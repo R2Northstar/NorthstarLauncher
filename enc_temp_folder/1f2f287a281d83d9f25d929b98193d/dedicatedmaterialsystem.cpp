@@ -63,7 +63,7 @@ void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 			*(ptr + 4) = (char)0x90;
 		}
 
-		// these don't work, they cause game to hang on rpak init, needs reworking
+		// these don't work, they cause game to hang on loading
 		{
 			// materialsystem rpak type: texture
 			char* ptr = (char*)baseAddress + 0x2B00;
@@ -174,6 +174,8 @@ void* RegisterRpakTypeHook(RpakTypeDefinition* rpakStruct, unsigned int a1, unsi
 
 void InitialiseDedicatedRtechGame(HMODULE baseAddress)
 {
+	spdlog::info("InitialiseDedicatedRtechGame");
+
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)GetModuleHandleA("rtech_game.dll") + 0x7BE0, &RegisterRpakTypeHook, reinterpret_cast<LPVOID*>(&RegisterRpakType));
 
