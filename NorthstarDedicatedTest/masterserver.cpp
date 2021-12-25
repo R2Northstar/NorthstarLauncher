@@ -93,7 +93,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
 
-			spdlog::info("Trying to authenticate with northstar masterserver for user {} {}", uidStr);
+			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
 
 			if (auto result = http.Get(fmt::format("/client/origin_auth?id={}&token={}", uidStr, tokenStr).c_str()))
 			{
@@ -197,7 +197,6 @@ void MasterServerManager::RequestServerList()
 					}
 
 					// todo: verify json props are fine before adding to m_remoteServers
-
 					if (!serverObj.HasMember("id") || !serverObj["id"].IsString() 
 						|| !serverObj.HasMember("name") || !serverObj["name"].IsString() 
 						|| !serverObj.HasMember("description") || !serverObj["description"].IsString()
@@ -209,8 +208,8 @@ void MasterServerManager::RequestServerList()
 						|| !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") || !serverObj["modInfo"]["Mods"].IsArray() )
 					{
 						spdlog::error("Failed reading masterserver response: malformed server object");
-						goto REQUEST_END_CLEANUP;
-					}
+						continue;
+					};
 
 					const char* id = serverObj["id"].GetString();
 
@@ -254,6 +253,10 @@ void MasterServerManager::RequestServerList()
 
 					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
 				}
+
+				std::sort(m_remoteServers.begin(), m_remoteServers.end(), [](RemoteServerInfo& a, RemoteServerInfo& b) {
+					return a.playerCount > b.playerCount;
+				});
 			}
 			else
 			{
@@ -812,18 +815,18 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 	requestThread.detach();
 }
 
-void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist)
+void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, int maxPlayers)
 {
 	// dont call this if we don't have a server id
 	if (!*m_ownServerId)
 		return;
 
-	std::thread requestThread([this, map, playlist] {
+	std::thread requestThread([this, map, playlist, maxPlayers] {
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
 
 			// we dont process this at all atm, maybe do later, but atm not necessary
-			if (auto result = http.Post(fmt::format("/server/update_values?id={}&map={}&playlist={}", m_ownServerId, map, playlist).c_str()))
+			if (auto result = http.Post(fmt::format("/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", m_ownServerId, map, playlist, maxPlayers).c_str()))
 			{
 				m_successfullyConnected = true;
 			}
@@ -938,7 +941,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	CHostState__State_NewGame(hostState);
 
 	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", true);
+	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
 	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 		maxPlayers = std::stoi(maxPlayersVar);
 
@@ -949,13 +952,23 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 
 void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 {
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName());
+	int maxPlayers = 6;
+	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
+		maxPlayers = std::stoi(maxPlayersVar);
+
+	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
 	CHostState__State_ChangeLevelMP(hostState);
 }
 
 void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
 {
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName());
+	int maxPlayers = 6;
+	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
+		maxPlayers = std::stoi(maxPlayersVar);
+
+	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
 	CHostState__State_ChangeLevelSP(hostState);
 }
 
