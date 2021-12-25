@@ -42,7 +42,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, const std::string& newPing)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -65,7 +65,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	ping = newPing;
 }
 
-void RemoteServerInfo::SetPing(std::string newPing)
+void RemoteServerInfo::SetPing(const std::string& newPing)
 {
 	ping = newPing;
 }
@@ -620,18 +620,18 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 			else
 			{
 				spdlog::error("Failed authenticating with server: error {}", result.error());
-				return (std::string)("NaN");
+				return std::string("-1");
 			}
 
 			REQUEST_END_CLEANUP:
 			spdlog::error("Finished authenticating with server");
-			return (std::string)("NaN");
+			return std::string("-1");
 
 		});
 
 	requestThread.detach();
 
-	return (std::string)("NaN");
+	return std::string("-1");
 }
 
 std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* server)
@@ -649,16 +649,15 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 
 	hIcmpFile = IcmpCreateFile();
 	if (hIcmpFile == INVALID_HANDLE_VALUE) {
-		printf("\tUnable to open handle.\n");
-		printf("IcmpCreatefile returned error: %ld\n", GetLastError());
-		return "NaN";
+		spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to open handle."));
+		return "-1";
 	}
 
 	ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
 	ReplyBuffer = (VOID*)malloc(ReplySize);
 	if (ReplyBuffer == NULL) {
-		printf("\tUnable to allocate memory\n");
-		return "NaN";
+		spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to allocate memory"));
+		return "-1";
 	}
 
 
@@ -668,31 +667,16 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 		PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
 		struct in_addr ReplyAddr;
 		ReplyAddr.S_un.S_addr = pEchoReply->Address;
-		printf("\tSent icmp message to %s\n", ip);
-		if (dwRetVal > 1) {
-			printf("\tReceived %ld icmp message responses\n", dwRetVal);
-			printf("\tInformation from the first response:\n");
-		}
-		else {
-			printf("\tReceived %ld icmp message response\n", dwRetVal);
-			printf("\tInformation from this response:\n");
-		}
-		printf("\t  Received from %s\n", inet_ntoa(ReplyAddr));
-		printf("\t  Status = %ld\n",
-			pEchoReply->Status);
-		printf("\t  Roundtrip time = %ld milliseconds\n",
-			pEchoReply->RoundTripTime);
 		spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
 
 		server->SetPing(std::to_string(pEchoReply->RoundTripTime) + "ms");
 		return std::to_string(pEchoReply->RoundTripTime)+"ms";
 	}
 	else {
-		printf("\tCall to IcmpSendEcho failed.\n");
-		printf("\tIcmpSendEcho returned error: %ld\n", GetLastError());
-		return "NaN";
+		spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: {}", ip, GetLastError()));
+		return "-1";
 	}
-	return "NaN";
+	return "-1";
 }
 
 void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
