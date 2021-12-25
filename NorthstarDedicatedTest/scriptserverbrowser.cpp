@@ -60,14 +60,7 @@ SQRESULT SQ_GetServerName(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	if (g_MasterServerManager->m_remoteServers[serverIndex].requiresPassword)
-	{
-		ClientSq_pushstring(sqvm, fmt::format("[PWD] {}", g_MasterServerManager->m_remoteServers[serverIndex].name).c_str(), -1);
-	}
-	else
-	{
-		ClientSq_pushstring(sqvm, fmt::format("{}", g_MasterServerManager->m_remoteServers[serverIndex].name).c_str(), -1);
-	}
+	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].name, -1);
 
 	return SQRESULT_NOTNULL;
 }
