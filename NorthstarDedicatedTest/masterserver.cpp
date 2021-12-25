@@ -42,7 +42,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, int newPing)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -66,7 +66,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	pingPending = true;
 }
 
-void RemoteServerInfo::SetPing(std::string newPing)
+void RemoteServerInfo::SetPing(int newPing)
 {
 	ping = newPing;
 	pingPending = false;
@@ -228,7 +228,7 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "-1");
+							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -237,10 +237,10 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "-1");
+						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
 
 
-					std::string ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
+					int ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
 
 					spdlog::info("Ping of server {} is {}", id, ping);
 
@@ -569,7 +569,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	requestThread.detach();
 }
 
-std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, RemoteServerInfo* server)
+int MasterServerManager::GetServerPing(char* uid, char* playerToken, RemoteServerInfo* server)
 {
 	std::thread requestThread([this, uid, playerToken, server]()
 		{
@@ -617,8 +617,8 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 
 				spdlog::info(fmt::format("Server with ID {} has address {}:{}", server->id, connectionInfoJson["ip"].GetString(), connectionInfoJson["port"].GetInt()).c_str());
 				server->pingPending = true;
-				std::string pingTemp = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
-				std::string ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
+				int pingTemp = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
+				int ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
 				server->pingPending = false;
 				return ping;
 			}
@@ -626,23 +626,23 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 			{
 				spdlog::error("Failed authenticating with server: error {}", result.error());
 				server->pingPending = false;
-				return std::string("-1");
+				return -1;
 			}
 
 			REQUEST_END_CLEANUP:
 			spdlog::error("Finished authenticating with server");
 			server->pingPending = false;
-			return std::string("-1");
+			return -1;
 
 		});
 
 	requestThread.detach();
 
 	server->pingPending = false;
-	return std::string("-1");
+	return -1;
 }
 
-std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* server)
+int MasterServerManager::SendPing(const char* ip, RemoteServerInfo* server)
 {
 	try {
 		// Declare and initialize variables
@@ -661,7 +661,7 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 		if (hIcmpFile == INVALID_HANDLE_VALUE) {
 			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to open handle."));
 			server->pingPending = false;
-			return std::string("-1");
+			return -1;
 		}
 
 		ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
@@ -669,7 +669,7 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 		if (ReplyBuffer == NULL) {
 			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to allocate memory"));
 			server->pingPending = false;
-			return std::string("-1");
+			return -1;
 		}
 
 
@@ -681,21 +681,21 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 			ReplyAddr.S_un.S_addr = pEchoReply->Address;
 			spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
 
-			server->SetPing(std::string(std::to_string(pEchoReply->RoundTripTime) + "ms"));
+			server->SetPing(pEchoReply->RoundTripTime);
 			server->pingPending = false;
-			return std::string(std::to_string(pEchoReply->RoundTripTime) + "ms");
+			return pEchoReply->RoundTripTime;
 		}
 		else {
 			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: {}", ip, GetLastError()));
 			server->pingPending = false;
-			return std::string("-1");
+			return -1;
 		}
 		server->pingPending = false;
-		return std::string("-1");
+		return -1;
 	}
 	catch (...) {
 		server->pingPending = false;
-		return std::string("-1");
+		return -1;
 	}
 }
 

@@ -77,7 +77,7 @@ SQRESULT SQ_GetServerPing(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	ClientSq_pushstring(sqvm, fmt::format("Ping: {}", g_MasterServerManager->m_remoteServers[serverIndex].ping).c_str(), -1);
+	ClientSq_pushinteger(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].ping);
 
 	return SQRESULT_NOTNULL;
 }
@@ -361,7 +361,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsGettingPing", "int serverIndex", "", SQ_IsGettingPing);
 
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerName", "int serverIndex", "", SQ_GetServerName);
-	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPing", "int serverIndex", "", SQ_GetServerPing);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerPing", "int serverIndex", "", SQ_GetServerPing);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerDescription", "int serverIndex", "", SQ_GetServerDescription);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerMap", "int serverIndex", "", SQ_GetServerMap);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPlaylist", "int serverIndex", "", SQ_GetServerPlaylist);
