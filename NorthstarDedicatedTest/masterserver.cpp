@@ -63,11 +63,13 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	maxPlayers = newMaxPlayers;
 
 	ping = newPing;
+	pingPending = true;
 }
 
 void RemoteServerInfo::SetPing(std::string newPing)
 {
 	ping = newPing;
+	pingPending = false;
 }
 
 void MasterServerManager::ClearServerList()
@@ -614,7 +616,10 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 				}
 
 				spdlog::info(fmt::format("Server with ID {} has address {}:{}", server->id, connectionInfoJson["ip"].GetString(), connectionInfoJson["port"].GetInt()).c_str());
+				server->pingPending = true;
+				std::string pingTemp = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
 				std::string ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
+				server->pingPending = false;
 				return ping;
 			}
 			else
@@ -625,12 +630,14 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 
 			REQUEST_END_CLEANUP:
 			spdlog::error("Finished authenticating with server");
+			server->pingPending = false;
 			return std::string("-1");
 
 		});
 
 	requestThread.detach();
 
+	server->pingPending = false;
 	return std::string("-1");
 }
 
@@ -645,12 +652,14 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 		char SendData[32] = "Data Buffer";
 		LPVOID ReplyBuffer = NULL;
 		DWORD ReplySize = 0;
+		DWORD Timeout = 1000;
 
 		ipaddr = inet_addr(ip);
 
 		hIcmpFile = IcmpCreateFile();
 		if (hIcmpFile == INVALID_HANDLE_VALUE) {
 			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to open handle."));
+			server->pingPending = false;
 			return std::string("-1");
 		}
 
@@ -658,12 +667,13 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 		ReplyBuffer = (VOID*)malloc(ReplySize);
 		if (ReplyBuffer == NULL) {
 			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to allocate memory"));
+			server->pingPending = false;
 			return std::string("-1");
 		}
 
 
 		dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof(SendData),
-			NULL, ReplyBuffer, ReplySize, 1000);
+			NULL, ReplyBuffer, ReplySize, Timeout);
 		if (dwRetVal != 0) {
 			PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
 			struct in_addr ReplyAddr;
@@ -671,15 +681,19 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* serv
 			spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
 
 			server->SetPing(std::string(std::to_string(pEchoReply->RoundTripTime) + "ms"));
+			server->pingPending = false;
 			return std::string(std::to_string(pEchoReply->RoundTripTime) + "ms");
 		}
 		else {
 			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: {}", ip, GetLastError()));
+			server->pingPending = false;
 			return std::string("-1");
 		}
+		server->pingPending = false;
 		return std::string("-1");
 	}
 	catch (...) {
+		server->pingPending = false;
 		return std::string("-1");
 	}
 }

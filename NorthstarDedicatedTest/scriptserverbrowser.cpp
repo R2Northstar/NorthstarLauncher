@@ -82,6 +82,21 @@ SQRESULT SQ_GetServerPing(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// bool function NSIsGettingPing( int serverIndex )
+SQRESULT SQ_IsGettingPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping status of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushbool(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].pingPending);
+	return SQRESULT_NOTNULL;
+}
+
 // string function NSGetServerDescription( int serverIndex )
 SQRESULT SQ_GetServerDescription(void* sqvm)
 {
@@ -343,6 +358,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSMasterServerConnectionSuccessful", "", "", SQ_MasterServerConnectionSuccessful);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerCount", "", "", SQ_GetServerCount);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSClearRecievedServerList", "", "", SQ_ClearRecievedServerList);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsGettingPing", "int serverIndex", "", SQ_IsGettingPing);
 
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerName", "int serverIndex", "", SQ_GetServerName);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPing", "int serverIndex", "", SQ_GetServerPing);

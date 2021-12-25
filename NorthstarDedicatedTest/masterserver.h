@@ -28,6 +28,7 @@ public:
 	bool requiresPassword;
 
 	std::string ping;
+	bool pingPending;
 
 public:
 	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing);
