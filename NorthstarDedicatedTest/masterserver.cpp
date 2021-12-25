@@ -42,7 +42,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -61,9 +61,11 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
+
+	ping = newPing;
 }
 
-void RemoteServerInfo::SetPing(const std::string newPing)
+void RemoteServerInfo::SetPing(std::string newPing)
 {
 	ping = newPing;
 }
@@ -211,9 +213,12 @@ void MasterServerManager::RequestServerList()
 						continue;
 					};
 
+
 					const char* id = serverObj["id"].GetString();
+					
 
 					RemoteServerInfo* newServer = nullptr;
+
 
 					bool createNewServerInfo = true;
 					for (RemoteServerInfo& server : m_remoteServers)
@@ -221,7 +226,7 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "NaN");
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -230,7 +235,12 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "NaN");
+
+
+					std::string ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
+
+					spdlog::info("Ping of server {} is {}", id, ping);
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -557,16 +567,16 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	requestThread.detach();
 }
 
-std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, RemoteServerInfo server, void* sqvm)
+std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, RemoteServerInfo* server)
 {
-	std::thread requestThread([this, uid, playerToken, server, sqvm]()
+	std::thread requestThread([this, uid, playerToken, server]()
 		{
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
 
-			spdlog::info("Attempting authentication with server of id \"{}\"", server.id);
+			spdlog::info("Attempting authentication with server of id \"{}\"", server->id);
 
-			if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server.id).c_str()))
+			if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server->id).c_str()))
 			{
 
 				rapidjson::Document connectionInfoJson;
@@ -603,8 +613,8 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 					goto REQUEST_END_CLEANUP;
 				}
 
-				spdlog::info(fmt::format("Server with ID {} has address {}:{}", server.id, connectionInfoJson["ip"].GetString(), connectionInfoJson["port"].GetInt()).c_str());
-				std::string ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server, sqvm);
+				spdlog::info(fmt::format("Server with ID {} has address {}:{}", server->id, connectionInfoJson["ip"].GetString(), connectionInfoJson["port"].GetInt()).c_str());
+				std::string ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
 				return ping;
 			}
 			else
@@ -624,7 +634,7 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 	return (std::string)("NaN");
 }
 
-std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo server, void* sqvm)
+std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* server)
 {
 	// Declare and initialize variables
 
@@ -674,15 +684,7 @@ std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo serve
 			pEchoReply->RoundTripTime);
 		spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
 
-		if (server.requiresPassword)
-		{
-			ClientSq_pushstring(sqvm, fmt::format("[PWD] {} | Ping: {}", server.name, std::to_string(pEchoReply->RoundTripTime)).c_str(), -1);
-		}
-		else
-		{
-			ClientSq_pushstring(sqvm, fmt::format("{} | Ping: {}", server.name, std::to_string(pEchoReply->RoundTripTime)).c_str(), -1);
-		}
-
+		server->SetPing(std::to_string(pEchoReply->RoundTripTime) + "ms");
 		return std::to_string(pEchoReply->RoundTripTime)+"ms";
 	}
 	else {

@@ -53,10 +53,6 @@ SQRESULT SQ_GetServerName(void* sqvm)
 {
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
 
-	std::string ping = "NaN";
-	ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, g_MasterServerManager->m_remoteServers[serverIndex], sqvm);
-
-	spdlog::info(ping);
 
 	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
 	{
@@ -66,12 +62,29 @@ SQRESULT SQ_GetServerName(void* sqvm)
 
 	if (g_MasterServerManager->m_remoteServers[serverIndex].requiresPassword)
 	{
-		ClientSq_pushstring(sqvm, fmt::format("[PWD] {} | Ping: {}", g_MasterServerManager->m_remoteServers[serverIndex].name, ping).c_str(), -1);
+		ClientSq_pushstring(sqvm, fmt::format("[PWD] {}", g_MasterServerManager->m_remoteServers[serverIndex].name).c_str(), -1);
 	}
 	else
 	{
-		ClientSq_pushstring(sqvm, fmt::format("{} | Ping: {}", g_MasterServerManager->m_remoteServers[serverIndex].name, ping).c_str(), -1);
+		ClientSq_pushstring(sqvm, fmt::format("{}", g_MasterServerManager->m_remoteServers[serverIndex].name).c_str(), -1);
 	}
+
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_GetServerPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushstring(sqvm, fmt::format("Ping: {}", g_MasterServerManager->m_remoteServers[serverIndex].ping).c_str(), -1);
 
 	return SQRESULT_NOTNULL;
 }
@@ -339,6 +352,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("void", "NSClearRecievedServerList", "", "", SQ_ClearRecievedServerList);
 
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerName", "int serverIndex", "", SQ_GetServerName);
+	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPing", "int serverIndex", "", SQ_GetServerPing);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerDescription", "int serverIndex", "", SQ_GetServerDescription);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerMap", "int serverIndex", "", SQ_GetServerMap);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPlaylist", "int serverIndex", "", SQ_GetServerPlaylist);

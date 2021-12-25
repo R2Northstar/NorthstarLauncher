@@ -30,8 +30,8 @@ public:
 	std::string ping;
 
 public:
-	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword);
-	void SetPing(const std::string newPing);
+	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing);
+	void SetPing(std::string newPing);
 };
 
 struct RemoteServerConnectionInfo
@@ -107,8 +107,8 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
-	std::string GetServerPing(char* uid, char* playerToken, RemoteServerInfo server, void* sqvm);
-	std::string SendPing(const char* ip, RemoteServerInfo server, void* sqvm);
+	std::string GetServerPing(char* uid, char* playerToken, RemoteServerInfo* server);
+	std::string SendPing(const char* ip, RemoteServerInfo* server);
 };
 
 void InitialiseSharedMasterServer(HMODULE baseAddress);
