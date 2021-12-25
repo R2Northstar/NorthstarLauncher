@@ -42,7 +42,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, const std::string& newPing)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -65,7 +65,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	ping = newPing;
 }
 
-void RemoteServerInfo::SetPing(const std::string& newPing)
+void RemoteServerInfo::SetPing(std::string newPing)
 {
 	ping = newPing;
 }
@@ -636,47 +636,52 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 
 std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo* server)
 {
-	// Declare and initialize variables
+	try {
+		// Declare and initialize variables
 
-	HANDLE hIcmpFile;
-	unsigned long ipaddr = INADDR_NONE;
-	DWORD dwRetVal = 0;
-	char SendData[32] = "Data Buffer";
-	LPVOID ReplyBuffer = NULL;
-	DWORD ReplySize = 0;
+		HANDLE hIcmpFile;
+		unsigned long ipaddr = INADDR_NONE;
+		DWORD dwRetVal = 0;
+		char SendData[32] = "Data Buffer";
+		LPVOID ReplyBuffer = NULL;
+		DWORD ReplySize = 0;
 
-	ipaddr = inet_addr(ip);
+		ipaddr = inet_addr(ip);
 
-	hIcmpFile = IcmpCreateFile();
-	if (hIcmpFile == INVALID_HANDLE_VALUE) {
-		spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to open handle."));
-		return "-1";
+		hIcmpFile = IcmpCreateFile();
+		if (hIcmpFile == INVALID_HANDLE_VALUE) {
+			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to open handle."));
+			return std::string("-1");
+		}
+
+		ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
+		ReplyBuffer = (VOID*)malloc(ReplySize);
+		if (ReplyBuffer == NULL) {
+			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to allocate memory"));
+			return std::string("-1");
+		}
+
+
+		dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof(SendData),
+			NULL, ReplyBuffer, ReplySize, 1000);
+		if (dwRetVal != 0) {
+			PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+			struct in_addr ReplyAddr;
+			ReplyAddr.S_un.S_addr = pEchoReply->Address;
+			spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
+
+			server->SetPing(std::string(std::to_string(pEchoReply->RoundTripTime) + "ms"));
+			return std::string(std::to_string(pEchoReply->RoundTripTime) + "ms");
+		}
+		else {
+			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: {}", ip, GetLastError()));
+			return std::string("-1");
+		}
+		return std::string("-1");
 	}
-
-	ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
-	ReplyBuffer = (VOID*)malloc(ReplySize);
-	if (ReplyBuffer == NULL) {
-		spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to allocate memory"));
-		return "-1";
+	catch (...) {
+		return std::string("-1");
 	}
-
-
-	dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof(SendData),
-		NULL, ReplyBuffer, ReplySize, 1000);
-	if (dwRetVal != 0) {
-		PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
-		struct in_addr ReplyAddr;
-		ReplyAddr.S_un.S_addr = pEchoReply->Address;
-		spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
-
-		server->SetPing(std::to_string(pEchoReply->RoundTripTime) + "ms");
-		return std::to_string(pEchoReply->RoundTripTime)+"ms";
-	}
-	else {
-		spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: {}", ip, GetLastError()));
-		return "-1";
-	}
-	return "-1";
 }
 
 void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)

@@ -30,8 +30,8 @@ public:
 	std::string ping;
 
 public:
-	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, const std::string& newPing);
-	void SetPing(const std::string& newPing);
+	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, std::string newPing);
+	void SetPing(std::string newPing);
 };
 
 struct RemoteServerConnectionInfo
