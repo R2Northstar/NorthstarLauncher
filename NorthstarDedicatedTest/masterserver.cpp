@@ -226,7 +226,7 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "NaN");
+							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "-1");
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -235,7 +235,7 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "NaN");
+						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), "-1");
 
 
 					std::string ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
