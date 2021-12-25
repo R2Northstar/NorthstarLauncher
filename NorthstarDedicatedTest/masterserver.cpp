@@ -625,6 +625,7 @@ std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, Rem
 			else
 			{
 				spdlog::error("Failed authenticating with server: error {}", result.error());
+				server->pingPending = false;
 				return std::string("-1");
 			}
 
