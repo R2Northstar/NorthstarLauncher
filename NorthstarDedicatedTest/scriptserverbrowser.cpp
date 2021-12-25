@@ -5,6 +5,10 @@
 #include "gameutils.h"
 #include "serverauthentication.h"
 #include "dedicated.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/error/en.h"
 
 // functions for viewing server browser
 
@@ -43,10 +47,16 @@ SQRESULT SQ_GetServerCount(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+
 // string function NSGetServerName( int serverIndex )
 SQRESULT SQ_GetServerName(void* sqvm)
 {
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	std::string ping = "NaN";
+	ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, g_MasterServerManager->m_remoteServers[serverIndex], sqvm);
+
+	spdlog::info(ping);
 
 	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
 	{
@@ -54,7 +64,15 @@ SQRESULT SQ_GetServerName(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].name, -1);
+	if (g_MasterServerManager->m_remoteServers[serverIndex].requiresPassword)
+	{
+		ClientSq_pushstring(sqvm, fmt::format("[PWD] {} | Ping: {}", g_MasterServerManager->m_remoteServers[serverIndex].name, ping).c_str(), -1);
+	}
+	else
+	{
+		ClientSq_pushstring(sqvm, fmt::format("{} | Ping: {}", g_MasterServerManager->m_remoteServers[serverIndex].name, ping).c_str(), -1);
+	}
+
 	return SQRESULT_NOTNULL;
 }
 

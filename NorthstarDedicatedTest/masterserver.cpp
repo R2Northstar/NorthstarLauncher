@@ -12,6 +12,13 @@
 #include "rapidjson/error/en.h"
 #include "modmanager.h"
 #include "misccommands.h"
+#include "squirrel.h"
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <icmpapi.h>
+
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 ConVar* Cvar_ns_masterserver_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
@@ -54,6 +61,11 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
+}
+
+void RemoteServerInfo::SetPing(const std::string newPing)
+{
+	ping = newPing;
 }
 
 void MasterServerManager::ClearServerList()
@@ -540,6 +552,142 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 		});
 
 	requestThread.detach();
+}
+
+std::string MasterServerManager::GetServerPing(char* uid, char* playerToken, RemoteServerInfo server, void* sqvm)
+{
+	std::thread requestThread([this, uid, playerToken, server, sqvm]()
+		{
+			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
+			http.set_connection_timeout(25);
+
+			spdlog::info("Attempting authentication with server of id \"{}\"", server.id);
+
+			if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server.id).c_str()))
+			{
+
+				rapidjson::Document connectionInfoJson;
+				connectionInfoJson.Parse(result->body.c_str());
+
+				if (connectionInfoJson.HasParseError())
+				{
+					spdlog::error("Failed reading masterserver authentication response: encountered parse error \"{}\"", rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (!connectionInfoJson.IsObject())
+				{
+					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (connectionInfoJson.HasMember("error"))
+				{
+					spdlog::error("Failed reading masterserver response: got fastify error response");
+					spdlog::error(result->body);
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (!connectionInfoJson["success"].IsTrue())
+				{
+					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") || !connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") || !connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") || !connectionInfoJson["authToken"].IsString())
+				{
+					spdlog::error("Failed reading masterserver authentication response: malformed json object");
+					goto REQUEST_END_CLEANUP;
+				}
+
+				spdlog::info(fmt::format("Server with ID {} has address {}:{}", server.id, connectionInfoJson["ip"].GetString(), connectionInfoJson["port"].GetInt()).c_str());
+				std::string ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server, sqvm);
+				return ping;
+			}
+			else
+			{
+				spdlog::error("Failed authenticating with server: error {}", result.error());
+				return (std::string)("NaN");
+			}
+
+			REQUEST_END_CLEANUP:
+			spdlog::error("Finished authenticating with server");
+			return (std::string)("NaN");
+
+		});
+
+	requestThread.detach();
+
+	return (std::string)("NaN");
+}
+
+std::string MasterServerManager::SendPing(const char* ip, RemoteServerInfo server, void* sqvm)
+{
+	// Declare and initialize variables
+
+	HANDLE hIcmpFile;
+	unsigned long ipaddr = INADDR_NONE;
+	DWORD dwRetVal = 0;
+	char SendData[32] = "Data Buffer";
+	LPVOID ReplyBuffer = NULL;
+	DWORD ReplySize = 0;
+
+	ipaddr = inet_addr(ip);
+
+	hIcmpFile = IcmpCreateFile();
+	if (hIcmpFile == INVALID_HANDLE_VALUE) {
+		printf("\tUnable to open handle.\n");
+		printf("IcmpCreatefile returned error: %ld\n", GetLastError());
+		return "NaN";
+	}
+
+	ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
+	ReplyBuffer = (VOID*)malloc(ReplySize);
+	if (ReplyBuffer == NULL) {
+		printf("\tUnable to allocate memory\n");
+		return "NaN";
+	}
+
+
+	dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof(SendData),
+		NULL, ReplyBuffer, ReplySize, 1000);
+	if (dwRetVal != 0) {
+		PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+		struct in_addr ReplyAddr;
+		ReplyAddr.S_un.S_addr = pEchoReply->Address;
+		printf("\tSent icmp message to %s\n", ip);
+		if (dwRetVal > 1) {
+			printf("\tReceived %ld icmp message responses\n", dwRetVal);
+			printf("\tInformation from the first response:\n");
+		}
+		else {
+			printf("\tReceived %ld icmp message response\n", dwRetVal);
+			printf("\tInformation from this response:\n");
+		}
+		printf("\t  Received from %s\n", inet_ntoa(ReplyAddr));
+		printf("\t  Status = %ld\n",
+			pEchoReply->Status);
+		printf("\t  Roundtrip time = %ld milliseconds\n",
+			pEchoReply->RoundTripTime);
+		spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
+
+		if (server.requiresPassword)
+		{
+			ClientSq_pushstring(sqvm, fmt::format("[PWD] {} | Ping: {}", server.name, std::to_string(pEchoReply->RoundTripTime)).c_str(), -1);
+		}
+		else
+		{
+			ClientSq_pushstring(sqvm, fmt::format("{} | Ping: {}", server.name, std::to_string(pEchoReply->RoundTripTime)).c_str(), -1);
+		}
+
+		return std::to_string(pEchoReply->RoundTripTime)+"ms";
+	}
+	else {
+		printf("\tCall to IcmpSendEcho failed.\n");
+		printf("\tIcmpSendEcho returned error: %ld\n", GetLastError());
+		return "NaN";
+	}
+	return "NaN";
 }
 
 void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
