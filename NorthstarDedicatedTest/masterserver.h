@@ -28,6 +28,7 @@ public:
 	bool requiresPassword;
 
 	in_addr ip;
+	bool ipSet;
 	bool ipPending;
 
 	int ping;

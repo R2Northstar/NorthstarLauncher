@@ -96,6 +96,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	maxPlayers = newMaxPlayers;
 
 	ip.S_un.S_addr = INADDR_NONE;
+	ipSet = false;
 	ipPending = true;
 
 	ping = -1;
@@ -628,58 +629,66 @@ void MasterServerManager::FetchServerAddress(char* uid, char* playerToken, Remot
 
 			spdlog::info("Attempting address fetch with server of id \"{}\"", server->id);
 
-			if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server->id).c_str()))
-			{
-				rapidjson::Document connectionInfoJson;
-				connectionInfoJson.Parse(result->body.c_str());
-
-				if (connectionInfoJson.HasParseError())
+			try {
+				if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server->id).c_str()))
 				{
-					spdlog::error("Failed reading masterserver authentication response: encountered parse error \"{}\"", rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
-				}
+					rapidjson::Document connectionInfoJson;
+					connectionInfoJson.Parse(result->body.c_str());
 
-				if (!connectionInfoJson.IsObject())
-				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
-					goto REQUEST_END_CLEANUP;
-				}
+					if (connectionInfoJson.HasParseError())
+					{
+						spdlog::error("Failed reading masterserver authentication response: encountered parse error \"{}\"", rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
+						goto REQUEST_END_CLEANUP;
+					}
 
-				if (connectionInfoJson.HasMember("error"))
-				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(result->body);
-					goto REQUEST_END_CLEANUP;
-				}
+					if (!connectionInfoJson.IsObject())
+					{
+						spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+						goto REQUEST_END_CLEANUP;
+					}
 
-				if (!connectionInfoJson["success"].IsTrue())
-				{
-					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
-					goto REQUEST_END_CLEANUP;
-				}
+					if (connectionInfoJson.HasMember("error"))
+					{
+						spdlog::error("Failed reading masterserver response: got fastify error response");
+						spdlog::error(result->body);
+						goto REQUEST_END_CLEANUP;
+					}
 
-				if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") || !connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") || !connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") || !connectionInfoJson["authToken"].IsString())
-				{
-					spdlog::error("Failed reading masterserver authentication response: malformed json object");
-					goto REQUEST_END_CLEANUP;
-				}
+					if (!connectionInfoJson["success"].IsTrue())
+					{
+						spdlog::error("Authentication with masterserver failed: \"success\" is not true");
+						goto REQUEST_END_CLEANUP;
+					}
 
-				spdlog::info("Successfully got IP ({}) of server with id {}", connectionInfoJson["ip"].GetString(), server->id);
+					if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") || !connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") || !connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") || !connectionInfoJson["authToken"].IsString())
+					{
+						spdlog::error("Failed reading masterserver authentication response: malformed json object");
+						goto REQUEST_END_CLEANUP;
+					}
+
+					spdlog::info("Successfully got IP ({}) of server with id {}", connectionInfoJson["ip"].GetString(), server->id);
 				
-				server->ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
-				server->ipPending = false;
-				m_fetchingIp = false;
-			}
-			else
-			{
-				spdlog::error("Failed authenticating with server: error {}", HttplibErrorToString(result.error()));
-				server->ipPending = false;
-				m_fetchingIp = false;
-			}
+					server->ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
+					server->ipSet = true;
+					server->ipPending = false;
+					m_fetchingIp = false;
+				}
+				else
+				{
+					spdlog::error("Failed authenticating with server: error {}", HttplibErrorToString(result.error()));
+					server->ipPending = false;
+					m_fetchingIp = false;
+				}
 
-		REQUEST_END_CLEANUP:
-			server->ipPending = false;
-			m_fetchingIp = false;
+			REQUEST_END_CLEANUP:
+				server->ipPending = false;
+				m_fetchingIp = false;
+			}
+			catch (...) {
+				server->ipPending = false;
+				m_fetchingIp = false;
+				return;
+			}
 		});
 
 	requestThread.detach();
@@ -695,11 +704,15 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 			while (server->ipPending || m_requestingServerList)
 				Sleep(100);
 
+			if (!server->ipSet)
+				return;
+
 			server->pingPending = true;
 
 			spdlog::info("Attempting to get ping of server \"{}\"", server->name);
 
 			try {
+
 				// Declare and initialize variables
 
 				HANDLE hIcmpFile;
@@ -713,13 +726,12 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 
 				ipaddr = server->ip.S_un.S_addr;
 				if (ipaddr == INADDR_NONE || ipaddr == 0) {
-					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unknown IP.", server->name));
 					return;
 				}
 
 				hIcmpFile = IcmpCreateFile();
 				if (hIcmpFile == INVALID_HANDLE_VALUE) {
-					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to open handle.", server->name));
+					//spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to open handle.", server->name));
 					server->pingPending = false;
 					return;
 				}
@@ -727,7 +739,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 				ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
 				ReplyBuffer = (VOID*)malloc(ReplySize);
 				if (ReplyBuffer == NULL) {
-					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to allocate memory", server->name));
+					//spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to allocate memory", server->name));
 					server->pingPending = false;
 					return;
 				}
@@ -740,7 +752,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 					struct in_addr ReplyAddr;
 					ReplyAddr.S_un.S_addr = pEchoReply->Address;
 					switch (pEchoReply->Status) {
-					case IP_DEST_HOST_UNREACHABLE:
+					/*case IP_DEST_HOST_UNREACHABLE:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Destination host was unreachable", server->name));
 						break;
 					case IP_DEST_NET_UNREACHABLE:
@@ -748,17 +760,17 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 						break;
 					case IP_REQ_TIMED_OUT:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Request timed out", server->name));
-						break;
+						break;*/
 					}
 
-					spdlog::error(fmt::format("Ping of server \"{}\" is {}", server->name, pEchoReply->RoundTripTime));
+					spdlog::info(fmt::format("Ping of server \"{}\" is {}", server->name, pEchoReply->RoundTripTime));
 					server->ping = pEchoReply->RoundTripTime;
 					server->pingPending = false;
 				}
 				else {
 					dwError = GetLastError();
 					switch (dwError) {
-					case IP_BUF_TOO_SMALL:
+					/*case IP_BUF_TOO_SMALL:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: ReplyBufferSize too small", server->name));
 						break;
 					case IP_REQ_TIMED_OUT:
@@ -766,7 +778,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 						break;
 					default:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: {}", server->name, dwError));
-						break;
+						break;*/
 					}
 					return;
 				}
