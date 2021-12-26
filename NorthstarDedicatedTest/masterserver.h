@@ -35,7 +35,8 @@ public:
 	bool pingPending;
 
 public:
-	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword);
+	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, int newPing);
+	void SetPing(int newPing);
 };
 
 struct RemoteServerConnectionInfo
@@ -115,6 +116,8 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+	int GetServerPing(char* uid, char* playerToken, RemoteServerInfo* server);
+	int SendPing(const char* ip, RemoteServerInfo* server);
 };
 
 void InitialiseSharedMasterServer(HMODULE baseAddress);

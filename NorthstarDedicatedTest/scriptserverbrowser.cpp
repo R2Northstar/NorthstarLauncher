@@ -5,6 +5,10 @@
 #include "gameutils.h"
 #include "serverauthentication.h"
 #include "dedicated.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/error/en.h"
 
 // functions for viewing server browser
 
@@ -43,10 +47,12 @@ SQRESULT SQ_GetServerCount(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+
 // string function NSGetServerName( int serverIndex )
 SQRESULT SQ_GetServerName(void* sqvm)
 {
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
 
 	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
 	{
@@ -55,6 +61,39 @@ SQRESULT SQ_GetServerName(void* sqvm)
 	}
 
 	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].name, -1);
+
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_GetServerPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushinteger(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].ping);
+
+	return SQRESULT_NOTNULL;
+}
+
+// bool function NSIsGettingPing( int serverIndex )
+SQRESULT SQ_IsGettingPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping status of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushbool(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].pingPending);
 	return SQRESULT_NOTNULL;
 }
 
@@ -334,8 +373,10 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSMasterServerConnectionSuccessful", "", "", SQ_MasterServerConnectionSuccessful);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerCount", "", "", SQ_GetServerCount);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSClearRecievedServerList", "", "", SQ_ClearRecievedServerList);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsGettingPing", "int serverIndex", "", SQ_IsGettingPing);
 
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerName", "int serverIndex", "", SQ_GetServerName);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerPing", "int serverIndex", "", SQ_GetServerPing);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerDescription", "int serverIndex", "", SQ_GetServerDescription);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerMap", "int serverIndex", "", SQ_GetServerMap);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPlaylist", "int serverIndex", "", SQ_GetServerPlaylist);

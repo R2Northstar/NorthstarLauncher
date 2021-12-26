@@ -12,6 +12,13 @@
 #include "rapidjson/error/en.h"
 #include "modmanager.h"
 #include "misccommands.h"
+#include "squirrel.h"
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <icmpapi.h>
+
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 #include <winsock2.h>
 #include <iphlpapi.h>
@@ -252,9 +259,12 @@ void MasterServerManager::RequestServerList()
 						continue;
 					};
 
+
 					const char* id = serverObj["id"].GetString();
+					
 
 					RemoteServerInfo* newServer = nullptr;
+
 
 					bool createNewServerInfo = true;
 					for (RemoteServerInfo& server : m_remoteServers)
@@ -262,7 +272,7 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -271,7 +281,12 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
+
+
+					int ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
+
+					spdlog::info("Ping of server {} is {}", id, ping);
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -795,7 +810,6 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 
 	requestThread.detach();
 }
-
 
 void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
 {
