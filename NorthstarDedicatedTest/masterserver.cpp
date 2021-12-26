@@ -20,6 +20,13 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <icmpapi.h>
+
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
+
 ConVar* Cvar_ns_masterserver_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
 ConVar* Cvar_ns_report_sp_server_to_masterserver;
@@ -42,7 +49,40 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, int newPing)
+const char* HttplibErrorToString(httplib::Error error)
+{
+	switch (error)
+	{
+	case httplib::Error::Success:
+		return "httplib::Error::Success";
+	case httplib::Error::Unknown:
+		return "httplib::Error::Unknown";
+	case httplib::Error::Connection:
+		return "httplib::Error::Connection";
+	case httplib::Error::BindIPAddress:
+		return "httplib::Error::BindIPAddress";
+	case httplib::Error::Read:
+		return "httplib::Error::Read";
+	case httplib::Error::Write:
+		return "httplib::Error::Write";
+	case httplib::Error::ExceedRedirectCount:
+		return "httplib::Error::ExceedRedirectCount";
+	case httplib::Error::Canceled:
+		return "httplib::Error::Canceled";
+	case httplib::Error::SSLConnection:
+		return "httplib::Error::SSLConnection";
+	case httplib::Error::SSLLoadingCerts:
+		return "httplib::Error::SSLLoadingCerts";
+	case httplib::Error::SSLServerVerification:
+		return "httplib::Error::SSLServerVerification";
+	case httplib::Error::UnsupportedMultipartBoundaryChars:
+		return "httplib::Error::UnsupportedMultipartBoundaryChars";
+	}
+
+	return "";
+}
+
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -62,13 +102,11 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
 
-	ping = newPing;
-	pingPending = true;
-}
+	ip.S_un.S_addr = INADDR_NONE;
+	ipSet = false;
+	ipPending = true;
 
-void RemoteServerInfo::SetPing(int newPing)
-{
-	ping = newPing;
+	ping = -1;
 	pingPending = false;
 }
 
@@ -80,6 +118,8 @@ void MasterServerManager::ClearServerList()
 	m_remoteServers.clear();
 
 	m_requestingServerList = false;
+
+	m_fetchingIp = false;
 }
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
@@ -96,6 +136,8 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 		{
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
 
@@ -108,7 +150,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 
 				if (originAuthInfo.HasParseError())
 				{
-					spdlog::error("Failed reading origin auth info response: encountered parse error \{}\"", rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
+					spdlog::error("Failed reading origin auth info response: encountered parse error \"{}\"", rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -129,7 +171,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			}
 			else
 			{
-				spdlog::error("Failed performing northstar origin auth: error {}", result.error());
+				spdlog::error("Failed performing northstar origin auth: error {}", HttplibErrorToString(result.error()));
 				m_successfullyConnected = false;
 			}
 
@@ -159,6 +201,8 @@ void MasterServerManager::RequestServerList()
 			
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->m_pszString);
 
@@ -264,6 +308,13 @@ void MasterServerManager::RequestServerList()
 					}
 
 					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
+
+					if (newServer->ipPending)
+					{
+						g_MasterServerManager->FetchServerAddress(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
+					}
+
+					g_MasterServerManager->GetPing(newServer);
 				}
 
 				std::sort(m_remoteServers.begin(), m_remoteServers.end(), [](RemoteServerInfo& a, RemoteServerInfo& b) {
@@ -272,7 +323,7 @@ void MasterServerManager::RequestServerList()
 			}
 			else
 			{
-				spdlog::error("Failed requesting servers: error {}", result.error());
+				spdlog::error("Failed requesting servers: error {}", HttplibErrorToString(result.error()));
 				m_successfullyConnected = false;
 			}
 
@@ -296,6 +347,8 @@ void MasterServerManager::RequestMainMenuPromos()
 			
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			if (auto result = http.Get("/client/mainmenupromos"))
 			{
@@ -369,7 +422,7 @@ void MasterServerManager::RequestMainMenuPromos()
 			}
 			else
 			{
-				spdlog::error("Failed requesting main menu promos: error {}", result.error());
+				spdlog::error("Failed requesting main menu promos: error {}", HttplibErrorToString(result.error()));
 				m_successfullyConnected = false;
 			}
 
@@ -395,6 +448,8 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 		{
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			if (auto result = http.Post(fmt::format("/client/auth_with_self?id={}&playerToken={}", uid, playerToken).c_str()))
 			{
@@ -464,7 +519,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			}
 			else
 			{
-				spdlog::error("Failed authenticating with own server: error {}", result.error());
+				spdlog::error("Failed authenticating with own server: error {}", HttplibErrorToString(result.error()));
 				m_successfullyConnected = false;
 				m_successfullyAuthenticatedWithGameServer = false;
 				m_scriptAuthenticatingWithGameServer = false;
@@ -503,6 +558,8 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			spdlog::info("Attempting authentication with server of id \"{}\"", serverId);
 
@@ -555,7 +612,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 			}
 			else
 			{
-				spdlog::error("Failed authenticating with server: error {}", result.error());
+				spdlog::error("Failed authenticating with server: error {}", HttplibErrorToString(result.error()));
 				m_successfullyConnected = false;
 				m_successfullyAuthenticatedWithGameServer = false;
 				m_scriptAuthenticatingWithGameServer = false;
@@ -569,134 +626,189 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	requestThread.detach();
 }
 
-int MasterServerManager::GetServerPing(char* uid, char* playerToken, RemoteServerInfo* server)
+void MasterServerManager::FetchServerAddress(char* uid, char* playerToken, RemoteServerInfo* server)
 {
+
 	std::thread requestThread([this, uid, playerToken, server]()
 		{
+			while (m_fetchingIp || m_requestingServerList)
+				Sleep(100);
+
+			m_fetchingIp = true;
+			server->ipPending = true;
+
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
-			spdlog::info("Attempting authentication with server of id \"{}\"", server->id);
+			spdlog::info("Attempting address fetch with server of id \"{}\"", server->id);
 
-			if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server->id).c_str()))
-			{
-
-				rapidjson::Document connectionInfoJson;
-				connectionInfoJson.Parse(result->body.c_str());
-
-				if (connectionInfoJson.HasParseError())
+			try {
+				if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server->id).c_str()))
 				{
-					spdlog::error("Failed reading masterserver authentication response: encountered parse error \"{}\"", rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
-				}
+					rapidjson::Document connectionInfoJson;
+					connectionInfoJson.Parse(result->body.c_str());
 
-				if (!connectionInfoJson.IsObject())
+					if (connectionInfoJson.HasParseError())
+					{
+						spdlog::error("Failed reading masterserver authentication response: encountered parse error \"{}\"", rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
+						goto REQUEST_END_CLEANUP;
+					}
+
+					if (!connectionInfoJson.IsObject())
+					{
+						spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+						goto REQUEST_END_CLEANUP;
+					}
+
+					if (connectionInfoJson.HasMember("error"))
+					{
+						spdlog::error("Failed reading masterserver response: got fastify error response");
+						spdlog::error(result->body);
+						goto REQUEST_END_CLEANUP;
+					}
+
+					if (!connectionInfoJson["success"].IsTrue())
+					{
+						spdlog::error("Authentication with masterserver failed: \"success\" is not true");
+						goto REQUEST_END_CLEANUP;
+					}
+
+					if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") || !connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") || !connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") || !connectionInfoJson["authToken"].IsString())
+					{
+						spdlog::error("Failed reading masterserver authentication response: malformed json object");
+						goto REQUEST_END_CLEANUP;
+					}
+
+					spdlog::info("Successfully got IP ({}) of server with id {}", connectionInfoJson["ip"].GetString(), server->id);
+				
+					server->ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
+					server->ipSet = true;
+					server->ipPending = false;
+					m_fetchingIp = false;
+				}
+				else
 				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
-					goto REQUEST_END_CLEANUP;
+					spdlog::error("Failed authenticating with server: error {}", HttplibErrorToString(result.error()));
+					server->ipPending = false;
+					m_fetchingIp = false;
 				}
-
-				if (connectionInfoJson.HasMember("error"))
-				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(result->body);
-					goto REQUEST_END_CLEANUP;
-				}
-
-				if (!connectionInfoJson["success"].IsTrue())
-				{
-					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
-					goto REQUEST_END_CLEANUP;
-				}
-
-				if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") || !connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") || !connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") || !connectionInfoJson["authToken"].IsString())
-				{
-					spdlog::error("Failed reading masterserver authentication response: malformed json object");
-					goto REQUEST_END_CLEANUP;
-				}
-
-				spdlog::info(fmt::format("Server with ID {} has address {}:{}", server->id, connectionInfoJson["ip"].GetString(), connectionInfoJson["port"].GetInt()).c_str());
-				server->pingPending = true;
-				int pingTemp = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
-				int ping = MasterServerManager::SendPing(connectionInfoJson["ip"].GetString(), server);
-				server->pingPending = false;
-				return ping;
-			}
-			else
-			{
-				spdlog::error("Failed authenticating with server: error {}", result.error());
-				server->pingPending = false;
-				return -1;
-			}
 
 			REQUEST_END_CLEANUP:
-			spdlog::error("Finished authenticating with server");
-			server->pingPending = false;
-			return -1;
-
+				server->ipPending = false;
+				m_fetchingIp = false;
+			}
+			catch (...) {
+				server->ipPending = false;
+				m_fetchingIp = false;
+				return;
+			}
 		});
 
 	requestThread.detach();
-
-	server->pingPending = false;
-	return -1;
 }
 
-int MasterServerManager::SendPing(const char* ip, RemoteServerInfo* server)
+void MasterServerManager::GetPing(RemoteServerInfo* server)
 {
-	try {
-		// Declare and initialize variables
+	if (server->pingPending)
+		return;
 
-		HANDLE hIcmpFile;
-		unsigned long ipaddr = INADDR_NONE;
-		DWORD dwRetVal = 0;
-		char SendData[32] = "Data Buffer";
-		LPVOID ReplyBuffer = NULL;
-		DWORD ReplySize = 0;
-		DWORD Timeout = 1000;
+	std::thread requestThread([this, server]()
+		{
+			while (server->ipPending || m_requestingServerList)
+				Sleep(100);
 
-		ipaddr = inet_addr(ip);
+			if (!server->ipSet)
+				return;
 
-		hIcmpFile = IcmpCreateFile();
-		if (hIcmpFile == INVALID_HANDLE_VALUE) {
-			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to open handle."));
+			server->pingPending = true;
+
+			spdlog::info("Attempting to get ping of server \"{}\"", server->name);
+
+			try {
+
+				// Declare and initialize variables
+
+				HANDLE hIcmpFile;
+				unsigned long ipaddr = INADDR_NONE;
+				DWORD dwRetVal = 0;
+				DWORD dwError = 0;
+				char SendData[32] = "Data Buffer";
+				LPVOID ReplyBuffer = NULL;
+				DWORD ReplySize = 0;
+				DWORD Timeout = 2500;
+
+				ipaddr = server->ip.S_un.S_addr;
+				if (ipaddr == INADDR_NONE || ipaddr == 0) {
+					return;
+				}
+
+				hIcmpFile = IcmpCreateFile();
+				if (hIcmpFile == INVALID_HANDLE_VALUE) {
+					//spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to open handle.", server->name));
+					server->pingPending = false;
+					return;
+				}
+
+				ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
+				ReplyBuffer = (VOID*)malloc(ReplySize);
+				if (ReplyBuffer == NULL) {
+					//spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to allocate memory", server->name));
+					server->pingPending = false;
+					return;
+				}
+
+				dwRetVal = IcmpSendEcho2(hIcmpFile, NULL, NULL, NULL,
+					ipaddr, SendData, sizeof(SendData), NULL,
+					ReplyBuffer, ReplySize, Timeout);
+				if (dwRetVal != 0) {
+					PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+					struct in_addr ReplyAddr;
+					ReplyAddr.S_un.S_addr = pEchoReply->Address;
+					switch (pEchoReply->Status) {
+					/*case IP_DEST_HOST_UNREACHABLE:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Destination host was unreachable", server->name));
+						break;
+					case IP_DEST_NET_UNREACHABLE:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Destination Network was unreachable", server->name));
+						break;
+					case IP_REQ_TIMED_OUT:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Request timed out", server->name));
+						break;*/
+					}
+
+					spdlog::info(fmt::format("Ping of server \"{}\" is {}", server->name, pEchoReply->RoundTripTime));
+					server->ping = pEchoReply->RoundTripTime;
+					server->pingPending = false;
+				}
+				else {
+					dwError = GetLastError();
+					switch (dwError) {
+					/*case IP_BUF_TOO_SMALL:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: ReplyBufferSize too small", server->name));
+						break;
+					case IP_REQ_TIMED_OUT:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Request timed out", server->name));
+						break;
+					default:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: {}", server->name, dwError));
+						break;*/
+					}
+					return;
+				}
+				server->pingPending = false;
+				return;
+			}
+			catch (...) {
+				server->pingPending = false;
+				return;
+			}
+
 			server->pingPending = false;
-			return -1;
-		}
+		});
 
-		ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
-		ReplyBuffer = (VOID*)malloc(ReplySize);
-		if (ReplyBuffer == NULL) {
-			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: Unable to allocate memory"));
-			server->pingPending = false;
-			return -1;
-		}
-
-
-		dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, SendData, sizeof(SendData),
-			NULL, ReplyBuffer, ReplySize, Timeout);
-		if (dwRetVal != 0) {
-			PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
-			struct in_addr ReplyAddr;
-			ReplyAddr.S_un.S_addr = pEchoReply->Address;
-			spdlog::info(fmt::format("Server with IP {} has ping {}", ip, std::to_string(pEchoReply->RoundTripTime)));
-
-			server->SetPing(pEchoReply->RoundTripTime);
-			server->pingPending = false;
-			return pEchoReply->RoundTripTime;
-		}
-		else {
-			spdlog::error(fmt::format("Encountered an error pinging server with IP {}. Error: {}", ip, GetLastError()));
-			server->pingPending = false;
-			return -1;
-		}
-		server->pingPending = false;
-		return -1;
-	}
-	catch (...) {
-		server->pingPending = false;
-		return -1;
-	}
+	requestThread.detach();
 }
 
 void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
@@ -715,6 +827,8 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 	std::thread requestThread([this, port, authPort, name, description, map, playlist, maxPlayers, password] {
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			m_ownServerId[0] = 0;
 
@@ -801,6 +915,8 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 				std::thread heartbeatThread([this] {
 						httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 						http.set_connection_timeout(25);
+						http.set_read_timeout(25);
+						http.set_write_timeout(25);
 
 						while (*m_ownServerId)
 						{
@@ -813,7 +929,7 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 			}
 			else
 			{
-				spdlog::error("Failed authenticating with server: error {}", result.error());
+				spdlog::error("Failed adding self to server list: error {}", HttplibErrorToString(result.error()));
 				m_successfullyConnected = false;
 			}
 		});
@@ -830,6 +946,8 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 	std::thread requestThread([this, map, playlist, maxPlayers] {
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			// we dont process this at all atm, maybe do later, but atm not necessary
 			if (auto result = http.Post(fmt::format("/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", m_ownServerId, map, playlist, maxPlayers).c_str()))
@@ -854,6 +972,8 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 	std::thread requestThread([this, playerCount] {
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			// we dont process this at all atm, maybe do later, but atm not necessary
 			if (auto result = http.Post(fmt::format("/server/update_values?id={}&playerCount={}", m_ownServerId, playerCount).c_str()))
@@ -882,7 +1002,9 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 	std::string playerIdTemp(playerId);
 	std::thread requestThread([this, playerIdTemp, pdata, pdataSize] {
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
-			http.set_connection_timeout(25); 
+			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25); 
 
 			httplib::MultipartFormDataItems requestItems = {
 				{ "pdata", std::string(pdata, pdataSize), "file.pdata", "application/octet-stream"}
@@ -913,6 +1035,8 @@ void MasterServerManager::RemoveSelfFromServerList()
 	std::thread requestThread([this] {
 			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
 			http.set_connection_timeout(25);
+			http.set_read_timeout(25);
+			http.set_write_timeout(25);
 
 			// we dont process this at all atm, maybe do later, but atm not necessary
 			if (auto result = http.Delete(fmt::format("/server/remove_server?id={}", m_ownServerId).c_str()))

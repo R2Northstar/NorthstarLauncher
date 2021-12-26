@@ -27,6 +27,10 @@ public:
 	// connection stuff
 	bool requiresPassword;
 
+	in_addr ip;
+	bool ipSet;
+	bool ipPending;
+
 	int ping;
 	bool pingPending;
 
@@ -71,6 +75,8 @@ private:
 	bool m_requestingServerList = false;
 	bool m_authenticatingWithGameServer = false;
 
+	bool m_fetchingIp = false;
+
 public:
 	char m_ownServerId[33];
 	char m_ownClientAuthToken[33];
@@ -103,6 +109,8 @@ public:
 	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
+	void FetchServerAddress(char* uid, char* playerToken, RemoteServerInfo* server);
+	void GetPing(RemoteServerInfo* server);
 	void AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);
