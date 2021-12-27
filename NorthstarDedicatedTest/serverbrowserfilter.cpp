@@ -32,26 +32,22 @@ void ServerBrowserFilter::SetPattern(char* pattern)
 
 void ServerBrowserFilter::UpdateList()
 {
-	// spdlog::info("Filtering servers (filter enable={})", m_isServerFilterEnable);
-
 	// clear current list
 	m_servers.clear();
 
-	// filter server list
+	// filter servers by name
 	std::copy_if(
 		g_MasterServerManager->m_remoteServers.begin(),
 		g_MasterServerManager->m_remoteServers.end(),
 		std::back_inserter(m_servers),
 		[this](RemoteServerInfo serverInfo) {
-			// filter server names
 			std::string serverName(serverInfo.name);
 			bool match = !m_enable || std::regex_search(serverName, m_pattern);
-			spdlog::info("Server \"{}\" (id=\"{}\") matched query: {}", serverName, serverInfo.id, match);
+			// spdlog::info("Server \"{}\" (id=\"{}\") matched query: {}", serverName, serverInfo.id, match);
 			return match;
 		}
 	);
-
-	spdlog::info("Servers after filtering: {}", m_servers.size());
+	// spdlog::info("Servers after filtering: {}", m_servers.size());
 }
 
 
@@ -60,7 +56,7 @@ int ServerBrowserFilter::GetServerCount()
 	return m_servers.size();
 }
 
-RemoteServerInfo ServerBrowserFilter::GetServer(int index)
+RemoteServerInfo& ServerBrowserFilter::GetServer(int index)
 {
 	return m_servers[index];
 }

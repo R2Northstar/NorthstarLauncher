@@ -515,8 +515,6 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	m_scriptAuthenticatingWithGameServer = true;
 	m_successfullyAuthenticatedWithGameServer = false;
 
-	spdlog::info("[OUTER] Attempting authentication with server of id \"{}\"", serverId);
-
 	std::thread requestThread([this, uid, playerToken, serverId, password]()
 		{
 			// esnure that any persistence saving is done, so we know masterserver has newest
@@ -528,7 +526,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 			http.set_read_timeout(25);
 			http.set_write_timeout(25);
 
-			spdlog::info("[INNER] Attempting authentication with server of id \"{}\"", serverId);
+			spdlog::info("Attempting authentication with server of id \"{}\"", serverId);
 
 			if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password={}", uid, playerToken, serverId, password).c_str()))
 			{

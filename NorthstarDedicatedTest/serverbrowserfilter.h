@@ -16,7 +16,7 @@ public:
 	void UpdateList();
 
 	int GetServerCount();
-	RemoteServerInfo GetServer(int index);
+	RemoteServerInfo& GetServer(int index);
 	std::string GetRawPattern();
 };
 
