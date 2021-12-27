@@ -75,7 +75,7 @@ const char* HttplibErrorToString(httplib::Error error)
 	return "";
 }
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, int newPing)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -99,7 +99,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	ipSet = false;
 	ipPending = true;
 
-	ping = newPing;
+	ping = -1;
 	pingPending = true;
 }
 
@@ -253,8 +253,7 @@ void MasterServerManager::RequestServerList()
 					};
 
 
-					const char* id = serverObj["id"].GetString();
-					
+					char* id = (char*)serverObj["id"].GetString();
 
 					RemoteServerInfo* newServer = nullptr;
 
@@ -265,8 +264,22 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
+							spdlog::info("Modifying server \"{}\"", serverObj["name"].GetString());
+
+							in_addr oldIp = server.ip;
+							bool oldIpSet = server.ipSet;
+							bool oldIpPending = server.ipPending;
 							int oldPing = server.ping;
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), oldPing);
+							bool oldPingPending = server.pingPending;
+
+							server = RemoteServerInfo((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							
+							server.ip = oldIp;
+							server.ipSet = oldIpSet;
+							server.ipPending = oldIpPending;
+							server.ping = oldPing;
+							server.pingPending = oldPingPending;
+
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -274,8 +287,10 @@ void MasterServerManager::RequestServerList()
 					}
 
 					// server didn't exist
-					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
+					if (createNewServerInfo) {
+						spdlog::info("Creating server \"{}\"", serverObj["name"].GetString());
+						newServer = &m_remoteServers.emplace_back((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+					}
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -296,7 +311,7 @@ void MasterServerManager::RequestServerList()
 						newServer->requiredMods.push_back(modInfo);
 					}
 
-					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
+					spdlog::info("Server {} on map {} with playlist {} has {}/{} players, Has IP: {}", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), newServer->ipSet);
 
 					if (!newServer->ipSet)
 						g_MasterServerManager->FetchServerAddress(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
@@ -620,15 +635,16 @@ void MasterServerManager::FetchServerAddress(char* uid, char* playerToken, Remot
 		return;
 	}
 	if(server->requiresPassword) {
-		m_fetchingIp = false;
 		server->ipPending = false;
 		return;
 	}
 
 	std::thread requestThread([this, uid, playerToken, server]()
 		{
-			while (m_fetchingIp || m_requestingServerList)
+			while (m_requestingServerList)
 				Sleep(100);
+
+			Sleep(500);
 
 			m_fetchingIp = true;
 			server->ipPending = true;
