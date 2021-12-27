@@ -20,13 +20,6 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32.lib")
 
-#include <winsock2.h>
-#include <iphlpapi.h>
-#include <icmpapi.h>
-
-#pragma comment(lib, "iphlpapi.lib")
-#pragma comment(lib, "ws2_32.lib")
-
 ConVar* Cvar_ns_masterserver_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
 ConVar* Cvar_ns_report_sp_server_to_masterserver;
@@ -107,7 +100,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	ipPending = true;
 
 	ping = -1;
-	pingPending = false;
+	pingPending = true;
 }
 
 void MasterServerManager::ClearServerList()
@@ -260,8 +253,7 @@ void MasterServerManager::RequestServerList()
 					};
 
 
-					const char* id = serverObj["id"].GetString();
-					
+					char* id = (char*)serverObj["id"].GetString();
 
 					RemoteServerInfo* newServer = nullptr;
 
@@ -272,7 +264,22 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
+							spdlog::info("Modifying server \"{}\"", serverObj["name"].GetString());
+
+							in_addr oldIp = server.ip;
+							bool oldIpSet = server.ipSet;
+							bool oldIpPending = server.ipPending;
+							int oldPing = server.ping;
+							bool oldPingPending = server.pingPending;
+
+							server = RemoteServerInfo((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							
+							server.ip = oldIp;
+							server.ipSet = oldIpSet;
+							server.ipPending = oldIpPending;
+							server.ping = oldPing;
+							server.pingPending = oldPingPending;
+
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -280,13 +287,10 @@ void MasterServerManager::RequestServerList()
 					}
 
 					// server didn't exist
-					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), -1);
-
-
-					int ping = g_MasterServerManager->GetServerPing(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
-
-					spdlog::info("Ping of server {} is {}", id, ping);
+					if (createNewServerInfo) {
+						spdlog::info("Creating server \"{}\"", serverObj["name"].GetString());
+						newServer = &m_remoteServers.emplace_back((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+					}
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -307,14 +311,13 @@ void MasterServerManager::RequestServerList()
 						newServer->requiredMods.push_back(modInfo);
 					}
 
-					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
+					spdlog::info("Server {} on map {} with playlist {} has {}/{} players, Has IP: {}", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), newServer->ipSet);
 
-					if (newServer->ipPending)
-					{
+					if (!newServer->ipSet)
 						g_MasterServerManager->FetchServerAddress(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
-					}
 
 					g_MasterServerManager->GetPing(newServer);
+
 				}
 
 				std::sort(m_remoteServers.begin(), m_remoteServers.end(), [](RemoteServerInfo& a, RemoteServerInfo& b) {
@@ -628,24 +631,32 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 
 void MasterServerManager::FetchServerAddress(char* uid, char* playerToken, RemoteServerInfo* server)
 {
+	if (server == NULL) {
+		return;
+	}
+	if(server->requiresPassword) {
+		server->ipPending = false;
+		return;
+	}
 
 	std::thread requestThread([this, uid, playerToken, server]()
 		{
-			while (m_fetchingIp || m_requestingServerList)
+			while (m_requestingServerList)
 				Sleep(100);
+
+			Sleep(500);
 
 			m_fetchingIp = true;
 			server->ipPending = true;
 
-			httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
-			http.set_connection_timeout(25);
-			http.set_read_timeout(25);
-			http.set_write_timeout(25);
-
-			spdlog::info("Attempting address fetch with server of id \"{}\"", server->id);
-
 			try {
-				if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}&password=", uid, playerToken, server->id).c_str()))
+				httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
+				http.set_connection_timeout(10);
+				http.set_read_timeout(10);
+				http.set_write_timeout(10);
+
+				spdlog::info("Attempting address fetch with server of id \"{}\"", server->id);
+				if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}", uid, playerToken, server->id).c_str()))
 				{
 					rapidjson::Document connectionInfoJson;
 					connectionInfoJson.Parse(result->body.c_str());
@@ -711,22 +722,24 @@ void MasterServerManager::FetchServerAddress(char* uid, char* playerToken, Remot
 
 void MasterServerManager::GetPing(RemoteServerInfo* server)
 {
-	if (server->pingPending)
+	if (server == NULL) {
 		return;
+	}
 
 	std::thread requestThread([this, server]()
 		{
 			while (server->ipPending || m_requestingServerList)
 				Sleep(100);
 
+			Sleep(500);
+
 			if (!server->ipSet)
 				return;
 
 			server->pingPending = true;
 
-			spdlog::info("Attempting to get ping of server \"{}\"", server->name);
-
 			try {
+				spdlog::info("Attempting to get ping of server \"{}\"", server->name);
 
 				// Declare and initialize variables
 
@@ -737,16 +750,17 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 				char SendData[32] = "Data Buffer";
 				LPVOID ReplyBuffer = NULL;
 				DWORD ReplySize = 0;
-				DWORD Timeout = 2500;
+				DWORD Timeout = 5000;
 
 				ipaddr = server->ip.S_un.S_addr;
 				if (ipaddr == INADDR_NONE || ipaddr == 0) {
+					server->pingPending = true;
 					return;
 				}
 
 				hIcmpFile = IcmpCreateFile();
 				if (hIcmpFile == INVALID_HANDLE_VALUE) {
-					//spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to open handle.", server->name));
+					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to open handle.", server->name));
 					server->pingPending = false;
 					return;
 				}
@@ -754,7 +768,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 				ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
 				ReplyBuffer = (VOID*)malloc(ReplySize);
 				if (ReplyBuffer == NULL) {
-					//spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to allocate memory", server->name));
+					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to allocate memory", server->name));
 					server->pingPending = false;
 					return;
 				}
@@ -767,7 +781,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 					struct in_addr ReplyAddr;
 					ReplyAddr.S_un.S_addr = pEchoReply->Address;
 					switch (pEchoReply->Status) {
-					/*case IP_DEST_HOST_UNREACHABLE:
+					case IP_DEST_HOST_UNREACHABLE:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Destination host was unreachable", server->name));
 						break;
 					case IP_DEST_NET_UNREACHABLE:
@@ -775,7 +789,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 						break;
 					case IP_REQ_TIMED_OUT:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Request timed out", server->name));
-						break;*/
+						break;
 					}
 
 					spdlog::info(fmt::format("Ping of server \"{}\" is {}", server->name, pEchoReply->RoundTripTime));
@@ -785,7 +799,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 				else {
 					dwError = GetLastError();
 					switch (dwError) {
-					/*case IP_BUF_TOO_SMALL:
+					case IP_BUF_TOO_SMALL:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: ReplyBufferSize too small", server->name));
 						break;
 					case IP_REQ_TIMED_OUT:
@@ -793,14 +807,16 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 						break;
 					default:
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: {}", server->name, dwError));
-						break;*/
+						break;
 					}
+					server->pingPending = true;
 					return;
 				}
 				server->pingPending = false;
 				return;
 			}
 			catch (...) {
+				spdlog::error(fmt::format("Encountered an unknown error pinging server \"{}\".", server->name));
 				server->pingPending = false;
 				return;
 			}
