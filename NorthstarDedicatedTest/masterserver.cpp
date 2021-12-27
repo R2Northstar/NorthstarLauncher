@@ -731,6 +731,8 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 			while (server->ipPending || m_requestingServerList)
 				Sleep(100);
 
+			Sleep(500);
+
 			if (!server->ipSet)
 				return;
 
@@ -752,6 +754,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 
 				ipaddr = server->ip.S_un.S_addr;
 				if (ipaddr == INADDR_NONE || ipaddr == 0) {
+					server->pingPending = true;
 					return;
 				}
 
@@ -806,6 +809,7 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: {}", server->name, dwError));
 						break;
 					}
+					server->pingPending = true;
 					return;
 				}
 				server->pingPending = false;
