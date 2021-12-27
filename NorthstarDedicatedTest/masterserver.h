@@ -1,6 +1,7 @@
 #pragma once
 #include "convar.h"
 #include <WinSock2.h>
+#include "serverbrowserfilter.h"
 
 struct RemoteModInfo
 {
@@ -91,6 +92,8 @@ public:
 
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
+
+	ServerBrowserFilter m_filteredServerView;
 
 public:
 	void ClearServerList();

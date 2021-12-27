@@ -1389,6 +1389,9 @@
     <ClInclude Include="miscserverfixes.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
+    <ClInclude Include="serverbrowserfilter.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1498,6 +1501,9 @@
     </ClCompile>
     <ClCompile Include="miscserverfixes.cpp">
       <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="serverbrowserfilter.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

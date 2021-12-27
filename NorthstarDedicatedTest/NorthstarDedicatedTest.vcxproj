@@ -593,6 +593,7 @@
     <ClInclude Include="scriptserverbrowser.h" />
     <ClInclude Include="scriptsrson.h" />
     <ClInclude Include="serverauthentication.h" />
+    <ClInclude Include="serverbrowserfilter.h" />
     <ClInclude Include="sigscanning.h" />
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
@@ -636,6 +637,7 @@
     <ClCompile Include="scriptsrson.cpp" />
     <ClCompile Include="serverauthentication.cpp" />
     <ClCompile Include="miscserverscript.cpp" />
+    <ClCompile Include="serverbrowserfilter.cpp" />
     <ClCompile Include="sigscanning.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
