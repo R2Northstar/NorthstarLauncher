@@ -1,5 +1,6 @@
 #pragma once
 #include "convar.h"
+#include "httplib.h"
 #include <WinSock2.h>
 
 struct RemoteModInfo
@@ -72,6 +73,7 @@ class MasterServerManager
 private:
 	bool m_requestingServerList = false;
 	bool m_authenticatingWithGameServer = false;
+	httplib::Client* m_httpClient = nullptr;
 
 public:
 	char m_ownServerId[33];
@@ -98,6 +100,18 @@ public:
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
 
+private:
+	void LazyCreateHttpClient();
+	bool RequestServerListThread();
+	bool RequestMainMenuPromosThread();
+	bool AuthenticateOriginWithMasterServerThread(std::string uidStr, std::string tokenStr);
+	bool AuthenticateWithOwnServerThread(char* uid, char* playerToken);
+	bool AuthenticateWithServerThread(char* uid, char* playerToken, char* serverId, char* password);
+	bool AddSelfToServerListThread(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
+	bool UpdateServerMapAndPlaylistThread(char* map, char* playlist, int playerCount);
+	bool WritePlayerPersistentDataThread(std::string playerId, char* pdata, size_t pdataSize);
+	bool RemoveSelfFromServerListThread();
+
 public:
 	void ClearServerList();
 	void RequestServerList();
@@ -111,6 +125,8 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+
+	void GetPing(RemoteServerInfo* server);
 };
 
 void InitialiseSharedMasterServer(HMODULE baseAddress);
