@@ -75,7 +75,7 @@ const char* HttplibErrorToString(httplib::Error error)
 	return "";
 }
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, char* newIp)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -95,9 +95,13 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
 
-	ip.S_un.S_addr = INADDR_NONE;
-	ipSet = false;
-	ipPending = true;
+	if (newIp == (char*)(0)) {
+		ip.S_un.S_addr = INADDR_NONE;
+		ipSet = false;
+	} else {
+		ip.S_un.S_addr = inet_addr(newIp);
+		ipSet = true;
+	}
 
 	ping = -1;
 	pingPending = true;
@@ -111,8 +115,6 @@ void MasterServerManager::ClearServerList()
 	m_remoteServers.clear();
 
 	m_requestingServerList = false;
-
-	m_fetchingIp = false;
 }
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
@@ -199,7 +201,7 @@ void MasterServerManager::RequestServerList()
 
 			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->m_pszString);
 
-			if (auto result = http.Get("/client/servers"))
+			if (auto result = http.Get(fmt::format("/client/servers_with_addresses?id={}&playerToken={}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken).c_str()))
 			{
 				m_successfullyConnected = true;
 
@@ -257,6 +259,10 @@ void MasterServerManager::RequestServerList()
 
 					RemoteServerInfo* newServer = nullptr;
 
+					char* ip = (char*)(0);
+					if (serverObj.HasMember("ip")) {
+						ip = (char*)serverObj["ip"].GetString();
+					}
 
 					bool createNewServerInfo = true;
 					for (RemoteServerInfo& server : m_remoteServers)
@@ -268,15 +274,13 @@ void MasterServerManager::RequestServerList()
 
 							in_addr oldIp = server.ip;
 							bool oldIpSet = server.ipSet;
-							bool oldIpPending = server.ipPending;
 							int oldPing = server.ping;
 							bool oldPingPending = server.pingPending;
 
-							server = RemoteServerInfo((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							server = RemoteServerInfo((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), ip);
 							
 							server.ip = oldIp;
 							server.ipSet = oldIpSet;
-							server.ipPending = oldIpPending;
 							server.ping = oldPing;
 							server.pingPending = oldPingPending;
 
@@ -289,7 +293,7 @@ void MasterServerManager::RequestServerList()
 					// server didn't exist
 					if (createNewServerInfo) {
 						spdlog::info("Creating server \"{}\"", serverObj["name"].GetString());
-						newServer = &m_remoteServers.emplace_back((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+						newServer = &m_remoteServers.emplace_back((char*)serverObj["id"].GetString(), serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), ip);
 					}
 
 					newServer->requiredMods.clear();
@@ -311,12 +315,10 @@ void MasterServerManager::RequestServerList()
 						newServer->requiredMods.push_back(modInfo);
 					}
 
-					spdlog::info("Server {} on map {} with playlist {} has {}/{} players, Has IP: {}", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), newServer->ipSet);
+					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
 
-					if (!newServer->ipSet)
-						g_MasterServerManager->FetchServerAddress(g_LocalPlayerUserID, m_ownClientAuthToken, newServer);
-
-					g_MasterServerManager->GetPing(newServer);
+					if (newServer->ipSet)
+						g_MasterServerManager->GetPing(newServer);
 
 				}
 
@@ -629,97 +631,6 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	requestThread.detach();
 }
 
-void MasterServerManager::FetchServerAddress(char* uid, char* playerToken, RemoteServerInfo* server)
-{
-	if (server == NULL) {
-		return;
-	}
-	if(server->requiresPassword) {
-		server->ipPending = false;
-		return;
-	}
-
-	std::thread requestThread([this, uid, playerToken, server]()
-		{
-			while (m_requestingServerList)
-				Sleep(100);
-
-			Sleep(500);
-
-			m_fetchingIp = true;
-			server->ipPending = true;
-
-			try {
-				httplib::Client http(Cvar_ns_masterserver_hostname->m_pszString);
-				http.set_connection_timeout(10);
-				http.set_read_timeout(10);
-				http.set_write_timeout(10);
-
-				spdlog::info("Attempting address fetch with server of id \"{}\"", server->id);
-				if (auto result = http.Post(fmt::format("/client/auth_with_server?id={}&playerToken={}&server={}", uid, playerToken, server->id).c_str()))
-				{
-					rapidjson::Document connectionInfoJson;
-					connectionInfoJson.Parse(result->body.c_str());
-
-					if (connectionInfoJson.HasParseError())
-					{
-						spdlog::error("Failed reading masterserver authentication response: encountered parse error \"{}\"", rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
-						goto REQUEST_END_CLEANUP;
-					}
-
-					if (!connectionInfoJson.IsObject())
-					{
-						spdlog::error("Failed reading masterserver authentication response: root object is not an object");
-						goto REQUEST_END_CLEANUP;
-					}
-
-					if (connectionInfoJson.HasMember("error"))
-					{
-						spdlog::error("Failed reading masterserver response: got fastify error response");
-						spdlog::error(result->body);
-						goto REQUEST_END_CLEANUP;
-					}
-
-					if (!connectionInfoJson["success"].IsTrue())
-					{
-						spdlog::error("Authentication with masterserver failed: \"success\" is not true");
-						goto REQUEST_END_CLEANUP;
-					}
-
-					if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") || !connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") || !connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") || !connectionInfoJson["authToken"].IsString())
-					{
-						spdlog::error("Failed reading masterserver authentication response: malformed json object");
-						goto REQUEST_END_CLEANUP;
-					}
-
-					spdlog::info("Successfully got IP ({}) of server with id {}", connectionInfoJson["ip"].GetString(), server->id);
-				
-					server->ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
-					server->ipSet = true;
-					server->ipPending = false;
-					m_fetchingIp = false;
-				}
-				else
-				{
-					spdlog::error("Failed authenticating with server: error {}", HttplibErrorToString(result.error()));
-					server->ipPending = false;
-					m_fetchingIp = false;
-				}
-
-			REQUEST_END_CLEANUP:
-				server->ipPending = false;
-				m_fetchingIp = false;
-			}
-			catch (...) {
-				server->ipPending = false;
-				m_fetchingIp = false;
-				return;
-			}
-		});
-
-	requestThread.detach();
-}
-
 void MasterServerManager::GetPing(RemoteServerInfo* server)
 {
 	if (server == NULL) {
@@ -728,11 +639,6 @@ void MasterServerManager::GetPing(RemoteServerInfo* server)
 
 	std::thread requestThread([this, server]()
 		{
-			while (server->ipPending || m_requestingServerList)
-				Sleep(100);
-
-			Sleep(500);
-
 			if (!server->ipSet)
 				return;
 
