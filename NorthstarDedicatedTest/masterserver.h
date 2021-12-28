@@ -28,8 +28,14 @@ public:
 	// connection stuff
 	bool requiresPassword;
 
+	in_addr ip;
+	bool ipSet;
+
+	int ping;
+	bool pingPending;
+
 public:
-	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword);
+	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, char* newIp);
 };
 
 struct RemoteServerConnectionInfo
@@ -118,6 +124,8 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+
+	void GetPing(RemoteServerInfo* server);
 };
 
 void InitialiseSharedMasterServer(HMODULE baseAddress);
