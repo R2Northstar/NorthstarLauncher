@@ -66,6 +66,16 @@ SQRESULT SQ_GetServerName(void* sqvm)
 }
 
 // string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_RefreshPings(void* sqvm)
+{
+	for (int i = 0; i < g_MasterServerManager->m_remoteServers.size(); i++)
+	{
+		g_MasterServerManager->GetPing(&g_MasterServerManager->m_remoteServers[i]);
+	}
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
 SQRESULT SQ_GetServerPing(void* sqvm)
 {
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
@@ -357,6 +367,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerCount", "", "", SQ_GetServerCount);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSClearRecievedServerList", "", "", SQ_ClearRecievedServerList);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsServerPingPending", "int serverIndex", "", SQ_IsServerPingPending);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSRefreshPings", "", "", SQ_RefreshPings);
 
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerName", "int serverIndex", "", SQ_GetServerName);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerDescription", "int serverIndex", "", SQ_GetServerDescription);
