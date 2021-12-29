@@ -98,3 +98,4 @@ void InitialiseServerAuthentication(HMODULE baseAddress);
 
 extern ServerAuthenticationManager* g_ServerAuthenticationManager;
 extern ConVar* Cvar_ns_player_auth_port;
+extern ConVar* Cvar_ns_server_bind_address;

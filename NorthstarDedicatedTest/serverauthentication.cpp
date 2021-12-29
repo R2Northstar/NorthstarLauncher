@@ -41,6 +41,7 @@ ProcessConnectionlessPacketType ProcessConnectionlessPacket;
 ServerAuthenticationManager* g_ServerAuthenticationManager;
 
 ConVar* Cvar_ns_player_auth_port;
+ConVar* Cvar_ns_server_bind_address;
 ConVar* Cvar_ns_erase_auth_info;
 ConVar* CVar_ns_auth_allow_insecure;
 ConVar* CVar_ns_auth_allow_insecure_write;
@@ -96,7 +97,7 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					response.set_content("{\"success\":true}", "application/json");
 				});
 
-			m_playerAuthServer.listen("0.0.0.0", Cvar_ns_player_auth_port->m_nValue);
+			m_playerAuthServer.listen(Cvar_ns_server_bind_address->m_pszString, Cvar_ns_player_auth_port->m_nValue);
 		});
 	
 	serverThread.detach();
@@ -438,6 +439,8 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	Cvar_net_chan_limit_msec_per_sec = RegisterConVar("net_chan_limit_msec_per_sec", "0", FCVAR_GAMEDLL, "Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	Cvar_ns_player_auth_port = RegisterConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	Cvar_sv_querylimit_per_sec = RegisterConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
+
+	Cvar_ns_server_bind_address = RegisterConVar("ns_server_bind_address", "0.0.0.0", FCVAR_GAMEDLL, "");
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x114430, &CBaseServer__ConnectClientHook, reinterpret_cast<LPVOID*>(&CBaseServer__ConnectClient));
