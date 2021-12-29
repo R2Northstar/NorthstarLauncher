@@ -114,8 +114,6 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
-
-	void GetPing(RemoteServerInfo* server);
 };
 
 void InitialiseSharedMasterServer(HMODULE baseAddress);
