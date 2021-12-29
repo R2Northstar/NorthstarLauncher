@@ -13,6 +13,13 @@
 #include "modmanager.h"
 #include "misccommands.h"
 
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <icmpapi.h>
+
+#pragma comment(lib, "iphlpapi.lib")
+#pragma comment(lib, "ws2_32.lib")
+
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver requests
 // so httplib is used exclusively for server stuff now
 
@@ -38,7 +45,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, char* newIp)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -57,6 +64,18 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
+
+	if (newIp == (char*)(0)) {
+		ip.S_un.S_addr = INADDR_NONE;
+		ipSet = false;
+	}
+	else {
+		ip.S_un.S_addr = inet_addr(newIp);
+		ipSet = true;
+	}
+
+	ping = -1;
+	pingPending = true;
 }
 
 void MasterServerManager::ClearServerList()
@@ -164,7 +183,7 @@ void MasterServerManager::RequestServerList()
 			CURL* curl = curl_easy_init();
 
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers_with_addresses?id={}&playerToken={}", Cvar_ns_masterserver_hostname->m_pszString, g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
@@ -228,6 +247,11 @@ void MasterServerManager::RequestServerList()
 					const char* id = serverObj["id"].GetString();
 
 					RemoteServerInfo* newServer = nullptr;
+					
+					char* ip = (char*)(0);
+					if (serverObj.HasMember("ip")) {
+						ip = (char*)serverObj["ip"].GetString();
+					}
 
 					bool createNewServerInfo = true;
 					for (RemoteServerInfo& server : m_remoteServers)
@@ -235,7 +259,7 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), ip);
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -244,7 +268,7 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), ip);
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -266,6 +290,9 @@ void MasterServerManager::RequestServerList()
 					}
 
 					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
+
+					if (newServer->ipSet)
+						g_MasterServerManager->GetPing(newServer);
 				}
 
 				std::sort(m_remoteServers.begin(), m_remoteServers.end(), [](RemoteServerInfo& a, RemoteServerInfo& b) 
@@ -926,6 +953,99 @@ void MasterServerManager::RemoveSelfFromServerList()
 
 	requestThread.detach();
 }
+
+void MasterServerManager::GetPing(RemoteServerInfo* server)
+{
+	if (server == NULL) {
+		return;
+	}
+
+	std::thread requestThread([this, server]()
+		{
+			if (!server->ipSet)
+				return;
+
+			server->pingPending = true;
+			try {
+				spdlog::info("Attempting to get ping of server \"{}\"", server->name);
+				// Declare and initialize variables
+				HANDLE hIcmpFile;
+				unsigned long ipaddr = INADDR_NONE;
+				DWORD dwRetVal = 0;
+				DWORD dwError = 0;
+				char SendData[32] = "Data Buffer";
+				LPVOID ReplyBuffer = NULL;
+				DWORD ReplySize = 0;
+				DWORD Timeout = 5000;
+				ipaddr = server->ip.S_un.S_addr;
+				if (ipaddr == INADDR_NONE || ipaddr == 0) {
+					server->pingPending = true;
+					return;
+				}
+				hIcmpFile = IcmpCreateFile();
+				if (hIcmpFile == INVALID_HANDLE_VALUE) {
+					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to open handle.", server->name));
+					server->pingPending = false;
+					return;
+				}
+				ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
+				ReplyBuffer = (VOID*)malloc(ReplySize);
+				if (ReplyBuffer == NULL) {
+					spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Unable to allocate memory", server->name));
+					server->pingPending = false;
+					return;
+				}
+				dwRetVal = IcmpSendEcho2(hIcmpFile, NULL, NULL, NULL,
+					ipaddr, SendData, sizeof(SendData), NULL,
+					ReplyBuffer, ReplySize, Timeout);
+				if (dwRetVal != 0) {
+					PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+					struct in_addr ReplyAddr;
+					ReplyAddr.S_un.S_addr = pEchoReply->Address;
+					switch (pEchoReply->Status) {
+					case IP_DEST_HOST_UNREACHABLE:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Destination host was unreachable", server->name));
+						break;
+					case IP_DEST_NET_UNREACHABLE:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Destination Network was unreachable", server->name));
+						break;
+					case IP_REQ_TIMED_OUT:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Request timed out", server->name));
+						break;
+					}
+					spdlog::info(fmt::format("Ping of server \"{}\" is {}", server->name, pEchoReply->RoundTripTime));
+					server->ping = pEchoReply->RoundTripTime;
+					server->pingPending = false;
+				}
+				else {
+					dwError = GetLastError();
+					switch (dwError) {
+					case IP_BUF_TOO_SMALL:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: ReplyBufferSize too small", server->name));
+						break;
+					case IP_REQ_TIMED_OUT:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: Request timed out", server->name));
+						break;
+					default:
+						spdlog::error(fmt::format("Encountered an error pinging server \"{}\". Error: {}", server->name, dwError));
+						break;
+					}
+					server->pingPending = true;
+					return;
+				}
+				server->pingPending = false;
+				return;
+			}
+			catch (...) {
+				spdlog::error(fmt::format("Encountered an unknown error pinging server \"{}\".", server->name));
+				server->pingPending = false;
+				return;
+			}
+			server->pingPending = false;
+		});
+	requestThread.detach();
+}
+
 
 void ConCommand_ns_fetchservers(const CCommand& args)
 {
