@@ -105,6 +105,46 @@ SQRESULT SQ_IsServerPingPending(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_RefreshPings(void* sqvm)
+{
+	for (int i = 0; i < g_MasterServerManager->m_remoteServers.size(); i++)
+	{
+		g_MasterServerManager->GetPing(&g_MasterServerManager->m_remoteServers[i]);
+	}
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_GetServerPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushinteger(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].ping);
+	return SQRESULT_NOTNULL;
+}
+
+// bool function NSIsServerPingPending( int serverIndex )
+SQRESULT SQ_IsServerPingPending(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping status of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushbool(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].pingPending);
+	return SQRESULT_NOTNULL;
+}
+
 // string function NSGetServerDescription( int serverIndex )
 SQRESULT SQ_GetServerDescription(void* sqvm)
 {
