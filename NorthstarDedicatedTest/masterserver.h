@@ -108,6 +108,7 @@ public:
 	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
+	void GetPing(RemoteServerInfo* server);
 	void AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);

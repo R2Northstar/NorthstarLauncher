@@ -5,6 +5,10 @@
 #include "gameutils.h"
 #include "serverauthentication.h"
 #include "dedicated.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/error/en.h"
 
 // functions for viewing server browser
 
@@ -43,10 +47,12 @@ SQRESULT SQ_GetServerCount(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+
 // string function NSGetServerName( int serverIndex )
 SQRESULT SQ_GetServerName(void* sqvm)
 {
 	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
 
 	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
 	{
@@ -55,6 +61,47 @@ SQRESULT SQ_GetServerName(void* sqvm)
 	}
 
 	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].name, -1);
+
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_RefreshPings(void* sqvm)
+{
+	for (int i = 0; i < g_MasterServerManager->m_remoteServers.size(); i++)
+	{
+		g_MasterServerManager->GetPing(&g_MasterServerManager->m_remoteServers[i]);
+	}
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_GetServerPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushinteger(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].ping);
+	return SQRESULT_NOTNULL;
+}
+
+// bool function NSIsServerPingPending( int serverIndex )
+SQRESULT SQ_IsServerPingPending(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping status of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushbool(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].pingPending);
 	return SQRESULT_NOTNULL;
 }
 
@@ -348,6 +395,46 @@ SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
 	return SQRESULT_NULL;
 }
 
+// string function NSRefreshPings()
+SQRESULT SQ_RefreshPings(void* sqvm)
+{
+	for (int i = 0; i < g_MasterServerManager->m_remoteServers.size(); i++)
+	{
+		g_MasterServerManager->GetPing(&g_MasterServerManager->m_remoteServers[i]);
+	}
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerPing( int serverIndex )
+SQRESULT SQ_GetServerPing(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushinteger(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].ping);
+	return SQRESULT_NOTNULL;
+}
+
+// bool function NSIsServerPingPending( int serverIndex )
+SQRESULT SQ_IsServerPingPending(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get ping status of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushbool(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].pingPending);
+	return SQRESULT_NOTNULL;
+}
+
 void InitialiseScriptServerBrowser(HMODULE baseAddress)
 {
 	if (IsDedicated())
@@ -374,6 +461,10 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerRequiredModsCount", "int serverIndex", "", SQ_GetServerRequiredModsCount);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerRequiredModName", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModName);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerRequiredModVersion", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModVersion);
+
+	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerPing", "int serverIndex", "", SQ_GetServerPing);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsServerPingPending", "int serverIndex", "", SQ_IsServerPingPending);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSRefreshPings", "", "", SQ_RefreshPings);
 
 	g_UISquirrelManager->AddFuncRegistration("void", "NSTryAuthWithServer", "int serverIndex, string password = \"\"", "", SQ_TryAuthWithServer);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsAuthenticatingWithServer", "", "", SQ_IsAuthComplete);
