@@ -901,6 +901,7 @@ bool MasterServerManager::RemoveSelfFromServerListThread()
 	}
 
 	m_ownServerId[0] = 0;
+	return m_successfullyConnected;
 }
 
 void MasterServerManager::RemoveSelfFromServerList()
