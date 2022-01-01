@@ -5,6 +5,7 @@
 #include "gameutils.h"
 #include "serverauthentication.h"
 #include "dedicated.h"
+#include "chrono"
 
 // functions for viewing server browser
 
@@ -160,6 +161,31 @@ SQRESULT SQ_ServerRequiresPassword(void* sqvm)
 	}
 
 	ClientSq_pushbool(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].requiresPassword);
+	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetServerLastHeartbeat( int serverIndex )
+SQRESULT SQ_GetTimeSinceLastHeartbeat(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(sqvm, fmt::format("Tried to get last heartbeat of server index {} when only {} servers are available", serverIndex, g_MasterServerManager->m_remoteServers.size()).c_str());
+		return SQRESULT_ERROR;
+	}
+	auto now = std::chrono::system_clock::now();
+
+	auto epoch = std::chrono::time_point<std::chrono::system_clock>();
+	int64_t lastHeartbeat = g_MasterServerManager->m_remoteServers[serverIndex].lastHeartbeat;
+	auto sinceEpoch = std::chrono::milliseconds(lastHeartbeat);
+	auto heartbeat_time = epoch + sinceEpoch;
+	
+	auto diff = now - heartbeat_time;
+	auto secs = std::chrono::duration_cast<std::chrono::seconds>(diff);
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(diff - secs);
+
+	ClientSq_pushstring(sqvm, fmt::format("{}.{}s", secs.count(), ms.count()).c_str(), -1);
 	return SQRESULT_NOTNULL;
 }
 
@@ -328,6 +354,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerMaxPlayerCount", "int serverIndex", "", SQ_GetServerMaxPlayerCount);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerID", "int serverIndex", "", SQ_GetServerID);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSServerRequiresPassword", "int serverIndex", "", SQ_ServerRequiresPassword);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerTimeSinceLastHeartbeat", "int serverIndex", "", SQ_GetTimeSinceLastHeartbeat);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerRequiredModsCount", "int serverIndex", "", SQ_GetServerRequiredModsCount);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerRequiredModName", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModName);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerRequiredModVersion", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModVersion);

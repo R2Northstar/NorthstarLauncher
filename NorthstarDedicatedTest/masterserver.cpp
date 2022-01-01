@@ -38,7 +38,7 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
-RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
+RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, int64_t newLastHeartbeat)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -57,6 +57,7 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
+	lastHeartbeat = newLastHeartbeat;
 }
 
 void MasterServerManager::ClearServerList()
@@ -221,6 +222,7 @@ void MasterServerManager::RequestServerList()
 						|| !serverObj.HasMember("playerCount") || !serverObj["playerCount"].IsNumber()
 						|| !serverObj.HasMember("maxPlayers") || !serverObj["maxPlayers"].IsNumber()
 						|| !serverObj.HasMember("hasPassword") || !serverObj["hasPassword"].IsBool()
+						|| !serverObj.HasMember("lastHeartbeat") || !serverObj["lastHeartbeat"].IsNumber()
 						|| !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") || !serverObj["modInfo"]["Mods"].IsArray())
 					{
 						spdlog::error("Failed reading masterserver response: malformed server object");
@@ -237,7 +239,7 @@ void MasterServerManager::RequestServerList()
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
 						{
-							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+							server = RemoteServerInfo(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), serverObj["lastHeartbeat"].GetInt64());
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -246,7 +248,7 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
+						newServer = &m_remoteServers.emplace_back(id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue(), serverObj["lastHeartbeat"].GetInt64());
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -267,7 +269,7 @@ void MasterServerManager::RequestServerList()
 						newServer->requiredMods.push_back(modInfo);
 					}
 
-					spdlog::info("Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt());
+					spdlog::info("Server {} on map {} with playlist {} has {}/{} players with last heartbeat {}", serverObj["name"].GetString(), serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(), serverObj["lastHeartbeat"].GetInt64());
 				}
 
 				std::sort(m_remoteServers.begin(), m_remoteServers.end(), [](RemoteServerInfo& a, RemoteServerInfo& b) 

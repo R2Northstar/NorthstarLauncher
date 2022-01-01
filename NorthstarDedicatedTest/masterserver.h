@@ -27,9 +27,10 @@ public:
 
 	// connection stuff
 	bool requiresPassword;
+	int64_t lastHeartbeat;
 
 public:
-	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword);
+	RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword, int64_t lastHeartbeat);
 };
 
 struct RemoteServerConnectionInfo
