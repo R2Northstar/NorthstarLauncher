@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "hookutils.h"
+#include "../NorthstarDedicatedTest/hookutils.h"
 
-#include <iostream>
+#define ERROR(...) { char err[2048]; sprintf_s(err, __VA_ARGS__); MessageBoxA(GetForegroundWindow(), err, "Northstar Wsock32 Proxy Error", 0); }
 
 TempReadWrite::TempReadWrite(void* ptr)
 {
@@ -29,7 +29,7 @@ void HookEnabler::CreateHook(LPVOID ppTarget, LPVOID ppDetour, LPVOID* ppOrigina
 
     if (MH_CreateHook(ppTarget, ppDetour, ppOriginal) == MH_OK)
     {
-        HookTarget *target = new HookTarget;
+        HookTarget* target = new HookTarget;
         target->targetAddress = ppTarget;
         target->targetName = (char*)targetName;
 
@@ -38,9 +38,13 @@ void HookEnabler::CreateHook(LPVOID ppTarget, LPVOID ppDetour, LPVOID* ppOrigina
     else
     {
         if (targetName != nullptr)
-            spdlog::error("MH_CreateHook failed for function {}", targetName);
+        {
+            ERROR("MH_CreateHook failed for function %s", targetName);
+        }
         else
-            spdlog::error("MH_CreateHook failed for unknown function");
+        {
+            ERROR("MH_CreateHook failed for unknown function");
+        }
     }
 }
 
@@ -51,11 +55,17 @@ HookEnabler::~HookEnabler()
         if (MH_EnableHook(hook->targetAddress) != MH_OK)
         {
             if (hook->targetName != nullptr)
-                spdlog::error("MH_EnableHook failed for function {}", hook->targetName);
+            {
+                ERROR("MH_EnableHook failed for function %s", hook->targetName);
+            }
             else
-                spdlog::error("MH_EnableHook failed for unknown function");
+            {
+                ERROR("MH_EnableHook failed for unknown function");
+            }
         }
         else
-            spdlog::info("Enabling hook {}", hook->targetName);
-    }   
+        {
+            //ERROR("Enabling hook %s", hook->targetName);
+        }
+    }
 }
