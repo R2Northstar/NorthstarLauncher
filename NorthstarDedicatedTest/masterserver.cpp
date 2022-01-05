@@ -16,6 +16,7 @@
 // so httplib is used exclusively for server stuff now
 
 ConVar* Cvar_ns_masterserver_hostname;
+ConVar* Cvar_ns_masterserver_backup_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
 ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
@@ -139,11 +140,16 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/origin_auth?id={}&token={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/origin_auth?id={}&token={}", masterServerHostname, uidStr, tokenStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -179,6 +185,20 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			{
 				spdlog::error("Failed performing northstar origin auth: error {}", curl_easy_strerror(result));
 				m_successfullyConnected = false;
+
+				if (Cvar_ns_masterserver_backup_hostname->m_pszString != "" && !m_usingBackupMasterServer)
+				{
+					m_bOriginAuthWithMasterServerInProgress = false;
+					m_bOriginAuthWithMasterServerDone = true;
+					curl_easy_cleanup(curl);
+
+					spdlog::info("Authentication with master server \"{}\" failed, trying backup master server \"{}\"", Cvar_ns_masterserver_hostname->m_pszString, Cvar_ns_masterserver_backup_hostname->m_pszString);
+
+					m_usingBackupMasterServer = true;
+					g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken);
+
+					return;
+				}
 			}
 
 			// we goto this instead of returning so we always hit this
@@ -206,16 +226,21 @@ void MasterServerManager::RequestServerList()
 			m_requestingServerList = true;
 			m_scriptRequestingServerList = true;
 
-			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->m_pszString);
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
+			spdlog::info("Requesting server list from {}", masterServerHostname);
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", masterServerHostname).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -348,11 +373,16 @@ void MasterServerManager::RequestMainMenuPromos()
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/mainmenupromos", Cvar_ns_masterserver_hostname->m_pszString).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/mainmenupromos", masterServerHostname).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -458,11 +488,16 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/auth_with_self?id={}&playerToken={}", masterServerHostname, uidStr, tokenStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -536,8 +571,6 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			{
 				spdlog::error("Failed authenticating with own server: error {}", curl_easy_strerror(result));
 				m_successfullyConnected = false;
-				m_successfullyAuthenticatedWithGameServer = false;
-				m_scriptAuthenticatingWithGameServer = false;
 			}
 
 		REQUEST_END_CLEANUP:
@@ -583,15 +616,20 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			{
 				char* escapedPassword = curl_easy_escape(curl, passwordStr.c_str(), passwordStr.length());
 
-				curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr, serverIdStr, escapedPassword).c_str());
+				curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}", masterServerHostname, uidStr, tokenStr, serverIdStr, escapedPassword).c_str());
 			
 				curl_free(escapedPassword);
 			}
@@ -715,10 +753,15 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			curl_mime* mime = curl_mime_init(curl);
 			curl_mimepart* part = curl_mime_addpart(mime);
@@ -738,7 +781,7 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 				char* playlistEscaped = curl_easy_escape(curl, strPlaylist.c_str(), strPlaylist.length());
 				char* passwordEscaped = curl_easy_escape(curl, strPassword.c_str(), strPassword.length());
 
-				curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}", Cvar_ns_masterserver_hostname->m_pszString, port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped, maxPlayers, passwordEscaped).c_str());
+				curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}", masterServerHostname, port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped, maxPlayers, passwordEscaped).c_str());
 
 				curl_free(nameEscaped);
 				curl_free(descEscaped);
@@ -803,12 +846,17 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 						CURL* curl = curl_easy_init();
 						SetCommonHttpClientOptions(curl);
 
+						char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+						if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+							masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 						std::string readBuffer;
 						curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-						curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/heartbeat?id={}&playerCount={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, g_ServerAuthenticationManager->m_additionalPlayerData.size()).c_str());
+						curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/heartbeat?id={}&playerCount={}", masterServerHostname, m_ownServerId, g_ServerAuthenticationManager->m_additionalPlayerData.size()).c_str());
 						curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 						curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 						curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+						curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 						
 						CURLcode result = curl_easy_perform(curl);
 						if (result != CURLcode::CURLE_OK)
@@ -849,17 +897,22 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			// escape params
 			{
 				char* mapEscaped = curl_easy_escape(curl, strMap.c_str(), strMap.length());
 				char* playlistEscaped = curl_easy_escape(curl, strPlaylist.c_str(), strPlaylist.length());
 
-				curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, mapEscaped, playlistEscaped, maxPlayers).c_str());
+				curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", masterServerHostname, m_ownServerId, mapEscaped, playlistEscaped, maxPlayers).c_str());
 				
 				curl_free(mapEscaped);
 				curl_free(playlistEscaped);
@@ -889,11 +942,16 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, playerCount).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_values?id={}&playerCount={}", masterServerHostname, m_ownServerId, playerCount).c_str());
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -926,11 +984,16 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/accounts/write_persistence?id={}&serverId={}", Cvar_ns_masterserver_hostname->m_pszString, strPlayerId, m_ownServerId).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/accounts/write_persistence?id={}&serverId={}", masterServerHostname, strPlayerId, m_ownServerId).c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			curl_mime* mime = curl_mime_init(curl);
 			curl_mimepart* part = curl_mime_addpart(mime);
@@ -967,11 +1030,16 @@ void MasterServerManager::RemoveSelfFromServerList()
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
+			char* masterServerHostname = Cvar_ns_masterserver_hostname->m_pszString;
+			if (m_usingBackupMasterServer && Cvar_ns_masterserver_backup_hostname->m_pszString != "")
+				masterServerHostname = Cvar_ns_masterserver_backup_hostname->m_pszString;
+
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/remove_server?id={}", masterServerHostname, m_ownServerId).c_str());
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -1054,6 +1122,7 @@ MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownSer
 void InitialiseSharedMasterServer(HMODULE baseAddress)
 {
 	Cvar_ns_masterserver_hostname = RegisterConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
+	Cvar_ns_masterserver_backup_hostname = RegisterConVar("ns_masterserver_backup_hostname", "", FCVAR_NONE, "");
 	// unfortunately lib doesn't let us specify a port and still have https work
 	//Cvar_ns_masterserver_port = RegisterConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
 

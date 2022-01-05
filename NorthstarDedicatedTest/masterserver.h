@@ -93,6 +93,8 @@ public:
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
 
+	bool m_usingBackupMasterServer = false;
+
 private:
 	void SetCommonHttpClientOptions(CURL* curl);
 
@@ -115,3 +117,4 @@ void InitialiseSharedMasterServer(HMODULE baseAddress);
 
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+extern ConVar* Cvar_ns_masterserver_backup_hostname;
