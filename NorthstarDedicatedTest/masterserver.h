@@ -95,6 +95,8 @@ public:
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
 
+	bool m_usingBackupMasterServer = false;
+
 private:
 	void SetCommonHttpClientOptions(CURL* curl);
 
@@ -111,9 +113,12 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+
+	char* GetMasterServerHostname();
 };
 
 void InitialiseSharedMasterServer(HMODULE baseAddress);
 
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+extern ConVar* Cvar_ns_masterserver_backup_hostname;
