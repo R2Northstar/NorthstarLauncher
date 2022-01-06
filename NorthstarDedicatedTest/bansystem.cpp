@@ -39,6 +39,8 @@ void ServerBanSystem::ClearBanlist()
 
 void ServerBanSystem::BanUID(uint64_t uid)
 {
+	if (!IsUIDAllowed(uid)) // don't double ban
+		return;
 	m_vBannedUids.push_back(uid);
 	m_sBanlistStream << std::to_string(uid) << std::endl;
 	spdlog::info("{} was banned", uid);

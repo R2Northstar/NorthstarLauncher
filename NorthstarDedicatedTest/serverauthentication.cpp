@@ -237,20 +237,36 @@ void* CBaseServer__ConnectClientHook(void* server, void* a2, void* a3, uint32_t 
 	return CBaseServer__ConnectClient(server, a2, a3, a4, a5, a6, a7, a8, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
+size_t CurlWriteToStringBufferCallbackAuth(char* contents, size_t size, size_t nmemb, void* userp)
+{
+	((std::string*)userp)->append((char*)contents, size * nmemb);
+	return size * nmemb;
+}
 char CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, int a7)
 {
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	char ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
 
-	if (!g_ServerBanSystem->IsUIDAllowed(nextPlayerUid))
+	std::string readBuffer;
+	CURL* curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, fmt::format("https://signin.ea.com/p/ajax/user/checkOriginId?originId={}", name).c_str());
+	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallbackAuth);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+	curl_easy_perform(curl);
+	rapidjson_document originNameInfo;
+	originNameInfo.Parse(readBuffer.c_str());
+
+	if (strlen(name) >= 16 || originNameInfo.HasParseError() || !originNameInfo.HasMember("message") || originNameInfo["message"] != "origin_id_duplicated") {
+		CBaseClient__Disconnect(self, 1, "Name spoofing attempt");
+		g_ServerBanSystem->BanUID(nextPlayerUid);
+	}
+	else if (!g_ServerBanSystem->IsUIDAllowed(nextPlayerUid))
 	{
 		CBaseClient__Disconnect(self, 1, "Banned from server");
 		return ret;
 	}
-
-	if (strlen(name) >= 64) // fix for name overflow bug
-		CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) && g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
