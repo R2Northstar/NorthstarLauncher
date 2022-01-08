@@ -2,9 +2,12 @@
 #include "latencyflex.h"
 #include "hookutils.h"
 #include "dedicated.h"
+#include "convar.h"
 
 typedef void(*OnRenderStartType)();
 OnRenderStartType OnRenderStart;
+
+ConVar* Cvar_r_latencyflex;
 
 HMODULE m_lfxModule{};
 typedef void (*PFN_winelfx_WaitAndBeginFrame)();
@@ -12,7 +15,8 @@ PFN_winelfx_WaitAndBeginFrame m_winelfx_WaitAndBeginFrame{};
 
 void OnRenderStartHook()
 {
-	m_winelfx_WaitAndBeginFrame();
+	if (Cvar_r_latencyflex->m_nValue)
+		m_winelfx_WaitAndBeginFrame();
 
 	OnRenderStart();
 }
@@ -35,6 +39,8 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 
 	m_winelfx_WaitAndBeginFrame = reinterpret_cast<PFN_winelfx_WaitAndBeginFrame>(reinterpret_cast<void*>(GetProcAddress(m_lfxModule,"winelfx_WaitAndBeginFrame")));
 	spdlog::info("LatencyFleX initialized.");
+
+	Cvar_r_latencyflex = RegisterConVar("r_latencyflex", "1", FCVAR_ARCHIVE, "Whether or not to use LatencyFleX input latency reduction.");
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1952C0, &OnRenderStartHook, reinterpret_cast<LPVOID*>(&OnRenderStart));
