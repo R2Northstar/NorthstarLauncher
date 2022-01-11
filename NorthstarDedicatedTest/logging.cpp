@@ -176,6 +176,16 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			if (!IsDedicated())
 				MessageBoxA(0, "Northstar has crashed! A crash log and dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		}
+		else if (AreDumpFileDisabled || !ArelogFileDisabled)
+		{
+			if (!IsDedicated())
+				MessageBoxA(0, "Northstar has crashed! A dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+		}
+		else if (!AreDumpFileDisabled || ArelogFileDisabled)
+		{
+			if (!IsDedicated())
+				MessageBoxA(0, "Northstar has crashed! A crash log can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+		}
 		else
 		{
 			if (!IsDedicated())
