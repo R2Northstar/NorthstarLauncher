@@ -154,25 +154,25 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		time_t time = std::time(nullptr);
 		tm currentTime = *std::localtime(&time);
 		std::stringstream stream;
-		if (!strstr(GetCommandLineA(), "-disabledump")) {
+		if (!AreDumpFileDisabled) {
 			stream << std::put_time(&currentTime, "R2Northstar/logs/nsdump%d-%m-%Y %H-%M-%S.dmp");
+
+			auto hMinidumpFile = CreateFileA(stream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+			if (hMinidumpFile)
+			{
+				MINIDUMP_EXCEPTION_INFORMATION dumpExceptionInfo;
+				dumpExceptionInfo.ThreadId = GetCurrentThreadId();
+				dumpExceptionInfo.ExceptionPointers = exceptionInfo;
+				dumpExceptionInfo.ClientPointers = false;
+
+				MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hMinidumpFile, MINIDUMP_TYPE(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory), &dumpExceptionInfo, nullptr, nullptr);
+				CloseHandle(hMinidumpFile);
+			}
+			else
+				spdlog::error("Failed to write minidump file {}!", stream.str());
 		}
 
-		auto hMinidumpFile = CreateFileA(stream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-		if (hMinidumpFile)
-		{
-			MINIDUMP_EXCEPTION_INFORMATION dumpExceptionInfo;
-			dumpExceptionInfo.ThreadId = GetCurrentThreadId();
-			dumpExceptionInfo.ExceptionPointers = exceptionInfo;
-			dumpExceptionInfo.ClientPointers = false;
-
-			MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hMinidumpFile, MINIDUMP_TYPE(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory), &dumpExceptionInfo, nullptr, nullptr);
-			CloseHandle(hMinidumpFile);
-		}
-		else
-			spdlog::error("Failed to write minidump file {}!", stream.str());
-
-		if (!strstr(GetCommandLineA(), "-disabledump")) {
+		if (!AreDumpFileDisabled || !ArelogFileDisabled) {
 			if (!IsDedicated())
 				MessageBoxA(0, "Northstar has crashed! A crash log and dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		}
@@ -205,7 +205,7 @@ void InitialiseLogging()
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
-	if (!strstr(GetCommandLineA(), "-disablelogging")) {
+	if (!ArelogFileDisabled) {
 		stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
 	}
 
@@ -390,4 +390,14 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1A1530, CClientState_ProcessPrint_Hook, reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
 
 	Cvar_spewlog_enable = RegisterConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
+}
+
+bool ArelogFileDisabled()
+{
+	return strstr(GetCommandLineA(), "-disablelogging");
+}
+
+bool AreDumpFileDisabled()
+{
+	return strstr(GetCommandLineA(), "-disabledump");
 }
