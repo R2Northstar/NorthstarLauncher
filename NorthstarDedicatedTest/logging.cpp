@@ -154,7 +154,9 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		time_t time = std::time(nullptr);
 		tm currentTime = *std::localtime(&time);
 		std::stringstream stream;
-		stream << std::put_time(&currentTime, "R2Northstar/logs/nsdump%d-%m-%Y %H-%M-%S.dmp");
+		if (!strstr(GetCommandLineA(), "-disabledump")) {
+			stream << std::put_time(&currentTime, "R2Northstar/logs/nsdump%d-%m-%Y %H-%M-%S.dmp");
+		}
 
 		auto hMinidumpFile = CreateFileA(stream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 		if (hMinidumpFile)
@@ -170,9 +172,15 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		else
 			spdlog::error("Failed to write minidump file {}!", stream.str());
 
-		if (!IsDedicated())
-			MessageBoxA(0, "Northstar has crashed! A crash log and dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
-
+		if (!strstr(GetCommandLineA(), "-disabledump")) {
+			if (!IsDedicated())
+				MessageBoxA(0, "Northstar has crashed! A crash log and dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+		}
+		else
+		{
+			if (!IsDedicated())
+				MessageBoxA(0, "Northstar has crashed!", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+		}
 	}
 
 	logged = true;
@@ -197,7 +205,9 @@ void InitialiseLogging()
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
-	stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
+	if (!strstr(GetCommandLineA(), "-disablelogging")) {
+		stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
+	}
 
 	// create logger
 	spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
