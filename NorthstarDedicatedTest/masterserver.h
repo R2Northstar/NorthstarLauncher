@@ -103,7 +103,7 @@ public:
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
+	void AuthenticateOriginWithMasterServer(char* uid, char* originToken, char* playerName);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
 	void AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
