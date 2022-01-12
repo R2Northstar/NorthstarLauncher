@@ -154,7 +154,6 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		time_t time = std::time(nullptr);
 		tm currentTime = *std::localtime(&time);
 		std::stringstream stream;
-		if (!AreDumpFileDisabled) {
 			stream << std::put_time(&currentTime, "R2Northstar/logs/nsdump%d-%m-%Y %H-%M-%S.dmp");
 
 			auto hMinidumpFile = CreateFileA(stream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
@@ -170,26 +169,15 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			}
 			else
 				spdlog::error("Failed to write minidump file {}!", stream.str());
-		}
-
+		
 		if (!AreDumpFileDisabled || !ArelogFileDisabled) {
 			if (!IsDedicated())
-				MessageBoxA(0, "Northstar has crashed! A crash log and dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
-		}
-		else if (AreDumpFileDisabled || !ArelogFileDisabled)
-		{
-			if (!IsDedicated())
-				MessageBoxA(0, "Northstar has crashed! A crash log can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
-		}
-		else if (!AreDumpFileDisabled || ArelogFileDisabled)
-		{
-			if (!IsDedicated())
-				MessageBoxA(0, "Northstar has crashed! A dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+				MessageBoxA(0, "Northstar has crashed!", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		}
 		else
 		{
 			if (!IsDedicated())
-				MessageBoxA(0, "Northstar has crashed!", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+				MessageBoxA(0, "Northstar has crashed! A crash log and dump can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		}
 	}
 
@@ -216,11 +204,16 @@ void InitialiseLogging()
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
 	if (!ArelogFileDisabled) {
+		spdlog::warn("Logging Disabled");
+	}
+	else
+	{
 		stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
+		spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
 	}
 
 	// create logger
-	spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
+	
 }
 
 ConVar* Cvar_spewlog_enable;
@@ -405,9 +398,4 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 bool ArelogFileDisabled()
 {
 	return strstr(GetCommandLineA(), "-disablelogging");
-}
-
-bool AreDumpFileDisabled()
-{
-	return strstr(GetCommandLineA(), "-disabledump");
 }
