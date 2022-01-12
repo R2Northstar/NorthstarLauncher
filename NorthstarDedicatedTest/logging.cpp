@@ -170,7 +170,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		else
 			spdlog::error("Failed to write minidump file {}!", stream.str());
 		
-		if (!ArelogFileDisabled) {
+		if (!strstr(GetCommandLineA(), "-disablelogging")) {
 			if (!IsDedicated())
 				MessageBoxA(0, "Northstar has crashed!", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		}
@@ -184,7 +184,6 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 	logged = true;
 	return EXCEPTION_EXECUTE_HANDLER;
 }
-
 
 void InitialiseLogging()
 {
@@ -203,7 +202,7 @@ void InitialiseLogging()
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
-	if (!ArelogFileDisabled) {
+	if (!strstr(GetCommandLineA(), "-disablelogging")) {
 		spdlog::warn("Logging Disabled");
 	}
 	else
@@ -211,8 +210,6 @@ void InitialiseLogging()
 		stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
 		spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
 	}
-
-	// create logger
 	
 }
 
@@ -393,9 +390,4 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1A1530, CClientState_ProcessPrint_Hook, reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
 
 	Cvar_spewlog_enable = RegisterConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
-}
-
-bool ArelogFileDisabled()
-{
-	return strstr(GetCommandLineA(), "-disablelogging");
 }

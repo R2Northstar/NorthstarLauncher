@@ -3,4 +3,3 @@
 
 void InitialiseLogging();
 void InitialiseEngineSpewFuncHooks(HMODULE baseAddress);
-bool ArelogFileDisabled();
