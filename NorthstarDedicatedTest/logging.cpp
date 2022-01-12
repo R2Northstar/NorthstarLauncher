@@ -202,13 +202,16 @@ void InitialiseLogging()
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
-	if (!strstr(GetCommandLineA(), "-disablelogging")) {
-		spdlog::warn("Logging Disabled");
-	}
-	else
+	if (strstr(GetCommandLineA(), "-disablelogging"))
 	{
 		stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
 		spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
+		return;
+	}
+	else if(!strstr(GetCommandLineA(), "-disablelogging"))
+	{
+		spdlog::warn("Logging Disabled");
+		return;
 	}
 	
 }
