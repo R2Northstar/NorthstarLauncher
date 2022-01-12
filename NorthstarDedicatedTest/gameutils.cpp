@@ -18,6 +18,7 @@ CHostState* g_pHostState;
 
 // cengine stuff
 CEngine* g_pEngine;
+server_state_t* sv_m_State;
 
 // network stuff
 ConVar* Cvar_hostport;
@@ -45,6 +46,8 @@ ConVar* Cvar_communities_hostname;
 ErrorType Error;
 CommandLineType CommandLine;
 Plat_FloatTimeType Plat_FloatTime;
+ThreadInServerFrameThreadType ThreadInServerFrameThread;
+GetBaseLocalClientType GetBaseLocalClient;
 
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 {
@@ -54,6 +57,7 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 
 	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
 	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
+	sv_m_State = (server_state_t*)((char*)baseAddress + 0x12A53D48);
 
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 
@@ -67,6 +71,8 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 
 	Cvar_match_defaultMap = (ConVar*)((char*)baseAddress + 0x8AB530);
 	Cvar_communities_hostname = (ConVar*)((char*)baseAddress + 0x13157E50);
+
+	GetBaseLocalClient = (GetBaseLocalClientType)((char*)baseAddress + 0x78200);
 }
 
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress)
@@ -78,12 +84,33 @@ void InitialiseServerGameUtilFunctions(HMODULE baseAddress)
 
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress)
 {
-	baseAddress = GetModuleHandleA("tier0.dll");
+	if (!baseAddress)
+	{
+		spdlog::critical("tier0 base address is null, but it should be already loaded");
+		throw "tier0 base address is null, but it should be already loaded";
+	}
+	if (g_pMemAllocSingleton)
+		return; // seems this function was already called
+	CreateGlobalMemAlloc = reinterpret_cast<CreateGlobalMemAllocType>(GetProcAddress(baseAddress, "CreateGlobalMemAlloc"));
+	IMemAlloc** ppMemAllocSingleton = reinterpret_cast<IMemAlloc**>(GetProcAddress(baseAddress, "g_pMemAllocSingleton"));
+	if (!ppMemAllocSingleton)
+	{
+		spdlog::critical("Address of g_pMemAllocSingleton is a null pointer, this should never happen");
+		throw "Address of g_pMemAllocSingleton is a null pointer, this should never happen";
+	}
+	if (!*ppMemAllocSingleton)
+	{
+		g_pMemAllocSingleton = CreateGlobalMemAlloc();
+		*ppMemAllocSingleton = g_pMemAllocSingleton;
+		spdlog::info("Created new g_pMemAllocSingleton");
+	}
+	else
+	{
+		g_pMemAllocSingleton = *ppMemAllocSingleton;
+	}
 
-	CreateGlobalMemAlloc = (CreateGlobalMemAllocType)GetProcAddress(baseAddress, "CreateGlobalMemAlloc");
-	g_pMemAllocSingleton = CreateGlobalMemAlloc();
-
-	Error = (ErrorType)GetProcAddress(baseAddress, "Error");
-	CommandLine = (CommandLineType)GetProcAddress(baseAddress, "CommandLine");
-	Plat_FloatTime = (Plat_FloatTimeType)GetProcAddress(baseAddress, "Plat_FloatTime");
+	Error = reinterpret_cast<ErrorType>(GetProcAddress(baseAddress, "Error"));
+	CommandLine = reinterpret_cast<CommandLineType>(GetProcAddress(baseAddress, "CommandLine"));
+	Plat_FloatTime = reinterpret_cast<Plat_FloatTimeType>(GetProcAddress(baseAddress, "Plat_FloatTime"));
+	ThreadInServerFrameThread = reinterpret_cast<ThreadInServerFrameThreadType>(GetProcAddress(baseAddress, "ThreadInServerFrameThread"));
 }

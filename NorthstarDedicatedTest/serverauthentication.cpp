@@ -5,6 +5,10 @@
 #include "masterserver.h"
 #include "httplib.h"
 #include "gameutils.h"
+#include "bansystem.h"
+#include "miscserverscript.h"
+#include "concommand.h"
+#include "dedicated.h"
 #include <fstream>
 #include <filesystem>
 #include <thread>
@@ -22,7 +26,6 @@ CBaseClient__ConnectType CBaseClient__Connect;
 typedef void(*CBaseClient__ActivatePlayerType)(void* self);
 CBaseClient__ActivatePlayerType CBaseClient__ActivatePlayer;
 
-typedef void(*CBaseClient__DisconnectType)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
 CBaseClient__DisconnectType CBaseClient__Disconnect;
 
 typedef char(*CGameClient__ExecuteStringCommandType)(void* self, uint32_t unknown, const char* pCommandString);
@@ -37,6 +40,12 @@ CBaseClient__SendServerInfoType CBaseClient__SendServerInfo;
 typedef bool(*ProcessConnectionlessPacketType)(void* a1, netpacket_t* packet);
 ProcessConnectionlessPacketType ProcessConnectionlessPacket;
 
+typedef void(*CServerGameDLL__OnRecievedSayTextMessageType)(void* self, unsigned int senderClientIndex, const char* message, char unknown);
+CServerGameDLL__OnRecievedSayTextMessageType CServerGameDLL__OnRecievedSayTextMessage;
+
+typedef void(*ConCommand__DispatchType)(ConCommand* command, const CCommand& args, void* a3);
+ConCommand__DispatchType ConCommand__Dispatch;
+
 // global vars
 ServerAuthenticationManager* g_ServerAuthenticationManager;
 
@@ -48,6 +57,7 @@ ConVar* CVar_sv_quota_stringcmdspersecond;
 ConVar* Cvar_net_chan_limit_mode;
 ConVar* Cvar_net_chan_limit_msec_per_sec;
 ConVar* Cvar_sv_querylimit_per_sec;
+ConVar* Cvar_sv_max_chat_messages_per_sec;
 
 void ServerAuthenticationManager::StartPlayerAuthServer()
 {
@@ -117,7 +127,6 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
 {
 	std::string strUid = std::to_string(uid);
-
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
 
 	bool authFail = true;
@@ -142,6 +151,9 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 	if (authFail)
 	{
+		// set persistent data as ready, we use 0x3 internally to mark the client as using local persistence
+		*((char*)player + 0x4a0) = (char)0x3;
+
 		if (!CVar_ns_auth_allow_insecure->m_nValue) // no auth data and insecure connections aren't allowed, so dc the client
 			return false;
 
@@ -160,16 +172,13 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		
 		// get file length
 		pdataStream.seekg(0, pdataStream.end);
-		int length = pdataStream.tellg();
+		auto length = pdataStream.tellg();
 		pdataStream.seekg(0, pdataStream.beg);
 
 		// copy pdata into buffer
 		pdataStream.read((char*)player + 0x4FA, length);
 
 		pdataStream.close();
-
-		// set persistent data as ready, we use 0x3 internally to mark the client as using local persistence
-		*((char*)player + 0x4a0) = (char)0x3;
 	}
 
 	return true; // auth successful, client stays on
@@ -221,7 +230,7 @@ void ServerAuthenticationManager::WritePersistentData(void* player)
 // store these in vars so we can use them in CBaseClient::Connect
 // this is fine because ptrs won't decay by the time we use this, just don't use it outside of cbaseclient::connect
 char* nextPlayerToken;
-int64_t nextPlayerUid;
+uint64_t nextPlayerUid;
 
 void* CBaseServer__ConnectClientHook(void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11, void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17)
 {
@@ -237,6 +246,13 @@ char CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	char ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
+
+	if (!g_ServerBanSystem->IsUIDAllowed(nextPlayerUid))
+	{
+		CBaseClient__Disconnect(self, 1, "Banned from server");
+		return ret;
+	}
+
 	if (strlen(name) >= 64) // fix for name overflow bug
 		CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) && g_MasterServerManager->m_bRequireClientAuth)
@@ -298,8 +314,13 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 }
 
 // maybe this should be done outside of auth code, but effort to refactor rn and it sorta fits
+// hack: store the client that's executing the current stringcmd for pCommand->Dispatch() hook later
+void* pExecutingGameClient;
+
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
 {
+	pExecutingGameClient = self;
+
 	if (CVar_sv_quota_stringcmdspersecond->m_nValue != -1)
 	{
 		// note: this isn't super perfect, legit clients can trigger it in lobby, mostly good enough tho imo
@@ -324,13 +345,29 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	return CGameClient__ExecuteStringCommand(self, unknown, pCommandString);
 }
 
+void ConCommand__DispatchHook(ConCommand* command, const CCommand& args, void* a3)
+{
+	// patch to ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
+	if (*sv_m_State == server_state_t::ss_active && command->GetFlags() & FCVAR_GAMEDLL && !(command->GetFlags() & FCVAR_CLIENTCMD_CAN_EXECUTE))
+	{
+		if (IsDedicated())
+			return;
+
+		// hack because don't currently have a way to check GetBaseLocalClient().m_nPlayerSlot
+		if (strcmp((char*)pExecutingGameClient + 0xF500, g_LocalPlayerUserID))
+			return;
+	}
+
+	ConCommand__Dispatch(command, args, a3);
+}
+
 char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 {
 	double startTime = Plat_FloatTime();
 	char ret = CNetChan___ProcessMessages(self, buf);
 	
-	// check processing limit
-	if (Cvar_net_chan_limit_mode->m_nValue != 0)
+	// check processing limits, unless we're in a level transition
+	if (g_pHostState->m_iCurrentState == HostState_t::HS_RUN && ThreadInServerFrameThread())
 	{
 		// player that sent the message
 		void* sender = *(void**)((char*)self + 368);
@@ -346,19 +383,14 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 			g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart = startTime;
 			g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime = 0.0;
 		}
-
 		g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime += (Plat_FloatTime() * 1000) - (startTime * 1000);
 
-		int32_t limit = Cvar_net_chan_limit_msec_per_sec->m_nValue;
-		if (g_pHostState->m_iCurrentState != HostState_t::HS_RUN)
-			limit *= 2; // give clients more headroom in these states, as alot of clients will tend to time out here
-
-		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >= limit)
+		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >= Cvar_net_chan_limit_msec_per_sec->m_nValue)
 		{
 			spdlog::warn("Client {} hit netchan processing limit with {}ms of processing time this second (max is {})", (char*)sender + 0x16, g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime, Cvar_net_chan_limit_msec_per_sec->m_nValue);
 			
-			// mode 1 = kick, mode 2 = log without kicking
-			if (Cvar_net_chan_limit_mode->m_nValue == 1)
+			// nonzero = kick, 0 = warn
+			if (Cvar_net_chan_limit_mode->m_nValue)
 			{
 				CBaseClient__Disconnect(sender, 1, "Exceeded net channel processing limit");
 				return false;
@@ -424,6 +456,28 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 	return ProcessConnectionlessPacket(a1, packet);
 }
 
+void CServerGameDLL__OnRecievedSayTextMessageHook(void* self, unsigned int senderClientIndex, const char* message, char unknown)
+{
+	void* sender = GetPlayerByIndex(senderClientIndex - 1); // senderClientIndex starts at 1
+
+	// check chat ratelimits
+	if (Plat_FloatTime() - g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastSayTextLimitStart >= 1.0)
+	{
+		g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastSayTextLimitStart = Plat_FloatTime();
+		g_ServerAuthenticationManager->m_additionalPlayerData[sender].sayTextLimitCount = 0;
+	}
+
+	if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].sayTextLimitCount >= Cvar_sv_max_chat_messages_per_sec->m_nValue)
+		return;
+
+	g_ServerAuthenticationManager->m_additionalPlayerData[sender].sayTextLimitCount++;
+
+	// todo: could censor messages here if we have a banned word list, we do not currently have one of these
+	// could possibly make this call a script codecallback, or smth
+
+	CServerGameDLL__OnRecievedSayTextMessage(self, senderClientIndex, message, unknown);
+}
+
 void InitialiseServerAuthentication(HMODULE baseAddress)
 {
 	g_ServerAuthenticationManager = new ServerAuthenticationManager;
@@ -434,10 +488,11 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	// literally just stolen from a fix valve used in csgo
 	CVar_sv_quota_stringcmdspersecond = RegisterConVar("sv_quota_stringcmdspersecond", "60", FCVAR_GAMEDLL, "How many string commands per second clients are allowed to submit, 0 to disallow all string commands");
 	// https://blog.counter-strike.net/index.php/2019/07/24922/ but different because idk how to check what current tick number is
-	Cvar_net_chan_limit_mode = RegisterConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = none, 1 = kick, 2 = log");
+	Cvar_net_chan_limit_mode = RegisterConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
 	Cvar_net_chan_limit_msec_per_sec = RegisterConVar("net_chan_limit_msec_per_sec", "0", FCVAR_GAMEDLL, "Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	Cvar_ns_player_auth_port = RegisterConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	Cvar_sv_querylimit_per_sec = RegisterConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
+	Cvar_sv_max_chat_messages_per_sec = RegisterConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x114430, &CBaseServer__ConnectClientHook, reinterpret_cast<LPVOID*>(&CBaseServer__ConnectClient));
@@ -448,6 +503,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x2140A0, &CNetChan___ProcessMessagesHook, reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x104FB0, &CBaseClient__SendServerInfoHook, reinterpret_cast<LPVOID*>(&CBaseClient__SendServerInfo));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x117800, &ProcessConnectionlessPacketHook, reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417440, &ConCommand__DispatchHook, reinterpret_cast<LPVOID*>(&ConCommand__Dispatch));
 
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
 	{
@@ -492,4 +548,10 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 		*((char*)ptr + 13) = (char)0x90;
 		*((char*)ptr + 14) = (char)0x90;
 	}
+}
+
+void InitialiseServerAuthenticationServerDLL(HMODULE baseAddress)
+{
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1595C0, &CServerGameDLL__OnRecievedSayTextMessageHook, reinterpret_cast<LPVOID*>(&CServerGameDLL__OnRecievedSayTextMessage));
 }

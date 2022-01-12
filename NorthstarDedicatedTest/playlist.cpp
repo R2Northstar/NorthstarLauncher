@@ -72,8 +72,6 @@ int GetCurrentGamemodeMaxPlayersHook()
 		return GetCurrentGamemodeMaxPlayers();
 
 	int maxPlayers = atoi(maxPlayersStr);
-	spdlog::info("Overwrote max_players to {}", maxPlayers);
-
 	return maxPlayers;
 }
 
@@ -97,7 +95,7 @@ void InitialisePlaylistHooks(HMODULE baseAddress)
 	{
 		void* ptr = (char*)baseAddress + 0x18ED8D;
 		TempReadWrite rw(ptr);
-		*((char*)ptr) = 0xC3; // jmp => ret
+		*((char*)ptr) = (char)0xC3; // jmp => ret
 	}
 
 	if (IsDedicated())

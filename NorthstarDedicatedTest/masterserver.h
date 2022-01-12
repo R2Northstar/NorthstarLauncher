@@ -1,6 +1,5 @@
 #pragma once
 #include "convar.h"
-#include "httplib.h"
 #include <WinSock2.h>
 
 struct RemoteModInfo
@@ -38,7 +37,7 @@ public:
 	char authToken[32];
 
 	in_addr ip;
-	int port;
+	unsigned short port;
 };
 
 struct MainMenuPromoData
@@ -67,12 +66,13 @@ class MasterServerManager
 private:
 	bool m_requestingServerList = false;
 	bool m_authenticatingWithGameServer = false;
-	httplib::Client* m_httpClient = nullptr;
 
 public:
 	char m_ownServerId[33];
 	char m_ownServerAuthToken[33];
 	char m_ownClientAuthToken[33];
+
+	std::string m_ownModInfoJson;
 
 	bool m_bOriginAuthWithMasterServerDone = false;
 	bool m_bOriginAuthWithMasterServerInProgress = false;
@@ -94,6 +94,9 @@ public:
 
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
+
+private:
+	void SetCommonHttpClientOptions(CURL* curl);
 
 public:
 	MasterServerManager();

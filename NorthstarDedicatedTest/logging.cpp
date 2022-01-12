@@ -113,7 +113,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		GetModuleFileNameExA(GetCurrentProcess(), crashedModuleHandle, crashedModuleFullName, MAX_PATH);
 		char* crashedModuleName = strrchr(crashedModuleFullName, '\\') + 1;
 
-		DWORD crashedModuleOffset = ((DWORD)exceptionAddress) - ((DWORD)crashedModuleInfo.lpBaseOfDll);
+		DWORD64 crashedModuleOffset = ((DWORD64)exceptionAddress) - ((DWORD64)crashedModuleInfo.lpBaseOfDll);
 		CONTEXT* exceptionContext = exceptionInfo->ContextRecord;
 
 		spdlog::error("Northstar has crashed! a minidump has been written and exception info is available below:");
@@ -186,21 +186,24 @@ void InitialiseLogging()
 
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
 
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 	spdlog::flush_on(spdlog::level::info);
 
 	// log file stuff
-	// generate log file, format should be nslog%d-%m-%Y %H-%M-%S.txt in gamedir/R2Northstar/logs
+	// generate log file, format should be nslog%Y-%m-%d %H-%M-%S.txt in gamedir/R2Northstar/logs
 	// todo: might be good to delete logs that are too old
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
-	stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%d-%m-%Y %H-%M-%S.txt");
+	stream << std::put_time(&currentTime, "R2Northstar/logs/nslog%Y-%m-%d %H-%M-%S.txt");
 
 	// create logger
 	spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
 }
+
+ConVar* Cvar_spewlog_enable;
 
 enum SpewType_t
 {
@@ -217,6 +220,9 @@ EngineSpewFuncType EngineSpewFunc;
 
 void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format, va_list args)
 {
+	if (!Cvar_spewlog_enable->m_nValue)
+		return;
+
 	const char* typeStr;
 	switch (type)
 	{
@@ -257,7 +263,7 @@ void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format,
 		}
 	}
 
-	char formatted[2048];
+	char formatted[2048] = { 0 };
 	bool shouldFormat = true;
 
 	// because titanfall 2 is quite possibly the worst thing to yet exist, it sometimes gives invalid specifiers which will crash
@@ -319,11 +325,59 @@ void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format,
 		spdlog::warn("Failed to format {} \"{}\"", typeStr, format);
 	}
 
+	auto endpos = strlen(formatted);
+	if (formatted[endpos - 1] == '\n')
+		formatted[endpos - 1] = '\0'; // cut off repeated newline
+
 	spdlog::info("[SERVER {}] {}", typeStr, formatted);
+}
+
+
+typedef void(*Status_ConMsg_Type)(const char* text, ...);
+Status_ConMsg_Type Status_ConMsg_Original;
+
+void Status_ConMsg_Hook(const char* text, ...)
+{
+	char formatted[2048];
+	va_list list;
+
+	va_start(list, text);
+	vsprintf_s(formatted, text, list);
+	va_end(list);
+
+	auto endpos = strlen(formatted);
+	if (formatted[endpos - 1] == '\n')
+		formatted[endpos - 1] = '\0'; // cut off repeated newline
+
+	spdlog::info(formatted);
+}
+
+typedef bool(*CClientState_ProcessPrint_Type)(__int64 thisptr, __int64 msg);
+CClientState_ProcessPrint_Type CClientState_ProcessPrint_Original;
+
+bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
+{
+	char* text = *(char**)(msg + 0x20);
+	
+	auto endpos = strlen(text);
+	if (text[endpos - 1] == '\n')
+		text[endpos - 1] = '\0'; // cut off repeated newline
+
+	spdlog::info(text);
+	return true;
 }
 
 void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 {
 	HookEnabler hook;
+
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x11CA80, EngineSpewFuncHook, reinterpret_cast<LPVOID*>(&EngineSpewFunc));
+
+	// Hook print function that status concmd uses to actually print data
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x15ABD0, Status_ConMsg_Hook, reinterpret_cast<LPVOID*>(&Status_ConMsg_Original));
+
+	// Hook CClientState::ProcessPrint
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1A1530, CClientState_ProcessPrint_Hook, reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
+
+	Cvar_spewlog_enable = RegisterConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }

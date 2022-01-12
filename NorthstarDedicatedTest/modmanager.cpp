@@ -2,7 +2,7 @@
 #include "modmanager.h"
 #include "convar.h"
 #include "concommand.h"
-
+#include "masterserver.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
@@ -22,7 +22,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	ModDirectory = modDir;
 
-	rapidjson::Document modJson;
+	rapidjson_document modJson;
 	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
 
 	// fail if parse error
@@ -309,7 +309,7 @@ void ModManager::LoadMods()
 				if (fs::is_regular_file(file))
 				{
 					std::string kvStr = file.path().lexically_relative(mod.ModDirectory / "keyvalues").lexically_normal().string();
-					mod.KeyValues.insert(std::make_pair(std::hash<std::string>{}(kvStr), kvStr));
+					mod.KeyValues.emplace(std::hash<std::string>{}(kvStr), kvStr);
 				}
 			}
 		}
@@ -333,7 +333,7 @@ void ModManager::LoadMods()
 	}
 
 	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
-	for (int i = m_loadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = m_loadedMods.size() - 1; i > -1; i--)
 	{
 		if (!m_loadedMods[i].Enabled)
 			continue;
@@ -354,6 +354,32 @@ void ModManager::LoadMods()
 			}
 		}
 	}
+
+	// build modinfo obj for masterserver
+	rapidjson_document modinfoDoc;
+	modinfoDoc.SetObject();
+	modinfoDoc.AddMember("Mods", rapidjson_document::GenericValue(rapidjson::kArrayType), modinfoDoc.GetAllocator());
+
+	int currentModIndex = 0;
+	for (Mod& mod : m_loadedMods)
+	{
+		if (!mod.Enabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
+			continue;
+
+		modinfoDoc["Mods"].PushBack(rapidjson_document::GenericValue(rapidjson::kObjectType), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
+
+		currentModIndex++;
+	}
+
+	rapidjson::StringBuffer buffer;
+	buffer.Clear();
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	modinfoDoc.Accept(writer);
+	g_MasterServerManager->m_ownModInfoJson = std::string(buffer.GetString());
 
 	m_hasLoadedMods = true;
 }
@@ -379,7 +405,7 @@ void ModManager::UnloadMods()
 		// should we be doing this here or should scripts be doing this manually?
 		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily what we wanna do
 		if (!m_enabledModsCfg.HasMember(mod.Name.c_str()))
-			m_enabledModsCfg.AddMember(rapidjson::StringRef(mod.Name.c_str()), rapidjson::Value(false), m_enabledModsCfg.GetAllocator());
+			m_enabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), rapidjson_document::GenericValue(false), m_enabledModsCfg.GetAllocator());
 
 		m_enabledModsCfg[mod.Name.c_str()].SetBool(mod.Enabled);
 	}

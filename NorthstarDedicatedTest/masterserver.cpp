@@ -3,7 +3,6 @@
 #include "concommand.h"
 #include "gameutils.h"
 #include "hookutils.h"
-#include "libcurl/include/curl/curl.h"
 #include "serverauthentication.h"
 #include "gameutils.h"
 #include "rapidjson/document.h"
@@ -24,6 +23,9 @@ ConVar* Cvar_ns_server_name;
 ConVar* Cvar_ns_server_desc;
 ConVar* Cvar_ns_server_password;
 
+// Source ConVar
+ConVar* Cvar_hostname;
+
 MasterServerManager* g_MasterServerManager;
 
 typedef void(*CHostState__State_NewGameType)(CHostState* hostState);
@@ -37,6 +39,39 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
+
+const char* HttplibErrorToString(httplib::Error error)
+{
+	switch (error)
+	{
+	case httplib::Error::Success:
+		return "httplib::Error::Success";
+	case httplib::Error::Unknown:
+		return "httplib::Error::Unknown";
+	case httplib::Error::Connection:
+		return "httplib::Error::Connection";
+	case httplib::Error::BindIPAddress:
+		return "httplib::Error::BindIPAddress";
+	case httplib::Error::Read:
+		return "httplib::Error::Read";
+	case httplib::Error::Write:
+		return "httplib::Error::Write";
+	case httplib::Error::ExceedRedirectCount:
+		return "httplib::Error::ExceedRedirectCount";
+	case httplib::Error::Canceled:
+		return "httplib::Error::Canceled";
+	case httplib::Error::SSLConnection:
+		return "httplib::Error::SSLConnection";
+	case httplib::Error::SSLLoadingCerts:
+		return "httplib::Error::SSLLoadingCerts";
+	case httplib::Error::SSLServerVerification:
+		return "httplib::Error::SSLServerVerification";
+	case httplib::Error::UnsupportedMultipartBoundaryChars:
+		return "httplib::Error::UnsupportedMultipartBoundaryChars";
+	}
+
+	return "";
+}
 
 RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
 {
@@ -57,6 +92,18 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
+}
+
+void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
+{
+	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	//curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
+	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
+	{
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+	}
 }
 
 void MasterServerManager::ClearServerList()
@@ -90,12 +137,11 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
 
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/origin_auth?id={}&token={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -105,12 +151,12 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			{
 				m_successfullyConnected = true;
 
-				rapidjson::Document originAuthInfo;
+				rapidjson_document originAuthInfo;
 				originAuthInfo.Parse(readBuffer.c_str());
 
 				if (originAuthInfo.HasParseError())
 				{
-					spdlog::error("Failed reading origin auth info response: encountered parse error \{}\"", rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
+					spdlog::error("Failed reading origin auth info response: encountered parse error \"{}\"", rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -163,12 +209,11 @@ void MasterServerManager::RequestServerList()
 			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->m_pszString);
 
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", Cvar_ns_masterserver_hostname->m_pszString).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -178,7 +223,7 @@ void MasterServerManager::RequestServerList()
 			{
 				m_successfullyConnected = true;
 
-				rapidjson::Document serverInfoJson;
+				rapidjson_document serverInfoJson;
 				serverInfoJson.Parse(readBuffer.c_str());
 
 				if (serverInfoJson.HasParseError())
@@ -200,7 +245,7 @@ void MasterServerManager::RequestServerList()
 					goto REQUEST_END_CLEANUP;
 				}
 
-				rapidjson::GenericArray<false, rapidjson::Value> serverArray = serverInfoJson.GetArray();
+				rapidjson::GenericArray<false, rapidjson_document::GenericValue> serverArray = serverInfoJson.GetArray();
 
 				spdlog::info("Got {} servers", serverArray.Size());
 
@@ -273,7 +318,7 @@ void MasterServerManager::RequestServerList()
 				std::sort(m_remoteServers.begin(), m_remoteServers.end(), [](RemoteServerInfo& a, RemoteServerInfo& b) 
 				{
 					return a.playerCount > b.playerCount;
-				});
+					});
 			}
 			else
 			{
@@ -301,12 +346,11 @@ void MasterServerManager::RequestMainMenuPromos()
 				Sleep(500);
 
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/mainmenupromos", Cvar_ns_masterserver_hostname->m_pszString).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -316,7 +360,7 @@ void MasterServerManager::RequestMainMenuPromos()
 			{
 				m_successfullyConnected = true;
 
-				rapidjson::Document mainMenuPromoJson;
+				rapidjson_document mainMenuPromoJson;
 				mainMenuPromoJson.Parse(readBuffer.c_str());
 
 				if (mainMenuPromoJson.HasParseError())
@@ -412,12 +456,11 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 	std::thread requestThread([this, uidStr, tokenStr]()
 		{
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -427,7 +470,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			{
 				m_successfullyConnected = true;
 
-				rapidjson::Document authInfoJson;
+				rapidjson_document authInfoJson;
 				authInfoJson.Parse(readBuffer.c_str());
 
 				if (authInfoJson.HasParseError())
@@ -480,7 +523,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 						goto REQUEST_END_CLEANUP;
 					}
 
-					newAuthData.pdata[i++] = (char)byte.GetUint();
+					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
 				}
 
 				std::lock_guard<std::mutex> guard(g_ServerAuthenticationManager->m_authDataMutex);
@@ -538,11 +581,10 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 			spdlog::info("Attempting authentication with server of id \"{}\"", serverIdStr);
 
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -560,7 +602,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 			{
 				m_successfullyConnected = true;
 
-				rapidjson::Document connectionInfoJson;
+				rapidjson_document connectionInfoJson;
 				connectionInfoJson.Parse(readBuffer.c_str());
 
 				if (connectionInfoJson.HasParseError())
@@ -595,7 +637,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 				}
 
 				m_pendingConnectionInfo.ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
-				m_pendingConnectionInfo.port = connectionInfoJson["port"].GetInt();
+				m_pendingConnectionInfo.port = (unsigned short)connectionInfoJson["port"].GetUint();
 
 				strncpy(m_pendingConnectionInfo.authToken, connectionInfoJson["authToken"].GetString(), 31);
 				m_pendingConnectionInfo.authToken[31] = 0;
@@ -644,45 +686,18 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 			m_ownServerId[0] = 0;
 			m_ownServerAuthToken[0] = 0;
 
-			// build modinfo obj
-			rapidjson::Document modinfoDoc;
-			modinfoDoc.SetObject();
-			modinfoDoc.AddMember("Mods", rapidjson::Value(rapidjson::kArrayType), modinfoDoc.GetAllocator());
-
-			int currentModIndex = 0;
-			for (Mod& mod : g_ModManager->m_loadedMods)
-			{
-				if (!mod.Enabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
-					continue;
-
-				modinfoDoc["Mods"].PushBack(rapidjson::Value(rapidjson::kObjectType), modinfoDoc.GetAllocator());
-				modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
-				modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
-				modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
-				modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
-
-				currentModIndex++;
-			}
-
-			rapidjson::StringBuffer buffer;
-			buffer.Clear();
-			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-			modinfoDoc.Accept(writer);
-			const char* modInfoString = buffer.GetString();
-
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			curl_mime* mime = curl_mime_init(curl);
 			curl_mimepart* part = curl_mime_addpart(mime);
 
-			curl_mime_data(part, modInfoString, buffer.GetSize());
+			curl_mime_data(part, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
 			curl_mime_name(part, "modinfo");
 			curl_mime_filename(part, "modinfo.json");
 			curl_mime_type(part, "application/json");
@@ -712,7 +727,7 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 			{
 				m_successfullyConnected = true;
 
-				rapidjson::Document serverAddedJson;
+				rapidjson_document serverAddedJson;
 				serverAddedJson.Parse(readBuffer.c_str());
 
 				if (serverAddedJson.HasParseError())
@@ -760,16 +775,69 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 					do
 					{
 						CURL* curl = curl_easy_init();
+						SetCommonHttpClientOptions(curl);
 
 						std::string readBuffer;
 						curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-						curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/heartbeat?id={}&playerCount={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, g_ServerAuthenticationManager->m_additionalPlayerData.size()).c_str());
-						curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 						curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 						curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+						curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+
+						// send all registration info so we have all necessary info to reregister our server if masterserver goes down, without a restart
+						// this isn't threadsafe :terror:
+						{
+							char* escapedNameNew = curl_easy_escape(curl, Cvar_ns_server_name->m_pszString, NULL);
+							char* escapedDescNew = curl_easy_escape(curl, Cvar_ns_server_desc->m_pszString, NULL);
+							char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
+							char* escapedPlaylistNew = curl_easy_escape(curl, GetCurrentPlaylistName(), NULL);
+							char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->m_pszString, NULL);
+
+							int maxPlayers = 6;
+							char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+							if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
+								maxPlayers = std::stoi(maxPlayersVar);
+
+							curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&maxPlayers={}&password={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, escapedNameNew, escapedDescNew, escapedMapNew, escapedPlaylistNew, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers, escapedPasswordNew).c_str());
+
+							curl_free(escapedNameNew);
+							curl_free(escapedDescNew);
+							curl_free(escapedMapNew);
+							curl_free(escapedPlaylistNew);
+							curl_free(escapedPasswordNew);
+						}
+
+						curl_mime* mime = curl_mime_init(curl);
+						curl_mimepart* part = curl_mime_addpart(mime);
+
+						curl_mime_data(part, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
+						curl_mime_name(part, "modinfo");
+						curl_mime_filename(part, "modinfo.json");
+						curl_mime_type(part, "application/json");
+
+						curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 						
 						CURLcode result = curl_easy_perform(curl);
-						if (result != CURLcode::CURLE_OK)
+						if (result == CURLcode::CURLE_OK)
+						{
+							rapidjson_document serverAddedJson;
+							serverAddedJson.Parse(readBuffer.c_str());
+
+							if (!serverAddedJson.HasParseError() && serverAddedJson.IsObject())
+							{
+								if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
+								{
+									strncpy(m_ownServerId, serverAddedJson["id"].GetString(), sizeof(m_ownServerId));
+									m_ownServerId[sizeof(m_ownServerId) - 1] = 0;
+								}
+
+								if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
+								{
+									strncpy(m_ownServerAuthToken, serverAddedJson["serverAuthToken"].GetString(), sizeof(m_ownServerAuthToken));
+									m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
+								}
+							}
+						}
+						else
 							spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
 
 						curl_easy_cleanup(curl);
@@ -805,11 +873,10 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 	std::thread requestThread([this, strMap, strPlaylist, maxPlayers]
 		{
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -846,11 +913,10 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 	std::thread requestThread([this, playerCount] 
 		{
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, playerCount).c_str());
@@ -884,12 +950,11 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 	std::thread requestThread([this, strPlayerId, strPdata, pdataSize]
 		{
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/accounts/write_persistence?id={}&serverId={}", Cvar_ns_masterserver_hostname->m_pszString, strPlayerId, m_ownServerId).c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
@@ -926,11 +991,10 @@ void MasterServerManager::RemoveSelfFromServerList()
 
 	std::thread requestThread([this] {
 			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId).c_str());
@@ -969,6 +1033,10 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 		maxPlayers = std::stoi(maxPlayersVar);
 
+	// Copy new server name cvar to source
+	Cvar_hostname->m_pszString = Cvar_ns_server_name->m_pszString;
+	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
+
 	g_MasterServerManager->AddSelfToServerList(Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString, hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, Cvar_ns_server_password->m_pszString);
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
@@ -1004,9 +1072,9 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 	CHostState__State_GameShutdown(hostState);
 }
 
-MasterServerManager::MasterServerManager()
+MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownServerId{ "" }, m_ownClientAuthToken{ "" }
 {
-	curl_global_init(CURL_GLOBAL_DEFAULT);
+
 }
 
 void InitialiseSharedMasterServer(HMODULE baseAddress)
@@ -1020,6 +1088,9 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 	Cvar_ns_server_password = RegisterConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_server_to_masterserver = RegisterConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_sp_server_to_masterserver = RegisterConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
+
+	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
+
 	g_MasterServerManager = new MasterServerManager;
 
 	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "", FCVAR_CLIENTDLL);
