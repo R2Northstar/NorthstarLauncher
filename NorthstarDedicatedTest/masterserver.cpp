@@ -129,10 +129,11 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 
 	// do this here so it's instantly set
 	m_bOriginAuthWithMasterServerInProgress = true;
+	std::string nameStr(playerName);
 	std::string uidStr(uid);
 	std::string tokenStr(originToken);
-
-	std::thread requestThread([this, uidStr, tokenStr]()
+	spdlog::info("username: {}", nameStr);
+	std::thread requestThread([this, uidStr, tokenStr, nameStr]()
 		{
 			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
 
@@ -140,7 +141,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/origin_auth?id={}&token={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/origin_auth?id={}&token={}&playerName={}", Cvar_ns_masterserver_hostname->m_pszString, uidStr, tokenStr, nameStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
