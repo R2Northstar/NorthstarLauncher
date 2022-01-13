@@ -122,7 +122,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	return size * nmemb;
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
+void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken, char* playerName)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
