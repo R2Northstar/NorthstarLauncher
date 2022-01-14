@@ -25,11 +25,12 @@ void AuthWithStryderHook(void* a1)
 		// if player has agreed to send token and we aren't already authing, try to auth
 		if (Cvar_ns_has_agreed_to_send_token->m_nValue == AGREED_TO_SEND_TOKEN && !g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 		{
-			while (Cvar_ns_auth_player_name->m_pszString == "0")
-			{
+			//Optional: upload playername to masterserver. Disabled for pr
+			//while (Cvar_ns_auth_player_name->m_pszString == "0")
+			//{
 				//std::this_thread::sleep_for(std::chrono::seconds(1));
-				spdlog::info("waited for one second but convar ns_auth_player_name still have no valid value.");
-			}
+			//	spdlog::info("waited for one second but convar ns_auth_player_name still have no valid value.");
+			//}
 
 			g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken, Cvar_ns_auth_player_name->m_pszString);
 		}
