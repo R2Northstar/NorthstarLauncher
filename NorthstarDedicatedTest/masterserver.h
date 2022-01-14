@@ -2,6 +2,9 @@
 #include "convar.h"
 #include <WinSock2.h>
 
+#include <iostream>
+#include <string>
+#include <cstring>
 struct RemoteModInfo
 {
 public:
@@ -117,3 +120,5 @@ void InitialiseSharedMasterServer(HMODULE baseAddress);
 
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+extern std::string nsServerName;
+extern std::string nsServerDesc;

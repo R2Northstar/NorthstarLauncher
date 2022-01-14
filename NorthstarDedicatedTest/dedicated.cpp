@@ -3,6 +3,7 @@
 #include "hookutils.h"
 #include "gameutils.h"
 #include "serverauthentication.h"
+#include "masterserver.h"
 
 bool IsDedicated()
 {
@@ -64,8 +65,8 @@ void RunServer(CDedicatedExports* dedicated)
 		const char* maxPlayers = GetCurrentPlaylistVar("max_players", false);
 		if (!maxPlayers)
 			maxPlayers = "6";
-
-		SetConsoleTitleA(fmt::format("Titanfall 2 dedicated server - {} {}/{} players ({})", g_pHostState->m_levelName, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers, GetCurrentPlaylistName()).c_str());		
+		
+		SetConsoleTitleA(fmt::format("{} - {} {}/{} players ({})", nsServerName, g_pHostState->m_levelName, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers, GetCurrentPlaylistName()).c_str());
 		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(Cvar_base_tickinterval_mp->m_fValue - fmin(Plat_FloatTime() - frameStart, 0.25)));
 	}
 }

@@ -12,6 +12,10 @@
 #include "modmanager.h"
 #include "misccommands.h"
 
+#include <iostream>
+#include <string>
+#include <cstring>
+using namespace std;
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver requests
 // so httplib is used exclusively for server stuff now
 
@@ -22,7 +26,8 @@ ConVar* Cvar_ns_report_sp_server_to_masterserver;
 ConVar* Cvar_ns_server_name;
 ConVar* Cvar_ns_server_desc;
 ConVar* Cvar_ns_server_password;
-
+std::string nsServerName;
+std::string nsServerDesc;
 // Source ConVar
 ConVar* Cvar_hostname;
 
@@ -39,6 +44,29 @@ CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
 
 typedef void(*CHostState__State_GameShutdownType)(CHostState* hostState);
 CHostState__State_GameShutdownType CHostState__State_GameShutdown;
+string cfgParser(string str)
+{
+	string output;
+
+	// Regex to extract the string
+	// between two delimiters
+	const regex pattern("\\\"(.*?)\\\"");
+
+	for (sregex_iterator it = sregex_iterator(
+		str.begin(), str.end(), pattern);
+		it != sregex_iterator(); it++)
+	{
+
+		// flag type for determining the
+		// matching behavior here it is
+		// for matches on 'string' objects
+		smatch match;
+		match = *it;
+
+		output = match.str(1);
+	}
+	return output;
+}
 
 const char* HttplibErrorToString(httplib::Error error)
 {
@@ -787,12 +815,13 @@ void MasterServerManager::AddSelfToServerList(int port, int authPort, char* name
 						// send all registration info so we have all necessary info to reregister our server if masterserver goes down, without a restart
 						// this isn't threadsafe :terror:
 						{
-							char* escapedNameNew = curl_easy_escape(curl, Cvar_ns_server_name->m_pszString, NULL);
-							char* escapedDescNew = curl_easy_escape(curl, Cvar_ns_server_desc->m_pszString, NULL);
+							char* escapedNameNew = curl_easy_escape(curl, nsServerName.c_str(), NULL);
+							char* escapedDescNew = curl_easy_escape(curl, nsServerDesc.c_str(), NULL);
 							char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
 							char* escapedPlaylistNew = curl_easy_escape(curl, GetCurrentPlaylistName(), NULL);
 							char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->m_pszString, NULL);
-
+							
+							
 							int maxPlayers = 6;
 							char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
 							if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
@@ -1017,7 +1046,17 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 {
 	g_MasterServerManager->RequestServerList();
 }
-
+void Hack_Register_Server_Information_From_File() 
+{
+	ifstream file(".\\R2Northstar\\mods\\Northstar.CustomServers\\mod\\cfg\\autoexec_ns_server.cfg");
+	std::string srvName; //Reads the first and second line of given cfg. Which should match with server name and server description.
+	std::string srvDesc;
+	getline(file, srvName);
+	nsServerName = cfgParser(srvName);
+	getline(file, srvDesc);
+	nsServerDesc = cfgParser(srvDesc);
+	file.seekg(0); // This should bring the ifstream back to start, avoiding problems maybe.
+}
 void CHostState__State_NewGameHook(CHostState* hostState)
 {
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
@@ -1045,7 +1084,10 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	// Copy new server name cvar to source
 	Cvar_hostname->m_pszString = Cvar_ns_server_name->m_pszString;
 	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
+	// Read server name directly from file
+	Hack_Register_Server_Information_From_File();
 
+	//nsServerName = Cvar_ns_server_name->m_pszString; //made a global var that pass server name to display on cmd title
 	g_MasterServerManager->AddSelfToServerList(Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString, hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, Cvar_ns_server_password->m_pszString);
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
