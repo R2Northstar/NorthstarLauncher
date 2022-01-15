@@ -21,6 +21,7 @@
 #include "securitypatches.h"
 #include "miscserverscript.h"
 #include "clientauthhooks.h"
+#include "latencyflex.h"
 #include "scriptbrowserhooks.h"
 #include "scriptmainmenupromos.h"
 #include "miscclientfixes.h"
@@ -123,6 +124,7 @@ bool InitialiseNorthstar()
         AddDllLoadCallback("client.dll", InitialiseScriptServerBrowser);
         AddDllLoadCallback("localize.dll", InitialiseModLocalisation);
         AddDllLoadCallback("engine.dll", InitialiseClientAuthHooks);
+        AddDllLoadCallback("client.dll", InitialiseLatencyFleX);
         AddDllLoadCallback("engine.dll", InitialiseScriptExternalBrowserHooks);
         AddDllLoadCallback("client.dll", InitialiseScriptMainMenuPromos);
         AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
