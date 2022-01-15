@@ -74,6 +74,20 @@ bool InitialiseNorthstar()
 
     SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
     curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
+    const curl_ssl_backend** backends;
+    CURLsslset result = curl_global_sslset(CURLSSLBACKEND_OPENSSL, NULL, &backends);
+    switch (result) {
+    case CURLSSLSET_TOO_LATE:
+        puts("SSL already initialized");
+        break;
+    case CURLSSLSET_UNKNOWN_BACKEND:
+        puts("OpenSSL not available. Alternatives:");
+        for (int i = 0; backends[i]; i++)
+            printf("%s (id %d)\n", backends[i]->name, backends[i]->id);
+        break;
+    default:
+        puts("SSL not available");
+    }
 
     InitialiseLogging();
     InstallInitialHooks();
