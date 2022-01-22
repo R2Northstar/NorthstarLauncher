@@ -21,6 +21,7 @@
 #include "securitypatches.h"
 #include "miscserverscript.h"
 #include "clientauthhooks.h"
+#include "latencyflex.h"
 #include "scriptbrowserhooks.h"
 #include "scriptmainmenupromos.h"
 #include "miscclientfixes.h"
@@ -30,6 +31,7 @@
 #include "memalloc.h"
 #include "maxplayers.h"
 #include "languagehooks.h"
+#include "audio.h"
 
 bool initialised = false;
 
@@ -72,12 +74,12 @@ bool InitialiseNorthstar()
 
     initialised = true;
 
+    SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
     curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
 
     InitialiseLogging();
-
-    // apply initial hooks
     InstallInitialHooks();
+    CreateLogFiles();
     InitialiseInterfaceCreationHooks();
 
     AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
@@ -109,6 +111,7 @@ bool InitialiseNorthstar()
         AddDllLoadCallback("client.dll", InitialiseScriptServerBrowser);
         AddDllLoadCallback("localize.dll", InitialiseModLocalisation);
         AddDllLoadCallback("engine.dll", InitialiseClientAuthHooks);
+        AddDllLoadCallback("client.dll", InitialiseLatencyFleX);
         AddDllLoadCallback("engine.dll", InitialiseScriptExternalBrowserHooks);
         AddDllLoadCallback("client.dll", InitialiseScriptMainMenuPromos);
         AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
@@ -133,6 +136,9 @@ bool InitialiseNorthstar()
     AddDllLoadCallback("engine.dll", InitialiseMaxPlayersOverride_Engine);
     AddDllLoadCallback("client.dll", InitialiseMaxPlayersOverride_Client);
     AddDllLoadCallback("server.dll", InitialiseMaxPlayersOverride_Server);
+
+    // audio hooks
+    AddDllLoadCallback("client.dll", InitialiseMilesAudioHooks);
 
     // mod manager after everything else
     AddDllLoadCallback("engine.dll", InitialiseModManager);

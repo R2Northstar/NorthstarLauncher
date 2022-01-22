@@ -3,7 +3,7 @@
 #include "hookutils.h"
 #include "gameutils.h"
 #include "serverauthentication.h"
-
+#include "masterserver.h"
 bool IsDedicated()
 {
 	//return CommandLine()->CheckParm("-dedicated");
@@ -36,36 +36,46 @@ typedef void(*CHostState__InitType)(CHostState* self);
 
 void RunServer(CDedicatedExports* dedicated)
 {
-	Sys_Printf(dedicated, "CDedicatedExports::RunServer(): starting");
-
-	// init hoststate, if we don't do this, we get a crash later on
-	CHostState__InitType CHostState__Init = (CHostState__InitType)((char*)GetModuleHandleA("engine.dll") + 0x16E110);
-	CHostState__Init(g_pHostState);
-
-	// set host state to allow us to enter CHostState::FrameUpdate, with the state HS_NEW_GAME
-	g_pHostState->m_iNextState = HostState_t::HS_NEW_GAME;
-	strncpy(g_pHostState->m_levelName, CommandLine()->ParmValue("+map", Cvar_match_defaultMap->m_pszString), sizeof(g_pHostState->m_levelName)); // set map to load into
-
+	spdlog::info("CDedicatedExports::RunServer(): starting");
 	spdlog::info(CommandLine()->GetCmdLine());
 
-	// run initial 2 ticks, 1 to initialise engine and 1 to load initial map
-	g_pEngine->Frame();
+	// initialise engine
 	g_pEngine->Frame();
 
-	// to fix a bug: set current playlist again, otherwise max_players will be set wrong
+	// add +map if not present
+	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
+	if (!CommandLine()->CheckParm("+map"))
+		CommandLine()->AppendParm("+map", Cvar_match_defaultMap->m_pszString);
+
+	// run server autoexec and re-run commandline
+	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
+	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
+	Cbuf_Execute();
+
+	// ensure playlist initialises right, if we've not explicitly called setplaylist
 	SetCurrentPlaylist(GetCurrentPlaylistName());
+	
+	// note: we no longer manually set map and hoststate to start server in g_pHostState, we just use +map which seems to initialise stuff better
 
+	// main loop
+	double frameTitle = 0;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
 	{
 		double frameStart = Plat_FloatTime();
 		g_pEngine->Frame();
 
-		// this way of getting playercount/maxplayers honestly really sucks, but not got any other methods of doing it rn
-		const char* maxPlayers = GetCurrentPlaylistVar("max_players", false);
-		if (!maxPlayers)
-			maxPlayers = "6";
+		// only update the title after at least 500ms since the last update
+		if ((frameStart - frameTitle) > 0.5) {
+			frameTitle = frameStart;
 
-		SetConsoleTitleA(fmt::format("Titanfall 2 dedicated server - {} {}/{} players ({})", g_pHostState->m_levelName, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers, GetCurrentPlaylistName()).c_str());		
+			// this way of getting playercount/maxplayers honestly really sucks, but not got any other methods of doing it rn
+			const char* maxPlayers = GetCurrentPlaylistVar("max_players", false);
+			if (!maxPlayers)
+				maxPlayers = "6";
+
+			SetConsoleTitleA(fmt::format("{} - {} {}/{} players ({})", g_MasterServerManager->ns_auth_srvName, g_pHostState->m_levelName, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers, GetCurrentPlaylistName()).c_str());
+		}
+
 		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(Cvar_base_tickinterval_mp->m_fValue - fmin(Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
@@ -406,7 +416,6 @@ void InitialiseDedicated(HMODULE engineAddress)
 	CommandLine()->AppendParm("-windowed", 0);
 	CommandLine()->AppendParm("+host_preload_shaders", "0");
 	CommandLine()->AppendParm("+net_usesocketsforloopback", "1");
-	CommandLine()->AppendParm("+exec", "autoexec_ns_server");
 
 	// Disable Quick Edit mode to reduce chance of user unintentionally hanging their server by selecting something.
 	if (!CommandLine()->CheckParm("-bringbackquickedit"))

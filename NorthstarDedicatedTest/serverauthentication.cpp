@@ -20,7 +20,7 @@ const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 typedef void*(*CBaseServer__ConnectClientType)(void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11, void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17);
 CBaseServer__ConnectClientType CBaseServer__ConnectClient;
 
-typedef char(*CBaseClient__ConnectType)(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, int a7);
+typedef bool(*CBaseClient__ConnectType)(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7);
 CBaseClient__ConnectType CBaseClient__Connect;
 
 typedef void(*CBaseClient__ActivatePlayerType)(void* self);
@@ -241,11 +241,14 @@ void* CBaseServer__ConnectClientHook(void* server, void* a2, void* a3, uint32_t 
 	return CBaseServer__ConnectClient(server, a2, a3, a4, a5, a6, a7, a8, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
-char CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, int a7)
+bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7)
 {
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
-	char ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
+	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
+	
+	if (!ret)
+		return ret;
 
 	if (!g_ServerBanSystem->IsUIDAllowed(nextPlayerUid))
 	{
@@ -314,13 +317,11 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 }
 
 // maybe this should be done outside of auth code, but effort to refactor rn and it sorta fits
-// hack: store the client that's executing the current stringcmd for pCommand->Dispatch() hook later
-void* pExecutingGameClient;
+typedef bool(*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, cmd_source_t commandSource);
+CCommand__TokenizeType CCommand__Tokenize;
 
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
 {
-	pExecutingGameClient = self;
-
 	if (CVar_sv_quota_stringcmdspersecond->m_nValue != -1)
 	{
 		// note: this isn't super perfect, legit clients can trigger it in lobby, mostly good enough tho imo
@@ -341,24 +342,32 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 		}
 	}
 
-	// todo later, basically just limit to CVar_sv_quota_stringcmdspersecond->m_nValue stringcmds per client per second
-	return CGameClient__ExecuteStringCommand(self, unknown, pCommandString);
-}
+	// verify the command we're trying to execute is FCVAR_CLIENTCMD_CAN_EXECUTE, if it's a concommand
+	char* commandBuf[1040]; // assumedly this is the size of CCommand since we don't have an actual constructor
+	memset(commandBuf, 0, sizeof(commandBuf));
+	CCommand tempCommand = *(CCommand*)&commandBuf;
 
-void ConCommand__DispatchHook(ConCommand* command, const CCommand& args, void* a3)
-{
-	// patch to ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
-	if (*sv_m_State == server_state_t::ss_active && command->GetFlags() & FCVAR_GAMEDLL && !(command->GetFlags() & FCVAR_CLIENTCMD_CAN_EXECUTE))
+	if (!CCommand__Tokenize(tempCommand, pCommandString, cmd_source_t::kCommandSrcCode) || !tempCommand.ArgC())
+		return false;
+
+	ICvar* icvar = *g_pCvar; // hellish call because i couldn't get icvar vtable stuff in convar.h to get the right offset for whatever reason
+	typedef ConCommand*(*FindCommandBaseType)(ICvar* self, const char* varName);
+	FindCommandBaseType FindCommandBase = *(FindCommandBaseType*)((*(char**)icvar) + 112);
+	ConCommand* command = FindCommandBase(icvar, tempCommand.Arg(0));
+
+	// if the command doesn't exist pass it on to ExecuteStringCommand for script clientcommands and stuff
+	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE))
 	{
+		// ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
 		if (IsDedicated())
-			return;
+			return false;
 
-		// hack because don't currently have a way to check GetBaseLocalClient().m_nPlayerSlot
-		if (strcmp((char*)pExecutingGameClient + 0xF500, g_LocalPlayerUserID))
-			return;
+		if (strcmp((char*)self + 0xF500, g_LocalPlayerUserID))
+			return false;
 	}
 
-	ConCommand__Dispatch(command, args, a3);
+	// todo later, basically just limit to CVar_sv_quota_stringcmdspersecond->m_nValue stringcmds per client per second
+	return CGameClient__ExecuteStringCommand(self, unknown, pCommandString);
 }
 
 char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
@@ -413,7 +422,7 @@ void CBaseClient__SendServerInfoHook(void* self)
 
 bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 {
-	if (packet->adr.type == NA_IP)
+	if (packet->adr.type == NA_IP && (!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->m_nValue) || !Cvar_net_datablock_enabled->m_nValue))
 	{
 		// bad lookup: optimise later tm
 		UnconnectedPlayerSendData* sendData = nullptr;
@@ -503,7 +512,8 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x2140A0, &CNetChan___ProcessMessagesHook, reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x104FB0, &CBaseClient__SendServerInfoHook, reinterpret_cast<LPVOID*>(&CBaseClient__SendServerInfo));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x117800, &ProcessConnectionlessPacketHook, reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417440, &ConCommand__DispatchHook, reinterpret_cast<LPVOID*>(&ConCommand__Dispatch));
+
+	CCommand__Tokenize = (CCommand__TokenizeType)((char*)baseAddress + 0x418380);
 
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
 	{
