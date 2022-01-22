@@ -453,6 +453,10 @@ void InitialiseMaxPlayersOverride_Server(HMODULE baseAddress)
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6654 + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C665B + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 
+	// this is probably a bad idea - but idc really :D
+	ChangeOffset<unsigned char>((char*)baseAddress + 0x6CFB3A + 2, 1);
+	ChangeOffset<unsigned char>((char*)baseAddress + 0x6CFB57 + 5, 1);
+			
 	// GameLoop::RunUserCmds - rebuild
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x483D10, &RunUserCmds_Hook, reinterpret_cast<LPVOID*>(&RunUserCmds_Original));
