@@ -33,5 +33,8 @@
     <Image Include="ns_icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="ns_logo_a11y.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

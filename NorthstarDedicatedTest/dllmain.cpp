@@ -32,6 +32,7 @@
 #include "maxplayers.h"
 #include "languagehooks.h"
 #include "audio.h"
+#include "tts.h"
 
 bool initialised = false;
 
@@ -115,6 +116,8 @@ bool InitialiseNorthstar()
         AddDllLoadCallback("engine.dll", InitialiseScriptExternalBrowserHooks);
         AddDllLoadCallback("client.dll", InitialiseScriptMainMenuPromos);
         AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
+        // tts
+        AddDllLoadCallback("client.dll", InitialiseTTS);
     }
 
     AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);

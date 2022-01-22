@@ -121,6 +121,12 @@
     <Filter Include="Header Files\include\libcurl">
       <UniqueIdentifier>{ea1e17a6-40b7-4e1b-8edb-e9ae704ce604}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\A11y">
+      <UniqueIdentifier>{8e3d6980-ae84-40d8-9523-eaf469b5ef13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\A11y">
+      <UniqueIdentifier>{98145671-25a0-4267-a66d-15983157112f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1440,6 +1446,18 @@
     <ClInclude Include="audio.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="tts.h">
+      <Filter>Header Files\A11y</Filter>
+    </ClInclude>
+    <ClInclude Include="voicebasic.h">
+      <Filter>Header Files\A11y</Filter>
+    </ClInclude>
+    <ClInclude Include="voicemale.h">
+      <Filter>Header Files\A11y</Filter>
+    </ClInclude>
+    <ClInclude Include="voicefemale.h">
+      <Filter>Header Files\A11y</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1568,6 +1586,18 @@
     <ClCompile Include="audio.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
+    <ClCompile Include="tts.cpp">
+      <Filter>Source Files\A11y</Filter>
+    </ClCompile>
+    <ClCompile Include="voicebasic.cpp">
+      <Filter>Source Files\A11y</Filter>
+    </ClCompile>
+    <ClCompile Include="voicefemale.cpp">
+      <Filter>Source Files\A11y</Filter>
+    </ClCompile>
+    <ClCompile Include="voicemale.cpp">
+      <Filter>Source Files\A11y</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">
@@ -1659,6 +1689,5 @@
     <None Include="include\crypto\dso_conf.h.in">
       <Filter>Header Files\include\openssl\crypto</Filter>
     </None>
-    <None Include="..\Northstar-Legal.txt" />
   </ItemGroup>
 </Project>

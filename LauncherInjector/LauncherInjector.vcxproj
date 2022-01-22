@@ -97,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="ns_icon.ico" />
+    <Image Include="ns_logo_a11y.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
