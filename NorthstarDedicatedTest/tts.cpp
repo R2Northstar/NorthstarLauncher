@@ -5,15 +5,18 @@
 #include "tts.h"
 #include "squirrel.h"
 #include "dedicated.h"
+#include "convar.h"
+
+BasicVoice* b1 = new BasicVoice;
+ConVar* Cvar_speechRate;
 
 void say(const char* input, const char* voice)
 {
-	BasicVoice* b1 = new BasicVoice;
-
+	b1->skipSpeech();
+	if (b1->speechRate != Cvar_speechRate->m_fValue) {
+		b1->setRate(Cvar_speechRate->m_fValue);
+	}
 	b1->speakText(input);
-	//b1->outSpeech();
-
-	//delete b1;
 }
 
 // void function TTSsay()
@@ -31,6 +34,8 @@ void InitialiseTTS(HMODULE baseAddress)
 {
 	if (IsDedicated())
 		return;
+
+	Cvar_speechRate = RegisterConVar("speech_rate", "1", FCVAR_NONE, "");
 
 	spdlog::info("adding tts func registration");
 	g_ClientSquirrelManager->AddFuncRegistration("void", "TTSsay", "string input, string voice = \"M\"", "Say something using SAPI TTS", SQ_TTSsay);

@@ -21,6 +21,7 @@ https://docs.microsoft.com/en-us/windows/win32/learnwin32/what-is-a-com-interfac
 				   It is supposed to be used to put inside characters whose indices (like Unicode glyphs) are larger than 255 (or 127, depending...).*/
 
 public:
+	float speechRate;
 	BasicVoice() {
 		pVoice = NULL; /* The ISpVoice interface enables an application to perform text synthesis operations.
 		Applications can speak text strings and text files, or play audio files through this interface.
@@ -57,7 +58,9 @@ public:
 		*/
 	}
 	virtual void speakText(const char* input);
+	virtual void setRate(float rate);
 	virtual void outSpeech();
+	virtual void skipSpeech();
 	virtual ~BasicVoice() {
 		//cout << "Basic Voice Deleted\n";
 		//pVoice = NULL;

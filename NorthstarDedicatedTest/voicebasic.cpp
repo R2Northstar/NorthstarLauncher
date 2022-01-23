@@ -11,13 +11,23 @@ void BasicVoice::speakText(const char* input)
 	}
 }
 
+void BasicVoice::setRate(float rate)
+{
+	speechRate = rate;
+	pVoice->SetRate(rate);
+}
+
 void BasicVoice::outSpeech()
 {
-	thread speechThread([this]()
-	{
-		pVoice->Release();
-		pVoice = NULL;
-		::CoUninitialize();
-	});
-	speechThread.detach();
+	pVoice->Release();
+	pVoice = NULL;
+	::CoUninitialize();
+}
+
+void BasicVoice::skipSpeech()
+{
+	unsigned long skipped;
+	pVoice->Skip(L"SENTENCE", 1, &skipped);
+
+	//spdlog::info("skipped {} sentences", skipped);
 }
