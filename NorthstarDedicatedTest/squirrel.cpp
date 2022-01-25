@@ -100,6 +100,10 @@ SQInteger NSTestFunc(void* sqvm)
 	return 1;
 }
 
+bool __fastcall DisconnectOnScriptErrorHook(__int64 unused) {
+	return 0;
+}
+
 void InitialiseClientSquirrel(HMODULE baseAddress)
 {
 	if (IsDedicated())
@@ -139,6 +143,7 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 	ClientSq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
 	ClientSq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
 
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x787C0, &DisconnectOnScriptErrorHook, reinterpret_cast<LPVOID*>(NULL));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x26130, &CreateNewVMHook<ScriptContext::CLIENT>, reinterpret_cast<LPVOID*>(&ClientCreateNewVM)); // client createnewvm function
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x26E70, &DestroyVMHook<ScriptContext::CLIENT>, reinterpret_cast<LPVOID*>(&ClientDestroyVM)); // client destroyvm function
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x79A50, &ScriptCompileErrorHook<ScriptContext::CLIENT>, reinterpret_cast<LPVOID*>(&ClientSQCompileError)); // client compileerror function
@@ -175,6 +180,7 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x26E20, &DestroyVMHook<ScriptContext::SERVER>, reinterpret_cast<LPVOID*>(&ServerDestroyVM)); // server destroyvm function
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x799E0, &ScriptCompileErrorHook<ScriptContext::SERVER>, reinterpret_cast<LPVOID*>(&ServerSQCompileError)); // server compileerror function
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1D5C0, &CallScriptInitCallbackHook<ScriptContext::SERVER>, reinterpret_cast<LPVOID*>(&ServerCallScriptInitCallback)); // server callscriptinitcallback function
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x78750, &DisconnectOnScriptErrorHook, reinterpret_cast<LPVOID*>(NULL));
 
 	// cheat and clientcmd_can_execute allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
 	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want 
