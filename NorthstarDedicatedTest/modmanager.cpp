@@ -94,6 +94,10 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			ModConVar* convar = new ModConVar;
 			convar->Name = convarObj["Name"].GetString();
 			convar->DefaultValue = convarObj["DefaultValue"].GetString();
+			if (convar->DefaultValue.find(',') != std::string::npos)
+			{
+				spdlog::error("ConVars cannot have ',' in their DefaultValue >:(");
+			}
 
 			if (convarObj.HasMember("HelpString"))
 				convar->HelpString = convarObj["HelpString"].GetString();

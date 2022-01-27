@@ -317,12 +317,17 @@ __int64 __fastcall SendPropArray2_Hook(__int64 recvProp, int elements, int flags
 
 void InitialiseMaxPlayersOverride_Server(HMODULE baseAddress)
 {
-	if (!MaxPlayersIncreaseEnabled())
-		return;
-
 	// get required data
 	serverBase = GetModuleHandleA("server.dll");
 	RandomIntZeroMax = (decltype(RandomIntZeroMax))(GetProcAddress(GetModuleHandleA("vstdlib.dll"), "RandomIntZeroMax"));
+
+	// this is probably a bad idea - but idc really :D
+	ChangeOffset<unsigned int>((char*)baseAddress + 0x6CFB3A + 2, 200);
+
+	ChangeOffset<unsigned int>((char*)baseAddress + 0x6CFB57 + 5, 200);
+
+	if (!MaxPlayersIncreaseEnabled())
+		return;
 
 	// patch max players amount
 	ChangeOffset<unsigned char>((char*)baseAddress + 0x9A44D + 3, NEW_MAX_PLAYERS); // 0x20 (32) => 0x80 (128)
@@ -453,9 +458,6 @@ void InitialiseMaxPlayersOverride_Server(HMODULE baseAddress)
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6654 + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C665B + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 
-	// this is probably a bad idea - but idc really :D
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x6CFB3A + 2, 1);
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x6CFB57 + 5, 1);
 			
 	// GameLoop::RunUserCmds - rebuild
 	HookEnabler hook;
@@ -499,6 +501,10 @@ __int64 __fastcall RecvPropArray2_Hook(__int64 recvProp, int elements, int flags
 
 void InitialiseMaxPlayersOverride_Client(HMODULE baseAddress)
 {
+	// same thing but client :)
+	ChangeOffset<unsigned int>(((char*)baseAddress) + 0x3d114a + 2, 200);
+	ChangeOffset<unsigned int>(((char*)baseAddress) + 0x3d1167 + 5, 200);
+
 	if (!MaxPlayersIncreaseEnabled())
 		return;
 
@@ -650,6 +656,7 @@ void InitialiseMaxPlayersOverride_Client(HMODULE baseAddress)
 
 	// Some other get name func 2 (that seems to be unused too) - change m_bConnected address
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x164834 + 3, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+
 
 	*(DWORD*)((char*)baseAddress + 0xC35068) = 0;
 	auto DT_PlayerResource_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x163400);
