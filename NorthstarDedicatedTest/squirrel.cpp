@@ -427,6 +427,5 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 		std::string argsStr = args.ArgS();
 		
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
-		isScriptBeingCalled = false;
 	}
 }
