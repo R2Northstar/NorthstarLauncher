@@ -2,7 +2,6 @@
 
 void InitialiseClientSquirrel(HMODULE baseAddress);
 void InitialiseServerSquirrel(HMODULE baseAddress);
-bool IsScriptBeingExecuted();
 
 // stolen from ttf2sdk: sqvm types
 typedef float SQFloat;

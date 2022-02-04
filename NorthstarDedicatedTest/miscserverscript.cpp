@@ -4,8 +4,10 @@
 #include "masterserver.h"
 #include "serverauthentication.h"
 #include "gameutils.h"
+#include <iostream>
 #include <fstream>
 #include <filesystem>
+namespace fs = std::filesystem;
 
 // annoying helper function because i can't figure out getting players or entities from sqvm rn
 // wish i didn't have to do it like this, but here we are
@@ -59,6 +61,12 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// For all of those about to file a security issue because people would be able to override system files
+// or bloat up the system immensely:
+// 
+// THIS IS ALREADY A PROBLEM, EVEN IF THESE FUNCTIONS DID NOT EXIST.
+// Why? See DevTextBufferWrite, DevTextBufferClear, and DevTextBufferDumpToFile.
+// as long as someone keeps sv_cheats to 0 - and doesn't allow the user to write files on their own - THIS SHOULD BE FINE.
 SQRESULT SQ_WriteFile(void* sqvm)
 {
 	// mod name for making selected directory :D
@@ -67,12 +75,6 @@ SQRESULT SQ_WriteFile(void* sqvm)
 	const SQChar* content = ServerSq_getstring(sqvm, 3);
 	try
 	{
-		// Yes, that's what I'm calling these. Fight me. Do it.
-		// -JustANormalUser/EladNLG
-		if (IsScriptBeingExecuted()) {
-			ServerSq_pusherror(sqvm, "Attempted to use I/O from console!");
-			return SQRESULT_ERROR;
-		}
 		std::ofstream myfile;
 		std::string finalPath; 
 		finalPath += "R2Northstar/Persistence/";
@@ -105,10 +107,6 @@ SQRESULT SQ_WriteFile(void* sqvm)
 
 SQRESULT SQ_ReadFile(void* sqvm)
 {
-	/*if (IsScriptBeingExecuted()) {
-		ServerSq_pusherror(sqvm, "Attempted to use I/O from console!");
-		return SQRESULT_ERROR;
-	}*/
 	std::ifstream myfile;
 
 	const SQChar* modName = ServerSq_getstring(sqvm, 1);
@@ -154,6 +152,47 @@ SQRESULT SQ_ReadFile(void* sqvm)
 
 	return SQRESULT_NOTNULL;
 }
+
+SQRESULT SQ_GetAllFilesInFolder(void* sqvm)
+{
+
+	const SQChar* modName = ServerSq_getstring(sqvm, 1);
+	const SQChar* path = ServerSq_getstring(sqvm, 2);
+
+	ServerSq_newarray(sqvm, 0);
+
+	try
+	{
+		std::string result;
+
+		std::string finalPath;
+		finalPath += "R2Northstar/Persistence/";
+		finalPath += modName;
+		finalPath += "/";
+		finalPath += path;
+		if (finalPath.find("..") != std::string::npos)
+		{
+			ServerSq_pusherror(sqvm, "Attempted to access higher directory!!!!");
+			return SQRESULT_ERROR;
+		}
+
+		using iterator = fs::directory_iterator;
+
+		const iterator end;
+		for (iterator iter{ finalPath }; iter != end; ++iter)
+		{
+			ServerSq_pushstring(sqvm, iter->path().filename().string().c_str(), -1);
+			
+			ServerSq_arrayappend(sqvm, -2);
+		}
+	}
+	catch (...)
+	{
+		ServerSq_pusherror(sqvm, fmt::format("Error whilst reading from folder {} (make sure it exists!)", path).c_str());
+		return SQRESULT_ERROR;
+	}
+	return SQRESULT_NOTNULL;
+}
 void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
 {
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
@@ -161,4 +200,5 @@ void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
 	g_ServerSquirrelManager->AddFuncRegistration("void", "WriteFile", "string modName, string path, string content", "", SQ_WriteFile);
 	g_ServerSquirrelManager->AddFuncRegistration("string", "ReadFile", "string modName, string path", "", SQ_ReadFile);
+	g_ServerSquirrelManager->AddFuncRegistration("array<string>", "GetAllFilesInFolder", "string modName, string path", "", SQ_GetAllFilesInFolder);
 }

@@ -305,6 +305,36 @@ void ModManager::LoadMods()
 				}
 			}
 		}
+
+		// MOUNT ALLLLLLLLL OF THE VPKS
+		// EVERY SINGLE ONE
+		// YOU GET A VPK
+		// YOU GET A VPK
+		// AAAAAAAND Y O U GET A VPK 
+		for (auto& file : fs::directory_iterator("vpk"))
+		{
+			if (!fs::is_regular_file(file))
+			{
+				continue;
+			}
+
+			std::regex regex = std::regex("client_(.+)\\.bsp");
+
+			std::string fileName = file.path().filename().generic_string();
+			std::smatch m;
+			std::regex_search(fileName, m, regex);
+			if (!m.empty())
+			{
+				std::string path = "vpk/" + m[0].str();
+				if (std::find(vpkList.begin(), vpkList.end(), path) == vpkList.end())
+				{
+					
+					spdlog::info("Found map VPK: {}", path);
+					vpkList.emplace_back(path);
+					//m_mapNames.emplace_back(m[1].str());
+				}
+			}
+		}
 			
 		// read keyvalues paths
 		if (fs::exists(mod.ModDirectory / "keyvalues"))
