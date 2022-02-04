@@ -342,7 +342,7 @@ void ModManager::LoadMods()
 				}
 			}
 		}
-			
+		
 		// read keyvalues paths
 		if (fs::exists(mod.ModDirectory / "keyvalues"))
 		{

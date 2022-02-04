@@ -63,7 +63,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 
 // For all of those about to file a security issue because people would be able to override system files
 // or bloat up the system immensely:
-// 
+//
 // THIS IS ALREADY A PROBLEM, EVEN IF THESE FUNCTIONS DID NOT EXIST.
 // Why? See DevTextBufferWrite, DevTextBufferClear, and DevTextBufferDumpToFile.
 // as long as someone keeps sv_cheats to 0 - and doesn't allow the user to write files on their own - THIS SHOULD BE FINE.
