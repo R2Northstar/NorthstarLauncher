@@ -1,5 +1,5 @@
 # NorthstarLauncher
-[Build Status](!https://github.com/R2Northstar/NorthstarLauncher/actions/workflows/ci.yml/badge.svg)
+![Build Status](https://github.com/R2Northstar/NorthstarLauncher/actions/workflows/ci.yml/badge.svg)
 
 Launcher used to modify Titanfall 2 to allow Northstar mods and custom content to be loaded.
 
