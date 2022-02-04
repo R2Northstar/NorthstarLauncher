@@ -317,17 +317,12 @@ __int64 __fastcall SendPropArray2_Hook(__int64 recvProp, int elements, int flags
 
 void InitialiseMaxPlayersOverride_Server(HMODULE baseAddress)
 {
+	if (!MaxPlayersIncreaseEnabled())
+		return;
+
 	// get required data
 	serverBase = GetModuleHandleA("server.dll");
 	RandomIntZeroMax = (decltype(RandomIntZeroMax))(GetProcAddress(GetModuleHandleA("vstdlib.dll"), "RandomIntZeroMax"));
-
-	// this is probably a bad idea - but idc really :D
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x6CFB3A + 2, 200);
-
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x6CFB57 + 5, 200);
-
-	if (!MaxPlayersIncreaseEnabled())
-		return;
 
 	// patch max players amount
 	ChangeOffset<unsigned char>((char*)baseAddress + 0x9A44D + 3, NEW_MAX_PLAYERS); // 0x20 (32) => 0x80 (128)
@@ -500,10 +495,6 @@ __int64 __fastcall RecvPropArray2_Hook(__int64 recvProp, int elements, int flags
 
 void InitialiseMaxPlayersOverride_Client(HMODULE baseAddress)
 {
-	// same thing but client :)
-	ChangeOffset<unsigned int>(((char*)baseAddress) + 0x3d114a + 2, 200);
-	ChangeOffset<unsigned int>(((char*)baseAddress) + 0x3d1167 + 5, 200);
-
 	if (!MaxPlayersIncreaseEnabled())
 		return;
 
