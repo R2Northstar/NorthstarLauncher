@@ -460,7 +460,7 @@ PrintFatalSquirrelErrorType PrintFatalSquirrelError;
 void PrintFatalSquirrelErrorHook(void* sqvm)
 {
 	PrintFatalSquirrelError(sqvm);
-	g_pEngine->m_nQuitting = EngineQuitState::QUIT_NOTQUITTING;
+	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
 }
 
 void InitialiseDedicatedServerGameDLL(HMODULE baseAddress)

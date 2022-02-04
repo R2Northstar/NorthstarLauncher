@@ -263,6 +263,11 @@ template<ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const ch
 	// in the future it'd be nice to do an actual error with UICodeCallback_ErrorDialog here, but only if we're compiling level scripts
 	// compilestring and stuff shouldn't tho
 	// though, that also has potential to be REALLY bad if we're compiling ui scripts lol
+
+	switch (realContext)
+	{
+
+	}
 }
 
 template<ScriptContext context> char CallScriptInitCallbackHook(void* sqvm, const char* callback)
@@ -405,6 +410,78 @@ template<ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 		isScriptBeingCalled = true;
 		std::string argsStr = args.ArgS();
 
+		// whilst this might be of mild annoyance, 
+		// we're only checking for a space from the left cause we don't want to prevent CreateExampleThread()
+		// but we do want to prevent thread WriteFile("test", "test", "test"), which cannot be blocked by our precaution.
+		// and whilst this may prevent `printt("thread be like")`, that's in my opinion on a level of a niche use case. like c'mon.
+		// and no, SpinOff() doesn't actually work. I tried.
+		// I wish it did so I could block it too.
+		// == += -= ||&& /= 
+		if (argsStr.find("thread ") != std::string::npos)
+		{
+			spdlog::warn("As a security caution, threads have been disabled.");
+			return;
+		}
+		// whilst this might be of mild annoyance, 
+		// we're only checking for a space from the left cause we don't want to prevent CreateExampleThread()
+		// but we do want to prevent thread WriteFile("test", "test", "test"), which cannot be blocked by our precaution.
+		// and whilst this may prevent `printt("thread be like")`, that's in my opinion on a level of a niche use case. like c'mon.
+		// and no, SpinOff() doesn't actually work. I tried.
+		// I wish it did so I could block it too.
+		// == += -= ||&& /= 
+		if (argsStr.find("thread ") != std::string::npos)
+		{
+			spdlog::warn("As a security caution, threads have been disabled.");
+			return;
+		}
+		// whilst this might be of mild annoyance, 
+		// we're only checking for a space from the left cause we don't want to prevent CreateExampleThread()
+		// but we do want to prevent thread WriteFile("test", "test", "test"), which cannot be blocked by our precaution.
+		// and whilst this may prevent `printt("thread be like")`, that's in my opinion on a level of a niche use case. like c'mon.
+		// and no, SpinOff() doesn't actually work. I tried.
+		// I wish it did so I could block it too.
+		// == += -= ||&& /= 
+		if (argsStr.find("thread ") != std::string::npos)
+		{
+			spdlog::warn("As a security caution, threads have been disabled.");
+			return;
+		}
+		// whilst this might be of mild annoyance, 
+		// we're only checking for a space from the left cause we don't want to prevent CreateExampleThread()
+		// but we do want to prevent thread WriteFile("test", "test", "test"), which cannot be blocked by our precaution.
+		// and whilst this may prevent `printt("thread be like")`, that's in my opinion on a level of a niche use case. like c'mon.
+		// and no, SpinOff() doesn't actually work. I tried.
+		// I wish it did so I could block it too.
+		// == += -= ||&& /= 
+		if (argsStr.find("thread ") != std::string::npos)
+		{
+			spdlog::warn("As a security caution, threads have been disabled.");
+			return;
+		}
+		// whilst this might be of mild annoyance, 
+		// we're only checking for a space from the left cause we don't want to prevent CreateExampleThread()
+		// but we do want to prevent thread WriteFile("test", "test", "test"), which cannot be blocked by our precaution.
+		// and whilst this may prevent `printt("thread be like")`, that's in my opinion on a level of a niche use case. like c'mon.
+		// and no, SpinOff() doesn't actually work. I tried.
+		// I wish it did so I could block it too.
+		// == += -= ||&& /= 
+		if (argsStr.find("thread ") != std::string::npos)
+		{
+			spdlog::warn("As a security caution, threads have been disabled.");
+			return;
+		}
+		// whilst this might be of mild annoyance, 
+		// we're only checking for a space from the left cause we don't want to prevent CreateExampleThread()
+		// but we do want to prevent thread WriteFile("test", "test", "test"), which cannot be blocked by our precaution.
+		// and whilst this may prevent `printt("thread be like")`, that's in my opinion on a level of a niche use case. like c'mon.
+		// and no, SpinOff() doesn't actually work. I tried.
+		// I wish it did so I could block it too.
+		// == += -= ||&& /= 
+		if (argsStr.find("thread ") != std::string::npos)
+		{
+			spdlog::warn("As a security caution, threads have been disabled.");
+			return;
+		}
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
 		isScriptBeingCalled = false;
 	}
