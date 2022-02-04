@@ -72,16 +72,23 @@ SQRESULT SQ_WriteFile(void* sqvm)
 	// mod name for making selected directory :D
 	const SQChar* modName = ServerSq_getstring(sqvm, 1);
 	const SQChar* path = ServerSq_getstring(sqvm, 2);
-	const SQChar* content = ServerSq_getstring(sqvm, 3);
+	const SQChar* fileName = ServerSq_getstring(sqvm, 3);
+	const SQChar* content = ServerSq_getstring(sqvm, 4);
 	try
 	{
 		std::ofstream myfile;
 		std::string finalPath;
 		finalPath += "R2Northstar/Persistence/";
 		finalPath += modName;
-		std::filesystem::create_directories(finalPath);
-		finalPath += "/";
+		if (path[0] != '/')
+			finalPath += '/';
 		finalPath += path;
+		std::filesystem::create_directories(finalPath);
+		
+		if (finalPath[finalPath.length() - 1] != '/' && fileName[0] != '/')
+			finalPath += '/';
+
+		finalPath += fileName;
 		if (finalPath.find("..") != std::string::npos)
 		{
 			ServerSq_pusherror(sqvm, "Attempted to access higher directory!!!!");
@@ -111,17 +118,20 @@ SQRESULT SQ_ReadFile(void* sqvm)
 
 	const SQChar* modName = ServerSq_getstring(sqvm, 1);
 	const SQChar* path = ServerSq_getstring(sqvm, 2);
+	const SQChar* fileName = ServerSq_getstring(sqvm, 3);
 
 	try
 	{
-
 		std::string result;
 
 		std::string finalPath;
 		finalPath += "R2Northstar/Persistence/";
 		finalPath += modName;
-		finalPath += "/";
+		if (path[0] != '/') finalPath += '/';
 		finalPath += path;
+		if (finalPath[finalPath.length() - 1] != '/' && fileName[0] != '/')
+			finalPath += '/';
+		finalPath += fileName;
 		if (finalPath.find("..") != std::string::npos)
 		{
 			ServerSq_pusherror(sqvm, "Attempted to access higher directory!!!!");
@@ -181,8 +191,65 @@ SQRESULT SQ_GetAllFilesInFolder(void* sqvm)
 		const iterator end;
 		for (iterator iter{finalPath}; iter != end; ++iter)
 		{
+			if (iter->is_directory()) continue;
 			ServerSq_pushstring(sqvm, iter->path().filename().string().c_str(), -1);
 			ServerSq_arrayappend(sqvm, -2);
+		}
+	}
+	catch (...)
+	{
+		ServerSq_pusherror(sqvm, fmt::format("Error whilst reading from folder {} (make sure it exists!)", path).c_str());
+		return SQRESULT_ERROR;
+	}
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_GetAllFoldersInFolder(void* sqvm)
+{
+
+	const SQChar* modName = ServerSq_getstring(sqvm, 1);
+	const SQChar* path = ServerSq_getstring(sqvm, 2);
+
+	ServerSq_newarray(sqvm, 0);
+
+	try
+	{
+		std::string result;
+
+		std::string finalPath;
+		finalPath += "R2Northstar/Persistence/";
+		finalPath += modName;
+		finalPath += "/";
+		finalPath += path;
+		if (finalPath.find("..") != std::string::npos)
+		{
+			ServerSq_pusherror(sqvm, "Attempted to access higher directory!!!!");
+			return SQRESULT_ERROR;
+		}
+
+		if (ServerSq_getbool(sqvm, 3))
+		{
+			using iterator = fs::recursive_directory_iterator;
+
+			const iterator end;
+			for (iterator iter{finalPath}; iter != end; ++iter)
+			{
+				if (!iter->is_directory()) continue;
+				ServerSq_pushstring(sqvm, iter->path().string().c_str(), -1);
+				ServerSq_arrayappend(sqvm, -2);
+			}
+		}
+		else
+		{
+			using iterator = fs::directory_iterator;
+
+			const iterator end;
+			for (iterator iter{finalPath}; iter != end; ++iter)
+			{
+				if (!iter->is_directory()) continue;
+				ServerSq_pushstring(sqvm, iter->path().string().c_str(), -1);
+				ServerSq_arrayappend(sqvm, -2);
+			}
 		}
 	}
 	catch (...)
@@ -198,8 +265,10 @@ void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
 		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "WriteFile", "string modName, string path, string content", "", SQ_WriteFile);
-	g_ServerSquirrelManager->AddFuncRegistration("string", "ReadFile", "string modName, string path", "", SQ_ReadFile);
+	g_ServerSquirrelManager->AddFuncRegistration("void", "WriteFile", "string modName, string path, string fileName, string content", "", SQ_WriteFile);
+	g_ServerSquirrelManager->AddFuncRegistration("string", "ReadFile", "string modName, string path, string fileName", "", SQ_ReadFile);
 	g_ServerSquirrelManager->AddFuncRegistration(
 		"array<string>", "GetAllFilesInFolder", "string modName, string path", "", SQ_GetAllFilesInFolder);
+	g_ServerSquirrelManager->AddFuncRegistration(
+		"array<string>", "GetAllFoldersInFolder", "string modName, string path, bool recursive = false", "", SQ_GetAllFoldersInFolder);
 }
