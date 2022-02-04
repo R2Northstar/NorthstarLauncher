@@ -318,7 +318,7 @@ void ModManager::LoadMods()
 		// EVERY SINGLE ONE
 		// YOU GET A VPK
 		// YOU GET A VPK
-		// AAAAAAAND Y O U GET A VPK 
+		// AAAAAAAND Y O U GET A VPK
 		for (auto& file : fs::directory_iterator("vpk"))
 		{
 			if (!fs::is_regular_file(file))
@@ -336,10 +336,9 @@ void ModManager::LoadMods()
 				std::string path = "vpk/" + m[0].str();
 				if (std::find(vpkList.begin(), vpkList.end(), path) == vpkList.end())
 				{
-					
 					spdlog::info("Found map VPK: {}", path);
 					vpkList.emplace_back(path);
-					//m_mapNames.emplace_back(m[1].str());
+					// m_mapNames.emplace_back(m[1].str());
 				}
 			}
 		}

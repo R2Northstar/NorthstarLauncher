@@ -76,7 +76,7 @@ SQRESULT SQ_WriteFile(void* sqvm)
 	try
 	{
 		std::ofstream myfile;
-		std::string finalPath; 
+		std::string finalPath;
 		finalPath += "R2Northstar/Persistence/";
 		finalPath += modName;
 		std::filesystem::create_directories(finalPath);
@@ -179,10 +179,9 @@ SQRESULT SQ_GetAllFilesInFolder(void* sqvm)
 		using iterator = fs::directory_iterator;
 
 		const iterator end;
-		for (iterator iter{ finalPath }; iter != end; ++iter)
+		for (iterator iter{finalPath}; iter != end; ++iter)
 		{
 			ServerSq_pushstring(sqvm, iter->path().filename().string().c_str(), -1);
-			
 			ServerSq_arrayappend(sqvm, -2);
 		}
 	}
@@ -201,5 +200,6 @@ void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
 	g_ServerSquirrelManager->AddFuncRegistration("void", "WriteFile", "string modName, string path, string content", "", SQ_WriteFile);
 	g_ServerSquirrelManager->AddFuncRegistration("string", "ReadFile", "string modName, string path", "", SQ_ReadFile);
-	g_ServerSquirrelManager->AddFuncRegistration("array<string>", "GetAllFilesInFolder", "string modName, string path", "", SQ_GetAllFilesInFolder);
+	g_ServerSquirrelManager->AddFuncRegistration(
+		"array<string>", "GetAllFilesInFolder", "string modName, string path", "", SQ_GetAllFilesInFolder);
 }
