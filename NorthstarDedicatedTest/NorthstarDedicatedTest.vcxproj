@@ -109,9 +109,12 @@
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="bansystem.h" />
+    <ClInclude Include="bitbuf.h" />
+    <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="concommand.h" />
+    <ClInclude Include="configurables.h" />
     <ClInclude Include="context.h" />
     <ClInclude Include="convar.h" />
     <ClInclude Include="dedicated.h" />
@@ -550,9 +553,11 @@
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
+    <ClCompile Include="buildainfile.cpp" />
     <ClCompile Include="chatcommand.cpp" />
     <ClCompile Include="clientauthhooks.cpp" />
     <ClCompile Include="concommand.cpp" />
+    <ClCompile Include="configurables.cpp" />
     <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="dedicated.cpp" />
@@ -625,7 +630,7 @@
     <None Include="include\spdlog\fmt\bundled\LICENSE.rst" />
   </ItemGroup>
   <ItemGroup>
-	  <MASM Include="audio_asm.asm" />
+    <MASM Include="audio_asm.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

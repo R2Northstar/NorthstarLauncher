@@ -1440,6 +1440,15 @@
     <ClInclude Include="audio.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="buildainfile.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="bitbuf.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="configurables.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1568,6 +1577,12 @@
     <ClCompile Include="audio.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
+    <ClCompile Include="buildainfile.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="configurables.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">
@@ -1659,6 +1674,5 @@
     <None Include="include\crypto\dso_conf.h.in">
       <Filter>Header Files\include\openssl\crypto</Filter>
     </None>
-    <None Include="..\Northstar-Legal.txt" />
   </ItemGroup>
 </Project>

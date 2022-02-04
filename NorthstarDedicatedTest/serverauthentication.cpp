@@ -12,38 +12,42 @@
 #include <fstream>
 #include <filesystem>
 #include <thread>
+#include "configurables.h"
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
 // hook types
 
-typedef void*(*CBaseServer__ConnectClientType)(void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11, void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17);
+typedef void* (*CBaseServer__ConnectClientType)(
+	void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11,
+	void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17);
 CBaseServer__ConnectClientType CBaseServer__ConnectClient;
 
-typedef bool(*CBaseClient__ConnectType)(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7);
+typedef bool (*CBaseClient__ConnectType)(
+	void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7);
 CBaseClient__ConnectType CBaseClient__Connect;
 
-typedef void(*CBaseClient__ActivatePlayerType)(void* self);
+typedef void (*CBaseClient__ActivatePlayerType)(void* self);
 CBaseClient__ActivatePlayerType CBaseClient__ActivatePlayer;
 
 CBaseClient__DisconnectType CBaseClient__Disconnect;
 
-typedef char(*CGameClient__ExecuteStringCommandType)(void* self, uint32_t unknown, const char* pCommandString);
+typedef char (*CGameClient__ExecuteStringCommandType)(void* self, uint32_t unknown, const char* pCommandString);
 CGameClient__ExecuteStringCommandType CGameClient__ExecuteStringCommand;
 
-typedef char(*__fastcall CNetChan___ProcessMessagesType)(void* self, void* buf);
+typedef char (*__fastcall CNetChan___ProcessMessagesType)(void* self, void* buf);
 CNetChan___ProcessMessagesType CNetChan___ProcessMessages;
 
-typedef char(*CBaseClient__SendServerInfoType)(void* self);
+typedef char (*CBaseClient__SendServerInfoType)(void* self);
 CBaseClient__SendServerInfoType CBaseClient__SendServerInfo;
 
-typedef bool(*ProcessConnectionlessPacketType)(void* a1, netpacket_t* packet);
+typedef bool (*ProcessConnectionlessPacketType)(void* a1, netpacket_t* packet);
 ProcessConnectionlessPacketType ProcessConnectionlessPacket;
 
-typedef void(*CServerGameDLL__OnRecievedSayTextMessageType)(void* self, unsigned int senderClientIndex, const char* message, char unknown);
+typedef void (*CServerGameDLL__OnRecievedSayTextMessageType)(void* self, unsigned int senderClientIndex, const char* message, char unknown);
 CServerGameDLL__OnRecievedSayTextMessageType CServerGameDLL__OnRecievedSayTextMessage;
 
-typedef void(*ConCommand__DispatchType)(ConCommand* command, const CCommand& args, void* a3);
+typedef void (*ConCommand__DispatchType)(ConCommand* command, const CCommand& args, void* a3);
 ConCommand__DispatchType ConCommand__Dispatch;
 
 // global vars
@@ -70,23 +74,36 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 	m_runningPlayerAuthThread = true;
 
 	// listen is a blocking call so thread this
-	std::thread serverThread([this] {
-			// this is just a super basic way to verify that servers have ports open, masterserver will try to read this before ensuring server is legit
-			m_playerAuthServer.Get("/verify", [](const httplib::Request& request, httplib::Response& response) {
-					response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain");
-				});
+	std::thread serverThread(
+		[this]
+		{
+			// this is just a super basic way to verify that servers have ports open, masterserver will try to read this before ensuring
+			// server is legit
+			m_playerAuthServer.Get(
+				"/verify", [](const httplib::Request& request, httplib::Response& response)
+				{ response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain"); });
 
-			m_playerAuthServer.Post("/authenticate_incoming_player", [this](const httplib::Request& request, httplib::Response& response) {
-					// can't just do request.remote_addr == Cvar_ns_masterserver_hostname->m_pszString because the cvar can be a url, gotta resolve an ip from it for comparisons
-					//unsigned long remoteAddr = inet_addr(request.remote_addr.c_str());
+			m_playerAuthServer.Post(
+				"/authenticate_incoming_player",
+				[this](const httplib::Request& request, httplib::Response& response)
+				{
+					// can't just do request.remote_addr == Cvar_ns_masterserver_hostname->m_pszString because the cvar can be a url, gotta
+					// resolve an ip from it for comparisons
+					// unsigned long remoteAddr = inet_addr(request.remote_addr.c_str());
 					//
-					//char* addrPtr = Cvar_ns_masterserver_hostname->m_pszString;
-					//char* typeStart = strstr(addrPtr, "://");
-					//if (typeStart)
+					// char* addrPtr = Cvar_ns_masterserver_hostname->m_pszString;
+					// char* typeStart = strstr(addrPtr, "://");
+					// if (typeStart)
 					//	addrPtr = typeStart + 3;
-					//hostent* resolvedRemoteAddr = gethostbyname((const char*)addrPtr);
+					// hostent* resolvedRemoteAddr = gethostbyname((const char*)addrPtr);
 
-					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= 65335 || !request.has_param("serverAuthToken") || strcmp(g_MasterServerManager->m_ownServerAuthToken, request.get_param_value("serverAuthToken").c_str()))// || !resolvedRemoteAddr || ((in_addr**)resolvedRemoteAddr->h_addr_list)[0]->S_un.S_addr != remoteAddr)
+					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= 65335 ||
+						!request.has_param("serverAuthToken") ||
+						strcmp(
+							g_MasterServerManager->m_ownServerAuthToken,
+							request.get_param_value("serverAuthToken")
+								.c_str())) // || !resolvedRemoteAddr || ((in_addr**)resolvedRemoteAddr->h_addr_list)[0]->S_un.S_addr !=
+										   // remoteAddr)
 					{
 						response.set_content("{\"success\":false}", "application/json");
 						return;
@@ -108,7 +125,7 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 
 			m_playerAuthServer.listen("0.0.0.0", Cvar_ns_player_auth_port->m_nValue);
 		});
-	
+
 	serverThread.detach();
 }
 
@@ -140,14 +157,34 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 			// uuid
 			strcpy((char*)player + 0xF500, strUid.c_str());
 
-			// copy pdata into buffer
-			memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
+			// reset from disk if we're doing that
+			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
+			{
+				std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
+
+				if (!pdataStream.fail())
+				{
+					// get file length
+					pdataStream.seekg(0, pdataStream.end);
+					auto length = pdataStream.tellg();
+					pdataStream.seekg(0, pdataStream.beg);
+
+					// copy pdata into buffer
+					pdataStream.read((char*)player + 0x4FA, length);
+				}
+				else // fallback to remote pdata if no local default
+					memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
+			}
+			else
+			{
+				// copy pdata into buffer
+				memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
+			}
 
 			// set persistent data as ready, we use 0x4 internally to mark the client as using remote persistence
 			*((char*)player + 0x4a0) = (char)0x4;
 		}
 	}
-
 
 	if (authFail)
 	{
@@ -162,14 +199,14 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		strcpy((char*)player + 0xF500, strUid.c_str());
 
 		// try reading pdata file for player
-		std::string pdataPath = "R2Northstar/playerdata_";
+		std::string pdataPath = GetNorthstarPrefix() + "/playerdata_";
 		pdataPath += strUid;
 		pdataPath += ".pdata";
 
 		std::fstream pdataStream(pdataPath, std::ios_base::in);
 		if (pdataStream.fail()) // file doesn't exist, use placeholder
-			pdataStream = std::fstream("R2Northstar/placeholder_playerdata.pdata");
-		
+			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata");
+
 		// get file length
 		pdataStream.seekg(0, pdataStream.end);
 		auto length = pdataStream.tellg();
@@ -216,14 +253,14 @@ void ServerAuthenticationManager::WritePersistentData(void* player)
 	// we use 0x4 internally to mark clients as using remote persistence
 	if (*((char*)player + 0x4A0) == (char)0x4)
 	{
-		g_MasterServerManager->WritePlayerPersistentData((char*)player + 0xF500, (char*)player + 0x4FA, m_additionalPlayerData[player].pdataSize);
+		g_MasterServerManager->WritePlayerPersistentData(
+			(char*)player + 0xF500, (char*)player + 0x4FA, m_additionalPlayerData[player].pdataSize);
 	}
 	else if (CVar_ns_auth_allow_insecure_write->m_nValue)
 	{
 		// todo: write pdata to disk here
 	}
 }
-
 
 // auth hooks
 
@@ -232,7 +269,9 @@ void ServerAuthenticationManager::WritePersistentData(void* player)
 char* nextPlayerToken;
 uint64_t nextPlayerUid;
 
-void* CBaseServer__ConnectClientHook(void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11, void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17)
+void* CBaseServer__ConnectClientHook(
+	void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11,
+	void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17)
 {
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	nextPlayerToken = serverFilter;
@@ -246,7 +285,7 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
-	
+
 	if (!ret)
 		return ret;
 
@@ -258,7 +297,9 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 
 	if (strlen(name) >= 64) // fix for name overflow bug
 		CBaseClient__Disconnect(self, 1, "Invalid name");
-	else if (!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) && g_MasterServerManager->m_bRequireClientAuth)
+	else if (
+		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) &&
+		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
@@ -276,9 +317,11 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 void CBaseClient__ActivatePlayerHook(void* self)
 {
 	// if we're authed, write our persistent data
-	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call (since this func is called on map loads)
+	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
+	// (since this func is called on map loads)
 	if (*((char*)self + 0x4A0) >= (char)0x3 && !g_ServerAuthenticationManager->RemovePlayerAuthData(self))
 	{
+		g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = false;
 		g_ServerAuthenticationManager->WritePersistentData(self);
 		g_MasterServerManager->UpdateServerPlayerCount(g_ServerAuthenticationManager->m_additionalPlayerData.size());
 	}
@@ -317,7 +360,7 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 }
 
 // maybe this should be done outside of auth code, but effort to refactor rn and it sorta fits
-typedef bool(*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, cmd_source_t commandSource);
+typedef bool (*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, cmd_source_t commandSource);
 CCommand__TokenizeType CCommand__Tokenize;
 
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
@@ -334,7 +377,8 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 		}
 
 		g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota++;
-		if (g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota > CVar_sv_quota_stringcmdspersecond->m_nValue)
+		if (g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota >
+			CVar_sv_quota_stringcmdspersecond->m_nValue)
 		{
 			// too many stringcmds, dc player
 			CBaseClient__Disconnect(self, 1, "Sent too many stringcmd commands");
@@ -350,10 +394,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	if (!CCommand__Tokenize(tempCommand, pCommandString, cmd_source_t::kCommandSrcCode) || !tempCommand.ArgC())
 		return false;
 
-	ICvar* icvar = *g_pCvar; // hellish call because i couldn't get icvar vtable stuff in convar.h to get the right offset for whatever reason
-	typedef ConCommand*(*FindCommandBaseType)(ICvar* self, const char* varName);
-	FindCommandBaseType FindCommandBase = *(FindCommandBaseType*)((*(char**)icvar) + 112);
-	ConCommand* command = FindCommandBase(icvar, tempCommand.Arg(0));
+	ConCommand* command = FindConCommand(tempCommand.Arg(0));
 
 	// if the command doesn't exist pass it on to ExecuteStringCommand for script clientcommands and stuff
 	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE))
@@ -374,7 +415,7 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 {
 	double startTime = Plat_FloatTime();
 	char ret = CNetChan___ProcessMessages(self, buf);
-	
+
 	// check processing limits, unless we're in a level transition
 	if (g_pHostState->m_iCurrentState == HostState_t::HS_RUN && ThreadInServerFrameThread())
 	{
@@ -387,17 +428,23 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 			return ret;
 
 		// reset every second
-		if (startTime - g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart >= 1.0 || g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart == -1.0)
+		if (startTime - g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart >= 1.0 ||
+			g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart == -1.0)
 		{
 			g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart = startTime;
 			g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime = 0.0;
 		}
-		g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime += (Plat_FloatTime() * 1000) - (startTime * 1000);
+		g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime +=
+			(Plat_FloatTime() * 1000) - (startTime * 1000);
 
-		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >= Cvar_net_chan_limit_msec_per_sec->m_nValue)
+		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >=
+			Cvar_net_chan_limit_msec_per_sec->m_nValue)
 		{
-			spdlog::warn("Client {} hit netchan processing limit with {}ms of processing time this second (max is {})", (char*)sender + 0x16, g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime, Cvar_net_chan_limit_msec_per_sec->m_nValue);
-			
+			spdlog::warn(
+				"Client {} hit netchan processing limit with {}ms of processing time this second (max is {})", (char*)sender + 0x16,
+				g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime,
+				Cvar_net_chan_limit_msec_per_sec->m_nValue);
+
 			// nonzero = kick, 0 = warn
 			if (Cvar_net_chan_limit_mode->m_nValue)
 			{
@@ -417,12 +464,14 @@ void CBaseClient__SendServerInfoHook(void* self)
 	bWasWritingStringTableSuccessful = true;
 	CBaseClient__SendServerInfo(self);
 	if (!bWasWritingStringTableSuccessful)
-		CBaseClient__Disconnect(self, 1, "Overflowed CNetworkStringTableContainer::WriteBaselines, try restarting your client and reconnecting");
+		CBaseClient__Disconnect(
+			self, 1, "Overflowed CNetworkStringTableContainer::WriteBaselines, try restarting your client and reconnecting");
 }
 
 bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 {
-	if (packet->adr.type == NA_IP && (!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->m_nValue) || !Cvar_net_datablock_enabled->m_nValue))
+	if (packet->adr.type == NA_IP &&
+		(!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->m_nValue) || !Cvar_net_datablock_enabled->m_nValue))
 	{
 		// bad lookup: optimise later tm
 		UnconnectedPlayerSendData* sendData = nullptr;
@@ -454,7 +503,9 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 
 		if (sendData->packetCount >= Cvar_sv_querylimit_per_sec->m_nValue)
 		{
-			spdlog::warn("Client went over connectionless ratelimit of {} per sec with packet of type {}", Cvar_sv_querylimit_per_sec->m_nValue, packet->data[4]);
+			spdlog::warn(
+				"Client went over connectionless ratelimit of {} per sec with packet of type {}", Cvar_sv_querylimit_per_sec->m_nValue,
+				packet->data[4]);
 
 			// timeout for a minute
 			sendData->timeoutEnd = Plat_FloatTime() + 60.0;
@@ -487,31 +538,62 @@ void CServerGameDLL__OnRecievedSayTextMessageHook(void* self, unsigned int sende
 	CServerGameDLL__OnRecievedSayTextMessage(self, senderClientIndex, message, unknown);
 }
 
+void ResetPdataCommand(const CCommand& args)
+{
+	if (*sv_m_State == server_state_t::ss_active)
+	{
+		spdlog::error("ns_resetpersistence must be entered from the main menu");
+		return;
+	}
+
+	spdlog::info("resetting persistence on next lobby load...");
+	g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = true;
+}
+
 void InitialiseServerAuthentication(HMODULE baseAddress)
 {
 	g_ServerAuthenticationManager = new ServerAuthenticationManager;
 
-	Cvar_ns_erase_auth_info = RegisterConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
-	CVar_ns_auth_allow_insecure = RegisterConVar("ns_auth_allow_insecure", "0", FCVAR_GAMEDLL, "Whether this server will allow unauthenicated players to connect");
-	CVar_ns_auth_allow_insecure_write = RegisterConVar("ns_auth_allow_insecure_write", "0", FCVAR_GAMEDLL, "Whether the pdata of unauthenticated clients will be written to disk when changed");
+	Cvar_ns_erase_auth_info = RegisterConVar(
+		"ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
+	CVar_ns_auth_allow_insecure =
+		RegisterConVar("ns_auth_allow_insecure", "0", FCVAR_GAMEDLL, "Whether this server will allow unauthenicated players to connect");
+	CVar_ns_auth_allow_insecure_write = RegisterConVar(
+		"ns_auth_allow_insecure_write", "0", FCVAR_GAMEDLL,
+		"Whether the pdata of unauthenticated clients will be written to disk when changed");
 	// literally just stolen from a fix valve used in csgo
-	CVar_sv_quota_stringcmdspersecond = RegisterConVar("sv_quota_stringcmdspersecond", "60", FCVAR_GAMEDLL, "How many string commands per second clients are allowed to submit, 0 to disallow all string commands");
+	CVar_sv_quota_stringcmdspersecond = RegisterConVar(
+		"sv_quota_stringcmdspersecond", "60", FCVAR_GAMEDLL,
+		"How many string commands per second clients are allowed to submit, 0 to disallow all string commands");
 	// https://blog.counter-strike.net/index.php/2019/07/24922/ but different because idk how to check what current tick number is
-	Cvar_net_chan_limit_mode = RegisterConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
-	Cvar_net_chan_limit_msec_per_sec = RegisterConVar("net_chan_limit_msec_per_sec", "0", FCVAR_GAMEDLL, "Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
+	Cvar_net_chan_limit_mode =
+		RegisterConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
+	Cvar_net_chan_limit_msec_per_sec = RegisterConVar(
+		"net_chan_limit_msec_per_sec", "0", FCVAR_GAMEDLL,
+		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	Cvar_ns_player_auth_port = RegisterConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	Cvar_sv_querylimit_per_sec = RegisterConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
 	Cvar_sv_max_chat_messages_per_sec = RegisterConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
 
+	RegisterConCommand("ns_resetpersistence", ResetPdataCommand, "resets your pdata when you next enter the lobby", FCVAR_NONE);
+
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x114430, &CBaseServer__ConnectClientHook, reinterpret_cast<LPVOID*>(&CBaseServer__ConnectClient));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x114430, &CBaseServer__ConnectClientHook, reinterpret_cast<LPVOID*>(&CBaseServer__ConnectClient));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x101740, &CBaseClient__ConnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Connect));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x100F80, &CBaseClient__ActivatePlayerHook, reinterpret_cast<LPVOID*>(&CBaseClient__ActivatePlayer));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1012C0, &CBaseClient__DisconnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Disconnect));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1022E0, &CGameClient__ExecuteStringCommandHook, reinterpret_cast<LPVOID*>(&CGameClient__ExecuteStringCommand));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x2140A0, &CNetChan___ProcessMessagesHook, reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x104FB0, &CBaseClient__SendServerInfoHook, reinterpret_cast<LPVOID*>(&CBaseClient__SendServerInfo));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x117800, &ProcessConnectionlessPacketHook, reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x100F80, &CBaseClient__ActivatePlayerHook, reinterpret_cast<LPVOID*>(&CBaseClient__ActivatePlayer));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x1012C0, &CBaseClient__DisconnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Disconnect));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x1022E0, &CGameClient__ExecuteStringCommandHook,
+		reinterpret_cast<LPVOID*>(&CGameClient__ExecuteStringCommand));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x2140A0, &CNetChan___ProcessMessagesHook, reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x104FB0, &CBaseClient__SendServerInfoHook, reinterpret_cast<LPVOID*>(&CBaseClient__SendServerInfo));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x117800, &ProcessConnectionlessPacketHook, reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
 
 	CCommand__Tokenize = (CCommand__TokenizeType)((char*)baseAddress + 0x418380);
 
@@ -563,5 +645,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 void InitialiseServerAuthenticationServerDLL(HMODULE baseAddress)
 {
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1595C0, &CServerGameDLL__OnRecievedSayTextMessageHook, reinterpret_cast<LPVOID*>(&CServerGameDLL__OnRecievedSayTextMessage));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x1595C0, &CServerGameDLL__OnRecievedSayTextMessageHook,
+		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnRecievedSayTextMessage));
 }

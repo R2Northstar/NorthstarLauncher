@@ -5,14 +5,15 @@
 #include "concommand.h"
 #include "miscserverscript.h"
 #include <filesystem>
+#include "configurables.h"
 
-const char* BANLIST_PATH = "R2Northstar/banlist.txt";
+const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 
 ServerBanSystem* g_ServerBanSystem;
 
 void ServerBanSystem::OpenBanlist()
 {
-	std::ifstream enabledModsStream(BANLIST_PATH);
+	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/banlist.txt");
 	std::stringstream enabledModsStringStream;
 
 	if (!enabledModsStream.fail())
@@ -22,10 +23,10 @@ void ServerBanSystem::OpenBanlist()
 			m_vBannedUids.push_back(strtoll(line.c_str(), nullptr, 10));
 
 		enabledModsStream.close();
-	}	
+	}
 
 	// open write stream for banlist
-	m_sBanlistStream.open(BANLIST_PATH, std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 }
 
 void ServerBanSystem::ClearBanlist()
@@ -34,7 +35,7 @@ void ServerBanSystem::ClearBanlist()
 
 	// reopen the file, don't provide std::ofstream::app so it clears on open
 	m_sBanlistStream.close();
-	m_sBanlistStream.open(BANLIST_PATH, std::ofstream::out | std::ofstream::binary);
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 }
 
 void ServerBanSystem::BanUID(uint64_t uid)
@@ -89,10 +90,7 @@ void UnbanPlayerCommand(const CCommand& args)
 	g_ServerBanSystem->UnbanUID(strtoll(args.Arg(1), nullptr, 10));
 }
 
-void ClearBanlistCommand(const CCommand& args)
-{
-	g_ServerBanSystem->ClearBanlist();
-}
+void ClearBanlistCommand(const CCommand& args) { g_ServerBanSystem->ClearBanlist(); }
 
 void InitialiseBanSystem(HMODULE baseAddress)
 {

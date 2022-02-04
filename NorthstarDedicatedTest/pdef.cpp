@@ -11,9 +11,11 @@ void ModManager::BuildPdef()
 {
 	spdlog::info("Building persistent_player_data_version_231.pdef...");
 
+	fs::path MOD_PDEF_PATH = fs::path(GetCompiledAssetsPath() / MOD_PDEF_SUFFIX);
+
 	fs::remove(MOD_PDEF_PATH);
 	std::string pdef = ReadVPKOriginalFile(VPK_PDEF_PATH);
-	
+
 	for (Mod& mod : m_loadedMods)
 	{
 		if (!mod.Enabled || !mod.Pdiff.size())
@@ -57,7 +59,8 @@ void ModManager::BuildPdef()
 				if (!currentLine.compare(start, 9, "$ENUM_END"))
 					inEnum = false;
 				else
-					enumAdds[currentEnum].push_back(currentLine); // only need to push_back current line, if there's syntax errors then game pdef parser will handle them
+					enumAdds[currentEnum].push_back(currentLine); // only need to push_back current line, if there's syntax errors then game
+																  // pdef parser will handle them
 			}
 			else if (!currentLine.compare(start, 9, "$ENUM_ADD"))
 			{
