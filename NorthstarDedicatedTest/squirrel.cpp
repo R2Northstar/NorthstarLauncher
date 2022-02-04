@@ -418,8 +418,5 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 	else if (context == ScriptContext::UI)
 		g_UISquirrelManager->ExecuteCode(args.ArgS());
 	else if (context == ScriptContext::SERVER)
-	{
-		std::string argsStr = args.ArgS();
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
-	}
 }
