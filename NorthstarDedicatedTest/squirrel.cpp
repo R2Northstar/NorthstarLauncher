@@ -275,6 +275,11 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 
 	spdlog::error("{} SCRIPT COMPILE ERROR {}", GetContextName(realContext), error);
 	spdlog::error("{} line [{}] column [{}]", file, line, column);
+
+	// dont call the original since it kills game
+	// in the future it'd be nice to do an actual error with UICodeCallback_ErrorDialog here, but only if we're compiling level scripts
+	// compilestring and stuff shouldn't tho
+	// though, that also has potential to be REALLY bad if we're compiling ui scripts lol
 }
 
 template <ScriptContext context> char CallScriptInitCallbackHook(void* sqvm, const char* callback)
