@@ -182,7 +182,9 @@ static void OnChatAnnounce(const char* data) {
 
 constexpr char CHAT_PACKET_CONTINUE = 1;
 constexpr char CHAT_PACKET_ANNOUNCE = 2;
-std::string gIncomingBuffer;
+
+std::string g_IncomingBuffer;
+bool g_IsIgnoringPacket = false;
 
 static void CHudChat__AddGameLineHook(CHudChat* self, const char* message, int fromPlayerIndex, bool isteam, bool isdead) {
 	// Custom messages are from player=0, other messages are handled as normal
@@ -203,14 +205,30 @@ static void CHudChat__AddGameLineHook(CHudChat* self, const char* message, int f
 	}
 
 	char packetType = message[0];
-	gIncomingBuffer.append(message + 1);
+	if (packetType != CHAT_PACKET_CONTINUE && g_IsIgnoringPacket) {
+		// The packet that we were ignoring has ended, stop ignoring.
+		g_IsIgnoringPacket = false;
+		return;
+	}
+	else if (g_IsIgnoringPacket) {
+		return;
+	}
+
+	g_IncomingBuffer.append(message + 1);
+
+	// Limit the buffer at 64KiB, ignore the rest of it if we've reached that limit
+	if (g_IncomingBuffer.size() > 65536) {
+		g_IncomingBuffer.clear();
+		g_IsIgnoringPacket = true;
+		return;
+	}
 
 	if (packetType == CHAT_PACKET_CONTINUE) {
 		return;
 	}
 
 	// Clear incoming data and keep the current packet string
-	std::string packetData = std::move(gIncomingBuffer);
+	std::string packetData = std::move(g_IncomingBuffer);
 
 	if (packetType == CHAT_PACKET_ANNOUNCE) {
 		OnChatAnnounce(packetData.c_str());
