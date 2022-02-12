@@ -21,8 +21,10 @@ void ConCommand_say_team(const CCommand& args)
 		ClientSayText(nullptr, args.ArgS(), true, true);
 }
 
-void ConCommand_log(const CCommand& args) {
-	if (args.ArgC() >= 2) {
+void ConCommand_log(const CCommand& args)
+{
+	if (args.ArgC() >= 2)
+	{
 		LocalChatStartLine(LocalChatContext::Game);
 		LocalChatInsertColor(LocalChatContext::Game, 255, 255, 255, 255);
 		LocalChatInsertText(LocalChatContext::Game, args.ArgS());

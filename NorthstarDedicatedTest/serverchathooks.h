@@ -3,8 +3,9 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 
-class ChatRichText {
-public:
+class ChatRichText
+{
+  public:
 	ChatRichText();
 
 	void ToString(rapidjson::StringBuffer& buffer) const;
@@ -16,7 +17,7 @@ public:
 	void SetFadeSustainSecs(float fadeSustain);
 	void SetFadeLengthSecs(float fadeLength);
 
-private:
+  private:
 	rapidjson::Document m_document;
 };
 

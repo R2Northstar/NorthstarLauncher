@@ -262,7 +262,8 @@ void ServerAuthenticationManager::WritePersistentData(void* player)
 	}
 }
 
-bool ServerAuthenticationManager::CheckPlayerChatRatelimit(void* player) {
+bool ServerAuthenticationManager::CheckPlayerChatRatelimit(void* player)
+{
 	if (Plat_FloatTime() - m_additionalPlayerData[player].lastSayTextLimitStart >= 1.0)
 	{
 		m_additionalPlayerData[player].lastSayTextLimitStart = Plat_FloatTime();

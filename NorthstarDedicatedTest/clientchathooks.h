@@ -4,7 +4,8 @@
 constexpr float DEFAULT_FADE_SUSTAIN = 12.f;
 constexpr float DEFAULT_FADE_LENGTH = 1.f;
 
-enum class LocalChatContext {
+enum class LocalChatContext
+{
 	Network = 0,
 	Game = 1
 };
