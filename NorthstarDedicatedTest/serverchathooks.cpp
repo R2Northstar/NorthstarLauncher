@@ -20,7 +20,6 @@ CServerGameDLL* gServer;
 typedef void(__fastcall* CServerGameDLL__OnReceivedSayTextMessageType)(
 	CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, int channelId);
 CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessage;
-CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessageUnhooked;
 
 typedef CBasePlayer*(__fastcall* UTIL_PlayerByIndexType)(int playerIndex);
 UTIL_PlayerByIndexType UTIL_PlayerByIndex;
@@ -108,7 +107,7 @@ CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int 
 	if (g_SkipSayTextHook)
 	{
 		g_SkipSayTextHook = false;
-		CServerGameDLL__OnReceivedSayTextMessageUnhooked(self, senderPlayerIndex, text, channelId);
+		CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerIndex, text, channelId);
 		return;
 	}
 
