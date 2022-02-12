@@ -34,6 +34,8 @@
 #include "audio.h"
 #include "buildainfile.h"
 #include "configurables.h"
+#include "serverchathooks.h"
+#include "clientchathooks.h"
 #include <string.h>
 #include "pch.h"
 
@@ -120,6 +122,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseScriptMainMenuPromos);
 		AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
 		AddDllLoadCallback("client.dll", InitialiseClientPrintHooks);
+		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
@@ -137,6 +140,9 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("filesystem_stdio.dll", InitialiseFilesystem);
 	AddDllLoadCallback("engine.dll", InitialiseEngineRpakFilesystem);
 	AddDllLoadCallback("engine.dll", InitialiseKeyValues);
+
+	AddDllLoadCallback("engine.dll", InitialiseServerChatHooks_Engine);
+	AddDllLoadCallback("server.dll", InitialiseServerChatHooks_Server);
 
 	// maxplayers increase
 	AddDllLoadCallback("engine.dll", InitialiseMaxPlayersOverride_Engine);
