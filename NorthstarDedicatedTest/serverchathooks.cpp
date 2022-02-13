@@ -141,48 +141,6 @@ CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int 
 	}
 }
 
-ChatRichText::ChatRichText()
-{
-	m_document.SetObject();
-	m_document.AddMember("t", rapidjson::Value(rapidjson::kArrayType), m_document.GetAllocator());
-}
-
-void ChatRichText::ToString(rapidjson::StringBuffer& buffer) const
-{
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	m_document.Accept(writer);
-}
-
-void ChatRichText::InsertLocalized(const char* str)
-{
-	rapidjson::Value obj(rapidjson::kObjectType);
-	obj.AddMember("i", "l", m_document.GetAllocator());
-	obj.AddMember("s", std::string(str), m_document.GetAllocator());
-	m_document["t"].PushBack(std::move(obj), m_document.GetAllocator());
-}
-
-void ChatRichText::InsertText(const char* str)
-{
-	rapidjson::Value obj(rapidjson::kObjectType);
-	obj.AddMember("i", "t", m_document.GetAllocator());
-	obj.AddMember("s", std::string(str), m_document.GetAllocator());
-	m_document["t"].PushBack(std::move(obj), m_document.GetAllocator());
-}
-
-void ChatRichText::InsertColor(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha)
-{
-	unsigned int color = (red << 24) + (green << 16) + (blue << 8) + alpha;
-
-	rapidjson::Value obj(rapidjson::kObjectType);
-	obj.AddMember("i", "c", m_document.GetAllocator());
-	obj.AddMember("c", color, m_document.GetAllocator());
-	m_document["t"].PushBack(std::move(obj), m_document.GetAllocator());
-}
-
-void ChatRichText::SetFadeSustainSecs(float fadeSustain) { m_document["fs"] = fadeSustain; }
-
-void ChatRichText::SetFadeLengthSecs(float fadeLength) { m_document["fl"] = fadeLength; }
-
 void ChatSendFromPlayer(unsigned int playerId, const char* text, bool isteam)
 {
 	unsigned int playerIndex = playerId + 1;
@@ -217,81 +175,41 @@ void ChatWhisperFromPlayer(unsigned int fromPlayerId, unsigned int toPlayerId, c
 	CRecipientFilter__Destruct(&filter);
 }
 
+enum class AnonymousMessageType : char
+{
+	Announce = 1,
+};
+
+static void SendAnonymousTo(CRecipientFilter& filter, AnonymousMessageType type, const char* data)
+{
+	char sendText[256];
+	sendText[0] = (char)type;
+	strncpy(sendText + 1, data, 255);
+	sendText[255] = 0;
+
+	UserMessageBegin(&filter, "SayText");
+	MessageWriteByte(0); // playerIndex=0 for anonymous
+	MessageWriteString(sendText);
+	MessageWriteBool(false); // isteam=false
+	MessageWriteBool(false); // isdead=false
+	MessageEnd();
+}
+
 void ChatBroadcastText(const char* text)
 {
-	ChatRichText rich;
-	rich.InsertColor(0xff, 0xff, 0xff, 0xff);
-	rich.InsertText(text);
-	ChatBroadcastRichText(rich);
-}
-
-void ChatWhisperText(unsigned int toPlayerId, const char* text)
-{
-	ChatRichText rich;
-	rich.InsertColor(0xff, 0xff, 0xff, 0xff);
-	rich.InsertText(text);
-	ChatWhisperRichText(toPlayerId, rich);
-}
-
-constexpr char CHAT_PACKET_CONTINUE = 1;
-constexpr char CHAT_PACKET_ANNOUNCE = 2;
-
-void ChatBroadcastRichText(const ChatRichText& text)
-{
-	rapidjson::StringBuffer buffer;
-
-	text.ToString(buffer);
-
-	size_t remainingLength = buffer.GetSize();
-	const char* textOffset = buffer.GetString();
-
 	CRecipientFilter filter;
 	CRecipientFilter__Construct(&filter);
 	CRecipientFilter__AddAllPlayers(&filter);
 	CRecipientFilter__MakeReliable(&filter);
 
-	// Custom messages are formatted as JSON, so they can be pretty long.
-	// SayText string payloads are limited to 255 characters long, so as a workaround
-	// we send multiple separate chunks and construct them into one string on the other
-	// side.
-	// The first char is the packet ID. As a byte:
-	//  1=not done
-	//  2=announce
-	while (true)
-	{
-		bool isLast = remainingLength <= 254;
-
-		char sendText[256];
-		sendText[0] = isLast ? CHAT_PACKET_ANNOUNCE : CHAT_PACKET_CONTINUE;
-		strncpy(sendText + 1, textOffset, 254);
-		sendText[255] = 0;
-
-		UserMessageBegin(&filter, "SayText");
-		MessageWriteByte(0); // playerIndex=0 for rich text
-		MessageWriteString(sendText);
-		MessageWriteBool(false); // isteam=false
-		MessageWriteBool(false); // isdead=false
-		MessageEnd();
-
-		if (isLast)
-		{
-			break;
-		}
-
-		remainingLength -= 254;
-		textOffset += 254;
-	}
+	SendAnonymousTo(filter, AnonymousMessageType::Announce, text);
 
 	CRecipientFilter__Destruct(&filter);
 }
 
-void ChatWhisperRichText(unsigned int toPlayerId, const ChatRichText& text)
+void ChatWhisperText(unsigned int toPlayerId, const char* text)
 {
 	unsigned int toPlayerIndex = toPlayerId + 1;
-	rapidjson::StringBuffer buffer;
-
-	text.ToString(buffer);
-
 	CBasePlayer* toPlayer = UTIL_PlayerByIndex(toPlayerIndex);
 	if (toPlayer == NULL)
 	{
@@ -303,12 +221,7 @@ void ChatWhisperRichText(unsigned int toPlayerId, const ChatRichText& text)
 	CRecipientFilter__AddRecipient(&filter, toPlayer);
 	CRecipientFilter__MakeReliable(&filter);
 
-	UserMessageBegin(&filter, "SayText");
-	MessageWriteByte(0); // playerIndex=0 for rich text
-	MessageWriteString(buffer.GetString());
-	MessageWriteBool(false); // isteam=false
-	MessageWriteBool(false); // isdead=false
-	MessageEnd();
+	SendAnonymousTo(filter, AnonymousMessageType::Announce, text);
 
 	CRecipientFilter__Destruct(&filter);
 }
@@ -343,48 +256,6 @@ SQRESULT SQ_ChatBroadcastText(void* sqvm)
 	const char* text = ServerSq_getstring(sqvm, 1);
 
 	ChatBroadcastText(text);
-
-	return SQRESULT_NULL;
-}
-
-// void function NSChatBroadcastRainbowText( string text )
-SQRESULT SQ_ChatBroadcastRainbowText(void* sqvm)
-{
-	const char* text = ServerSq_getstring(sqvm, 1);
-
-	unsigned char colors[18];
-	colors[0] = 0xFF;
-	colors[1] = 0x7F;
-	colors[2] = 0x7F;
-	colors[3] = 0xFF;
-	colors[4] = 0xFF;
-	colors[5] = 0x7F;
-	colors[6] = 0x7F;
-	colors[7] = 0xFF;
-	colors[8] = 0x7F;
-	colors[9] = 0x7F;
-	colors[10] = 0xFF;
-	colors[11] = 0xFF;
-	colors[12] = 0x7F;
-	colors[13] = 0x7F;
-	colors[14] = 0xFF;
-	colors[15] = 0xFF;
-	colors[16] = 0x7F;
-	colors[17] = 0xFF;
-
-	ChatRichText richText;
-	size_t textLen = strlen(text);
-	for (size_t charIndex = 0; charIndex < textLen; charIndex++)
-	{
-		size_t colorIndex = charIndex % 6;
-		richText.InsertColor(colors[colorIndex * 3], colors[colorIndex * 3 + 1], colors[colorIndex * 3 + 2], 255);
-
-		char mini[2];
-		mini[0] = text[charIndex];
-		mini[1] = 0;
-		richText.InsertText(mini);
-	}
-	ChatBroadcastRichText(richText);
 
 	return SQRESULT_NULL;
 }
@@ -439,6 +310,5 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration(
 		"void", "NSChatWhisperFromPlayer", "int fromPlayerIndex, int toPlayerIndex, string text", "", SQ_ChatWhisperFromPlayer);
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSChatBroadcastText", "string text", "", SQ_ChatBroadcastText);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSChatBroadcastRainbowText", "string text", "", SQ_ChatBroadcastRainbowText);
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSChatWhisperText", "int toPlayerIndex, string text", "", SQ_ChatWhisperText);
 }

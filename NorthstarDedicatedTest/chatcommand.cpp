@@ -25,10 +25,7 @@ void ConCommand_log(const CCommand& args)
 {
 	if (args.ArgC() >= 2)
 	{
-		LocalChatStartLine(LocalChatContext::Game);
-		LocalChatInsertColor(LocalChatContext::Game, 255, 255, 255, 255);
-		LocalChatInsertText(LocalChatContext::Game, args.ArgS());
-		LocalChatInsertFade(LocalChatContext::Game, DEFAULT_FADE_SUSTAIN, DEFAULT_FADE_LENGTH);
+		LocalChatWriteLine(LocalChatContext::Game, args.ArgS());
 	}
 }
 
