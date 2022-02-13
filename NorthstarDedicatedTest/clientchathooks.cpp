@@ -311,7 +311,8 @@ class AnsiEscapeDecoder
 
 	Next HandleForegroundR(unsigned long val)
 	{
-		if (val >= UCHAR_MAX) return Next::ControlType;
+		if (val >= UCHAR_MAX)
+			return Next::ControlType;
 
 		m_expandedColor.r = (unsigned char)val;
 		return Next::ForegroundG;
@@ -319,7 +320,8 @@ class AnsiEscapeDecoder
 
 	Next HandleForegroundG(unsigned long val)
 	{
-		if (val >= UCHAR_MAX) return Next::ControlType;
+		if (val >= UCHAR_MAX)
+			return Next::ControlType;
 
 		m_expandedColor.g = (unsigned char)val;
 		return Next::ForegroundB;
@@ -327,7 +329,8 @@ class AnsiEscapeDecoder
 
 	Next HandleForegroundB(unsigned long val)
 	{
-		if (val >= UCHAR_MAX) return Next::ControlType;
+		if (val >= UCHAR_MAX)
+			return Next::ControlType;
 
 		m_expandedColor.b = (unsigned char)val;
 		LocalChatInsertColorChange(m_context, m_expandedColor);
