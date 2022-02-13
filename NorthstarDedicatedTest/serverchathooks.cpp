@@ -20,6 +20,7 @@ CServerGameDLL* gServer;
 typedef void(__fastcall* CServerGameDLL__OnReceivedSayTextMessageType)(
 	CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, int channelId);
 CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessage;
+CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessageHookBase;
 
 typedef CBasePlayer*(__fastcall* UTIL_PlayerByIndexType)(int playerIndex);
 UTIL_PlayerByIndexType UTIL_PlayerByIndex;
@@ -60,7 +61,6 @@ static std::string currentMessage;
 static int currentPlayerId;
 static int currentChannelId;
 static bool shouldBlock;
-static bool isProcessed = true;
 
 static SQRESULT setMessage(void* sqvm)
 {
@@ -68,6 +68,12 @@ static SQRESULT setMessage(void* sqvm)
 	currentPlayerId = ServerSq_getinteger(sqvm, 2);
 	currentChannelId = ServerSq_getinteger(sqvm, 3);
 	shouldBlock = ServerSq_getbool(sqvm, 4);
+
+	if (!shouldBlock)
+	{
+		ChatSendFromPlayer(currentPlayerId, currentMessage.c_str(), (bool)currentChannelId);
+	}
+
 	return SQRESULT_NOTNULL;
 }
 static SQRESULT getMessageServer(void* sqvm)
@@ -85,20 +91,6 @@ static SQRESULT getChannelServer(void* sqvm)
 	ServerSq_pushinteger(sqvm, currentChannelId);
 	return SQRESULT_NOTNULL;
 }
-static SQRESULT getShouldProcessMessage(void* sqvm)
-{
-	ServerSq_pushbool(sqvm, !isProcessed);
-	return SQRESULT_NOTNULL;
-}
-static SQRESULT pushMessage(void* sqvm)
-{
-	currentMessage = ServerSq_getstring(sqvm, 1);
-	currentPlayerId = ServerSq_getinteger(sqvm, 2);
-	currentChannelId = ServerSq_getinteger(sqvm, 3);
-	shouldBlock = ServerSq_getbool(sqvm, 4);
-	isProcessed = true;
-	return SQRESULT_NOTNULL;
-}
 
 static void
 CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, int channelId)
@@ -107,7 +99,7 @@ CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int 
 	if (g_SkipSayTextHook)
 	{
 		g_SkipSayTextHook = false;
-		CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerIndex, text, channelId);
+		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerIndex, text, channelId);
 		return;
 	}
 
@@ -119,26 +111,11 @@ CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int 
 		return;
 	}
 
-	bool shouldDoChathooks = strstr(GetCommandLineA(), "-enablechathooks");
-	if (shouldDoChathooks)
-	{
-
-		currentMessage = text;
-		currentPlayerId = senderPlayerIndex - 1; // Stupid fix cause of index offsets
-		currentChannelId = channelId;
-		shouldBlock = false;
-		isProcessed = false;
-
-		g_ServerSquirrelManager->ExecuteCode("CServerGameDLL_ProcessMessageStartThread()");
-		if (!shouldBlock && currentPlayerId + 1 == senderPlayerIndex) // stop player id spoofing from server
-		{
-			CServerGameDLL__OnReceivedSayTextMessage(self, currentPlayerId + 1, currentMessage.c_str(), currentChannelId);
-		}
-	}
-	else
-	{
-		CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerIndex, text, channelId);
-	}
+	currentMessage = text;
+	currentPlayerId = senderPlayerIndex - 1;
+	currentChannelId = channelId;
+	shouldBlock = false;
+	g_ServerSquirrelManager->ExecuteCode("CServerGameDLL_ProcessMessageStartThread()");
 }
 
 void ChatSendFromPlayer(unsigned int playerId, const char* text, bool isteam)
@@ -292,7 +269,7 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x1595C0, &CServerGameDLL__OnReceivedSayTextMessageHook,
-		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessage));
+		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessageHookBase));
 
 	// Chat intercept functions
 	g_ServerSquirrelManager->AddFuncRegistration(
@@ -300,9 +277,6 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("string", "NSChatGetCurrentMessage", "", "", getMessageServer);
 	g_ServerSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentPlayer", "", "", getPlayerServer);
 	g_ServerSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentChannel", "", "", getChannelServer);
-	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSShouldProcessMessage", "", "", getShouldProcessMessage);
-	g_ServerSquirrelManager->AddFuncRegistration(
-		"void", "NSPushMessage", "string message, int playerId, int channelId, bool shouldBlock", "", pushMessage);
 
 	// Chat sending functions
 	g_ServerSquirrelManager->AddFuncRegistration(
