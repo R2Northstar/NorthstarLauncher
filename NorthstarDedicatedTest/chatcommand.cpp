@@ -2,8 +2,7 @@
 #include "chatcommand.h"
 #include "concommand.h"
 #include "dedicated.h"
-#include "clientchathooks.h"
-#include "squirrel.h"
+#include "localchatwriter.h"
 
 // note: isIngameChat is an int64 because the whole register the arg is stored in needs to be 0'd out to work
 // if isIngameChat is false, we use network chat instead
@@ -29,7 +28,7 @@ void ConCommand_log(const CCommand& args)
 {
 	if (args.ArgC() >= 2)
 	{
-		LocalChatWriteLine(LocalChatContext::Game, args.ArgS(), 128, AnonymousMessageType::Whisper);
+		LocalChatWriter(LocalChatWriter::GameContext).WriteLine(args.ArgS());
 	}
 }
 

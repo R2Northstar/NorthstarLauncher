@@ -69,7 +69,7 @@ static SQRESULT setMessage(void* sqvm)
 
 	if (!shouldBlock)
 	{
-		ChatSendFromPlayer(currentPlayerId, currentMessage.c_str(), currentIsTeam);
+		ChatSendMessage(currentPlayerId, currentMessage.c_str(), currentIsTeam);
 	}
 
 	return SQRESULT_NOTNULL;
@@ -90,8 +90,16 @@ static SQRESULT getTeamServer(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+bool isSkippingHook = false;
+
 static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, bool isTeam)
 {
+	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
+	// To allow bypassing the hook, isSkippingHook can be set.
+	if (isSkippingHook) {
+		isSkippingHook = false;
+		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerIndex, text, isTeam);
+	}
 
 	void* sender = GetPlayerByIndex(senderPlayerIndex - 1);
 
@@ -108,50 +116,46 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 	g_ServerSquirrelManager->ExecuteCode("CServerGameDLL_ProcessMessageStartThread()");
 }
 
-void ChatSendFromPlayer(unsigned int playerId, const char* text, bool isteam)
-{
-	unsigned int playerIndex = playerId + 1;
-	ChatBroadcastText(playerIndex, text, isteam ? 1 : 0);
+void ChatSendMessage(unsigned int playerId, const char* text, bool isteam) {
+	CServerGameDLL__OnReceivedSayTextMessage(
+		gServer,
+		// Ensure the first bit isn't set, since this indicates a custom message
+		(playerId + 1) & CUSTOM_MESSAGE_INDEX_MASK,
+		text,
+		isteam
+	);
 }
 
-static void SendAnonymousTo(CRecipientFilter& filter, AnonymousMessageType type, const char* data, bool isTeam, bool isDead)
-{
-	char sendText[256];
-	sendText[0] = (char)type;
-	strncpy(sendText + 1, data, 255);
-	sendText[255] = 0;
-
-	UserMessageBegin(&filter, "SayText");
-	MessageWriteByte(0); // playerIndex=0 for anonymous
-	MessageWriteString(sendText);
-	MessageWriteBool(isTeam);
-	MessageWriteBool(isDead);
-	MessageEnd();
-}
-
-void ChatToPlayer(int fromPlayerId, int toPlayerId, const char* text, bool isTeam, bool isDead, AnonymousMessageType messageType)
-{
-	int fromPlayerIndex = fromPlayerId + 1;
-	int toPlayerIndex = toPlayerId + 1;
-
-	CBasePlayer* toPlayer = UTIL_PlayerByIndex(toPlayerIndex);
-	if (toPlayer == NULL)
-	{
-		return;
+void ChatBroadcastMessage(int fromPlayerId, int toPlayerId, const char* text, bool isTeam, bool isDead, CustomMessageType messageType) {
+	CBasePlayer* toPlayer = NULL;
+	if (toPlayerId >= 0) {
+		toPlayer = UTIL_PlayerByIndex(toPlayerId + 1);
+		if (toPlayer == NULL) return;
 	}
-
-	CRecipientFilter filter;
-	CRecipientFilter__Construct(&filter);
-	CRecipientFilter__AddRecipient(&filter, toPlayer);
-	CRecipientFilter__MakeReliable(&filter);
-
+	
+	// Build a new string where the first byte is the message type
 	char sendText[256];
 	sendText[0] = (char)messageType;
 	strncpy(sendText + 1, text, 255);
 	sendText[255] = 0;
 
+	// Anonymous custom messages use playerId=0, non-anonymous ones use a player index with the first bit set
+	unsigned int fromPlayerIndex = fromPlayerId < 0
+		? 0
+		: ((toPlayerId + 1) | CUSTOM_MESSAGE_INDEX_BIT);
+
+	CRecipientFilter filter;
+	CRecipientFilter__Construct(&filter);
+	if (toPlayer == NULL) {
+		CRecipientFilter__AddAllPlayers(&filter);
+	}
+	else {
+		CRecipientFilter__AddRecipient(&filter, toPlayer);
+	}
+	CRecipientFilter__MakeReliable(&filter);
+
 	UserMessageBegin(&filter, "SayText");
-	MessageWriteByte(fromPlayerId); // playerIndex=0 for anonymous
+	MessageWriteByte(fromPlayerIndex);
 	MessageWriteString(sendText);
 	MessageWriteBool(isTeam);
 	MessageWriteBool(isDead);
@@ -160,52 +164,30 @@ void ChatToPlayer(int fromPlayerId, int toPlayerId, const char* text, bool isTea
 	CRecipientFilter__Destruct(&filter);
 }
 
-void ChatBroadcastText(int playerIndex, const char* text, bool isTeam)
-{
-
-	if (playerIndex == 0)
-	{
-		CRecipientFilter filter;
-		CRecipientFilter__Construct(&filter);
-		CRecipientFilter__AddAllPlayers(&filter);
-		CRecipientFilter__MakeReliable(&filter);
-
-		SendAnonymousTo(filter, AnonymousMessageType::Announce, text, isTeam, false);
-
-		CRecipientFilter__Destruct(&filter);
-	}
-	else
-	{
-		CServerGameDLL__OnReceivedSayTextMessageHookBase(gServer, playerIndex, text, isTeam);
-	}
-	
-}
-
-// void function NSChatSendFromPlayer( int playerIndex, string text, bool isteam )
-SQRESULT SQ_ChatBroadcastFromPlayer(void* sqvm)
-{
-	int playerIndex = ServerSq_getinteger(sqvm, 1);
+SQRESULT SQ_SendMessage(void* sqvm) {
+	int playerId = ServerSq_getinteger(sqvm, 1);
 	const char* text = ServerSq_getstring(sqvm, 2);
-	bool isteam = ServerSq_getbool(sqvm, 3);
+	bool isTeam = ServerSq_getbool(sqvm, 3);
 
-	ChatSendFromPlayer(playerIndex, text, isteam);
-
+	ChatSendMessage(playerId, text, isTeam);
+	
 	return SQRESULT_NULL;
 }
 
-// void function NSChatWhisperFromPlayer( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
-SQRESULT SQ_ChatToPlayer(void* sqvm)
-{
-	int fromPlayerIndex = ServerSq_getinteger(sqvm, 1);
-	int toPlayerIndex = ServerSq_getinteger(sqvm, 2);
+SQRESULT SQ_BroadcastMessage(void* sqvm) {
+	int fromPlayerId = ServerSq_getinteger(sqvm, 1);
+	int toPlayerId = ServerSq_getinteger(sqvm, 2);
 	const char* text = ServerSq_getstring(sqvm, 3);
-	bool isTeam = ServerSq_getstring(sqvm, 4);
-	bool isDead = ServerSq_getstring(sqvm, 5);
+	bool isTeam = ServerSq_getbool(sqvm, 4);
+	bool isDead = ServerSq_getbool(sqvm, 5);
 	int messageType = ServerSq_getinteger(sqvm, 6);
 
-	AnonymousMessageType realType = AnonymousMessageType(messageType);
+	if (messageType < 1 || messageType >= (int)CustomMessageType::ENUM_MAX) {
+		ServerSq_pusherror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		return SQRESULT_ERROR;
+	}
 
-	ChatToPlayer(fromPlayerIndex, toPlayerIndex, text, isTeam, isDead, realType);
+	ChatBroadcastMessage(fromPlayerId, toPlayerId, text, isTeam, isDead, (CustomMessageType)messageType);
 
 	return SQRESULT_NULL;
 }
@@ -241,6 +223,6 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSChatGetIsTeam", "", "", getTeamServer);
 
 	// Chat sending functions
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType", "", SQ_ChatToPlayer);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSChatBroadcastText", "int playerIndex, string text, bool isTeam", "", SQ_ChatBroadcastFromPlayer);
+	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int playerId, string text, bool isTeam", "", SQ_SendMessage);
+	g_ServerSquirrelManager->AddFuncRegistration("void", "NSBroadcastMessage", "int fromPlayerId, int toPlayerId, string text, bool isTeam, bool isDead, int messageType", "", SQ_BroadcastMessage);
 }

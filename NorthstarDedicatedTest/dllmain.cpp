@@ -36,6 +36,7 @@
 #include "configurables.h"
 #include "serverchathooks.h"
 #include "clientchathooks.h"
+#include "localchatwriter.h"
 #include <string.h>
 #include "pch.h"
 
@@ -123,7 +124,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
 		AddDllLoadCallback("client.dll", InitialiseClientPrintHooks);
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
-		AddDllLoadCallback("client.dll", InitialiseUICommands);
+		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);

@@ -113,6 +113,7 @@
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
+    <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="concommand.h" />
@@ -572,6 +573,7 @@
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
+    <ClCompile Include="localchatwriter.cpp" />
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />
     <ClCompile Include="memalloc.cpp" />
