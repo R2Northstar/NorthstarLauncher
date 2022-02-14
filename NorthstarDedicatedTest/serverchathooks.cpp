@@ -92,11 +92,13 @@ static SQRESULT getTeamServer(void* sqvm)
 
 bool isSkippingHook = false;
 
-static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, bool isTeam)
+static void
+CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, bool isTeam)
 {
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
 	// To allow bypassing the hook, isSkippingHook can be set.
-	if (isSkippingHook) {
+	if (isSkippingHook)
+	{
 		isSkippingHook = false;
 		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerIndex, text, isTeam);
 	}
@@ -116,23 +118,24 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 	g_ServerSquirrelManager->ExecuteCode("CServerGameDLL_ProcessMessageStartThread()");
 }
 
-void ChatSendMessage(unsigned int playerId, const char* text, bool isteam) {
+void ChatSendMessage(unsigned int playerId, const char* text, bool isteam)
+{
 	CServerGameDLL__OnReceivedSayTextMessage(
 		gServer,
 		// Ensure the first bit isn't set, since this indicates a custom message
-		(playerId + 1) & CUSTOM_MESSAGE_INDEX_MASK,
-		text,
-		isteam
-	);
+		(playerId + 1) & CUSTOM_MESSAGE_INDEX_MASK, text, isteam);
 }
 
-void ChatBroadcastMessage(int fromPlayerId, int toPlayerId, const char* text, bool isTeam, bool isDead, CustomMessageType messageType) {
+void ChatBroadcastMessage(int fromPlayerId, int toPlayerId, const char* text, bool isTeam, bool isDead, CustomMessageType messageType)
+{
 	CBasePlayer* toPlayer = NULL;
-	if (toPlayerId >= 0) {
+	if (toPlayerId >= 0)
+	{
 		toPlayer = UTIL_PlayerByIndex(toPlayerId + 1);
-		if (toPlayer == NULL) return;
+		if (toPlayer == NULL)
+			return;
 	}
-	
+
 	// Build a new string where the first byte is the message type
 	char sendText[256];
 	sendText[0] = (char)messageType;
@@ -140,16 +143,16 @@ void ChatBroadcastMessage(int fromPlayerId, int toPlayerId, const char* text, bo
 	sendText[255] = 0;
 
 	// Anonymous custom messages use playerId=0, non-anonymous ones use a player index with the first bit set
-	unsigned int fromPlayerIndex = fromPlayerId < 0
-		? 0
-		: ((toPlayerId + 1) | CUSTOM_MESSAGE_INDEX_BIT);
+	unsigned int fromPlayerIndex = fromPlayerId < 0 ? 0 : ((toPlayerId + 1) | CUSTOM_MESSAGE_INDEX_BIT);
 
 	CRecipientFilter filter;
 	CRecipientFilter__Construct(&filter);
-	if (toPlayer == NULL) {
+	if (toPlayer == NULL)
+	{
 		CRecipientFilter__AddAllPlayers(&filter);
 	}
-	else {
+	else
+	{
 		CRecipientFilter__AddRecipient(&filter, toPlayer);
 	}
 	CRecipientFilter__MakeReliable(&filter);
@@ -164,17 +167,19 @@ void ChatBroadcastMessage(int fromPlayerId, int toPlayerId, const char* text, bo
 	CRecipientFilter__Destruct(&filter);
 }
 
-SQRESULT SQ_SendMessage(void* sqvm) {
+SQRESULT SQ_SendMessage(void* sqvm)
+{
 	int playerId = ServerSq_getinteger(sqvm, 1);
 	const char* text = ServerSq_getstring(sqvm, 2);
 	bool isTeam = ServerSq_getbool(sqvm, 3);
 
 	ChatSendMessage(playerId, text, isTeam);
-	
+
 	return SQRESULT_NULL;
 }
 
-SQRESULT SQ_BroadcastMessage(void* sqvm) {
+SQRESULT SQ_BroadcastMessage(void* sqvm)
+{
 	int fromPlayerId = ServerSq_getinteger(sqvm, 1);
 	int toPlayerId = ServerSq_getinteger(sqvm, 2);
 	const char* text = ServerSq_getstring(sqvm, 3);
@@ -182,7 +187,8 @@ SQRESULT SQ_BroadcastMessage(void* sqvm) {
 	bool isDead = ServerSq_getbool(sqvm, 5);
 	int messageType = ServerSq_getinteger(sqvm, 6);
 
-	if (messageType < 1 || messageType >= (int)CustomMessageType::ENUM_MAX) {
+	if (messageType < 1 || messageType >= (int)CustomMessageType::ENUM_MAX)
+	{
 		ServerSq_pusherror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
@@ -224,5 +230,7 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 
 	// Chat sending functions
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int playerId, string text, bool isTeam", "", SQ_SendMessage);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSBroadcastMessage", "int fromPlayerId, int toPlayerId, string text, bool isTeam, bool isDead, int messageType", "", SQ_BroadcastMessage);
+	g_ServerSquirrelManager->AddFuncRegistration(
+		"void", "NSBroadcastMessage", "int fromPlayerId, int toPlayerId, string text, bool isTeam, bool isDead, int messageType", "",
+		SQ_BroadcastMessage);
 }

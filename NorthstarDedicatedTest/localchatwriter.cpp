@@ -5,13 +5,13 @@ class vgui_BaseRichText_vtable;
 
 class vgui_BaseRichText
 {
-public:
+  public:
 	vgui_BaseRichText_vtable* vtable;
 };
 
 class vgui_BaseRichText_vtable
 {
-public:
+  public:
 	char unknown1[1880];
 
 	void(__fastcall* InsertChar)(vgui_BaseRichText* self, wchar_t ch);
@@ -49,23 +49,25 @@ public:
 	int(__fastcall* GetNumLines)(vgui_BaseRichText* self);
 };
 
-class CGameSettings {
-public:
+class CGameSettings
+{
+  public:
 	char unknown1[92];
 	int isChatEnabled;
 };
 
 // Not sure what this actually refers to but chatFadeLength and chatFadeSustain
 // have their value at the same offset
-class CGameFloatVar {
-public:
+class CGameFloatVar
+{
+  public:
 	char unknown1[88];
 	float value;
 };
 
 class CHudChat
 {
-public:
+  public:
 	char unknown1[720];
 
 	vgui_Color m_sameTeamColor;
@@ -102,16 +104,17 @@ LocalChatWriter::SwatchColor swatchColors[4] = {
 	LocalChatWriter::NetworkNameColor,
 };
 
-vgui_Color darkColors[8] = { vgui_Color{0, 0, 0, 255},	   vgui_Color{205, 49, 49, 255},  vgui_Color{13, 188, 121, 255},
+vgui_Color darkColors[8] = {vgui_Color{0, 0, 0, 255},	   vgui_Color{205, 49, 49, 255},  vgui_Color{13, 188, 121, 255},
 							vgui_Color{229, 229, 16, 255}, vgui_Color{36, 114, 200, 255}, vgui_Color{188, 63, 188, 255},
-							vgui_Color{17, 168, 205, 255}, vgui_Color{229, 229, 229, 255} };
+							vgui_Color{17, 168, 205, 255}, vgui_Color{229, 229, 229, 255}};
 
-vgui_Color lightColors[8] = { vgui_Color{102, 102, 102, 255}, vgui_Color{241, 76, 76, 255},	vgui_Color{35, 209, 139, 255},
+vgui_Color lightColors[8] = {vgui_Color{102, 102, 102, 255}, vgui_Color{241, 76, 76, 255},	vgui_Color{35, 209, 139, 255},
 							 vgui_Color{245, 245, 67, 255},	 vgui_Color{59, 142, 234, 255}, vgui_Color{214, 112, 214, 255},
-							 vgui_Color{41, 184, 219, 255},	 vgui_Color{255, 255, 255, 255} };
+							 vgui_Color{41, 184, 219, 255},	 vgui_Color{255, 255, 255, 255}};
 
-class AnsiEscapeParser {
-public:
+class AnsiEscapeParser
+{
+  public:
 	explicit AnsiEscapeParser(LocalChatWriter* writer) : m_writer(writer) {}
 
 	void HandleVal(unsigned long val)
@@ -139,7 +142,7 @@ public:
 		}
 	}
 
-private:
+  private:
 	enum class Next
 	{
 		ControlType,
@@ -152,7 +155,7 @@ private:
 
 	LocalChatWriter* m_writer;
 	Next m_next = Next::ControlType;
-	vgui_Color m_expandedColor{ 0, 0, 0, 0 };
+	vgui_Color m_expandedColor{0, 0, 0, 0};
 
 	Next HandleControlType(unsigned long val)
 	{
@@ -198,7 +201,7 @@ private:
 		// Next values are r,g,b
 		if (val == 2)
 		{
-			m_expandedColor = { 0, 0, 0, 255 };
+			m_expandedColor = {0, 0, 0, 255};
 			return Next::ForegroundR;
 		}
 		// Next value is 8-bit swatch color
@@ -228,12 +231,12 @@ private:
 			unsigned char green = ((code - blue) / 6) % 6;
 			unsigned char red = (code - blue - (green * 6)) / 36;
 			m_writer->InsertColorChange(
-				vgui_Color{ (unsigned char)(red * 51), (unsigned char)(green * 51), (unsigned char)(blue * 51), 255 });
+				vgui_Color{(unsigned char)(red * 51), (unsigned char)(green * 51), (unsigned char)(blue * 51), 255});
 		}
 		else if (val < UCHAR_MAX)
 		{
 			unsigned char brightness = (val - 232) * 10 + 8;
-			m_writer->InsertColorChange(vgui_Color{ brightness, brightness, brightness, 255 });
+			m_writer->InsertColorChange(vgui_Color{brightness, brightness, brightness, 255});
 		}
 
 		return Next::ControlType;
@@ -270,10 +273,12 @@ private:
 
 LocalChatWriter::LocalChatWriter(Context context) : m_context(context) {}
 
-void LocalChatWriter::Write(const char* str) {
+void LocalChatWriter::Write(const char* str)
+{
 	char writeBuffer[256];
 
-	while (true) {
+	while (true)
+	{
 		const char* startOfEscape = strstr(str, "\033[");
 
 		if (startOfEscape == NULL)
@@ -301,13 +306,15 @@ void LocalChatWriter::Write(const char* str) {
 	}
 }
 
-void LocalChatWriter::WriteLine(const char* str) {
+void LocalChatWriter::WriteLine(const char* str)
+{
 	InsertChar(L'\n');
 	InsertSwatchColorChange(MainTextColor);
 	Write(str);
 }
 
-void LocalChatWriter::InsertChar(wchar_t ch) {
+void LocalChatWriter::InsertChar(wchar_t ch)
+{
 	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next)
 	{
 		if (hud->m_unknownContext != (int)m_context)
@@ -316,12 +323,14 @@ void LocalChatWriter::InsertChar(wchar_t ch) {
 		hud->m_richText->vtable->InsertChar(hud->m_richText, ch);
 	}
 
-	if (ch != L'\n') {
+	if (ch != L'\n')
+	{
 		InsertDefaultFade();
 	}
 }
 
-void LocalChatWriter::InsertText(const char* str) {
+void LocalChatWriter::InsertText(const char* str)
+{
 	WCHAR messageUnicode[288];
 	ConvertANSIToUnicode(str, -1, messageUnicode, 274);
 
@@ -336,8 +345,10 @@ void LocalChatWriter::InsertText(const char* str) {
 	InsertDefaultFade();
 }
 
-void LocalChatWriter::InsertText(const wchar_t* str) {
-	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next) {
+void LocalChatWriter::InsertText(const wchar_t* str)
+{
+	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next)
+	{
 		if (hud->m_unknownContext != (int)m_context)
 			continue;
 
@@ -347,7 +358,8 @@ void LocalChatWriter::InsertText(const wchar_t* str) {
 	InsertDefaultFade();
 }
 
-void LocalChatWriter::InsertColorChange(vgui_Color color) {
+void LocalChatWriter::InsertColorChange(vgui_Color color)
+{
 	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next)
 	{
 		if (hud->m_unknownContext != (int)m_context)
@@ -370,10 +382,11 @@ static vgui_Color GetHudSwatchColor(CHudChat* hud, LocalChatWriter::SwatchColor 
 	case LocalChatWriter::NetworkNameColor:
 		return hud->m_networkNameColor;
 	}
-	return vgui_Color{ 0, 0, 0, 0 };
+	return vgui_Color{0, 0, 0, 0};
 }
 
-void LocalChatWriter::InsertSwatchColorChange(SwatchColor swatchColor) {
+void LocalChatWriter::InsertSwatchColorChange(SwatchColor swatchColor)
+{
 	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next)
 	{
 		if (hud->m_unknownContext != (int)m_context)
@@ -382,7 +395,8 @@ void LocalChatWriter::InsertSwatchColorChange(SwatchColor swatchColor) {
 	}
 }
 
-const char* LocalChatWriter::ApplyAnsiEscape(const char* escape) {
+const char* LocalChatWriter::ApplyAnsiEscape(const char* escape)
+{
 	AnsiEscapeParser decoder(this);
 	while (true)
 	{
@@ -415,21 +429,26 @@ const char* LocalChatWriter::ApplyAnsiEscape(const char* escape) {
 	}
 }
 
-void LocalChatWriter::InsertDefaultFade() {
+void LocalChatWriter::InsertDefaultFade()
+{
 	float fadeLength = 0.f;
 	float fadeSustain = 0.f;
-	if (gGameSettings->isChatEnabled) {
+	if (gGameSettings->isChatEnabled)
+	{
 		fadeLength = gChatFadeLength->value;
 		fadeSustain = gChatFadeSustain->value;
 	}
 
-	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next) {
-		if (hud->m_unknownContext != (int)m_context) continue;
+	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next)
+	{
+		if (hud->m_unknownContext != (int)m_context)
+			continue;
 		hud->m_richText->vtable->InsertFade(hud->m_richText, fadeSustain, fadeLength);
 	}
 }
 
-void InitialiseLocalChatWriter(HMODULE baseAddress) {
+void InitialiseLocalChatWriter(HMODULE baseAddress)
+{
 	gGameSettings = (CGameSettings*)((char*)baseAddress + 0x11BAA48);
 	gChatFadeLength = (CGameFloatVar*)((char*)baseAddress + 0x11BAB78);
 	gChatFadeSustain = (CGameFloatVar*)((char*)baseAddress + 0x11BAC08);

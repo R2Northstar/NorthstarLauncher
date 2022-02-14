@@ -9,13 +9,16 @@ struct vgui_Color
 	unsigned char a;
 };
 
-class LocalChatWriter {
-public:
-	enum Context {
+class LocalChatWriter
+{
+  public:
+	enum Context
+	{
 		NetworkContext = 0,
 		GameContext = 1
 	};
-	enum SwatchColor {
+	enum SwatchColor
+	{
 		MainTextColor,
 		SameTeamNameColor,
 		EnemyTeamNameColor,
@@ -35,7 +38,7 @@ public:
 	void InsertColorChange(vgui_Color color);
 	void InsertSwatchColorChange(SwatchColor color);
 
-private:
+  private:
 	Context m_context;
 
 	const char* ApplyAnsiEscape(const char* escape);

@@ -48,13 +48,15 @@ static unsigned char r;
 static unsigned char g;
 static unsigned char b;*/
 
-struct ChatTags {
+struct ChatTags
+{
 	bool whisper;
 	bool team;
 	bool dead;
 };
 
-struct Chat {
+struct Chat
+{
 	std::string message;
 	int senderId;
 	bool isTeam;
@@ -135,7 +137,8 @@ static void OnReceivedChat(const char* message, int senderIndex, ChatTags tags, 
 	}
 }*/
 
-static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxIndex, bool isTeam, bool isDead) {
+static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxIndex, bool isTeam, bool isDead)
+{
 	int senderIndex = inboxIndex & CUSTOM_MESSAGE_INDEX_BIT;
 	bool isAnonymous = senderIndex == 0;
 	bool isCustom = isAnonymous || (inboxIndex & CUSTOM_MESSAGE_INDEX_MASK);
@@ -143,7 +146,8 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 	// Type is set to 0 for non-custom messages, custom messages have a type encoded as the first byte
 	int type = 0;
 	const char* payload = message;
-	if (isCustom) {
+	if (isCustom)
+	{
 		type = message[0];
 		payload = message + 1;
 	}
@@ -158,7 +162,8 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 }
 
 // void NSChatWrite( int context, string str )
-static SQRESULT SQ_ChatWrite(void* sqvm) {
+static SQRESULT SQ_ChatWrite(void* sqvm)
+{
 	int context = ClientSq_getinteger(sqvm, 1);
 	const char* str = ClientSq_getstring(sqvm, 2);
 
@@ -167,7 +172,8 @@ static SQRESULT SQ_ChatWrite(void* sqvm) {
 }
 
 // void NSChatWriteRaw( int context, string str )
-static SQRESULT SQ_ChatWriteRaw(void* sqvm) {
+static SQRESULT SQ_ChatWriteRaw(void* sqvm)
+{
 	int context = ClientSq_getinteger(sqvm, 1);
 	const char* str = ClientSq_getstring(sqvm, 2);
 
@@ -176,7 +182,8 @@ static SQRESULT SQ_ChatWriteRaw(void* sqvm) {
 }
 
 // void NSChatWriteLine( int context, string str )
-static SQRESULT SQ_ChatWriteLine(void* sqvm) {
+static SQRESULT SQ_ChatWriteLine(void* sqvm)
+{
 	int context = ClientSq_getinteger(sqvm, 1);
 	const char* str = ClientSq_getstring(sqvm, 2);
 
@@ -185,8 +192,10 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm) {
 }
 
 // string NSChatGetCurrentMessage()
-static SQRESULT SQ_ChatGetCurrentMessage(void* sqvm) {
-	if (currentChat == NULL) {
+static SQRESULT SQ_ChatGetCurrentMessage(void* sqvm)
+{
+	if (currentChat == NULL)
+	{
 		ClientSq_pusherror(sqvm, "No chat is available");
 		return SQRESULT_ERROR;
 	}
@@ -196,8 +205,10 @@ static SQRESULT SQ_ChatGetCurrentMessage(void* sqvm) {
 }
 
 // int NSChatGetCurrentPlayer()
-static SQRESULT SQ_ChatGetCurrentPlayer(void* sqvm) {
-	if (currentChat == NULL) {
+static SQRESULT SQ_ChatGetCurrentPlayer(void* sqvm)
+{
+	if (currentChat == NULL)
+	{
 		ClientSq_pusherror(sqvm, "No chat is available");
 		return SQRESULT_ERROR;
 	}
@@ -207,8 +218,10 @@ static SQRESULT SQ_ChatGetCurrentPlayer(void* sqvm) {
 }
 
 // bool NSChatGetIsTeam()
-static SQRESULT SQ_ChatGetIsTeam(void* sqvm) {
-	if (currentChat == NULL) {
+static SQRESULT SQ_ChatGetIsTeam(void* sqvm)
+{
+	if (currentChat == NULL)
+	{
 		ClientSq_pusherror(sqvm, "No chat is available");
 		return SQRESULT_ERROR;
 	}
@@ -218,8 +231,10 @@ static SQRESULT SQ_ChatGetIsTeam(void* sqvm) {
 }
 
 // bool NSChatGetIsDead()
-static SQRESULT SQ_ChatGetIsDead(void* sqvm) {
-	if (currentChat == NULL) {
+static SQRESULT SQ_ChatGetIsDead(void* sqvm)
+{
+	if (currentChat == NULL)
+	{
 		ClientSq_pusherror(sqvm, "No chat is available");
 		return SQRESULT_ERROR;
 	}
@@ -229,8 +244,10 @@ static SQRESULT SQ_ChatGetIsDead(void* sqvm) {
 }
 
 // int NSChatGetCurrentType()
-static SQRESULT SQ_ChatGetCurrentType(void* sqvm) {
-	if (currentChat == NULL) {
+static SQRESULT SQ_ChatGetCurrentType(void* sqvm)
+{
+	if (currentChat == NULL)
+	{
 		ClientSq_pusherror(sqvm, "No chat is available");
 		return SQRESULT_ERROR;
 	}
