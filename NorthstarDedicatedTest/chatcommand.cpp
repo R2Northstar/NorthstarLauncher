@@ -9,9 +9,6 @@
 typedef void(__fastcall* ClientSayTextType)(void* a1, const char* message, __int64 isIngameChat, bool isTeamChat);
 ClientSayTextType ClientSayText;
 
-const char* whisperReceiver;
-const char* whisperMessage;
-
 void ConCommand_say(const CCommand& args)
 {
 	if (args.ArgC() >= 2)

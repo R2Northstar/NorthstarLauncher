@@ -120,6 +120,7 @@ CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int 
 
 void ChatSendMessage(unsigned int playerId, const char* text, bool isteam)
 {
+	isSkippingHook = true;
 	CServerGameDLL__OnReceivedSayTextMessage(
 		gServer,
 		// Ensure the first bit isn't set, since this indicates a custom message
@@ -218,7 +219,7 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x1595C0, &CServerGameDLL__OnReceivedSayTextMessageHook,
+		hook, CServerGameDLL__OnReceivedSayTextMessage, &CServerGameDLL__OnReceivedSayTextMessageHook,
 		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessageHookBase));
 
 	// Chat intercept functions
