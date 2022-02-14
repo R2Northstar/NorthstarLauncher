@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include "serverchathooks.h"
 
 enum class LocalChatContext
 {
@@ -7,6 +8,6 @@ enum class LocalChatContext
 	Game = 1
 };
 
-void LocalChatWriteLine(LocalChatContext context, const char* str);
+void LocalChatWriteLine(LocalChatContext context, const char* str, int fromPlayerId, AnonymousMessageType messageType);
 
 void InitialiseClientChatHooks(HMODULE baseAddress);

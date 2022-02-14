@@ -3,11 +3,15 @@
 #include "concommand.h"
 #include "dedicated.h"
 #include "clientchathooks.h"
+#include "squirrel.h"
 
 // note: isIngameChat is an int64 because the whole register the arg is stored in needs to be 0'd out to work
 // if isIngameChat is false, we use network chat instead
 typedef void(__fastcall* ClientSayTextType)(void* a1, const char* message, __int64 isIngameChat, bool isTeamChat);
 ClientSayTextType ClientSayText;
+
+const char* whisperReceiver;
+const char* whisperMessage;
 
 void ConCommand_say(const CCommand& args)
 {
@@ -25,7 +29,7 @@ void ConCommand_log(const CCommand& args)
 {
 	if (args.ArgC() >= 2)
 	{
-		LocalChatWriteLine(LocalChatContext::Game, args.ArgS());
+		LocalChatWriteLine(LocalChatContext::Game, args.ArgS(), 128, AnonymousMessageType::Whisper);
 	}
 }
 

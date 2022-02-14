@@ -2,6 +2,7 @@
 #include "clientchathooks.h"
 #include <rapidjson/document.h>
 #include "squirrel.h"
+#include "serverchathooks.h"
 
 struct vgui_Color
 {
@@ -115,6 +116,20 @@ vgui_Color darkColors[8] = {vgui_Color{0, 0, 0, 255},	   vgui_Color{205, 49, 49,
 vgui_Color lightColors[8] = {vgui_Color{102, 102, 102, 255}, vgui_Color{241, 76, 76, 255},	vgui_Color{35, 209, 139, 255},
 							 vgui_Color{245, 245, 67, 255},	 vgui_Color{59, 142, 234, 255}, vgui_Color{214, 112, 214, 255},
 							 vgui_Color{41, 184, 219, 255},	 vgui_Color{255, 255, 255, 255}};
+
+int playerIdForLookup;
+std::string foundPlayerName;
+
+static std::string currentMessage;
+static int currentPlayerId;
+static bool currentIsTeam;
+static bool currentIsDead;
+static bool currentIsEnemy;
+
+static bool useCustomCode;
+static unsigned char r;
+static unsigned char g;
+static unsigned char b;
 
 static void LocalChatInsertChar(LocalChatContext context, wchar_t ch)
 {
@@ -372,13 +387,31 @@ const char* ApplyAnsiEscape(LocalChatContext context, const char* escape)
 	}
 }
 
-void LocalChatWriteLine(LocalChatContext context, const char* str)
+void LocalChatWriteLine(LocalChatContext context, const char* str, int fromPlayerId, AnonymousMessageType messageType)
 {
 	char writeBuffer[256];
 
 	// Force a new line and color reset at the start of all chat lines
 	LocalChatInsertChar(context, L'\n');
 	LocalChatInsertSwatchColorChange(context, SwatchColor::MainText);
+
+	if (fromPlayerId == 0)
+	{
+		LocalChatInsertColorChange(context, vgui_Color{255, 100, 100, 255});
+		LocalChatInsertText(context, "[SERVER] ");
+	}
+
+	if (messageType == AnonymousMessageType::Whisper)
+	{
+		LocalChatInsertColorChange(context, vgui_Color{190, 50, 200, 255});
+		LocalChatInsertText(context, "[WHISPER] ");
+		fromPlayerId -= 128;
+		playerIdForLookup = fromPlayerId;
+		g_ClientSquirrelManager->ExecuteCode("GetPlayerNameById()");
+		const char* test = foundPlayerName.c_str();
+		LocalChatInsertText(context, foundPlayerName.c_str());
+		LocalChatInsertText(context, ": ");
+	}
 
 	while (true)
 	{
@@ -409,24 +442,82 @@ void LocalChatWriteLine(LocalChatContext context, const char* str)
 	}
 }
 
+void LocalChatWriteMessage(LocalChatContext context, const char* str, const char* playerName, bool isTeam, bool isDead, bool isEnemy)
+{
+	char writeBuffer[256];
+
+	// Force a new line and color reset at the start of all chat lines
+	LocalChatInsertChar(context, L'\n');
+	LocalChatInsertSwatchColorChange(context, SwatchColor::MainText);
+	// TODO: the following colors are probably not entire accurate
+	// Should get them from the game dll
+	if (isEnemy)
+	{
+		LocalChatInsertColorChange(context, vgui_Color{220, 70, 0, 255});
+	}
+	else
+	{
+		LocalChatInsertColorChange(context, vgui_Color{52, 225, 255, 255});
+	}
+	if (isTeam)
+	{
+		LocalChatInsertText(context, "[TEAM] ");
+	}
+	LocalChatInsertText(context, playerName);
+	LocalChatInsertText(context, ": ");
+	LocalChatInsertColorChange(context, vgui_Color{255, 255, 255, 255});
+
+	while (true)
+	{
+		const char* startOfEscape = strstr(str, "\033[");
+
+		if (startOfEscape == NULL)
+		{
+			// No more escape sequences, write the remaining text and exit
+			LocalChatInsertText(context, str);
+			break;
+		}
+
+		if (startOfEscape != str)
+		{
+			// There is some text before the escape sequence, just print that
+
+			size_t copyChars = startOfEscape - str;
+			if (copyChars > 255)
+				copyChars = 255;
+			strncpy(writeBuffer, str, copyChars);
+			writeBuffer[copyChars] = 0;
+
+			LocalChatInsertText(context, writeBuffer);
+		}
+
+		const char* escape = startOfEscape + 2;
+		str = ApplyAnsiEscape(context, escape);
+	}
+}
+
+
 static void OnNetworkChatHook(const char* message, const char* playerName, int unknown)
 {
-	// todo: support squirrel hook
 	OnNetworkChat(message, playerName, unknown);
 }
 
-enum class AnonymousMessageType : char
-{
-	Announce = 1,
-};
-
-static void CHudChat__AddGameLineHook(CHudChat* self, const char* message, int fromPlayerIndex, bool isteam, bool isdead)
+static void CHudChat__AddGameLineHook(CHudChat* self, const char* message, int fromPlayerIndex, bool isTeam, bool isDead)
 {
 	// Anonymous messages are from playerIndex=0, other messages are handled as normal
-	if (fromPlayerIndex != 0)
+	if (fromPlayerIndex != 0 && fromPlayerIndex < 128)
 	{
 		// todo: support squirrel hook
-		CHudChat__AddGameLine(self, message, fromPlayerIndex, isteam, isdead);
+		currentMessage = message;
+		currentPlayerId = fromPlayerIndex - 1;
+		currentIsTeam = isTeam;
+		currentIsDead = isDead;
+		currentIsEnemy = false;
+		if (self == *gHudChatList)
+		{
+			g_ClientSquirrelManager->ExecuteCode("CClientGameDLL_ProcessMessageStartThread()");
+		}
+		
 		return;
 	}
 
@@ -444,28 +535,89 @@ static void CHudChat__AddGameLineHook(CHudChat* self, const char* message, int f
 
 	char messageType = message[0];
 	const char* messageContent = message + 1;
-
-	if (messageType == (char)AnonymousMessageType::Announce)
-	{
-		LocalChatWriteLine(LocalChatContext::Game, messageContent);
-	}
+	LocalChatWriteLine(LocalChatContext::Game, messageContent, fromPlayerIndex, AnonymousMessageType(messageType));
 }
+
+SQRESULT SQ_GameChatWriteMessage(void* sqvm)
+{
+	const char* text = ClientSq_getstring(sqvm, 1);
+	const char* playerName = ClientSq_getstring(sqvm, 2);
+	bool isTeam = ClientSq_getbool(sqvm, 3);
+	bool isDead = ClientSq_getbool(sqvm, 4);
+	bool isEnemy = ClientSq_getbool(sqvm, 5);
+	LocalChatWriteMessage(LocalChatContext::Game, text, playerName, isTeam, isDead, isEnemy);
+	return SQRESULT_NOTNULL;
+}
+
 
 // void NSGameChatWriteLine( string text )
 SQRESULT SQ_GameChatWriteLine(void* sqvm)
 {
 	const char* text = ClientSq_getstring(sqvm, 1);
-	LocalChatWriteLine(LocalChatContext::Game, text);
-	return SQRESULT_NULL;
+	LocalChatWriteLine(LocalChatContext::Game, text, 128, AnonymousMessageType::Announce);
+	return SQRESULT_NOTNULL;
 }
 
 // void NSNetworkChatWriteLine( string text )
 SQRESULT SQ_NetworkChatWriteLine(void* sqvm)
 {
 	const char* text = ClientSq_getstring(sqvm, 1);
-	LocalChatWriteLine(LocalChatContext::Network, text);
-	return SQRESULT_NULL;
+	LocalChatWriteLine(LocalChatContext::Network, text, 128, AnonymousMessageType::Announce);
+	return SQRESULT_NOTNULL;
 }
+
+// void NSNetworkChatWriteLine( string text )
+SQRESULT SQ_GetPlayerIdForLookup(void* sqvm)
+{
+	ClientSq_pushinteger(sqvm, playerIdForLookup);
+	return SQRESULT_NOTNULL;
+}
+
+// void NSNetworkChatWriteLine( string text )
+SQRESULT SQ_SetFoundPlayerName(void* sqvm)
+{
+	foundPlayerName = ClientSq_getstring(sqvm, 1);
+	return SQRESULT_NOTNULL;
+}
+
+static SQRESULT getMessageClient(void* sqvm)
+{
+	ClientSq_pushstring(sqvm, currentMessage.c_str(), -1);
+	return SQRESULT_NOTNULL;
+}
+static SQRESULT getPlayerClient(void* sqvm)
+{
+	ClientSq_pushinteger(sqvm, currentPlayerId);
+	return SQRESULT_NOTNULL;
+}
+
+static SQRESULT getTeamClient(void* sqvm)
+{
+	ClientSq_pushinteger(sqvm, currentIsTeam);
+	return SQRESULT_NOTNULL;
+}
+
+
+static SQRESULT getDeadClient(void* sqvm)
+{
+	ClientSq_pushinteger(sqvm, currentIsDead);
+	return SQRESULT_NOTNULL;
+}
+
+static SQRESULT setChat(void* sqvm)
+{
+	useCustomCode = ClientSq_getbool(sqvm, 1);
+	return SQRESULT_NOTNULL;
+}
+
+static SQRESULT setColor(void* sqvm)
+{
+	r = ClientSq_getinteger(sqvm, 1);
+	g = ClientSq_getinteger(sqvm, 2);
+	b = ClientSq_getinteger(sqvm, 3);
+	return SQRESULT_NOTNULL;
+}
+
 
 void InitialiseClientChatHooks(HMODULE baseAddress)
 {
@@ -479,4 +631,16 @@ void InitialiseClientChatHooks(HMODULE baseAddress)
 
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSGameChatWriteLine", "string text", "", SQ_GameChatWriteLine);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSNetworkChatWriteLine", "string text", "", SQ_NetworkChatWriteLine);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "NSGameChatWriteMessage", "string text, string playerName, bool isTeam, bool isDead, bool isEnemy", "", SQ_GameChatWriteMessage);
+
+	g_ClientSquirrelManager->AddFuncRegistration("int", "NSGetPlayerIdForLookup", "", "", SQ_GetPlayerIdForLookup);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "NSSetFoundPlayerName", "string text", "", SQ_SetFoundPlayerName);
+
+	g_ClientSquirrelManager->AddFuncRegistration("string", "NSChatGetCurrentMessage", "", "", getMessageClient);
+	g_ClientSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentPlayer", "", "", getPlayerClient);
+	g_ClientSquirrelManager->AddFuncRegistration("bool", "NSChatGetIsTeam", "", "", getTeamClient);
+	g_ClientSquirrelManager->AddFuncRegistration("bool", "NSChatGetIsDead", "", "", getDeadClient);
+
+	g_ClientSquirrelManager->AddFuncRegistration("void", "setchat", "bool value", "", setChat);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "setcolor", "int r, int g, int b", "", setColor);
 }

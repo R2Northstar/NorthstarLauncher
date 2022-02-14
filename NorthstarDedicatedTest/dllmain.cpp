@@ -123,6 +123,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
 		AddDllLoadCallback("client.dll", InitialiseClientPrintHooks);
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
+		AddDllLoadCallback("client.dll", InitialiseUICommands);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
