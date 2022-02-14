@@ -307,7 +307,7 @@ SQRESULT SQ_TryAuthWithServer(void* sqvm)
 	// do auth
 	g_MasterServerManager->AuthenticateWithServer(
 		g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, g_MasterServerManager->m_remoteServers[serverIndex].id,
-		(char*)password);
+		(char*)password, true);
 
 	return SQRESULT_NULL;
 }

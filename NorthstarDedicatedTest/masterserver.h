@@ -108,11 +108,10 @@ class MasterServerManager
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
+	void AuthenticateOriginWithMasterServer(char* uid, char* originToken, bool async);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
-	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
-	void
-	AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
+	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password, bool async);
+	void AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
