@@ -45,4 +45,6 @@ class LocalChatWriter
 	void InsertDefaultFade();
 };
 
+bool IsFirstHud(void* hud);
+
 void InitialiseLocalChatWriter(HMODULE baseAddress);

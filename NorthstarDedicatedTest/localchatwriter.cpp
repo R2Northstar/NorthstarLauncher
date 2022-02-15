@@ -87,9 +87,9 @@ class CHudChat
 	CHudChat* previous;
 };
 
-CGameSettings* gGameSettings;
-CGameFloatVar* gChatFadeLength;
-CGameFloatVar* gChatFadeSustain;
+CGameSettings** gGameSettings;
+CGameFloatVar** gChatFadeLength;
+CGameFloatVar** gChatFadeSustain;
 
 // Linked list of CHudChats
 CHudChat** gHudChatList;
@@ -433,10 +433,10 @@ void LocalChatWriter::InsertDefaultFade()
 {
 	float fadeLength = 0.f;
 	float fadeSustain = 0.f;
-	if (gGameSettings->isChatEnabled)
+	if ((*gGameSettings)->isChatEnabled)
 	{
-		fadeLength = gChatFadeLength->value;
-		fadeSustain = gChatFadeSustain->value;
+		fadeLength = (*gChatFadeLength)->value;
+		fadeSustain = (*gChatFadeSustain)->value;
 	}
 
 	for (CHudChat* hud = *gHudChatList; hud != NULL; hud = hud->next)
@@ -447,11 +447,13 @@ void LocalChatWriter::InsertDefaultFade()
 	}
 }
 
+bool IsFirstHud(void* hud) { return hud == *gHudChatList; }
+
 void InitialiseLocalChatWriter(HMODULE baseAddress)
 {
-	gGameSettings = (CGameSettings*)((char*)baseAddress + 0x11BAA48);
-	gChatFadeLength = (CGameFloatVar*)((char*)baseAddress + 0x11BAB78);
-	gChatFadeSustain = (CGameFloatVar*)((char*)baseAddress + 0x11BAC08);
+	gGameSettings = (CGameSettings**)((char*)baseAddress + 0x11BAA48);
+	gChatFadeLength = (CGameFloatVar**)((char*)baseAddress + 0x11BAB78);
+	gChatFadeSustain = (CGameFloatVar**)((char*)baseAddress + 0x11BAC08);
 	gHudChatList = (CHudChat**)((char*)baseAddress + 0x11BA9E8);
 
 	ConvertANSIToUnicode = (ConvertANSIToUnicodeType)((char*)baseAddress + 0x7339A0);
