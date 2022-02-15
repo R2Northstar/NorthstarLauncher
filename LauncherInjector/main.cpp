@@ -288,18 +288,17 @@ std::wstring s2ws(const std::string& s)
 
 std::string URIProtocolName = "northstar://";
 
-
-
 int main(int argc, char* argv[])
 {
-
 	wchar_t buffer[_MAX_PATH];
 	GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
 	std::wstring w = std::wstring(buffer);
-	std::string message = std::string(w.begin(), w.end());			   // Convert from wstring to string
-	std::string path = message.substr(0, message.find_last_of("/\\")); // Substr to just the folder name
+	std::string exepath = std::string(w.begin(), w.end());			   // Convert from wstring to string
+	std::string path = exepath.substr(0, exepath.find_last_of("/\\")); // Substr to just the folder name
 	std::filesystem::current_path(path);							   // Set CWD
 	bool hasURIString = strstr(GetCommandLineA(), "northstar://");
+	printf("Has URI String: \n");
+	printf("%d\n", hasURIString);
 
 	if (namedPipeExists("\\\\.\\pipe\\northstar") && hasURIString) // Check if another instance is already running
 	{
