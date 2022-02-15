@@ -157,7 +157,16 @@ bool InitialiseNorthstar()
 	int uriOffset = cla.find(URIProtocolName);
 	if (uriOffset != -1)
 	{
-		std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1); // -1 to remove a trailing slash
+		std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1);
+		int firstSpace = message.find(" ");
+		if (firstSpace != std::string::npos)
+		{
+			message = message.substr(0, firstSpace);
+		}
+		if (message[message.length() - 1] == '/')
+		{
+			message = message.substr(0, message.length() - 1);
+		}
 		parseURI(message);
 	}
 	else
