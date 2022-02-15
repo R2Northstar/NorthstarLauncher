@@ -93,7 +93,14 @@ std::string unescape_unicode(const std::string& str)
 			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
 		}
 	}
-	result.append(last_match.suffix());
+	if (!last_match.ready())
+	{
+		return str;
+	}
+	else
+	{
+		result.append(last_match.suffix());
+	}
 	return result;
 }
 
@@ -403,11 +410,12 @@ void MasterServerManager::RequestServerList()
 
 						newServer->requiredMods.push_back(modInfo);
 					}
-
-					spdlog::info(
-						"Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(),
-						serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(),
-						serverObj["maxPlayers"].GetInt());
+					// Can probably re-enable this later with a -verbose flag, but slows down loading of the server browser quite a bit as
+					// is
+					// spdlog::info(
+					//	"Server {} on map {} with playlist {} has {}/{} players", serverObj["name"].GetString(),
+					//	serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(),
+					//	serverObj["maxPlayers"].GetInt());
 				}
 
 				std::sort(
