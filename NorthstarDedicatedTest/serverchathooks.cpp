@@ -18,7 +18,7 @@ class CRecipientFilter
 CServerGameDLL* gServer;
 
 typedef void(__fastcall* CServerGameDLL__OnReceivedSayTextMessageType)(
-	CServerGameDLL* self, unsigned int senderPlayerIndex, const char* text, int channelId);
+	CServerGameDLL* self, unsigned int senderPlayerId, const char* text, int channelId);
 CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessage;
 CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessageHookBase;
 
