@@ -30,7 +30,7 @@ bool compressFile(const fs::path path)
 	// compress log file
 	string compressed_data = gzip::compress(log_data.data(), log_data.size());
 	// write log file gzip
-	ofstream output (filename + ".gz", ios::out | ios::binary);
+	ofstream output(filename + ".gz", ios::out | ios::binary);
 	if (!output)
 	{
 		cerr << "Could not write : '" + filename + "'" << endl;
