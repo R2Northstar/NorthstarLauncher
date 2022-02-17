@@ -1,4 +1,6 @@
 #pragma once
+#include <chrono>
+#include <typeinfo>
 
 void InitialiseClientSquirrel(HMODULE baseAddress);
 void InitialiseServerSquirrel(HMODULE baseAddress);
@@ -124,6 +126,10 @@ typedef SQBool (*sq_getboolType)(void*, SQInteger stackpos);
 extern sq_getboolType ClientSq_getbool;
 extern sq_getboolType ServerSq_getbool;
 
+typedef SQRESULT (*sq_getType)(void* sqvm, SQInteger idx);
+extern sq_getType ServerSq_sq_get;
+extern sq_getType ClientSq_sq_get;
+
 template <ScriptContext context> class SquirrelManager
 {
   private:
@@ -192,6 +198,60 @@ template <ScriptContext context> class SquirrelManager
 			}
 		}
 	}
+
+	int setupfunc(const char* funcname)
+	{
+		int result = -2;
+		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
+		{
+			ClientSq_pushroottable(sqvm2);
+			ClientSq_pushstring(sqvm2, funcname, -1);
+			int result = ClientSq_sq_get(sqvm2, -2);
+		}
+		else if (context == ScriptContext::SERVER)
+		{
+			ServerSq_pushroottable(sqvm2);
+			ServerSq_pushstring(sqvm2, funcname, -1);
+			int result = ServerSq_sq_get(sqvm2, -2);
+		}
+		
+		
+		spdlog::info("sq_get returned {}", result);
+		return result;
+	}
+
+	void pusharg(SQInteger arg) {
+		if (context == ScriptContext::CLIENT || context == ScriptContext::UI) ClientSq_pushinteger(sqvm2, arg);
+		else if (context == ScriptContext::SERVER) ServerSq_pushinteger(sqvm2, arg);
+	}
+	void pusharg(SQChar arg)
+	{
+		if (context == ScriptContext::CLIENT || context == ScriptContext::UI) ClientSq_pushstring(sqvm2, arg, -1);
+		else if (context == ScriptContext::SERVER) ServerSq_pushstring(sqvm2, arg, -1);
+	}
+	void pusharg(SQFloat arg)
+	{
+		if (context == ScriptContext::CLIENT || context == ScriptContext::UI) ClientSq_pushfloat(sqvm2, arg);
+		else if (context == ScriptContext::SERVER) ServerSq_pushfloat(sqvm2, arg);
+	}
+	void pusharg(SQBool arg)
+	{
+		if (context == ScriptContext::CLIENT || context == ScriptContext::UI) ClientSq_pushbool(sqvm2, arg);
+		else if (context == ScriptContext::SERVER) ServerSq_pushbool(sqvm2, arg);
+	}
+
+	int call(int args)
+	{
+		int result = -2;
+		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
+			int result = ClientSq_call(sqvm2, args + 1, false, false);
+		else if (context == ScriptContext::SERVER)
+			int result = ServerSq_call(sqvm2, args + 1, false, false);
+		
+		spdlog::info("sq_call returned {}", result);
+		return result;
+	}
+
 
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func)
 	{
