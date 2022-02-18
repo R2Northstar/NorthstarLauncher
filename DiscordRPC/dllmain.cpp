@@ -91,7 +91,7 @@ DiscordState state{};
 int main(int, char**)
 {
 
-	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"0");
+	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"1");
 	SetConsoleTitle(L"Northstar");
 
 	discord::Core* core{};
@@ -108,11 +108,21 @@ int main(int, char**)
 		discord::LogLevel::Debug, [](discord::LogLevel level, const char* message)
 		{ std::cerr << "Log(" << static_cast<uint32_t>(level) << "): " << message << "\n"; });
 
-	//const auto p1 = std::chrono::system_clock::now().time_since_epoch();
+	
+	state.core->ActivityManager().RegisterCommand("notepad.exe");
+
+	state.core->ActivityManager().OnActivityJoin.Connect([](const char* secret) { std::cout << "Join " << secret << "\n"; });
+	state.core->ActivityManager().OnActivitySpectate.Connect([](const char* secret) { std::cout << "Spectate " << secret << "\n"; });
+	state.core->ActivityManager().OnActivityJoinRequest.Connect([](discord::User const& user)
+																{ std::cout << "Join Request " << user.GetUsername() << "\n"; });
+	state.core->ActivityManager().OnActivityInvite.Connect(
+		[](discord::ActivityActionType, discord::User const& user, discord::Activity const&)
+		{ std::cout << "Invite " << user.GetUsername() << "\n"; });
 
 	discord::Activity activity{};
 
-	//activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
+	const auto p1 = std::chrono::system_clock::now().time_since_epoch();
+	activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
 
 	std::string gameState = (*gameStatePTR).playlistDisplayName;
 
@@ -127,6 +137,10 @@ int main(int, char**)
 	activity.GetParty().GetSize().SetCurrentSize(4);
 	activity.GetParty().GetSize().SetMaxSize(12);
 
+	activity.GetParty().SetId("aiuahfijsdhfjk");
+
+	activity.GetSecrets().SetJoin("biusdghfkjrsdh");
+
 
 	state.core->ActivityManager().UpdateActivity(
 		activity,
@@ -137,7 +151,6 @@ int main(int, char**)
 		});
 
 	std::signal(SIGINT, [](int) { interrupted = true; });
-
 	do
 	{
 		state.core->RunCallbacks();
@@ -193,6 +206,9 @@ int main(int, char**)
 				activity.GetParty().GetSize().SetMaxSize(0);
 				activity.SetDetails("In menu");
 			}
+
+
+
 		}
 
 
