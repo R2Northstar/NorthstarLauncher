@@ -274,7 +274,7 @@ int main(int argc, char* argv[])
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
 
-	if (!noOriginStartup)
+	if (!noOriginStartup && !dedicated)
 	{
 		EnsureOriginStarted();
 	}
