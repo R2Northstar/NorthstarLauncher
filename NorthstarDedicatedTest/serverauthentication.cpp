@@ -145,7 +145,7 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
-bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
+bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* name)
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
@@ -156,39 +156,41 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
 
-		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
-		{
-			authFail = false;
-			// uuid
-			strcpy((char*)player + 0xF500, strUid.c_str());
-
-			// reset from disk if we're doing that
-			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
+		if (!strcmp(strUid.c_str(), authData.uid) && !strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
+			if (!strcmp(strUid.c_str(), authData.uid) &&
+				!strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
 			{
-				std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
+				authFail = false;
+				// uuid
+				strcpy((char*)player + 0xF500, strUid.c_str());
 
-				if (!pdataStream.fail())
+				// reset from disk if we're doing that
+				if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
 				{
-					// get file length
-					pdataStream.seekg(0, pdataStream.end);
-					auto length = pdataStream.tellg();
-					pdataStream.seekg(0, pdataStream.beg);
+					std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
-					// copy pdata into buffer
-					pdataStream.read((char*)player + 0x4FA, length);
+					if (!pdataStream.fail())
+					{
+						// get file length
+						pdataStream.seekg(0, pdataStream.end);
+						auto length = pdataStream.tellg();
+						pdataStream.seekg(0, pdataStream.beg);
+
+						// copy pdata into buffer
+						pdataStream.read((char*)player + 0x4FA, length);
+					}
+					else // fallback to remote pdata if no local default
+						memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
 				}
-				else // fallback to remote pdata if no local default
+				else
+				{
+					// copy pdata into buffer
 					memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
-			}
-			else
-			{
-				// copy pdata into buffer
-				memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
-			}
+				}
 
-			// set persistent data as ready, we use 0x4 internally to mark the client as using remote persistence
-			*((char*)player + 0x4a0) = (char)0x4;
-		}
+				// set persistent data as ready, we use 0x4 internally to mark the client as using remote persistence
+				*((char*)player + 0x4a0) = (char)0x4;
+			}
 	}
 
 	if (authFail)
@@ -224,27 +226,6 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 	}
 
 	return true; // auth successful, client stays on
-}
-bool ServerAuthenticationManager::CheckPlayerName(void* player, char* authToken, char* name)
-{
-	std::lock_guard<std::mutex> guard(m_authDataMutex);
-
-	bool authFail = true;
-	if (!m_authData.empty() && m_authData.count(std::string(authToken)))
-	{
-		// use stored auth data
-		AuthData authData = m_authData[authToken];
-
-		if (!strcmp(name, authData.name)) // connecting client's name matches supplied one
-		{
-			authFail = false;
-		}
-	}
-
-	if (authFail && !CVar_ns_auth_allow_insecure->m_nValue) // no auth data and insecure connections aren't allowed, so dc the client
-		return false;
-	else
-		return true;
 }
 
 bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
@@ -321,10 +302,10 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		return ret;
 	}
 
-	if (strlen(name) >= 64 || !g_ServerAuthenticationManager->CheckPlayerName(self, nextPlayerToken, name)) // fix for name overflow bug
+	if (strlen(name) >= 64) // fix for name overflow bug
 		CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (
-		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) &&
+		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken, name) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
 

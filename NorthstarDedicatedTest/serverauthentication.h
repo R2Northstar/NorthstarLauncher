@@ -94,8 +94,7 @@ class ServerAuthenticationManager
   public:
 	void StartPlayerAuthServer();
 	void StopPlayerAuthServer();
-	bool AuthenticatePlayer(void* player, int64_t uid, char* authToken);
-	bool CheckPlayerName(void* player, char* authToken, char* name);
+	bool AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* name);
 	bool RemovePlayerAuthData(void* player);
 	void WritePersistentData(void* player);
 };
