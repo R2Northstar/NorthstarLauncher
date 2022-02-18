@@ -145,7 +145,7 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
-bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* name)
+bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
@@ -225,9 +225,8 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 	return true; // auth successful, client stays on
 }
-bool ServerAuthenticationManager::CheckPlayerName(void* player, int64_t uid, char* authToken, char* name)
+bool ServerAuthenticationManager::CheckPlayerName(void* player, char* authToken, char* name)
 {
-	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
 
 	bool authFail = true;
@@ -242,7 +241,7 @@ bool ServerAuthenticationManager::CheckPlayerName(void* player, int64_t uid, cha
 		}
 	}
 
-	if (authFail)
+	if (authFail && !CVar_ns_auth_allow_insecure->m_nValue) // no auth data and insecure connections aren't allowed, so dc the client
 		return false;
 	else
 		return true;
@@ -322,14 +321,12 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		return ret;
 	}
 
-	if (strlen(name) >= 64) // fix for name overflow bug
+	if (strlen(name) >= 64 || !g_ServerAuthenticationManager->CheckPlayerName(self, nextPlayerToken, name)) // fix for name overflow bug
 		CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (
-		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken, name) &&
+		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
-	else if (!g_ServerAuthenticationManager->CheckPlayerName(self, nextPlayerUid, nextPlayerToken, name))
-		CBaseClient__Disconnect(self, 1, "Authentication Failed: Player name mismatch");
 
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
 	{
