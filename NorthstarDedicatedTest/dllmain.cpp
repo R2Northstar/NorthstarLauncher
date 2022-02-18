@@ -36,6 +36,13 @@
 #include "configurables.h"
 #include <string.h>
 #include "pch.h"
+#include <Windows.h>
+#include "state.h"
+#include "plugins.h"
+
+#define IMPORT __declspec(dllimport)
+typedef void (* setGameStatePtr)(GameState*);
+IMPORT void setGameState(GameState* gameStatePTR_external);
 
 bool initialised = false;
 
@@ -63,6 +70,37 @@ void WaitForDebugger(HMODULE baseAddress)
 		while (!IsDebuggerPresent())
 			Sleep(100);
 	}
+}
+
+bool LoadPlugins() {
+
+	std::vector<fs::path> paths;
+
+	// ensure dirs exist
+	fs::create_directories("plugins");
+
+	// get mod directories
+
+	for (auto const& entry : fs::recursive_directory_iterator("plugins"))
+	{
+		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+			paths.emplace_back(entry.path().filename());
+	}
+	spdlog::info("Found the following DLLs in plugins folder:");
+	for (fs::path path : paths)
+	{
+		spdlog::info(path.string());
+	} 
+
+	initGameState();
+	HMODULE hLib = LoadLibrary(L"DiscordRPC.dll");
+	if (hLib == NULL)
+	{
+		return false;
+	}
+	setGameStatePtr setGameState = (setGameStatePtr)GetProcAddress(hLib, "setGameState");
+	setGameState(&gameState);
+	return true;
 }
 
 bool InitialiseNorthstar()
@@ -120,6 +158,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseScriptMainMenuPromos);
 		AddDllLoadCallback("client.dll", InitialiseMiscClientFixes);
 		AddDllLoadCallback("client.dll", InitialiseClientPrintHooks);
+		AddDllLoadCallback("client.dll", InitialisePluginCommands);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
