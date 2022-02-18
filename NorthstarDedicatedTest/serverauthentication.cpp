@@ -114,6 +114,9 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
 					newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
+					strncpy(newAuthData.name, request.get_param_value("username").c_str(), sizeof(newAuthData.name));
+					newAuthData.name[sizeof(newAuthData.name) - 1] = 0;
+
 					newAuthData.pdataSize = request.body.size();
 					newAuthData.pdata = new char[newAuthData.pdataSize];
 					memcpy(newAuthData.pdata, request.body.c_str(), newAuthData.pdataSize);
@@ -142,7 +145,7 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
-bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
+bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* name)
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
@@ -152,7 +155,8 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 	{
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
-		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
+
+		if (!strcmp(strUid.c_str(), authData.uid) && !strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
 		{
 			authFail = false;
 			// uuid
@@ -299,7 +303,7 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 	if (strlen(name) >= 64) // fix for name overflow bug
 		CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (
-		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) &&
+		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken, name) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
