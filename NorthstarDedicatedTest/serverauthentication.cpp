@@ -156,7 +156,8 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
 
-		if (!strcmp(strUid.c_str(), authData.uid) && !strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
+		if (!strcmp(strUid.c_str(), authData.uid) &&
+		    	!strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
 		{
 			authFail = false;
 			// uuid
