@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <Shlwapi.h>
+#include <iostream>
 
 namespace fs = std::filesystem;
 
@@ -224,6 +225,15 @@ bool LoadNorthstar()
 	}
 
 	((bool (*)())Hook_Init)();
+
+
+	Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
+	if (!hHookModule || Hook_Init == nullptr)
+	{
+		LibraryLoadError(GetLastError(), L"Plugins.dll", buffer);
+		return false;
+	}
+	((bool (*)())Hook_Init)();
 	return true;
 }
 
@@ -240,8 +250,10 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
+
 int main(int argc, char* argv[])
 {
+
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
 		MessageBoxA(
@@ -262,8 +274,10 @@ int main(int argc, char* argv[])
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
 
-	if (!noOriginStartup && !dedicated)
+	if (!noOriginStartup)
+	{
 		EnsureOriginStarted();
+	}
 
 	if (dedicated && !nostubs)
 	{
@@ -310,6 +324,14 @@ int main(int argc, char* argv[])
 	}
 
 	{
+		if (!GetExePathWide(exePath, sizeof(exePath)))
+		{
+			MessageBoxA(
+				GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.",
+				"Northstar Launcher Error", 0);
+			return 1;
+		}
+
 		PrependPath();
 
 		printf("[*] Loading tier0.dll\n");
@@ -345,10 +367,12 @@ int main(int argc, char* argv[])
 	auto LauncherMain = GetLauncherMain();
 	if (!LauncherMain)
 		MessageBoxA(
-			GetForegroundWindow(), "Failed loading launcher.dll.\nThe game cannot continue and has to exit.", "Northstar Launcher Error",
-			0);
+			GetForegroundWindow(), "Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
+			"Northstar Launcher Error", 0);
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
-	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
-		NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	printf("Starting normally");
+	return ((int(/*__fastcall*/*)(
+		HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	//system("pause");
 }
