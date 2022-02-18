@@ -372,7 +372,7 @@ int main(int argc, char* argv[])
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
 	printf("Starting normally");
-	//return ((int(/*__fastcall*/*)(
-	//	HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
-	system("pause");
+	return ((int(/*__fastcall*/*)(
+		HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	//system("pause");
 }
