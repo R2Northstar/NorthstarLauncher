@@ -226,6 +226,28 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 	return true; // auth successful, client stays on
 }
+bool ServerAuthenticationManager::CheckPlayerName(void* player, int64_t uid, char* authToken, char* name)
+{
+	std::string strUid = std::to_string(uid);
+	std::lock_guard<std::mutex> guard(m_authDataMutex);
+
+	bool authFail = true;
+	if (!m_authData.empty() && m_authData.count(std::string(authToken)))
+	{
+		// use stored auth data
+		AuthData authData = m_authData[authToken];
+
+		if (!strcmp(name, authData.name)) // connecting client's name matches supplied one
+		{
+			authFail = false;
+		}
+	}
+
+	if (authFail)
+		return false;
+	else
+		return true;
+}
 
 bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
 {
@@ -307,6 +329,8 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken, name) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
+	else if (!g_ServerAuthenticationManager->CheckPlayerName(self, nextPlayerUid, nextPlayerToken, name))
+		CBaseClient__Disconnect(self, 1, "Authentication Failed: Player name mismatch");
 
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
 	{
