@@ -536,9 +536,8 @@ bool isProcessed = true;
 SQRESULT setMessage(void* sqvm)
 {
 	currentMessage = ServerSq_getstring(sqvm, 1);
-	currentPlayerId = ServerSq_getinteger(sqvm, 2);
-	currentChannelId = ServerSq_getinteger(sqvm, 3);
-	shouldBlock = ServerSq_getbool(sqvm, 4);
+	currentChannelId = ServerSq_getinteger(sqvm, 2);
+	shouldBlock = ServerSq_getbool(sqvm, 3);
 	return SQRESULT_NOTNULL;
 }
 
@@ -569,9 +568,9 @@ void CServerGameDLL__OnReceivedSayTextMessageHook(void* self, unsigned int sende
 		isProcessed = false;
 
 		g_ServerSquirrelManager->ExecuteCode("CServerGameDLL_ProcessMessageStartThread()");
-		if (!shouldBlock && currentPlayerId + 1 == senderClientIndex) // stop player id spoofing from server
+		if (!shouldBlock)
 		{
-			CServerGameDLL__OnReceivedSayTextMessage(self, currentPlayerId + 1, currentMessage.c_str(), currentChannelId);
+			CServerGameDLL__OnReceivedSayTextMessage(self, senderClientIndex, currentMessage.c_str(), currentChannelId);
 		}
 	}
 	else
@@ -721,8 +720,7 @@ void InitialiseServerAuthenticationServerDLL(HMODULE baseAddress)
 		hook, (char*)baseAddress + 0x1595C0, &CServerGameDLL__OnReceivedSayTextMessageHook,
 		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessage));
 
-	g_ServerSquirrelManager->AddFuncRegistration(
-		"void", "NSSetMessage", "string message, int playerId, int channelId, bool shouldBlock", "", setMessage);
+	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSetMessage", "string message, int channelId, bool shouldBlock", "", setMessage);
 
 	g_ServerSquirrelManager->AddFuncRegistration("string", "NSChatGetCurrentMessage", "", "", getMessageServer);
 	g_ServerSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentPlayer", "", "", getPlayerServer);
