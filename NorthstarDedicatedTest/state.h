@@ -10,6 +10,7 @@ struct ServerInfo
 	int maxPlayers;
 	bool roundBased;
 	int scoreLimit;
+	int endTime;
 };
 
 struct PlayerInfo
@@ -28,6 +29,7 @@ struct GameState
 	int highestScore;
 
 	bool connected;
+	bool loading;
 	std::string map;
 	std::string mapDisplayName;
 	std::string playlist;

@@ -86,20 +86,31 @@ bool LoadPlugins() {
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-	spdlog::info("Found the following DLLs in plugins folder:");
-	for (fs::path path : paths)
-	{
-		spdlog::info(path.string());
-	} 
 
 	initGameState();
-	HMODULE hLib = LoadLibrary(L"DiscordRPC.dll");
-	if (hLib == NULL)
+	spdlog::info("Loading the following DLLs in plugins folder:");
+	for (fs::path path : paths)
 	{
-		return false;
-	}
-	setGameStatePtr setGameState = (setGameStatePtr)GetProcAddress(hLib, "setGameState");
-	setGameState(&gameState);
+		std::string pathstring = ("plugins"/ path).string();
+		std::wstring wpath = ("plugins"/path).wstring();
+		
+		LPCWSTR wpptr = wpath.c_str();
+		//spdlog::info(wpptr);
+		HMODULE hLib = LoadLibraryW(wpptr);
+		if (hLib == NULL)
+		{
+			spdlog::info("Failed to load library {}", pathstring);
+			continue;
+		}
+		setGameStatePtr setGameState = (setGameStatePtr)GetProcAddress(hLib, "initializePlugin");
+		if (setGameState == 0)
+		{
+			spdlog::info("Library {} has no function initializePlugin", pathstring);
+			continue;
+		}
+		spdlog::info("Succesfully loaded {}", pathstring);
+		setGameState(&gameState);
+	} 
 	return true;
 }
 

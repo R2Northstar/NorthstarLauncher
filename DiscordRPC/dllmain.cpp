@@ -77,9 +77,9 @@ volatile bool interrupted{false};
 
 GameState* gameStatePTR = 0;
 
-extern "C" EXPORT void setGameState(GameState* gameState);
+extern "C" EXPORT void initializePlugin(GameState* gameState);
 
-extern "C" EXPORT void setGameState(GameState* gameStatePTR_external)
+extern "C" EXPORT void initializePlugin(GameState* gameStatePTR_external)
 {
 	gameStatePTR = gameStatePTR_external;
 	std::thread discord(main, 0, (char**)0);
@@ -87,11 +87,12 @@ extern "C" EXPORT void setGameState(GameState* gameStatePTR_external)
 }
 
 DiscordState state{};
+bool wasInGame;
 
 int main(int, char**)
 {
 
-	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"0");
+	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"1");
 	SetConsoleTitle(L"Northstar");
 
 	discord::Core* core{};
@@ -108,20 +109,19 @@ int main(int, char**)
 		discord::LogLevel::Debug, [](discord::LogLevel level, const char* message)
 		{ std::cerr << "Log(" << static_cast<uint32_t>(level) << "): " << message << "\n"; });
 
-	//const auto p1 = std::chrono::system_clock::now().time_since_epoch();
+	
 
 	discord::Activity activity{};
 
-	//activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
+	const auto p1 = std::chrono::system_clock::now().time_since_epoch();
+	activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
 
 	std::string gameState = (*gameStatePTR).playlistDisplayName;
 
-	activity.SetDetails("UNKNOWN SCORE");
-	activity.SetState(gameState.c_str());
-	activity.GetAssets().SetSmallImage("northstar");
-	activity.GetAssets().SetSmallText("Titanfall 2 + Northstar");
-	activity.GetAssets().SetLargeImage((*gameStatePTR).map.c_str());
-	activity.GetAssets().SetLargeText((*gameStatePTR).mapDisplayName.c_str());
+	activity.SetDetails("");
+	activity.SetState("Loading...");
+	activity.GetAssets().SetLargeImage("northstar");
+	activity.GetAssets().SetLargeText("");
 	activity.SetType(discord::ActivityType::Playing);
 
 	activity.GetParty().GetSize().SetCurrentSize(4);
@@ -158,6 +158,15 @@ int main(int, char**)
 			activity.SetState("On Main Menu");
 			activity.GetAssets().SetLargeImage("northstar");
 			activity.GetAssets().SetLargeText("Titanfall 2 + Northstar");
+			activity.GetAssets().SetSmallImage("");
+			activity.GetAssets().SetSmallText("");
+			activity.GetTimestamps().SetEnd(0);
+			if (wasInGame)
+			{
+				const auto p1 = std::chrono::system_clock::now().time_since_epoch();
+				activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
+				wasInGame = false;
+			}
 		}
 		else if ((*gameStatePTR).map == "mp_lobby")
 		{
@@ -167,10 +176,19 @@ int main(int, char**)
 			activity.SetDetails("Lobby");
 			activity.GetAssets().SetLargeImage("northstar");
 			activity.GetAssets().SetLargeText("Titanfall 2 + Northstar");
+			activity.GetAssets().SetSmallImage("");
+			activity.GetAssets().SetSmallText("");
+			activity.GetTimestamps().SetEnd(0);
+			if (wasInGame)
+			{
+				const auto p1 = std::chrono::system_clock::now().time_since_epoch();
+				activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
+				wasInGame = false;
+			}
 		}
 		else
 		{
-			if ((*gameStatePTR).connected)
+			if (!(*gameStatePTR).loading)
 			{
 				activity.GetParty().GetSize().SetCurrentSize((*gameStatePTR).players);
 				activity.GetParty().GetSize().SetMaxSize((*gameStatePTR).serverInfo.maxPlayers);
@@ -186,12 +204,15 @@ int main(int, char**)
 
 				details += " (First to " + std::to_string((*gameStatePTR).serverInfo.scoreLimit) + ")";
 				activity.SetDetails(details.c_str());
+				activity.GetTimestamps().SetEnd((*gameStatePTR).serverInfo.endTime);
+				activity.GetTimestamps().SetStart(0);
+				wasInGame = true;
 			}
 			else
 			{
 				activity.GetParty().GetSize().SetCurrentSize(0);
 				activity.GetParty().GetSize().SetMaxSize(0);
-				activity.SetDetails("In menu");
+				activity.SetDetails("Loading...");
 			}
 		}
 
