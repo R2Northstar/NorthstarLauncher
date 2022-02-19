@@ -200,13 +200,11 @@ template <ScriptContext context> class SquirrelManager
 	int setupfunc(const char* funcname)
 	{
 		int result = -2;
-		spdlog::info("Context: {}", context);
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
 		{
 			ClientSq_pushroottable(sqvm2);
 			ClientSq_pushstring(sqvm2, funcname, -1);
 			result = ClientSq_sq_get(sqvm2, -2);
-			spdlog::info("sq_get returned {}", result);
 			ClientSq_pushroottable(sqvm2);
 		}
 		else if (context == ScriptContext::SERVER)
@@ -214,7 +212,6 @@ template <ScriptContext context> class SquirrelManager
 			ServerSq_pushroottable(sqvm2);
 			ServerSq_pushstring(sqvm2, funcname, -1);
 			result = ServerSq_sq_get(sqvm2, -2);
-			spdlog::info("sq_get returned {}", result);
 			ServerSq_pushroottable(sqvm2);
 		}
 		return result;
@@ -257,7 +254,6 @@ template <ScriptContext context> class SquirrelManager
 		else if (context == ScriptContext::SERVER)
 			result = ServerSq_call(sqvm2, args + 1, false, false);
 
-		spdlog::info("sq_call returned {}", result);
 		return result;
 	}
 
