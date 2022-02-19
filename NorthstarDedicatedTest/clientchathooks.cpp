@@ -15,16 +15,6 @@ struct ChatTags
 	bool dead;
 };
 
-struct Chat
-{
-	std::string message;
-	int senderIndex;
-	bool isTeam;
-	bool isDead;
-	int type;
-};
-Chat currentChat;
-
 static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
@@ -46,12 +36,13 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 		payload = message + 1;
 	}
 
-	currentChat.message = payload;
-	currentChat.senderIndex = senderId - 1;
-	currentChat.isTeam = isTeam;
-	currentChat.isDead = isDead;
-	currentChat.type = type;
-	g_ClientSquirrelManager->ExecuteCode("CHudChat_ProcessMessageStartThread()");
+	g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread");
+	g_ClientSquirrelManager->pusharg((int)senderId - 1);
+	g_ClientSquirrelManager->pusharg(payload);
+	g_ClientSquirrelManager->pusharg(isTeam);
+	g_ClientSquirrelManager->pusharg(isDead);
+	g_ClientSquirrelManager->pusharg(type);
+	g_ClientSquirrelManager->call(5);
 }
 
 // void NSChatWrite( int context, string str )
@@ -84,41 +75,6 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-// string NSChatGetCurrentMessage()
-static SQRESULT SQ_ChatGetCurrentMessage(void* sqvm)
-{
-	ClientSq_pushstring(sqvm, currentChat.message.c_str(), -1);
-	return SQRESULT_NOTNULL;
-}
-
-// int NSChatGetCurrentPlayer()
-static SQRESULT SQ_ChatGetCurrentPlayer(void* sqvm)
-{
-	ClientSq_pushinteger(sqvm, currentChat.senderIndex);
-	return SQRESULT_NOTNULL;
-}
-
-// bool NSChatGetIsTeam()
-static SQRESULT SQ_ChatGetIsTeam(void* sqvm)
-{
-	ClientSq_pushbool(sqvm, currentChat.isTeam);
-	return SQRESULT_NOTNULL;
-}
-
-// bool NSChatGetIsDead()
-static SQRESULT SQ_ChatGetIsDead(void* sqvm)
-{
-	ClientSq_pushbool(sqvm, currentChat.isDead);
-	return SQRESULT_NOTNULL;
-}
-
-// int NSChatGetCurrentType()
-static SQRESULT SQ_ChatGetCurrentType(void* sqvm)
-{
-	ClientSq_pushinteger(sqvm, currentChat.type);
-	return SQRESULT_NOTNULL;
-}
-
 void InitialiseClientChatHooks(HMODULE baseAddress)
 {
 	HookEnabler hook;
@@ -127,10 +83,4 @@ void InitialiseClientChatHooks(HMODULE baseAddress)
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
-
-	g_ClientSquirrelManager->AddFuncRegistration("string", "NSChatGetCurrentMessage", "", "", SQ_ChatGetCurrentMessage);
-	g_ClientSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentPlayer", "", "", SQ_ChatGetCurrentPlayer);
-	g_ClientSquirrelManager->AddFuncRegistration("bool", "NSChatGetIsTeam", "", "", SQ_ChatGetIsTeam);
-	g_ClientSquirrelManager->AddFuncRegistration("bool", "NSChatGetIsDead", "", "", SQ_ChatGetIsDead);
-	g_ClientSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentType", "", "", SQ_ChatGetCurrentType);
 }

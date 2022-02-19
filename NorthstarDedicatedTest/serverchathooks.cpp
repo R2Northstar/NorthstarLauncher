@@ -55,41 +55,6 @@ MessageWriteStringType MessageWriteString;
 typedef void(__fastcall* MessageWriteBoolType)(bool bValue);
 MessageWriteBoolType MessageWriteBool;
 
-static std::string currentMessage;
-static int currentPlayerIndex;
-static int currentIsTeam;
-static bool shouldBlock;
-
-static SQRESULT setMessage(void* sqvm)
-{
-	currentMessage = ServerSq_getstring(sqvm, 1);
-	currentPlayerIndex = ServerSq_getinteger(sqvm, 2);
-	currentIsTeam = ServerSq_getinteger(sqvm, 3);
-	shouldBlock = ServerSq_getbool(sqvm, 4);
-
-	if (!shouldBlock)
-	{
-		ChatSendMessage(currentPlayerIndex, currentMessage.c_str(), currentIsTeam);
-	}
-
-	return SQRESULT_NOTNULL;
-}
-static SQRESULT getMessageServer(void* sqvm)
-{
-	ServerSq_pushstring(sqvm, currentMessage.c_str(), -1);
-	return SQRESULT_NOTNULL;
-}
-static SQRESULT getPlayerServer(void* sqvm)
-{
-	ServerSq_pushinteger(sqvm, currentPlayerIndex);
-	return SQRESULT_NOTNULL;
-}
-static SQRESULT getTeamServer(void* sqvm)
-{
-	ServerSq_pushinteger(sqvm, currentIsTeam);
-	return SQRESULT_NOTNULL;
-}
-
 bool isSkippingHook = false;
 
 static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam)
@@ -111,11 +76,11 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 		return;
 	}
 
-	currentMessage = text;
-	currentPlayerIndex = senderPlayerId - 1;
-	currentIsTeam = isTeam;
-	shouldBlock = false;
-	g_ServerSquirrelManager->ExecuteCode("CServerGameDLL_ProcessMessageStartThread()");
+	g_ServerSquirrelManager->setupfunc("CServerGameDLL_ProcessMessageStartThread");
+	g_ServerSquirrelManager->pusharg((int) senderPlayerId - 1);
+	g_ServerSquirrelManager->pusharg(text);
+	g_ServerSquirrelManager->pusharg(isTeam);
+	g_ServerSquirrelManager->call(3);
 }
 
 void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam)
@@ -221,13 +186,6 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(
 		hook, CServerGameDLL__OnReceivedSayTextMessage, &CServerGameDLL__OnReceivedSayTextMessageHook,
 		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessageHookBase));
-
-	// Chat intercept functions
-	g_ServerSquirrelManager->AddFuncRegistration(
-		"void", "NSSetMessage", "string message, int playerIndex, int channelId, bool shouldBlock", "", setMessage);
-	g_ServerSquirrelManager->AddFuncRegistration("string", "NSChatGetCurrentMessage", "", "", getMessageServer);
-	g_ServerSquirrelManager->AddFuncRegistration("int", "NSChatGetCurrentPlayer", "", "", getPlayerServer);
-	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSChatGetIsTeam", "", "", getTeamServer);
 
 	// Chat sending functions
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
