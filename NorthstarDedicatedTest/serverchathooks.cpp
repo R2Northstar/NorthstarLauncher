@@ -77,7 +77,7 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 	}
 
 	g_ServerSquirrelManager->setupfunc("CServerGameDLL_ProcessMessageStartThread");
-	g_ServerSquirrelManager->pusharg((int) senderPlayerId - 1);
+	g_ServerSquirrelManager->pusharg((int)senderPlayerId - 1);
 	g_ServerSquirrelManager->pusharg(text);
 	g_ServerSquirrelManager->pusharg(isTeam);
 	g_ServerSquirrelManager->call(3);

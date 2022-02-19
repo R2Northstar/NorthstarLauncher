@@ -154,7 +154,6 @@ template <ScriptContext context> class SquirrelManager
 			else
 				ServerRegisterSquirrelFunc(sqvm, funcReg, 1);
 		}
-		
 	}
 
 	void VMDestroyed() { sqvm = nullptr; }
@@ -193,7 +192,7 @@ template <ScriptContext context> class SquirrelManager
 			{
 				ServerSq_pushroottable(sqvm2);
 				SQRESULT callResult = ServerSq_call(sqvm2, 1, false, false);
-				spdlog::info("sq_call returned {}", callResult);	
+				spdlog::info("sq_call returned {}", callResult);
 			}
 		}
 	}
