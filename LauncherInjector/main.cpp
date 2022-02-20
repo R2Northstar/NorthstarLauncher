@@ -250,10 +250,8 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
-
 int main(int argc, char* argv[])
 {
-
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
 		MessageBoxA(
@@ -262,6 +260,13 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	if (!GetExePathWide(exePath, sizeof(exePath)))
+	{
+		MessageBoxA(
+			GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.", "Northstar Launcher Error",
+			0);
+		return 1;
+	}
 	bool noOriginStartup = false;
 	bool dedicated = false;
 	bool nostubs = false;
@@ -275,9 +280,7 @@ int main(int argc, char* argv[])
 			nostubs = true;
 
 	if (!noOriginStartup && !dedicated)
-	{
 		EnsureOriginStarted();
-	}
 
 	if (dedicated && !nostubs)
 	{
@@ -324,14 +327,6 @@ int main(int argc, char* argv[])
 	}
 
 	{
-		if (!GetExePathWide(exePath, sizeof(exePath)))
-		{
-			MessageBoxA(
-				GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.",
-				"Northstar Launcher Error", 0);
-			return 1;
-		}
-
 		PrependPath();
 
 		printf("[*] Loading tier0.dll\n");
