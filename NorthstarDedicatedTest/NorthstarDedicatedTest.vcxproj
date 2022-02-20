@@ -524,6 +524,7 @@
     <ClInclude Include="languagehooks.h" />
     <ClInclude Include="latencyflex.h" />
     <ClInclude Include="logging.h" />
+    <ClInclude Include="logrotation.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="masterserver.h" />
     <ClInclude Include="maxplayers.h" />
@@ -569,6 +570,7 @@
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
+    <ClCompile Include="logrotation.cpp" />
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />
     <ClCompile Include="memalloc.cpp" />
