@@ -225,174 +225,154 @@ bool LoadNorthstar()
 	}
 
 	((bool (*)())Hook_Init)();
+
+
+	Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
+	if (!hHookModule || Hook_Init == nullptr)
+	{
+		LibraryLoadError(GetLastError(), L"Plugins.dll", buffer);
+		return false;
+	}
+	((bool (*)())Hook_Init)();
 	return true;
 }
 
-bool namedPipeExists(const std::filesystem::path& pipePath)
+HMODULE LoadDediStub(const char* name)
 {
-	std::wstring pipeName = pipePath;
-	if ((pipeName.size() < 10) || (pipeName.compare(0, 9, L"\\\\.\\pipe\\") != 0) || (pipeName.find(L'\\', 9) != std::string::npos))
+	// this works because materialsystem_dx11.dll uses relative imports, and even a DLL loaded with an absolute path will take precedence
+	printf("[*]   Loading %s\n", name);
+	swprintf_s(buffer, L"%s\\bin\\x64_dedi\\%hs", exePath, name);
+	HMODULE h = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+	if (!h)
 	{
-		// This can't be a pipe, so it also can't exist
-		return false;
+		wprintf(L"[*] Failed to load stub %hs from \"%ls\": %hs\n", name, buffer, std::system_category().message(GetLastError()).c_str());
 	}
-	pipeName.erase(0, 9);
-
-	WIN32_FIND_DATAW fd;
-	DWORD dwErrCode;
-
-	HANDLE hFind = FindFirstFileW(L"\\\\.\\pipe\\*", &fd);
-	if (hFind == INVALID_HANDLE_VALUE)
-	{
-		dwErrCode = GetLastError();
-	}
-	else
-	{
-		do
-		{
-			if (pipeName == fd.cFileName)
-			{
-				FindClose(hFind);
-				return true;
-			}
-		} while (FindNextFileW(hFind, &fd));
-
-		dwErrCode = GetLastError();
-		FindClose(hFind);
-	}
-
-	return false;
+	return h;
 }
 
-void sendData(HANDLE pipe, BOOL result, const wchar_t* data)
-{
-	DWORD numBytesWritten = 0;
-	result = WriteFile(
-		pipe,							// handle to our outbound pipe
-		data,							// data to send
-		wcslen(data) * sizeof(wchar_t), // length of data to send (bytes)
-		&numBytesWritten,				// will store actual amount of data sent
-		NULL							// not using overlapped IO
-	);
-}
-
-std::wstring s2ws(const std::string& s)
-{
-	int slength = (int)s.length() + 1;
-	int len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
-	std::wstring r(len, L'\0');
-	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &r[0], len);
-	r.resize(r.size() - 1);
-	return r;
-}
-
-std::string URIProtocolName = "northstar://";
 
 int main(int argc, char* argv[])
 {
-	wchar_t buffer[_MAX_PATH];
-	GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
-	std::wstring w = std::wstring(buffer);
-	std::string exepath = std::string(w.begin(), w.end());			   // Convert from wstring to string
-	std::string path = exepath.substr(0, exepath.find_last_of("/\\")); // Substr to just the folder name
-	std::filesystem::current_path(path);							   // Set CWD
-	bool hasURIString = strstr(GetCommandLineA(), "northstar://");
-	printf("Has URI String: \n");
-	printf("%d\n", hasURIString);
 
-	if (namedPipeExists("\\\\.\\pipe\\northstar") && hasURIString) // Check if another instance is already running
+	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
-		printf("Connecting to pipe...\n");
-
-		// Open the named pipe
-		// Most of these parameters aren't very relevant for pipes.
-		HANDLE pipe = CreateFile(
-			L"\\\\.\\pipe\\northstar",
-			GENERIC_ALL, // only need read access
-			FILE_SHARE_READ | FILE_SHARE_WRITE,
-			NULL,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
-			NULL
-		);
-
-		if (pipe == INVALID_HANDLE_VALUE)
-		{
-			printf("Failed to connect to pipe.\n");
-		}
-		std::string cla = GetCommandLineA();
-		int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length();
-		std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
-		bool result = false;
-		sendData(pipe, result, s2ws(message).c_str());
-
-		// Close our pipe handle
-		CloseHandle(pipe);
-
-		printf("Done.\n");
+		MessageBoxA(
+			GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.", "Northstar Launcher Error",
+			0);
+		return 1;
 	}
-	else
+
+	bool noOriginStartup = false;
+	bool dedicated = false;
+	bool nostubs = false;
+
+	for (int i = 0; i < argc; i++)
+		if (!strcmp(argv[i], "-noOriginStartup"))
+			noOriginStartup = true;
+		else if (!strcmp(argv[i], "-dedicated")) // also checked by Northstar.dll
+			dedicated = true;
+		else if (!strcmp(argv[i], "-nostubs"))
+			nostubs = true;
+
+	if (!noOriginStartup && !dedicated)
 	{
-		// checked to avoid starting origin, Northstar.dll will check for -dedicated as well on its own
-		bool noOriginStartup = false;
-		for (int i = 0; i < argc; i++)
-			if (!strcmp(argv[i], "-noOriginStartup") || !strcmp(argv[i], "-dedicated"))
-				noOriginStartup = true;
+		EnsureOriginStarted();
+	}
 
-		if (!noOriginStartup)
+	if (dedicated && !nostubs)
+	{
+		// clang-format keeps messing with the easy-to-read if statements, so
+		// clang-format off
+		printf("[*] Loading stubs\n");
+		HMODULE gssao, gtxaa, d3d11;
+		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) &&
+			!(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
+			!(d3d11 = GetModuleHandleA("d3d11.dll")))
 		{
-			EnsureOriginStarted();
-		}
-
-		{
-			if (!GetExePathWide(exePath, sizeof(exePath)))
+			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) ||
+				!(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
+				!(d3d11 = LoadDediStub("d3d11.dll")))
 			{
-				MessageBoxA(
-					GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.",
-					"Northstar Launcher Error", 0);
-				return 1;
-			}
-
-			PrependPath();
-
-			printf("[*] Loading tier0.dll\n");
-			swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
-			hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
-			if (!hTier0Module)
-			{
-				LibraryLoadError(GetLastError(), L"tier0.dll", buffer);
-				return 1;
-			}
-
-			bool loadNorthstar = ShouldLoadNorthstar(argc, argv);
-			if (loadNorthstar)
-			{
-				printf("[*] Loading Northstar\n");
-				if (!LoadNorthstar())
+				if ((!gssao || FreeLibrary(gssao)) &&
+					(!gtxaa || FreeLibrary(gtxaa)) &&
+					(!d3d11 || FreeLibrary(d3d11)))
+				{
+					printf(
+						"[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
+						"The stubs have been unloaded and the original libraries will be used instead.\n");
+				}
+				else
+				{
+					// this is highly unlikely
+					MessageBoxA(
+						GetForegroundWindow(),
+						"Failed to load one or more stubs, but could not unload them either.\n"
+						"The game cannot continue and has to exit.",
+						"Northstar Launcher Error", 0);
 					return 1;
-			}
-			else
-				printf("[*] Going to load the vanilla game\n");
-
-			printf("[*] Loading launcher.dll\n");
-			swprintf_s(buffer, L"%s\\bin\\x64_retail\\launcher.dll", exePath);
-			hLauncherModule = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
-			if (!hLauncherModule)
-			{
-				LibraryLoadError(GetLastError(), L"launcher.dll", buffer);
-				return 1;
+				}
 			}
 		}
-
-		printf("[*] Launching the game...\n");
-		auto LauncherMain = GetLauncherMain();
-		if (!LauncherMain)
-			MessageBoxA(
-				GetForegroundWindow(), "Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
-				"Northstar Launcher Error", 0);
-		// auto result = ((__int64(__fastcall*)())LauncherMain)();
-		// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
-		return ((int(/*__fastcall*/*)(
-			HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+		else
+		{
+			// this should never happen
+			printf(
+				"[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
+				"(did Northstar initialize too late?).\n");
+		}
+		// clang-format on
 	}
+
+	{
+		if (!GetExePathWide(exePath, sizeof(exePath)))
+		{
+			MessageBoxA(
+				GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.",
+				"Northstar Launcher Error", 0);
+			return 1;
+		}
+
+		PrependPath();
+
+		printf("[*] Loading tier0.dll\n");
+		swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
+		hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+		if (!hTier0Module)
+		{
+			LibraryLoadError(GetLastError(), L"tier0.dll", buffer);
+			return 1;
+		}
+
+		bool loadNorthstar = ShouldLoadNorthstar(argc, argv);
+		if (loadNorthstar)
+		{
+			printf("[*] Loading Northstar\n");
+			if (!LoadNorthstar())
+				return 1;
+		}
+		else
+			printf("[*] Going to load the vanilla game\n");
+
+		printf("[*] Loading launcher.dll\n");
+		swprintf_s(buffer, L"%s\\bin\\x64_retail\\launcher.dll", exePath);
+		hLauncherModule = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+		if (!hLauncherModule)
+		{
+			LibraryLoadError(GetLastError(), L"launcher.dll", buffer);
+			return 1;
+		}
+	}
+
+	printf("[*] Launching the game...\n");
+	auto LauncherMain = GetLauncherMain();
+	if (!LauncherMain)
+		MessageBoxA(
+			GetForegroundWindow(), "Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
+			"Northstar Launcher Error", 0);
+	// auto result = ((__int64(__fastcall*)())LauncherMain)();
+	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
+	printf("Starting normally");
+	return ((int(/*__fastcall*/*)(
+		HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	//system("pause");
 }
