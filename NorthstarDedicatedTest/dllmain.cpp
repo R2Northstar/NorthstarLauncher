@@ -80,8 +80,10 @@ bool LoadPlugins() {
 	fs::create_directories("plugins");
 
 	// get mod directories
+	
+	std::string pluginsDir = GetNorthstarPrefix() + "/plugins";
 
-	for (auto const& entry : fs::recursive_directory_iterator("plugins"))
+	for (auto const& entry : fs::recursive_directory_iterator(pluginsDir))
 	{
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
@@ -91,8 +93,8 @@ bool LoadPlugins() {
 	spdlog::info("Loading the following DLLs in plugins folder:");
 	for (fs::path path : paths)
 	{
-		std::string pathstring = ("plugins"/ path).string();
-		std::wstring wpath = ("plugins"/path).wstring();
+		std::string pathstring = (pluginsDir / path).string();
+		std::wstring wpath = (pluginsDir / path).wstring();
 		
 		LPCWSTR wpptr = wpath.c_str();
 		//spdlog::info(wpptr);
