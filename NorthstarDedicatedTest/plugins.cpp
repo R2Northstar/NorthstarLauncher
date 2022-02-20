@@ -3,6 +3,7 @@
 #include "state.h"
 #include "plugins.h"
 #include <chrono>
+#include "masterserver.h"
 
 GameState gameState;
 ServerInfo serverInfo;
@@ -90,8 +91,13 @@ SQRESULT SQ_SetConnected(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-
-
+SQRESULT SQ_UpdateListenServer(void* sqvm)
+{
+	gameState.serverInfo.name = g_MasterServerManager->ns_auth_srvName;
+	gameState.serverInfo.description = g_MasterServerManager->ns_auth_srvDesc;
+	gameState.serverInfo.password = FindConVar("ns_server_password")->m_pszString;
+	return SQRESULT_NOTNULL;
+}
 
 void InitialisePluginCommands(HMODULE baseAddress)
 {
@@ -110,4 +116,5 @@ void InitialisePluginCommands(HMODULE baseAddress)
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
+	g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
 }
