@@ -225,15 +225,6 @@ bool LoadNorthstar()
 	}
 
 	((bool (*)())Hook_Init)();
-
-
-	Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
-	if (!hHookModule || Hook_Init == nullptr)
-	{
-		LibraryLoadError(GetLastError(), L"Plugins.dll", buffer);
-		return false;
-	}
-	((bool (*)())Hook_Init)();
 	return true;
 }
 
