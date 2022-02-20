@@ -11,8 +11,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_launcher_proxy", "lo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_wsock32_proxy", "loader_wsock32_proxy\loader_wsock32_proxy.vcxproj", "{CF55F3B5-F348-450A-9CCB-C269F21D629D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DiscordRPC", "DiscordRPC\DiscordRPC.vcxproj", "{2601AF91-0EB7-475E-AD32-01589A47F75E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
