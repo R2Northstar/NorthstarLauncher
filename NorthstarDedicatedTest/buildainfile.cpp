@@ -92,12 +92,13 @@ struct UnkNodeStruct0
 	float y;
 	float z;
 
-	short* unk2;   // maps to unk5 on disk;
-	char pad1[12]; // pad to +48
+	char pad5[4];
+	int* unk2;	   // maps to unk5 on disk;
+	char pad1[16]; // pad to +48
 	int unkcount0; // maps to unkcount0 on disk
 
 	char pad2[4]; // pad to +56
-	short* unk3;
+	int* unk3;
 	char pad3[16]; // pad to +80
 	int unkcount1;
 
@@ -297,12 +298,18 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 		writeStream.write((char*)&nodeStruct->z, sizeof(nodeStruct->z));
 
 		writeStream.write((char*)&nodeStruct->unkcount0, sizeof(nodeStruct->unkcount0));
-		for (int i = 0; i < nodeStruct->unkcount0; i++)
-			writeStream.write((char*)&nodeStruct->unk2[i], sizeof(nodeStruct->unk2[i]));
+		for (int j = 0; j < nodeStruct->unkcount0; j++)
+		{
+			short unk2Short = (short)nodeStruct->unk2[j];
+			writeStream.write((char*)&unk2Short, sizeof(unk2Short));
+		}
 
 		writeStream.write((char*)&nodeStruct->unkcount1, sizeof(nodeStruct->unkcount1));
-		for (int i = 0; i < nodeStruct->unkcount1; i++)
-			writeStream.write((char*)&nodeStruct->unk3[i], sizeof(nodeStruct->unk3[i]));
+		for (int j = 0; j < nodeStruct->unkcount1; j++)
+		{
+			short unk3Short = (short)nodeStruct->unk3[j];
+			writeStream.write((char*)&unk3Short, sizeof(unk3Short));
+		}
 
 		writeStream.write((char*)&nodeStruct->unk5, sizeof(nodeStruct->unk5));
 	}
