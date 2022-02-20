@@ -17,17 +17,27 @@ void RegisterConCommand(const char* name, void (*callback)(const CCommand&), con
 	conCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
 }
 
-ConCommand* FindConCommand(const char* name)
-{
-	ICvar* icvar =
-		*g_pCvar; // hellish call because i couldn't get icvar vtable stuff in convar.h to get the right offset for whatever reason
-	typedef ConCommand* (*FindCommandBaseType)(ICvar * self, const char* varName);
-	FindCommandBaseType FindCommandBase = *(FindCommandBaseType*)((*(char**)icvar) + 112);
-	return FindCommandBase(icvar, name);
-}
-
 void InitialiseConCommands(HMODULE baseAddress)
 {
 	conCommandConstructor = (ConCommandConstructorType)((char*)baseAddress + 0x415F60);
 	AddMiscConCommands();
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Add's flags to ConCommand.
+// Input  : nFlags -
+//-----------------------------------------------------------------------------
+void ConCommandBase::AddFlags(int nFlags) { m_nFlags |= nFlags; }
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes flags from ConCommand.
+// Input  : nFlags -
+//-----------------------------------------------------------------------------
+void ConCommandBase::RemoveFlags(int nFlags) { m_nFlags &= ~nFlags; }
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if ConCommand has requested flags.
+// Input  : nFlags -
+// Output : True if ConCommand has nFlags.
+//-----------------------------------------------------------------------------
+bool ConCommandBase::HasFlags(int nFlags) { return m_nFlags & nFlags; }

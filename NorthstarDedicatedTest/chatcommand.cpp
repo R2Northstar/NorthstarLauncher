@@ -1,6 +1,7 @@
 #include "pch.h"
-#include "chatcommand.h"
+#include "convar.h"
 #include "concommand.h"
+#include "chatcommand.h"
 #include "dedicated.h"
 
 // note: isIngameChat is an int64 because the whole register the arg is stored in needs to be 0'd out to work

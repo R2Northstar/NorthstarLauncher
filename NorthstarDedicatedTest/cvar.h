@@ -26,10 +26,10 @@ public:
 class CCvar
 {
 public:
-	ConCommandBase       * FindCommandBase(const char* pszCommandName);
-	ConVar               * FindVar(const char* pszVarName);
-	ConCommand           * FindCommand(const char* pszCommandName);
-	CCVarIteratorInternal        * FactoryInternalIterator();
+	ConCommandBase        * FindCommandBase(const char* pszCommandName);
+	ConVar                * FindVar(const char* pszVarName);
+	ConCommand            * FindCommand(const char* pszCommandName);
+	CCVarIteratorInternal * FactoryInternalIterator();
 	std::unordered_map<std::string, ConCommandBase*> DumpToMap();
 };
 
