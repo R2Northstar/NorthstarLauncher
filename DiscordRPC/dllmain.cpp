@@ -92,7 +92,7 @@ bool wasInGame;
 int main(int, char**)
 {
 
-	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"1");
+	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"0");
 	SetConsoleTitle(L"Northstar");
 
 	discord::Core* core{};
