@@ -116,16 +116,21 @@ public:
 
 	static bool IsFlagSet(ConVar* pConVar, int nFlags);
 
+	struct CVValue_t
+	{
+		const char* m_pszString;
+		int64_t     m_iStringLength;
+		float       m_fValue;
+		int         m_nValue;
+	};
+
 	ConCommandBase m_ConCommandBase {}; //0x0000
 	ConVar*        m_pParent        {}; //0x0040
-	const char*    m_pzsCurrentValue{}; //0x0048
-	size_t         m_iStringLength  {}; //0x004C
-	float          m_flValue        {}; //0x0054
-	int            m_nValue         {}; //0x0058
+	CVValue_t      m_Value          {}; //0x0048
 	bool           m_bHasMin        {}; //0x005C
-	float          m_flMinValue     {}; //0x0060
+	float          m_fMinVal        {}; //0x0060
 	bool           m_bHasMax        {}; //0x0064
-	float          m_flMaxValue     {}; //0x0068
+	float          m_fMaxVal        {}; //0x0068
 	void*          m_pMalloc        {}; //0x0070
 	char           m_pPad80[10]     {}; //0x0080
 }; //Size: 0x0080

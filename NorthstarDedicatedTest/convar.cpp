@@ -84,10 +84,10 @@ ConVar::ConVar(
 //-----------------------------------------------------------------------------
 ConVar::~ConVar(void)
 {
-	if (m_pzsCurrentValue)
+	if (m_Value.m_pszString)
 	{
-		delete[] m_pzsCurrentValue;
-		m_pzsCurrentValue = NULL;
+		delete[] m_Value.m_pszString;
+		m_Value.m_pszString = NULL;
 	}
 }
 
@@ -151,7 +151,7 @@ bool ConVar::GetBool(void) const
 //-----------------------------------------------------------------------------
 float ConVar::GetFloat(void) const
 {
-	return m_flValue;
+	return m_Value.m_fValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -160,7 +160,7 @@ float ConVar::GetFloat(void) const
 //-----------------------------------------------------------------------------
 int ConVar::GetInt(void) const
 {
-	return m_nValue;
+	return m_Value.m_nValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ int ConVar::GetInt(void) const
 //-----------------------------------------------------------------------------
 Color ConVar::GetColor(void) const
 {
-	unsigned char* pColorElement = ((unsigned char*)&m_nValue);
+	unsigned char* pColorElement = ((unsigned char*)&m_Value.m_nValue);
 	return Color(pColorElement[0], pColorElement[1], pColorElement[2], pColorElement[3]);
 }
 
@@ -184,7 +184,7 @@ const char* ConVar::GetString(void) const
 		return "FCVAR_NEVER_AS_STRING";
 	}
 
-	char const* str = m_pzsCurrentValue;
+	char const* str = m_Value.m_pszString;
 	return str ? str : "";
 }
 
@@ -195,7 +195,7 @@ const char* ConVar::GetString(void) const
 //-----------------------------------------------------------------------------
 bool ConVar::GetMin(float& flMinVal) const
 {
-	flMinVal = m_flMinValue;
+	flMinVal = m_fMinVal;
 	return m_bHasMin;
 }
 
@@ -206,7 +206,7 @@ bool ConVar::GetMin(float& flMinVal) const
 //-----------------------------------------------------------------------------
 bool ConVar::GetMax(float& flMaxVal) const
 {
-	flMaxVal = m_flMaxValue;
+	flMaxVal = m_fMaxVal;
 	return m_bHasMax;
 }
 
@@ -216,7 +216,7 @@ bool ConVar::GetMax(float& flMaxVal) const
 //-----------------------------------------------------------------------------
 float ConVar::GetMinValue(void) const
 {
-	return m_flMinValue;
+	return m_fMinVal;
 }
 
 //-----------------------------------------------------------------------------
@@ -225,7 +225,7 @@ float ConVar::GetMinValue(void) const
 //-----------------------------------------------------------------------------
 float ConVar::GetMaxValue(void) const
 {
-	return m_flMaxValue;;
+	return m_fMaxVal;;
 }
 
 //-----------------------------------------------------------------------------
@@ -252,7 +252,7 @@ bool ConVar::HasMax(void) const
 //-----------------------------------------------------------------------------
 void ConVar::SetValue(int nValue)
 {
-	if (nValue == m_nValue)
+	if (nValue == m_Value.m_nValue)
 	{
 		return;
 	}
@@ -269,14 +269,14 @@ void ConVar::SetValue(int nValue)
 	}
 
 	// Redetermine value.
-	float flOldValue = m_flValue;
-	m_flValue = flValue;
-	m_nValue = nValue;
+	float flOldValue = m_Value.m_fValue;
+	m_Value.m_fValue = flValue;
+	m_Value.m_nValue = nValue;
 
 	if (!(m_ConCommandBase.m_nFlags & FCVAR_NEVER_AS_STRING))
 	{
 		char szTempValue[32];
-		snprintf(szTempValue, sizeof(szTempValue), "%d", m_nValue);
+		snprintf(szTempValue, sizeof(szTempValue), "%d", m_Value.m_nValue);
 		ChangeStringValue(szTempValue, flOldValue);
 	}
 }
@@ -287,7 +287,7 @@ void ConVar::SetValue(int nValue)
 //-----------------------------------------------------------------------------
 void ConVar::SetValue(float flValue)
 {
-	if (flValue == m_flValue)
+	if (flValue == m_Value.m_fValue)
 	{
 		return;
 	}
@@ -299,14 +299,14 @@ void ConVar::SetValue(float flValue)
 	ClampValue(flValue);
 
 	// Redetermine value.
-	float flOldValue = m_flValue;
-	m_flValue = flValue;
-	m_nValue = (int)m_flValue;
+	float flOldValue = m_Value.m_fValue;
+	m_Value.m_fValue = flValue;
+	m_Value.m_nValue = (int)m_Value.m_fValue;
 
 	if (!(m_ConCommandBase.m_nFlags & FCVAR_NEVER_AS_STRING))
 	{
 		char szTempValue[32];
-		snprintf(szTempValue, sizeof(szTempValue), "%f", m_flValue);
+		snprintf(szTempValue, sizeof(szTempValue), "%f", m_Value.m_fValue);
 		ChangeStringValue(szTempValue, flOldValue);
 	}
 }
@@ -317,11 +317,11 @@ void ConVar::SetValue(float flValue)
 //-----------------------------------------------------------------------------
 void ConVar::SetValue(const char* pszValue)
 {
-	if (strcmp(this->m_pzsCurrentValue, pszValue) == 0)
+	if (strcmp(this->m_Value.m_pszString, pszValue) == 0)
 	{
 		return;
 	}
-	this->m_pzsCurrentValue = pszValue;
+	this->m_Value.m_pszString = pszValue;
 
 	char szTempValue[32]{};
 	const char* pszNewValue{};
@@ -329,7 +329,7 @@ void ConVar::SetValue(const char* pszValue)
 	// Only valid for root convars.
 	assert(m_pParent == this);
 
-	float flOldValue = m_flValue;
+	float flOldValue = m_Value.m_fValue;
 	pszNewValue = (char*)pszValue;
 	if (!pszNewValue)
 	{
@@ -353,8 +353,8 @@ void ConVar::SetValue(const char* pszValue)
 		}
 
 		// Redetermine value
-		m_flValue = flNewValue;
-		m_nValue = (int)(m_flValue);
+		m_Value.m_fValue = flNewValue;
+		m_Value.m_nValue = (int)(m_Value.m_fValue);
 	}
 
 	if (!(m_ConCommandBase.m_nFlags & FCVAR_NEVER_AS_STRING))
@@ -380,7 +380,7 @@ void ConVar::SetValue(Color clValue)
 		}
 	}
 
-	this->m_pzsCurrentValue = svResult.c_str();
+	this->m_Value.m_pszString= svResult.c_str();
 }
 
 //-----------------------------------------------------------------------------
@@ -391,32 +391,32 @@ void ConVar::ChangeStringValue(const char* pszTempVal, float flOldValue)
 {
 	assert(!(m_ConCommandBase.m_nFlags & FCVAR_NEVER_AS_STRING));
 
-	char* pszOldValue = (char*)_malloca(m_iStringLength);
+	char* pszOldValue = (char*)_malloca(m_Value.m_iStringLength);
 	if (pszOldValue != NULL)
 	{
-		memcpy(pszOldValue, m_pzsCurrentValue, m_iStringLength);
+		memcpy(pszOldValue, m_Value.m_pszString, m_Value.m_iStringLength);
 	}
 
 	if (pszTempVal)
 	{
 		int len = strlen(pszTempVal) + 1;
 
-		if (len > m_iStringLength)
+		if (len > m_Value.m_iStringLength)
 		{
-			if (m_pzsCurrentValue)
+			if (m_Value.m_pszString)
 			{
-				delete[] m_pzsCurrentValue;
+				delete[] m_Value.m_pszString;
 			}
 
-			m_pzsCurrentValue = new char[len];
-			m_iStringLength = len;
+			m_Value.m_pszString = new char[len];
+			m_Value.m_iStringLength = len;
 		}
 
-		memcpy((char*)m_pzsCurrentValue, pszTempVal, len);
+		memcpy((char*)m_Value.m_pszString, pszTempVal, len);
 	}
 	else
 	{
-		m_pzsCurrentValue = NULL;
+		m_Value.m_pszString = NULL;
 	}
 
 	pszOldValue = 0;
@@ -454,14 +454,14 @@ bool ConVar::SetColorFromString(const char* pszValue)
 			bColor = true;
 
 			// Stuff all the values into each byte of our int.
-			unsigned char* pColorElement = ((unsigned char*)&m_nValue);
+			unsigned char* pColorElement = ((unsigned char*)&m_Value.m_nValue);
 			pColorElement[0] = nRGBA[0];
 			pColorElement[1] = nRGBA[1];
 			pColorElement[2] = nRGBA[2];
 			pColorElement[3] = nRGBA[3];
 
 			// Copy that value into our float.
-			m_flValue = (float)(m_nValue);
+			m_Value.m_fValue = (float)(m_Value.m_nValue);
 		}
 	}
 
@@ -489,15 +489,15 @@ bool ConVar::IsFlagSet(ConVar* pConVar, int nFlags)
 //-----------------------------------------------------------------------------
 bool ConVar::ClampValue(float& flValue)
 {
-	if (m_bHasMin && (flValue < m_flMinValue))
+	if (m_bHasMin && (flValue < m_fMinVal))
 	{
-		flValue = m_flMinValue;
+		flValue = m_fMinVal;
 		return true;
 	}
 
-	if (m_bHasMax && (flValue > m_flMaxValue))
+	if (m_bHasMax && (flValue > m_fMaxVal))
 	{
-		flValue = m_flMaxValue;
+		flValue = m_fMaxVal;
 		return true;
 	}
 
