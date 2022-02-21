@@ -158,40 +158,38 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 		if (!strcmp(strUid.c_str(), authData.uid) &&
 			!strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
-			if (!strcmp(strUid.c_str(), authData.uid) &&
-				!strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
+		{
+			authFail = false;
+			// uuid
+			strcpy((char*)player + 0xF500, strUid.c_str());
+
+			// reset from disk if we're doing that
+			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
 			{
-				authFail = false;
-				// uuid
-				strcpy((char*)player + 0xF500, strUid.c_str());
+				std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
-				// reset from disk if we're doing that
-				if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
+				if (!pdataStream.fail())
 				{
-					std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
+					// get file length
+					pdataStream.seekg(0, pdataStream.end);
+					auto length = pdataStream.tellg();
+					pdataStream.seekg(0, pdataStream.beg);
 
-					if (!pdataStream.fail())
-					{
-						// get file length
-						pdataStream.seekg(0, pdataStream.end);
-						auto length = pdataStream.tellg();
-						pdataStream.seekg(0, pdataStream.beg);
-
-						// copy pdata into buffer
-						pdataStream.read((char*)player + 0x4FA, length);
-					}
-					else // fallback to remote pdata if no local default
-						memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
-				}
-				else
-				{
 					// copy pdata into buffer
-					memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
+					pdataStream.read((char*)player + 0x4FA, length);
 				}
-
-				// set persistent data as ready, we use 0x4 internally to mark the client as using remote persistence
-				*((char*)player + 0x4a0) = (char)0x4;
+				else // fallback to remote pdata if no local default
+					memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
 			}
+			else
+			{
+				// copy pdata into buffer
+				memcpy((char*)player + 0x4FA, authData.pdata, authData.pdataSize);
+			}
+
+			// set persistent data as ready, we use 0x4 internally to mark the client as using remote persistence
+			*((char*)player + 0x4a0) = (char)0x4;
+		}
 	}
 
 	if (authFail)
