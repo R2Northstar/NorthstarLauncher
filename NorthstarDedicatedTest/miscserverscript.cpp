@@ -84,7 +84,7 @@ SQRESULT SQ_WriteFile(void* sqvm)
 			finalPath += '/';
 		finalPath += path;
 		std::filesystem::create_directories(finalPath);
-		
+
 		if (finalPath[finalPath.length() - 1] != '/' && fileName[0] != '/')
 			finalPath += '/';
 
@@ -191,7 +191,8 @@ SQRESULT SQ_GetAllFilesInFolder(void* sqvm)
 		const iterator end;
 		for (iterator iter{finalPath}; iter != end; ++iter)
 		{
-			if (iter->is_directory()) continue;
+			if (iter->is_directory())
+				continue;
 			ServerSq_pushstring(sqvm, iter->path().filename().string().c_str(), -1);
 			ServerSq_arrayappend(sqvm, -2);
 		}
@@ -234,7 +235,8 @@ SQRESULT SQ_GetAllFoldersInFolder(void* sqvm)
 			const iterator end;
 			for (iterator iter{finalPath}; iter != end; ++iter)
 			{
-				if (!iter->is_directory()) continue;
+				if (!iter->is_directory())
+					continue;
 				ServerSq_pushstring(sqvm, iter->path().string().c_str(), -1);
 				ServerSq_arrayappend(sqvm, -2);
 			}
@@ -246,7 +248,8 @@ SQRESULT SQ_GetAllFoldersInFolder(void* sqvm)
 			const iterator end;
 			for (iterator iter{finalPath}; iter != end; ++iter)
 			{
-				if (!iter->is_directory()) continue;
+				if (!iter->is_directory())
+					continue;
 				ServerSq_pushstring(sqvm, iter->path().string().c_str(), -1);
 				ServerSq_arrayappend(sqvm, -2);
 			}
@@ -265,7 +268,8 @@ void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
 		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "WriteFile", "string modName, string path, string fileName, string content", "", SQ_WriteFile);
+	g_ServerSquirrelManager->AddFuncRegistration(
+		"void", "WriteFile", "string modName, string path, string fileName, string content", "", SQ_WriteFile);
 	g_ServerSquirrelManager->AddFuncRegistration("string", "ReadFile", "string modName, string path, string fileName", "", SQ_ReadFile);
 	g_ServerSquirrelManager->AddFuncRegistration(
 		"array<string>", "GetAllFilesInFolder", "string modName, string path", "", SQ_GetAllFilesInFolder);
