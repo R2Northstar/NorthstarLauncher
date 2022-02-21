@@ -114,6 +114,7 @@
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="plugins.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="concommand.h" />
@@ -540,7 +541,6 @@
     <ClInclude Include="pdef.h" />
     <ClInclude Include="playlist.h" />
     <ClInclude Include="miscserverscript.h" />
-    <ClInclude Include="plugins.h" />
     <ClInclude Include="rpakfilesystem.h" />
     <ClInclude Include="scriptbrowserhooks.h" />
     <ClInclude Include="scriptmainmenupromos.h" />
