@@ -230,7 +230,7 @@ bool LoadNorthstar()
 	Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
 	if (!hHookModule || Hook_Init == nullptr)
 	{
-		LibraryLoadError(GetLastError(), L"Plugins.dll", buffer);
+		printf("Failed to get function pointer to LoadPlugins of Northstar.dll\n");
 		return false;
 	}
 	((bool (*)())Hook_Init)();
@@ -371,8 +371,7 @@ int main(int argc, char* argv[])
 			"Northstar Launcher Error", 0);
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
-	printf("Starting normally");
+	//printf("Starting normally");
 	return ((int(/*__fastcall*/*)(
 		HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
-	//system("pause");
 }

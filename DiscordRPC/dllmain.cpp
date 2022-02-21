@@ -16,6 +16,9 @@
 
 #if defined(_WIN32)
 #pragma pack(push, 1)
+
+
+
 struct BitmapImageHeader
 {
 	uint32_t const structSize{sizeof(BitmapImageHeader)};
@@ -77,8 +80,6 @@ volatile bool interrupted{false};
 
 GameState* gameStatePTR = 0;
 
-extern "C" EXPORT void initializePlugin(GameState* gameState);
-
 extern "C" EXPORT void initializePlugin(GameState* gameStatePTR_external)
 {
 	gameStatePTR = gameStatePTR_external;
@@ -96,7 +97,7 @@ int main(int, char**)
 	SetConsoleTitle(L"Northstar");
 
 	discord::Core* core{};
-	auto result = discord::Core::Create(941428101429231617, DiscordCreateFlags_Default, &core);
+	auto result = discord::Core::Create(941428101429231617, DiscordCreateFlags_NoRequireDiscord, &core);
 	state.core.reset(core);
 	if (!state.core)
 	{

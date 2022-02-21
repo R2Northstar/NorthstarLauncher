@@ -40,9 +40,12 @@
 #include "state.h"
 #include "plugins.h"
 
-#define IMPORT __declspec(dllimport)
-typedef void (* setGameStatePtr)(GameState*);
-IMPORT void setGameState(GameState* gameStatePTR_external);
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/error/en.h"
+
+typedef void (*initPluginFuncPtr)(GameState*);
 
 bool initialised = false;
 
@@ -71,45 +74,93 @@ void WaitForDebugger(HMODULE baseAddress)
 			Sleep(100);
 	}
 }
-
 bool LoadPlugins() {
 
 	std::vector<fs::path> paths;
+
+	std::string pluginPath = GetNorthstarPrefix() + "/plugins";
 
 	// ensure dirs exist
 	fs::create_directories("plugins");
 
 	// get mod directories
 
-	for (auto const& entry : fs::recursive_directory_iterator("plugins"))
+	for (auto const& entry : fs::recursive_directory_iterator(pluginPath))
 	{
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
 
 	initGameState();
-	spdlog::info("Loading the following DLLs in plugins folder:");
+	//spdlog::info("Loading the following DLLs in plugins folder:");
 	for (fs::path path : paths)
 	{
-		std::string pathstring = ("plugins"/ path).string();
-		std::wstring wpath = ("plugins"/path).wstring();
+		std::string pathstring = (pluginPath/ path).string();
+		std::wstring wpath = (pluginPath / path).wstring();
 		
 		LPCWSTR wpptr = wpath.c_str();
-		//spdlog::info(wpptr);
-		HMODULE hLib = LoadLibraryW(wpptr);
-		if (hLib == NULL)
+		HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
+		if (datafile == NULL)
 		{
-			spdlog::info("Failed to load library {}", pathstring);
+			spdlog::info("Failed to load library {}. It appears the file does exist", pathstring);
 			continue;
 		}
-		setGameStatePtr setGameState = (setGameStatePtr)GetProcAddress(hLib, "initializePlugin");
-		if (setGameState == 0)
+		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCE(101), MAKEINTRESOURCE(RT_RCDATA));
+		
+		if (manifestResource == NULL)
+		{
+			spdlog::info("Could not find manifest for library {}", pathstring);
+			continue;
+		}
+		spdlog::info("Loading resource from library");
+		HGLOBAL myResourceData = LoadResource(datafile, manifestResource);
+		if (myResourceData == NULL)
+		{
+			spdlog::error("Failed to load resource from library");
+			continue;
+		}
+		int manifestSize = SizeofResource(datafile, manifestResource);
+		const char* manifestBinaryData = (const char*)LockResource(myResourceData);
+
+		std::string manifest = std::string(manifestBinaryData, 0, manifestSize);
+
+		rapidjson_document manifestJSON;
+		manifestJSON.Parse(manifest.c_str());
+
+		if (manifestJSON.HasParseError())
+		{
+			spdlog::error("Manifest for {} was invalid", pathstring);
+			continue;
+		}
+
+		if (!manifestJSON.HasMember("version"))
+		{
+			spdlog::error("{} does not have a version number in its manifest", pathstring);
+			continue;
+			//spdlog::info(manifestJSON["version"].GetString());
+		}
+
+		if (strcmp(manifestJSON["version"].GetString(), "1.0"))
+		{
+			spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
+			continue;
+		}
+		// Passed all checks, going to actually load it now
+
+		HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
+		if (pluginLib == NULL)
+		{
+			spdlog::info("Failed to load library {}. It appears the file does exist", pathstring);
+			continue;
+		}
+		initPluginFuncPtr initPlugin = (initPluginFuncPtr)GetProcAddress(pluginLib, "initializePlugin");
+		if (initPlugin == 0)
 		{
 			spdlog::info("Library {} has no function initializePlugin", pathstring);
 			continue;
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
-		setGameState(&gameState);
+		initPlugin(&gameState);
 	} 
 	return true;
 }

@@ -1,0 +1,7 @@
+{
+	"name": "Author.PluginName",
+	"displayname": "Example Plugin",
+	"description": "A description for your plugin",
+	"api_version": "1.0",
+	"version": "1.0"
+}
