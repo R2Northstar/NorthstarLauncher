@@ -1,9 +1,5 @@
-name: Build
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+name: CI
+on: [push, pull_request]
 
 env:
   BUILD_PROFILE: Release
