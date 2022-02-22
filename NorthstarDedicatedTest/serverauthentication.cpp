@@ -270,7 +270,7 @@ bool ServerAuthenticationManager::CheckPlayerChatRatelimit(void* player)
 		m_additionalPlayerData[player].sayTextLimitCount = 0;
 	}
 
-	if (m_additionalPlayerData[player].sayTextLimitCount >= Cvar_sv_max_chat_messages_per_sec->m_nValue)
+	if (m_additionalPlayerData[player].sayTextLimitCount >= Cvar_sv_max_chat_messages_per_sec->GetInt())
 		return false;
 
 	m_additionalPlayerData[player].sayTextLimitCount++;
