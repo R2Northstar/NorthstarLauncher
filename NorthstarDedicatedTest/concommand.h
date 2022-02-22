@@ -57,22 +57,22 @@ inline const char* CCommand::operator[](int nIndex) const { return Arg(nIndex); 
 // From r5reloaded
 class ConCommandBase
 {
-public:
+  public:
 	void AddFlags(int nFlags);
 	void RemoveFlags(int nFlags);
 	bool HasFlags(int nFlags);
-	//bool IsFlagSet(ConCommandBase* pCommandBase, int nFlags);
+	// bool IsFlagSet(ConCommandBase* pCommandBase, int nFlags);
 
-	void* m_pConCommandBaseVTable;        //0x0000
-	ConCommandBase*   m_pNext;            //0x0008
-	bool              m_bRegistered;      //0x0010
-	char              pad_0011[7];        //0x0011
-	const char*       m_pszName;          //0x0018
-	const char*       m_pszHelpString;    //0x0020
-	int               m_nFlags;           //0x0028
-	ConCommandBase*   s_pConCommandBases; //0x002C
-	IConCommandBaseAccessor* s_pAccessor; //0x0034
-}; //Size: 0x0040
+	void* m_pConCommandBaseVTable;		  // 0x0000
+	ConCommandBase* m_pNext;			  // 0x0008
+	bool m_bRegistered;					  // 0x0010
+	char pad_0011[7];					  // 0x0011
+	const char* m_pszName;				  // 0x0018
+	const char* m_pszHelpString;		  // 0x0020
+	int m_nFlags;						  // 0x0028
+	ConCommandBase* s_pConCommandBases;	  // 0x002C
+	IConCommandBaseAccessor* s_pAccessor; // 0x0034
+};										  // Size: 0x0040
 
 // taken from ttf2sdk
 class ConCommand
@@ -95,13 +95,13 @@ class ConCommand
 	// if all members offsets are the same. They should
 	// match but if they don't, check the reg function
 	// called by the constructor and align accordingly.
-	ConCommandBase m_ConCommandBase     {}; //0x0000
-	void*          m_nNullCallBack      {}; //0x0040
-	char           m_nPad48[8]          {}; //0x0048
-	void*          m_pCommandCallback   {}; //0x0050
-	void*          m_pCompletionCallback{}; //0x0058
-	int            m_nCallbackFlags     {}; //0x0060
-	char           m_nPad68[4]          {}; //0x0068
+	ConCommandBase m_ConCommandBase{}; // 0x0000
+	void* m_nNullCallBack{};		   // 0x0040
+	char m_nPad48[8]{};				   // 0x0048
+	void* m_pCommandCallback{};		   // 0x0050
+	void* m_pCompletionCallback{};	   // 0x0058
+	int m_nCallbackFlags{};			   // 0x0060
+	char m_nPad68[4]{};				   // 0x0068
 };
 
 void RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags);

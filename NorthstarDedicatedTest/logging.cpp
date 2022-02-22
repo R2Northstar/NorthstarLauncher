@@ -390,8 +390,7 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 		hook, (char*)baseAddress + 0x1A1530, CClientState_ProcessPrint_Hook,
 		reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
 
-	Cvar_spewlog_enable =
-		new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
+	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
 
 #include "bitbuf.h"

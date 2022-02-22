@@ -13,11 +13,11 @@ class ConVar;
 //-----------------------------------------------------------------------------
 class CCVarIteratorInternal // Fully reversed table, just look at the virtual function table and rename the function.
 {
-public:
-	virtual void            SetFirst(void) = 0; //0
-	virtual void            Next(void)     = 0; //1
-	virtual	bool            IsValid(void)  = 0; //2
-	virtual ConCommandBase* Get(void)      = 0; //3
+  public:
+	virtual void SetFirst(void) = 0;	   // 0
+	virtual void Next(void) = 0;		   // 1
+	virtual bool IsValid(void) = 0;		   // 2
+	virtual ConCommandBase* Get(void) = 0; // 3
 };
 
 //-----------------------------------------------------------------------------
@@ -25,11 +25,11 @@ public:
 //-----------------------------------------------------------------------------
 class CCvar
 {
-public:
-	ConCommandBase        * FindCommandBase(const char* pszCommandName);
-	ConVar                * FindVar(const char* pszVarName);
-	ConCommand            * FindCommand(const char* pszCommandName);
-	CCVarIteratorInternal * FactoryInternalIterator();
+  public:
+	ConCommandBase* FindCommandBase(const char* pszCommandName);
+	ConVar* FindVar(const char* pszVarName);
+	ConCommand* FindCommand(const char* pszCommandName);
+	CCVarIteratorInternal* FactoryInternalIterator();
 	std::unordered_map<std::string, ConCommandBase*> DumpToMap();
 };
 

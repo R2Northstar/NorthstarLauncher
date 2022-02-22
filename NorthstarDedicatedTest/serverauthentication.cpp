@@ -547,8 +547,8 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 {
 	g_ServerAuthenticationManager = new ServerAuthenticationManager;
 
-	Cvar_ns_erase_auth_info = new ConVar(
-		"ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
+	Cvar_ns_erase_auth_info =
+		new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
 	CVar_ns_auth_allow_insecure =
 		new ConVar("ns_auth_allow_insecure", "0", FCVAR_GAMEDLL, "Whether this server will allow unauthenicated players to connect");
 	CVar_ns_auth_allow_insecure_write = new ConVar(

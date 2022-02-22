@@ -1203,8 +1203,8 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->GetInt(), Cvar_ns_player_auth_port->GetInt(), (char*)Cvar_ns_server_name->GetString(),
-		(char*)Cvar_ns_server_desc->GetString(),
-		hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, (char*)Cvar_ns_server_password->GetString());
+		(char*)Cvar_ns_server_desc->GetString(), hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers,
+		(char*)Cvar_ns_server_password->GetString());
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
 }

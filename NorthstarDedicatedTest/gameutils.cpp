@@ -70,20 +70,20 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 
 	GetBaseLocalClient = (GetBaseLocalClientType)((char*)baseAddress + 0x78200);
 
-/* NOTE:
-	g_pCVar->FindVar("convar_name") now works. These are no longer needed.
-	You can also itterate over every ConVar using CCVarIteratorInternal
-	dump the pointers to a vector and access them from there.
-Example:
-	std::vector<ConVar*> g_pAllConVars;
-	for (auto& map : g_pCVar->DumpToMap())
-	{
-		ConVar* pConVar = g_pCVar->FindVar(map.first.c_str());
-		if (pConVar)
+	/* NOTE:
+		g_pCVar->FindVar("convar_name") now works. These are no longer needed.
+		You can also itterate over every ConVar using CCVarIteratorInternal
+		dump the pointers to a vector and access them from there.
+	Example:
+		std::vector<ConVar*> g_pAllConVars;
+		for (auto& map : g_pCVar->DumpToMap())
 		{
-			g_pAllConVars.push_back(pConVar);
-		}
-	}*/
+			ConVar* pConVar = g_pCVar->FindVar(map.first.c_str());
+			if (pConVar)
+			{
+				g_pAllConVars.push_back(pConVar);
+			}
+		}*/
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 	Cvar_net_datablock_enabled = (ConVar*)((char*)baseAddress + 0x12A4F6D0);
 	Cvar_match_defaultMap = (ConVar*)((char*)baseAddress + 0x8AB530);
