@@ -1464,6 +1464,15 @@
     <ClInclude Include="bits.h">
       <Filter>Header Files\Shared\Math</Filter>
     </ClInclude>
+    <ClInclude Include="serverchathooks.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="clientchathooks.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="localchatwriter.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1603,6 +1612,15 @@
     </ClCompile>
     <ClCompile Include="bits.cpp">
       <Filter>Source Files\Shared\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="serverchathooks.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="clientchathooks.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="localchatwriter.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
