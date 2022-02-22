@@ -113,6 +113,9 @@
     <ClInclude Include="bits.h" />
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
+    <ClInclude Include="clientchathooks.h" />
+    <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="concommand.h" />
@@ -560,6 +563,7 @@
     <ClCompile Include="buildainfile.cpp" />
     <ClCompile Include="chatcommand.cpp" />
     <ClCompile Include="clientauthhooks.cpp" />
+    <ClCompile Include="clientchathooks.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="configurables.cpp" />
     <ClCompile Include="context.cpp" />
@@ -574,6 +578,7 @@
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
+    <ClCompile Include="localchatwriter.cpp" />
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />
     <ClCompile Include="memalloc.cpp" />
@@ -599,6 +604,7 @@
     <ClCompile Include="scriptsrson.cpp" />
     <ClCompile Include="serverauthentication.cpp" />
     <ClCompile Include="miscserverscript.cpp" />
+    <ClCompile Include="serverchathooks.cpp" />
     <ClCompile Include="sigscanning.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
