@@ -145,7 +145,19 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
-bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* username)
+char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToken, char* name)
+{
+	AuthData authData = m_authData[authToken];
+
+	bool nameAccepted = (!*authData.username || name == "" || !strcmp(name, authData.username));
+
+	if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->m_nValue) {
+		strcpy(name, authData.username);
+	}
+	return name;
+}
+
+bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
@@ -156,10 +168,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
 
-		bool nameAccepted = ( !*authData.username || username == "" || !strcmp(username, authData.username) );
-
-		if (!strcmp(strUid.c_str(), authData.uid) &&
-			nameAccepted) // connecting client's uid is the same as auth's uid and name matches supplied one
+		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
 		{
 			authFail = false;
 			// uuid
@@ -290,6 +299,9 @@ void* CBaseServer__ConnectClientHook(
 
 bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7)
 {
+	// try changing name before all else
+	name = g_ServerAuthenticationManager->VerifyPlayerName(self, nextPlayerToken, name);
+
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
@@ -306,7 +318,7 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 	if (strlen(name) >= 64) // fix for name overflow bug
 		CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (
-		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken, name) &&
+		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
