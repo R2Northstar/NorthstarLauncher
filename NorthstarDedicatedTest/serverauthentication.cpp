@@ -114,8 +114,8 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
 					newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
-					strncpy(newAuthData.name, request.get_param_value("username").c_str(), sizeof(newAuthData.name));
-					newAuthData.name[sizeof(newAuthData.name) - 1] = 0;
+					strncpy(newAuthData.username, request.get_param_value("username").c_str(), sizeof(newAuthData.username));
+					newAuthData.username[sizeof(newAuthData.username) - 1] = 0;
 
 					newAuthData.pdataSize = request.body.size();
 					newAuthData.pdata = new char[newAuthData.pdataSize];
@@ -145,7 +145,7 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
-bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* name)
+bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken, char* username)
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_authDataMutex);
@@ -156,8 +156,10 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
 
+		bool nameAccepted = ( !*authData.username || username == "" || !strcmp(username, authData.username) );
+
 		if (!strcmp(strUid.c_str(), authData.uid) &&
-			!strcmp(name, authData.name)) // connecting client's uid is the same as auth's uid and name matches supplied one
+			nameAccepted) // connecting client's uid is the same as auth's uid and name matches supplied one
 		{
 			authFail = false;
 			// uuid
