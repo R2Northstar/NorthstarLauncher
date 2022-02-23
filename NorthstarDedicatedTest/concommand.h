@@ -94,18 +94,13 @@ class ConCommand : public ConCommandBase
 	void Init(void);
 	bool IsCommand(void) const;
 
-	// This is taken from apex. The size is the same
-	// as titanfall 2 (0x68). but i have not confirmed
-	// if all members offsets are the same. They should
-	// match but if they don't, check the reg function
-	// called by the constructor and align accordingly.
-	void* m_nNullCallBack{};		   // 0x0040 <- starts from 0x40 since we inherit ConCommandBase.
-	char m_nPad48[8]{};				   // 0x0048
-	void* m_pCommandCallback{};		   // 0x0050
-	void* m_pCompletionCallback{};	   // 0x0058
-	int m_nCallbackFlags{};			   // 0x0060
-	char m_nPad68[4]{};				   // 0x0064
-};									   // Size: 0x0068
+	void* m_pCommandCallback{};		   // 0x0040 <- starts from 0x40 since we inherit ConCommandBase.
+	void* m_pCompletionCallback{};	   // 0x0048 <- defaults to sub_180417410 ('xor eax, eax').
+	int m_nCallbackFlags{};			   // 0x0050
+	char pad_0054[4];				   // 0x0054
+	int unk0;						   // 0x0058
+	int unk1;						   // 0x005C
+};									   // Size: 0x0060
 
 void RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags);
 void InitialiseConCommands(HMODULE baseAddress);
