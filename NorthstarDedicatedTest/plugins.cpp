@@ -13,6 +13,10 @@ GameState gameStateExport;
 ServerInfo serverInfoExport;
 PlayerInfo playerInfoExport;
 
+/// <summary>
+/// We use SRW Locks because plugins will often be running their own thread
+/// To ensure thread safety, and to make it difficult to fuck up, we force them to use *our* functions to get data
+/// </summary>
 static SRWLOCK gameStateLock;
 static SRWLOCK serverInfoLock;
 static SRWLOCK playerInfoLock;
@@ -33,6 +37,7 @@ void* getPluginObject(PluginObject var) {
 
 void initGameState()
 {
+	// Initalize the Slim Reader / Writer locks
 	InitializeSRWLock(&gameStateLock);
 	InitializeSRWLock(&serverInfoLock);
 	InitializeSRWLock(&playerInfoLock);
@@ -65,6 +70,7 @@ void initGameState()
 	playerInfo.uid = 123;
 }
 
+// string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading
 SQRESULT SQ_UpdateGameStateUI(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
@@ -78,6 +84,7 @@ SQRESULT SQ_UpdateGameStateUI(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit
 SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
@@ -93,6 +100,7 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string playlistDisplayName
 SQRESULT SQ_UpdateServerInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
@@ -111,6 +119,7 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// int maxPlayers
 SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
@@ -122,6 +131,7 @@ SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// float timeInFuture
 SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
@@ -132,6 +142,7 @@ SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// bool loading
 SQRESULT SQ_SetConnected(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
@@ -374,9 +385,6 @@ void InitialisePluginCommands(HMODULE baseAddress)
 	// i swear there's a way to make this not have be run in 2 contexts but i can't figure it out
 	// some funcs i need are just not available in UI or CLIENT
 
-	//g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateServerInfo", "", "", SQ_UpdateGameState);
-	//g_UISquirrelManager->AddFuncRegistration("void", "NSUpdatePlayerInfo", "", "", SQ_UpdateGameState);
-	
 	g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateGameStateUI", "string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading", "", SQ_UpdateGameStateUI);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateGameStateClient", "int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit", "", SQ_UpdateGameStateClient);
 	g_UISquirrelManager->AddFuncRegistration(
