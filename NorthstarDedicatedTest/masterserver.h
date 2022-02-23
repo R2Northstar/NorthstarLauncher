@@ -71,9 +71,16 @@ class MasterServerManager
 	bool m_authenticatingWithGameServer = false;
 
   public:
+	bool m_RequestingRemoteBanlistVersion = false;
+	bool m_RequestingRemoteBanlist = false;
+
 	char m_ownServerId[33];
 	char m_ownServerAuthToken[33];
 	char m_ownClientAuthToken[33];
+
+	std::string RemoteBanlistString;
+	std::string LocalBanlistVersion = "undefined";
+	std::string RemoteBanlistVersion;
 
 	std::string m_ownModInfoJson;
 	std::string ns_auth_srvName; // Unicode unescaped version of Cvar_ns_auth_servername for support in cjk characters
@@ -111,12 +118,16 @@ class MasterServerManager
 	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
+	void InitRemoteBanlistThread(int interval);
 	void
 	AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+	void UpdateBanlistVersionStringFromMasterserver();
+	void GetBanlistFromMasterserver();
+	void RemoteBanlistProcessingFunc();
 };
 std::string unescape_unicode(const std::string& str);
 void UpdateServerInfoFromUnicodeToUTF8();
