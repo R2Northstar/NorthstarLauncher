@@ -368,7 +368,7 @@ void ConVar::ChangeStringValue(const char* pszTempVal, float flOldValue)
 				// Not a big issue since we are creating a new string below
 				// anyways to prevent buffer overflow if string is longer
 				// then the old string.
-				//delete[] m_Value.m_pszString;
+				// delete[] m_Value.m_pszString;
 			}
 
 			m_Value.m_pszString = new char[len];

@@ -88,19 +88,20 @@ class ConCommandBase
 class ConCommand : public ConCommandBase
 {
 	friend class CCVar;
+
   public:
 	ConCommand(void){}; // !TODO: Rebuild engine constructor in SDK instead.
 	ConCommand(const char* szName, const char* szHelpString, int nFlags, void* pCallback, void* pCommandCompletionCallback);
 	void Init(void);
 	bool IsCommand(void) const;
 
-	void* m_pCommandCallback{};		   // 0x0040 <- starts from 0x40 since we inherit ConCommandBase.
-	void* m_pCompletionCallback{};	   // 0x0048 <- defaults to sub_180417410 ('xor eax, eax').
-	int m_nCallbackFlags{};			   // 0x0050
-	char pad_0054[4];				   // 0x0054
-	int unk0;						   // 0x0058
-	int unk1;						   // 0x005C
-};									   // Size: 0x0060
+	void* m_pCommandCallback{};	   // 0x0040 <- starts from 0x40 since we inherit ConCommandBase.
+	void* m_pCompletionCallback{}; // 0x0048 <- defaults to sub_180417410 ('xor eax, eax').
+	int m_nCallbackFlags{};		   // 0x0050
+	char pad_0054[4];			   // 0x0054
+	int unk0;					   // 0x0058
+	int unk1;					   // 0x005C
+};								   // Size: 0x0060
 
 void RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags);
 void InitialiseConCommands(HMODULE baseAddress);
