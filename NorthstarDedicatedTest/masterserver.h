@@ -18,6 +18,7 @@ class RemoteServerInfo
 	// server info
 	char name[64];
 	std::string description;
+	std::string tags;
 	char map[32];
 	char playlist[16];
 	std::vector<RemoteModInfo> requiredMods;
@@ -30,8 +31,8 @@ class RemoteServerInfo
 
   public:
 	RemoteServerInfo(
-		const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount,
-		int newMaxPlayers, bool newRequiresPassword);
+		const char* newId, const char* newName, const char* newDescription, const char* newTags, const char* newMap,
+		const char* newPlaylist, int newPlayerCount, int newMaxPlayers, bool newRequiresPassword);
 };
 
 struct RemoteServerConnectionInfo
@@ -78,6 +79,7 @@ class MasterServerManager
 	std::string m_ownModInfoJson;
 	std::string ns_auth_srvName; // Unicode unescaped version of Cvar_ns_auth_servername for support in cjk characters
 	std::string ns_auth_srvDesc; // Unicode unescaped version of Cvar_ns_auth_serverdesc for support in cjk characters
+	std::string ns_auth_srvTags; // Unicode unescaped version of Cvar_ns_auth_servertags for support in cjk characters
 
 	bool m_bOriginAuthWithMasterServerDone = false;
 	bool m_bOriginAuthWithMasterServerInProgress = false;
@@ -111,8 +113,8 @@ class MasterServerManager
 	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
-	void
-	AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
+	void AddSelfToServerList(
+		int port, int authPort, char* name, char* description, char* tags, char* map, char* playlist, int maxPlayers, char* password);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);

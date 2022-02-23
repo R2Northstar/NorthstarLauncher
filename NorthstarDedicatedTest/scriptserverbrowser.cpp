@@ -81,6 +81,25 @@ SQRESULT SQ_GetServerDescription(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// string function NSGetServerDescription( int serverIndex )
+SQRESULT SQ_GetServerTags(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(
+			sqvm, fmt::format(
+					  "Tried to get tags of server index {} when only {} servers are available", serverIndex,
+					  g_MasterServerManager->m_remoteServers.size())
+					  .c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].tags.c_str(), -1);
+	return SQRESULT_NOTNULL;
+}
+
 // string function NSGetServerMap( int serverIndex )
 SQInteger SQ_GetServerMap(void* sqvm)
 {
@@ -387,6 +406,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerName", "int serverIndex", "", SQ_GetServerName);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerDescription", "int serverIndex", "", SQ_GetServerDescription);
+	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerTags", "int serverIndex", "", SQ_GetServerTags);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerMap", "int serverIndex", "", SQ_GetServerMap);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerPlaylist", "int serverIndex", "", SQ_GetServerPlaylist);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGetServerPlayerCount", "int serverIndex", "", SQ_GetServerPlayerCount);

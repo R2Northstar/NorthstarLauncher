@@ -22,6 +22,7 @@ ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
 ConVar* Cvar_ns_server_name;
 ConVar* Cvar_ns_server_desc;
+ConVar* Cvar_ns_server_tags;
 ConVar* Cvar_ns_server_password;
 
 // Source ConVar
@@ -107,6 +108,7 @@ void UpdateServerInfoFromUnicodeToUTF8()
 {
 	g_MasterServerManager->ns_auth_srvName = unescape_unicode(Cvar_ns_server_name->m_pszString);
 	g_MasterServerManager->ns_auth_srvDesc = unescape_unicode(Cvar_ns_server_desc->m_pszString);
+	g_MasterServerManager->ns_auth_srvTags = unescape_unicode(Cvar_ns_server_tags->m_pszString);
 }
 
 const char* HttplibErrorToString(httplib::Error error)
@@ -143,8 +145,8 @@ const char* HttplibErrorToString(httplib::Error error)
 }
 
 RemoteServerInfo::RemoteServerInfo(
-	const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount,
-	int newMaxPlayers, bool newRequiresPassword)
+	const char* newId, const char* newName, const char* newDescription, const char* newTags, const char* newMap, const char* newPlaylist,
+	int newPlayerCount, int newMaxPlayers, bool newRequiresPassword)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -155,6 +157,7 @@ RemoteServerInfo::RemoteServerInfo(
 	name[sizeof(name) - 1] = 0;
 
 	description = std::string(newDescription);
+	tags = std::string(newTags);
 
 	strncpy((char*)map, newMap, sizeof(map));
 	map[sizeof(map) - 1] = 0;
@@ -338,8 +341,10 @@ void MasterServerManager::RequestServerList()
 
 					// todo: verify json props are fine before adding to m_remoteServers
 					if (!serverObj.HasMember("id") || !serverObj["id"].IsString() || !serverObj.HasMember("name") ||
-						!serverObj["name"].IsString() || !serverObj.HasMember("description") || !serverObj["description"].IsString() ||
-						!serverObj.HasMember("map") || !serverObj["map"].IsString() || !serverObj.HasMember("playlist") ||
+						!serverObj["name"].IsString() || !serverObj.HasMember("description") ||
+						!serverObj["description"].IsString()
+						//|| !serverObj.HasMember("tags") || !serverObj["tags"].IsString()
+						|| !serverObj.HasMember("map") || !serverObj["map"].IsString() || !serverObj.HasMember("playlist") ||
 						!serverObj["playlist"].IsString() || !serverObj.HasMember("playerCount") || !serverObj["playerCount"].IsNumber() ||
 						!serverObj.HasMember("maxPlayers") || !serverObj["maxPlayers"].IsNumber() || !serverObj.HasMember("hasPassword") ||
 						!serverObj["hasPassword"].IsBool() || !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") ||
@@ -353,6 +358,17 @@ void MasterServerManager::RequestServerList()
 
 					RemoteServerInfo* newServer = nullptr;
 
+					// no idea how to test with masterserver so for now...
+					const char* serverTags;
+					if (!serverObj.HasMember("tags") || !serverObj["tags"].IsString())
+					{
+						serverTags = new char{'\0'};
+					}
+					else
+					{
+						serverTags = serverObj["tags"].GetString();
+					}
+
 					bool createNewServerInfo = true;
 					for (RemoteServerInfo& server : m_remoteServers)
 					{
@@ -360,9 +376,9 @@ void MasterServerManager::RequestServerList()
 						if (!strncmp((const char*)server.id, id, 32))
 						{
 							server = RemoteServerInfo(
-								id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(),
-								serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(),
-								serverObj["hasPassword"].IsTrue());
+								id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverTags,
+								serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(),
+								serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -372,9 +388,9 @@ void MasterServerManager::RequestServerList()
 					// server didn't exist
 					if (createNewServerInfo)
 						newServer = &m_remoteServers.emplace_back(
-							id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(),
-							serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(),
-							serverObj["hasPassword"].IsTrue());
+							id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverTags,
+							serverObj["map"].GetString(), serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(),
+							serverObj["maxPlayers"].GetInt(), serverObj["hasPassword"].IsTrue());
 
 					newServer->requiredMods.clear();
 					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
@@ -775,7 +791,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 }
 
 void MasterServerManager::AddSelfToServerList(
-	int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
+	int port, int authPort, char* name, char* description, char* tags, char* map, char* playlist, int maxPlayers, char* password)
 {
 	if (!Cvar_ns_report_server_to_masterserver->m_nValue)
 		return;
@@ -790,12 +806,13 @@ void MasterServerManager::AddSelfToServerList(
 
 	std::string strName(name);
 	std::string strDescription(description);
+	std::string strTags(tags);
 	std::string strMap(map);
 	std::string strPlaylist(playlist);
 	std::string strPassword(password);
 
 	std::thread requestThread(
-		[this, port, authPort, strName, strDescription, strMap, strPlaylist, maxPlayers, strPassword]
+		[this, port, authPort, strName, strDescription, strTags, strMap, strPlaylist, maxPlayers, strPassword]
 		{
 			m_ownServerId[0] = 0;
 			m_ownServerAuthToken[0] = 0;
@@ -816,12 +833,36 @@ void MasterServerManager::AddSelfToServerList(
 			curl_mime_filename(part, "modinfo.json");
 			curl_mime_type(part, "application/json");
 
+			int MAX_TAGS = 5; // idk where constants should go lol
+			int tagsAdded = 0;
+			std::istringstream input;
+			input.str(strTags);
+			std::string truncatedTags;
+
+			for (std::string line; std::getline(input, line, ' ');)
+			{
+				if (tagsAdded < MAX_TAGS)
+				{
+					if (tagsAdded++ == 0)
+						truncatedTags.append(line);
+					else
+						truncatedTags.append(" " + line);
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			spdlog::info("TRUNCATED TAGS: " + truncatedTags);
+
 			curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 
 			// format every paramter because computers hate me
 			{
 				char* nameEscaped = curl_easy_escape(curl, strName.c_str(), strName.length());
 				char* descEscaped = curl_easy_escape(curl, strDescription.c_str(), strDescription.length());
+				char* tagsEscaped = curl_easy_escape(curl, truncatedTags.c_str(), truncatedTags.length());
 				char* mapEscaped = curl_easy_escape(curl, strMap.c_str(), strMap.length());
 				char* playlistEscaped = curl_easy_escape(curl, strPlaylist.c_str(), strPlaylist.length());
 				char* passwordEscaped = curl_easy_escape(curl, strPassword.c_str(), strPassword.length());
@@ -829,13 +870,15 @@ void MasterServerManager::AddSelfToServerList(
 				curl_easy_setopt(
 					curl, CURLOPT_URL,
 					fmt::format(
-						"{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
-						Cvar_ns_masterserver_hostname->m_pszString, port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped,
-						maxPlayers, passwordEscaped)
+						"{}/server/"
+						"add_server?port={}&authPort={}&name={}&description={}&tags={}&map={}&playlist={}&maxPlayers={}&password={}",
+						Cvar_ns_masterserver_hostname->m_pszString, port, authPort, nameEscaped, descEscaped, tagsEscaped, mapEscaped,
+						playlistEscaped, maxPlayers, passwordEscaped)
 						.c_str());
 
 				curl_free(nameEscaped);
 				curl_free(descEscaped);
+				curl_free(tagsEscaped);
 				curl_free(mapEscaped);
 				curl_free(playlistEscaped);
 				curl_free(passwordEscaped);
@@ -893,7 +936,7 @@ void MasterServerManager::AddSelfToServerList(
 				// heartbeat thread
 				// ideally this should actually be done in main thread, rather than on it's own thread, so it'd stop if server freezes
 				std::thread heartbeatThread(
-					[this]
+					[this, truncatedTags]
 					{
 						Sleep(5000);
 
@@ -913,6 +956,7 @@ void MasterServerManager::AddSelfToServerList(
 							{
 								char* escapedNameNew = curl_easy_escape(curl, g_MasterServerManager->ns_auth_srvName.c_str(), NULL);
 								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->ns_auth_srvDesc.c_str(), NULL);
+								char* escapedTagsNew = curl_easy_escape(curl, truncatedTags.c_str(), NULL);
 								char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
 								char* escapedPlaylistNew = curl_easy_escape(curl, GetCurrentPlaylistName(), NULL);
 								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->m_pszString, NULL);
@@ -926,16 +970,17 @@ void MasterServerManager::AddSelfToServerList(
 									curl, CURLOPT_URL,
 									fmt::format(
 										"{}/server/"
-										"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
-										"maxPlayers={}&password={}",
+										"update_values?id={}&port={}&authPort={}&name={}&description={}&tags={}&map={}&playlist={}&"
+										"playerCount={}&maxPlayers={}&password={}",
 										Cvar_ns_masterserver_hostname->m_pszString, m_ownServerId, Cvar_hostport->m_nValue,
-										Cvar_ns_player_auth_port->m_nValue, escapedNameNew, escapedDescNew, escapedMapNew,
+										Cvar_ns_player_auth_port->m_nValue, escapedNameNew, escapedDescNew, escapedTagsNew, escapedMapNew,
 										escapedPlaylistNew, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers,
 										escapedPasswordNew)
 										.c_str());
 
 								curl_free(escapedNameNew);
 								curl_free(escapedDescNew);
+								curl_free(escapedTagsNew);
 								curl_free(escapedMapNew);
 								curl_free(escapedPlaylistNew);
 								curl_free(escapedPasswordNew);
@@ -1199,12 +1244,13 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	// Copy new server name cvar to source
 	Cvar_hostname->m_pszString = Cvar_ns_server_name->m_pszString;
 	Cvar_hostname->m_StringLength = Cvar_ns_server_name->m_StringLength;
-	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
+	// This calls the function that converts unicode strings from servername, serverdesc and servertags to UTF-8
 	UpdateServerInfoFromUnicodeToUTF8();
 
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->m_nValue, Cvar_ns_player_auth_port->m_nValue, Cvar_ns_server_name->m_pszString, Cvar_ns_server_desc->m_pszString,
-		hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers, Cvar_ns_server_password->m_pszString);
+		Cvar_ns_server_tags->m_pszString, hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers,
+		Cvar_ns_server_password->m_pszString);
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
 }
@@ -1261,6 +1307,8 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 
 	Cvar_ns_server_name = RegisterConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "");
 	Cvar_ns_server_desc = RegisterConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "");
+	Cvar_ns_server_tags = RegisterConVar("ns_server_tags", "", FCVAR_GAMEDLL, "");
+
 	Cvar_ns_server_password = RegisterConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_server_to_masterserver = RegisterConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_sp_server_to_masterserver = RegisterConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
