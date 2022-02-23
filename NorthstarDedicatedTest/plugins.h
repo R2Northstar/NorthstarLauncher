@@ -1,8 +1,5 @@
 #pragma once
 #include "plugin_abi.h"
-extern InternalGameState gameState;
-extern InternalServerInfo serverInfo;
-extern InternalPlayerInfo playerInfo;
 
 int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var);
 int getServerInfoInt(int* out_ptr, ServerInfoType var);

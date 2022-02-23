@@ -5,6 +5,42 @@
 #include "masterserver.h"
 #include <windows.h>
 
+/// <summary>
+/// The data is split into two different representations: one for internal, and one for plugins, for thread safety reasons
+/// The struct exposed to plugins contains getter functions for the various data types.
+/// We can safely use C++ types like std::string here since these are only ever handled by Northstar internally
+/// </summary>
+struct InternalGameState
+{
+	int ourScore;
+	int secondHighestScore;
+	int highestScore;
+
+	bool connected;
+	bool loading;
+	std::string map;
+	std::string mapDisplayName;
+	std::string playlist;
+	std::string playlistDisplayName;
+	int players;
+};
+struct InternalServerInfo
+{
+	std::string id;
+	std::string name;
+	std::string description;
+	std::string password;
+	int maxPlayers;
+	bool roundBased;
+	int scoreLimit;
+	int endTime;
+};
+// TODO: need to extend this to include current player data like loadouts
+struct InternalPlayerInfo
+{
+	int uid;
+};
+
 InternalGameState gameState;
 InternalServerInfo serverInfo;
 InternalPlayerInfo playerInfo;
