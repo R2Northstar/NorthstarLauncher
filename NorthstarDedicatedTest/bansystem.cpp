@@ -218,9 +218,8 @@ void ClearBanlistCommand(const CCommand& args) { g_ServerBanSystem->ClearBanlist
 void InitialiseBanSystem(HMODULE baseAddress)
 {
 	g_ServerBanSystem = new ServerBanSystem;
-	g_ServerBanSystem->m_CurrentMessageIndex = 0;
 	g_ServerBanSystem->OpenBanlist();
-	IsBanMessageFileParsed = g_ServerBanSystem->ParseLocalBanMessageFile();
+	g_ServerBanSystem->ParseLocalBanMessageFile();
 	RegisterConCommand("ban", BanPlayerCommand, "bans a given player by uid or name", FCVAR_GAMEDLL);
 	RegisterConCommand("unban", UnbanPlayerCommand, "unbans a given player by uid", FCVAR_NONE);
 	RegisterConCommand("clearbanlist", ClearBanlistCommand, "clears all uids on the banlist", FCVAR_NONE);

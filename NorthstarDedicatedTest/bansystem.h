@@ -8,7 +8,7 @@ class ServerBanSystem
 	std::ofstream m_sBanlistStream;
 	std::vector<uint64_t> m_vBannedUids;
 	std::vector<std::string> m_vBanMessages;
-	int m_CurrentMessageIndex;
+	int m_CurrentMessageIndex = 0;
 
   public:
 	const char* GetRandomBanMessage();
