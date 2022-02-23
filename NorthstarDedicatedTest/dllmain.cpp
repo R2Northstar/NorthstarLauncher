@@ -40,7 +40,7 @@
 #include <string.h>
 #include "pch.h"
 #include <Windows.h>
-#include "state.h"
+#include "plugin_abi.h"
 #include "plugins.h"
 
 #include "rapidjson/document.h"
@@ -77,6 +77,15 @@ void WaitForDebugger(HMODULE baseAddress)
 			Sleep(100);
 	}
 }
+
+void freeLibrary(HMODULE hLib) {
+	bool freed = FreeLibrary(hLib);
+	if (!freed)
+	{
+		spdlog::error("There was an error while trying to free library");
+	}
+}
+
 bool LoadPlugins() {
 
 	std::vector<fs::path> paths;
@@ -84,11 +93,13 @@ bool LoadPlugins() {
 	std::string pluginPath = GetNorthstarPrefix() + "/plugins";
 
 	// ensure dirs exist
-	fs::create_directories("plugins");
-
-	// get mod directories
-
-	for (auto const& entry : fs::recursive_directory_iterator(pluginPath))
+	fs::recursive_directory_iterator iterator(pluginPath);
+	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
+	{
+		spdlog::warn("Could not find any plugins. Skipped loading plugins");
+		return false;
+	}
+	for (auto const& entry : iterator)
 	{
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
@@ -105,7 +116,7 @@ bool LoadPlugins() {
 		HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
 		if (datafile == NULL)
 		{
-			spdlog::info("Failed to load library {}. It appears the file does exist", pathstring);
+			spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 			continue;
 		}
 		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCE(101), MAKEINTRESOURCE(RT_RCDATA));
@@ -113,6 +124,7 @@ bool LoadPlugins() {
 		if (manifestResource == NULL)
 		{
 			spdlog::info("Could not find manifest for library {}", pathstring);
+			freeLibrary(datafile);
 			continue;
 		}
 		spdlog::info("Loading resource from library");
@@ -120,6 +132,7 @@ bool LoadPlugins() {
 		if (myResourceData == NULL)
 		{
 			spdlog::error("Failed to load resource from library");
+			freeLibrary(datafile);
 			continue;
 		}
 		int manifestSize = SizeofResource(datafile, manifestResource);
@@ -133,27 +146,31 @@ bool LoadPlugins() {
 		if (manifestJSON.HasParseError())
 		{
 			spdlog::error("Manifest for {} was invalid", pathstring);
+			freeLibrary(datafile);
 			continue;
 		}
 
 		if (!manifestJSON.HasMember("version"))
 		{
 			spdlog::error("{} does not have a version number in its manifest", pathstring);
+			freeLibrary(datafile);
 			continue;
 			//spdlog::info(manifestJSON["version"].GetString());
 		}
 
-		if (strcmp(manifestJSON["version"].GetString(), "1.0"))
+		if (strcmp(manifestJSON["version"].GetString(), "1"))
 		{
 			spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
+			freeLibrary(datafile);
 			continue;
 		}
 		// Passed all checks, going to actually load it now
+		freeLibrary(datafile);
 
 		HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
 		if (pluginLib == NULL)
 		{
-			spdlog::info("Failed to load library {}. It appears the file does exist", pathstring);
+			spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 			continue;
 		}
 		initPluginFuncPtr initPlugin = (initPluginFuncPtr)GetProcAddress(pluginLib, "initializePlugin");

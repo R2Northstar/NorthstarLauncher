@@ -1464,6 +1464,9 @@
     <ClInclude Include="state.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="plugin_abi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

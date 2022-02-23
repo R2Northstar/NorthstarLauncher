@@ -324,14 +324,6 @@ int main(int argc, char* argv[])
 	}
 
 	{
-		if (!GetExePathWide(exePath, sizeof(exePath)))
-		{
-			MessageBoxA(
-				GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.",
-				"Northstar Launcher Error", 0);
-			return 1;
-		}
-
 		PrependPath();
 
 		printf("[*] Loading tier0.dll\n");
@@ -372,6 +364,7 @@ int main(int argc, char* argv[])
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
 	//printf("Starting normally");
-	return ((int(/*__fastcall*/*)(
-		HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	//return ((int(/*__fastcall*/*)(
+	//	HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	system("pause");
 }

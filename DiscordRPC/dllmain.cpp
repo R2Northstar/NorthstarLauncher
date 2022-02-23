@@ -14,6 +14,9 @@
 
 #include "library/discord.h"
 
+#define DLLEXPORT __declspec(dllexport)
+#include "../NorthstarDedicatedTest/plugin_abi.h"
+
 #if defined(_WIN32)
 #pragma pack(push, 1)
 
@@ -74,15 +77,16 @@ namespace
 volatile bool interrupted{false};
 }
 
-#define EXPORT __declspec(dllexport)
+GameState* gameStatePtr = 0;
+ServerInfo* serverInfoPtr = 0;
+PlayerInfo* playerInfoPtr = 0;
 
-#include "../NorthstarDedicatedTest/state.h"
 
-GameState* gameStatePTR = 0;
-
-extern "C" EXPORT void initializePlugin(GameState* gameStatePTR_external)
+extern "C" DLLEXPORT void initializePlugin(GameState* gameStatePtr_external, ServerInfo* serverInfoPtr_external, PlayerInfo* playerInfoPtr_external)
 {
-	gameStatePTR = gameStatePTR_external;
+	gameStatePtr = gameStatePtr_external;
+	serverInfoPtr = serverInfoPtr_external;
+	playerInfoPtr = playerInfoPtr_external;
 	std::thread discord(main, 0, (char**)0);
 	discord.detach();
 }
@@ -90,13 +94,25 @@ extern "C" EXPORT void initializePlugin(GameState* gameStatePTR_external)
 DiscordState state{};
 bool wasInGame;
 
+static struct PluginData
+{
+	static char map[32];
+	static char mapDisplayName[64];
+	static char playlist[32];
+	static char playlistDisplayName[64];
+	int players;
+	int maxPlayers;
+} pluginData;
+
+
+
 int main(int, char**)
 {
+	(*gameStatePtr).getPlaylist(pluginData.playlist, sizeof(pluginData.playlist), GameStateInfoType::playlist);
 
-	SetEnvironmentVariable(L"DISCORD_INSTANCE_ID", L"0");
-	SetConsoleTitle(L"Northstar");
+	std::cout << playlist << "\n";
 
-	discord::Core* core{};
+	/*discord::Core* core{};
 	auto result = discord::Core::Create(941428101429231617, DiscordCreateFlags_NoRequireDiscord, &core);
 	state.core.reset(core);
 	if (!state.core)
@@ -110,14 +126,12 @@ int main(int, char**)
 		discord::LogLevel::Debug, [](discord::LogLevel level, const char* message)
 		{ std::cerr << "Log(" << static_cast<uint32_t>(level) << "): " << message << "\n"; });
 
-	
-
 	discord::Activity activity{};
 
 	const auto p1 = std::chrono::system_clock::now().time_since_epoch();
 	activity.GetTimestamps().SetStart(std::chrono::duration_cast<std::chrono::seconds>(p1).count());
 
-	std::string gameState = (*gameStatePTR).playlistDisplayName;
+	
 
 	activity.SetDetails("");
 	activity.SetState("Loading...");
@@ -139,7 +153,7 @@ int main(int, char**)
 
 	std::signal(SIGINT, [](int) { interrupted = true; });
 
-	do
+	 do
 	{
 		state.core->RunCallbacks();
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -221,7 +235,7 @@ int main(int, char**)
 		state.core->ActivityManager().UpdateActivity(
 			activity, [](discord::Result result){});
 
-	} while (!interrupted);
+	} while (!interrupted);*/
 
 	return 0;
 }

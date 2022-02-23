@@ -1,8 +1,8 @@
 #pragma once
-
-extern GameState gameState;
-extern ServerInfo serverInfo;
-extern PlayerInfo playerInfo;
+#include "plugin_abi.h"
+extern InternalGameState gameState;
+extern InternalServerInfo serverInfo;
+extern InternalPlayerInfo playerInfo;
 
 void initGameState();
 

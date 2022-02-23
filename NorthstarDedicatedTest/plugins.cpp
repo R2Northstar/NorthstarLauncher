@@ -1,17 +1,40 @@
 #include "pch.h"
 #include "squirrel.h"
-#include "state.h"
 #include "plugins.h"
 #include <chrono>
 #include "masterserver.h"
+#include <windows.h>
 
-GameState gameState;
-ServerInfo serverInfo;
-PlayerInfo playerInfo;
+InternalGameState gameState;
+InternalServerInfo serverInfo;
+InternalPlayerInfo playerInfo;
 
+GameState gameStateExport;
+ServerInfo serverInfoExport;
+PlayerInfo playerInfoExport;
+
+static PSRWLOCK gameStateLock;
+static PSRWLOCK serverInfoLock;
+static PSRWLOCK playerInfoLock;
 
 void initGameState()
 {
+	InitializeSRWLock(gameStateLock);
+	InitializeSRWLock(serverInfoLock);
+	InitializeSRWLock(playerInfoLock);
+
+	gameStateExport.getGameStateChar = *getGameStateChar;
+	gameStateExport.getGameStateInt = *getGameStateInt;
+	gameStateExport.getGameStateBool = *getGameStateBool;
+
+	serverInfoExport.getServerInfoChar = *getServerInfoChar;
+	serverInfoExport.getServerInfoInt = *getServerInfoInt;
+	serverInfoExport.getServerInfoBool = *getServerInfoBool;
+
+	playerInfoExport.getPlayerInfoChar = *getPlayerInfoChar;
+	playerInfoExport.getPlayerInfoInt = *getPlayerInfoInt;
+	playerInfoExport.getPlayerInfoBool = *getPlayerInfoBool;
+
 	serverInfo.id = "";
 	serverInfo.name = "";
 	serverInfo.description = "";
@@ -21,7 +44,7 @@ void initGameState()
 	gameState.loading = false;
 	gameState.map = "";
 	gameState.mapDisplayName = "";
-	gameState.playlist = "";
+	gameState.playlist = "testing_playlist";
 	gameState.playlistDisplayName = "";
 	gameState.players = 0;
 
@@ -45,21 +68,19 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 	gameState.ourScore = ClientSq_getinteger(sqvm, 2);
 	gameState.secondHighestScore = ClientSq_getinteger(sqvm, 3);
 	gameState.highestScore = ClientSq_getinteger(sqvm, 4);
-	gameState.serverInfo.roundBased = ClientSq_getbool(sqvm, 5);
-	gameState.serverInfo.scoreLimit = ClientSq_getbool(sqvm, 6);
+	serverInfo.roundBased = ClientSq_getbool(sqvm, 5);
+	serverInfo.scoreLimit = ClientSq_getbool(sqvm, 6);
 	return SQRESULT_NOTNULL;
 }
 
-// string id, string name, string password, int player, int maxPlayers, 
-// string map, string mapDisplayName, string playlist, string playlistDisplayName
 SQRESULT SQ_UpdateServerInfo(void* sqvm)
 {
 	spdlog::info("=============================SERVER INFO UPDATE SUCCESFUL=============================");
-	gameState.serverInfo.id = ClientSq_getstring(sqvm, 1);
-	gameState.serverInfo.name = ClientSq_getstring(sqvm, 2);
-	gameState.serverInfo.password = ClientSq_getstring(sqvm, 3);
+	serverInfo.id = ClientSq_getstring(sqvm, 1);
+	serverInfo.name = ClientSq_getstring(sqvm, 2);
+	serverInfo.password = ClientSq_getstring(sqvm, 3);
 	gameState.players = ClientSq_getinteger(sqvm, 4);
-	gameState.serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 5);
+	serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 5);
 	gameState.map = ClientSq_getstring(sqvm, 6);
 	gameState.mapDisplayName = ClientSq_getstring(sqvm, 7);
 	gameState.playlist = ClientSq_getstring(sqvm, 8);
@@ -69,19 +90,18 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 
 SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 {
-	gameState.serverInfo.id = ClientSq_getstring(sqvm, 1);
-	gameState.serverInfo.name = ClientSq_getstring(sqvm, 2);
-	gameState.serverInfo.password = ClientSq_getstring(sqvm, 3);
-	gameState.serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 4);
+	serverInfo.id = ClientSq_getstring(sqvm, 1);
+	serverInfo.name = ClientSq_getstring(sqvm, 2);
+	serverInfo.password = ClientSq_getstring(sqvm, 3);
+	serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 4);
 	return SQRESULT_NOTNULL;
 }
-
 
 SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 {
 	int endTimeFromNow = ceil(ClientSq_getfloat(sqvm, 1));
 	const auto p1 = std::chrono::system_clock::now().time_since_epoch();
-	gameState.serverInfo.endTime = std::chrono::duration_cast<std::chrono::seconds>(p1).count() + endTimeFromNow;
+	serverInfo.endTime = std::chrono::duration_cast<std::chrono::seconds>(p1).count() + endTimeFromNow;
 	return SQRESULT_NOTNULL;
 }
 
@@ -91,17 +111,232 @@ SQRESULT SQ_SetConnected(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-
 SQRESULT SQ_UpdateListenServer(void* sqvm)
 {
-	gameState.serverInfo.id = g_MasterServerManager->m_ownServerId;
-	gameState.serverInfo.password = FindConVar("ns_server_password")->m_pszString;
+	serverInfo.id = g_MasterServerManager->m_ownServerId;
+	serverInfo.password = FindConVar("ns_server_password")->m_pszString;
 	return SQRESULT_NOTNULL;
 }
 
+int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
 
+	AcquireSRWLockShared(serverInfoLock);
+	int n = 0;
+	switch (var)
+	{
+		case ServerInfoType::id:
+			strncpy(out_buf, serverInfo.id, out_buf_len);
+			break;
+		case ServerInfoType::name:
+			strncpy(out_buf, serverInfo.name, out_buf_len);
+			break;
+		case ServerInfoType::description:
+			strncpy(out_buf, serverInfo.id, out_buf_len);
+			break;
+		case ServerInfoType::password:
+			strncpy(out_buf, serverInfo.password, out_buf_len);
+			break;
+		default:
+			n = -1;
+	}
 
+	ReleaseSRWLockShared(serverInfoLock);
 
+	return n;
+}
+int getServerInfoInt(int *out_ptr, ServerInfoType var) {
+	AcquireSRWLockShared(serverInfoLock);
+	int n = 0;
+	switch (var)
+	{
+	case ServerInfoType::maxPlayers:
+		*out_ptr = serverInfo.maxPlayers;
+		break;
+	case ServerInfoType::scoreLimit:
+		*out_ptr = serverInfo.scoreLimit;
+		break;
+	case ServerInfoType::endTime:
+		*out_ptr = serverInfo.endTime;
+		break;
+	default:
+		n = -1;
+	}
+
+	ReleaseSRWLockShared(serverInfoLock);
+
+	return n;
+}
+int getServerInfoBool(bool* out_ptr, ServerInfoType var)
+{
+	AcquireSRWLockShared(serverInfoLock);
+	int n = 0;
+	switch (var)
+	{
+	case ServerInfoType::roundBased:
+		*out_ptr = serverInfo.roundBased;
+		break;
+	default:
+		n = -1;
+	}
+
+	ReleaseSRWLockShared(serverInfoLock);
+
+	return n;
+}
+
+int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
+
+	AcquireSRWLockShared(gameStateLock);
+	int n = 0;
+	switch (var)
+	{
+	case GameStateInfoType::map:
+		strncpy(out_buf, gameState.map, out_buf_len);
+		break;
+	case GameStateInfoType::mapDisplayName:
+		strncpy(out_buf, gameState.mapDisplayName, out_buf_len);
+		break;
+	case GameStateInfoType::playlist:
+		strncpy(out_buf, gameState.playlist, out_buf_len);
+		break;
+	case GameStateInfoType::playlistDisplayName:
+		strncpy(out_buf, gameState.playlistDisplayName, out_buf_len);
+		break;
+	default:
+		n = -1;
+	}
+
+	ReleaseSRWLockShared(gameStateLock);
+
+	return n;
+}
+int getGameStateInt(int* out_ptr, GameStateInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
+
+	AcquireSRWLockShared(gameStateLock);
+	int n = 0;
+	switch (var)
+	{
+	case GameStateInfoType::ourScore:
+		*out_ptr = gameState.ourScore;
+		break;
+	case GameStateInfoType::secondHighestScore:
+		*out_ptr = gameState.secondHighestScore;
+		break;
+	case GameStateInfoType::highestScore:
+		*out_ptr = gameState.highestScore;
+		break;
+	case GameStateInfoType::players:
+		*out_ptr = gameState.players;
+		break;
+	default:
+		n = -1;
+	}
+
+	ReleaseSRWLockShared(gameStateLock);
+
+	return n;
+}
+int getGameStateBool(bool* out_ptr, GameStateInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
+
+	AcquireSRWLockShared(gameStateLock);
+	int n = 0;
+	switch (var)
+	{
+	case GameStateInfoType::connected:
+		*out_ptr = gameState.connected;
+		break;
+	case GameStateInfoType::loading:
+		*out_ptr = gameState.loading;
+		break;
+	default:
+		n = -1;
+	}
+
+	ReleaseSRWLockShared(gameStateLock);
+
+	return n;
+}
+
+int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
+
+	AcquireSRWLockShared(playerInfoLock);
+	int n = 0;
+	switch (var)
+	{
+		default:
+			n = -1;
+	}
+
+	ReleaseSRWLockShared(playerInfoLock);
+
+	return n;
+}
+int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
+
+	AcquireSRWLockShared(playerInfoLock);
+	int n = 0;
+	switch (var)
+	{
+		case PlayerInfoType::uid:
+			*out_ptr = playerInfo.uid;
+			break;
+		default:
+			n = -1;
+	}
+
+	ReleaseSRWLockShared(playerInfoLock);
+
+	return n;
+}
+int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
+{
+	/* if (var > ...)
+	{
+		return -1; // no such var
+	}*/
+
+	AcquireSRWLockShared(playerInfoLock);
+	int n = 0;
+	switch (var)
+	{
+		default:
+			n = -1;
+	}
+
+	ReleaseSRWLockShared(playerInfoLock);
+
+	return n;
+}
 
 void InitialisePluginCommands(HMODULE baseAddress)
 {
