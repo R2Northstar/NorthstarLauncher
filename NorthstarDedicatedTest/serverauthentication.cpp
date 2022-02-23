@@ -306,7 +306,7 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 
 	if (!g_ServerBanSystem->IsUIDAllowed(nextPlayerUid))
 	{
-		CBaseClient__Disconnect(self, 1, "Banned from server");
+		CBaseClient__Disconnect(self, 1, g_ServerBanSystem->GetRandomBanMessage());
 		return ret;
 	}
 
