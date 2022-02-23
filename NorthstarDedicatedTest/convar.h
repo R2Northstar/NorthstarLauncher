@@ -93,8 +93,6 @@ class ConVar
 	void AddFlags(int nFlags);
 	void RemoveFlags(int nFlags);
 
-	bool IsRegistered(void) const;
-
 	bool GetBool(void) const;
 	float GetFloat(void) const;
 	int GetInt(void) const;
@@ -105,6 +103,7 @@ class ConVar
 	bool GetMax(float& flMaxValue) const;
 	float GetMinValue(void) const;
 	float GetMaxValue(void) const;
+
 	bool HasMin(void) const;
 	bool HasMax(void) const;
 
@@ -117,6 +116,8 @@ class ConVar
 	bool SetColorFromString(const char* pszValue);
 	bool ClampValue(float& value);
 
+	bool IsRegistered(void) const;
+	bool IsCommand(void) const;
 	static bool IsFlagSet(ConVar* pConVar, int nFlags);
 
 	struct CVValue_t

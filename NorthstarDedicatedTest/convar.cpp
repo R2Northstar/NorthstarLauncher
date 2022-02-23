@@ -10,9 +10,6 @@
 std::unordered_map<std::string, ConVar*>
 	g_CustomConvars; // this is used in modloading code to determine whether we've registered a mod convar already
 
-typedef void (*ConVarConstructorType)(ConVar* pNewVar, const char* name, const char* defaultValue, int flags, const char* helpString);
-ConVarConstructorType conVarConstructor;
-
 typedef void (*ConVarRegisterType)(
 	ConVar* pConVar, const char* pszName, const char* pszDefaultValue, int nFlags, const char* pszHelpString, bool bMin, float fMin,
 	bool bMax, float fMax, void* pCallback);
@@ -32,7 +29,6 @@ CvarIsFlagSetType CvarIsFlagSet;
 //-----------------------------------------------------------------------------
 void InitialiseConVars(HMODULE baseAddress)
 {
-	conVarConstructor = (ConVarConstructorType)((char*)baseAddress + 0x416200);
 	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
 	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
 
@@ -115,12 +111,6 @@ void ConVar::AddFlags(int nFlags) { m_ConCommandBase.m_nFlags |= nFlags; }
 // Input  : nFlags -
 //-----------------------------------------------------------------------------
 void ConVar::RemoveFlags(int nFlags) { m_ConCommandBase.m_nFlags &= ~nFlags; }
-
-//-----------------------------------------------------------------------------
-// Purpose: Checks if ConVar is registered.
-// Output : bool
-//-----------------------------------------------------------------------------
-bool ConVar::IsRegistered(void) const { return m_ConCommandBase.m_bRegistered; }
 
 //-----------------------------------------------------------------------------
 // Purpose: Return ConVar value as a boolean.
@@ -374,7 +364,11 @@ void ConVar::ChangeStringValue(const char* pszTempVal, float flOldValue)
 		{
 			if (m_Value.m_pszString)
 			{
-				delete[] m_Value.m_pszString;
+				// !TODO: Causes issues in tier0.dll, but doesn't in apex.
+				// Not a big issue since we are creating a new string below
+				// anyways to prevent buffer overflow if string is longer
+				// then the old string.
+				//delete[] m_Value.m_pszString;
 			}
 
 			m_Value.m_pszString = new char[len];
@@ -434,6 +428,18 @@ bool ConVar::SetColorFromString(const char* pszValue)
 
 	return bColor;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if ConVar is registered.
+// Output : bool
+//-----------------------------------------------------------------------------
+bool ConVar::IsRegistered(void) const { return m_ConCommandBase.m_bRegistered; }
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if this is a command
+// Output : bool
+//-----------------------------------------------------------------------------
+bool ConVar::IsCommand(void) const { return false; }
 
 //-----------------------------------------------------------------------------
 // Purpose: Test each ConVar query before setting the value.
