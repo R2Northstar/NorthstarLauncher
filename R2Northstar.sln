@@ -11,10 +11,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_launcher_proxy", "lo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_wsock32_proxy", "loader_wsock32_proxy\loader_wsock32_proxy.vcxproj", "{CF55F3B5-F348-450A-9CCB-C269F21D629D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DiscordRPC", "DiscordRPC\DiscordRPC.vcxproj", "{2601AF91-0EB7-475E-AD32-01589A47F75E}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DiscordGameSDK", "DiscordGameSDK\DiscordGameSDK.vcxproj", "{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -55,22 +51,6 @@ Global
 		{CF55F3B5-F348-450A-9CCB-C269F21D629D}.Release|x64.Build.0 = Release|x64
 		{CF55F3B5-F348-450A-9CCB-C269F21D629D}.Release|x86.ActiveCfg = Release|x64
 		{CF55F3B5-F348-450A-9CCB-C269F21D629D}.Release|x86.Build.0 = Release|x64
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Debug|x64.ActiveCfg = Debug|x64
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Debug|x64.Build.0 = Debug|x64
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Debug|x86.ActiveCfg = Debug|Win32
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Debug|x86.Build.0 = Debug|Win32
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Release|x64.ActiveCfg = Release|x64
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Release|x64.Build.0 = Release|x64
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Release|x86.ActiveCfg = Release|Win32
-		{2601AF91-0EB7-475E-AD32-01589A47F75E}.Release|x86.Build.0 = Release|Win32
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Debug|x64.ActiveCfg = Debug|x64
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Debug|x64.Build.0 = Debug|x64
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Debug|x86.ActiveCfg = Debug|Win32
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Debug|x86.Build.0 = Debug|Win32
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Release|x64.ActiveCfg = Release|x64
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Release|x64.Build.0 = Release|x64
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Release|x86.ActiveCfg = Release|Win32
-		{87BA15AA-96EE-47B8-9A10-1F41FA927AAD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
