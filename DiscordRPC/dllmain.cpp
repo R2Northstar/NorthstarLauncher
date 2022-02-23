@@ -20,8 +20,6 @@
 #if defined(_WIN32)
 #pragma pack(push, 1)
 
-
-
 struct BitmapImageHeader
 {
 	uint32_t const structSize{sizeof(BitmapImageHeader)};
@@ -81,12 +79,14 @@ GameState* gameStatePtr = 0;
 ServerInfo* serverInfoPtr = 0;
 PlayerInfo* playerInfoPtr = 0;
 
+void* (*getPluginData)(PluginObject);
 
-extern "C" DLLEXPORT void initializePlugin(GameState* gameStatePtr_external, ServerInfo* serverInfoPtr_external, PlayerInfo* playerInfoPtr_external)
+extern "C" DLLEXPORT void initializePlugin(void* getPluginData_external)
 {
-	gameStatePtr = gameStatePtr_external;
-	serverInfoPtr = serverInfoPtr_external;
-	playerInfoPtr = playerInfoPtr_external;
+	getPluginData = (void*(*)(PluginObject))getPluginData_external;
+	gameStatePtr = (GameState*) getPluginData(PluginObject::GAMESTATE);
+	serverInfoPtr = (ServerInfo*)getPluginData(PluginObject::SERVERINFO);
+	playerInfoPtr = (PlayerInfo*)getPluginData(PluginObject::PLAYERINFO);
 	std::thread discord(main, 0, (char**)0);
 	discord.detach();
 }
@@ -96,23 +96,23 @@ bool wasInGame;
 
 static struct PluginData
 {
-	static char map[32];
-	static char mapDisplayName[64];
-	static char playlist[32];
-	static char playlistDisplayName[64];
+	char map[32];
+	char mapDisplayName[64];
+	char playlist[32];
+	char playlistDisplayName[64];
 	int players;
 	int maxPlayers;
+	bool loading;
+	int ourScore;
+	int secondHighestScore;
+	int highestScore;
+	int scoreLimit;
+	int endTime;
 } pluginData;
-
-
 
 int main(int, char**)
 {
-	(*gameStatePtr).getPlaylist(pluginData.playlist, sizeof(pluginData.playlist), GameStateInfoType::playlist);
-
-	std::cout << playlist << "\n";
-
-	/*discord::Core* core{};
+	discord::Core* core{};
 	auto result = discord::Core::Create(941428101429231617, DiscordCreateFlags_NoRequireDiscord, &core);
 	state.core.reset(core);
 	if (!state.core)
@@ -160,12 +160,19 @@ int main(int, char**)
 
 		std::string details = "Score: ";
 
-		
-		activity.SetState((*gameStatePTR).playlistDisplayName.c_str());
-		activity.GetAssets().SetLargeImage((*gameStatePTR).map.c_str());
-		activity.GetAssets().SetLargeText((*gameStatePTR).mapDisplayName.c_str());
+		(*gameStatePtr).getGameStateChar(pluginData.playlist, sizeof(pluginData.playlist), GameStateInfoType::playlist);
+		(*gameStatePtr).getGameStateChar(pluginData.playlistDisplayName, sizeof(pluginData.playlistDisplayName), GameStateInfoType::playlistDisplayName);
+		(*gameStatePtr).getGameStateChar(pluginData.map, sizeof(pluginData.map), GameStateInfoType::map);
+		(*gameStatePtr).getGameStateChar(pluginData.mapDisplayName, sizeof(pluginData.mapDisplayName), GameStateInfoType::mapDisplayName);
+		(*gameStatePtr).getGameStateBool(&pluginData.loading, GameStateInfoType::loading);
+		(*gameStatePtr).getGameStateInt(&pluginData.players, GameStateInfoType::players);
+		(*serverInfoPtr).getServerInfoInt(&pluginData.maxPlayers, ServerInfoType::maxPlayers);
 
-		if ((*gameStatePTR).map == "")
+
+		activity.SetState(pluginData.playlistDisplayName);
+		activity.GetAssets().SetLargeImage(pluginData.map);
+		activity.GetAssets().SetLargeText(pluginData.mapDisplayName);
+		if (!strncmp(pluginData.map, "", 1))
 		{
 			activity.GetParty().GetSize().SetCurrentSize(0);
 			activity.GetParty().GetSize().SetMaxSize(0);
@@ -183,7 +190,7 @@ int main(int, char**)
 				wasInGame = false;
 			}
 		}
-		else if ((*gameStatePTR).map == "mp_lobby")
+		else if (!strncmp(pluginData.map, "mp_lobby", 9))
 		{
 			activity.SetState("In the Lobby");
 			activity.GetParty().GetSize().SetCurrentSize(0);
@@ -203,23 +210,29 @@ int main(int, char**)
 		}
 		else
 		{
-			if (!(*gameStatePTR).loading)
+			if (!pluginData.loading)
 			{
-				activity.GetParty().GetSize().SetCurrentSize((*gameStatePTR).players);
-				activity.GetParty().GetSize().SetMaxSize((*gameStatePTR).serverInfo.maxPlayers);
-
-				if ((*gameStatePTR).ourScore == (*gameStatePTR).highestScore)
+				activity.GetParty().GetSize().SetCurrentSize(pluginData.players);
+				activity.GetParty().GetSize().SetMaxSize(pluginData.maxPlayers);
+				(*gameStatePtr).getGameStateInt(&pluginData.ourScore, GameStateInfoType::ourScore);
+				(*gameStatePtr).getGameStateInt(&pluginData.secondHighestScore, GameStateInfoType::secondHighestScore);
+				(*gameStatePtr).getGameStateInt(&pluginData.highestScore, GameStateInfoType::highestScore);
+				(*serverInfoPtr).getServerInfoInt(&pluginData.scoreLimit, ServerInfoType::scoreLimit);
+				(*serverInfoPtr).getServerInfoInt(&pluginData.endTime, ServerInfoType::endTime);
+				(*gameStatePtr).getGameStateChar(pluginData.playlistDisplayName, sizeof(pluginData.playlistDisplayName), GameStateInfoType::playlistDisplayName);
+				activity.SetState(pluginData.playlistDisplayName);
+				if (pluginData.ourScore == pluginData.highestScore)
 				{
-					details += std::to_string((*gameStatePTR).ourScore) + " - " + std::to_string((*gameStatePTR).secondHighestScore);
+					details += std::to_string(pluginData.ourScore) + " - " + std::to_string(pluginData.secondHighestScore);
 				}
 				else
 				{
-					details += std::to_string((*gameStatePTR).ourScore) + " - " + std::to_string((*gameStatePTR).highestScore);
+					details += std::to_string(pluginData.ourScore) + " - " + std::to_string(pluginData.highestScore);
 				}
 
-				details += " (First to " + std::to_string((*gameStatePTR).serverInfo.scoreLimit) + ")";
+				details += " (First to " + std::to_string(pluginData.scoreLimit) + ")";
 				activity.SetDetails(details.c_str());
-				activity.GetTimestamps().SetEnd((*gameStatePTR).serverInfo.endTime);
+				activity.GetTimestamps().SetEnd(pluginData.endTime);
 				activity.GetTimestamps().SetStart(0);
 				wasInGame = true;
 			}
@@ -235,7 +248,7 @@ int main(int, char**)
 		state.core->ActivityManager().UpdateActivity(
 			activity, [](discord::Result result){});
 
-	} while (!interrupted);*/
+	} while (!interrupted);
 
 	return 0;
 }

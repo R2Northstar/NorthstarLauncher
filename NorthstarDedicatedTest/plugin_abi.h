@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-int ABI_VERSION = 1;
+#define ABI_VERSION = 1;
 
 /// <summary>
 /// This enum is used for referencing the different types of objects we can pass to and from a plugin
@@ -13,6 +13,8 @@ enum PluginObject
 {
 	UNSUPPORTED = 0,
 	GAMESTATE = 1,
+	SERVERINFO = 2,
+	PLAYERINFO = 3,
 	DUMMY = 0xFFFF
 };
 
@@ -28,18 +30,18 @@ struct InternalGameState
 
 	bool connected;
 	bool loading;
-	const char* map;
-	const char* mapDisplayName;
-	const char* playlist;
-	const char* playlistDisplayName;
+	std::string map;
+	std::string mapDisplayName;
+	std::string playlist;
+	std::string playlistDisplayName;
 	int players;
 };
 struct InternalServerInfo
 {
-	const char* id;
-	const char* name;
-	const char* description;
-	const char* password;
+	std::string id;
+	std::string name;
+	std::string description;
+	std::string password;
 	int maxPlayers;
 	bool roundBased;
 	int scoreLimit;

@@ -48,7 +48,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 
-typedef void (*initPluginFuncPtr)(GameState*);
+typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
 bool initialised = false;
 
@@ -104,7 +104,7 @@ bool LoadPlugins() {
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-
+	//system("pause");
 	initGameState();
 	//spdlog::info("Loading the following DLLs in plugins folder:");
 	for (fs::path path : paths)
@@ -149,16 +149,14 @@ bool LoadPlugins() {
 			freeLibrary(datafile);
 			continue;
 		}
-
-		if (!manifestJSON.HasMember("version"))
+		if (!manifestJSON.HasMember("api_version"))
 		{
 			spdlog::error("{} does not have a version number in its manifest", pathstring);
 			freeLibrary(datafile);
 			continue;
 			//spdlog::info(manifestJSON["version"].GetString());
 		}
-
-		if (strcmp(manifestJSON["version"].GetString(), "1"))
+		if (strcmp(manifestJSON["api_version"].GetString(), "1"))
 		{
 			spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
 			freeLibrary(datafile);
@@ -180,7 +178,7 @@ bool LoadPlugins() {
 			continue;
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
-		initPlugin(&gameState);
+		initPlugin(&getPluginObject);
 	} 
 	return true;
 }
