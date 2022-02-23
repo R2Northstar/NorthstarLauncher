@@ -156,7 +156,7 @@ bool LoadPlugins() {
 			continue;
 			//spdlog::info(manifestJSON["version"].GetString());
 		}
-		if (strcmp(manifestJSON["api_version"].GetString(), "1"))
+		if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 		{
 			spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
 			freeLibrary(datafile);

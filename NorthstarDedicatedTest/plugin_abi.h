@@ -1,10 +1,10 @@
 #pragma once
 #include <string>
 
-#define ABI_VERSION = 1;
+#define ABI_VERSION 1
 
 /// <summary>
-/// This enum is used for referencing the different types of objects we can pass to and from a plugin
+/// This enum is used for referencing the different types of objects we can pass to a plugin
 /// Anything exposed to a plugin must not a be C++ type, as they could break when compiling with a different compiler.
 /// Any ABI incompatible change must increment the version number.
 /// Nothing must be removed from this enum, only appended. When it absolutely necessary to deprecate an object, it should return UNSUPPORTED when retrieved
@@ -21,6 +21,7 @@ enum PluginObject
 /// <summary>
 /// The data is split into two different representations: one for internal, and one for plugins, for thread safety reasons
 /// The struct exposed to plugins contains getter functions for the various data types.
+/// We can safely use C++ types like std::string here since these are only ever handled by Northstar internally
 /// </summary>
 struct InternalGameState
 {
@@ -47,10 +48,10 @@ struct InternalServerInfo
 	int scoreLimit;
 	int endTime;
 };
+// TODO: need to extend this to include current player data like loadouts
 struct InternalPlayerInfo
 {
 	int uid;
-	// stuff like current weapons ig?
 };
 
 
