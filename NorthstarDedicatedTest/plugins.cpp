@@ -57,17 +57,18 @@ static SRWLOCK gameStateLock;
 static SRWLOCK serverInfoLock;
 static SRWLOCK playerInfoLock;
 
-void* getPluginObject(PluginObject var) { 
+void* getPluginObject(PluginObject var)
+{
 	switch (var)
 	{
-		case PluginObject::GAMESTATE:
-			return &gameStateExport;
-		case PluginObject::SERVERINFO:
-			return &serverInfoExport;
-		case PluginObject::PLAYERINFO:
-			return &playerInfoExport;
-		default:
-			return (void*) -1;
+	case PluginObject::GAMESTATE:
+		return &gameStateExport;
+	case PluginObject::SERVERINFO:
+		return &serverInfoExport;
+	case PluginObject::PLAYERINFO:
+		return &playerInfoExport;
+	default:
+		return (void*)-1;
 	}
 }
 
@@ -136,7 +137,8 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-// string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string playlistDisplayName
+// string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string
+// playlistDisplayName
 SQRESULT SQ_UpdateServerInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
@@ -207,27 +209,28 @@ int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
 	int n = 0;
 	switch (var)
 	{
-		case ServerInfoType::id:
-			strncpy(out_buf, serverInfo.id.c_str(), out_buf_len);
-			break;
-		case ServerInfoType::name:
-			strncpy(out_buf, serverInfo.name.c_str(), out_buf_len);
-			break;
-		case ServerInfoType::description:
-			strncpy(out_buf, serverInfo.id.c_str(), out_buf_len);
-			break;
-		case ServerInfoType::password:
-			strncpy(out_buf, serverInfo.password.c_str(), out_buf_len);
-			break;
-		default:
-			n = -1;
+	case ServerInfoType::id:
+		strncpy(out_buf, serverInfo.id.c_str(), out_buf_len);
+		break;
+	case ServerInfoType::name:
+		strncpy(out_buf, serverInfo.name.c_str(), out_buf_len);
+		break;
+	case ServerInfoType::description:
+		strncpy(out_buf, serverInfo.id.c_str(), out_buf_len);
+		break;
+	case ServerInfoType::password:
+		strncpy(out_buf, serverInfo.password.c_str(), out_buf_len);
+		break;
+	default:
+		n = -1;
 	}
 
 	ReleaseSRWLockShared(&serverInfoLock);
 
 	return n;
 }
-int getServerInfoInt(int *out_ptr, ServerInfoType var) {
+int getServerInfoInt(int* out_ptr, ServerInfoType var)
+{
 	AcquireSRWLockShared(&serverInfoLock);
 	int n = 0;
 	switch (var)
@@ -366,8 +369,8 @@ int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
 	int n = 0;
 	switch (var)
 	{
-		default:
-			n = -1;
+	default:
+		n = -1;
 	}
 
 	ReleaseSRWLockShared(&playerInfoLock);
@@ -385,11 +388,11 @@ int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
 	int n = 0;
 	switch (var)
 	{
-		case PlayerInfoType::uid:
-			*out_ptr = playerInfo.uid;
-			break;
-		default:
-			n = -1;
+	case PlayerInfoType::uid:
+		*out_ptr = playerInfo.uid;
+		break;
+	default:
+		n = -1;
 	}
 
 	ReleaseSRWLockShared(&playerInfoLock);
@@ -407,8 +410,8 @@ int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
 	int n = 0;
 	switch (var)
 	{
-		default:
-			n = -1;
+	default:
+		n = -1;
 	}
 
 	ReleaseSRWLockShared(&playerInfoLock);
@@ -421,13 +424,20 @@ void InitialisePluginCommands(HMODULE baseAddress)
 	// i swear there's a way to make this not have be run in 2 contexts but i can't figure it out
 	// some funcs i need are just not available in UI or CLIENT
 
-	g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateGameStateUI", "string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading", "", SQ_UpdateGameStateUI);
-	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateGameStateClient", "int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit", "", SQ_UpdateGameStateClient);
 	g_UISquirrelManager->AddFuncRegistration(
-		"void",
-		"NSUpdateServerInfo", "string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string playlistDisplayName",
+		"void", "NSUpdateGameStateUI", "string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading", "",
+		SQ_UpdateGameStateUI);
+	g_ClientSquirrelManager->AddFuncRegistration(
+		"void", "NSUpdateGameStateClient",
+		"int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit", "",
+		SQ_UpdateGameStateClient);
+	g_UISquirrelManager->AddFuncRegistration(
+		"void", "NSUpdateServerInfo",
+		"string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string "
+		"playlistDisplayName",
 		"", SQ_UpdateServerInfo);
-	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
+	g_ClientSquirrelManager->AddFuncRegistration(
+		"void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);

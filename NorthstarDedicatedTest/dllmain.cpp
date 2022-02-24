@@ -78,7 +78,8 @@ void WaitForDebugger(HMODULE baseAddress)
 	}
 }
 
-void freeLibrary(HMODULE hLib) {
+void freeLibrary(HMODULE hLib)
+{
 	bool freed = FreeLibrary(hLib);
 	if (!freed)
 	{
@@ -86,7 +87,8 @@ void freeLibrary(HMODULE hLib) {
 	}
 }
 
-bool LoadPlugins() {
+bool LoadPlugins()
+{
 
 	std::vector<fs::path> paths;
 
@@ -104,23 +106,24 @@ bool LoadPlugins() {
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-	//system("pause");
+	// system("pause");
 	initGameState();
-	//spdlog::info("Loading the following DLLs in plugins folder:");
+	// spdlog::info("Loading the following DLLs in plugins folder:");
 	for (fs::path path : paths)
 	{
-		std::string pathstring = (pluginPath/ path).string();
+		std::string pathstring = (pluginPath / path).string();
 		std::wstring wpath = (pluginPath / path).wstring();
-		
+
 		LPCWSTR wpptr = wpath.c_str();
-		HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
+		HMODULE datafile =
+			LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
 		if (datafile == NULL)
 		{
 			spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 			continue;
 		}
 		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCE(101), MAKEINTRESOURCE(RT_RCDATA));
-		
+
 		if (manifestResource == NULL)
 		{
 			spdlog::info("Could not find manifest for library {}", pathstring);
@@ -154,7 +157,7 @@ bool LoadPlugins() {
 			spdlog::error("{} does not have a version number in its manifest", pathstring);
 			freeLibrary(datafile);
 			continue;
-			//spdlog::info(manifestJSON["version"].GetString());
+			// spdlog::info(manifestJSON["version"].GetString());
 		}
 		if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 		{
@@ -179,7 +182,7 @@ bool LoadPlugins() {
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
 		initPlugin(&getPluginObject);
-	} 
+	}
 	return true;
 }
 
