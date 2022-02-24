@@ -22,6 +22,8 @@ HMODULE hTier0Module;
 wchar_t exePath[4096];
 wchar_t buffer[8192];
 
+bool noLoadPlugins = false;
+
 DWORD GetProcessByName(std::wstring processName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -225,13 +227,17 @@ bool LoadNorthstar()
 	}
 
 	((bool (*)())Hook_Init)();
-	Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
-	if (!hHookModule || Hook_Init == nullptr)
+	if (!noLoadPlugins)
 	{
-		printf("Failed to get function pointer to LoadPlugins of Northstar.dll\n");
-		return false;
+		Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
+		if (!hHookModule || Hook_Init == nullptr)
+		{
+			printf("Failed to get function pointer to LoadPlugins of Northstar.dll\n");
+			return false;
+		}
+		((bool (*)())Hook_Init)();
 	}
-	((bool (*)())Hook_Init)();
+
 	return true;
 }
 
@@ -271,6 +277,8 @@ int main(int argc, char* argv[])
 			dedicated = true;
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
+		else if (!strcmp(argv[i], "-noplugins"))
+			noLoadPlugins = true;
 
 	if (!noOriginStartup && !dedicated)
 	{
