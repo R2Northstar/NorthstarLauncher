@@ -29,6 +29,4 @@ void BasicVoice::skipSpeech()
 {
 	unsigned long skipped;
 	pVoice->Skip(L"SENTENCE", 1, &skipped);
-
-	// spdlog::info("skipped {} sentences", skipped);
 }
