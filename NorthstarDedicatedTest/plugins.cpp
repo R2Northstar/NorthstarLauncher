@@ -3,6 +3,7 @@
 #include "plugins.h"
 #include <chrono>
 #include "masterserver.h"
+#include "convar.h"
 #include <windows.h>
 
 /// <summary>
