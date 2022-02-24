@@ -1,6 +1,6 @@
 #pragma once
 #include <minwindef.h>
 
-void say(char* input, char* voice);
+void say(std::string input, std::string voice);
 
 void InitialiseTTS(HMODULE baseAddress);

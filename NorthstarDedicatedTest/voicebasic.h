@@ -57,7 +57,7 @@ public:
 		);
 		*/
 	}
-	virtual void speakText(const char* input);
+	virtual void speakText(char* input);
 	virtual void setRate(float rate);
 	virtual void outSpeech();
 	virtual void skipSpeech();
