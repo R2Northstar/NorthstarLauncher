@@ -7,7 +7,8 @@
 /// This enum is used for referencing the different types of objects we can pass to a plugin
 /// Anything exposed to a plugin must not a be C++ type, as they could break when compiling with a different compiler.
 /// Any ABI incompatible change must increment the version number.
-/// Nothing must be removed from this enum, only appended. When it absolutely necessary to deprecate an object, it should return UNSUPPORTED when retrieved
+/// Nothing must be removed from this enum, only appended. When it absolutely necessary to deprecate an object, it should return UNSUPPORTED
+/// when retrieved
 /// </summary>
 enum PluginObject
 {
@@ -40,7 +41,14 @@ struct GameState
 
 enum ServerInfoType
 {
-	id, name, description, password, maxPlayers, roundBased, scoreLimit, endTime
+	id,
+	name,
+	description,
+	password,
+	maxPlayers,
+	roundBased,
+	scoreLimit,
+	endTime
 };
 struct ServerInfo
 {
