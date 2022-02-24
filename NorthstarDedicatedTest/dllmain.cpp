@@ -126,6 +126,8 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseClientPrintHooks);
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
+		// tts
+		AddDllLoadCallback("client.dll", InitialiseTTS);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
