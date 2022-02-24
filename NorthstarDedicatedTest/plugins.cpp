@@ -194,7 +194,7 @@ SQRESULT SQ_UpdateListenServer(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
 	serverInfo.id = g_MasterServerManager->m_ownServerId;
-	serverInfo.password = FindConVar("ns_server_password")->m_pszString;
+	serverInfo.password = Cvar_ns_server_password->GetString();
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }
