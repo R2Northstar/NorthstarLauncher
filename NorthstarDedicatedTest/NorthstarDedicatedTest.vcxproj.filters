@@ -1473,6 +1473,12 @@
     <ClInclude Include="localchatwriter.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="tts.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="voicebasic.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1620,6 +1626,12 @@
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="localchatwriter.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="tts.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="voicebasic.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>

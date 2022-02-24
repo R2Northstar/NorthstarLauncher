@@ -555,6 +555,8 @@
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
+    <ClInclude Include="tts.h" />
+    <ClInclude Include="voicebasic.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
@@ -609,6 +611,8 @@
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
+    <ClCompile Include="tts.cpp" />
+    <ClCompile Include="voicebasic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />
