@@ -121,6 +121,12 @@
     <Filter Include="Header Files\include\libcurl">
       <UniqueIdentifier>{ea1e17a6-40b7-4e1b-8edb-e9ae704ce604}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shared\Math">
+      <UniqueIdentifier>{59b0f68f-daa7-4641-b6fa-8464b56da2bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shared\Math">
+      <UniqueIdentifier>{44a83740-9d70-480d-9a7a-43b81f8eab9e}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\A11y">
       <UniqueIdentifier>{8e3d6980-ae84-40d8-9523-eaf469b5ef13}</UniqueIdentifier>
     </Filter>
@@ -1446,6 +1452,33 @@
     <ClInclude Include="audio.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="buildainfile.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="bitbuf.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="configurables.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="cvar.h">
+      <Filter>Header Files\Shared\Convar</Filter>
+    </ClInclude>
+    <ClInclude Include="color.h">
+      <Filter>Header Files\Shared\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="bits.h">
+      <Filter>Header Files\Shared\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="serverchathooks.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="clientchathooks.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="localchatwriter.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
     <ClInclude Include="tts.h">
       <Filter>Header Files\A11y</Filter>
     </ClInclude>
@@ -1584,6 +1617,27 @@
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="audio.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="buildainfile.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="configurables.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="cvar.cpp">
+      <Filter>Source Files\Shared\Convar</Filter>
+    </ClCompile>
+    <ClCompile Include="bits.cpp">
+      <Filter>Source Files\Shared\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="serverchathooks.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="clientchathooks.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="localchatwriter.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="tts.cpp">

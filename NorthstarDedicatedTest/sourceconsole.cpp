@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "convar.h"
 #include "sourceconsole.h"
 #include "sourceinterface.h"
 #include "concommand.h"
@@ -15,15 +16,7 @@ void ConCommand_toggleconsole(const CCommand& arg)
 		(*g_SourceGameConsole)->Activate();
 }
 
-void ConCommand_help(const CCommand& arg)
-{
-	if (arg.ArgC() < 2)
-		return;
-
-	// todo: this should basically just call FindConVar once we have that working, then just print convar.GetHelpString
-}
-
-typedef void(*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char* pCommand);
+typedef void (*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char* pCommand);
 OnCommandSubmittedType onCommandSubmittedOriginal;
 void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
 {
@@ -48,7 +41,9 @@ void InitialiseConsoleOnInterfaceCreation()
 
 	// hook OnCommandSubmitted so we print inputted commands
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (void*)((*g_SourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted), &OnCommandSubmittedHook, reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
+	ENABLER_CREATEHOOK(
+		hook, (void*)((*g_SourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted), &OnCommandSubmittedHook,
+		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
 }
 
 void InitialiseSourceConsole(HMODULE baseAddress)
@@ -59,7 +54,6 @@ void InitialiseSourceConsole(HMODULE baseAddress)
 	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
 	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_NONE);
 }
-
 
 // logging stuff
 
@@ -81,7 +75,8 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 	spdlog::memory_buf_t formatted;
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-	(*g_SourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(logColours[msg.level], fmt::to_string(formatted).c_str()); // todo needs colour support
+	(*g_SourceGameConsole)
+		->m_pConsole->m_pConsolePanel->ColorPrint(logColours[msg.level], fmt::to_string(formatted).c_str()); // todo needs colour support
 }
 
 void SourceConsoleSink::flush_() {}
