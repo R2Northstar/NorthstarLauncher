@@ -16,6 +16,7 @@ bool IsValveModHook()
 	// basically: by default r2 isn't set as a valve mod, meaning that m_bRestrictServerCommands is false
 	// this is HORRIBLE for security, because it means servers can run arbitrary concommands on clients
 	// especially since we have script commands this could theoretically be awful
+	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"""security"""
 	return !CommandLine()->CheckParm("-norestrictservercommands");
 }
 
@@ -394,6 +395,7 @@ __int64 __fastcall Host_InitHook(char a1) {
 }
 char* __fastcall sub_180414BC0(char* a1, const char* a2, unsigned __int64 a3, __int64 a4)
 {
+	// what the fuck
 	signed __int64 v5; // r8
 	__int64 v6; // r10
 	char* result; // rax
