@@ -35,7 +35,7 @@ void InitialiseConsoleOnInterfaceCreation()
 	(*g_SourceGameConsole)->Initialize();
 
 	auto consoleLogger = std::make_shared<SourceConsoleSink>();
-	consoleLogger->set_pattern("[%l] %v");
+	consoleLogger->set_pattern("%v");
 
 	spdlog::default_logger()->sinks().push_back(consoleLogger);
 
