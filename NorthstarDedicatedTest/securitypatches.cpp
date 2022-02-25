@@ -16,7 +16,7 @@ bool IsValveModHook()
 	// basically: by default r2 isn't set as a valve mod, meaning that m_bRestrictServerCommands is false
 	// this is HORRIBLE for security, because it means servers can run arbitrary concommands on clients
 	// especially since we have script commands this could theoretically be awful
-	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"""security"""
+	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"""security"""
 	return !CommandLine()->CheckParm("-norestrictservercommands");
 }
 
