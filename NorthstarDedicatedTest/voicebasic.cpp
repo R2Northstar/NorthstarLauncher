@@ -17,6 +17,11 @@ void BasicVoice::setRate(float rate)
 	speechRate = rate;
 	pVoice->SetRate(rate);
 }
+void BasicVoice::setVolume(float volume)
+{
+	speechVolume = volume;
+	pVoice->SetVolume(volume);
+}
 
 void BasicVoice::outSpeech()
 {

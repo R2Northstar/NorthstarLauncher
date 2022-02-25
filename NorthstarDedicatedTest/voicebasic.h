@@ -11,6 +11,7 @@ class BasicVoice
 
   public:
 	float speechRate = 1.0;
+	float speechVolume = 1.0;
 	BasicVoice()
 	{
 		pVoice = NULL;
@@ -22,6 +23,7 @@ class BasicVoice
 	}
 	virtual void speakText(char* input);
 	virtual void setRate(float rate);
+	virtual void setVolume(float volume);
 	virtual void outSpeech();
 	virtual void skipSpeech();
 	virtual ~BasicVoice()

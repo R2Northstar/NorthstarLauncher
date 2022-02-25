@@ -7,6 +7,7 @@
 
 BasicVoice* b1 = new BasicVoice;
 ConVar* Cvar_speechRate;
+ConVar* Cvar_speechVolume;
 
 char* input;
 // void function TTSsay()
@@ -24,6 +25,10 @@ SQRESULT SQ_TTSsay(void* sqvm)
 			{
 				b1->setRate(Cvar_speechRate->GetFloat());
 			}
+			if (b1->speechVolume != Cvar_speechRate->GetFloat())
+			{
+				b1->setVolume(Cvar_speechVolume->GetFloat());
+			}
 			b1->speakText(input);
 		});
 	sayThread.detach();
@@ -37,6 +42,7 @@ void InitialiseTTS(HMODULE baseAddress)
 		return;
 
 	Cvar_speechRate = new ConVar("speech_rate", "2.5", FCVAR_NONE, "");
+	Cvar_speechVolume = new ConVar("speech_volume", "0.5", FCVAR_NONE, "");
 
 	spdlog::info("adding tts func registration");
 	g_ClientSquirrelManager->AddFuncRegistration(
