@@ -141,3 +141,5 @@ class ConVar
 
 void InitialiseConVars(HMODULE baseAddress);
 extern std::unordered_map<std::string, ConVar*> g_CustomConvars;
+
+extern void* g_pConVar_Vtable;
