@@ -430,7 +430,7 @@ bool ConVar::IsRegistered(void) const { return m_ConCommandBase.m_bRegistered; }
 // Purpose: Returns true if this is a command
 // Output : bool
 //-----------------------------------------------------------------------------
-bool ConVar::IsCommand(void) const { return false; }
+bool ConCommandBase::IsCommand(void) const { return m_pConCommandBaseVTable != g_pConVar_Vtable; }
 
 //-----------------------------------------------------------------------------
 // Purpose: Test each ConVar query before setting the value.
