@@ -33,7 +33,7 @@ bool ConCommand::IsCommand(void) const { return true; }
 // Purpose: Returns true if this is a command
 // Output : bool
 //-----------------------------------------------------------------------------
-bool ConCommandBase::IsCommand(void) const { return true; }
+bool ConCommandBase::IsCommand(void) const { return m_pConCommandBaseVTable != g_pConVar_Vtable; }
 
 //-----------------------------------------------------------------------------
 // Purpose: Has this cvar been registered
