@@ -154,7 +154,7 @@ char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToke
 
 		bool nameAccepted = (!*authData.username || !strcmp(name, authData.username));
 
-		if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->m_nValue)
+		if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->GetInt())
 		{
 			strcpy(name, authData.username);
 		}
