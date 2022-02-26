@@ -156,14 +156,13 @@ char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToke
 
 		if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->GetInt())
 		{
-			strcpy(name, authData.username);
+			// limit name length to 64 characters just in case something changes, this technically shouldn't be needed given the master
+			// server gets usernames from origin but we have it just in case
+			strncpy(name, authData.username, 64);
+			name[64] = 0;
 		}
-		return name;
 	}
-	else
-	{
-		return name;
-	}
+	return name;
 }
 
 bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
