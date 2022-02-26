@@ -146,15 +146,24 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 
 char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToken, char* name)
 {
-	AuthData authData = m_authData[authToken];
+	std::lock_guard<std::mutex> guard(m_authDataMutex);
 
-	bool nameAccepted = (!*authData.username || !strcmp(name, authData.username));
-
-	if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->m_nValue)
+	if (!m_authData.empty() && m_authData.count(std::string(authToken)))
 	{
-		strcpy(name, authData.username);
+		AuthData authData = m_authData[authToken];
+
+		bool nameAccepted = (!*authData.username || !strcmp(name, authData.username));
+
+		if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->m_nValue)
+		{
+			strcpy(name, authData.username);
+		}
+		return name;
 	}
-	return name;
+	else
+	{
+		return name;
+	}
 }
 
 bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
