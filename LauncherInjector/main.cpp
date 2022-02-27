@@ -319,7 +319,7 @@ int main(int argc, char* argv[])
 			file.write(defaultArgs.c_str(), defaultArgs.length());
 			file.close();
 		}
-		if (!fs::exists("ns_startup_args.txt"))
+		if (!fs::exists("ns_startup_args_dedi.txt"))
 		{
 			std::ofstream file("ns_startup_args_dedi.txt");
 			std::string defaultArgs = "+setplaylist private_match";
