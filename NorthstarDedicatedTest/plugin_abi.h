@@ -22,16 +22,16 @@ enum PluginObject
 
 enum GameStateInfoType
 {
-	ourScore,
-	secondHighestScore,
-	highestScore,
-	connected,
-	loading,
-	map,
-	mapDisplayName,
-	playlist,
-	playlistDisplayName,
-	players
+	ourScore = 0,
+	secondHighestScore = 1,
+	highestScore = 2,
+	connected = 3,
+	loading = 4,
+	map = 5,
+	mapDisplayName = 6,
+	playlist = 7,
+	playlistDisplayName = 8,
+	players = 9
 };
 struct GameState
 {
@@ -42,14 +42,14 @@ struct GameState
 
 enum ServerInfoType
 {
-	id,
-	name,
-	description,
-	password,
-	maxPlayers,
-	roundBased,
-	scoreLimit,
-	endTime
+	id = 0,
+	name = 1,
+	description = 2,
+	password = 3,
+	maxPlayers = 4,
+	roundBased = 5,
+	scoreLimit = 6,
+	endTime = 7
 };
 struct ServerInfo
 {
@@ -60,7 +60,7 @@ struct ServerInfo
 
 enum PlayerInfoType
 {
-	uid
+	uid = 0
 };
 struct PlayerInfo
 {

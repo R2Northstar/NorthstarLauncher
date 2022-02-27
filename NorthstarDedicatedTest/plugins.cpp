@@ -201,11 +201,6 @@ SQRESULT SQ_UpdateListenServer(void* sqvm)
 
 int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&serverInfoLock);
 	int n = 0;
 	switch (var)

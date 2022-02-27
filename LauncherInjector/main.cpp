@@ -225,17 +225,19 @@ bool LoadNorthstar()
 			return false;
 		}
 	}
-
 	((bool (*)())Hook_Init)();
+
+	FARPROC LoadPlugins = nullptr;
 	if (!noLoadPlugins)
 	{
-		Hook_Init = GetProcAddress(hHookModule, "LoadPlugins");
-		if (!hHookModule || Hook_Init == nullptr)
+		LoadPlugins = GetProcAddress(hHookModule, "LoadPlugins");
+		if (!hHookModule || LoadPlugins == nullptr)
 		{
 			printf("Failed to get function pointer to LoadPlugins of Northstar.dll\n");
+			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
 			return false;
 		}
-		((bool (*)())Hook_Init)();
+		((bool (*)())LoadPlugins)();
 	}
 
 	return true;

@@ -39,7 +39,6 @@
 #include "localchatwriter.h"
 #include <string.h>
 #include "pch.h"
-#include <Windows.h>
 #include "plugin_abi.h"
 #include "plugins.h"
 
@@ -80,8 +79,7 @@ void WaitForDebugger(HMODULE baseAddress)
 
 void freeLibrary(HMODULE hLib)
 {
-	bool freed = FreeLibrary(hLib);
-	if (!freed)
+	if (!FreeLibrary(hLib))
 	{
 		spdlog::error("There was an error while trying to free library");
 	}
@@ -139,9 +137,8 @@ bool LoadPlugins()
 			continue;
 		}
 		int manifestSize = SizeofResource(datafile, manifestResource);
-		const char* manifestBinaryData = (const char*)LockResource(myResourceData);
-
-		std::string manifest = std::string(manifestBinaryData, 0, manifestSize);
+		std::string manifest = std::string((const char*)LockResource(myResourceData), 0, manifestSize);
+		freeLibrary(datafile);
 
 		rapidjson_document manifestJSON;
 		manifestJSON.Parse(manifest.c_str());
@@ -149,24 +146,20 @@ bool LoadPlugins()
 		if (manifestJSON.HasParseError())
 		{
 			spdlog::error("Manifest for {} was invalid", pathstring);
-			freeLibrary(datafile);
 			continue;
 		}
 		if (!manifestJSON.HasMember("api_version"))
 		{
 			spdlog::error("{} does not have a version number in its manifest", pathstring);
-			freeLibrary(datafile);
 			continue;
 			// spdlog::info(manifestJSON["version"].GetString());
 		}
 		if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 		{
 			spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
-			freeLibrary(datafile);
 			continue;
 		}
 		// Passed all checks, going to actually load it now
-		freeLibrary(datafile);
 
 		HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
 		if (pluginLib == NULL)
@@ -175,7 +168,7 @@ bool LoadPlugins()
 			continue;
 		}
 		initPluginFuncPtr initPlugin = (initPluginFuncPtr)GetProcAddress(pluginLib, "initializePlugin");
-		if (initPlugin == 0)
+		if (initPlugin == NULL)
 		{
 			spdlog::info("Library {} has no function initializePlugin", pathstring);
 			continue;
