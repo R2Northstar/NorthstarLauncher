@@ -268,11 +268,6 @@ int getServerInfoBool(bool* out_ptr, ServerInfoType var)
 
 int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&gameStateLock);
 	int n = 0;
 	switch (var)
@@ -299,11 +294,6 @@ int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
 }
 int getGameStateInt(int* out_ptr, GameStateInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&gameStateLock);
 	int n = 0;
 	switch (var)
@@ -330,11 +320,6 @@ int getGameStateInt(int* out_ptr, GameStateInfoType var)
 }
 int getGameStateBool(bool* out_ptr, GameStateInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&gameStateLock);
 	int n = 0;
 	switch (var)
@@ -356,11 +341,6 @@ int getGameStateBool(bool* out_ptr, GameStateInfoType var)
 
 int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&playerInfoLock);
 	int n = 0;
 	switch (var)
@@ -375,11 +355,6 @@ int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
 }
 int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&playerInfoLock);
 	int n = 0;
 	switch (var)
@@ -397,11 +372,6 @@ int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
 }
 int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
 {
-	/* if (var > ...)
-	{
-		return -1; // no such var
-	}*/
-
 	AcquireSRWLockShared(&playerInfoLock);
 	int n = 0;
 	switch (var)
