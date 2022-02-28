@@ -315,7 +315,7 @@ int main(int argc, char* argv[])
 		if (!fs::exists("ns_startup_args.txt"))
 		{
 			std::ofstream file("ns_startup_args.txt");
-			std::string defaultArgs = "-multiple -novid -noborder -windowed";
+			std::string defaultArgs = "-multiple";
 			file.write(defaultArgs.c_str(), defaultArgs.length());
 			file.close();
 		}
