@@ -54,7 +54,7 @@ LPSTR GetCommandLineAHook()
 	{
 		cmdlineOrg = GetCommandLineAOriginal();
 		bool isDedi = strstr(cmdlineOrg, "-dedicated"); // well, this one has to be a real argument
-		bool ignoreStartupArgs = strstr(cmdlineOrg, "-nostartupargs"); // well, this one has to be a real argument
+		bool ignoreStartupArgs = strstr(cmdlineOrg, "-nostartupargs");
 
 		std::string args;
 		std::ifstream cmdlineArgFile;
