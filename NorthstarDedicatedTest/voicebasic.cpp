@@ -3,6 +3,8 @@
 
 void BasicVoice::speakText(char* input)
 {
+	if (pVoice == NULL)
+		return;
 	size_t size = strlen(input) + 1;
 	wchar_t* wtext = new wchar_t[size];
 
@@ -14,24 +16,15 @@ void BasicVoice::speakText(char* input)
 
 void BasicVoice::setRate(float rate)
 {
+	if (pVoice == NULL)
+		return;
 	speechRate = rate;
 	pVoice->SetRate(rate);
 }
 void BasicVoice::setVolume(float volume)
 {
+	if (pVoice == NULL)
+		return;
 	speechVolume = volume;
 	pVoice->SetVolume(volume * 100.0);
-}
-
-void BasicVoice::outSpeech()
-{
-	pVoice->Release();
-	pVoice = NULL;
-	::CoUninitialize();
-}
-
-void BasicVoice::skipSpeech()
-{
-	unsigned long skipped;
-	pVoice->Skip(L"SENTENCE", 1, &skipped);
 }
