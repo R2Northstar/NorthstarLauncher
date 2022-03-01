@@ -26,7 +26,7 @@ class BasicVoice
 	virtual void setVolume(float volume);
 	virtual ~BasicVoice()
 	{
+		pVoice->Release();
 		::CoUninitialize();
-		delete pVoice;
 	}
 };
