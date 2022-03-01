@@ -1,5 +1,4 @@
 #include "pch.h"
-#include <iostream>
 #include "rpakfilesystem.h"
 #include "hookutils.h"
 #include "modmanager.h"
