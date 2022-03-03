@@ -333,6 +333,21 @@ int main(int argc, char* argv[])
 	{
 		PrependPath();
 
+		if (!fs::exists("ns_startup_args.txt"))
+		{
+			std::ofstream file("ns_startup_args.txt");
+			std::string defaultArgs = "-multiple";
+			file.write(defaultArgs.c_str(), defaultArgs.length());
+			file.close();
+		}
+		if (!fs::exists("ns_startup_args_dedi.txt"))
+		{
+			std::ofstream file("ns_startup_args_dedi.txt");
+			std::string defaultArgs = "+setplaylist private_match";
+			file.write(defaultArgs.c_str(), defaultArgs.length());
+			file.close();
+		}
+
 		printf("[*] Loading tier0.dll\n");
 		swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
 		hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -370,7 +385,7 @@ int main(int argc, char* argv[])
 			0);
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
-	// printf("Starting normally");
-	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used
-																										// anyways system("pause");
+
+	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
+		NULL, NULL, NULL, 0); // the parameters aren't really used anyways
 }
