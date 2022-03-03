@@ -11,8 +11,7 @@
 #include "rapidjson/error/en.h"
 #include "modmanager.h"
 #include "misccommands.h"
-#include <cstring>
-#include <regex>
+#include "host_state.h"
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
 // requests so httplib is used exclusively for server stuff now
 

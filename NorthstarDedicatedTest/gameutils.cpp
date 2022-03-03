@@ -2,6 +2,9 @@
 #include "gameutils.h"
 #include "convar.h"
 #include "concommand.h"
+#include "sv_rcon.h"
+#include "cl_rcon.h"
+#include "dedicated.h"
 
 // memory
 IMemAlloc* g_pMemAllocSingleton;
@@ -12,9 +15,6 @@ CreateGlobalMemAllocType CreateGlobalMemAlloc;
 Cbuf_GetCurrentPlayerType Cbuf_GetCurrentPlayer;
 Cbuf_AddTextType Cbuf_AddText;
 Cbuf_ExecuteType Cbuf_Execute;
-
-// hoststate stuff
-CHostState* g_pHostState;
 
 // cengine stuff
 CEngine* g_pEngine;
@@ -56,7 +56,6 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 	Cbuf_AddText = (Cbuf_AddTextType)((char*)baseAddress + 0x1203B0);
 	Cbuf_Execute = (Cbuf_ExecuteType)((char*)baseAddress + 0x1204B0);
 
-	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
 	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
 	sv_m_State = (server_state_t*)((char*)baseAddress + 0x12A53D48);
 

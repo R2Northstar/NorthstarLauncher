@@ -37,10 +37,10 @@
 #include "serverchathooks.h"
 #include "clientchathooks.h"
 #include "localchatwriter.h"
-#include <string.h>
-#include "pch.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "host_state.h"
+#include "rcon_shared.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -247,6 +247,9 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
+
+	AddDllLoadCallback("engine.dll", InitializeCHostStateHooks);
+	AddDllLoadCallback("engine.dll", InitializeRconSystems);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
 

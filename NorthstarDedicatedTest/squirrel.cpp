@@ -6,7 +6,8 @@
 #include "concommand.h"
 #include "modmanager.h"
 #include "dedicated.h"
-#include <iostream>
+#include "rcon_shared.h"
+#include "sv_rcon.h"
 
 // hook forward declarations
 typedef SQInteger (*SQPrintType)(void* sqvm, char* fmt, ...);
@@ -220,6 +221,17 @@ template <ScriptContext context> SQInteger SQPrintHook(void* sqvm, char* fmt, ..
 			buf[charsWritten - 1] = '\0';
 
 		spdlog::info("[{} SCRIPT] {}", GetContextName(context), buf);
+
+		if (IsDedicated())
+		{
+			if (CVar_sv_rcon_sendlogs->GetBool())
+			{
+				char sendbuf[1024]{};
+
+				snprintf(sendbuf, sizeof(sendbuf), "[%s SCRIPT] %s", GetContextName(context), buf);
+				g_pRConServer->Send(sendbuf);
+			}
+		}
 	}
 
 	va_end(va);
@@ -252,6 +264,7 @@ template <ScriptContext context> void* CreateNewVMHook(void* a1, ScriptContext r
 template <ScriptContext context> void DestroyVMHook(void* a1, void* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
+	char buffer[2048]{};
 
 	if (context == ScriptContext::CLIENT)
 	{
@@ -276,12 +289,22 @@ template <ScriptContext context> void DestroyVMHook(void* a1, void* sqvm)
 
 template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const char* error, const char* file, int line, int column)
 {
+	char buffer[2048]{};
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
 	if (context == ScriptContext::CLIENT && sqvm == g_UISquirrelManager->sqvm)
 		realContext = ScriptContext::UI;
 
-	spdlog::error("{} SCRIPT COMPILE ERROR {}", GetContextName(realContext), error);
-	spdlog::error("{} line [{}] column [{}]", file, line, column);
+	snprintf(
+		buffer, sizeof(buffer), "%s SCRIPT COMPILE ERROR %s\n%s line [%s] column [%s]", GetContextName(realContext), error, file, line,
+		column);
+	spdlog::error("{}", buffer);
+	if (IsDedicated())
+	{
+		if (CVar_sv_rcon_sendlogs->GetBool())
+		{
+			g_pRConServer->Send(buffer);
+		}
+	}
 
 	// dont call the original since it kills game
 	// in the future it'd be nice to do an actual error with UICodeCallback_ErrorDialog here, but only if we're compiling level scripts

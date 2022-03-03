@@ -10,6 +10,8 @@
 #include <Psapi.h>
 #include <minidumpapiset.h>
 #include "configurables.h"
+#include "rcon_shared.h"
+#include "sv_rcon.h"
 
 // This needs to be called after hooks are loaded so we can access the command line args
 void CreateLogFiles()
@@ -340,6 +342,16 @@ void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format,
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
 	spdlog::info("[SERVER {}] {}", typeStr, formatted);
+
+	if (IsDedicated())
+	{
+		if (CVar_sv_rcon_sendlogs->GetBool())
+		{
+			char sendbuf[2048]{};
+			snprintf(sendbuf, sizeof(sendbuf), "[SERVER %s] %s", typeStr, formatted);
+			g_pRConServer->Send(sendbuf);
+		}
+	}
 }
 
 typedef void (*Status_ConMsg_Type)(const char* text, ...);
@@ -359,6 +371,14 @@ void Status_ConMsg_Hook(const char* text, ...)
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
 	spdlog::info(formatted);
+
+	if (IsDedicated())
+	{
+		if (CVar_sv_rcon_sendlogs->GetBool())
+		{
+			g_pRConServer->Send(formatted);
+		}
+	}
 }
 
 typedef bool (*CClientState_ProcessPrint_Type)(__int64 thisptr, __int64 msg);

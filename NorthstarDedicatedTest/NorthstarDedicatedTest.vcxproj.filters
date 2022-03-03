@@ -1482,6 +1482,39 @@
     <ClInclude Include="plugin_abi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sv_rcon.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="socketcreator.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="NetAdr2.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="cl_rcon.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="cl_rcon.pb.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="sv_rcon.pb.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="igameserverdata.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="sha256.h">
+      <Filter>Header Files\Shared\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="rcon_shared.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="net.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="host_state.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1633,6 +1666,36 @@
     </ClCompile>
     <ClCompile Include="plugins.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sv_rcon.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="socketcreator.cpp">
+      <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="NetAdr2.cpp">
+      <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_rcon.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="cl_rcon.pb.cc">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="sv_rcon.pb.cc">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="sha256.cpp">
+      <Filter>Source Files\Shared\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="rcon_shared.cpp">
+      <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="net.cpp">
+      <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="host_state.cpp">
+      <Filter>Source Files\Shared</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
