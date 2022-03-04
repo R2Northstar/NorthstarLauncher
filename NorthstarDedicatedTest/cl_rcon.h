@@ -6,7 +6,7 @@
 
 class CRConClient
 {
-public:
+  public:
 	CRConClient(void){};
 	~CRConClient(void){};
 
@@ -31,12 +31,11 @@ public:
 	bool IsInitialized(void) const;
 	bool IsConnected(void) const;
 
-private:
+  private:
 	CNetAdr2* m_pNetAdr2 = new CNetAdr2("localhost", "37015");
 	CSocketCreator* m_pSocket = new CSocketCreator();
 
 	bool m_bInitialized = false;
 	bool m_bConnEstablished = false;
 };
-void InitializeClientRcon(HMODULE baseAddress);
 extern CRConClient* g_pRConClient;

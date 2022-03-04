@@ -5,14 +5,14 @@
 #include "cl_rcon.pb.h"
 #include "igameserverdata.h"
 
-constexpr char s_pszNoAuthMessage[]  = "This server is password protected for console access. Must send 'PASS <password>' command.\n\r";
+constexpr char s_pszNoAuthMessage[] = "This server is password protected for console access. Must send 'PASS <password>' command.\n\r";
 constexpr char s_pszWrongPwMessage[] = "Password incorrect.\n\r";
-constexpr char s_pszBannedMessage[]  = "Go away.\n\r";
-constexpr char s_pszAuthMessage[]    = "RCON authentication succesfull.\n\r";
+constexpr char s_pszBannedMessage[] = "Go away.\n\r";
+constexpr char s_pszAuthMessage[] = "RCON authentication succesfull.\n\r";
 
 class CRConServer
 {
-public:
+  public:
 	void Init(void);
 	void Shutdown(void);
 
@@ -37,14 +37,12 @@ public:
 	void CloseConnection(void);
 	void CloseNonAuthConnection(void);
 
-private:
-
-	bool                     m_bInitialized  = false;
-	int                      m_nConnIndex    = 0;
-	CNetAdr2*                m_pAdr2         = new CNetAdr2();
-	CSocketCreator*          m_pSocket       = new CSocketCreator();
+  private:
+	bool m_bInitialized = false;
+	int m_nConnIndex = 0;
+	CNetAdr2* m_pAdr2 = new CNetAdr2();
+	CSocketCreator* m_pSocket = new CSocketCreator();
 	std::vector<std::string> m_vBannedAddress;
-	std::string              m_svPasswordHash;
+	std::string m_svPasswordHash;
 };
-void InitializeServerRcon(HMODULE baseAddress);
 extern CRConServer* g_pRConServer;

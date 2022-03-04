@@ -1,7 +1,7 @@
 //===========================================================================//
-// 
+//
 // Purpose: Implementation of the rcon server.
-// 
+//
 //===========================================================================//
 
 #include "pch.h"
@@ -104,7 +104,7 @@ void CRConServer::RunFrame(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: send message
-// Input  : *svMessage - 
+// Input  : *svMessage -
 //-----------------------------------------------------------------------------
 void CRConServer::Send(const std::string& svMessage) const
 {
@@ -133,10 +133,10 @@ void CRConServer::Recv(void)
 	for (m_nConnIndex = nCount - 1; m_nConnIndex >= 0; m_nConnIndex--)
 	{
 		CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(m_nConnIndex);
-		{//////////////////////////////////////////////
+		{ //////////////////////////////////////////////
 			if (this->CheckForBan(pData))
 			{
-				std::string svNoAuth =  this->Serialize(s_pszBannedMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
+				std::string svNoAuth = this->Serialize(s_pszBannedMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
 				::send(pData->m_hSocket, svNoAuth.c_str(), static_cast<int>(svNoAuth.size()), MSG_NOSIGNAL);
 				this->CloseConnection();
 				continue;
@@ -152,7 +152,7 @@ void CRConServer::Recv(void)
 				this->CloseConnection();
 				continue;
 			}
-		}//////////////////////////////////////////////
+		} //////////////////////////////////////////////
 
 		u_long nReadLen; // Find out how much we have to read.
 		::ioctlsocket(pData->m_hSocket, FIONREAD, &nReadLen);
@@ -180,9 +180,9 @@ void CRConServer::Recv(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: serializes input
-// Input  : *svRspBuf - 
-//			*svRspVal - 
-//			response_t - 
+// Input  : *svRspBuf -
+//			*svRspVal -
+//			response_t -
 // Output : serialized results as string
 //-----------------------------------------------------------------------------
 std::string CRConServer::Serialize(const std::string& svRspBuf, const std::string& svRspVal, sv_rcon::response_t response_t) const
@@ -194,28 +194,28 @@ std::string CRConServer::Serialize(const std::string& svRspBuf, const std::strin
 
 	switch (response_t)
 	{
-		case sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH:
-		{
-			sv_response.set_responsebuf(svRspBuf);
-			break;
-		}
-		case sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG:
-		{
-			sv_response.set_responsebuf(svRspBuf);
-			sv_response.set_responseval("");
-			break;
-		}
-		default:
-		{
-			break;
-		}
+	case sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH:
+	{
+		sv_response.set_responsebuf(svRspBuf);
+		break;
+	}
+	case sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG:
+	{
+		sv_response.set_responsebuf(svRspBuf);
+		sv_response.set_responseval("");
+		break;
+	}
+	default:
+	{
+		break;
+	}
 	}
 	return sv_response.SerializeAsString().append("\r");
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: de-serializes input
-// Input  : *svBuf - 
+// Input  : *svBuf -
 // Output : de-serialized object
 //-----------------------------------------------------------------------------
 cl_rcon::request CRConServer::Deserialize(const std::string& svBuf) const
@@ -228,8 +228,8 @@ cl_rcon::request CRConServer::Deserialize(const std::string& svBuf) const
 
 //-----------------------------------------------------------------------------
 // Purpose: authenticate new connections
-// Input  : *cl_request - 
-//			*pData - 
+// Input  : *cl_request -
+//			*pData -
 // Todo   : implement logic for key exchange instead so we never network our
 // password in plain text over the wire. create a cvar for this so user could
 // also opt out and use legacy authentication instead for older RCON clients
@@ -270,7 +270,7 @@ void CRConServer::Authenticate(const cl_rcon::request& cl_request, CConnectedNet
 
 //-----------------------------------------------------------------------------
 // Purpose: sha256 hashed password comparison
-// Input  : *svCompare - 
+// Input  : *svCompare -
 // Output : true if matches, false otherwise
 //-----------------------------------------------------------------------------
 bool CRConServer::Comparator(std::string svPassword) const
@@ -292,9 +292,9 @@ bool CRConServer::Comparator(std::string svPassword) const
 
 //-----------------------------------------------------------------------------
 // Purpose: handles input command buffer
-// Input  : *pszIn - 
-//			nRecvLen - 
-//			*pData - 
+// Input  : *pszIn -
+//			nRecvLen -
+//			*pData -
 //-----------------------------------------------------------------------------
 void CRConServer::ProcessBuffer(const char* pszIn, int nRecvLen, CConnectedNetConsoleData* pData)
 {
@@ -328,14 +328,13 @@ void CRConServer::ProcessBuffer(const char* pszIn, int nRecvLen, CConnectedNetCo
 
 //-----------------------------------------------------------------------------
 // Purpose: processes received message
-// Input  : *cl_request - 
+// Input  : *cl_request -
 //-----------------------------------------------------------------------------
 void CRConServer::ProcessMessage(const cl_rcon::request& cl_request)
 {
 	CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(m_nConnIndex);
 
-	if (!pData->m_bAuthorized 
-		&& cl_request.requesttype() != cl_rcon::request_t::SERVERDATA_REQUEST_AUTH)
+	if (!pData->m_bAuthorized && cl_request.requesttype() != cl_rcon::request_t::SERVERDATA_REQUEST_AUTH)
 	{
 		// Notify net console that authentication is required.
 		std::string svMessage = this->Serialize(s_pszNoAuthMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
@@ -346,39 +345,39 @@ void CRConServer::ProcessMessage(const cl_rcon::request& cl_request)
 	}
 	switch (cl_request.requesttype())
 	{
-		case cl_rcon::request_t::SERVERDATA_REQUEST_AUTH:
+	case cl_rcon::request_t::SERVERDATA_REQUEST_AUTH:
+	{
+		this->Authenticate(cl_request, pData);
+		break;
+	}
+	case cl_rcon::request_t::SERVERDATA_REQUEST_EXECCOMMAND:
+	case cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE:
+	{
+		// Only execute if auth was succesfull.
+		if (pData->m_bAuthorized)
 		{
-			this->Authenticate(cl_request, pData);
-			break;
+			this->Execute(cl_request);
 		}
-		case cl_rcon::request_t::SERVERDATA_REQUEST_EXECCOMMAND:
-		case cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE:
+		break;
+	}
+	case cl_rcon::request_t::SERVERDATA_REQUEST_SEND_CONSOLE_LOG:
+	{
+		if (pData->m_bAuthorized)
 		{
-			// Only execute if auth was succesfull.
-			if (pData->m_bAuthorized)
-			{
-				this->Execute(cl_request);
-			}
-			break;
+			CVar_sv_rcon_sendlogs->SetValue(1);
 		}
-		case cl_rcon::request_t::SERVERDATA_REQUEST_SEND_CONSOLE_LOG:
-		{
-			if (pData->m_bAuthorized)
-			{
-				CVar_sv_rcon_sendlogs->SetValue(1);
-			}
-			break;
-		}
-		default:
-		{
-			break;
-		}
+		break;
+	}
+	default:
+	{
+		break;
+	}
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: execute commands issued from net console
-// Input  : *cl_request - 
+// Input  : *cl_request -
 //-----------------------------------------------------------------------------
 void CRConServer::Execute(const cl_rcon::request& cl_request) const
 {
@@ -397,15 +396,14 @@ void CRConServer::Execute(const cl_rcon::request& cl_request) const
 
 //-----------------------------------------------------------------------------
 // Purpose: checks for amount of failed attempts and bans net console accordingly
-// Input  : *pData - 
+// Input  : *pData -
 //-----------------------------------------------------------------------------
 bool CRConServer::CheckForBan(CConnectedNetConsoleData* pData)
 {
 	CNetAdr2 netAdr2 = m_pSocket->GetAcceptedSocketAddress(m_nConnIndex);
 
 	// Check if IP is in the ban vector.
-	if (std::find(m_vBannedAddress.begin(), m_vBannedAddress.end(),
-		netAdr2.GetIP(true)) != m_vBannedAddress.end())
+	if (std::find(m_vBannedAddress.begin(), m_vBannedAddress.end(), netAdr2.GetIP(true)) != m_vBannedAddress.end())
 	{
 		return true;
 	}

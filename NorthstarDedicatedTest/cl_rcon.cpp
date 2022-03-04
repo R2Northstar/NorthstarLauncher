@@ -1,7 +1,7 @@
 //===========================================================================//
-// 
+//
 // Purpose: Implementation of the rcon client.
-// 
+//
 //===========================================================================//
 
 #include "pch.h"
@@ -17,10 +17,7 @@
 //-----------------------------------------------------------------------------
 // Purpose: NETCON systems init
 //-----------------------------------------------------------------------------
-void CRConClient::Init(void)
-{
-	m_bInitialized = true;
-}
+void CRConClient::Init(void) { m_bInitialized = true; }
 
 //-----------------------------------------------------------------------------
 // Purpose: NETCON systems shutdown
@@ -69,8 +66,8 @@ bool CRConClient::Connect(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: connect to specified address and port
-// Input  : *svInAdr - 
-//			*svInPort - 
+// Input  : *svInAdr -
+//			*svInPort -
 // Output : true if connection succeeds, false otherwise
 //-----------------------------------------------------------------------------
 bool CRConClient::Connect(const std::string& svInAdr, const std::string& svInPort)
@@ -103,7 +100,7 @@ void CRConClient::Disconnect(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: send message
-// Input  : *svMessage - 
+// Input  : *svMessage -
 //-----------------------------------------------------------------------------
 void CRConClient::Send(const std::string& svMessage) const
 {
@@ -121,7 +118,7 @@ void CRConClient::Recv(void)
 {
 	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN]{};
 
-	{//////////////////////////////////////////////
+	{ //////////////////////////////////////////////
 		int nPendingLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, sizeof(szRecvBuf), MSG_PEEK);
 		if (nPendingLen == SOCKET_ERROR && m_pSocket->IsSocketBlocking())
 		{
@@ -133,7 +130,7 @@ void CRConClient::Recv(void)
 			spdlog::info("Server closed RCON connection");
 			return;
 		}
-	}//////////////////////////////////////////////
+	} //////////////////////////////////////////////
 
 	u_long nReadLen; // Find out how much we have to read.
 	::ioctlsocket(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, FIONREAD, &nReadLen);
@@ -161,8 +158,8 @@ void CRConClient::Recv(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: handles input response buffer
-// Input  : *pszIn - 
-//			nRecvLen - 
+// Input  : *pszIn -
+//			nRecvLen -
 //-----------------------------------------------------------------------------
 void CRConClient::ProcessBuffer(const char* pszIn, int nRecvLen) const
 {
@@ -200,7 +197,7 @@ void CRConClient::ProcessBuffer(const char* pszIn, int nRecvLen) const
 
 //-----------------------------------------------------------------------------
 // Purpose: processes received message
-// Input  : *sv_response - 
+// Input  : *sv_response -
 //-----------------------------------------------------------------------------
 void CRConClient::ProcessMessage(const sv_rcon::response& sv_response) const
 {
@@ -230,9 +227,9 @@ void CRConClient::ProcessMessage(const sv_rcon::response& sv_response) const
 
 //-----------------------------------------------------------------------------
 // Purpose: serializes input
-// Input  : *svReqBuf - 
-//			*svReqVal - 
-//			request_t - 
+// Input  : *svReqBuf -
+//			*svReqVal -
+//			request_t -
 // Output : serialized results as string
 //-----------------------------------------------------------------------------
 std::string CRConClient::Serialize(const std::string& svReqBuf, const std::string& svReqVal, cl_rcon::request_t request_t) const
@@ -262,7 +259,7 @@ std::string CRConClient::Serialize(const std::string& svReqBuf, const std::strin
 
 //-----------------------------------------------------------------------------
 // Purpose: de-serializes input
-// Input  : *svBuf - 
+// Input  : *svBuf -
 // Output : de-serialized object
 //-----------------------------------------------------------------------------
 sv_rcon::response CRConClient::Deserialize(const std::string& svBuf) const
@@ -277,18 +274,12 @@ sv_rcon::response CRConClient::Deserialize(const std::string& svBuf) const
 // Purpose: checks if client rcon is initialized
 // Output : true if initialized, false otherwise
 //-----------------------------------------------------------------------------
-bool CRConClient::IsInitialized(void) const
-{
-	return m_bInitialized;
-}
+bool CRConClient::IsInitialized(void) const { return m_bInitialized; }
 
 //-----------------------------------------------------------------------------
 // Purpose: checks if client rcon is connected
 // Output : true if connected, false otherwise
 //-----------------------------------------------------------------------------
-bool CRConClient::IsConnected(void) const
-{
-	return m_bConnEstablished;
-}
+bool CRConClient::IsConnected(void) const { return m_bConnEstablished; }
 ///////////////////////////////////////////////////////////////////////////////
 CRConClient* g_pRConClient = new CRConClient();
