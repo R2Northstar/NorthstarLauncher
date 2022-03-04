@@ -51,7 +51,6 @@
 #include <shellapi.h>
 #include <WinUser.h>
 
-
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
 bool initialised = false;
@@ -334,6 +333,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialisePluginCommands);
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
+		AddDllLoadCallback("client.dll", InitialiseURIStuff);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);

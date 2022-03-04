@@ -108,7 +108,7 @@ std::string base64_encode(unsigned char const* bytes_to_encode, size_t in_len, b
 template <typename String> static std::string decode(String encoded_string, bool remove_linebreaks)
 {
 	//
-	// decode(…) is templated so that it can be used with String = const std::string&
+	// decode(...) is templated so that it can be used with String = const std::string&
 	// or std::string_view (requires at least C++17)
 	//
 

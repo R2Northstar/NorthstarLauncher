@@ -18,7 +18,6 @@ const int DISAGREED_TO_SEND_TOKEN = 2;
 
 int GetAgreedToSendToken() { return Cvar_ns_has_agreed_to_send_token->GetInt(); }
 
-
 void AuthWithStryderHook(void* a1)
 {
 	// game will call this forever, until it gets a valid auth key

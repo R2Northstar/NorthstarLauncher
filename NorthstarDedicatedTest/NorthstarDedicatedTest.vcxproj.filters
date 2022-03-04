@@ -1476,9 +1476,6 @@
     <ClInclude Include="plugins.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="state.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="plugin_abi.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -558,7 +558,6 @@
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
-    <ClInclude Include="state.h" />
     <ClInclude Include="urihandler.h" />
   </ItemGroup>
   <ItemGroup>

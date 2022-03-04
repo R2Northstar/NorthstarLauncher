@@ -256,7 +256,6 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
-
 bool namedPipeExists(const std::filesystem::path& pipePath)
 {
 	std::wstring pipeName = pipePath;
@@ -405,7 +404,7 @@ int main(int argc, char* argv[])
 
 		if (namedPipeExists("\\\\.\\pipe\\northstar") && hasURIString) // Check if another instance is already running
 		{
-			printf("Connecting to pipe...\n");
+			printf("Connecting to running instance...\n");
 
 			// Open the named pipe
 			// Most of these parameters aren't very relevant for pipes.
@@ -427,7 +426,9 @@ int main(int argc, char* argv[])
 			// Close our pipe handle
 			CloseHandle(pipe);
 
-			printf("Done.\n");
+			printf("Done sending data to running instance.\n");
+			printf("Closing now!\n");
+			return 1;
 		}
 
 		PrependPath();
@@ -485,6 +486,6 @@ int main(int argc, char* argv[])
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
 
-	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
-		NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	return ((int(/*__fastcall*/*)(
+		HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(NULL, NULL, NULL, 0); // the parameters aren't really used anyways
 }

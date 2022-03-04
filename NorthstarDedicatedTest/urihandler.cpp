@@ -10,11 +10,13 @@
 #include "clientauthhooks.h"
 #include "urihandler.h"
 #include "base64.h"
+#include "plugins.h"
 
 #include <Shlwapi.h>
 #include <iostream>
 #include <windows.h>
 #include <filesystem>
+#include <winuser.h>
 
 enum InviteType
 {
@@ -52,11 +54,15 @@ HANDLE initPipe()
 	return pipe;
 }
 
-void parseURI(std::string uriString) {
+bool parseURI(std::string uriString)
+{
 	int uriOffset = URIProtocolName.length();
 	if (uriString.find(URIProtocolName) != std::string::npos)
 	{
-		uriString = uriString.substr(uriOffset, uriString.length() - uriOffset); // -1 to remove a trailing slash -_-
+		if (strncmp(uriString.c_str() + (uriString.length() - 1), "/", 1))
+		{
+			uriString = uriString.substr(uriOffset, uriString.length() - uriOffset); // -1 to remove a trailing slash -_-
+		}
 	}
 	std::string password;
 	spdlog::info("Parsing URI: {}", uriString.c_str());
@@ -65,15 +71,21 @@ void parseURI(std::string uriString) {
 	if (atLocation == std::string::npos)
 	{
 		spdlog::info("Invalid or malformed URI. Returning early.");
-		return;
+		return false;
 	}
 	std::string invitetype = uriString.substr(0, atLocation);
-	if (invitetype == "server"){storedInviteType = InviteType::Server;}
-	else if (invitetype == "party"){storedInviteType = InviteType::Party;}
+	if (invitetype == "server")
+	{
+		storedInviteType = InviteType::Server;
+	}
+	else if (invitetype == "party")
+	{
+		storedInviteType = InviteType::Party;
+	}
 	else
 	{
 		spdlog::info("Invalid or unknown invite type \"{}\". Returning early.", invitetype);
-		return;
+		return false;
 	}
 	uriString = uriString.substr(atLocation + 1);
 	int sep = uriString.find(":");
@@ -94,6 +106,7 @@ void parseURI(std::string uriString) {
 	spdlog::info("password: {}", storedPassword.c_str());
 
 	hasStoredURI = true;
+	return true;
 }
 
 void HandleAcceptedInvite()
@@ -106,13 +119,14 @@ void HandleAcceptedInvite()
 			// if player has agreed to send token and we aren't already authing, try to auth
 			if (GetAgreedToSendToken() == 1 && !g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 				g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken, false);
-		
+
 			// invalidate key so auth will fail
 			*g_LocalPlayerOriginToken = 0;
 		}
 
-		spdlog::info("{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
-		(char*)storedPassword.c_str());
+		spdlog::info(
+			"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
+			(char*)storedPassword.c_str());
 		while (g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 		{
 			Sleep(10);
@@ -121,8 +135,9 @@ void HandleAcceptedInvite()
 			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(), (char*)storedPassword.c_str(),
 			false);
 		RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
-		spdlog::info("connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
-		info.ip.S_un.S_un_b.s_b4,info.port);
+		spdlog::info(
+			"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
+			info.ip.S_un.S_un_b.s_b4, info.port);
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
 		Cbuf_AddText(
 			Cbuf_GetCurrentPlayer(),
@@ -164,6 +179,45 @@ SQRESULT SQ_SetOnMainMenu(void* sqvm)
 SQRESULT SQ_RemoveStoredURI(void* sqvm)
 {
 	hasStoredURI = false;
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_TryJoinInvite(void* sqvm)
+{
+	std::string invite = ClientSq_getstring(sqvm, 1);
+	if (parseURI(invite))
+	{
+		HandleAcceptedInvite();
+		return SQRESULT_NOTNULL;
+	}
+	else
+	{
+		return SQRESULT_NULL;
+	}
+}
+
+SQRESULT SQ_GenerateServerInvite(void* sqvm)
+{
+	std::string id = serverInfo.id;
+	std::string password = serverInfo.password;
+	spdlog::info(password);
+	password = base64_encode(password);
+	spdlog::info(password);
+	std::string invite = "northstar://server@" + id;
+	if (password.length() != 0)
+	{
+		invite += ":" + password;
+	}
+	spdlog::info("GENERATED INVITE: {}, {}", id, password);
+	const size_t inviteLen = strlen(invite.c_str()) + 1;
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, inviteLen);
+	memcpy(GlobalLock(hMem), invite.c_str(), inviteLen);
+	GlobalUnlock(hMem);
+	OpenClipboard(0);
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hMem);
+	CloseClipboard();
+	ClientSq_pushinteger(sqvm, 1);
 	return SQRESULT_NOTNULL;
 }
 
@@ -245,17 +299,19 @@ void StartUriHandler()
 	spdlog::info("Closing handle #2\n");
 	CloseHandle(pipe);
 
-	spdlog::info("Done.\n");
+	spdlog::info("	.\n");
 }
 
 void InitialiseURIStuff(HMODULE baseAddress)
 {
 	std::thread thread1(std::ref(StartUriHandler)); // Start NamedPipe handler
-	thread1.detach(); // Detach from it so it doesn't block main thread
+	thread1.detach();								// Detach from it so it doesn't block main thread
 
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSHasStoredURI", "", "", SQ_HasStoredURI);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSRemoveStoredURI", "", "", SQ_RemoveStoredURI);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSAcceptInvite", "", "", SQ_AcceptInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSDeclineInvite", "", "", SQ_DeclineInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetOnMainMenu", "bool onMainMenu", "", SQ_SetOnMainMenu);
+	g_UISquirrelManager->AddFuncRegistration("void", "NSTryJoinInvite", "string invite", "", SQ_TryJoinInvite);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSGenerateServerInvite", "", "", SQ_GenerateServerInvite);
 }
