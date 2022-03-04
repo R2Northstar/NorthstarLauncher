@@ -365,7 +365,7 @@ void CRConServer::ProcessMessage(const cl_rcon::request& cl_request)
 		{
 			if (pData->m_bAuthorized)
 			{
-				// TODO: Send conlog to true.
+				CVar_sv_rcon_sendlogs->SetValue(1);
 			}
 			break;
 		}

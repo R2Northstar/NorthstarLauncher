@@ -54,9 +54,6 @@ void RunServer(CDedicatedExports* dedicated)
 	// ensure playlist initialises right, if we've not explicitly called setplaylist
 	SetCurrentPlaylist(GetCurrentPlaylistName());
 
-	// Initialize RCON server
-	g_pRConServer->Init();
-
 	// note: we no longer manually set map and hoststate to start server in g_pHostState, we just use +map which seems to initialise stuff
 	// better
 
@@ -66,7 +63,6 @@ void RunServer(CDedicatedExports* dedicated)
 	{
 		double frameStart = Plat_FloatTime();
 		g_pEngine->Frame();
-		g_pRConServer->RunFrame();
 
 		// only update the title after at least 500ms since the last update
 		if ((frameStart - frameTitle) > 0.5)

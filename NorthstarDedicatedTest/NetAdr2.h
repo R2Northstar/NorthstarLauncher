@@ -73,6 +73,7 @@ public:
 	void ToSockadr(sockaddr_storage* pSadr) const;
 	void ToAdrinfo(addrinfo* pHint) const;
 
+	bool IsValidPort(const std::string& svInPort) const;
 	bool IsLocalhost(void) const;
 	bool IsLoopback(void) const;
 	bool IsReservedAdr(void) const;

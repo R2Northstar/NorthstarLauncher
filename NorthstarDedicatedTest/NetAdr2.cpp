@@ -279,6 +279,11 @@ std::string CNetAdr2::GetPort(void) const
 	static std::regex rx(".*\\]:");
 	svport = std::regex_replace(svport, rx, "");
 
+	if (!IsValidPort(svport))
+	{
+		return "37015";
+	}
+
 	return svport;
 }
 
@@ -290,6 +295,11 @@ std::string CNetAdr2::GetPort(std::string svInPort) const
 {
 	static std::regex rx(".*\\]:");
 	svInPort = std::regex_replace(svInPort, rx, "");
+
+	if (!IsValidPort(svInPort))
+	{
+		return "37015";
+	}
 
 	return svInPort;
 }
@@ -470,6 +480,21 @@ void CNetAdr2::ToAdrinfo(addrinfo* pHint) const
 			spdlog::warn("Address info translation failed ({})", pszError);
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: returns true if this is a valid port string.
+//-----------------------------------------------------------------------------
+bool CNetAdr2::IsValidPort(const std::string& svInPort) const
+{
+	for (char const& c : svInPort)
+	{
+		if (std::isdigit(c) == 0)
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 //-----------------------------------------------------------------------------

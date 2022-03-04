@@ -108,7 +108,7 @@ _RCON_Disconnect_f
 */
 void _RCON_Disconnect_f(const CCommand& args)
 {
-	if (IsDedicated)
+	if (IsDedicated())
 	{
 		return;
 	}

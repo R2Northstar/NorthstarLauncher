@@ -295,7 +295,7 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 		realContext = ScriptContext::UI;
 
 	snprintf(
-		buffer, sizeof(buffer), "%s SCRIPT COMPILE ERROR %s\n%s line [%s] column [%s]", GetContextName(realContext), error, file, line,
+		buffer, sizeof(buffer), "%s SCRIPT COMPILE ERROR %s\n%s line [%d] column [%d]", GetContextName(realContext), error, file, line,
 		column);
 	spdlog::error("{}", buffer);
 	if (IsDedicated())

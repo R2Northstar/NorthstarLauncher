@@ -58,7 +58,7 @@ bool CRConClient::Connect(void)
 
 	if (m_pSocket->ConnectSocket(*m_pNetAdr2, true) == SOCKET_ERROR)
 	{
-		spdlog::info("Connection to RCON server failed: (SOCKET_ERROR)");
+		spdlog::info("Connection to RCON server '{}' failed: (SOCKET_ERROR)", m_pNetAdr2->GetIPAndPort());
 		return false;
 	}
 	spdlog::info("Connected to: {}", m_pNetAdr2->GetIPAndPort().c_str());
@@ -83,7 +83,7 @@ bool CRConClient::Connect(const std::string& svInAdr, const std::string& svInPor
 
 	if (m_pSocket->ConnectSocket(*m_pNetAdr2, true) == SOCKET_ERROR)
 	{
-		spdlog::info("Connection to RCON server failed: (SOCKET_ERROR)");
+		spdlog::info("Connection to RCON server '{}' failed: (SOCKET_ERROR)", m_pNetAdr2->GetIPAndPort());
 		return false;
 	}
 	spdlog::info("Connected to: {}", m_pNetAdr2->GetIPAndPort().c_str());
@@ -210,12 +210,14 @@ void CRConClient::ProcessMessage(const sv_rcon::response& sv_response) const
 	{
 	case sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH:
 	{
+		svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
 		spdlog::info("{}", svOut.c_str());
 		break;
 	}
 	case sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG:
 	{
 		// !TODO: Network the enum to differentiate script/engine logs.
+		svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
 		spdlog::info("{}", svOut.c_str());
 		break;
 	}
