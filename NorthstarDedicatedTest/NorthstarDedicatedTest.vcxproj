@@ -109,6 +109,7 @@
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="bansystem.h" />
+    <ClInclude Include="base64.h" />
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
     <ClInclude Include="buildainfile.h" />
@@ -558,10 +559,12 @@
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="state.h" />
+    <ClInclude Include="urihandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
+    <ClCompile Include="base64.cpp" />
     <ClCompile Include="bits.cpp" />
     <ClCompile Include="buildainfile.cpp" />
     <ClCompile Include="chatcommand.cpp" />
@@ -613,6 +616,7 @@
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
+    <ClCompile Include="urihandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />

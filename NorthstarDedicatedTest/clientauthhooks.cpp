@@ -16,6 +16,9 @@ const int NOT_DECIDED_TO_SEND_TOKEN = 0;
 const int AGREED_TO_SEND_TOKEN = 1;
 const int DISAGREED_TO_SEND_TOKEN = 2;
 
+int GetAgreedToSendToken() { return Cvar_ns_has_agreed_to_send_token->GetInt(); }
+
+
 void AuthWithStryderHook(void* a1)
 {
 	// game will call this forever, until it gets a valid auth key
@@ -25,7 +28,7 @@ void AuthWithStryderHook(void* a1)
 		// if player has agreed to send token and we aren't already authing, try to auth
 		if (Cvar_ns_has_agreed_to_send_token->GetInt() == AGREED_TO_SEND_TOKEN &&
 			!g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
-			g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken);
+			g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken, true);
 
 		// invalidate key so auth will fail
 		*g_LocalPlayerOriginToken = 0;

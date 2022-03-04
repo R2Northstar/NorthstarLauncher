@@ -193,7 +193,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	return size * nmemb;
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
+void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken, bool async)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
@@ -264,7 +264,14 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			curl_easy_cleanup(curl);
 		});
 
-	requestThread.detach();
+	if (async)
+	{
+		requestThread.detach();
+	}
+	else
+	{
+		requestThread.join();
+	}
 }
 
 void MasterServerManager::RequestServerList()
@@ -658,7 +665,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 	requestThread.detach();
 }
 
-void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password)
+void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password, bool async)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
 	if (m_authenticatingWithGameServer)
@@ -771,7 +778,14 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 			curl_easy_cleanup(curl);
 		});
 
-	requestThread.detach();
+	if (async)
+	{
+		requestThread.detach();
+	}
+	else
+	{
+		requestThread.join();
+	}
 }
 
 void MasterServerManager::AddSelfToServerList(

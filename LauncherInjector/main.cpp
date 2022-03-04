@@ -256,6 +256,67 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
+
+bool namedPipeExists(const std::filesystem::path& pipePath)
+{
+	std::wstring pipeName = pipePath;
+	if ((pipeName.size() < 10) || (pipeName.compare(0, 9, L"\\\\.\\pipe\\") != 0) || (pipeName.find(L'\\', 9) != std::string::npos))
+	{
+		// This can't be a pipe, so it also can't exist
+		return false;
+	}
+	pipeName.erase(0, 9);
+
+	WIN32_FIND_DATAW fd;
+	DWORD dwErrCode;
+
+	HANDLE hFind = FindFirstFileW(L"\\\\.\\pipe\\*", &fd);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		dwErrCode = GetLastError();
+	}
+	else
+	{
+		do
+		{
+			if (pipeName == fd.cFileName)
+			{
+				FindClose(hFind);
+				return true;
+			}
+		} while (FindNextFileW(hFind, &fd));
+
+		dwErrCode = GetLastError();
+		FindClose(hFind);
+	}
+
+	return false;
+}
+
+void sendData(HANDLE pipe, BOOL result, const wchar_t* data)
+{
+	DWORD numBytesWritten = 0;
+	result = WriteFile(
+		pipe,							// handle to our outbound pipe
+		data,							// data to send
+		wcslen(data) * sizeof(wchar_t), // length of data to send (bytes)
+		&numBytesWritten,				// will store actual amount of data sent
+		NULL							// not using overlapped IO
+	);
+}
+
+std::wstring stringToWideString(const std::string& s)
+{
+	int slength = (int)s.length() + 1;
+	int len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
+	std::wstring r(len, L'\0');
+	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &r[0], len);
+	r.resize(r.size() - 1);
+	return r;
+}
+
+std::string URIProtocolName = "northstar://";
+
 int main(int argc, char* argv[])
 {
 
@@ -331,6 +392,44 @@ int main(int argc, char* argv[])
 	}
 
 	{
+
+		wchar_t buffer[_MAX_PATH];
+		GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
+		std::wstring w = std::wstring(buffer);
+		std::string exepath = std::string(w.begin(), w.end());			   // Convert from wstring to string
+		std::string path = exepath.substr(0, exepath.find_last_of("/\\")); // Substr to just the folder name
+		std::filesystem::current_path(path);							   // Set CWD
+		bool hasURIString = strstr(GetCommandLineA(), "northstar://");
+		printf("Has URI String: \n");
+		printf("%d\n", hasURIString);
+
+		if (namedPipeExists("\\\\.\\pipe\\northstar") && hasURIString) // Check if another instance is already running
+		{
+			printf("Connecting to pipe...\n");
+
+			// Open the named pipe
+			// Most of these parameters aren't very relevant for pipes.
+			HANDLE pipe = CreateFile(
+				L"\\\\.\\pipe\\northstar",
+				GENERIC_ALL, // only need read access
+				FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			if (pipe == INVALID_HANDLE_VALUE)
+			{
+				printf("Failed to connect to pipe.\n");
+			}
+			std::string cla = GetCommandLineA();
+			int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length();
+			std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
+			bool result = false;
+			sendData(pipe, result, stringToWideString(message).c_str());
+
+			// Close our pipe handle
+			CloseHandle(pipe);
+
+			printf("Done.\n");
+		}
+
 		PrependPath();
 
 		if (!fs::exists("ns_startup_args.txt"))
