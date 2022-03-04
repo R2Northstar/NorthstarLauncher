@@ -14,18 +14,12 @@
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CSocketCreator::CSocketCreator(void)
-{
-	m_hListenSocket = -1;
-}
+CSocketCreator::CSocketCreator(void) { m_hListenSocket = -1; }
 
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-CSocketCreator::~CSocketCreator(void)
-{
-	DisconnectSocket();
-}
+CSocketCreator::~CSocketCreator(void) { DisconnectSocket(); }
 
 //-----------------------------------------------------------------------------
 // Purpose: accept new connections and walk open sockets and handle any incoming data
@@ -74,8 +68,8 @@ bool CSocketCreator::ConfigureListenSocket(int iSocket)
 {
 	// Disable NAGLE as RCON cmds are small in size.
 	int nodelay = 1;
-	int v6only  = 0;
-	u_long opt  = 1;
+	int v6only = 0;
+	u_long opt = 1;
 
 	::setsockopt(iSocket, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
 	::setsockopt(iSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&nodelay, sizeof(nodelay));
@@ -115,8 +109,8 @@ bool CSocketCreator::ConfigureConnectSocket(SocketHandle_t hSocket)
 
 //-----------------------------------------------------------------------------
 // Purpose: bind to a TCP port and accept incoming connections
-// Input  : *netAdr2 - 
-//			bListenOnAllInterfaces - 
+// Input  : *netAdr2 -
+//			bListenOnAllInterfaces -
 // Output : true on success, failed otherwise
 //-----------------------------------------------------------------------------
 bool CSocketCreator::CreateListenSocket(const CNetAdr2& netAdr2, bool bListenOnAllInterfaces = false)
@@ -169,8 +163,8 @@ void CSocketCreator::CloseListenSocket(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: connect to the remote server
-// Input  : *netAdr2 - 
-//			bSingleSocker - 
+// Input  : *netAdr2 -
+//			bSingleSocker -
 // Output : accepted socket index, SOCKET_ERROR (-1) if failed
 //-----------------------------------------------------------------------------
 int CSocketCreator::ConnectSocket(const CNetAdr2& netAdr2, bool bSingleSocket)
@@ -192,7 +186,9 @@ int CSocketCreator::ConnectSocket(const CNetAdr2& netAdr2, bool bSingleSocket)
 		return SOCKET_ERROR;
 	}
 
-	struct sockaddr_storage s{};
+	struct sockaddr_storage s
+	{
+	};
 	netAdr2.ToSockadr(&s);
 
 	int results = ::connect(hSocket, reinterpret_cast<sockaddr*>(&s), netAdr2.GetSize());
@@ -209,7 +205,7 @@ int CSocketCreator::ConnectSocket(const CNetAdr2& netAdr2, bool bSingleSocket)
 		timeval tv{};
 
 		tv.tv_usec = 0;
-		tv.tv_sec  = 1;
+		tv.tv_sec = 1;
 
 		FD_ZERO(&writefds);
 		FD_SET(static_cast<u_int>(hSocket), &writefds);
@@ -238,8 +234,8 @@ void CSocketCreator::DisconnectSocket(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: handles new TCP requests and puts them in accepted queue
-// Input  : hSocket - 
-//			*netAdr2 - 
+// Input  : hSocket -
+//			*netAdr2 -
 // Output : accepted socket index, -1 if failed
 //-----------------------------------------------------------------------------
 int CSocketCreator::OnSocketAccepted(SocketHandle_t hSocket, CNetAdr2 netAdr2)
@@ -248,7 +244,7 @@ int CSocketCreator::OnSocketAccepted(SocketHandle_t hSocket, CNetAdr2 netAdr2)
 
 	pNewEntry.m_hSocket = hSocket;
 	pNewEntry.m_Address = netAdr2;
-	pNewEntry.m_pData   = new CConnectedNetConsoleData(hSocket);
+	pNewEntry.m_pData = new CConnectedNetConsoleData(hSocket);
 
 	m_hAcceptedSockets.push_back(pNewEntry);
 
@@ -258,7 +254,7 @@ int CSocketCreator::OnSocketAccepted(SocketHandle_t hSocket, CNetAdr2 netAdr2)
 
 //-----------------------------------------------------------------------------
 // Purpose: close an accepted socket
-// Input  : nIndex - 
+// Input  : nIndex -
 //-----------------------------------------------------------------------------
 void CSocketCreator::CloseAcceptedSocket(int nIndex)
 {
@@ -289,47 +285,29 @@ void CSocketCreator::CloseAllAcceptedSockets(void)
 //-----------------------------------------------------------------------------
 // Purpose: returns true if the listening socket is created and listening
 //-----------------------------------------------------------------------------
-bool CSocketCreator::IsListening(void) const
-{
-	return m_hListenSocket != -1;
-}
+bool CSocketCreator::IsListening(void) const { return m_hListenSocket != -1; }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns true if the socket would block because of the last socket command
 //-----------------------------------------------------------------------------
-bool CSocketCreator::IsSocketBlocking(void) const
-{
-	return (WSAGetLastError() == WSAEWOULDBLOCK);
-}
+bool CSocketCreator::IsSocketBlocking(void) const { return (WSAGetLastError() == WSAEWOULDBLOCK); }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket count
 //-----------------------------------------------------------------------------
-int CSocketCreator::GetAcceptedSocketCount(void) const
-{
-	return m_hAcceptedSockets.size();
-}
+int CSocketCreator::GetAcceptedSocketCount(void) const { return m_hAcceptedSockets.size(); }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket handle
 //-----------------------------------------------------------------------------
-SocketHandle_t CSocketCreator::GetAcceptedSocketHandle(int nIndex) const
-{
-	return m_hAcceptedSockets[nIndex].m_hSocket;
-}
+SocketHandle_t CSocketCreator::GetAcceptedSocketHandle(int nIndex) const { return m_hAcceptedSockets[nIndex].m_hSocket; }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket address
 //-----------------------------------------------------------------------------
-const CNetAdr2& CSocketCreator::GetAcceptedSocketAddress(int nIndex) const
-{
-	return m_hAcceptedSockets[nIndex].m_Address;
-}
+const CNetAdr2& CSocketCreator::GetAcceptedSocketAddress(int nIndex) const { return m_hAcceptedSockets[nIndex].m_Address; }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket data
 //-----------------------------------------------------------------------------
-CConnectedNetConsoleData* CSocketCreator::GetAcceptedSocketData(int nIndex) const
-{
-	return m_hAcceptedSockets[nIndex].m_pData;
-}
+CConnectedNetConsoleData* CSocketCreator::GetAcceptedSocketData(int nIndex) const { return m_hAcceptedSockets[nIndex].m_pData; }

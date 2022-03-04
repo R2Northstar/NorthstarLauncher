@@ -1,9 +1,8 @@
 //=====================================================================================//
-// 
+//
 // Purpose: Lightweight netconsole client.
-// 
+//
 //=====================================================================================//
-
 
 #include "pch.h"
 #include "NetAdr2.h"
@@ -94,10 +93,7 @@ void CNetCon::UserInput(void)
 				return;
 			}
 			size_t nPos = svInput.find(" ");
-			if (!svInput.empty() 
-				&& nPos > 0 
-				&& nPos < svInput.size() 
-				&& nPos != svInput.size())
+			if (!svInput.empty() && nPos > 0 && nPos < svInput.size() && nPos != svInput.size())
 			{
 				std::string svReqVal = svInput.substr(nPos + 1);
 				std::string svReqBuf = svInput.erase(svInput.find(" "));
@@ -122,10 +118,7 @@ void CNetCon::UserInput(void)
 		else // Setup connection from input.
 		{
 			size_t nPos = svInput.find(" ");
-			if (!svInput.empty() 
-				&& nPos > 0 
-				&& nPos < svInput.size() 
-				&& nPos != svInput.size())
+			if (!svInput.empty() && nPos > 0 && nPos < svInput.size() && nPos != svInput.size())
 			{
 				std::string svInPort = svInput.substr(nPos + 1);
 				std::string svInAdr = svInput.erase(svInput.find(" "));
@@ -172,15 +165,12 @@ void CNetCon::RunFrame(void)
 // Purpose: checks if application should be terminated
 // Output : true for termination, false otherwise
 //-----------------------------------------------------------------------------
-bool CNetCon::ShouldQuit(void) const
-{
-	return this->m_bQuitApplication;
-}
+bool CNetCon::ShouldQuit(void) const { return this->m_bQuitApplication; }
 
 //-----------------------------------------------------------------------------
 // Purpose: connect to specified address and port
-// Input  : *svInAdr - 
-//			*svInPort - 
+// Input  : *svInAdr -
+//			*svInPort -
 // Output : true if connection succeeds, false otherwise
 //-----------------------------------------------------------------------------
 bool CNetCon::Connect(const std::string& svInAdr, const std::string& svInPort)
@@ -208,13 +198,13 @@ bool CNetCon::Connect(const std::string& svInAdr, const std::string& svInPort)
 void CNetCon::Disconnect(void)
 {
 	::closesocket(m_pSocket->GetAcceptedSocketHandle(0));
-	m_abPromptConnect   = true;
+	m_abPromptConnect = true;
 	m_abConnEstablished = false;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: send message
-// Input  : *svMessage - 
+// Input  : *svMessage -
 //-----------------------------------------------------------------------------
 void CNetCon::Send(const std::string& svMessage) const
 {
@@ -232,7 +222,7 @@ void CNetCon::Recv(void)
 {
 	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN]{};
 
-	{//////////////////////////////////////////////
+	{ //////////////////////////////////////////////
 		int nPendingLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, sizeof(szRecvBuf), MSG_PEEK);
 		if (nPendingLen == SOCKET_ERROR && m_pSocket->IsSocketBlocking())
 		{
@@ -244,7 +234,7 @@ void CNetCon::Recv(void)
 			spdlog::info("Server closed connection");
 			return;
 		}
-	}//////////////////////////////////////////////
+	} //////////////////////////////////////////////
 
 	u_long nReadLen; // Find out how much we have to read.
 	::ioctlsocket(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, FIONREAD, &nReadLen);
@@ -272,8 +262,8 @@ void CNetCon::Recv(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: handles input response buffer
-// Input  : *pszIn - 
-//			nRecvLen - 
+// Input  : *pszIn -
+//			nRecvLen -
 //-----------------------------------------------------------------------------
 void CNetCon::ProcessBuffer(const char* pszIn, int nRecvLen) const
 {
@@ -311,32 +301,32 @@ void CNetCon::ProcessBuffer(const char* pszIn, int nRecvLen) const
 
 //-----------------------------------------------------------------------------
 // Purpose: processes received message
-// Input  : *sv_response - 
+// Input  : *sv_response -
 //-----------------------------------------------------------------------------
 void CNetCon::ProcessMessage(const sv_rcon::response& sv_response) const
 {
 	switch (sv_response.responsetype())
 	{
-		case sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH:
-		case sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG:
-		{
-			std::string svOut = sv_response.responsebuf();
-			svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
-			spdlog::info(svOut.c_str());
-			break;
-		}
-		default:
-		{
-			break;
-		}
+	case sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH:
+	case sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG:
+	{
+		std::string svOut = sv_response.responsebuf();
+		svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
+		spdlog::info(svOut.c_str());
+		break;
+	}
+	default:
+	{
+		break;
+	}
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: serializes input
-// Input  : *svReqBuf - 
-//			*svReqVal - 
-//			request_t - 
+// Input  : *svReqBuf -
+//			*svReqVal -
+//			request_t -
 // Output : serialized results as string
 //-----------------------------------------------------------------------------
 std::string CNetCon::Serialize(const std::string& svReqBuf, const std::string& svReqVal, cl_rcon::request_t request_t) const
@@ -348,25 +338,25 @@ std::string CNetCon::Serialize(const std::string& svReqBuf, const std::string& s
 
 	switch (request_t)
 	{
-		case cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE:
-		case cl_rcon::request_t::SERVERDATA_REQUEST_AUTH:
-		{
-			cl_request.set_requestbuf(svReqBuf);
-			cl_request.set_requestval(svReqVal);
-			break;
-		}
-		case cl_rcon::request_t::SERVERDATA_REQUEST_EXECCOMMAND:
-		{
-			cl_request.set_requestbuf(svReqBuf);
-			break;
-		}
+	case cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE:
+	case cl_rcon::request_t::SERVERDATA_REQUEST_AUTH:
+	{
+		cl_request.set_requestbuf(svReqBuf);
+		cl_request.set_requestval(svReqVal);
+		break;
+	}
+	case cl_rcon::request_t::SERVERDATA_REQUEST_EXECCOMMAND:
+	{
+		cl_request.set_requestbuf(svReqBuf);
+		break;
+	}
 	}
 	return cl_request.SerializeAsString().append("\r");
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: de-serializes input
-// Input  : *svBuf - 
+// Input  : *svBuf -
 // Output : de-serialized object
 //-----------------------------------------------------------------------------
 sv_rcon::response CNetCon::Deserialize(const std::string& svBuf) const
@@ -379,8 +369,8 @@ sv_rcon::response CNetCon::Deserialize(const std::string& svBuf) const
 
 //-----------------------------------------------------------------------------
 // Purpose: entrypoint
-// Input  : argc - 
-//			*argv - 
+// Input  : argc -
+//			*argv -
 //-----------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {

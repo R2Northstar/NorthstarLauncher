@@ -1,6 +1,6 @@
 //===========================================================================//
 //
-// Purpose: 
+// Purpose:
 //
 //===========================================================================//
 #pragma once
@@ -11,7 +11,7 @@ constexpr const char* NETCON_VERSION = "2.0.0.1";
 
 class CNetCon
 {
-public:
+  public:
 	bool Init(void);
 	bool Shutdown(void);
 
@@ -33,12 +33,12 @@ public:
 	std::string Serialize(const std::string& svReqBuf, const std::string& svReqVal, cl_rcon::request_t request_t) const;
 	sv_rcon::response Deserialize(const std::string& svBuf) const;
 
-private:
+  private:
 	CNetAdr2* m_pNetAdr2 = new CNetAdr2("localhost", "37015");
 	CSocketCreator* m_pSocket = new CSocketCreator();
 
-	bool m_bInitialized      = false;
-	bool m_bQuitApplication  = false;
-	std::atomic<bool> m_abPromptConnect{ true };
-	std::atomic<bool> m_abConnEstablished{ false };
+	bool m_bInitialized = false;
+	bool m_bQuitApplication = false;
+	std::atomic<bool> m_abPromptConnect{true};
+	std::atomic<bool> m_abConnEstablished{false};
 };

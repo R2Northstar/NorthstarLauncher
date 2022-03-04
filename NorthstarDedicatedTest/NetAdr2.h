@@ -2,8 +2,8 @@
 constexpr int MAX_NETCONSOLE_INPUT_LEN = 4096;
 constexpr int MSG_NOSIGNAL = 0;
 
-//typedef struct netpacket_s netpacket_t;
-//typedef struct __declspec(align(8)) netpacket_s
+// typedef struct netpacket_s netpacket_t;
+// typedef struct __declspec(align(8)) netpacket_s
 //{
 //	DWORD         family_maybe;
 //	sockaddr_in   sin;
@@ -43,8 +43,8 @@ enum class netadrversion_t
 
 class CNetAdr2
 {
-public:
-	CNetAdr2(void) {};
+  public:
+	CNetAdr2(void){};
 	CNetAdr2(std::string svInAdr);
 	CNetAdr2(std::string svInAdr, std::string svInPort);
 	~CNetAdr2(void);
@@ -86,9 +86,9 @@ public:
 
 	void Clear(void);
 
-private:
-	std::string       m_svip;
-	netadrtype_t      m_type{};
-	netadrversion_t   m_version{};
+  private:
+	std::string m_svip;
+	netadrtype_t m_type{};
+	netadrversion_t m_version{};
 	sockaddr_storage* m_sadr{};
 };

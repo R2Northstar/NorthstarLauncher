@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 class CSocketCreator
 {
-public:
+  public:
 	CSocketCreator(void);
 	~CSocketCreator(void);
 
@@ -36,21 +36,21 @@ public:
 	const CNetAdr2& GetAcceptedSocketAddress(int nIndex) const;
 	CConnectedNetConsoleData* GetAcceptedSocketData(int nIndex) const;
 
-public:
+  public:
 	struct AcceptedSocket_t
 	{
-		SocketHandle_t            m_hSocket{};
-		CNetAdr2                  m_Address{};
+		SocketHandle_t m_hSocket{};
+		CNetAdr2 m_Address{};
 		CConnectedNetConsoleData* m_pData = nullptr;
 
 		bool operator==(const AcceptedSocket_t& rhs) const { return (m_Address.CompareAdr(rhs.m_Address, false) == 0); }
 	};
 
 	std::vector<AcceptedSocket_t> m_hAcceptedSockets{};
-	SocketHandle_t                m_hListenSocket   {}; // Used to accept connections.
-	CNetAdr2                      m_ListenAddress   {}; // Address used to listen on.
+	SocketHandle_t m_hListenSocket{}; // Used to accept connections.
+	CNetAdr2 m_ListenAddress{};		  // Address used to listen on.
 
-private:
+  private:
 	enum
 	{
 		SOCKET_TCP_MAX_ACCEPTS = 2

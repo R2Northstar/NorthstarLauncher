@@ -1,7 +1,7 @@
 //===========================================================================//
-// 
+//
 // Purpose: Protocol-agnostic implementation of the CNetAdr class.
-// 
+//
 //===========================================================================//
 
 #include "pch.h"
@@ -9,17 +9,14 @@
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor (use this when string contains <[IP]:PORT>).
-// Input  : svInAdr - 
+// Input  : svInAdr -
 //-----------------------------------------------------------------------------
-CNetAdr2::CNetAdr2(std::string svInAdr)
-{
-	SetIPAndPort(svInAdr);
-}
+CNetAdr2::CNetAdr2(std::string svInAdr) { SetIPAndPort(svInAdr); }
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor (expects string format <IPv4/IPv6> <PORT>).
-// Input  : svInAdr - 
-//			svInPort - 
+// Input  : svInAdr -
+//			svInPort -
 //-----------------------------------------------------------------------------
 CNetAdr2::CNetAdr2(std::string svInAdr, std::string svInPort)
 {
@@ -54,32 +51,23 @@ CNetAdr2::CNetAdr2(std::string svInAdr, std::string svInPort)
 //-----------------------------------------------------------------------------
 // Purpose: destructor.
 //-----------------------------------------------------------------------------
-CNetAdr2::~CNetAdr2(void)
-{
-	Clear();
-}
+CNetAdr2::~CNetAdr2(void) { Clear(); }
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP address.
-// Input  : *svInAdr - 
+// Input  : *svInAdr -
 //-----------------------------------------------------------------------------
-void CNetAdr2::SetIP(const std::string& svInAdr)
-{
-	m_svip = "[" + svInAdr + "]";
-}
+void CNetAdr2::SetIP(const std::string& svInAdr) { m_svip = "[" + svInAdr + "]"; }
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the port.
-// Input  : *svInPort - 
+// Input  : *svInPort -
 //-----------------------------------------------------------------------------
-void CNetAdr2::SetPort(const std::string& svInPort)
-{
-	m_svip += ":" + svInPort;
-}
+void CNetAdr2::SetPort(const std::string& svInPort) { m_svip += ":" + svInPort; }
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP address and port.
-// Input  : *svInAdr - 
+// Input  : *svInAdr -
 //-----------------------------------------------------------------------------
 void CNetAdr2::SetIPAndPort(std::string svInAdr)
 {
@@ -109,8 +97,8 @@ void CNetAdr2::SetIPAndPort(std::string svInAdr)
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP address and port.
-// Input  : *svInAdr - 
-//			*svInPort - 
+// Input  : *svInAdr -
+//			*svInPort -
 //-----------------------------------------------------------------------------
 void CNetAdr2::SetIPAndPort(std::string svInAdr, std::string svInPort)
 {
@@ -145,27 +133,25 @@ void CNetAdr2::SetIPAndPort(std::string svInAdr, std::string svInPort)
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the type.
-// Input  : *type - 
+// Input  : *type -
 //-----------------------------------------------------------------------------
-void CNetAdr2::SetType(const netadrtype_t& type)
-{
-	m_type = type;
-}
+void CNetAdr2::SetType(const netadrtype_t& type) { m_type = type; }
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP version (IPv4/IPv6/INVALID) based on input.
 //-----------------------------------------------------------------------------
 void CNetAdr2::SetVersion(void)
 {
-	if (inet_pton(reinterpret_cast<sockaddr_in*>(&m_sadr)->sin_family, 
-		GetBase().c_str(), &reinterpret_cast<sockaddr_in*>(m_sadr)->sin_addr) &&
+	if (inet_pton(
+			reinterpret_cast<sockaddr_in*>(&m_sadr)->sin_family, GetBase().c_str(), &reinterpret_cast<sockaddr_in*>(m_sadr)->sin_addr) &&
 		!strstr(GetBase().c_str(), "::"))
 	{
 		m_version = netadrversion_t::NA_V4;
 		return;
 	}
-	else if (inet_pton(reinterpret_cast<sockaddr_in6*>(&m_sadr)->sin6_family, 
-		GetBase().c_str(), &reinterpret_cast<sockaddr_in6*>(m_sadr)->sin6_addr))
+	else if (inet_pton(
+				 reinterpret_cast<sockaddr_in6*>(&m_sadr)->sin6_family, GetBase().c_str(),
+				 &reinterpret_cast<sockaddr_in6*>(m_sadr)->sin6_addr))
 	{
 		m_version = netadrversion_t::NA_V6;
 		return;
@@ -175,7 +161,7 @@ void CNetAdr2::SetVersion(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: sets IP address and port from sockaddr struct.
-// Input  : hSocket - 
+// Input  : hSocket -
 //-----------------------------------------------------------------------------
 void CNetAdr2::SetFromSocket(const int& hSocket)
 {
@@ -192,7 +178,7 @@ void CNetAdr2::SetFromSocket(const int& hSocket)
 
 //-----------------------------------------------------------------------------
 // Purpose: sets fields based on 'sockaddr' input.
-// Input  : *s - 
+// Input  : *s -
 //-----------------------------------------------------------------------------
 bool CNetAdr2::SetFromSockadr(sockaddr_storage* s)
 {
@@ -232,7 +218,7 @@ std::string CNetAdr2::GetBase(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: removes brackets and port from IP address.
-// Input  : svInAdr - 
+// Input  : svInAdr -
 //-----------------------------------------------------------------------------
 std::string CNetAdr2::GetBase(std::string svInAdr) const
 {
@@ -245,7 +231,7 @@ std::string CNetAdr2::GetBase(std::string svInAdr) const
 
 //-----------------------------------------------------------------------------
 // Purpose: gets the IP address.
-// Input  : bBaseOnly - 
+// Input  : bBaseOnly -
 //-----------------------------------------------------------------------------
 std::string CNetAdr2::GetIP(bool bBaseOnly) const
 {
@@ -289,7 +275,7 @@ std::string CNetAdr2::GetPort(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: removes brackets and IP address from port.
-// Input  : svInPort - 
+// Input  : svInPort -
 //-----------------------------------------------------------------------------
 std::string CNetAdr2::GetPort(std::string svInPort) const
 {
@@ -307,26 +293,17 @@ std::string CNetAdr2::GetPort(std::string svInPort) const
 //-----------------------------------------------------------------------------
 // Purpose: returns the IP address and port.
 //-----------------------------------------------------------------------------
-std::string CNetAdr2::GetIPAndPort(void) const
-{
-	return m_svip;
-}
+std::string CNetAdr2::GetIPAndPort(void) const { return m_svip; }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns the address type.
 //-----------------------------------------------------------------------------
-netadrtype_t CNetAdr2::GetType(void) const
-{
-	return m_type;
-}
+netadrtype_t CNetAdr2::GetType(void) const { return m_type; }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns the IP version.
 //-----------------------------------------------------------------------------
-netadrversion_t CNetAdr2::GetVersion(void) const
-{
-	return m_version;
-}
+netadrversion_t CNetAdr2::GetVersion(void) const { return m_version; }
 
 //-----------------------------------------------------------------------------
 // Purpose: splits IP address into parts by their delimiters.
@@ -404,7 +381,7 @@ int CNetAdr2::GetFamily(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: sets fields from 'sockaddr'.
-// Input  : *pSadr - 
+// Input  : *pSadr -
 //-----------------------------------------------------------------------------
 void CNetAdr2::ToSockadr(sockaddr_storage* pSadr) const
 {
@@ -442,16 +419,16 @@ void CNetAdr2::ToSockadr(sockaddr_storage* pSadr) const
 
 //-----------------------------------------------------------------------------
 // Purpose: sets fields from 'addrinfo'.
-// Input  : *pHint - 
+// Input  : *pHint -
 //-----------------------------------------------------------------------------
 void CNetAdr2::ToAdrinfo(addrinfo* pHint) const
 {
-	int results{ };
-	addrinfo hint{ }; // <-- TODO: Pass these instead.
+	int results{};
+	addrinfo hint{}; // <-- TODO: Pass these instead.
 	if (GetVersion() == netadrversion_t::NA_V4)
 	{
-		hint.ai_flags    = AI_PASSIVE;
-		hint.ai_family   = AF_INET;
+		hint.ai_flags = AI_PASSIVE;
+		hint.ai_family = AF_INET;
 		hint.ai_socktype = SOCK_STREAM;
 		hint.ai_protocol = IPPROTO_TCP;
 
@@ -466,8 +443,8 @@ void CNetAdr2::ToAdrinfo(addrinfo* pHint) const
 	}
 	else if (GetVersion() == netadrversion_t::NA_V6)
 	{
-		hint.ai_flags    = AI_PASSIVE;
-		hint.ai_family   = AF_INET6;
+		hint.ai_flags = AI_PASSIVE;
+		hint.ai_family = AF_INET6;
 		hint.ai_socktype = SOCK_STREAM;
 		hint.ai_protocol = IPPROTO_TCP;
 
@@ -500,18 +477,12 @@ bool CNetAdr2::IsValidPort(const std::string& svInPort) const
 //-----------------------------------------------------------------------------
 // Purpose: returns true if we are localhost.
 //-----------------------------------------------------------------------------
-bool CNetAdr2::IsLocalhost(void) const
-{
-	return (strcmp(GetBase().c_str(), "127.0.0.1") == 0);
-}
+bool CNetAdr2::IsLocalhost(void) const { return (strcmp(GetBase().c_str(), "127.0.0.1") == 0); }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns true if we use the loopback buffers.
 //-----------------------------------------------------------------------------
-bool CNetAdr2::IsLoopback(void) const
-{
-	return GetType() == netadrtype_t::NA_LOOPBACK;
-}
+bool CNetAdr2::IsLoopback(void) const { return GetType() == netadrtype_t::NA_LOOPBACK; }
 
 //-----------------------------------------------------------------------------
 // Purpose: check if address is reserved and not routable.
@@ -530,10 +501,10 @@ bool CNetAdr2::IsReservedAdr(void) const
 		int n0 = stoi(ip_parts[0]);
 		int n1 = stoi(ip_parts[1]);
 
-		if ((n0 == 10)                          || // 10.x.x.x is reserved
-			(n0 == 127)                         || // 127.x.x.x 
+		if ((n0 == 10) ||						   // 10.x.x.x is reserved
+			(n0 == 127) ||						   // 127.x.x.x
 			(n0 == 172 && n1 >= 16 && n1 <= 31) || // 172.16.x.x - 172.31.x.x
-			(n0 == 192 && n1 >= 168))              // 192.168.x.x
+			(n0 == 192 && n1 >= 168))			   // 192.168.x.x
 		{
 			return true;
 		}
@@ -543,8 +514,8 @@ bool CNetAdr2::IsReservedAdr(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: compares IP for equality (IPv4/IPv6).
-// Input  : *netAdr2 - 
-//			bBaseOnly - 
+// Input  : *netAdr2 -
+//			bBaseOnly -
 // Output : true if equal, false otherwise.
 //-----------------------------------------------------------------------------
 bool CNetAdr2::CompareAdr(const CNetAdr2& netAdr2, bool bBaseOnly) const
@@ -561,8 +532,7 @@ bool CNetAdr2::CompareAdr(const CNetAdr2& netAdr2, bool bBaseOnly) const
 
 	if (GetType() == netadrtype_t::NA_IP)
 	{
-		if (!bBaseOnly && 
-			(strcmp(netAdr2.GetPort().c_str(), GetPort().c_str()) != 0))
+		if (!bBaseOnly && (strcmp(netAdr2.GetPort().c_str(), GetPort().c_str()) != 0))
 		{
 			return false;
 		}
@@ -578,7 +548,7 @@ bool CNetAdr2::CompareAdr(const CNetAdr2& netAdr2, bool bBaseOnly) const
 
 //-----------------------------------------------------------------------------
 // Purpose: compares Class-B IP for equality.
-// Input  : *netAdr2 - 
+// Input  : *netAdr2 -
 // Output : true if equal, false otherwise.
 //-----------------------------------------------------------------------------
 bool CNetAdr2::CompareClassBAdr(const CNetAdr2& netAdr2) const
@@ -603,8 +573,7 @@ bool CNetAdr2::CompareClassBAdr(const CNetAdr2& netAdr2) const
 		std::vector<std::string> v0 = netAdr2.GetParts();
 		std::vector<std::string> v1 = GetParts();
 
-		if (strcmp(v0[0].c_str(), v1[0].c_str()) == 0 && 
-			strcmp(v0[1].c_str(), v1[1].c_str()) == 0)
+		if (strcmp(v0[0].c_str(), v1[0].c_str()) == 0 && strcmp(v0[1].c_str(), v1[1].c_str()) == 0)
 		{
 			return true;
 		}
@@ -615,7 +584,7 @@ bool CNetAdr2::CompareClassBAdr(const CNetAdr2& netAdr2) const
 
 //-----------------------------------------------------------------------------
 // Purpose: compares Class-C IP for equality.
-// Input  : *netAdr2 - 
+// Input  : *netAdr2 -
 // Output : true if equal, false otherwise.
 //-----------------------------------------------------------------------------
 bool CNetAdr2::CompareClassCAdr(const CNetAdr2& netAdr2) const
@@ -640,8 +609,7 @@ bool CNetAdr2::CompareClassCAdr(const CNetAdr2& netAdr2) const
 		std::vector<std::string> v0 = netAdr2.GetParts();
 		std::vector<std::string> v1 = GetParts();
 
-		if (strcmp(v0[0].c_str(), v1[0].c_str()) == 0 && 
-			strcmp(v0[1].c_str(), v1[1].c_str()) == 0 && 
+		if (strcmp(v0[0].c_str(), v1[0].c_str()) == 0 && strcmp(v0[1].c_str(), v1[1].c_str()) == 0 &&
 			strcmp(v0[2].c_str(), v1[2].c_str()) == 0)
 		{
 			return true;
@@ -654,7 +622,7 @@ bool CNetAdr2::CompareClassCAdr(const CNetAdr2& netAdr2) const
 //-----------------------------------------------------------------------------
 // Purpose: for replacing string occurence in given string
 //-----------------------------------------------------------------------------
-bool CNetAdr2::StringReplace(std::string& svStr, std::string svFrom,  std::string svTo) const
+bool CNetAdr2::StringReplace(std::string& svStr, std::string svFrom, std::string svTo) const
 {
 	size_t start_pos = svStr.find(svFrom);
 	if (start_pos == std::string::npos)
@@ -672,7 +640,7 @@ bool CNetAdr2::StringReplace(std::string& svStr, std::string svFrom,  std::strin
 void CNetAdr2::Clear(void)
 {
 	m_svip.clear();
-	m_type    = netadrtype_t::NA_NULL;
+	m_type = netadrtype_t::NA_NULL;
 	m_version = netadrversion_t::NA_INVALID;
-	m_sadr    = {};
+	m_sadr = {};
 }
