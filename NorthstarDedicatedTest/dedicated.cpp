@@ -5,7 +5,7 @@
 #include "serverauthentication.h"
 #include "masterserver.h"
 #include "host_state.h"
-#include "sv_rcon.h"
+
 bool IsDedicated()
 {
 	// return CommandLine()->CheckParm("-dedicated");
