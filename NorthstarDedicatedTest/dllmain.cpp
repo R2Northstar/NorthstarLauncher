@@ -41,6 +41,7 @@
 #include "pch.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "debugoverlay.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -237,6 +238,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialisePluginCommands);
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
+		AddDllLoadCallback("engine.dll", InitialiseDebugOverlay);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
