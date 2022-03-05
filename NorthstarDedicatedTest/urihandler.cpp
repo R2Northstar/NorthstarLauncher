@@ -111,8 +111,9 @@ bool parseURI(std::string uriString)
 	return true;
 }
 
-void HandleAcceptedInvite()
+bool HandleAcceptedInvite()
 {
+	hasStoredURI = false;
 	if (storedInviteType == InviteType::Server) // Party invites are currently unsupported
 	{
 		spdlog::info("Handling incoming invite");
@@ -125,14 +126,24 @@ void HandleAcceptedInvite()
 			// invalidate key so auth will fail
 			*g_LocalPlayerOriginToken = 0;
 		}
-		while (g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
-		{
-			Sleep(10);
-		}
+		spdlog::info(
+			"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
+			(char*)storedPassword.c_str());
+		bool temp = g_MasterServerManager->m_savingPersistentData;
+		g_MasterServerManager->m_savingPersistentData = false;
 		g_MasterServerManager->AuthenticateWithServer(
 			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(), (char*)storedPassword.c_str(),
 			false);
+		if (!g_MasterServerManager->m_successfullyAuthenticatedWithGameServer)
+		{
+			return false;
+		}
+		g_MasterServerManager->m_savingPersistentData = temp;
+		spdlog::info("Correctly returned");
 		RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
+		spdlog::info(
+			"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
+			info.ip.S_un.S_un_b.s_b4, info.port);
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
 		Cbuf_AddText(
 			Cbuf_GetCurrentPlayer(),
@@ -143,7 +154,9 @@ void HandleAcceptedInvite()
 			cmd_source_t::kCommandSrcCode);
 
 		g_MasterServerManager->m_hasPendingConnectionInfo = false;
+		return true;
 	}
+	return false;
 }
 
 SQRESULT SQ_HasStoredURI(void* sqvm)
@@ -154,7 +167,7 @@ SQRESULT SQ_HasStoredURI(void* sqvm)
 
 SQRESULT SQ_AcceptInvite(void* sqvm)
 {
-	HandleAcceptedInvite();
+	ClientSq_pushbool(sqvm, HandleAcceptedInvite());
 	hasStoredURI = false;
 	return SQRESULT_NOTNULL;
 }
@@ -182,11 +195,12 @@ SQRESULT SQ_TryJoinInvite(void* sqvm)
 	std::string invite = ClientSq_getstring(sqvm, 1);
 	if (parseURI(invite))
 	{
-		HandleAcceptedInvite();
+		ClientSq_pushbool(sqvm, HandleAcceptedInvite());
 		return SQRESULT_NOTNULL;
 	}
 	else
 	{
+		ClientSq_pushbool(sqvm, false);
 		return SQRESULT_NULL;
 	}
 }
@@ -318,6 +332,6 @@ void InitialiseURIStuff(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("void", "NSAcceptInvite", "", "", SQ_AcceptInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSDeclineInvite", "", "", SQ_DeclineInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetOnMainMenu", "bool onMainMenu", "", SQ_SetOnMainMenu);
-	g_UISquirrelManager->AddFuncRegistration("void", "NSTryJoinInvite", "string invite", "", SQ_TryJoinInvite);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSTryJoinInvite", "string invite", "", SQ_TryJoinInvite);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGenerateServerInvite", "", "", SQ_GenerateServerInvite);
 }

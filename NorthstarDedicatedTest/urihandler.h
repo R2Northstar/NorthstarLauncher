@@ -4,5 +4,5 @@ static std::string URIProtocolName = "northstar://";
 
 bool parseURI(std::string uriString);
 
-void HandleAcceptedInvite();
+bool HandleAcceptedInvite();
 void InitialiseURIStuff(HMODULE baseAddress);
