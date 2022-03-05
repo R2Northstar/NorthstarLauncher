@@ -51,5 +51,4 @@ extern InternalGameState gameState;
 extern InternalServerInfo serverInfo;
 extern InternalPlayerInfo playerInfo;
 
-
 void InitialisePluginCommands(HMODULE baseAddress);

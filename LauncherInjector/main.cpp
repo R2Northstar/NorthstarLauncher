@@ -399,9 +399,6 @@ int main(int argc, char* argv[])
 		std::string path = exepath.substr(0, exepath.find_last_of("/\\")); // Substr to just the folder name
 		std::filesystem::current_path(path);							   // Set CWD
 		bool hasURIString = strstr(GetCommandLineA(), "northstar://");
-		printf("Found the following invite string: \n");
-		printf("%d\n", hasURIString);
-
 		if (namedPipeExists("\\\\.\\pipe\\northstar") && hasURIString) // Check if another instance is already running
 		{
 			// Open the named pipe
@@ -416,7 +413,7 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 			std::string cla = GetCommandLineA();
-			int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length(); 
+			int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length();
 			std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
 			bool result = false;
 			sendData(pipe, result, stringToWideString(message).c_str());

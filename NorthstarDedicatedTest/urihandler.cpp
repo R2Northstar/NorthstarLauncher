@@ -29,7 +29,8 @@ std::string storedServerId;
 std::string storedPassword;
 
 bool hasStoredURI = false;
-bool isOnMainMenu = true; // For some fucking reason, calling OpenDialog from c++/console on the main menu crashes, so we use this workaround
+bool isOnMainMenu =
+	true; // For some fucking reason, calling OpenDialog from c++/console on the main menu crashes, so we use this workaround
 
 /// URI Handler
 /// This file is responsible for handling everything related to URI parsing and invites and stuff
@@ -42,14 +43,14 @@ HANDLE initPipe()
 {
 	// Create a pipe to send data
 	HANDLE pipe = CreateNamedPipe(
-		L"\\\\.\\pipe\\northstar", 
-		PIPE_ACCESS_DUPLEX,		   // duplex for ease of use
-		PIPE_TYPE_BYTE,			   // send data as a byte stream
-		1,						   // only allow 1 instance of this pipe
-		0,						   // no outbound buffer
-		0,						   // no inbound buffer
-		0,						   // use default wait time
-		NULL					   // use default security attributes
+		L"\\\\.\\pipe\\northstar",
+		PIPE_ACCESS_DUPLEX, // duplex for ease of use
+		PIPE_TYPE_BYTE,		// send data as a byte stream
+		1,					// only allow 1 instance of this pipe
+		0,					// no outbound buffer
+		0,					// no inbound buffer
+		0,					// use default wait time
+		NULL				// use default security attributes
 	);
 	return pipe;
 }
