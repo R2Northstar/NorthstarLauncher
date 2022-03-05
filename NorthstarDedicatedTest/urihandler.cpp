@@ -29,7 +29,7 @@ std::string storedServerId;
 std::string storedPassword;
 
 bool hasStoredURI = false;
-bool isOnMainMenu = true; // For some fucking reason, calling OpenDialog from c++ on the main menu crashes, so we use this workaround
+bool isOnMainMenu = true; // For some fucking reason, calling OpenDialog from c++/console on the main menu crashes, so we use this workaround
 
 /// URI Handler
 /// This file is responsible for handling everything related to URI parsing and invites and stuff
@@ -42,7 +42,7 @@ HANDLE initPipe()
 {
 	// Create a pipe to send data
 	HANDLE pipe = CreateNamedPipe(
-		L"\\\\.\\pipe\\northstar", // name of the pipe
+		L"\\\\.\\pipe\\northstar", 
 		PIPE_ACCESS_DUPLEX,		   // duplex for ease of use
 		PIPE_TYPE_BYTE,			   // send data as a byte stream
 		1,						   // only allow 1 instance of this pipe
@@ -100,10 +100,11 @@ bool parseURI(std::string uriString)
 		storedPassword = "";
 	}
 	spdlog::info("================================");
-	spdlog::info("Parsed URI: ");
+	spdlog::info("Parsed invite: ");
 	spdlog::info("Invite type: {}", invitetype);
 	spdlog::info("ID: {}", storedServerId.c_str());
 	spdlog::info("password: {}", storedPassword.c_str());
+	spdlog::info("================================");
 
 	hasStoredURI = true;
 	return true;
@@ -113,7 +114,7 @@ void HandleAcceptedInvite()
 {
 	if (storedInviteType == InviteType::Server) // Party invites are currently unsupported
 	{
-		spdlog::info("Handling Accepted Invite");
+		spdlog::info("Handling incoming invite");
 		if (!g_MasterServerManager->m_bOriginAuthWithMasterServerDone && GetAgreedToSendToken() != 2)
 		{
 			// if player has agreed to send token and we aren't already authing, try to auth
@@ -123,10 +124,6 @@ void HandleAcceptedInvite()
 			// invalidate key so auth will fail
 			*g_LocalPlayerOriginToken = 0;
 		}
-
-		spdlog::info(
-			"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
-			(char*)storedPassword.c_str());
 		while (g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 		{
 			Sleep(10);
@@ -135,9 +132,6 @@ void HandleAcceptedInvite()
 			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(), (char*)storedPassword.c_str(),
 			false);
 		RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
-		spdlog::info(
-			"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
-			info.ip.S_un.S_un_b.s_b4, info.port);
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
 		Cbuf_AddText(
 			Cbuf_GetCurrentPlayer(),
@@ -211,13 +205,22 @@ SQRESULT SQ_GenerateServerInvite(void* sqvm)
 	spdlog::info("GENERATED INVITE: {}, {}", id, password);
 	const size_t inviteLen = strlen(invite.c_str()) + 1;
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, inviteLen);
-	memcpy(GlobalLock(hMem), invite.c_str(), inviteLen);
-	GlobalUnlock(hMem);
-	OpenClipboard(0);
-	EmptyClipboard();
-	SetClipboardData(CF_TEXT, hMem);
-	CloseClipboard();
-	ClientSq_pushinteger(sqvm, 1);
+	if (hMem != NULL)
+	{
+		LPVOID locked = GlobalLock(hMem);
+		if (locked != NULL)
+		{
+			memcpy(locked, invite.c_str(), inviteLen);
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_TEXT, hMem);
+			CloseClipboard();
+			ClientSq_pushinteger(sqvm, 1);
+			return SQRESULT_NOTNULL;
+		}
+	}
+	ClientSq_pushinteger(sqvm, 0);
 	return SQRESULT_NOTNULL;
 }
 
@@ -255,6 +258,8 @@ void StartUriHandler()
 				if (pipe == NULL || pipe == INVALID_HANDLE_VALUE)
 				{
 					// what the fuck
+					spdlog::info("Fatal error trying to open named pipe");
+					exit(0);
 				}
 
 				BOOL result = ConnectNamedPipe(pipe, NULL);

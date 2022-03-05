@@ -399,26 +399,24 @@ int main(int argc, char* argv[])
 		std::string path = exepath.substr(0, exepath.find_last_of("/\\")); // Substr to just the folder name
 		std::filesystem::current_path(path);							   // Set CWD
 		bool hasURIString = strstr(GetCommandLineA(), "northstar://");
-		printf("Has URI String: \n");
+		printf("Found the following invite string: \n");
 		printf("%d\n", hasURIString);
 
 		if (namedPipeExists("\\\\.\\pipe\\northstar") && hasURIString) // Check if another instance is already running
 		{
-			printf("Connecting to running instance...\n");
-
 			// Open the named pipe
 			// Most of these parameters aren't very relevant for pipes.
 			HANDLE pipe = CreateFile(
-				L"\\\\.\\pipe\\northstar",
-				GENERIC_ALL, // only need read access
-				FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+				L"\\\\.\\pipe\\northstar", GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+				NULL);
 
 			if (pipe == INVALID_HANDLE_VALUE)
 			{
 				printf("Failed to connect to pipe.\n");
+				return 0;
 			}
 			std::string cla = GetCommandLineA();
-			int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length();
+			int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length(); 
 			std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
 			bool result = false;
 			sendData(pipe, result, stringToWideString(message).c_str());
@@ -427,7 +425,6 @@ int main(int argc, char* argv[])
 			CloseHandle(pipe);
 
 			printf("Done sending data to running instance.\n");
-			printf("Closing now!\n");
 			return 1;
 		}
 
