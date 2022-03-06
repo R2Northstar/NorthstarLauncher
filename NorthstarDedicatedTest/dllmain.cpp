@@ -38,6 +38,7 @@
 #include "clientchathooks.h"
 #include "localchatwriter.h"
 #include "hideconsole.h"
+#include "scriptservertoclientstringcommand.h"
 #include <string.h>
 #include "pch.h"
 #include "plugin_abi.h"
@@ -92,7 +93,11 @@ bool LoadPlugins()
 	std::vector<fs::path> paths;
 
 	std::string pluginPath = GetNorthstarPrefix() + "/plugins";
-
+	if (!fs::exists(pluginPath))
+	{
+		spdlog::warn("Could not find a plugins directory. Skipped loading plugins");
+		return false;
+	}
 	// ensure dirs exist
 	fs::recursive_directory_iterator iterator(pluginPath);
 	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
@@ -105,9 +110,7 @@ bool LoadPlugins()
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-	// system("pause");
 	initGameState();
-	// spdlog::info("Loading the following DLLs in plugins folder:");
 	for (fs::path path : paths)
 	{
 		std::string pathstring = (pluginPath / path).string();
@@ -238,6 +241,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialisePluginCommands);
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
+		AddDllLoadCallback("client.dll", InitialiseScriptServerToClientStringCommands);
 		AddDllLoadCallback("client.dll", InitialiseHiddenConsole);
 	}
 
