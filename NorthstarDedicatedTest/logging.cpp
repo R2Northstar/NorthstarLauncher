@@ -205,8 +205,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			ShowWindow(GetConsoleWindow(), SW_RESTORE);
 
 			MessageBoxA(
-				GetConsoleWindow(), "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!",
-				MB_ICONERROR | MB_OK);
+				0, "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 		}
 	}
 
