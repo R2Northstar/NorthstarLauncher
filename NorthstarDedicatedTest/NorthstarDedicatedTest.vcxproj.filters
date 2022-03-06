@@ -1482,6 +1482,9 @@
     <ClInclude Include="plugin_abi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hideconsole.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1633,6 +1636,9 @@
     </ClCompile>
     <ClCompile Include="plugins.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hideconsole.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
