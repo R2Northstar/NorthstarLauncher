@@ -67,7 +67,6 @@ bool parseURI(std::string uriString)
 	}
 	std::string password;
 	spdlog::info("Parsing URI: {}", uriString.c_str());
-
 	int atLocation = uriString.find("@");
 	if (atLocation == std::string::npos)
 	{
@@ -107,9 +106,45 @@ bool parseURI(std::string uriString)
 	spdlog::info("password: {}", storedPassword.c_str());
 	spdlog::info("================================");
 
+	serverInfo.password = storedPassword.c_str();
+	serverInfo.id = storedServerId.c_str();
+
 	hasStoredURI = true;
 	return true;
 }
+
+static LPDWORD procId;
+bool enumwindowsproc(HWND hwnd, LPARAM lParam)
+{
+	spdlog::info("Proc got called");
+	LPSTR pszMem = (PSTR)VirtualAlloc((LPVOID)NULL, (DWORD)(MAX_PATH), MEM_COMMIT, PAGE_READWRITE);
+	if (pszMem != NULL)
+	{
+		GetWindowTextA(hwnd, pszMem, MAX_PATH);
+		if (strncmp(pszMem, "Titanfall 2", 12) == 0)
+		{
+			spdlog::info("Found window, bringing to top");
+			SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
+
+			// Not stolen from https://stackoverflow.com/a/34414846
+			// Blame Barnaby if this breaks
+			HWND hCurWnd = GetForegroundWindow();
+			DWORD dwMyID = GetCurrentThreadId();
+			DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
+			AttachThreadInput(dwCurID, dwMyID, TRUE);
+			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+			SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+			SetForegroundWindow(hwnd);
+			SetFocus(hwnd);
+			SetActiveWindow(hwnd);
+			AttachThreadInput(dwCurID, dwMyID, FALSE);
+			ShowWindow(hwnd, SW_RESTORE);
+			return false;
+		}
+	}
+	return true;
+}
+
 
 bool HandleAcceptedInvite()
 {
@@ -309,6 +344,7 @@ void StartUriHandler()
 				{
 					g_UISquirrelManager->ExecuteCode("ShowURIDialog()");
 				}
+				EnumWindows((WNDENUMPROC)enumwindowsproc, 0);
 			}
 			CloseHandle(pipe);
 			shouldRecreate = true;
@@ -321,6 +357,9 @@ void StartUriHandler()
 
 	spdlog::info("	.\n");
 }
+
+SQRESULT SQ_testfunc(void* sqvm) { 
+	return SQRESULT_NOTNULL; }
 
 void InitialiseURIStuff(HMODULE baseAddress)
 {
