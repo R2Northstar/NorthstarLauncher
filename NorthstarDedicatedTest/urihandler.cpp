@@ -141,36 +141,40 @@ bool HandleAcceptedInvite()
 
 			// invalidate key so auth will fail
 			*g_LocalPlayerOriginToken = 0;
+			spdlog::info(
+				"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
+				(char*)storedPassword.c_str());
+			bool temp = g_MasterServerManager->m_savingPersistentData;
+			g_MasterServerManager->m_savingPersistentData = false;
+			g_MasterServerManager->AuthenticateWithServer(
+				g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
+				(char*)storedPassword.c_str(), false);
+			if (!g_MasterServerManager->m_successfullyAuthenticatedWithGameServer)
+			{
+				return false;
+			}
+			g_MasterServerManager->m_savingPersistentData = temp;
+			spdlog::info("Correctly returned");
+			RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
+			spdlog::info(
+				"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
+				info.ip.S_un.S_un_b.s_b4, info.port);
+			Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
+			Cbuf_AddText(
+				Cbuf_GetCurrentPlayer(),
+				fmt::format(
+					"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
+					info.ip.S_un.S_un_b.s_b4, info.port)
+					.c_str(),
+				cmd_source_t::kCommandSrcCode);
+
+			g_MasterServerManager->m_hasPendingConnectionInfo = false;
+			return true;
 		}
-		spdlog::info(
-			"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
-			(char*)storedPassword.c_str());
-		bool temp = g_MasterServerManager->m_savingPersistentData;
-		g_MasterServerManager->m_savingPersistentData = false;
-		g_MasterServerManager->AuthenticateWithServer(
-			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(), (char*)storedPassword.c_str(),
-			false);
-		if (!g_MasterServerManager->m_successfullyAuthenticatedWithGameServer)
+		else
 		{
 			return false;
 		}
-		g_MasterServerManager->m_savingPersistentData = temp;
-		spdlog::info("Correctly returned");
-		RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
-		spdlog::info(
-			"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
-			info.ip.S_un.S_un_b.s_b4, info.port);
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
-		Cbuf_AddText(
-			Cbuf_GetCurrentPlayer(),
-			fmt::format(
-				"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
-				info.ip.S_un.S_un_b.s_b4, info.port)
-				.c_str(),
-			cmd_source_t::kCommandSrcCode);
-
-		g_MasterServerManager->m_hasPendingConnectionInfo = false;
-		return true;
 	}
 	return false;
 }
@@ -203,6 +207,13 @@ SQRESULT SQ_SetOnMainMenu(void* sqvm)
 SQRESULT SQ_RemoveStoredURI(void* sqvm)
 {
 	hasStoredURI = false;
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_GetInviteServerName(void* sqvm)
+{
+	g_MasterServerManager->GetServerInfo((char*)storedServerId.c_str(), false);
+	ClientSq_pushstring(sqvm, g_MasterServerManager->s_requestedServerInfo.name.c_str(), -1);
 	return SQRESULT_NOTNULL;
 }
 
@@ -373,4 +384,5 @@ void InitialiseURIStuff(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetOnMainMenu", "bool onMainMenu", "", SQ_SetOnMainMenu);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSTryJoinInvite", "string invite", "", SQ_TryJoinInvite);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGenerateServerInvite", "bool link", "", SQ_GenerateServerInvite);
+	g_UISquirrelManager->AddFuncRegistration("string", "NSGetInviteServerName", "", "", SQ_GetInviteServerName);
 }

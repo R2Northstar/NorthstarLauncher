@@ -788,6 +788,103 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 	}
 }
 
+void MasterServerManager::GetServerInfo(char* id, bool async)
+{
+	std::string idStr(id);
+
+	s_requestedServerInfo.success = false;
+
+	std::thread requestThread(
+		[this, idStr]()
+		{
+			spdlog::info("Attempting getting info of server of id \"{}\"", idStr);
+
+			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
+
+			std::string readBuffer;
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+			{
+				curl_easy_setopt(
+					curl, CURLOPT_URL, fmt::format("{}/client/serverinfo/{}", Cvar_ns_masterserver_hostname->GetString(), idStr).c_str());
+			}
+
+			CURLcode result = curl_easy_perform(curl);
+
+			if (result == CURLcode::CURLE_OK)
+			{
+				rapidjson_document connectionInfoJson;
+				connectionInfoJson.Parse(readBuffer.c_str());
+
+				if (connectionInfoJson.HasParseError())
+				{
+					spdlog::error(
+						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+						rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (!connectionInfoJson.IsObject())
+				{
+					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (connectionInfoJson.HasMember("error"))
+				{
+					spdlog::error("Failed reading masterserver response: got fastify error response");
+					spdlog::error(readBuffer);
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (!connectionInfoJson["success"].IsTrue())
+				{
+					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
+					goto REQUEST_END_CLEANUP;
+				}
+
+				if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("info") ||
+					!connectionInfoJson["info"].HasMember("id") || !connectionInfoJson["info"].HasMember("name") ||
+					!connectionInfoJson["info"].HasMember("description") || !connectionInfoJson["info"].HasMember("playerCount") ||
+					!connectionInfoJson["info"].HasMember("maxPlayers") || !connectionInfoJson["info"].HasMember("map") ||
+					!connectionInfoJson["info"].HasMember("playlist") || !connectionInfoJson["info"].HasMember("hasPassword"))
+				{
+				spdlog::error("Failed reading masterserver response: malformed json object");
+				goto REQUEST_END_CLEANUP;
+				}
+
+				s_requestedServerInfo.id = connectionInfoJson["info"]["id"].GetString();
+				s_requestedServerInfo.name = connectionInfoJson["info"]["name"].GetString();
+				s_requestedServerInfo.description = connectionInfoJson["info"]["description"].GetString();
+				s_requestedServerInfo.playerCount = connectionInfoJson["info"]["playerCount"].GetInt();
+				s_requestedServerInfo.maxPlayers = connectionInfoJson["info"]["maxPlayers"].GetInt();
+				s_requestedServerInfo.map = connectionInfoJson["info"]["map"].GetString();
+				s_requestedServerInfo.playlist = connectionInfoJson["info"]["playlist"].GetString();
+				s_requestedServerInfo.hasPassword = connectionInfoJson["info"]["hasPassword"].GetBool();
+				s_requestedServerInfo.success = true;
+			}
+			else
+			{
+				spdlog::error("Failed getting server info: error {}", curl_easy_strerror(result));
+			}
+
+		REQUEST_END_CLEANUP:
+			curl_easy_cleanup(curl);
+		});
+
+	if (async)
+	{
+		requestThread.detach();
+	}
+	else
+	{
+		requestThread.join();
+	}
+}
+
 void MasterServerManager::AddSelfToServerList(
 	int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
 {
