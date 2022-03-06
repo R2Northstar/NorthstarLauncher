@@ -50,6 +50,8 @@ Plat_FloatTimeType Plat_FloatTime;
 ThreadInServerFrameThreadType ThreadInServerFrameThread;
 GetBaseLocalClientType GetBaseLocalClient;
 
+HWND* g_gameHwnd;
+
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 {
 	Cbuf_GetCurrentPlayer = (Cbuf_GetCurrentPlayerType)((char*)baseAddress + 0x120630);
@@ -88,6 +90,8 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 	Cvar_net_datablock_enabled = (ConVar*)((char*)baseAddress + 0x12A4F6D0);
 	Cvar_match_defaultMap = (ConVar*)((char*)baseAddress + 0x8AB530);
 	Cvar_communities_hostname = (ConVar*)((char*)baseAddress + 0x13157E50);
+
+	g_gameHwnd = (HWND*)((char*)baseAddress + 0x7d88a0);
 }
 
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress)
