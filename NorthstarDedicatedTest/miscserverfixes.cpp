@@ -2,6 +2,12 @@
 #include "miscserverfixes.h"
 #include "hookutils.h"
 
+typedef bool (*DevTextBufferDumpToFileType)(int a1);
+DevTextBufferDumpToFileType DevTextBufferDumpToFileServer;
+
+bool DevTextBufferDumpToFileHookServer(int a1)
+{ return true; }
+
 void InitialiseMiscServerFixes(HMODULE baseAddress)
 {
 	// ret at the start of the concommand GenerateObjFile as it can crash servers
@@ -20,5 +26,14 @@ void InitialiseMiscServerFixes(HMODULE baseAddress)
 		*(ptr++) = 0x90; // nop
 		*(ptr++) = 0x90; // nop
 		*ptr = 0x90;	 // nop
+	}
+
+	HookEnabler hook;
+
+	if (!strstr(GetCommandLineA(), "-allowio"))
+	{
+		ENABLER_CREATEHOOK(
+			hook, (char*)baseAddress + 0x2A8690, &DevTextBufferDumpToFileHookServer,
+			reinterpret_cast<LPVOID*>(&DevTextBufferDumpToFileServer));
 	}
 }

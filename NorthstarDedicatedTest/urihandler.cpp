@@ -57,17 +57,31 @@ HANDLE initPipe()
 
 bool parseURI(std::string uriString)
 {
+	std::string password;
+	std::string inviteType;
+	int atLocation;
 	int uriOffset = URIProtocolName.length();
 	if (uriString.find(URIProtocolName) != std::string::npos)
 	{
 		if (strncmp(uriString.c_str() + (uriString.length() - 1), "/", 1))
 		{
-			uriString = uriString.substr(uriOffset, uriString.length() - uriOffset); // -1 to remove a trailing slash -_-
+			uriString = uriString.substr(uriOffset, uriString.length() - uriOffset);
 		}
 	}
-	std::string password;
+	int inviteOffset = uriString.find("/invite/");
+	if (uriString.find("/invite/") != std::string::npos)
+	{
+		uriString = uriString.substr(inviteOffset + 8, uriString.length() - inviteOffset);
+		spdlog::info("Current string : {}", uriString);
+		atLocation = uriString.find("/");
+	}
+	else
+	{
+		atLocation = uriString.find("@");
+	}
+	
 	spdlog::info("Parsing URI: {}", uriString.c_str());
-	int atLocation = uriString.find("@");
+	
 	if (atLocation == std::string::npos)
 	{
 		spdlog::info("Invalid or malformed URI. Returning early.");
@@ -112,39 +126,6 @@ bool parseURI(std::string uriString)
 	hasStoredURI = true;
 	return true;
 }
-
-static LPDWORD procId;
-bool enumwindowsproc(HWND hwnd, LPARAM lParam)
-{
-	spdlog::info("Proc got called");
-	LPSTR pszMem = (PSTR)VirtualAlloc((LPVOID)NULL, (DWORD)(MAX_PATH), MEM_COMMIT, PAGE_READWRITE);
-	if (pszMem != NULL)
-	{
-		GetWindowTextA(hwnd, pszMem, MAX_PATH);
-		if (strncmp(pszMem, "Titanfall 2", 12) == 0)
-		{
-			spdlog::info("Found window, bringing to top");
-			SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
-
-			// Not stolen from https://stackoverflow.com/a/34414846
-			// Blame Barnaby if this breaks
-			HWND hCurWnd = GetForegroundWindow();
-			DWORD dwMyID = GetCurrentThreadId();
-			DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
-			AttachThreadInput(dwCurID, dwMyID, TRUE);
-			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-			SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
-			SetForegroundWindow(hwnd);
-			SetFocus(hwnd);
-			SetActiveWindow(hwnd);
-			AttachThreadInput(dwCurID, dwMyID, FALSE);
-			ShowWindow(hwnd, SW_RESTORE);
-			return false;
-		}
-	}
-	return true;
-}
-
 
 bool HandleAcceptedInvite()
 {
@@ -242,12 +223,19 @@ SQRESULT SQ_TryJoinInvite(void* sqvm)
 
 SQRESULT SQ_GenerateServerInvite(void* sqvm)
 {
+	bool link = ClientSq_getbool(sqvm, 1);
 	std::string id = serverInfo.id;
 	std::string password = serverInfo.password;
 	spdlog::info(password);
 	password = base64_encode(password);
 	spdlog::info(password);
-	std::string invite = "northstar://server@" + id;
+	std::string invite = "";
+	if (link)
+		invite = Cvar_ns_masterserver_hostname->GetString() + std::string("/invite/server/") + id;
+	else
+	{
+		invite = "northstar://server@" + id;
+	}
 	if (password.length() != 0)
 	{
 		invite += ":" + password;
@@ -344,7 +332,19 @@ void StartUriHandler()
 				{
 					g_UISquirrelManager->ExecuteCode("ShowURIDialog()");
 				}
-				EnumWindows((WNDENUMPROC)enumwindowsproc, 0);
+				spdlog::info("Trying to get focus now");
+				SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
+				HWND hCurWnd = GetForegroundWindow();
+				DWORD dwMyID = GetCurrentThreadId();
+				DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
+				AttachThreadInput(dwCurID, dwMyID, TRUE);
+				SetWindowPos(*g_gameHWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+				SetWindowPos(*g_gameHWND, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+				SetForegroundWindow(*g_gameHWND);
+				SetFocus(*g_gameHWND);
+				SetActiveWindow(*g_gameHWND);
+				AttachThreadInput(dwCurID, dwMyID, FALSE);
+				ShowWindow(*g_gameHWND, SW_RESTORE);
 			}
 			CloseHandle(pipe);
 			shouldRecreate = true;
@@ -372,5 +372,5 @@ void InitialiseURIStuff(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("void", "NSDeclineInvite", "", "", SQ_DeclineInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetOnMainMenu", "bool onMainMenu", "", SQ_SetOnMainMenu);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSTryJoinInvite", "string invite", "", SQ_TryJoinInvite);
-	g_UISquirrelManager->AddFuncRegistration("int", "NSGenerateServerInvite", "", "", SQ_GenerateServerInvite);
+	g_UISquirrelManager->AddFuncRegistration("int", "NSGenerateServerInvite", "bool link", "", SQ_GenerateServerInvite);
 }

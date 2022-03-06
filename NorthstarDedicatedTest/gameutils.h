@@ -252,6 +252,8 @@ extern ThreadInServerFrameThreadType ThreadInServerFrameThread;
 typedef void* (*GetBaseLocalClientType)();
 extern GetBaseLocalClientType GetBaseLocalClient;
 
+extern HWND* g_gameHWND;
+
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress);
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress);
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress);
