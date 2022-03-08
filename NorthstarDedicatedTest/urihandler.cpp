@@ -27,6 +27,8 @@ enum InviteType
 InviteType storedInviteType = InviteType::Server;
 std::string storedServerId;
 std::string storedPassword;
+std::string lastError;
+bool storedInviteNeedsPassword;
 
 bool hasStoredURI = false;
 bool isOnMainMenu =
@@ -72,7 +74,6 @@ bool parseURI(std::string uriString)
 	if (uriString.find("/invite/") != std::string::npos)
 	{
 		uriString = uriString.substr(inviteOffset + 8, uriString.length() - inviteOffset);
-		spdlog::info("Current string : {}", uriString);
 		atLocation = uriString.find("/");
 	}
 	else
@@ -84,6 +85,7 @@ bool parseURI(std::string uriString)
 	
 	if (atLocation == std::string::npos)
 	{
+		lastError = "Invalid or malformed URI. Returning early.";
 		spdlog::info("Invalid or malformed URI. Returning early.");
 		return false;
 	}
@@ -98,6 +100,7 @@ bool parseURI(std::string uriString)
 	}
 	else
 	{
+		lastError = "Invalid or unknown invite type.";
 		spdlog::info("Invalid or unknown invite type \"{}\". Returning early.", invitetype);
 		return false;
 	}
@@ -138,43 +141,40 @@ bool HandleAcceptedInvite()
 			// if player has agreed to send token and we aren't already authing, try to auth
 			if (GetAgreedToSendToken() == 1 && !g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 				g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken, false);
-
 			// invalidate key so auth will fail
 			*g_LocalPlayerOriginToken = 0;
-			spdlog::info(
-				"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
-				(char*)storedPassword.c_str());
-			bool temp = g_MasterServerManager->m_savingPersistentData;
-			g_MasterServerManager->m_savingPersistentData = false;
-			g_MasterServerManager->AuthenticateWithServer(
-				g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
-				(char*)storedPassword.c_str(), false);
-			if (!g_MasterServerManager->m_successfullyAuthenticatedWithGameServer)
-			{
-				return false;
-			}
-			g_MasterServerManager->m_savingPersistentData = temp;
-			spdlog::info("Correctly returned");
-			RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
-			spdlog::info(
-				"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
-				info.ip.S_un.S_un_b.s_b4, info.port);
-			Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
-			Cbuf_AddText(
-				Cbuf_GetCurrentPlayer(),
-				fmt::format(
-					"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
-					info.ip.S_un.S_un_b.s_b4, info.port)
-					.c_str(),
-				cmd_source_t::kCommandSrcCode);
-
-			g_MasterServerManager->m_hasPendingConnectionInfo = false;
-			return true;
 		}
-		else
+		spdlog::info(
+			"{}, {}, {}, {}", g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
+			(char*)storedPassword.c_str());
+		bool temp = g_MasterServerManager->m_savingPersistentData;
+		g_MasterServerManager->m_savingPersistentData = false; // Stupid hack, process will hang if true here
+		spdlog::info("Going to try authenticating with server");
+		g_MasterServerManager->AuthenticateWithServer(
+			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
+			(char*)storedPassword.c_str(), false);
+		g_MasterServerManager->m_savingPersistentData = temp; // Restore original value
+		if (!g_MasterServerManager->m_successfullyAuthenticatedWithGameServer)
 		{
+			lastError = "Failed to authenticate";
 			return false;
 		}
+		spdlog::info("Correctly returned");
+		RemoteServerConnectionInfo info = g_MasterServerManager->m_pendingConnectionInfo;
+		spdlog::info(
+			"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
+			info.ip.S_un.S_un_b.s_b4, info.port);
+		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
+		Cbuf_AddText(
+			Cbuf_GetCurrentPlayer(),
+			fmt::format(
+				"connect {}.{}.{}.{}:{}", info.ip.S_un.S_un_b.s_b1, info.ip.S_un.S_un_b.s_b2, info.ip.S_un.S_un_b.s_b3,
+				info.ip.S_un.S_un_b.s_b4, info.port)
+				.c_str(),
+			cmd_source_t::kCommandSrcCode);
+
+		g_MasterServerManager->m_hasPendingConnectionInfo = false;
+		return true;
 	}
 	return false;
 }
@@ -212,24 +212,45 @@ SQRESULT SQ_RemoveStoredURI(void* sqvm)
 
 SQRESULT SQ_GetInviteServerName(void* sqvm)
 {
-	g_MasterServerManager->GetServerInfo((char*)storedServerId.c_str(), false);
 	ClientSq_pushstring(sqvm, g_MasterServerManager->s_requestedServerInfo.name.c_str(), -1);
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_GetInviteShouldShowPasswordDialog(void* sqvm)
+{
+	ClientSq_pushbool(sqvm, (g_MasterServerManager->s_requestedServerInfo.hasPassword && storedPassword.length() == 0));
 	return SQRESULT_NOTNULL;
 }
 
 SQRESULT SQ_TryJoinInvite(void* sqvm)
 {
+	ClientSq_pushbool(sqvm, HandleAcceptedInvite());
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_ParseInvite(void* sqvm)
+{
 	std::string invite = ClientSq_getstring(sqvm, 1);
-	if (parseURI(invite))
-	{
-		ClientSq_pushbool(sqvm, HandleAcceptedInvite());
-		return SQRESULT_NOTNULL;
-	}
-	else
-	{
-		ClientSq_pushbool(sqvm, false);
-		return SQRESULT_NULL;
-	}
+	bool result = parseURI(invite);
+	ClientSq_pushbool(sqvm, result);
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_RequestInviteServerInfo(void* sqvm)
+{
+	g_MasterServerManager->GetServerInfo((char*)storedServerId.c_str(), false);
+	if (!g_MasterServerManager->s_requestedServerInfo.success)
+		lastError = "Failed to get server info";
+	ClientSq_pushbool(sqvm, g_MasterServerManager->s_requestedServerInfo.success);
+	return SQRESULT_NOTNULL;
+}
+
+
+SQRESULT SQ_JoinInviteWithPassword(void* sqvm)
+{
+	storedPassword = ClientSq_getstring(sqvm, 1);
+	ClientSq_pushbool(sqvm, HandleAcceptedInvite());
+	return SQRESULT_NOTNULL;
 }
 
 SQRESULT SQ_GenerateServerInvite(void* sqvm)
@@ -270,6 +291,11 @@ SQRESULT SQ_GenerateServerInvite(void* sqvm)
 		}
 	}
 	ClientSq_pushinteger(sqvm, 0);
+	return SQRESULT_NOTNULL;
+}
+
+SQRESULT SQ_GetInviteError(void* sqvm) {
+	ClientSq_pushstring(sqvm, lastError.c_str(), -1);
 	return SQRESULT_NOTNULL;
 }
 
@@ -369,9 +395,6 @@ void StartUriHandler()
 	spdlog::info("	.\n");
 }
 
-SQRESULT SQ_testfunc(void* sqvm) { 
-	return SQRESULT_NOTNULL; }
-
 void InitialiseURIStuff(HMODULE baseAddress)
 {
 	std::thread thread1(std::ref(StartUriHandler)); // Start NamedPipe handler
@@ -382,7 +405,12 @@ void InitialiseURIStuff(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("void", "NSAcceptInvite", "", "", SQ_AcceptInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSDeclineInvite", "", "", SQ_DeclineInvite);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSetOnMainMenu", "bool onMainMenu", "", SQ_SetOnMainMenu);
-	g_UISquirrelManager->AddFuncRegistration("bool", "NSTryJoinInvite", "string invite", "", SQ_TryJoinInvite);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSGetInviteShouldShowPasswordDialog", "", "", SQ_GetInviteShouldShowPasswordDialog);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSTryJoinInvite", "", "", SQ_TryJoinInvite);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSJoinInviteWithPassword", "string password", "", SQ_JoinInviteWithPassword);
 	g_UISquirrelManager->AddFuncRegistration("int", "NSGenerateServerInvite", "bool link", "", SQ_GenerateServerInvite);
 	g_UISquirrelManager->AddFuncRegistration("string", "NSGetInviteServerName", "", "", SQ_GetInviteServerName);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSParseInvite", "string invite", "", SQ_ParseInvite);
+	g_UISquirrelManager->AddFuncRegistration("bool", "NSRequestInviteServerInfo", "", "", SQ_RequestInviteServerInfo);
+	g_UISquirrelManager->AddFuncRegistration("string", "NSGetLastInviteError", "", "", SQ_GetInviteError);
 }
