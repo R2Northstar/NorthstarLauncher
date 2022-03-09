@@ -561,6 +561,7 @@
     <ClInclude Include="scriptsrson.h" />
     <ClInclude Include="serverauthentication.h" />
     <ClInclude Include="sha256.h" />
+    <ClInclude Include="scriptservertoclientstringcommand.h" />
     <ClInclude Include="sigscanning.h" />
     <ClInclude Include="socketcreator.h" />
     <ClInclude Include="sourceconsole.h" />
@@ -630,6 +631,7 @@
     <ClCompile Include="miscserverscript.cpp" />
     <ClCompile Include="serverchathooks.cpp" />
     <ClCompile Include="sha256.cpp" />
+    <ClCompile Include="scriptservertoclientstringcommand.cpp" />
     <ClCompile Include="sigscanning.cpp" />
     <ClCompile Include="socketcreator.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
