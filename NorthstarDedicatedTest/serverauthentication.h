@@ -6,6 +6,7 @@
 struct AuthData
 {
 	char uid[33];
+	char username[64];
 
 	// pdata
 	char* pdata;
@@ -85,6 +86,7 @@ class ServerAuthenticationManager
 	void StartPlayerAuthServer();
 	void StopPlayerAuthServer();
 	bool AuthenticatePlayer(void* player, int64_t uid, char* authToken);
+	char* VerifyPlayerName(void* player, char* authToken, char* name);
 	bool RemovePlayerAuthData(void* player);
 	void WritePersistentData(void* player);
 	bool CheckPlayerChatRatelimit(void* player);
