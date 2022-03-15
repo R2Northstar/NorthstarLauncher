@@ -42,7 +42,7 @@
 #include "plugins.h"
 #include "host_state.h"
 #include "rcon_shared.h"
-
+#include "clientvideooverrides.h"
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -241,6 +241,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
 		AddDllLoadCallback("client.dll", InitialiseScriptServerToClientStringCommands);
+		AddDllLoadCallback("client.dll", InitialiseClientVideoOverrides);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);

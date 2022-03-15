@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "gameutils.h"
 #include "convar.h"
 #include "concommand.h"
 #include "sv_rcon.h"
 #include "cl_rcon.h"
 #include "dedicated.h"
+#include "gameutils.h"
 
 // memory
 IMemAlloc* g_pMemAllocSingleton;
@@ -22,7 +22,6 @@ server_state_t* sv_m_State;
 
 // network stuff
 ConVar* Cvar_hostport;
-ConVar* Cvar_net_datablock_enabled;
 
 // playlist stuff
 GetCurrentPlaylistType GetCurrentPlaylistName;
@@ -33,17 +32,11 @@ GetCurrentPlaylistVarType GetCurrentPlaylistVar;
 // server entity stuff
 Server_GetEntityByIndexType Server_GetEntityByIndex;
 
-// server tickrate stuff
-ConVar* Cvar_base_tickinterval_mp;
-ConVar* Cvar_base_tickinterval_sp;
-
 // auth
 char* g_LocalPlayerUserID;
 char* g_LocalPlayerOriginToken;
 
 // misc stuff
-ConVar* Cvar_match_defaultMap;
-ConVar* Cvar_communities_hostname;
 ErrorType Error;
 CommandLineType CommandLine;
 Plat_FloatTimeType Plat_FloatTime;
@@ -83,17 +76,13 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 				g_pAllConVars.push_back(pConVar);
 			}
 		}*/
+
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
-	Cvar_net_datablock_enabled = (ConVar*)((char*)baseAddress + 0x12A4F6D0);
-	Cvar_match_defaultMap = (ConVar*)((char*)baseAddress + 0x8AB530);
-	Cvar_communities_hostname = (ConVar*)((char*)baseAddress + 0x13157E50);
 }
 
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress)
 {
 	Server_GetEntityByIndex = (Server_GetEntityByIndexType)((char*)baseAddress + 0xFB820);
-	Cvar_base_tickinterval_mp = (ConVar*)((char*)baseAddress + 0xBFC360);
-	Cvar_base_tickinterval_sp = (ConVar*)((char*)baseAddress + 0xBFBEA0);
 }
 
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress)
