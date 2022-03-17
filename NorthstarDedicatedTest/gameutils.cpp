@@ -80,9 +80,6 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 		}*/
 
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
-	Cvar_net_datablock_enabled = (ConVar*)((char*)baseAddress + 0x12A4F6D0);
-	Cvar_match_defaultMap = (ConVar*)((char*)baseAddress + 0x8AB530);
-	Cvar_communities_hostname = (ConVar*)((char*)baseAddress + 0x13157E50);
 
 	g_gameHWND = (HWND*)((char*)baseAddress + 0x7d88a0);
 }
