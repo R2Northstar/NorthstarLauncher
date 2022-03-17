@@ -852,8 +852,8 @@ void MasterServerManager::GetServerInfo(char* id, bool async)
 					!connectionInfoJson["info"].HasMember("maxPlayers") || !connectionInfoJson["info"].HasMember("map") ||
 					!connectionInfoJson["info"].HasMember("playlist") || !connectionInfoJson["info"].HasMember("hasPassword"))
 				{
-				spdlog::error("Failed reading masterserver response: malformed json object");
-				goto REQUEST_END_CLEANUP;
+					spdlog::error("Failed reading masterserver response: malformed json object");
+					goto REQUEST_END_CLEANUP;
 				}
 
 				s_requestedServerInfo.id = connectionInfoJson["info"]["id"].GetString();

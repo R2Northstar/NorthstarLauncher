@@ -75,7 +75,6 @@ struct RequestedServerInfo
 	std::string map;
 	std::string playlist;
 	bool hasPassword;
-
 };
 
 class MasterServerManager

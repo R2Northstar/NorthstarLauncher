@@ -81,9 +81,9 @@ bool parseURI(std::string uriString)
 	{
 		atLocation = uriString.find("@");
 	}
-	
+
 	spdlog::info("Parsing URI: {}", uriString.c_str());
-	
+
 	if (atLocation == std::string::npos)
 	{
 		lastError = "Invalid or malformed URI. Returning early.";
@@ -152,8 +152,8 @@ bool HandleAcceptedInvite()
 		g_MasterServerManager->m_savingPersistentData = false; // Stupid hack, process will hang if true here
 		spdlog::info("Going to try authenticating with server");
 		g_MasterServerManager->AuthenticateWithServer(
-			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(),
-			(char*)storedPassword.c_str(), false);
+			g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken, (char*)storedServerId.c_str(), (char*)storedPassword.c_str(),
+			false);
 		g_MasterServerManager->m_savingPersistentData = temp; // Restore original value
 		if (!g_MasterServerManager->m_successfullyAuthenticatedWithGameServer)
 		{
@@ -246,7 +246,6 @@ SQRESULT SQ_RequestInviteServerInfo(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-
 SQRESULT SQ_JoinInviteWithPassword(void* sqvm)
 {
 	storedPassword = ClientSq_getstring(sqvm, 1);
@@ -295,7 +294,8 @@ SQRESULT SQ_GenerateServerInvite(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-SQRESULT SQ_GetInviteError(void* sqvm) {
+SQRESULT SQ_GetInviteError(void* sqvm)
+{
 	ClientSq_pushstring(sqvm, lastError.c_str(), -1);
 	return SQRESULT_NOTNULL;
 }

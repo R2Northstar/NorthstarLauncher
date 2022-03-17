@@ -3,7 +3,7 @@
 #include "modmanager.h"
 #include "dedicated.h"
 
-typedef void*(*BinkOpenType)(const char* path, uint32_t flags);
+typedef void* (*BinkOpenType)(const char* path, uint32_t flags);
 BinkOpenType BinkOpen;
 
 void* BinkOpenHook(const char* path, uint32_t flags)
@@ -17,7 +17,7 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 	{
 		if (!mod.Enabled)
 			continue;
-		
+
 		if (std::find(mod.BinkVideos.begin(), mod.BinkVideos.end(), filename) != mod.BinkVideos.end())
 			fileOwner = &mod;
 	}
@@ -38,5 +38,6 @@ void InitialiseClientVideoOverrides(HMODULE baseAddress)
 		return;
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, GetProcAddress(GetModuleHandleA("bink2w64.dll"), "BinkOpen"), &BinkOpenHook, reinterpret_cast<LPVOID*>(&BinkOpen));
+	ENABLER_CREATEHOOK(
+		hook, GetProcAddress(GetModuleHandleA("bink2w64.dll"), "BinkOpen"), &BinkOpenHook, reinterpret_cast<LPVOID*>(&BinkOpen));
 }
