@@ -50,7 +50,6 @@
 #include "rapidjson/error/en.h"
 
 #include <shellapi.h>
-#include <WinUser.h>
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -223,71 +222,71 @@ bool InitialiseNorthstar()
 
 	parseConfigurables();
 
-	wchar_t buffer[_MAX_PATH];
-	GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
-	std::wstring w = std::wstring(buffer);
-	std::string exepath = std::string(w.begin(), w.end()); // Convert from wstring to string
+	if (!IsDedicated())
+	{
 
-	if (strstr(GetCommandLineA(), "-addurihandler"))
-	{
-		writeURIHandlerToRegistry(exepath);
-		exit(0);
-	}
+		wchar_t buffer[_MAX_PATH];
+		GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
+		std::wstring w = std::wstring(buffer);
+		std::string exepath = std::string(w.begin(), w.end()); // Convert from wstring to string
 
-	HKEY subKey = nullptr;
-	LONG result = RegOpenKeyEx(HKEY_CLASSES_ROOT, L"northstar", 0, KEY_READ, &subKey);
-	std::ofstream file;
-	if (result != ERROR_SUCCESS && !strstr(GetCommandLineA(), "-nopopupurihandler"))
-	{
-		int msgboxID = MessageBox(
-			NULL,
-			(LPCWSTR)L"Would you like to allow Northstar to automatically open invite links when you click on them?\n\nClick YES to "
-					 L"allow\nClick NO to disable forever\nClick CANCEL to ask again next time",
-			(LPCWSTR)L"Northstar Launcher", MB_ICONQUESTION | MB_YESNOCANCEL | MB_DEFBUTTON1 | MB_APPLMODAL);
-		switch (msgboxID)
+		if (strstr(GetCommandLineA(), "-addurihandler"))
 		{
-		case IDYES:
-			ShellExecute(
-				NULL, L"runas", w.c_str(), L" -addurihandler",
-				NULL, // default dir
-				SW_SHOWNORMAL);
-			break;
-		case IDNO:
-			file.open("ns_startup_args.txt", std::ios::app | std::ios::out);
-			file.write(" -nopopupurihandler", 20);
-			file.close();
-			break;
-		case IDCANCEL:
-			break;
-		default:
-			break;
+			writeURIHandlerToRegistry(exepath);
+			exit(0);
 		}
-	}
 
-	std::string cla = GetCommandLineA();
-	std::string URIProtocolName = "northstar://";
-	int uriOffset = cla.find(URIProtocolName);
-	if (uriOffset != -1)
-	{
-		std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1);
-		int firstSpace = message.find(" ");
-		if (firstSpace != std::string::npos)
+		HKEY subKey = nullptr;
+		LONG result = RegOpenKeyEx(HKEY_CLASSES_ROOT, L"northstar", 0, KEY_READ, &subKey);
+		std::ofstream file;
+		if (result != ERROR_SUCCESS && !strstr(GetCommandLineA(), "-nopopupurihandler"))
 		{
-			message = message.substr(0, firstSpace);
+			int msgboxID = MessageBox(
+				NULL,
+				(LPCWSTR)L"Would you like to allow Northstar to automatically open invite links when you click on them?\n\nClick YES to "
+						 L"allow\nClick NO to disable forever\nClick CANCEL to ask again next time",
+				(LPCWSTR)L"Northstar Launcher", MB_ICONQUESTION | MB_YESNOCANCEL | MB_DEFBUTTON1 | MB_APPLMODAL);
+			switch (msgboxID)
+			{
+			case IDYES:
+				ShellExecute(
+					NULL, L"runas", w.c_str(), L" -addurihandler",
+					NULL, // default dir
+					SW_SHOWNORMAL);
+				break;
+			case IDNO:
+				file.open("ns_startup_args.txt", std::ios::app | std::ios::out);
+				file.write(" -nopopupurihandler", 20);
+				file.close();
+				break;
+			case IDCANCEL:
+				break;
+			default:
+				break;
+			}
 		}
-		if (message[message.length() - 1] == '/')
+
+		std::string cla = GetCommandLineA();
+		std::string URIProtocolName = "northstar://";
+		int uriOffset = cla.find(URIProtocolName);
+		if (uriOffset != -1)
 		{
-			message = message.substr(0, message.length() - 1);
+			std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1);
+			int firstSpace = message.find(" ");
+			if (firstSpace != std::string::npos)
+			{
+				message = message.substr(0, firstSpace);
+			}
+			if (message[message.length() - 1] == '/')
+			{
+				message = message.substr(0, message.length() - 1);
+			}
+			parseURI(message);
 		}
-		parseURI(message);
-	}
-	else
-	{
-		spdlog::info("================================");
-		spdlog::info("================================");
-		spdlog::info("================================");
-		spdlog::info("================================");
-		spdlog::info("No URI found");
+		else
+		{
+			spdlog::info("No URI found, launching normally.");
+		}
 	}
 
 	SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
