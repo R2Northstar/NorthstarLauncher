@@ -2,6 +2,7 @@
 #include "clientchathooks.h"
 #include <rapidjson/document.h>
 #include "squirrel.h"
+#include "dedicated.h"
 #include "serverchathooks.h"
 #include "localchatwriter.h"
 
@@ -17,14 +18,14 @@ struct ChatTags
 
 static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
 {
+	// This hook is called for each HUD, but we only want our logic to run once.
+	if (self != *CHudChat::allHuds)
+	{
+		return;
+	}
+
 	if (g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		// This hook is called for each HUD, but we only want our logic to run once.
-		if (!IsFirstHud(self))
-		{
-			return;
-		}
-
 		int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
 		bool isAnonymous = senderId == 0;
 		bool isCustom = isAnonymous || (inboxId & CUSTOM_MESSAGE_INDEX_BIT);
@@ -46,7 +47,12 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 		g_ClientSquirrelManager->call(5);
 	}
 	else
-		CHudChat__AddGameLine(self, message, inboxId, isTeam, isDead);
+	{
+		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
+		{
+			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
+		}
+	}
 }
 
 // void NSChatWrite( int context, string str )
@@ -81,6 +87,9 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm)
 
 void InitialiseClientChatHooks(HMODULE baseAddress)
 {
+	if (IsDedicated())
+		return;
+
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x22E580, &CHudChat__AddGameLineHook, reinterpret_cast<LPVOID*>(&CHudChat__AddGameLine));
 

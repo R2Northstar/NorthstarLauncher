@@ -1473,6 +1473,21 @@
     <ClInclude Include="localchatwriter.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="scriptservertoclientstringcommand.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="plugins.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin_abi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="clientvideooverrides.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1620,6 +1635,15 @@
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="localchatwriter.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptservertoclientstringcommand.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
