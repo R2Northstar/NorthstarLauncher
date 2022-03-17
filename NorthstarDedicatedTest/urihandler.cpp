@@ -9,7 +9,8 @@
 #include "masterserver.h"
 #include "clientauthhooks.h"
 #include "urihandler.h"
-#include "base64.h"
+#include <base64.h>
+#include <base64.cpp> // explicitly include cpp file, otherwise it will not compile
 #include "plugins.h"
 
 #include <Shlwapi.h>
