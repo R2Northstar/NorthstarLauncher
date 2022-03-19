@@ -59,20 +59,21 @@ void LoadPreloadPaks()
 		for (ModRpakEntry& pak : mod.Rpaks)
 			if (pak.m_bAutoLoad)
 				g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakPath).string().c_str());
-	} 
+	}
 
 	bShouldPreload = true;
 }
 
 LoadPakSyncType LoadPakSyncOriginal;
 void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
-{ 
+{
 	HandlePakAliases(&path);
-	// note: we don't handle loading any preloaded custom paks synchronously since LoadPakSync is never actually called in retail, just load them async instead
+	// note: we don't handle loading any preloaded custom paks synchronously since LoadPakSync is never actually called in retail, just load
+	// them async instead
 	LoadPreloadPaks();
 
 	spdlog::info("LoadPakSync {}", path);
-	return LoadPakSyncOriginal(path, unknownSingleton, flags); 
+	return LoadPakSyncOriginal(path, unknownSingleton, flags);
 }
 
 LoadPakAsyncType LoadPakAsyncOriginal;

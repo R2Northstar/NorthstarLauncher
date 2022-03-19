@@ -559,7 +559,7 @@
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
-    <ClInclude Include="state.h" />
+    <ClInclude Include="urihandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
@@ -617,6 +617,7 @@
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
+    <ClCompile Include="urihandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />

@@ -40,6 +40,7 @@
 #include "scriptservertoclientstringcommand.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "urihandler.h"
 #include "clientvideooverrides.h"
 #include <string.h>
 #include "pch.h"
@@ -48,6 +49,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
+
+#include <shellapi.h>
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -84,6 +87,31 @@ void freeLibrary(HMODULE hLib)
 	if (!FreeLibrary(hLib))
 	{
 		spdlog::error("There was an error while trying to free library");
+	}
+}
+
+void writeURIHandlerToRegistry(std::string exepath)
+{
+	::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+
+	HKEY runKey;
+	DWORD dontcare;
+
+	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, L"northstar\\shell\\open\\command", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &runKey, &dontcare) !=
+		ERROR_SUCCESS)
+	{
+		return;
+	}
+	else
+	{
+		std::string command = exepath + " %1";
+		std::wstring wide_string = std::wstring(command.begin(), command.end());
+		LPCTSTR data = wide_string.c_str();
+		LPCTSTR flag = L"";
+		LPCTSTR name = L"Northstar Launcher";
+		RegSetKeyValueW(HKEY_CLASSES_ROOT, L"northstar\\shell\\open\\command", L"", REG_SZ, (LPBYTE)data, wcslen(data) * sizeof(TCHAR));
+		RegSetKeyValueW(HKEY_CLASSES_ROOT, L"northstar", L"URL Protocol", REG_SZ, (LPBYTE)flag, wcslen(flag) * sizeof(TCHAR));
+		RegSetKeyValueW(HKEY_CLASSES_ROOT, L"northstar", L"", REG_SZ, (LPBYTE)name, wcslen(name) * sizeof(TCHAR));
 	}
 }
 
@@ -194,6 +222,73 @@ bool InitialiseNorthstar()
 	initialised = true;
 
 	parseConfigurables();
+
+	if (!IsDedicated())
+	{
+
+		wchar_t buffer[_MAX_PATH];
+		GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
+		std::wstring w = std::wstring(buffer);
+		std::string exepath = std::string(w.begin(), w.end()); // Convert from wstring to string
+
+		if (strstr(GetCommandLineA(), "-addurihandler"))
+		{
+			writeURIHandlerToRegistry(exepath);
+			exit(0);
+		}
+
+		HKEY subKey = nullptr;
+		LONG result = RegOpenKeyEx(HKEY_CLASSES_ROOT, L"northstar", 0, KEY_READ, &subKey);
+		std::ofstream file;
+		if (result != ERROR_SUCCESS && !strstr(GetCommandLineA(), "-nopopupurihandler"))
+		{
+			int msgboxID = MessageBox(
+				NULL,
+				(LPCWSTR)L"Would you like to allow Northstar to automatically open invite links when you click on them?\n\nClick YES to "
+						 L"allow\nClick NO to disable forever\nClick CANCEL to ask again next time",
+				(LPCWSTR)L"Northstar Launcher", MB_ICONQUESTION | MB_YESNOCANCEL | MB_DEFBUTTON1 | MB_APPLMODAL);
+			switch (msgboxID)
+			{
+			case IDYES:
+				ShellExecute(
+					NULL, L"runas", w.c_str(), L" -addurihandler",
+					NULL, // default dir
+					SW_SHOWNORMAL);
+				break;
+			case IDNO:
+				file.open("ns_startup_args.txt", std::ios::app | std::ios::out);
+				file.write(" -nopopupurihandler", 20);
+				file.close();
+				break;
+			case IDCANCEL:
+				break;
+			default:
+				break;
+			}
+		}
+
+		std::string cla = GetCommandLineA();
+		std::string URIProtocolName = "northstar://";
+		int uriOffset = cla.find(URIProtocolName);
+		if (uriOffset != -1)
+		{
+			std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1);
+			int firstSpace = message.find(" ");
+			if (firstSpace != std::string::npos)
+			{
+				message = message.substr(0, firstSpace);
+			}
+			if (message[message.length() - 1] == '/')
+			{
+				message = message.substr(0, message.length() - 1);
+			}
+			parseURI(message);
+		}
+		else
+		{
+			spdlog::info("No URI found, launching normally.");
+		}
+	}
 
 	SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
 	curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);

@@ -64,6 +64,19 @@ struct MainMenuPromoData
 	int smallButton2ImageIndex;
 };
 
+struct RequestedServerInfo
+{
+	bool success;
+	std::string id;
+	std::string name;
+	std::string description;
+	int playerCount;
+	int maxPlayers;
+	std::string map;
+	std::string playlist;
+	bool hasPassword;
+};
+
 class MasterServerManager
 {
   private:
@@ -100,6 +113,8 @@ class MasterServerManager
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
 
+	RequestedServerInfo s_requestedServerInfo;
+
   private:
 	void SetCommonHttpClientOptions(CURL* curl);
 
@@ -108,9 +123,10 @@ class MasterServerManager
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
+	void AuthenticateOriginWithMasterServer(char* uid, char* originToken, bool async);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
-	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
+	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password, bool async);
+	void GetServerInfo(char* uid, bool async);
 	void
 	AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
 	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
