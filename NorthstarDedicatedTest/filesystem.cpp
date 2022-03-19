@@ -193,11 +193,5 @@ VPKData* MountVPKHook(IFileSystem* fileSystem, const char* vpkPath)
 		}
 	}
 
-	for (std::string vpkPath : g_ModManager->vpkList)
-	{
-		spdlog::info("MountVPK {}", vpkPath);
-		mountVPK(fileSystem, vpkPath.c_str());
-	}
-
 	return ret;
 }
