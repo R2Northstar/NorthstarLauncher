@@ -99,9 +99,6 @@ SQInteger NSTestFunc(void* sqvm) { return 1; }
 
 void InitialiseClientSquirrel(HMODULE baseAddress)
 {
-	if (IsDedicated())
-		return;
-
 	HookEnabler hook;
 
 	// client inits
