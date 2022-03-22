@@ -18,7 +18,6 @@
 #include "chatcommand.h"
 #include "modlocalisation.h"
 #include "playlist.h"
-#include "securitypatches.h"
 #include "miscserverscript.h"
 #include "clientauthhooks.h"
 #include "latencyflex.h"
@@ -226,7 +225,6 @@ bool InitialiseNorthstar()
 	// client-exclusive patches
 	{
 		AddDllLoadCallbackForClient("tier0.dll", InitialiseTier0LanguageHooks);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseClientEngineSecurityPatches);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrel);
 		AddDllLoadCallbackForClient("client.dll", InitialiseSourceConsole);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseChatCommands);
