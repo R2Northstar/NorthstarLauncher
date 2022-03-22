@@ -72,6 +72,23 @@ namespace KittenMem {
 		}
 		return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
 	}
+
+	inline void BytePatch(uintptr_t address, const BYTE* vals, int size) {
+		WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
+	}
+
+	inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals) {
+		std::vector<BYTE> bytes = vals;
+		if (!bytes.empty())
+			BytePatch(address, &bytes[0], bytes.size());
+	}
+
+	inline void NOP(uintptr_t address, int size) {
+		BYTE* buf = (BYTE*)malloc(size);
+		memset(buf, 0x90, size);
+		BytePatch(address, buf, size);
+		free(buf);
+	}
 }
 
 #pragma region KHOOK
