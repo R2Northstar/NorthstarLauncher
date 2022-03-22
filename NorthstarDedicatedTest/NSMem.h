@@ -2,10 +2,10 @@
 #include "pch.h"
 // clang-format off
 
-// KittenPopo's stuff (because I really can't handle working with northstar's stuff tbh)
+// KittenPopo's memory stuff, made for northstar (because I really can't handle working with northstar's original memory stuff tbh)
 
 #pragma region Pattern Scanning
-namespace KittenMem {
+namespace NSMem {
 	inline void* PatternScan(void* module, const int* pattern, int patternSize, int offset) {
 		if (!module)
 			return NULL;
@@ -114,7 +114,7 @@ struct KHook {
 	}
 
 	bool Setup() {
-		auto func = KittenMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+		auto func = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
 		if (!func)
 			return false;
 

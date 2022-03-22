@@ -117,7 +117,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 	return 0;
 }
 
-#include "KittenMemUtils.h"
+#include "NSMem.h"
 void InitialiseDedicated(HMODULE engineAddress)
 {
 	spdlog::info("InitialiseDedicated");
@@ -127,7 +127,7 @@ void InitialiseDedicated(HMODULE engineAddress)
 	{
 		// Host_Init
 		// prevent a particle init that relies on client dll
-		KittenMem::NOP(ea + 0x156799, 5);
+		NSMem::NOP(ea + 0x156799, 5);
 	}
 
 	{
@@ -136,83 +136,83 @@ void InitialiseDedicated(HMODULE engineAddress)
 		auto ptr = ea + 0x1C4EBD;
 
 		// cmp => mov
-		KittenMem::BytePatch(ptr + 1, {0xC6, 0x87});
+		NSMem::BytePatch(ptr + 1, {0xC6, 0x87});
 
 		// 00 => 01
-		KittenMem::BytePatch(ptr + 7, {0x01});
+		NSMem::BytePatch(ptr + 7, {0x01});
 	}
 
 	{
 		// Some init that i'm not sure of that crashes
 		// nop the call to it
-		KittenMem::NOP(ea + 0x156A63, 5);
+		NSMem::NOP(ea + 0x156A63, 5);
 	}
 
 	{
 		// runframeserver
 		// nop some access violations
-		KittenMem::NOP(ea + 0x159819, 17);
+		NSMem::NOP(ea + 0x159819, 17);
 	}
 
 	{
-		KittenMem::NOP(ea + 0x156B4C, 7);
+		NSMem::NOP(ea + 0x156B4C, 7);
 
 		// previously patched these, took me a couple weeks to figure out they were the issue
 		// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
 		// so uhh, don't do that
-		//KittenMem::NOP(ea + 0x156B4C + 7, 8);
+		//NSMem::NOP(ea + 0x156B4C + 7, 8);
 
-		KittenMem::NOP(ea + 0x156B4C + 15, 9);
+		NSMem::NOP(ea + 0x156B4C + 15, 9);
 	}
 
 	{
 		// HostState_State_NewGame
 		// nop an access violation
-		KittenMem::NOP(ea + 0xB934C, 9);
+		NSMem::NOP(ea + 0xB934C, 9);
 	}
 
 	{
 		// CEngineAPI::Connect
 		// remove call to Shader_Connect
-		KittenMem::NOP(ea + 0x1C4D7D, 5);
+		NSMem::NOP(ea + 0x1C4D7D, 5);
 	}
 
 	// currently does not work, crashes stuff, likely gotta keep this here
 	//{
 	//	// CEngineAPI::Connect
 	//  // remove calls to register ui rpak asset types
-	//	KittenMem::NOP(ea + 0x1C4E07, 5);
+	//	NSMem::NOP(ea + 0x1C4E07, 5);
 	//}
 
 	// not sure if this should be done, not loading ui at least is good, but should everything be gone?
 	{
 		// Host_Init
 		// change the number of rpaks to load from 6 to 1, so we only load common.rpak
-		KittenMem::BytePatch(ea + 0x15653B + 1, {0x01});
+		NSMem::BytePatch(ea + 0x15653B + 1, {0x01});
 	}
 
 	{
 		// Host_Init
 		// remove call to ui loading stuff
-		KittenMem::NOP(ea + 0x156595, 5);
+		NSMem::NOP(ea + 0x156595, 5);
 	}
 
 	{
 		// some function that gets called from RunFrameServer
 		// nop a function that makes requests to stryder, this will eventually access violation if left alone and isn't necessary anyway
-		KittenMem::NOP(ea + 0x15A0BB, 5);
+		NSMem::NOP(ea + 0x15A0BB, 5);
 	}
 
 	{
 		// RunFrameServer
 		// nop a function that access violations
-		KittenMem::NOP(ea + 0x159BF3, 5);
+		NSMem::NOP(ea + 0x159BF3, 5);
 	}
 
 	{
 		// func that checks if origin is inited
 		// always return 1
-		KittenMem::BytePatch(ea + 0x183B70, {
+		NSMem::BytePatch(ea + 0x183B70, {
 			0xB0, 0x01, // mov al,01
 			0xC3 // ret
 		});
@@ -221,13 +221,13 @@ void InitialiseDedicated(HMODULE engineAddress)
 	{
 		// HostState_State_ChangeLevel
 		// nop clientinterface call
-		KittenMem::NOP(ea + 0x1552ED, 16);
+		NSMem::NOP(ea + 0x1552ED, 16);
 	}
 
 	{
 		// HostState_State_ChangeLevel
 		// nop clientinterface call
-		KittenMem::NOP(ea + 0x155363, 16);
+		NSMem::NOP(ea + 0x155363, 16);
 	}
 
 	// note: previously had DisableDedicatedWindowCreation patches here, but removing those rn since they're all shit and unstable and bad
@@ -235,7 +235,7 @@ void InitialiseDedicated(HMODULE engineAddress)
 	{
 		// IVideoMode::CreateGameWindow
 		// nop call to ShowWindow
-		KittenMem::NOP(ea + 0x1CD146, 5);
+		NSMem::NOP(ea + 0x1CD146, 5);
 	}
 
 	CDedicatedExports* dedicatedExports = new CDedicatedExports;
