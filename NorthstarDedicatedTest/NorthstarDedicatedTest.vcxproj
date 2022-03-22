@@ -549,7 +549,6 @@
     <ClInclude Include="rpakfilesystem.h" />
     <ClInclude Include="scriptbrowserhooks.h" />
     <ClInclude Include="scriptmainmenupromos.h" />
-    <ClInclude Include="securitypatches.h" />
     <ClInclude Include="scriptmodmenu.h" />
     <ClInclude Include="scriptserverbrowser.h" />
     <ClInclude Include="scriptsrson.h" />
@@ -607,7 +606,6 @@
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
-    <ClCompile Include="securitypatches.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />
     <ClCompile Include="scriptsrson.cpp" />
