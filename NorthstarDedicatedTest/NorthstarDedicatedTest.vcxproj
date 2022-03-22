@@ -560,6 +560,8 @@
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="state.h" />
+    <ClInclude Include="ExploitFixes.h" />
+    <ClInclude Include="KittenMemUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
@@ -617,6 +619,7 @@
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
+    <ClCompile Include="ExploitFixes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />
