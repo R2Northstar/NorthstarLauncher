@@ -301,9 +301,9 @@ void InitialiseDedicatedOrigin(HMODULE baseAddress)
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
 	// an origin id as a client for dedi it's fine though, game doesn't care if origin is disabled as long as there's only a server
 
-	char* ptr = (char*)GetProcAddress(GetModuleHandleA("tier0.dll"), "Tier0_InitOrigin");
-	TempReadWrite rw(ptr);
-	*ptr = (char)0xC3; // ret
+	NSMem::BytePatch((uintptr_t)GetProcAddress(GetModuleHandleA("tier0.dll"), "Tier0_InitOrigin"), {
+		0xC3 // ret
+	});
 }
 
 typedef void (*PrintFatalSquirrelErrorType)(void* sqvm);
