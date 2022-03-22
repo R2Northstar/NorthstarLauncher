@@ -5,7 +5,7 @@
 // note: sigscanning is only really intended to be used for resolving stuff like shared function definitions
 // we mostly use raw function addresses for stuff
 
-size_t GetDLLLength(HMODULE moduleHandle)
+size_t GetDLLength(HMODULE moduleHandle)
 {
 	// based on sigscn code from ttf2sdk, which is in turn based on CSigScan from https://wiki.alliedmods.net/Signature_Scanning
 	MEMORY_BASIC_INFORMATION mem;
@@ -20,7 +20,7 @@ size_t GetDLLLength(HMODULE moduleHandle)
 void* FindSignature(std::string dllName, const char* sig, const char* mask)
 {
 	HMODULE dllAddress = GetModuleHandleA(dllName.c_str());
-	char* dllEnd = (char*)(dllAddress + GetDLLLength(dllAddress));
+	char* dllEnd = (char*)(dllAddress + GetDLLength(dllAddress));
 
 	size_t sigLength = strlen(mask);
 
