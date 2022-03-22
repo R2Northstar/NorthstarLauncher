@@ -127,6 +127,9 @@
     <Filter Include="Header Files\Shared\Math">
       <UniqueIdentifier>{44a83740-9d70-480d-9a7a-43b81f8eab9e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shared\Exploit Fixes">
+      <UniqueIdentifier>{4a8a695a-a103-4b1f-b314-0ec19a253119}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1488,6 +1491,12 @@
     <ClInclude Include="clientvideooverrides.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="ExploitFixes.h">
+      <Filter>Source Files\Shared\Exploit Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="KittenMemUtils.h">
+      <Filter>Source Files\Shared\Exploit Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1645,6 +1654,9 @@
     </ClCompile>
     <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="ExploitFixes.cpp">
+      <Filter>Source Files\Shared\Exploit Fixes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -48,6 +48,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
+#include "ExploitFixes.h"
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -273,6 +274,9 @@ bool InitialiseNorthstar()
 
 	// mod manager after everything else
 	AddDllLoadCallback("engine.dll", InitialiseModManager);
+
+	// activate exploit fixes
+	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
