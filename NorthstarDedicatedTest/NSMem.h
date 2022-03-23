@@ -89,6 +89,16 @@ namespace NSMem {
 		BytePatch(address, buf, size);
 		free(buf);
 	}
+
+	inline bool IsMemoryReadable(void* ptr, size_t size) {
+		BYTE* buffer = (BYTE*)malloc(size);
+
+		size_t numWritten = 0;
+		ReadProcessMemory(GetCurrentProcess(), ptr, buffer, size, &numWritten);
+		free(buffer);
+
+		return numWritten == size;
+	}
 }
 
 #pragma region KHOOK
@@ -102,6 +112,7 @@ struct KHookPatternInfo {
 
 struct KHook {
 	KHookPatternInfo targetFunc;
+	void* targetFuncAddr;
 	void* hookFunc;
 	void** original;
 
@@ -114,24 +125,24 @@ struct KHook {
 	}
 
 	bool Setup() {
-		auto func = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
-		if (!func)
+		targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+		if (!targetFuncAddr)
 			return false;
 
-		return MH_CreateHook(func, hookFunc, original) == MH_OK;
+		return MH_CreateHook(targetFuncAddr, hookFunc, original) == MH_OK;
 	}
 
 	// Returns true if succeeded
 	static bool InitAllHooks() {
 		for (KHook* hook : _allHooks) {
 			if (hook->Setup()) {
-
+				spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
 			} else {
 				return false;
 			}
 		}
 
-		return true;
+		return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
 	}
 };
 #define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                             \
