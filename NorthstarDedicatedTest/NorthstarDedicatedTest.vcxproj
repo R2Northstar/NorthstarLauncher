@@ -556,7 +556,6 @@
     <ClInclude Include="rpakfilesystem.h" />
     <ClInclude Include="scriptbrowserhooks.h" />
     <ClInclude Include="scriptmainmenupromos.h" />
-    <ClInclude Include="securitypatches.h" />
     <ClInclude Include="scriptmodmenu.h" />
     <ClInclude Include="scriptserverbrowser.h" />
     <ClInclude Include="scriptsrson.h" />
@@ -571,6 +570,9 @@
     <ClInclude Include="state.h" />
     <ClInclude Include="sv_rcon.h" />
     <ClInclude Include="sv_rcon.pb.h" />
+    <ClInclude Include="ExploitFixes.h" />
+    <ClInclude Include="ExploitFixes_UTF8Parser.h" />
+    <ClInclude Include="NSMem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
@@ -625,7 +627,6 @@
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
-    <ClCompile Include="securitypatches.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />
     <ClCompile Include="scriptsrson.cpp" />
@@ -644,6 +645,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ExploitFixes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />
