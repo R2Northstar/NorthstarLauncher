@@ -1486,6 +1486,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hideconsole.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
     <ClInclude Include="clientvideooverrides.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
@@ -1645,6 +1647,8 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hideconsole.cpp">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
     <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
