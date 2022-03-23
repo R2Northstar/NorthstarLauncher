@@ -560,6 +560,7 @@
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="state.h" />
     <ClInclude Include="ExploitFixes.h" />
+    <ClInclude Include="ExploitFixes_UTF8Parser.h" />
     <ClInclude Include="NSMem.h" />
   </ItemGroup>
   <ItemGroup>
