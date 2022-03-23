@@ -1646,10 +1646,10 @@
     <ClCompile Include="plugins.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hideconsole.cpp">
-      <Filter>Header Files\Client</Filter>
-    </ClCompile>
     <ClCompile Include="clientvideooverrides.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="hideconsole.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
