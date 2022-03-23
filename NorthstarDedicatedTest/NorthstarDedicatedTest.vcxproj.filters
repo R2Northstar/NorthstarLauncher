@@ -1648,7 +1648,7 @@
     </ClCompile>
     <ClCompile Include="hideconsole.cpp">
       <Filter>Header Files\Client</Filter>
-    </ClInclude>
+    </ClCompile>
     <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
