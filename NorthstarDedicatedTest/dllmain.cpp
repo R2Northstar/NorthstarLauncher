@@ -245,6 +245,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerToClientStringCommands);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("client.dll", InitialiseHiddenConsole);
+		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineErrorHooks);
 
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
