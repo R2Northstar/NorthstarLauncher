@@ -19,9 +19,6 @@ void ChangeConsoleHiddenState()
 
 void InitialiseHiddenConsole(HMODULE baseAddress)
 {
-	if (IsDedicated())
-		return;
-
 	if (!strstr(GetCommandLineA(), "-showconsole"))
 	{
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
