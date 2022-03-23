@@ -27,7 +27,9 @@ void InitialiseClientEngineSecurityPatches(HMODULE baseAddress)
 
 	// note: this could break some things
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1C6360, &IsValveModHook, reinterpret_cast<LPVOID*>(&IsValveMod));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x222E70, &SVC_CmdKeyValues__ReadFromBufferHook, reinterpret_cast<LPVOID*>(&SVC_CmdKeyValues__ReadFromBuffer));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x222E70, &SVC_CmdKeyValues__ReadFromBufferHook,
+		reinterpret_cast<LPVOID*>(&SVC_CmdKeyValues__ReadFromBuffer));
 
 	// patches to make commands run from client/ui script still work
 	// note: this is likely preventable in a nicer way? test prolly

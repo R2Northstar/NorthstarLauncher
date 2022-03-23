@@ -37,6 +37,7 @@
 #include "serverchathooks.h"
 #include "clientchathooks.h"
 #include "localchatwriter.h"
+#include "hideconsole.h"
 #include "scriptservertoclientstringcommand.h"
 #include "plugin_abi.h"
 #include "plugins.h"
@@ -243,6 +244,8 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseLocalChatWriter);
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerToClientStringCommands);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
+		AddDllLoadCallbackForClient("client.dll", InitialiseHiddenConsole);
+		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineErrorHooks);
 
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);

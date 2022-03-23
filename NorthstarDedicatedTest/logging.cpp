@@ -5,6 +5,7 @@
 #include "hookutils.h"
 #include "dedicated.h"
 #include "convar.h"
+#include "gameutils.h"
 #include <iomanip>
 #include <sstream>
 #include <Psapi.h>
@@ -195,8 +196,18 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			spdlog::error("Failed to write minidump file {}!", stream.str());
 
 		if (!IsDedicated())
+		{
+			PostMessage(*g_gameHwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			ShowWindow(*g_gameHwnd, SW_HIDE);
+			ShowWindow(GetConsoleWindow(), SW_SHOW);
+			SetForegroundWindow(GetConsoleWindow());
+			SetFocus(GetConsoleWindow());
+			SetActiveWindow(GetConsoleWindow());
+			ShowWindow(GetConsoleWindow(), SW_RESTORE);
+
 			MessageBoxA(
 				0, "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+		}
 	}
 
 	logged = true;
@@ -451,4 +462,29 @@ void InitialiseClientPrintHooks(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x198710, TextMsgHook, reinterpret_cast<LPVOID*>(&TextMsg_Original));
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
+}
+
+typedef int(__fastcall* Sys_Error_Internal_Type)(char a1, const char near* a2, char near* a3);
+Sys_Error_Internal_Type Sys_Error_Internal;
+
+int __fastcall Sys_Error_Internal_Hook(char a1, const char near* a2, char near* a3)
+{
+	// Bring console to the foreground before showing the engine error message box
+	PostMessage(*g_gameHwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+	ShowWindow(*g_gameHwnd, SW_HIDE);
+	ShowWindow(GetConsoleWindow(), SW_SHOW);
+	SetForegroundWindow(GetConsoleWindow());
+	SetFocus(GetConsoleWindow());
+	SetActiveWindow(GetConsoleWindow());
+	ShowWindow(GetConsoleWindow(), SW_RESTORE);
+
+	return Sys_Error_Internal(a1, a2, a3);
+}
+
+void InitialiseEngineErrorHooks(HMODULE baseAddress)
+{
+	HookEnabler hook;
+
+	// Engine Error popup
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1C1F30, Sys_Error_Internal_Hook, reinterpret_cast<LPVOID*>(&Sys_Error_Internal));
 }
