@@ -1,6 +1,5 @@
 #pragma once
 #include "pch.h"
-// clang-format off
 
 // KittenPopo's memory stuff, made for northstar (because I really can't handle working with northstar's original memory stuff tbh)
 
