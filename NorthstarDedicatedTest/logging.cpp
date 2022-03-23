@@ -5,6 +5,7 @@
 #include "hookutils.h"
 #include "dedicated.h"
 #include "convar.h"
+#include "gameutils.h"
 #include <iomanip>
 #include <sstream>
 #include <Psapi.h>
