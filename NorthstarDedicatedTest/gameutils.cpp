@@ -80,7 +80,7 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 		}*/
 
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
-  
+
 	g_gameHwnd = (HWND*)((char*)baseAddress + 0x7d88a0);
 }
 
