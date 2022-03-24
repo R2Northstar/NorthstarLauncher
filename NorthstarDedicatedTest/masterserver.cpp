@@ -560,7 +560,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
 				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr)
-					.c_str());
+				.c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -703,7 +703,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 					fmt::format(
 						"{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}", Cvar_ns_masterserver_hostname->GetString(),
 						uidStr, tokenStr, serverIdStr, escapedPassword)
-						.c_str());
+					.c_str());
 
 				curl_free(escapedPassword);
 			}
@@ -838,7 +838,7 @@ void MasterServerManager::AddSelfToServerList(
 						"{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
 						Cvar_ns_masterserver_hostname->GetString(), port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped,
 						maxPlayers, passwordEscaped)
-						.c_str());
+					.c_str());
 
 				curl_free(nameEscaped);
 				curl_free(descEscaped);
@@ -942,7 +942,7 @@ void MasterServerManager::AddSelfToServerList(
 										Cvar_ns_player_auth_port->GetInt(), escapedNameNew, escapedDescNew, escapedMapNew,
 										escapedPlaylistNew, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers,
 										escapedPasswordNew)
-										.c_str());
+									.c_str());
 
 								curl_free(escapedNameNew);
 								curl_free(escapedDescNew);
@@ -1044,7 +1044,7 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 					fmt::format(
 						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", Cvar_ns_masterserver_hostname->GetString(),
 						m_ownServerId, mapEscaped, playlistEscaped, maxPlayers)
-						.c_str());
+					.c_str());
 
 				curl_free(mapEscaped);
 				curl_free(playlistEscaped);
@@ -1084,7 +1084,7 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 				curl, CURLOPT_URL,
 				fmt::format(
 					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId, playerCount)
-					.c_str());
+				.c_str());
 
 			CURLcode result = curl_easy_perform(curl);
 
@@ -1125,7 +1125,7 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 				fmt::format(
 					"{}/accounts/write_persistence?id={}&serverId={}", Cvar_ns_masterserver_hostname->GetString(), strPlayerId,
 					m_ownServerId)
-					.c_str());
+				.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -1271,7 +1271,7 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 	CHostState__State_GameShutdown(hostState);
 }
 
-MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownServerId{""}, m_ownClientAuthToken{""} {}
+MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownServerId{ "" }, m_ownClientAuthToken{ "" } {}
 
 void InitialiseSharedMasterServer(HMODULE baseAddress)
 {
