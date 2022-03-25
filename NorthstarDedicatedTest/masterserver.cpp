@@ -212,7 +212,6 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 			std::string readBuffer;
 			curl_easy_setopt(
 				curl, CURLOPT_URL,
@@ -289,7 +288,6 @@ void MasterServerManager::RequestServerList()
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/servers", Cvar_ns_masterserver_hostname->GetString()).c_str());
@@ -437,7 +435,6 @@ void MasterServerManager::RequestMainMenuPromos()
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(
@@ -555,7 +552,6 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(
@@ -689,7 +685,6 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -808,7 +803,6 @@ void MasterServerManager::AddSelfToServerList(
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -1028,7 +1022,6 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -1075,7 +1068,6 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -1166,7 +1158,6 @@ void MasterServerManager::RemoveSelfFromServerList()
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
