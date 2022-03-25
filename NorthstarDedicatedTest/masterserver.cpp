@@ -170,6 +170,7 @@ void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 {
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
@@ -1117,7 +1118,6 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			std::string readBuffer;
 			curl_easy_setopt(
