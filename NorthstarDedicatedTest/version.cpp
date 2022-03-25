@@ -13,7 +13,7 @@ void InitialiseVersion() {
 	VS_FIXEDFILEINFO* lpFfi = NULL;
 	HINSTANCE hInst = ::GetModuleHandle(NULL);
 
-	hResInfo = FindResource(hInst, MAKEINTRESOURCE(1), RT_VERSION);
+	hResInfo = FindResourceW(hInst, MAKEINTRESOURCE(1), RT_VERSION);
 	if (hResInfo != NULL) {
 		dwSize = SizeofResource(hInst, hResInfo);
 		hResData = LoadResource(hInst, hResInfo);
@@ -22,7 +22,7 @@ void InitialiseVersion() {
 			pResCopy = LocalAlloc(LMEM_FIXED, dwSize);
 			if (pResCopy != 0) {
 				CopyMemory(pResCopy, pRes, dwSize);
-				VerQueryValue(pResCopy, L"\\", (LPVOID*)&lpFfi, &uLen);
+				VerQueryValueW(pResCopy, L"\\", (LPVOID*)&lpFfi, &uLen);
 
 				DWORD dwFileVersionMS = lpFfi->dwFileVersionMS;
 				DWORD dwFileVersionLS = lpFfi->dwFileVersionLS;
