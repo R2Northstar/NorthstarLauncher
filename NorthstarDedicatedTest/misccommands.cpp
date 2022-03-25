@@ -29,7 +29,6 @@ void AddMiscConCommands() {
 		[](const CCommand& arg) {
 
 			// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
-
 			g_MasterServerManager->m_bNewgameAfterSelfAuth = true;
 			g_MasterServerManager->AuthenticateWithOwnServer(g_LocalPlayerUserID, g_MasterServerManager->m_ownClientAuthToken);
 		}
@@ -49,6 +48,7 @@ void AddMiscConCommands() {
 			// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
 			if (g_ClientSquirrelManager->sqvm) {
 				g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = true;
+
 				// this won't set playlist correctly on remote clients, don't think they can set playlist until they've left which sorta fucks
 				// things should maybe set this in HostState_NewGame?
 				SetCurrentPlaylist("tdm");
