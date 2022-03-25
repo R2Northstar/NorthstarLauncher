@@ -16,6 +16,7 @@
 #include <Windows.h>
 #include <Psapi.h>
 #include <set>
+#include <map>
 #include <filesystem>
 #include <sstream>
 
@@ -30,4 +31,5 @@ template <typename ReturnType, typename... Args> ReturnType CallVFunc(int index,
 	return (*reinterpret_cast<ReturnType(__fastcall***)(void*, Args...)>(thisPtr))[index](thisPtr, args...);
 }
 
+#define STR_HASH(s) (std::hash<std::string>()(s))
 #endif
