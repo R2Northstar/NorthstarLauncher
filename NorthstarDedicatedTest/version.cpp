@@ -36,8 +36,8 @@ void InitialiseVersion() {
 				// If it is set to 1 (as in resources.rc), we are a dev build
 				// On github CI, we set this 1 to a 0 automatically as we replace the 0.0.0.1 with the real version number
 				if (dwRightMost == 1) {
-					sprintf(version, "%d.%d.%d.%d-dev", dwLeftMost, dwSecondLeft, dwSecondRight, dwRightMost);
-					sprintf(NSUserAgent, "R2Northstar/%d.%d.%d-dev", dwLeftMost, dwSecondLeft, dwSecondRight);
+					sprintf(version, "%d.%d.%d.%d+dev", dwLeftMost, dwSecondLeft, dwSecondRight, dwRightMost);
+					sprintf(NSUserAgent, "R2Northstar/%d.%d.%d+dev", dwLeftMost, dwSecondLeft, dwSecondRight);
 				}
 				else {
 					sprintf(version, "%d.%d.%d.%d", dwLeftMost, dwSecondLeft, dwSecondRight, dwRightMost);
