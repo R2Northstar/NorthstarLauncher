@@ -41,6 +41,7 @@
 #include "plugins.h"
 #include "clientvideooverrides.h"
 #include <string.h>
+#include "version.h"
 #include "pch.h"
 
 #include "rapidjson/document.h"
@@ -194,6 +195,7 @@ bool InitialiseNorthstar()
 	initialised = true;
 
 	parseConfigurables();
+	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters
 	SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
