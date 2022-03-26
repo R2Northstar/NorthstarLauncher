@@ -13,7 +13,6 @@ IndentExternBlock: Indent
 PointerAlignment: Left
 SortIncludes: false
 
-PointerAlignment: Left
 SpaceAfterLogicalNot: 'false'
 SpaceAfterTemplateKeyword: 'true'
 SpaceBeforeAssignmentOperators: 'true'
@@ -22,3 +21,4 @@ SpaceBeforeCtorInitializerColon: 'true'
 SpaceBeforeInheritanceColon: 'true'
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: 'true'
+NamespaceIndentation: All

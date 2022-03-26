@@ -22,5 +22,6 @@ std::unordered_map<std::string, ConCommandBase*> CCvar::DumpToMap()
 
 	return allConVars;
 }
+
 SourceInterface<CCvar>* g_pCVarInterface;
 CCvar* g_pCVar;
