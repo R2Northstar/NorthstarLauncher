@@ -1,4 +1,13 @@
+---
+AlignConsecutiveMacros: 'false'
+AlignTrailingComments: 'false'
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: 'false'
+IndentWrappedFunctionNames: 'false'
+KeepEmptyLinesAtTheStartOfBlocks: 'false'
 Language: Cpp
+<<<<<<< HEAD
 Standard: Auto
 IndentWidth: 4
 TabWidth: 4
@@ -13,6 +22,11 @@ IndentExternBlock: Indent
 PointerAlignment: Left
 SortIncludes: false
 
+=======
+PointerAlignment: Left
+SortIncludes: 'false'
+SpaceAfterCStyleCast: 'false'
+>>>>>>> parent of 29a061b (Update .clang-format)
 SpaceAfterLogicalNot: 'false'
 SpaceAfterTemplateKeyword: 'true'
 SpaceBeforeAssignmentOperators: 'true'
@@ -21,4 +35,17 @@ SpaceBeforeCtorInitializerColon: 'true'
 SpaceBeforeInheritanceColon: 'true'
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: 'true'
+<<<<<<< HEAD
 NamespaceIndentation: All
+=======
+SpaceInEmptyParentheses: 'false'
+SpacesInAngles: 'false'
+SpacesInCStyleCastParentheses: 'false'
+SpacesInContainerLiterals: 'false'
+SpacesInParentheses: 'false'
+SpacesInSquareBrackets: 'false'
+Standard: Cpp03
+UseTab: Always
+
+...
+>>>>>>> parent of 29a061b (Update .clang-format)
