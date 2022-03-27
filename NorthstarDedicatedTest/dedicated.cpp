@@ -7,8 +7,8 @@
 
 bool IsDedicated()
 {
-	// return CommandLine()->CheckParm("-dedicated");
-	return strstr(GetCommandLineA(), "-dedicated");
+	static bool result = strstr(GetCommandLineA(), "-dedicated");
+	return result;
 }
 
 // CDedidcatedExports defs

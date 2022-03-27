@@ -40,6 +40,43 @@ namespace NSMem
 		return nullptr;
 	}
 
+	// Returns -1 if not a valid hex char
+	inline int HexCharVal(char c) {
+		c = toupper(c);
+		if (isdigit(c))
+		{
+			return c - '0';
+		}
+		else if (c >= 'A' && c <= 'F')
+		{
+			return 0xA + (c - 'A');
+		}
+		else
+		{
+			return -1;
+		}
+	}
+
+	inline std::vector<BYTE> HexStrToByteArray(std::string str) 
+	{
+		std::vector<BYTE> out;
+
+		int buf = -1;
+		for (int i = 0; i < str.size(); i+= 3) { 
+			if (i + 1 < str.size())
+			{
+				out.push_back(HexCharVal(str[i])*16 + HexCharVal(str[i+1]));
+			}
+		}
+
+		if (buf != -1)
+		{
+			out.push_back(buf);
+		}
+
+		return out;
+	}
+
 	inline void* PatternScan(const char* moduleName, const char* pattern, int offset = 0)
 	{
 		std::vector<int> patternNums;
@@ -97,6 +134,12 @@ namespace NSMem
 	inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
 	{
 		std::vector<BYTE> bytes = vals;
+		if (!bytes.empty())
+			BytePatch(address, &bytes[0], bytes.size());
+	}
+
+	inline void BytePatch(uintptr_t address, std::string bytesStr) {
+		std::vector<BYTE> bytes = HexStrToByteArray(bytesStr);
 		if (!bytes.empty())
 			BytePatch(address, &bytes[0], bytes.size());
 	}
