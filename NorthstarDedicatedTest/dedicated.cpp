@@ -136,10 +136,10 @@ void InitialiseDedicated(HMODULE engineAddress)
 		auto ptr = ea + 0x1C4EBD;
 
 		// cmp => mov
-		NSMem::BytePatch(ptr + 1, {0xC6, 0x87});
+		NSMem::BytePatch(ptr + 1, "C6 87");
 
 		// 00 => 01
-		NSMem::BytePatch(ptr + 7, {0x01});
+		NSMem::BytePatch(ptr + 7, "01");
 	}
 
 	{
@@ -188,7 +188,7 @@ void InitialiseDedicated(HMODULE engineAddress)
 	{
 		// Host_Init
 		// change the number of rpaks to load from 6 to 1, so we only load common.rpak
-		NSMem::BytePatch(ea + 0x15653B + 1, {0x01});
+		NSMem::BytePatch(ea + 0x15653B + 1, "01");
 	}
 
 	{
