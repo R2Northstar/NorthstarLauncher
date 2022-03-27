@@ -1533,6 +1533,9 @@
     <ClInclude Include="ExploitFixes_UTF8Parser.h">
       <Filter>Source Files\Shared\Exploit Fixes\UTF8Parser</Filter>
     </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1720,6 +1723,9 @@
     </ClCompile>
     <ClCompile Include="ExploitFixes.cpp">
       <Filter>Source Files\Shared\Exploit Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="version.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
