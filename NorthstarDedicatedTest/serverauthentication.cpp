@@ -78,55 +78,60 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 	m_runningPlayerAuthThread = true;
 
 	// listen is a blocking call so thread this
-	std::thread serverThread([this] {
-		// this is just a super basic way to verify that servers have ports open, masterserver will try to read this before ensuring
-		// server is legit
-		m_playerAuthServer.Get("/verify", [](const httplib::Request& request, httplib::Response& response) {
-			response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain");
+	std::thread serverThread(
+		[this]
+		{
+			// this is just a super basic way to verify that servers have ports open, masterserver will try to read this before ensuring
+			// server is legit
+			m_playerAuthServer.Get(
+				"/verify", [](const httplib::Request& request, httplib::Response& response)
+				{ response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain"); });
+
+			m_playerAuthServer.Post(
+				"/authenticate_incoming_player",
+				[this](const httplib::Request& request, httplib::Response& response)
+				{
+					// can't just do request.remote_addr == Cvar_ns_masterserver_hostname->GetString() because the cvar can be a url, gotta
+					// resolve an ip from it for comparisons
+					// unsigned long remoteAddr = inet_addr(request.remote_addr.c_str());
+					//
+					// char* addrPtr = Cvar_ns_masterserver_hostname->GetString();
+					// char* typeStart = strstr(addrPtr, "://");
+					// if (typeStart)
+					//	addrPtr = typeStart + 3;
+					// hostent* resolvedRemoteAddr = gethostbyname((const char*)addrPtr);
+
+					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= 65335 ||
+						!request.has_param("serverAuthToken") ||
+						strcmp(
+							g_MasterServerManager->m_ownServerAuthToken,
+							request.get_param_value("serverAuthToken")
+								.c_str())) // || !resolvedRemoteAddr || ((in_addr**)resolvedRemoteAddr->h_addr_list)[0]->S_un.S_addr !=
+										   // remoteAddr)
+					{
+						response.set_content("{\"success\":false}", "application/json");
+						return;
+					}
+
+					AuthData newAuthData;
+					strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
+					newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
+
+					strncpy(newAuthData.username, request.get_param_value("username").c_str(), sizeof(newAuthData.username));
+					newAuthData.username[sizeof(newAuthData.username) - 1] = 0;
+
+					newAuthData.pdataSize = request.body.size();
+					newAuthData.pdata = new char[newAuthData.pdataSize];
+					memcpy(newAuthData.pdata, request.body.c_str(), newAuthData.pdataSize);
+
+					std::lock_guard<std::mutex> guard(m_authDataMutex);
+					m_authData.insert(std::make_pair(request.get_param_value("authToken"), newAuthData));
+
+					response.set_content("{\"success\":true}", "application/json");
+				});
+
+			m_playerAuthServer.listen("0.0.0.0", Cvar_ns_player_auth_port->GetInt());
 		});
-
-		m_playerAuthServer.Post("/authenticate_incoming_player", [this](const httplib::Request& request, httplib::Response& response) {
-			// can't just do request.remote_addr == Cvar_ns_masterserver_hostname->GetString() because the cvar can be a url, gotta
-			// resolve an ip from it for comparisons
-			// unsigned long remoteAddr = inet_addr(request.remote_addr.c_str());
-			//
-			// char* addrPtr = Cvar_ns_masterserver_hostname->GetString();
-			// char* typeStart = strstr(addrPtr, "://");
-			// if (typeStart)
-			//	addrPtr = typeStart + 3;
-			// hostent* resolvedRemoteAddr = gethostbyname((const char*)addrPtr);
-
-			if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= 65335 ||
-				!request.has_param("serverAuthToken") ||
-				strcmp(
-					g_MasterServerManager->m_ownServerAuthToken,
-					request.get_param_value("serverAuthToken")
-						.c_str())) // || !resolvedRemoteAddr || ((in_addr**)resolvedRemoteAddr->h_addr_list)[0]->S_un.S_addr !=
-								   // remoteAddr)
-			{
-				response.set_content("{\"success\":false}", "application/json");
-				return;
-			}
-
-			AuthData newAuthData;
-			strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
-			newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
-
-			strncpy(newAuthData.username, request.get_param_value("username").c_str(), sizeof(newAuthData.username));
-			newAuthData.username[sizeof(newAuthData.username) - 1] = 0;
-
-			newAuthData.pdataSize = request.body.size();
-			newAuthData.pdata = new char[newAuthData.pdataSize];
-			memcpy(newAuthData.pdata, request.body.c_str(), newAuthData.pdataSize);
-
-			std::lock_guard<std::mutex> guard(m_authDataMutex);
-			m_authData.insert(std::make_pair(request.get_param_value("authToken"), newAuthData));
-
-			response.set_content("{\"success\":true}", "application/json");
-		});
-
-		m_playerAuthServer.listen("0.0.0.0", Cvar_ns_player_auth_port->GetInt());
-	});
 
 	serverThread.detach();
 }
