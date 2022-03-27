@@ -6,162 +6,165 @@
 #pragma region Pattern Scanning
 namespace NSMem
 {
-	inline void* PatternScan(void* module, const int* pattern, int patternSize, int offset)
+inline void* PatternScan(void* module, const int* pattern, int patternSize, int offset)
+{
+	if (!module)
+		return NULL;
+
+	auto dosHeader = (PIMAGE_DOS_HEADER)module;
+	auto ntHeaders = (PIMAGE_NT_HEADERS)((BYTE*)module + dosHeader->e_lfanew);
+
+	auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
+
+	auto scanBytes = (BYTE*)module;
+
+	for (auto i = 0; i < sizeOfImage - patternSize; ++i)
 	{
-		if (!module)
-			return NULL;
-
-		auto dosHeader = (PIMAGE_DOS_HEADER)module;
-		auto ntHeaders = (PIMAGE_NT_HEADERS)((BYTE*)module + dosHeader->e_lfanew);
-
-		auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
-
-		auto scanBytes = (BYTE*)module;
-
-		for (auto i = 0; i < sizeOfImage - patternSize; ++i)
+		bool found = true;
+		for (auto j = 0; j < patternSize; ++j)
 		{
-			bool found = true;
-			for (auto j = 0; j < patternSize; ++j)
+			if (scanBytes[i + j] != pattern[j] && pattern[j] != -1)
 			{
-				if (scanBytes[i + j] != pattern[j] && pattern[j] != -1)
+				found = false;
+				break;
+			}
+		}
+
+		if (found)
+		{
+			uintptr_t addressInt = (uintptr_t)(&scanBytes[i]) + offset;
+			return (uint8_t*)addressInt;
+		}
+	}
+
+	return nullptr;
+}
+
+// Returns -1 if not a valid hex char
+inline int HexCharVal(char c)
+{
+	c = toupper(c);
+	if (isdigit(c))
+	{
+		return c - '0';
+	}
+	else if (c >= 'A' && c <= 'F')
+	{
+		return 0xA + (c - 'A');
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+inline std::vector<BYTE> HexStrToByteArray(std::string str)
+{
+	std::vector<BYTE> out;
+
+	int buf = -1;
+	for (int i = 0; i < str.size(); i += 3)
+	{
+		if (i + 1 < str.size())
+		{
+			out.push_back(HexCharVal(str[i]) * 16 + HexCharVal(str[i + 1]));
+		}
+	}
+
+	if (buf != -1)
+	{
+		out.push_back(buf);
+	}
+
+	return out;
+}
+
+inline void* PatternScan(const char* moduleName, const char* pattern, int offset = 0)
+{
+	std::vector<int> patternNums;
+
+	bool lastChar = 0;
+	int size = strlen(pattern);
+	for (int i = 0; i < size; i++)
+	{
+		char c = pattern[i];
+
+		// If this is a space character, ignore it
+		if (c == ' ' || c == '\t')
+			continue;
+
+		if (c == '?')
+		{
+			// Add a wildcard (-1)
+			patternNums.push_back(-1);
+		}
+		else if (i < size - 1)
+		{
+			BYTE result = 0;
+			for (int j = 0; j < 2; j++)
+			{
+				int val = 0;
+				char c = (pattern + i + j)[0];
+				if (c >= 'a')
 				{
-					found = false;
-					break;
+					val = c - 'a' + 0xA;
 				}
-			}
-
-			if (found)
-			{
-				uintptr_t addressInt = (uintptr_t)(&scanBytes[i]) + offset;
-				return (uint8_t*)addressInt;
-			}
-		}
-
-		return nullptr;
-	}
-
-	// Returns -1 if not a valid hex char
-	inline int HexCharVal(char c) {
-		c = toupper(c);
-		if (isdigit(c))
-		{
-			return c - '0';
-		}
-		else if (c >= 'A' && c <= 'F')
-		{
-			return 0xA + (c - 'A');
-		}
-		else
-		{
-			return -1;
-		}
-	}
-
-	inline std::vector<BYTE> HexStrToByteArray(std::string str) 
-	{
-		std::vector<BYTE> out;
-
-		int buf = -1;
-		for (int i = 0; i < str.size(); i+= 3) { 
-			if (i + 1 < str.size())
-			{
-				out.push_back(HexCharVal(str[i])*16 + HexCharVal(str[i+1]));
-			}
-		}
-
-		if (buf != -1)
-		{
-			out.push_back(buf);
-		}
-
-		return out;
-	}
-
-	inline void* PatternScan(const char* moduleName, const char* pattern, int offset = 0)
-	{
-		std::vector<int> patternNums;
-
-		bool lastChar = 0;
-		int size = strlen(pattern);
-		for (int i = 0; i < size; i++)
-		{
-			char c = pattern[i];
-
-			// If this is a space character, ignore it
-			if (c == ' ' || c == '\t')
-				continue;
-
-			if (c == '?')
-			{
-				// Add a wildcard (-1)
-				patternNums.push_back(-1);
-			}
-			else if (i < size - 1)
-			{
-				BYTE result = 0;
-				for (int j = 0; j < 2; j++)
+				else if (c >= 'A')
 				{
-					int val = 0;
-					char c = (pattern + i + j)[0];
-					if (c >= 'a')
-					{
-						val = c - 'a' + 0xA;
-					}
-					else if (c >= 'A')
-					{
-						val = c - 'A' + 0xA;
-					}
-					else
-					{
-						val = c - '0';
-					}
-
-					result += (j == 0) ? val * 16 : val;
+					val = c - 'A' + 0xA;
 				}
-				patternNums.push_back(result);
+				else
+				{
+					val = c - '0';
+				}
+
+				result += (j == 0) ? val * 16 : val;
 			}
-
-			i++;
+			patternNums.push_back(result);
 		}
-		return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
+
+		i++;
 	}
+	return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
+}
 
-	inline void BytePatch(uintptr_t address, const BYTE* vals, int size)
-	{
-		WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
-	}
+inline void BytePatch(uintptr_t address, const BYTE* vals, int size)
+{
+	WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
+}
 
-	inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
-	{
-		std::vector<BYTE> bytes = vals;
-		if (!bytes.empty())
-			BytePatch(address, &bytes[0], bytes.size());
-	}
+inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
+{
+	std::vector<BYTE> bytes = vals;
+	if (!bytes.empty())
+		BytePatch(address, &bytes[0], bytes.size());
+}
 
-	inline void BytePatch(uintptr_t address, std::string bytesStr) {
-		std::vector<BYTE> bytes = HexStrToByteArray(bytesStr);
-		if (!bytes.empty())
-			BytePatch(address, &bytes[0], bytes.size());
-	}
+inline void BytePatch(uintptr_t address, std::string bytesStr)
+{
+	std::vector<BYTE> bytes = HexStrToByteArray(bytesStr);
+	if (!bytes.empty())
+		BytePatch(address, &bytes[0], bytes.size());
+}
 
-	inline void NOP(uintptr_t address, int size)
-	{
-		BYTE* buf = (BYTE*)malloc(size);
-		memset(buf, 0x90, size);
-		BytePatch(address, buf, size);
-		free(buf);
-	}
+inline void NOP(uintptr_t address, int size)
+{
+	BYTE* buf = (BYTE*)malloc(size);
+	memset(buf, 0x90, size);
+	BytePatch(address, buf, size);
+	free(buf);
+}
 
-	inline bool IsMemoryReadable(void* ptr, size_t size)
-	{
-		BYTE* buffer = (BYTE*)malloc(size);
+inline bool IsMemoryReadable(void* ptr, size_t size)
+{
+	BYTE* buffer = (BYTE*)malloc(size);
 
-		size_t numWritten = 0;
-		ReadProcessMemory(GetCurrentProcess(), ptr, buffer, size, &numWritten);
-		free(buffer);
+	size_t numWritten = 0;
+	ReadProcessMemory(GetCurrentProcess(), ptr, buffer, size, &numWritten);
+	free(buffer);
 
-		return numWritten == size;
-	}
+	return numWritten == size;
+}
 } // namespace NSMem
 
 #pragma region KHOOK
