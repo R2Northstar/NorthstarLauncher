@@ -630,7 +630,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	{
 		NSMem::BytePatch(
 			ba + 0x114655,
-			"0xEB" // jz => jmp
+			"EB" // jz => jmp
 		);
 	}
 

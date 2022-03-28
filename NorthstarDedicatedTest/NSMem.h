@@ -6,6 +6,59 @@
 #pragma region Pattern Scanning
 namespace NSMem
 {
+inline std::vector<int> HexBytesToString(const char* str)
+{
+	std::vector<int> patternNums;
+	int size = strlen(str);
+	for (int i = 0; i < size; i++)
+	{
+		char c = str[i];
+
+		// If this is a space character, ignore it
+		if (c == ' ' || c == '\t')
+			continue;
+
+		if (c == '?')
+		{
+			// Add a wildcard (-1)
+			patternNums.push_back(-1);
+		}
+		else if (i < size - 1)
+		{
+			BYTE result = 0;
+			for (int j = 0; j < 2; j++)
+			{
+				int val = 0;
+				char c = *(str + i + j);
+				if (c >= 'a')
+				{
+					val = c - 'a' + 0xA;
+				}
+				else if (c >= 'A')
+				{
+					val = c - 'A' + 0xA;
+				}
+				else if (isdigit(c))
+				{
+					val = c - '0';
+				}
+				else
+				{
+					assert(false, "Failed to parse invalid hex string.");
+					val = -1;
+				}
+
+				result += (j == 0) ? val * 16 : val;
+			}
+			patternNums.push_back(result);
+		}
+
+		i++;
+	}
+
+	return patternNums;
+}
+
 inline void* PatternScan(void* module, const int* pattern, int patternSize, int offset)
 {
 	if (!module)
@@ -40,91 +93,10 @@ inline void* PatternScan(void* module, const int* pattern, int patternSize, int 
 	return nullptr;
 }
 
-// Returns -1 if not a valid hex char
-inline int HexCharVal(char c)
-{
-	c = toupper(c);
-	if (isdigit(c))
-	{
-		return c - '0';
-	}
-	else if (c >= 'A' && c <= 'F')
-	{
-		return 0xA + (c - 'A');
-	}
-	else
-	{
-		return -1;
-	}
-}
-
-inline std::vector<BYTE> HexStrToByteArray(std::string str)
-{
-	std::vector<BYTE> out;
-
-	int buf = -1;
-	for (int i = 0; i < str.size(); i += 3)
-	{
-		if (i + 1 < str.size())
-		{
-			out.push_back(HexCharVal(str[i]) * 16 + HexCharVal(str[i + 1]));
-		}
-	}
-
-	if (buf != -1)
-	{
-		out.push_back(buf);
-	}
-
-	return out;
-}
-
 inline void* PatternScan(const char* moduleName, const char* pattern, int offset = 0)
 {
-	std::vector<int> patternNums;
+	std::vector<int> patternNums = HexBytesToString(pattern);
 
-	bool lastChar = 0;
-	int size = strlen(pattern);
-	for (int i = 0; i < size; i++)
-	{
-		char c = pattern[i];
-
-		// If this is a space character, ignore it
-		if (c == ' ' || c == '\t')
-			continue;
-
-		if (c == '?')
-		{
-			// Add a wildcard (-1)
-			patternNums.push_back(-1);
-		}
-		else if (i < size - 1)
-		{
-			BYTE result = 0;
-			for (int j = 0; j < 2; j++)
-			{
-				int val = 0;
-				char c = (pattern + i + j)[0];
-				if (c >= 'a')
-				{
-					val = c - 'a' + 0xA;
-				}
-				else if (c >= 'A')
-				{
-					val = c - 'A' + 0xA;
-				}
-				else
-				{
-					val = c - '0';
-				}
-
-				result += (j == 0) ? val * 16 : val;
-			}
-			patternNums.push_back(result);
-		}
-
-		i++;
-	}
 	return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
 }
 
@@ -140,9 +112,13 @@ inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
 		BytePatch(address, &bytes[0], bytes.size());
 }
 
-inline void BytePatch(uintptr_t address, std::string bytesStr)
+inline void BytePatch(uintptr_t address, const char* bytesStr)
 {
-	std::vector<BYTE> bytes = HexStrToByteArray(bytesStr);
+	std::vector<int> byteInts = HexBytesToString(bytesStr);
+	std::vector<BYTE> bytes;
+	for (int v : byteInts)
+		bytes.push_back(v);
+
 	if (!bytes.empty())
 		BytePatch(address, &bytes[0], bytes.size());
 }
