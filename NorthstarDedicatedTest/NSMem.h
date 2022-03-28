@@ -133,13 +133,15 @@ inline void NOP(uintptr_t address, int size)
 
 inline bool IsMemoryReadable(void* ptr, size_t size)
 {
-	BYTE* buffer = (BYTE*)malloc(size);
+	MEMORY_BASIC_INFORMATION memInfo;
 
-	size_t numWritten = 0;
-	ReadProcessMemory(GetCurrentProcess(), ptr, buffer, size, &numWritten);
-	free(buffer);
+	if (!VirtualQuery(ptr, &memInfo, size))
+		return false;
 
-	return numWritten == size;
+	if (memInfo.RegionSize < size)
+		return false;
+
+	return (memInfo.State == MEM_COMMIT) && (memInfo.Protect != PAGE_NOACCESS); // TODO: Check for other protects? Is that even needed?
 }
 } // namespace NSMem
 
