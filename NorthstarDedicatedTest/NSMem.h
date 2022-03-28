@@ -133,15 +133,19 @@ inline void NOP(uintptr_t address, int size)
 
 inline bool IsMemoryReadable(void* ptr, size_t size)
 {
+	static SYSTEM_INFO sysInfo;
+	if (!sysInfo.dwPageSize)
+		GetSystemInfo(&sysInfo); // This should always be 4096 unless ur playing on NES or some shit but whatever
+
 	MEMORY_BASIC_INFORMATION memInfo;
 
-	if (!VirtualQuery(ptr, &memInfo, size))
+	if (!VirtualQuery(ptr, &memInfo, sizeof(memInfo)))
 		return false;
 
 	if (memInfo.RegionSize < size)
 		return false;
 
-	return (memInfo.State == MEM_COMMIT) && (memInfo.Protect != PAGE_NOACCESS); // TODO: Check for other protects? Is that even needed?
+	return (memInfo.State & MEM_COMMIT) && !(memInfo.Protect & PAGE_NOACCESS);
 }
 } // namespace NSMem
 
