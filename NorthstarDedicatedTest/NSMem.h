@@ -203,9 +203,11 @@ struct KHook
 		return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
 	}
 };
+
 #define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                         \
 	returnType convention hk##name args;                                                                                                   \
 	auto o##name = (returnType(convention*) args)0;                                                                                        \
 	KHook k##name = KHook(KHookPatternInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                  \
 	returnType convention hk##name args
+
 #pragma endregion
