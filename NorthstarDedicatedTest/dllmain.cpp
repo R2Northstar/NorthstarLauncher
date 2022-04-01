@@ -43,6 +43,7 @@
 #include <string.h>
 #include "version.h"
 #include "pch.h"
+#include "persistence.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -257,6 +258,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseServerAuthentication);
 	AddDllLoadCallback("engine.dll", InitialiseSharedMasterServer);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
+	AddDllLoadCallback("server.dll", InitializePersistence);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
 

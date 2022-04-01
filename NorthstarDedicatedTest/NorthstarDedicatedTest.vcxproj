@@ -116,6 +116,7 @@
     <ClInclude Include="clientchathooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="persistence.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
     <ClInclude Include="serverchathooks.h" />
@@ -603,6 +604,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="pdef.cpp" />
+    <ClCompile Include="persistence.cpp" />
     <ClCompile Include="playlist.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
