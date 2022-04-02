@@ -152,12 +152,16 @@ inline bool IsMemoryReadable(void* ptr, size_t size)
 #pragma region KHOOK
 struct KHookPatternInfo
 {
+	void* preFound;
 	const char *moduleName, *pattern;
 	int offset = 0;
 
-	KHookPatternInfo(const char* moduleName, const char* pattern, int offset = 0) : moduleName(moduleName), pattern(pattern), offset(offset)
+	KHookPatternInfo(const char* moduleName, const char* pattern, int offset = 0)
+		: moduleName(moduleName), pattern(pattern), offset(offset), preFound(NULL)
 	{
 	}
+
+	KHookPatternInfo(void* preFound) : preFound(preFound) {}
 };
 
 struct KHook
@@ -178,7 +182,7 @@ struct KHook
 
 	bool Setup()
 	{
-		targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+		targetFuncAddr = targetFunc.preFound ? targetFunc.preFound : NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
 		if (!targetFuncAddr)
 			return false;
 
