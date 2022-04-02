@@ -10,6 +10,26 @@
 #include <Psapi.h>
 #include <minidumpapiset.h>
 #include "configurables.h"
+#include <unordered_set>
+
+void PrintCallStack(std::string prefix) {
+	PVOID framesToCapture[62];
+	int frames = RtlCaptureStackBackTrace(0, 62, framesToCapture, NULL);
+	for (int i = 0; i < frames; i++)
+	{
+		HMODULE backtraceModuleHandle;
+		GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(framesToCapture[i]), &backtraceModuleHandle);
+
+		char backtraceModuleFullName[MAX_PATH];
+		GetModuleFileNameExA(GetCurrentProcess(), backtraceModuleHandle, backtraceModuleFullName, MAX_PATH);
+		char* backtraceModuleName = strrchr(backtraceModuleFullName, '\\') + 1;
+
+		void* actualAddress = (void*)framesToCapture[i];
+		void* relativeAddress = (void*)(uintptr_t(actualAddress) - uintptr_t(backtraceModuleHandle));
+
+		spdlog::error(prefix + "{} + {} ({})", backtraceModuleName, relativeAddress, actualAddress);
+	}
+}
 
 // This needs to be called after hooks are loaded so we can access the command line args
 void CreateLogFiles()
@@ -39,20 +59,80 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 	if (!IsDebuggerPresent())
 	{
-		const DWORD exceptionCode = exceptionInfo->ExceptionRecord->ExceptionCode;
-		if (exceptionCode != EXCEPTION_ACCESS_VIOLATION && exceptionCode != EXCEPTION_ARRAY_BOUNDS_EXCEEDED &&
-			exceptionCode != EXCEPTION_DATATYPE_MISALIGNMENT && exceptionCode != EXCEPTION_FLT_DENORMAL_OPERAND &&
-			exceptionCode != EXCEPTION_FLT_DIVIDE_BY_ZERO && exceptionCode != EXCEPTION_FLT_INEXACT_RESULT &&
-			exceptionCode != EXCEPTION_FLT_INVALID_OPERATION && exceptionCode != EXCEPTION_FLT_OVERFLOW &&
-			exceptionCode != EXCEPTION_FLT_STACK_CHECK && exceptionCode != EXCEPTION_FLT_UNDERFLOW &&
-			exceptionCode != EXCEPTION_ILLEGAL_INSTRUCTION && exceptionCode != EXCEPTION_IN_PAGE_ERROR &&
-			exceptionCode != EXCEPTION_INT_DIVIDE_BY_ZERO && exceptionCode != EXCEPTION_INT_OVERFLOW &&
-			exceptionCode != EXCEPTION_INVALID_DISPOSITION && exceptionCode != EXCEPTION_NONCONTINUABLE_EXCEPTION &&
-			exceptionCode != EXCEPTION_PRIV_INSTRUCTION && exceptionCode != EXCEPTION_STACK_OVERFLOW)
-			return EXCEPTION_CONTINUE_SEARCH;
+		EXCEPTION_RECORD* record = exceptionInfo->ExceptionRecord;
+
+		// Ideally we could just ignore uncaught instead... but there seem to be so many not listed (i.e. E06D7363, etc.)
+		const static std::unordered_set<DWORD> caughtExceptionCodes = {
+			EXCEPTION_ACCESS_VIOLATION,			
+			EXCEPTION_DATATYPE_MISALIGNMENT,	
+			EXCEPTION_ARRAY_BOUNDS_EXCEEDED,	
+			EXCEPTION_FLT_DENORMAL_OPERAND,		
+			EXCEPTION_FLT_DIVIDE_BY_ZERO,		
+			EXCEPTION_FLT_INEXACT_RESULT,		
+			EXCEPTION_FLT_INVALID_OPERATION,	
+			EXCEPTION_FLT_OVERFLOW,				
+			EXCEPTION_FLT_STACK_CHECK,			
+			EXCEPTION_FLT_UNDERFLOW,			
+			EXCEPTION_INT_DIVIDE_BY_ZERO,		
+			EXCEPTION_INT_OVERFLOW,				
+			EXCEPTION_PRIV_INSTRUCTION,			
+			EXCEPTION_IN_PAGE_ERROR,			
+			EXCEPTION_ILLEGAL_INSTRUCTION,		
+			EXCEPTION_NONCONTINUABLE_EXCEPTION, 
+			EXCEPTION_STACK_OVERFLOW,			
+			EXCEPTION_GUARD_PAGE,				
+		};
+
+		if (caughtExceptionCodes.find(record->ExceptionCode) == caughtExceptionCodes.end())
+			return EXCEPTION_CONTINUE_SEARCH; // didnt ask + dont care 
 
 		std::stringstream exceptionCause;
 		exceptionCause << "Cause: ";
+
+		switch (record->ExceptionCode)
+		{
+		case EXCEPTION_ACCESS_VIOLATION:
+		case EXCEPTION_IN_PAGE_ERROR:
+		{
+
+			exceptionCause << "Access Violation" << std::endl;
+
+			auto exceptionInfoType = record->ExceptionInformation[0];
+			auto exceptionInfo1 = (void*)record->ExceptionInformation[1];
+
+			switch (exceptionInfoType)
+			{
+			case 0:
+				exceptionCause << "Attempted to read from: 0x" << exceptionInfo1;
+				break;
+			case 1:
+				exceptionCause << "Attempted to write to: 0x" << exceptionInfo1;
+				break;
+			case 8:
+				exceptionCause << "Data Execution Prevention (DEP) at: 0x" << exceptionInfo1;
+				break;
+			default:
+				exceptionCause << "Unknown access violation at: 0x" << exceptionInfo1;
+			}
+			break;
+		}
+		default:
+		{
+
+			static HANDLE ntdll = GetModuleHandleA("ntdll.dll");
+			char buf[MAX_PATH];
+			DWORD res = FormatMessageA(
+				FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, ntdll, record->ExceptionCode,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, MAX_PATH, NULL);
+
+			exceptionCause << buf;
+			break;
+		}
+		}
+		
+		exceptionCause << " [" << (void*)record->ExceptionCode << "]";
+
+		/*
 		switch (exceptionCode)
 		{
 		case EXCEPTION_ACCESS_VIOLATION:
@@ -60,8 +140,8 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		{
 			exceptionCause << "Access Violation" << std::endl;
 
-			auto exceptionInfo0 = exceptionInfo->ExceptionRecord->ExceptionInformation[0];
-			auto exceptionInfo1 = exceptionInfo->ExceptionRecord->ExceptionInformation[1];
+			auto exceptionInfo0 = record->ExceptionInformation[0];
+			auto exceptionInfo1 = record->ExceptionInformation[1];
 
 			if (!exceptionInfo0)
 				exceptionCause << "Attempted to read from: 0x" << (void*)exceptionInfo1;
@@ -124,8 +204,9 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			exceptionCause << "Unknown";
 			break;
 		}
+		*/
 
-		void* exceptionAddress = exceptionInfo->ExceptionRecord->ExceptionAddress;
+		void* exceptionAddress = record->ExceptionAddress;
 
 		HMODULE crashedModuleHandle;
 		GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(exceptionAddress), &crashedModuleHandle);
@@ -144,22 +225,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		spdlog::error(exceptionCause.str());
 		spdlog::error("At: {} + {}", crashedModuleName, (void*)crashedModuleOffset);
 
-		PVOID framesToCapture[62];
-		int frames = RtlCaptureStackBackTrace(0, 62, framesToCapture, NULL);
-		for (int i = 0; i < frames; i++)
-		{
-			HMODULE backtraceModuleHandle;
-			GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(framesToCapture[i]), &backtraceModuleHandle);
-
-			char backtraceModuleFullName[MAX_PATH];
-			GetModuleFileNameExA(GetCurrentProcess(), backtraceModuleHandle, backtraceModuleFullName, MAX_PATH);
-			char* backtraceModuleName = strrchr(backtraceModuleFullName, '\\') + 1;
-
-			void* actualAddress = (void*)framesToCapture[i];
-			void* relativeAddress = (void*)(uintptr_t(actualAddress) - uintptr_t(backtraceModuleHandle));
-
-			spdlog::error("    {} + {} ({})", backtraceModuleName, relativeAddress, actualAddress);
-		}
+		PrintCallStack("\t");
 
 		spdlog::error("RAX: 0x{0:x}", exceptionContext->Rax);
 		spdlog::error("RBX: 0x{0:x}", exceptionContext->Rbx);
