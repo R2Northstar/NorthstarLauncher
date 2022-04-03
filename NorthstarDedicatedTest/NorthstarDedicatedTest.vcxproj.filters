@@ -133,6 +133,9 @@
     <Filter Include="Source Files\Shared\Exploit Fixes\UTF8Parser">
       <UniqueIdentifier>{b30e08b1-b962-4264-8cbb-a0a31924b93e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shared\Exploit Fixes\AntiRCE">
+      <UniqueIdentifier>{3447f712-e02f-4cfc-932e-c8cb0d8d358a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1503,6 +1506,9 @@
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AntiRCE.h">
+      <Filter>Source Files\Shared\Exploit Fixes\AntiRCE</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1663,6 +1669,9 @@
     </ClCompile>
     <ClCompile Include="version.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AntiRCE.cpp">
+      <Filter>Source Files\Shared\Exploit Fixes\AntiRCE</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
