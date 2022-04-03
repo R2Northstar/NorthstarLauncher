@@ -182,7 +182,8 @@ struct KHook
 
 	bool Setup()
 	{
-		targetFuncAddr = targetFunc.preFound ? targetFunc.preFound : NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+		targetFuncAddr =
+			targetFunc.preFound ? targetFunc.preFound : NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
 		if (!targetFuncAddr)
 			return false;
 

@@ -12,7 +12,8 @@
 #include "configurables.h"
 #include <unordered_set>
 
-void PrintCallStack(std::string prefix) {
+void PrintCallStack(std::string prefix)
+{
 	PVOID framesToCapture[62];
 	int frames = RtlCaptureStackBackTrace(0, 62, framesToCapture, NULL);
 	for (int i = 0; i < frames; i++)
@@ -63,28 +64,19 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 		// Ideally we could just ignore uncaught instead... but there seem to be so many not listed (i.e. E06D7363, etc.)
 		const static std::unordered_set<DWORD> caughtExceptionCodes = {
-			EXCEPTION_ACCESS_VIOLATION,			
-			EXCEPTION_DATATYPE_MISALIGNMENT,	
-			EXCEPTION_ARRAY_BOUNDS_EXCEEDED,	
-			EXCEPTION_FLT_DENORMAL_OPERAND,		
-			EXCEPTION_FLT_DIVIDE_BY_ZERO,		
-			EXCEPTION_FLT_INEXACT_RESULT,		
-			EXCEPTION_FLT_INVALID_OPERATION,	
-			EXCEPTION_FLT_OVERFLOW,				
-			EXCEPTION_FLT_STACK_CHECK,			
-			EXCEPTION_FLT_UNDERFLOW,			
-			EXCEPTION_INT_DIVIDE_BY_ZERO,		
-			EXCEPTION_INT_OVERFLOW,				
-			EXCEPTION_PRIV_INSTRUCTION,			
-			EXCEPTION_IN_PAGE_ERROR,			
-			EXCEPTION_ILLEGAL_INSTRUCTION,		
-			EXCEPTION_NONCONTINUABLE_EXCEPTION, 
-			EXCEPTION_STACK_OVERFLOW,			
-			EXCEPTION_GUARD_PAGE,				
+			EXCEPTION_ACCESS_VIOLATION,		 EXCEPTION_DATATYPE_MISALIGNMENT,
+			EXCEPTION_ARRAY_BOUNDS_EXCEEDED, EXCEPTION_FLT_DENORMAL_OPERAND,
+			EXCEPTION_FLT_DIVIDE_BY_ZERO,	 EXCEPTION_FLT_INEXACT_RESULT,
+			EXCEPTION_FLT_INVALID_OPERATION, EXCEPTION_FLT_OVERFLOW,
+			EXCEPTION_FLT_STACK_CHECK,		 EXCEPTION_FLT_UNDERFLOW,
+			EXCEPTION_INT_DIVIDE_BY_ZERO,	 EXCEPTION_INT_OVERFLOW,
+			EXCEPTION_PRIV_INSTRUCTION,		 EXCEPTION_IN_PAGE_ERROR,
+			EXCEPTION_ILLEGAL_INSTRUCTION,	 EXCEPTION_NONCONTINUABLE_EXCEPTION,
+			EXCEPTION_STACK_OVERFLOW,		 EXCEPTION_GUARD_PAGE,
 		};
 
 		if (caughtExceptionCodes.find(record->ExceptionCode) == caughtExceptionCodes.end())
-			return EXCEPTION_CONTINUE_SEARCH; // didnt ask + dont care 
+			return EXCEPTION_CONTINUE_SEARCH; // didnt ask + dont care
 
 		std::stringstream exceptionCause;
 		exceptionCause << "Cause: ";
@@ -129,7 +121,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			break;
 		}
 		}
-		
+
 		exceptionCause << " [" << (void*)record->ExceptionCode << "]";
 
 		/*

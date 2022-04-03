@@ -43,7 +43,7 @@ void OnGameFileAccess(const char* path)
 			}
 		}
 	}
-		
+
 	bool isRelativePath;
 	if (pathLen >= curDirectoryLen)
 	{
@@ -64,7 +64,6 @@ void OnGameFileAccess(const char* path)
 				isRelativePath = false;
 				break;
 			}
-
 		}
 	}
 	else
