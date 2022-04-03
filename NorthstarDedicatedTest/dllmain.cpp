@@ -50,7 +50,7 @@
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
 
-typedef void (*initPluginFuncPtr)(void* getPluginObject);
+typedef void (*initPluginFuncPtr)(void* fnGetPluginObject);
 
 bool initialised = false;
 
@@ -111,7 +111,7 @@ bool LoadPlugins()
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-	initGameState();
+	InitGameState();
 	for (fs::path path : paths)
 	{
 		std::string pathstring = (pluginPath / path).string();
@@ -179,7 +179,7 @@ bool LoadPlugins()
 			continue;
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
-		initPlugin(&getPluginObject);
+		initPlugin(&GetPluginObject);
 	}
 	return true;
 }

@@ -45,8 +45,9 @@ struct MaskTable_T
 	u32 vals[33];
 
 	u32& operator[](int index) { return vals[index]; }
+	u32 operator[](int index) const { return vals[index]; }
 };
-constexpr MaskTable_T _bitbuf_MakeMaskTable() 
+const MaskTable_T _bitbuf_MakeMaskTable() 
 { 
 	MaskTable_T out{};
 	for (int i = 0; i < 32; i++)
@@ -104,7 +105,7 @@ class BFRead : public BitBufferBase
 		m_DataIn = m_Data;
 
 		m_DataBytes = byteLength;
-		m_DataBits = byteLength << 3;
+		m_DataBits = byteLength* 8;
 
 		m_DataEnd = reinterpret_cast<u32 const*>(reinterpret_cast<u8 const*>(m_Data) + m_DataBytes);
 
@@ -404,16 +405,16 @@ class BFRead : public BitBufferBase
 		return fReturn;
 	}
 
-	inline i32 ReadChar() { return ReadSBitLong(sizeof(char) << 3); }
-	inline u32 ReadByte() { return ReadUBitLong(sizeof(unsigned char) << 3); }
+	inline i32 ReadChar() { return ReadSBitLong(sizeof(char)* 8); }
+	inline u32 ReadByte() { return ReadUBitLong(sizeof(unsigned char)* 8); }
 
-	inline i32 ReadShort() { return ReadSBitLong(sizeof(short) << 3); }
-	inline u32 ReadWord() { return ReadUBitLong(sizeof(unsigned short) << 3); }
+	inline i32 ReadShort() { return ReadSBitLong(sizeof(short)* 8); }
+	inline u32 ReadWord() { return ReadUBitLong(sizeof(unsigned short)* 8); }
 
-	inline i32 ReadLong() { return (i32)(ReadUBitLong(sizeof(i32) << 3)); }
+	inline i32 ReadLong() { return (i32)(ReadUBitLong(sizeof(i32)* 8)); }
 	inline float ReadFloat()
 	{
-		u32 temp = ReadUBitLong(sizeof(float) << 3);
+		u32 temp = ReadUBitLong(sizeof(float)* 8);
 		return *reinterpret_cast<float*>(&temp);
 	}
 
@@ -495,7 +496,7 @@ class BFRead : public BitBufferBase
 
 	inline bool ReadBytes(uptr outData, u32 byteLength)
 	{
-		ReadBits(outData, byteLength << 3);
+		ReadBits(outData, byteLength* 8);
 		return !IsOverflowed();
 	}
 
@@ -561,8 +562,8 @@ class BFRead : public BitBufferBase
 		const short endianIndex = 0x0100;
 		u8* idx = (u8*)&endianIndex;
 
-		longs[*idx++] = ReadUBitLong(sizeof(i32) << 3);
-		longs[*idx] = ReadUBitLong(sizeof(i32) << 3);
+		longs[*idx++] = ReadUBitLong(sizeof(i32)* 8);
+		longs[*idx] = ReadUBitLong(sizeof(i32)* 8);
 
 		return retval;
 	}
@@ -600,11 +601,11 @@ class BFRead : public BitBufferBase
 			m_DataIn = (u32 const*)partial;
 
 			m_CachedBufWord >>= (startPos & 31);
-			m_CachedBitsLeft = (nHead << 3) - (startPos & 31);
+			m_CachedBitsLeft = (nHead* 8) - (startPos & 31);
 		}
 		else
 		{
-			int adjustedPos = startPos - (nHead << 3);
+			int adjustedPos = startPos - (nHead* 8);
 
 			m_DataIn = reinterpret_cast<u32 const*>(reinterpret_cast<u8 const*>(m_Data) + ((adjustedPos / 32) << 2) + nHead);
 
@@ -678,7 +679,7 @@ class BFWrite : public BitBufferBase
 		m_DataOut = m_Data;
 
 		m_DataBytes = byteLength;
-		m_DataBits = byteLength << 3;
+		m_DataBits = byteLength* 8;
 
 		m_DataEnd = reinterpret_cast<u32*>(reinterpret_cast<u8*>(m_Data) + m_DataBytes);
 	}
@@ -842,19 +843,19 @@ class BFWrite : public BitBufferBase
 		return !IsOverflowed();
 	}
 
-	inline bool WriteBytes(const uptr data, i32 numBytes) { return WriteBits(data, numBytes << 3); }
+	inline bool WriteBytes(const uptr data, i32 numBytes) { return WriteBits(data, numBytes* 8); }
 
 	inline i32 GetNumBitsWritten() { return (32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data)); }
 
 	inline i32 GetNumBytesWritten() { return (GetNumBitsWritten() + 7) >> 3; }
 
-	inline void WriteChar(i32 val) { WriteSBitLong(val, sizeof(char) << 3); }
+	inline void WriteChar(i32 val) { WriteSBitLong(val, sizeof(char)* 8); }
 
-	inline void WriteByte(i32 val) { WriteUBitLong(val, sizeof(unsigned char) << 3, false); }
+	inline void WriteByte(i32 val) { WriteUBitLong(val, sizeof(unsigned char)* 8, false); }
 
-	inline void WriteShort(i32 val) { WriteSBitLong(val, sizeof(short) << 3); }
+	inline void WriteShort(i32 val) { WriteSBitLong(val, sizeof(short)* 8); }
 
-	inline void WriteWord(i32 val) { WriteUBitLong(val, sizeof(unsigned short) << 3); }
+	inline void WriteWord(i32 val) { WriteUBitLong(val, sizeof(unsigned short)* 8); }
 
 	inline bool WriteString(const char* str)
 	{
@@ -875,8 +876,8 @@ class BFWrite : public BitBufferBase
 		const short endianIndex = 0x0100;
 		u8* idx = (u8*)&endianIndex;
 
-		WriteUBitLong(pLongs[*idx++], sizeof(i32) << 3);
-		WriteUBitLong(pLongs[*idx], sizeof(i32) << 3);
+		WriteUBitLong(pLongs[*idx++], sizeof(i32)* 8);
+		WriteUBitLong(pLongs[*idx], sizeof(i32)* 8);
 	}
 
 	/*inline void WriteBitCoord(const float f) {

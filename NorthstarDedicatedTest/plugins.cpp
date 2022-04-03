@@ -58,7 +58,7 @@ static SRWLOCK gameStateLock;
 static SRWLOCK serverInfoLock;
 static SRWLOCK playerInfoLock;
 
-void* getPluginObject(PluginObject var)
+void* GetPluginObject(PluginObject var)
 {
 	switch (var)
 	{
@@ -73,7 +73,7 @@ void* getPluginObject(PluginObject var)
 	}
 }
 
-void initGameState()
+void InitGameState()
 {
 	// Initalize the Slim Reader / Writer locks
 	InitializeSRWLock(&gameStateLock);
@@ -224,7 +224,8 @@ int GetServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
 
 	return n;
 }
-int getServerInfoInt(int* out_ptr, ServerInfoType var)
+
+int GetServerInfoInt(int* out_ptr, ServerInfoType var)
 {
 	AcquireSRWLockShared(&serverInfoLock);
 	int n = 0;
@@ -247,7 +248,8 @@ int getServerInfoInt(int* out_ptr, ServerInfoType var)
 
 	return n;
 }
-int getServerInfoBool(bool* out_ptr, ServerInfoType var)
+
+int GetServerInfoBool(bool* out_ptr, ServerInfoType var)
 {
 	AcquireSRWLockShared(&serverInfoLock);
 	int n = 0;
@@ -291,6 +293,7 @@ int GetGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
 
 	return n;
 }
+
 int GetGameStateInt(int* out_ptr, GameStateInfoType var)
 {
 	AcquireSRWLockShared(&gameStateLock);
@@ -317,6 +320,7 @@ int GetGameStateInt(int* out_ptr, GameStateInfoType var)
 
 	return n;
 }
+
 int GetGameStateBool(bool* out_ptr, GameStateInfoType var)
 {
 	AcquireSRWLockShared(&gameStateLock);
@@ -338,7 +342,7 @@ int GetGameStateBool(bool* out_ptr, GameStateInfoType var)
 	return n;
 }
 
-int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
+int GetPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
 {
 	AcquireSRWLockShared(&playerInfoLock);
 	int n = 0;
@@ -352,7 +356,8 @@ int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
 
 	return n;
 }
-int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
+
+int GetPlayerInfoInt(int* out_ptr, PlayerInfoType var)
 {
 	AcquireSRWLockShared(&playerInfoLock);
 	int n = 0;
@@ -369,7 +374,8 @@ int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
 
 	return n;
 }
-int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
+
+int GetPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
 {
 	AcquireSRWLockShared(&playerInfoLock);
 	int n = 0;
