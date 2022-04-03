@@ -5,6 +5,7 @@
 
 void HookEnabler::CreateHook(LPVOID ppTarget, LPVOID ppDetour, LPVOID* ppOriginal, const char* targetName)
 {
+	DLOG("HookEnabler::CreateHook at {} (targetName: {})", ppTarget, targetName);
 	// the macro for this uses ppTarget's name as targetName, and this typically starts with &
 	// targetname is used for debug stuff and debug output is nicer if we don't have this
 	if (*targetName == '&')

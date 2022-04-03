@@ -42,3 +42,10 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 #define M_VMETHOD(returnType, name, index, args, argsRaw)                                                                                  \
 	FORCEINLINE returnType name args noexcept { return CallVFunc_Alt<returnType, index> argsRaw; }
 #endif
+
+// Logs a message only if in debug mode
+#ifdef _DEBUG 
+#define DLOG(s) spdlog::info(s)
+#else
+#define DLOG(s)
+#endif
