@@ -1,16 +1,18 @@
 #pragma once
 
-#define INLINE inline
+#define BITS_PER_INT sizeof(uint32_t) * 8
 
-#define BITS_PER_INT 32
-
-INLINE int GetBitForBitnum(int bitNum)
+inline int GetBitForBitnum(int bitNum)
 {
-	static int bitsForBitnum[] = {
-		(1 << 0),  (1 << 1),  (1 << 2),	 (1 << 3),	(1 << 4),  (1 << 5),  (1 << 6),	 (1 << 7),	(1 << 8),  (1 << 9),  (1 << 10),
-		(1 << 11), (1 << 12), (1 << 13), (1 << 14), (1 << 15), (1 << 16), (1 << 17), (1 << 18), (1 << 19), (1 << 20), (1 << 21),
-		(1 << 22), (1 << 23), (1 << 24), (1 << 25), (1 << 26), (1 << 27), (1 << 28), (1 << 29), (1 << 30), (1 << 31),
-	};
+	static int bitsForBitnum[BITS_PER_INT];
+
+	IF_ONCE
+	{
+		for (int i = 0; i < BITS_PER_INT; i++)
+		{
+			bitsForBitnum[i] = 1 << i;
+		}
+	}
 
 	return bitsForBitnum[(bitNum) & (BITS_PER_INT - 1)];
 }
@@ -32,47 +34,29 @@ using iptr = intptr_t;
 // Endianess, don't use on PPC64 nor ARM64BE
 #define LittleDWord(val) (val)
 
-static INLINE void StoreLittleDWord(u32* base, size_t dwordIndex, u32 dword) { base[dwordIndex] = LittleDWord(dword); }
+static inline void StoreLittleDWord(u32* base, size_t dwordIndex, u32 dword) { base[dwordIndex] = LittleDWord(dword); }
 
-static INLINE u32 LoadLittleDWord(u32* base, size_t dwordIndex) { return LittleDWord(base[dwordIndex]); }
+static inline u32 LoadLittleDWord(u32* base, size_t dwordIndex) { return LittleDWord(base[dwordIndex]); }
 
 #include <algorithm>
 
-static inline const u32 s_nMaskTable[33] = {
-	0,
-	(1 << 1) - 1,
-	(1 << 2) - 1,
-	(1 << 3) - 1,
-	(1 << 4) - 1,
-	(1 << 5) - 1,
-	(1 << 6) - 1,
-	(1 << 7) - 1,
-	(1 << 8) - 1,
-	(1 << 9) - 1,
-	(1 << 10) - 1,
-	(1 << 11) - 1,
-	(1 << 12) - 1,
-	(1 << 13) - 1,
-	(1 << 14) - 1,
-	(1 << 15) - 1,
-	(1 << 16) - 1,
-	(1 << 17) - 1,
-	(1 << 18) - 1,
-	(1 << 19) - 1,
-	(1 << 20) - 1,
-	(1 << 21) - 1,
-	(1 << 22) - 1,
-	(1 << 23) - 1,
-	(1 << 24) - 1,
-	(1 << 25) - 1,
-	(1 << 26) - 1,
-	(1 << 27) - 1,
-	(1 << 28) - 1,
-	(1 << 29) - 1,
-	(1 << 30) - 1,
-	0x7fffffff,
-	0xffffffff,
+struct MaskTable_T
+{
+	u32 vals[33];
+
+	u32& operator[](int index) { return vals[index]; }
 };
+constexpr MaskTable_T _bitbuf_MakeMaskTable() { 
+	MaskTable_T out{};
+	for (int i = 0; i < 32; i++)
+	{
+		out[i] = (1 << i) - 1;
+	}
+	out[32] = -1;
+	return out;
+}
+
+const static MaskTable_T s_nMaskTable = _bitbuf_MakeMaskTable();
 
 enum EBitCoordType
 {
@@ -84,13 +68,13 @@ enum EBitCoordType
 class BitBufferBase
 {
   protected:
-	INLINE void SetName(const char* name) { m_BufferName = name; }
+	inline void SetName(const char* name) { m_BufferName = name; }
 
   public:
-	INLINE bool IsOverflowed() { return m_Overflow; }
-	INLINE void SetOverflowed() { m_Overflow = true; }
+	inline bool IsOverflowed() { return m_Overflow; }
+	inline void SetOverflowed() { m_Overflow = true; }
 
-	INLINE const char* GetName() { return m_BufferName; }
+	inline const char* GetName() { return m_BufferName; }
 
   private:
 	const char* m_BufferName = "";
@@ -104,7 +88,7 @@ class BFRead : public BitBufferBase
   public:
 	BFRead() = default;
 
-	INLINE BFRead(uptr data, size_t byteLength, size_t startPos = 0, const char* bufferName = 0)
+	inline BFRead(uptr data, size_t byteLength, size_t startPos = 0, const char* bufferName = 0)
 	{
 		StartReading(data, byteLength, startPos);
 
@@ -113,7 +97,7 @@ class BFRead : public BitBufferBase
 	}
 
   public:
-	INLINE void StartReading(uptr data, size_t byteLength, size_t startPos = 0)
+	inline void StartReading(uptr data, size_t byteLength, size_t startPos = 0)
 	{
 		m_Data = reinterpret_cast<u32 const*>(data);
 		m_DataIn = m_Data;
@@ -126,7 +110,7 @@ class BFRead : public BitBufferBase
 		Seek(startPos);
 	}
 
-	INLINE void GrabNextDWord(bool overflow = false)
+	inline void GrabNextDWord(bool overflow = false)
 	{
 		if (m_Data == m_DataEnd)
 		{
@@ -152,13 +136,13 @@ class BFRead : public BitBufferBase
 		}
 	}
 
-	INLINE void FetchNext()
+	inline void FetchNext()
 	{
 		m_CachedBitsLeft = 32;
 		GrabNextDWord(false);
 	}
 
-	INLINE i32 ReadOneBit()
+	inline i32 ReadOneBit()
 	{
 		i32 ret = m_CachedBufWord & 1;
 
@@ -170,7 +154,7 @@ class BFRead : public BitBufferBase
 		return ret;
 	}
 
-	INLINE u32 ReadUBitLong(i32 numBits)
+	inline u32 ReadUBitLong(i32 numBits)
 	{
 		if (m_CachedBitsLeft >= numBits)
 		{
@@ -205,13 +189,13 @@ class BFRead : public BitBufferBase
 		}
 	}
 
-	INLINE i32 ReadSBitLong(int numBits)
+	inline i32 ReadSBitLong(int numBits)
 	{
 		i32 ret = ReadUBitLong(numBits);
 		return (ret << (32 - numBits)) >> (32 - numBits);
 	}
 
-	INLINE u32 ReadUBitVar()
+	inline u32 ReadUBitVar()
 	{
 		u32 ret = ReadUBitLong(6);
 
@@ -234,7 +218,7 @@ class BFRead : public BitBufferBase
 		return ret;
 	}
 
-	INLINE u32 PeekUBitLong(i32 numBits)
+	inline u32 PeekUBitLong(i32 numBits)
 	{
 		i32 nSaveBA = m_CachedBitsLeft;
 		i32 nSaveW = m_CachedBufWord;
@@ -248,13 +232,13 @@ class BFRead : public BitBufferBase
 		return nRet;
 	}
 
-	INLINE float ReadBitFloat()
+	inline float ReadBitFloat()
 	{
 		u32 value = ReadUBitLong(32);
 		return *reinterpret_cast<float*>(&value);
 	}
 
-	/*INLINE float ReadBitCoord() {
+	/*inline float ReadBitCoord() {
 		i32   intval = 0, fractval = 0, signbit = 0;
 		float value = 0.0;
 
@@ -289,7 +273,7 @@ class BFRead : public BitBufferBase
 		return value;
 	}
 
-	INLINE float ReadBitCoordMP() {
+	inline float ReadBitCoordMP() {
 		i32   intval = 0, fractval = 0, signbit = 0;
 		float value = 0.0;
 
@@ -318,7 +302,7 @@ class BFRead : public BitBufferBase
 		return value;
 	}
 
-	INLINE float ReadBitCellCoord(int bits, EBitCoordType coordType) {
+	inline float ReadBitCellCoord(int bits, EBitCoordType coordType) {
 		bool bIntegral = (coordType == kCW_Integral);
 		bool bLowPrecision = (coordType == kCW_LowPrecision);
 
@@ -340,7 +324,7 @@ class BFRead : public BitBufferBase
 		return value;
 	}
 
-	INLINE float ReadBitNormal() {
+	inline float ReadBitNormal() {
 		// Read the sign bit
 		i32 signbit = ReadOneBit();
 
@@ -357,7 +341,7 @@ class BFRead : public BitBufferBase
 		return value;
 	}
 
-	INLINE void ReadBitVec3Coord(Vector& fa) {
+	inline void ReadBitVec3Coord(Vector& fa) {
 		i32 xflag, yflag, zflag;
 
 		// This vector must be initialized! Otherwise, If any of the flags aren't set,
@@ -376,7 +360,7 @@ class BFRead : public BitBufferBase
 			fa[2] = ReadBitCoord();
 	}
 
-	INLINE void ReadBitVec3Normal(Vector& fa) {
+	inline void ReadBitVec3Normal(Vector& fa) {
 		i32 xflag = ReadOneBit();
 		i32 yflag = ReadOneBit();
 
@@ -403,13 +387,13 @@ class BFRead : public BitBufferBase
 			fa[2] = -fa[2];
 	}
 
-	INLINE void ReadBitAngles(QAngle& fa) {
+	inline void ReadBitAngles(QAngle& fa) {
 		Vector tmp;
 		ReadBitVec3Coord(tmp);
 		fa.Init(tmp.x, tmp.y, tmp.z);
 	}*/
 
-	INLINE float ReadBitAngle(int numBits)
+	inline float ReadBitAngle(int numBits)
 	{
 		float shift = (float)(GetBitForBitnum(numBits));
 
@@ -419,20 +403,20 @@ class BFRead : public BitBufferBase
 		return fReturn;
 	}
 
-	INLINE i32 ReadChar() { return ReadSBitLong(sizeof(char) << 3); }
-	INLINE u32 ReadByte() { return ReadUBitLong(sizeof(unsigned char) << 3); }
+	inline i32 ReadChar() { return ReadSBitLong(sizeof(char) << 3); }
+	inline u32 ReadByte() { return ReadUBitLong(sizeof(unsigned char) << 3); }
 
-	INLINE i32 ReadShort() { return ReadSBitLong(sizeof(short) << 3); }
-	INLINE u32 ReadWord() { return ReadUBitLong(sizeof(unsigned short) << 3); }
+	inline i32 ReadShort() { return ReadSBitLong(sizeof(short) << 3); }
+	inline u32 ReadWord() { return ReadUBitLong(sizeof(unsigned short) << 3); }
 
-	INLINE i32 ReadLong() { return (i32)(ReadUBitLong(sizeof(i32) << 3)); }
-	INLINE float ReadFloat()
+	inline i32 ReadLong() { return (i32)(ReadUBitLong(sizeof(i32) << 3)); }
+	inline float ReadFloat()
 	{
 		u32 temp = ReadUBitLong(sizeof(float) << 3);
 		return *reinterpret_cast<float*>(&temp);
 	}
 
-	INLINE u32 ReadVarInt32()
+	inline u32 ReadVarInt32()
 	{
 		constexpr int kMaxVarint32Bytes = 5;
 
@@ -453,7 +437,7 @@ class BFRead : public BitBufferBase
 		return result;
 	}
 
-	INLINE u64 ReadVarInt64()
+	inline u64 ReadVarInt64()
 	{
 		constexpr int kMaxVarintBytes = 10;
 
@@ -474,7 +458,7 @@ class BFRead : public BitBufferBase
 		return result;
 	}
 
-	INLINE void ReadBits(uptr outData, u32 bitLength)
+	inline void ReadBits(uptr outData, u32 bitLength)
 	{
 		u8* out = reinterpret_cast<u8*>(outData);
 		int bitsLeft = bitLength;
@@ -508,13 +492,13 @@ class BFRead : public BitBufferBase
 			*out = ReadUBitLong(bitsLeft);
 	}
 
-	INLINE bool ReadBytes(uptr outData, u32 byteLength)
+	inline bool ReadBytes(uptr outData, u32 byteLength)
 	{
 		ReadBits(outData, byteLength << 3);
 		return !IsOverflowed();
 	}
 
-	INLINE bool ReadString(char* str, i32 maxLength, bool stopAtLineTermination = false, i32* outNumChars = 0)
+	inline bool ReadString(char* str, i32 maxLength, bool stopAtLineTermination = false, i32* outNumChars = 0)
 	{
 		bool tooSmall = false;
 		int iChar = 0;
@@ -549,7 +533,7 @@ class BFRead : public BitBufferBase
 		return !IsOverflowed() && !tooSmall;
 	}
 
-	INLINE char* ReadAndAllocateString(bool* hasOverflowed = 0)
+	inline char* ReadAndAllocateString(bool* hasOverflowed = 0)
 	{
 		char str[2048];
 
@@ -567,7 +551,7 @@ class BFRead : public BitBufferBase
 		return ret;
 	}
 
-	INLINE i64 ReadLongLong()
+	inline i64 ReadLongLong()
 	{
 		i64 retval;
 		u32* longs = (u32*)&retval;
@@ -582,7 +566,7 @@ class BFRead : public BitBufferBase
 		return retval;
 	}
 
-	INLINE bool Seek(size_t startPos)
+	inline bool Seek(size_t startPos)
 	{
 		bool bSucc = true;
 
@@ -641,7 +625,7 @@ class BFRead : public BitBufferBase
 		return bSucc;
 	}
 
-	INLINE size_t GetNumBitsRead()
+	inline size_t GetNumBitsRead()
 	{
 		if (!m_Data)
 			return 0;
@@ -654,12 +638,12 @@ class BFRead : public BitBufferBase
 		return std::min(nCurOfs + nAdjust, m_DataBits);
 	}
 
-	INLINE bool SeekRelative(size_t offset) { return Seek(GetNumBitsRead() + offset); }
+	inline bool SeekRelative(size_t offset) { return Seek(GetNumBitsRead() + offset); }
 
-	INLINE size_t TotalBytesAvailable() { return m_DataBytes; }
+	inline size_t TotalBytesAvailable() { return m_DataBytes; }
 
-	INLINE size_t GetNumBitsLeft() { return m_DataBits - GetNumBitsRead(); }
-	INLINE size_t GetNumBytesLeft() { return GetNumBitsLeft() >> 3; }
+	inline size_t GetNumBitsLeft() { return m_DataBits - GetNumBitsRead(); }
+	inline size_t GetNumBytesLeft() { return GetNumBitsLeft() >> 3; }
 
   private:
 	size_t m_DataBits;	// 0x0010
@@ -678,7 +662,7 @@ class BFWrite : public BitBufferBase
   public:
 	BFWrite() = default;
 
-	INLINE BFWrite(uptr data, size_t byteLength, const char* bufferName = 0)
+	inline BFWrite(uptr data, size_t byteLength, const char* bufferName = 0)
 	{
 		StartWriting(data, byteLength);
 
@@ -687,7 +671,7 @@ class BFWrite : public BitBufferBase
 	}
 
   public:
-	INLINE void StartWriting(uptr data, size_t byteLength)
+	inline void StartWriting(uptr data, size_t byteLength)
 	{
 		m_Data = reinterpret_cast<u32*>(data);
 		m_DataOut = m_Data;
@@ -698,9 +682,9 @@ class BFWrite : public BitBufferBase
 		m_DataEnd = reinterpret_cast<u32*>(reinterpret_cast<u8*>(m_Data) + m_DataBytes);
 	}
 
-	INLINE int GetNumBitsLeft() { return m_OutBitsLeft + (32 * (m_DataEnd - m_DataOut - 1)); }
+	inline int GetNumBitsLeft() { return m_OutBitsLeft + (32 * (m_DataEnd - m_DataOut - 1)); }
 
-	INLINE void Reset()
+	inline void Reset()
 	{
 		m_Overflow = false;
 		m_OutBufWord = 0;
@@ -708,7 +692,7 @@ class BFWrite : public BitBufferBase
 		m_DataOut = m_Data;
 	}
 
-	INLINE void TempFlush()
+	inline void TempFlush()
 	{
 		if (m_OutBitsLeft != 32)
 		{
@@ -721,15 +705,15 @@ class BFWrite : public BitBufferBase
 		m_Flushed = true;
 	}
 
-	INLINE u8* GetBasePointer()
+	inline u8* GetBasePointer()
 	{
 		TempFlush();
 		return reinterpret_cast<u8*>(m_Data);
 	}
 
-	INLINE u8* GetData() { return GetBasePointer(); }
+	inline u8* GetData() { return GetBasePointer(); }
 
-	INLINE void Finish()
+	inline void Finish()
 	{
 		if (m_OutBitsLeft != 32)
 		{
@@ -740,7 +724,7 @@ class BFWrite : public BitBufferBase
 		}
 	}
 
-	INLINE void FlushNoCheck()
+	inline void FlushNoCheck()
 	{
 		StoreLittleDWord(m_DataOut++, 0, m_OutBufWord);
 
@@ -748,7 +732,7 @@ class BFWrite : public BitBufferBase
 		m_OutBufWord = 0;
 	}
 
-	INLINE void Flush()
+	inline void Flush()
 	{
 		if (m_DataOut == m_DataEnd)
 			SetOverflowed();
@@ -759,7 +743,7 @@ class BFWrite : public BitBufferBase
 		m_OutBufWord = 0;
 	}
 
-	INLINE void WriteOneBitNoCheck(i32 value)
+	inline void WriteOneBitNoCheck(i32 value)
 	{
 		m_OutBufWord |= (value & 1) << (32 - m_OutBitsLeft);
 
@@ -767,7 +751,7 @@ class BFWrite : public BitBufferBase
 			FlushNoCheck();
 	}
 
-	INLINE void WriteOneBit(i32 value)
+	inline void WriteOneBit(i32 value)
 	{
 		m_OutBufWord |= (value & 1) << (32 - m_OutBitsLeft);
 
@@ -775,7 +759,7 @@ class BFWrite : public BitBufferBase
 			Flush();
 	}
 
-	INLINE void WriteUBitLong(u32 data, i32 numBits, bool checkRange = true)
+	inline void WriteUBitLong(u32 data, i32 numBits, bool checkRange = true)
 	{
 		if (numBits <= m_OutBitsLeft)
 		{
@@ -800,9 +784,9 @@ class BFWrite : public BitBufferBase
 		}
 	}
 
-	INLINE void WriteSBitLong(i32 data, i32 numBits) { WriteUBitLong((u32)data, numBits, false); }
+	inline void WriteSBitLong(i32 data, i32 numBits) { WriteUBitLong((u32)data, numBits, false); }
 
-	INLINE void WriteUBitVar(u32 n)
+	inline void WriteUBitVar(u32 n)
 	{
 		if (n < 16)
 			WriteUBitLong(n, 6);
@@ -817,19 +801,19 @@ class BFWrite : public BitBufferBase
 		}
 	}
 
-	INLINE void WriteBitFloat(float value)
+	inline void WriteBitFloat(float value)
 	{
 		auto temp = &value;
 		WriteUBitLong(*reinterpret_cast<u32*>(temp), 32);
 	}
 
-	INLINE void WriteFloat(float value)
+	inline void WriteFloat(float value)
 	{
 		auto temp = &value;
 		WriteUBitLong(*reinterpret_cast<u32*>(temp), 32);
 	}
 
-	INLINE bool WriteBits(const uptr data, i32 numBits)
+	inline bool WriteBits(const uptr data, i32 numBits)
 	{
 		u8* out = (u8*)data;
 		i32 numBitsLeft = numBits;
@@ -857,21 +841,21 @@ class BFWrite : public BitBufferBase
 		return !IsOverflowed();
 	}
 
-	INLINE bool WriteBytes(const uptr data, i32 numBytes) { return WriteBits(data, numBytes << 3); }
+	inline bool WriteBytes(const uptr data, i32 numBytes) { return WriteBits(data, numBytes << 3); }
 
-	INLINE i32 GetNumBitsWritten() { return (32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data)); }
+	inline i32 GetNumBitsWritten() { return (32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data)); }
 
-	INLINE i32 GetNumBytesWritten() { return (GetNumBitsWritten() + 7) >> 3; }
+	inline i32 GetNumBytesWritten() { return (GetNumBitsWritten() + 7) >> 3; }
 
-	INLINE void WriteChar(i32 val) { WriteSBitLong(val, sizeof(char) << 3); }
+	inline void WriteChar(i32 val) { WriteSBitLong(val, sizeof(char) << 3); }
 
-	INLINE void WriteByte(i32 val) { WriteUBitLong(val, sizeof(unsigned char) << 3, false); }
+	inline void WriteByte(i32 val) { WriteUBitLong(val, sizeof(unsigned char) << 3, false); }
 
-	INLINE void WriteShort(i32 val) { WriteSBitLong(val, sizeof(short) << 3); }
+	inline void WriteShort(i32 val) { WriteSBitLong(val, sizeof(short) << 3); }
 
-	INLINE void WriteWord(i32 val) { WriteUBitLong(val, sizeof(unsigned short) << 3); }
+	inline void WriteWord(i32 val) { WriteUBitLong(val, sizeof(unsigned short) << 3); }
 
-	INLINE bool WriteString(const char* str)
+	inline bool WriteString(const char* str)
 	{
 		if (str)
 			while (*str)
@@ -882,7 +866,7 @@ class BFWrite : public BitBufferBase
 		return !IsOverflowed();
 	}
 
-	INLINE void WriteLongLong(i64 val)
+	inline void WriteLongLong(i64 val)
 	{
 		u32* pLongs = (u32*)&val;
 
@@ -894,7 +878,7 @@ class BFWrite : public BitBufferBase
 		WriteUBitLong(pLongs[*idx], sizeof(i32) << 3);
 	}
 
-	/*INLINE void WriteBitCoord(const float f) {
+	/*inline void WriteBitCoord(const float f) {
 		i32 signbit = (f <= -COORD_RESOLUTION);
 		i32 intval = (i32)abs(f);
 		i32 fractval = abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1);
@@ -921,7 +905,7 @@ class BFWrite : public BitBufferBase
 		}
 	}
 
-	INLINE void WriteBitCoordMP(const float f) {
+	inline void WriteBitCoordMP(const float f) {
 		i32 signbit = (f <= -COORD_RESOLUTION);
 		i32 intval = (i32)abs(f);
 		i32 fractval = (abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1));
@@ -947,7 +931,7 @@ class BFWrite : public BitBufferBase
 		}
 	}
 
-	INLINE void WriteBitCellCoord(const float f, int bits, EBitCoordType coordType) {
+	inline void WriteBitCellCoord(const float f, int bits, EBitCoordType coordType) {
 		bool bIntegral = (coordType == kCW_Integral);
 		bool bLowPrecision = (coordType == kCW_LowPrecision);
 
@@ -963,7 +947,7 @@ class BFWrite : public BitBufferBase
 		}
 	}*/
 
-	INLINE void SeekToBit(int bit)
+	inline void SeekToBit(int bit)
 	{
 		TempFlush();
 
@@ -972,7 +956,7 @@ class BFWrite : public BitBufferBase
 		m_OutBitsLeft = 32 - (bit & 31);
 	}
 
-	/*INLINE void WriteBitVec3Coord(const Vector& fa) {
+	/*inline void WriteBitVec3Coord(const Vector& fa) {
 		i32 xflag, yflag, zflag;
 
 		xflag = (fa[0] >= COORD_RESOLUTION) || (fa[0] <= -COORD_RESOLUTION);
@@ -991,7 +975,7 @@ class BFWrite : public BitBufferBase
 			WriteBitCoord(fa[2]);
 	}
 
-	INLINE void WriteBitNormal(float f) {
+	inline void WriteBitNormal(float f) {
 		i32 signbit = (f <= -NORMAL_RESOLUTION);
 
 		// NOTE: Since +/-1 are valid values for a normal, I'm going to encode that as all ones
@@ -1008,7 +992,7 @@ class BFWrite : public BitBufferBase
 		WriteUBitLong(fractval, NORMAL_FRACTIONAL_BITS);
 	}
 
-	INLINE void WriteBitVec3Normal(const Vector& fa) {
+	inline void WriteBitVec3Normal(const Vector& fa) {
 		i32 xflag, yflag;
 
 		xflag = (fa[0] >= NORMAL_RESOLUTION) || (fa[0] <= -NORMAL_RESOLUTION);
@@ -1027,7 +1011,7 @@ class BFWrite : public BitBufferBase
 		WriteOneBit(signbit);
 	}*/
 
-	INLINE void WriteBitAngle(float angle, int numBits)
+	inline void WriteBitAngle(float angle, int numBits)
 	{
 		u32 shift = GetBitForBitnum(numBits);
 		u32 mask = shift - 1;
@@ -1038,7 +1022,7 @@ class BFWrite : public BitBufferBase
 		WriteUBitLong((u32)d, numBits);
 	}
 
-	INLINE bool WriteBitsFromBuffer(BFRead* in, int numBits)
+	inline bool WriteBitsFromBuffer(BFRead* in, int numBits)
 	{
 		while (numBits > 32)
 		{
@@ -1050,7 +1034,7 @@ class BFWrite : public BitBufferBase
 		return !IsOverflowed() && !in->IsOverflowed();
 	}
 
-	/*INLINE void WriteBitAngles(const QAngle& fa) {
+	/*inline void WriteBitAngles(const QAngle& fa) {
 		// FIXME:
 		Vector tmp(fa.x, fa.y, fa.z);
 		WriteBitVec3Coord(tmp);
@@ -1070,4 +1054,4 @@ class BFWrite : public BitBufferBase
 	bool m_Flushed = false; // :flushed:
 };
 
-#undef INLINE
+#undef inline
