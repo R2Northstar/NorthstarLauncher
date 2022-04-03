@@ -80,17 +80,17 @@ void initGameState()
 	InitializeSRWLock(&serverInfoLock);
 	InitializeSRWLock(&playerInfoLock);
 
-	gameStateExport.getGameStateChar = &getGameStateChar;
-	gameStateExport.getGameStateInt = &getGameStateInt;
-	gameStateExport.getGameStateBool = &getGameStateBool;
+	gameStateExport.fnGetGameStateChar = &GetGameStateChar;
+	gameStateExport.fnGetGameStateInt = &GetGameStateInt;
+	gameStateExport.fnGetGameStateBool = &GetGameStateBool;
 
-	serverInfoExport.getServerInfoChar = &getServerInfoChar;
-	serverInfoExport.getServerInfoInt = &getServerInfoInt;
-	serverInfoExport.getServerInfoBool = &getServerInfoBool;
+	serverInfoExport.fnGetServerInfoChar = &GetServerInfoChar;
+	serverInfoExport.fnGetServerInfoInt = &GetServerInfoInt;
+	serverInfoExport.fnGetServerInfoBool = &GetServerInfoBool;
 
-	playerInfoExport.getPlayerInfoChar = &getPlayerInfoChar;
-	playerInfoExport.getPlayerInfoInt = &getPlayerInfoInt;
-	playerInfoExport.getPlayerInfoBool = &getPlayerInfoBool;
+	playerInfoExport.fnGetPlayerInfoChar = &GetPlayerInfoChar;
+	playerInfoExport.fnGetPlayerInfoInt = &GetPlayerInfoInt;
+	playerInfoExport.fnGetPlayerInfoBool = &GetPlayerInfoBool;
 
 	serverInfo.id = "";
 	serverInfo.name = "";
@@ -198,7 +198,7 @@ SQRESULT SQ_UpdateListenServer(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
+int GetServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
 {
 	AcquireSRWLockShared(&serverInfoLock);
 	int n = 0;
@@ -265,7 +265,7 @@ int getServerInfoBool(bool* out_ptr, ServerInfoType var)
 	return n;
 }
 
-int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
+int GetGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
 {
 	AcquireSRWLockShared(&gameStateLock);
 	int n = 0;
@@ -291,7 +291,7 @@ int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
 
 	return n;
 }
-int getGameStateInt(int* out_ptr, GameStateInfoType var)
+int GetGameStateInt(int* out_ptr, GameStateInfoType var)
 {
 	AcquireSRWLockShared(&gameStateLock);
 	int n = 0;
@@ -317,7 +317,7 @@ int getGameStateInt(int* out_ptr, GameStateInfoType var)
 
 	return n;
 }
-int getGameStateBool(bool* out_ptr, GameStateInfoType var)
+int GetGameStateBool(bool* out_ptr, GameStateInfoType var)
 {
 	AcquireSRWLockShared(&gameStateLock);
 	int n = 0;

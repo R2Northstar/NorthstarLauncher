@@ -269,9 +269,7 @@ void LocalChatWriter::Write(const char* str)
 		{
 			// There is some text before the escape sequence, just print that
 
-			size_t copyChars = startOfEscape - str;
-			if (copyChars > 255)
-				copyChars = 255;
+			size_t copyChars = MAX(startOfEscape - str, 255);
 			strncpy(writeBuffer, str, copyChars);
 			writeBuffer[copyChars] = 0;
 

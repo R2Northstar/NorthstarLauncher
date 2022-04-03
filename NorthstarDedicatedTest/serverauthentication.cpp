@@ -162,7 +162,7 @@ char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToke
 		{
 			// limit name length to 64 characters just in case something changes, this technically shouldn't be needed given the master
 			// server gets usernames from origin but we have it just in case
-			strncpy(name, authData.username, 64);
+			strncpy(name, authData.username, 63);
 			name[63] = 0;
 		}
 	}
