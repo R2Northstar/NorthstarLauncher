@@ -168,23 +168,25 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-void InitialiseServerChatHooks_Engine(HMODULE baseAddress) { g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98); }
+void InitialiseServerChatHooks_Engine(HMODULE baseAddress) { g_pServerGameDLL = (CServerGameDLL*)((uintptr_t)baseAddress + 0x13F0AA98); }
 
 void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 {
-	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)((char*)baseAddress + 0x1595C0);
-	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)((char*)baseAddress + 0x26AA10);
-	CRecipientFilter__Construct = (CRecipientFilter__ConstructType)((char*)baseAddress + 0x1E9440);
-	CRecipientFilter__Destruct = (CRecipientFilter__DestructType)((char*)baseAddress + 0x1E9700);
-	CRecipientFilter__AddAllPlayers = (CRecipientFilter__AddAllPlayersType)((char*)baseAddress + 0x1E9940);
-	CRecipientFilter__AddRecipient = (CRecipientFilter__AddRecipientType)((char*)baseAddress + 0x1E9b30);
-	CRecipientFilter__MakeReliable = (CRecipientFilter__MakeReliableType)((char*)baseAddress + 0x1EA4E0);
+	uintptr_t ba = (uintptr_t)baseAddress;
 
-	UserMessageBegin = (UserMessageBeginType)((char*)baseAddress + 0x15C520);
-	MessageEnd = (MessageEndType)((char*)baseAddress + 0x158880);
-	MessageWriteByte = (MessageWriteByteType)((char*)baseAddress + 0x158A90);
-	MessageWriteString = (MessageWriteStringType)((char*)baseAddress + 0x158D00);
-	MessageWriteBool = (MessageWriteBoolType)((char*)baseAddress + 0x158A00);
+	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)(ba + 0x1595C0);
+	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)(ba + 0x26AA10);
+	CRecipientFilter__Construct = (CRecipientFilter__ConstructType)(ba + 0x1E9440);
+	CRecipientFilter__Destruct = (CRecipientFilter__DestructType)(ba + 0x1E9700);
+	CRecipientFilter__AddAllPlayers = (CRecipientFilter__AddAllPlayersType)(ba + 0x1E9940);
+	CRecipientFilter__AddRecipient = (CRecipientFilter__AddRecipientType)(ba + 0x1E9b30);
+	CRecipientFilter__MakeReliable = (CRecipientFilter__MakeReliableType)(ba + 0x1EA4E0);
+
+	UserMessageBegin = (UserMessageBeginType)(ba + 0x15C520);
+	MessageEnd = (MessageEndType)(ba + 0x158880);
+	MessageWriteByte = (MessageWriteByteType)(ba + 0x158A90);
+	MessageWriteString = (MessageWriteStringType)(ba + 0x158D00);
+	MessageWriteBool = (MessageWriteBoolType)(ba + 0x158A00);
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

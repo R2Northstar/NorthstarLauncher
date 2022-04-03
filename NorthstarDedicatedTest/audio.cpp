@@ -343,7 +343,7 @@ bool ShouldPlayAudioEvent(const char* eventName, const std::shared_ptr<EventOver
 bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 	uintptr_t parentEvent, void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType)
 {
-	char* eventName = (char*)parentEvent + 0x110;
+	char* eventName = (char*)(parentEvent + 0x110);
 
 	if (Cvar_ns_print_played_sounds->GetInt() > 0)
 		spdlog::info("[AUDIO] Playing event {}", eventName);
@@ -475,7 +475,7 @@ void InitialiseMilesAudioHooks(HMODULE baseAddress)
 	HookEnabler hook;
 
 	ENABLER_CREATEHOOK(
-		hook, (char*)milesAudioBase + 0xF110, &LoadSampleMetadata_Hook, reinterpret_cast<LPVOID*>(&LoadSampleMetadata_Original));
+		hook, (char*)(milesAudioBase + 0xF110), &LoadSampleMetadata_Hook, reinterpret_cast<LPVOID*>(&LoadSampleMetadata_Original));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x57DAD0, &MilesLog_Hook, reinterpret_cast<LPVOID*>(&MilesLog_Original));
 
 	MilesStopAll = (MilesStopAll_Type)((char*)baseAddress + 0x580850);

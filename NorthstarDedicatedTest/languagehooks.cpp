@@ -105,7 +105,7 @@ char* GetGameLanguageHook()
 					 "command line option.");
 		auto lang = GetAnyInstalledAudioLanguage();
 		spdlog::warn("Falling back to the first installed audio language: {}", lang.c_str());
-		strncpy(ingameLang1, lang.c_str(), MAX(lang.size()+1, 256));
+		strncpy(ingameLang1, lang.c_str(), MAX(lang.size() + 1, 256));
 		return ingameLang1;
 	}
 

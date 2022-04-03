@@ -369,7 +369,7 @@ void LoadAINFileHook(void* aimanager, void* buf, const char* filename)
 	if (Cvar_ns_ai_dumpAINfileFromLoad->GetBool())
 	{
 		spdlog::info("running DumpAINInfo for loaded file {}", filename);
-		DumpAINInfo(*(CAI_Network**)((char*)aimanager + 2536));
+		DumpAINInfo(*(CAI_Network**)((uintptr_t)aimanager + 2536));
 	}
 }
 
@@ -378,18 +378,20 @@ void InitialiseBuildAINFileHooks(HMODULE baseAddress)
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
 		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
 
+	uintptr_t ba = (uintptr_t)baseAddress;
+
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x385E20, &CAI_NetworkBuilder__BuildHook, reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x3933A0, &LoadAINFileHook, reinterpret_cast<LPVOID*>(&LoadAINFile));
+		hook, (void*)(ba + 0x385E20), &CAI_NetworkBuilder__BuildHook, reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
+	ENABLER_CREATEHOOK(hook, (void*)(ba + 0x3933A0), &LoadAINFileHook, reinterpret_cast<LPVOID*>(&LoadAINFile));
 
-	pUnkStruct0Count = (int*)((char*)baseAddress + 0x1063BF8);
-	pppUnkNodeStruct0s = (UnkNodeStruct0***)((char*)baseAddress + 0x1063BE0);
+	pUnkStruct0Count = (int*)(ba + 0x1063BF8);
+	pppUnkNodeStruct0s = (UnkNodeStruct0***)(ba + 0x1063BE0);
 
-	pUnkLinkStruct1Count = (int*)((char*)baseAddress + 0x1063AA8);
-	pppUnkStruct1s = (UnkLinkStruct1***)((char*)baseAddress + 0x1063A90);
-	pUnkServerMapversionGlobal = (char**)((char*)baseAddress + 0xBFBE08);
-	pMapName = (char*)baseAddress + 0x1053370;
+	pUnkLinkStruct1Count = (int*)(ba + 0x1063AA8);
+	pppUnkStruct1s = (UnkLinkStruct1***)(ba + 0x1063A90);
+	pUnkServerMapversionGlobal = (char**)(ba + 0xBFBE08);
+	pMapName = (char*)(ba + 0x1053370);
 
 	uintptr_t base = (uintptr_t)baseAddress;
 
