@@ -46,7 +46,8 @@ struct MaskTable_T
 
 	u32& operator[](int index) { return vals[index]; }
 };
-constexpr MaskTable_T _bitbuf_MakeMaskTable() { 
+constexpr MaskTable_T _bitbuf_MakeMaskTable() 
+{ 
 	MaskTable_T out{};
 	for (int i = 0; i < 32; i++)
 	{
