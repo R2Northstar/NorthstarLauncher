@@ -1,3 +1,4 @@
+// clang-format off
 #ifndef PCH_H
 #define PCH_H
 
@@ -41,11 +42,38 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 // Example usage: M_VMETHOD(int, GetEntityIndex, 8, (CBaseEntity* ent), (this, ent))
 #define M_VMETHOD(returnType, name, index, args, argsRaw)                                                                                  \
 	FORCEINLINE returnType name args noexcept { return CallVFunc_Alt<returnType, index> argsRaw; }
-#endif
 
 // Logs a message only if in debug mode
-#ifdef _DEBUG 
+#ifdef _DEBUG
 #define DLOG(s) spdlog::info(s)
 #else
 #define DLOG(s)
+#endif
+
+// Concatiations of some compile-time macros line __LINE__ require 2 levels of macro indirection
+#define CONCAT_WRAP_INNER(a, b) a##b
+#define CONCAT_WRAP(a, b) CONCAT_WRAP_INNER(a, b)
+
+// Execute a block of code at startup runtime (before main)
+struct _ORTC
+{
+	_ORTC(std::function<void()> f) { f(); }
+};
+#define RUNTIME_EXEC(lambdaFunc) const inline _ORTC CONCAT_WRAP_INNER(_ORTC_INSTANCE, __COUNTER__) = _ORTC(lambdaFunc)
+
+// If-statement that only fires once
+#define IF_ONCE                                                                                                                            \
+	if ((                                                                                                                                  \
+			[]                                                                                                                             \
+			{                                                                                                                              \
+				static bool _if_once_change_bool = true;                                                                                   \
+				if (_if_once_change_bool)                                                                                                  \
+				{                                                                                                                          \
+					_if_once_change_bool = false;                                                                                          \
+					return true;                                                                                                           \
+				}                                                                                                                          \
+				else                                                                                                                       \
+					return false;                                                                                                          \
+			})())
+
 #endif
