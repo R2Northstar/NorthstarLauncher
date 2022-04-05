@@ -136,6 +136,12 @@
     <Filter Include="Source Files\Shared\Exploit Fixes\AntiRCE">
       <UniqueIdentifier>{3447f712-e02f-4cfc-932e-c8cb0d8d358a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shared\NSQApi">
+      <UniqueIdentifier>{432cf9b4-f0cf-4520-aa55-a96958081e80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shared\NSQApi\IO">
+      <UniqueIdentifier>{529cae5f-ef9e-4bb8-9a8b-06b1f7e623cc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1509,6 +1515,12 @@
     <ClInclude Include="AntiRCE.h">
       <Filter>Source Files\Shared\Exploit Fixes\AntiRCE</Filter>
     </ClInclude>
+    <ClInclude Include="NSQApi.h">
+      <Filter>Source Files\Shared\NSQApi</Filter>
+    </ClInclude>
+    <ClInclude Include="NSQIO.h">
+      <Filter>Source Files\Shared\NSQApi\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1672,6 +1684,12 @@
     </ClCompile>
     <ClCompile Include="AntiRCE.cpp">
       <Filter>Source Files\Shared\Exploit Fixes\AntiRCE</Filter>
+    </ClCompile>
+    <ClCompile Include="NSQApi.cpp">
+      <Filter>Source Files\Shared\NSQApi</Filter>
+    </ClCompile>
+    <ClCompile Include="NSQIO.cpp">
+      <Filter>Source Files\Shared\NSQApi\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

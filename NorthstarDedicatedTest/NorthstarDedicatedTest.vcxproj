@@ -117,6 +117,8 @@
     <ClInclude Include="clientchathooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="NSQApi.h" />
+    <ClInclude Include="NSQIO.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
     <ClInclude Include="serverchathooks.h" />
@@ -600,6 +602,8 @@
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="masterserver.cpp" />
     <ClCompile Include="modmanager.cpp" />
+    <ClCompile Include="NSQApi.cpp" />
+    <ClCompile Include="NSQIO.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

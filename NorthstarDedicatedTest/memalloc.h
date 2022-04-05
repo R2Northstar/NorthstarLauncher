@@ -40,7 +40,3 @@ class SourceAllocator
 };
 
 typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<SourceAllocator>, SourceAllocator> rapidjson_document;
-// typedef rapidjson::GenericDocument<rapidjson::UTF8<>, SourceAllocator, SourceAllocator> rapidjson_document;
-// typedef rapidjson::Document rapidjson_document;
-// using MyDocument = rapidjson::GenericDocument<rapidjson::UTF8<>, MemoryAllocator>;
-// using rapidjson_document = rapidjson::GenericDocument<rapidjson::UTF8<>, SourceAllocator, SourceAllocator>;

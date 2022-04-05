@@ -49,10 +49,9 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
+#include "NSQApi.h"
 
 typedef void (*initPluginFuncPtr)(void* fnGetPluginObject);
-
-bool initialised = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -186,15 +185,11 @@ bool LoadPlugins()
 
 bool InitialiseNorthstar()
 {
-	if (initialised)
-	{
-		// spdlog::warn("Called InitialiseNorthstar more than once!"); // it's actually 100% fine for that to happen
-		return false;
+	IF_ONCE { } else { 
+		return false; // Prevent multi-initialization
 	}
-
-	initialised = true;
-
-	parseConfigurables();
+	
+	ParseConfigurables();
 	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters
@@ -279,6 +274,9 @@ bool InitialiseNorthstar()
 
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
+
+	// active NSQApi
+	AddDllLoadCallbackForClient("client.dll", NSQApi::InitClient);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
