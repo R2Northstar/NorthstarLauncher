@@ -5,7 +5,7 @@
 
 void HookEnabler::CreateHook(LPVOID ppTarget, LPVOID ppDetour, LPVOID* ppOriginal, const char* targetName)
 {
-	DLOG("HookEnabler::CreateHook at {} (targetName: {})", ppTarget, targetName);
+	DBLOG("HookEnabler::CreateHook at {} (targetName: {})", ppTarget, targetName);
 	// the macro for this uses ppTarget's name as targetName, and this typically starts with &
 	// targetname is used for debug stuff and debug output is nicer if we don't have this
 	if (*targetName == '&')
@@ -40,6 +40,6 @@ HookEnabler::~HookEnabler()
 				spdlog::error("MH_EnableHook failed for unknown function");
 		}
 		else
-			spdlog::info("Enabling hook {}", hook->targetName);
+			DBLOG("Enabling hook {}", hook->targetName);
 	}
 }

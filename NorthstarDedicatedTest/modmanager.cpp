@@ -295,7 +295,7 @@ void ModManager::LoadMods()
 			std::stringstream vpkJsonStringStream;
 
 			bool bUseVPKJson = false;
-			rapidjson::Document dVpkJson;
+			rapidjson_document dVpkJson;
 
 			if (!vpkJsonStream.fail())
 			{
@@ -342,7 +342,7 @@ void ModManager::LoadMods()
 			std::stringstream rpakJsonStringStream;
 
 			bool bUseRpakJson = false;
-			rapidjson::Document dRpakJson;
+			rapidjson::Document dRpakJson; // not using rapidjson_document here
 
 			if (!rpakJsonStream.fail())
 			{

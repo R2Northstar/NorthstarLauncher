@@ -43,7 +43,7 @@ void InitialiseConVars(HMODULE baseAddress)
 //-----------------------------------------------------------------------------
 ConVar::ConVar(const char* pszName, const char* pszDefaultValue, int nFlags, const char* pszHelpString)
 {
-	spdlog::info("Registering Convar {}", pszName);
+	DBLOG("Registering Convar {}", pszName);
 
 	this->m_ConCommandBase.m_pConCommandBaseVTable = g_pConVar_Vtable;
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
@@ -59,7 +59,7 @@ ConVar::ConVar(
 	const char* pszName, const char* pszDefaultValue, int nFlags, const char* pszHelpString, bool bMin, float fMin, bool bMax, float fMax,
 	void* pCallback)
 {
-	spdlog::info("Registering Convar {}", pszName);
+	DBLOG("Registering Convar {}", pszName);
 
 	this->m_ConCommandBase.m_pConCommandBaseVTable = g_pConVar_Vtable;
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;

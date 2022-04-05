@@ -147,7 +147,7 @@ template <ScriptContext context> class SquirrelManager
 
 		for (SQFuncRegistration* funcReg : m_funcRegistrations)
 		{
-			spdlog::info("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
+			DBLOG("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
 
 			if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
 				ClientRegisterSquirrelFunc(sqvm, funcReg, 1);

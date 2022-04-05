@@ -102,7 +102,7 @@ inline void* PatternScan(const char* moduleName, const char* pattern, int offset
 
 inline void BytePatch(uintptr_t address, const BYTE* vals, int size)
 {
-	DLOG("Patching {} bytes at {}", size, address);
+	DBLOG("Patching {} bytes at {}", size, address);
 	WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
 }
 
@@ -198,7 +198,7 @@ struct KHook
 		{
 			if (hook->Setup())
 			{
-				DLOG("KHook hooked at {}", hook->targetFuncAddr);
+				DBLOG("KHook hooked at {}", hook->targetFuncAddr);
 			}
 			else
 			{

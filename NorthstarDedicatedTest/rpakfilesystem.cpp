@@ -72,7 +72,7 @@ void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 	// them async instead
 	LoadPreloadPaks();
 
-	spdlog::info("LoadPakSync {}", path);
+	DBLOG("LoadPakSync {}", path);
 	return LoadPakSyncOriginal(path, unknownSingleton, flags);
 }
 
@@ -85,7 +85,7 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 		LoadPreloadPaks();
 
 	int ret = LoadPakAsyncOriginal(path, unknownSingleton, flags, callback0, callback1);
-	spdlog::info("LoadPakAsync {} {}", path, ret);
+	DBLOG("LoadPakAsync {} {}", path, ret);
 	return ret;
 }
 

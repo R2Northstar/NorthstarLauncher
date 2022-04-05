@@ -45,7 +45,7 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 
 // Logs a message only if in debug mode
 #ifdef _DEBUG
-#define DLOG(s) spdlog::info(s)
+#define DBLOG(s, ...) spdlog::info(s, ##__VA_ARGS__)
 #else
 #define DLOG(s)
 #endif

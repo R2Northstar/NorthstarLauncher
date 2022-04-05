@@ -173,12 +173,7 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writePath += ".ain";
 
 	// dump from memory
-	spdlog::info("writing ain file {}", writePath.string());
-	spdlog::info("");
-	spdlog::info("");
-	spdlog::info("");
-	spdlog::info("");
-	spdlog::info("");
+	spdlog::info("writing ain file {}\n\n\n", writePath.string());
 
 	std::ofstream writeStream(writePath, std::ofstream::binary);
 	spdlog::info("writing ainet version: {}", AINET_VERSION_NUMBER);

@@ -259,13 +259,13 @@ bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath)
 
 	for (const std::string& eventId : data->EventIds)
 	{
-		spdlog::info("Registering sound event {}", eventId);
+		DBLOG("Registering sound event {}", eventId);
 		m_loadedAudioOverrides.insert({eventId, data});
 	}
 
 	for (const auto& eventIdRegexData : data->EventIdsRegex)
 	{
-		spdlog::info("Registering sound event regex {}", eventIdRegexData.first);
+		DBLOG("Registering sound event regex {}", eventIdRegexData.first);
 		m_loadedAudioOverridesRegex.insert({eventIdRegexData.first, data});
 	}
 

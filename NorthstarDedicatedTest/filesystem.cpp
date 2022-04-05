@@ -84,7 +84,7 @@ void SetNewModSearchPaths(Mod* mod)
 	{
 		if ((fs::absolute(mod->ModDirectory) / MOD_OVERRIDE_DIR).string().compare(currentModPath))
 		{
-			spdlog::info("changing mod search path from {} to {}", currentModPath, mod->ModDirectory.string());
+			DBLOG("changing mod search path from \"{}\" to \"{}\"", currentModPath, mod->ModDirectory.string());
 
 			addSearchPathOriginal(
 				&*(*g_Filesystem), (fs::absolute(mod->ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);

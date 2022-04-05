@@ -10,7 +10,7 @@ ConCommandConstructorType conCommandConstructor;
 
 void RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags)
 {
-	spdlog::info("Registering ConCommand {}", name);
+	DBLOG("Registering ConCommand {}", name);
 
 	// no need to free this ever really, it should exist as long as game does
 	ConCommand* newCommand = new ConCommand;

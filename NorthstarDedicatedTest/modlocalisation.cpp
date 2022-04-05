@@ -13,7 +13,7 @@ bool AddLocalisationFileHook(void* g_pVguiLocalize, const char* path, const char
 	bool ret = AddLocalisationFile(g_pVguiLocalize, path, pathId, unknown);
 
 	if (ret)
-		spdlog::info("Loaded localisation file {} successfully", path);
+		DBLOG("Loaded localisation file {} successfully", path);
 
 	if (!loadModLocalisationFiles)
 		return ret;
