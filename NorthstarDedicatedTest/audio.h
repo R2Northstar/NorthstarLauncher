@@ -39,6 +39,7 @@ class CustomAudioManager
 	bool TryLoadAudioOverride(const fs::path&);
 	void ClearAudioOverrides();
 
+	std::atomic_int m_iActiveAudioReads = 0;
 	std::unordered_map<std::string, std::shared_ptr<EventOverrideData>> m_loadedAudioOverrides = {};
 	std::unordered_map<std::string, std::shared_ptr<EventOverrideData>> m_loadedAudioOverridesRegex = {};
 };
