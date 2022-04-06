@@ -7,7 +7,6 @@
 #include <iostream>
 #include <sstream>
 #include <random>
-#include <atomic>
 #include "convar.h"
 
 extern "C"
@@ -217,14 +216,12 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 			std::thread readThread(
 				[pathString, fileSize, data] 
 				{
-					g_CustomAudioManager.m_iActiveAudioReads++;
-
+					std::shared_lock lock(g_CustomAudioManager.m_loadingMutex);
 					std::basic_ifstream<uint8_t> wavStream(pathString, std::ios::binary);
 
 					// would be weird if this got hit, since it would've worked previously
 					if (wavStream.fail())
 					{
-						g_CustomAudioManager.m_iActiveAudioReads--;
 						spdlog::error("Failed async read of audio sample {}", pathString);
 						return;
 					}
@@ -236,7 +233,6 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					wavStream.read(data, sizeof(EMPTY_WAVE));
 					wavStream.close();
 
-					g_CustomAudioManager.m_iActiveAudioReads--;
 					spdlog::info("Finished async read of audio sample {}", pathString);
 				});
 
@@ -325,8 +321,7 @@ void CustomAudioManager::ClearAudioOverrides()
 	
 	// slightly (very) bad
 	// wait for all audio reads to complete so we don't kill preexisting audio buffers as we're writing to them
-	while (m_iActiveAudioReads)
-		Sleep(50);
+	std::unique_lock lock(g_CustomAudioManager.m_loadingMutex);
 
 	m_loadedAudioOverrides.clear();
 	m_loadedAudioOverridesRegex.clear();
