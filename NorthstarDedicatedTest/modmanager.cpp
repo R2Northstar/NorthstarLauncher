@@ -14,6 +14,7 @@
 #include <sstream>
 #include <vector>
 #include "filesystem.h"
+#include "rpakfilesystem.h"
 #include "configurables.h"
 
 ModManager* g_ModManager;
@@ -190,9 +191,10 @@ ModManager::ModManager()
 {
 	// precaculated string hashes
 	// note: use backslashes for these, since we use lexically_normal for file paths which uses them
-	m_hScriptsRsonHash = std::hash<std::string>{}("scripts\\vscripts\\scripts.rson");
-	m_hPdefHash = std::hash<std::string>{}(
-		"cfg\\server\\persistent_player_data_version_231.pdef"); // this can have multiple versions, but we use 231 so that's what we hash
+	m_hScriptsRsonHash = STR_HASH("scripts\\vscripts\\scripts.rson");
+	m_hPdefHash = STR_HASH(
+		"cfg\\server\\persistent_player_data_version_231.pdef" // this can have multiple versions, but we use 231 so that's what we hash
+	);
 
 	LoadMods();
 }
@@ -281,14 +283,32 @@ void ModManager::LoadMods()
 		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
 		// causes us to leak memory on reload, but not much, potentially find a way to not do this at some point
 		for (ModConVar* convar : mod.ConVars)
-			if (g_CustomConvars.find(convar->Name) ==
-				g_CustomConvars.end()) // make sure convar isn't registered yet, unsure if necessary but idk what behaviour is for defining
-									   // same convar multiple times
+			if (!g_pCVar->FindVar(convar->Name.c_str())) // make sure convar isn't registered yet, unsure if necessary but idk what
+														 // behaviour is for defining same convar multiple times
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
 
 		// read vpk paths
 		if (fs::exists(mod.ModDirectory / "vpk"))
 		{
+			// read vpk cfg
+			std::ifstream vpkJsonStream(mod.ModDirectory / "vpk/vpk.json");
+			std::stringstream vpkJsonStringStream;
+
+			bool bUseVPKJson = false;
+			rapidjson::Document dVpkJson;
+
+			if (!vpkJsonStream.fail())
+			{
+				while (vpkJsonStream.peek() != EOF)
+					vpkJsonStringStream << (char)vpkJsonStream.get();
+
+				vpkJsonStream.close();
+				dVpkJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+					vpkJsonStringStream.str().c_str());
+
+				bUseVPKJson = !dVpkJson.HasParseError() && dVpkJson.IsObject();
+			}
+
 			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "vpk"))
 			{
 				// a bunch of checks to make sure we're only adding dir vpks and their paths are good
@@ -302,10 +322,69 @@ void ModManager::LoadMods()
 					// this really fucking sucks but it'll work
 					std::string vpkName =
 						(file.path().parent_path() / formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3)).string();
-					mod.Vpks.push_back(vpkName);
 
-					if (m_hasLoadedMods)
+					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
+					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
+														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
+					modVpk.m_sVpkPath = vpkName;
+
+					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
 						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
+				}
+			}
+		}
+
+		// read rpak paths
+		if (fs::exists(mod.ModDirectory / "paks"))
+		{
+			// read rpak cfg
+			std::ifstream rpakJsonStream(mod.ModDirectory / "paks/rpak.json");
+			std::stringstream rpakJsonStringStream;
+
+			bool bUseRpakJson = false;
+			rapidjson::Document dRpakJson;
+
+			if (!rpakJsonStream.fail())
+			{
+				while (rpakJsonStream.peek() != EOF)
+					rpakJsonStringStream << (char)rpakJsonStream.get();
+
+				rpakJsonStream.close();
+				dRpakJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+					rpakJsonStringStream.str().c_str());
+
+				bUseRpakJson = !dRpakJson.HasParseError() && dRpakJson.IsObject();
+			}
+
+			// read pak aliases
+			if (bUseRpakJson && dRpakJson.HasMember("Aliases") && dRpakJson["Aliases"].IsObject())
+			{
+				for (rapidjson::Value::ConstMemberIterator iterator = dRpakJson["Aliases"].MemberBegin();
+					 iterator != dRpakJson["Aliases"].MemberEnd(); iterator++)
+				{
+					if (!iterator->name.IsString() || !iterator->value.IsString())
+						continue;
+
+					mod.RpakAliases.insert(std::make_pair(iterator->name.GetString(), iterator->value.GetString()));
+				}
+			}
+
+			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "paks"))
+			{
+				// ensure we're only loading rpaks
+				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
+				{
+					std::string pakName(file.path().filename().string());
+
+					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
+					modPak.m_bAutoLoad =
+						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
+										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+					modPak.m_sPakPath = pakName;
+
+					// not using atm because we need to resolve path to rpak
+					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
+					//	g_PakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
 		}
@@ -318,7 +397,7 @@ void ModManager::LoadMods()
 				if (fs::is_regular_file(file))
 				{
 					std::string kvStr = file.path().lexically_relative(mod.ModDirectory / "keyvalues").lexically_normal().string();
-					mod.KeyValues.emplace(std::hash<std::string>{}(kvStr), kvStr);
+					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
 				}
 			}
 		}
@@ -338,6 +417,14 @@ void ModManager::LoadMods()
 
 				mod.Pdiff = pdiffStringStream.str();
 			}
+		}
+
+		// read bink video paths
+		if (fs::exists(mod.ModDirectory / "media"))
+		{
+			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.ModDirectory / "media"))
+				if (fs::is_regular_file(file) && file.path().extension() == ".bik")
+					mod.BinkVideos.push_back(file.path().filename().string());
 		}
 
 		// try to load audio
@@ -451,7 +538,7 @@ void ModManager::UnloadMods()
 
 void ModManager::CompileAssetsForFile(const char* filename)
 {
-	size_t fileHash = std::hash<std::string>{}(fs::path(filename).lexically_normal().string());
+	size_t fileHash = STR_HASH(fs::path(filename).lexically_normal().string());
 
 	if (fileHash == m_hScriptsRsonHash)
 		BuildScriptsRson();

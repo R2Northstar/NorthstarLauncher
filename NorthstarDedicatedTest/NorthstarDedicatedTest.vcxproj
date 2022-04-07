@@ -66,7 +66,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>$(ProjectDir)include\MinHook.x64.lib;$(ProjectDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)include\MinHook.x64.lib;$(ProjectDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -96,7 +96,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>$(ProjectDir)include\MinHook.x64.lib;$(ProjectDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)include\MinHook.x64.lib;$(ProjectDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -114,6 +114,7 @@
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
+    <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
@@ -548,7 +549,6 @@
     <ClInclude Include="rpakfilesystem.h" />
     <ClInclude Include="scriptbrowserhooks.h" />
     <ClInclude Include="scriptmainmenupromos.h" />
-    <ClInclude Include="securitypatches.h" />
     <ClInclude Include="scriptmodmenu.h" />
     <ClInclude Include="scriptserverbrowser.h" />
     <ClInclude Include="scriptsrson.h" />
@@ -561,6 +561,10 @@
     <ClInclude Include="tts.h" />
     <ClInclude Include="voicebasic.h" />
     <ClInclude Include="state.h" />
+    <ClInclude Include="ExploitFixes.h" />
+    <ClInclude Include="ExploitFixes_UTF8Parser.h" />
+    <ClInclude Include="NSMem.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
@@ -570,6 +574,7 @@
     <ClCompile Include="chatcommand.cpp" />
     <ClCompile Include="clientauthhooks.cpp" />
     <ClCompile Include="clientchathooks.cpp" />
+    <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="configurables.cpp" />
     <ClCompile Include="context.cpp" />
@@ -605,7 +610,6 @@
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
-    <ClCompile Include="securitypatches.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />
     <ClCompile Include="scriptsrson.cpp" />
@@ -619,6 +623,8 @@
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="tts.cpp" />
     <ClCompile Include="voicebasic.cpp" />
+    <ClCompile Include="ExploitFixes.cpp" />
+    <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />

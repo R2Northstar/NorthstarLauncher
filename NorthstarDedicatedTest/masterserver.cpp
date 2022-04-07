@@ -13,6 +13,7 @@
 #include "misccommands.h"
 #include <cstring>
 #include <regex>
+#include "version.h"
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
 // requests so httplib is used exclusively for server stuff now
 
@@ -169,6 +170,7 @@ void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 {
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
@@ -210,7 +212,6 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
-
 			std::string readBuffer;
 			curl_easy_setopt(
 				curl, CURLOPT_URL,

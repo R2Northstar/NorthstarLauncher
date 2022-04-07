@@ -142,10 +142,15 @@ void EnsureOriginStarted()
 		return;
 	}
 
+	printf("[*] Starting Origin...\n");
+
 	PROCESS_INFORMATION pi;
 	memset(&pi, 0, sizeof(pi));
 	STARTUPINFO si;
 	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(STARTUPINFO);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_MINIMIZE;
 	CreateProcessA(
 		originPath, (char*)"", NULL, NULL, false, CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP, NULL, NULL, (LPSTARTUPINFOA)&si,
 		&pi);
@@ -288,25 +293,18 @@ int main(int argc, char* argv[])
 
 	if (dedicated && !nostubs)
 	{
-		// clang-format keeps messing with the easy-to-read if statements, so
-		// clang-format off
 		printf("[*] Loading stubs\n");
 		HMODULE gssao, gtxaa, d3d11;
-		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) &&
-			!(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
+		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) && !(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
 			!(d3d11 = GetModuleHandleA("d3d11.dll")))
 		{
-			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) ||
-				!(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
+			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) || !(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
 				!(d3d11 = LoadDediStub("d3d11.dll")))
 			{
-				if ((!gssao || FreeLibrary(gssao)) &&
-					(!gtxaa || FreeLibrary(gtxaa)) &&
-					(!d3d11 || FreeLibrary(d3d11)))
+				if ((!gssao || FreeLibrary(gssao)) && (!gtxaa || FreeLibrary(gtxaa)) && (!d3d11 || FreeLibrary(d3d11)))
 				{
-					printf(
-						"[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
-						"The stubs have been unloaded and the original libraries will be used instead.\n");
+					printf("[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
+						   "The stubs have been unloaded and the original libraries will be used instead.\n");
 				}
 				else
 				{
@@ -323,11 +321,9 @@ int main(int argc, char* argv[])
 		else
 		{
 			// this should never happen
-			printf(
-				"[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
-				"(did Northstar initialize too late?).\n");
+			printf("[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
+				   "(did Northstar initialize too late?).\n");
 		}
-		// clang-format on
 	}
 
 	{

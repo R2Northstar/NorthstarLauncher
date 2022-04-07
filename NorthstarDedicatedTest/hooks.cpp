@@ -2,6 +2,7 @@
 #include "hooks.h"
 #include "hookutils.h"
 #include "sigscanning.h"
+#include "dedicated.h"
 
 #include <wchar.h>
 #include <iostream>
@@ -35,7 +36,7 @@ LoadLibraryWType LoadLibraryWOriginal;
 void InstallInitialHooks()
 {
 	if (MH_Initialize() != MH_OK)
-		spdlog::error("MH_Initialize failed");
+		spdlog::error("MH_Initialize (minhook initialization) failed");
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, &GetCommandLineA, &GetCommandLineAHook, reinterpret_cast<LPVOID*>(&GetCommandLineAOriginal));
@@ -120,6 +121,32 @@ std::vector<DllLoadCallback*> dllLoadCallbacks;
 
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback)
 {
+	DllLoadCallback* callbackStruct = new DllLoadCallback;
+	callbackStruct->dll = dll;
+	callbackStruct->callback = callback;
+	callbackStruct->called = false;
+
+	dllLoadCallbacks.push_back(callbackStruct);
+}
+
+void AddDllLoadCallbackForDedicatedServer(std::string dll, DllLoadCallbackFuncType callback)
+{
+	if (!IsDedicated())
+		return;
+
+	DllLoadCallback* callbackStruct = new DllLoadCallback;
+	callbackStruct->dll = dll;
+	callbackStruct->callback = callback;
+	callbackStruct->called = false;
+
+	dllLoadCallbacks.push_back(callbackStruct);
+}
+
+void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callback)
+{
+	if (IsDedicated())
+		return;
+
 	DllLoadCallback* callbackStruct = new DllLoadCallback;
 	callbackStruct->dll = dll;
 	callbackStruct->callback = callback;

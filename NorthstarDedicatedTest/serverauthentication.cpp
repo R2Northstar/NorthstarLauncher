@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "serverauthentication.h"
+#include "cvar.h"
 #include "convar.h"
 #include "hookutils.h"
 #include "masterserver.h"
@@ -13,6 +14,7 @@
 #include <filesystem>
 #include <thread>
 #include "configurables.h"
+#include "NSMem.h"
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
@@ -62,6 +64,8 @@ ConVar* Cvar_net_chan_limit_mode;
 ConVar* Cvar_net_chan_limit_msec_per_sec;
 ConVar* Cvar_sv_querylimit_per_sec;
 ConVar* Cvar_sv_max_chat_messages_per_sec;
+
+ConVar* Cvar_net_datablock_enabled;
 
 void ServerAuthenticationManager::StartPlayerAuthServer()
 {
@@ -113,6 +117,9 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
 					newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
+					strncpy(newAuthData.username, request.get_param_value("username").c_str(), sizeof(newAuthData.username));
+					newAuthData.username[sizeof(newAuthData.username) - 1] = 0;
+
 					newAuthData.pdataSize = request.body.size();
 					newAuthData.pdata = new char[newAuthData.pdataSize];
 					memcpy(newAuthData.pdata, request.body.c_str(), newAuthData.pdataSize);
@@ -141,6 +148,27 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
+char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToken, char* name)
+{
+	std::lock_guard<std::mutex> guard(m_authDataMutex);
+
+	if (!m_authData.empty() && m_authData.count(std::string(authToken)))
+	{
+		AuthData authData = m_authData[authToken];
+
+		bool nameAccepted = (!*authData.username || !strcmp(name, authData.username));
+
+		if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->GetInt())
+		{
+			// limit name length to 64 characters just in case something changes, this technically shouldn't be needed given the master
+			// server gets usernames from origin but we have it just in case
+			strncpy(name, authData.username, 64);
+			name[63] = 0;
+		}
+	}
+	return name;
+}
+
 bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
 {
 	std::string strUid = std::to_string(uid);
@@ -151,6 +179,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 	{
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
+
 		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
 		{
 			authFail = false;
@@ -297,6 +326,9 @@ void* CBaseServer__ConnectClientHook(
 
 bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7)
 {
+	// try changing name before all else
+	name = g_ServerAuthenticationManager->VerifyPlayerName(self, nextPlayerToken, name);
+
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
@@ -568,6 +600,8 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	Cvar_sv_querylimit_per_sec = new ConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
 	Cvar_sv_max_chat_messages_per_sec = new ConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
 
+	Cvar_net_datablock_enabled = g_pCVar->FindVar("net_datablock_enabled");
+
 	RegisterConCommand("ns_resetpersistence", ResetPdataCommand, "resets your pdata when you next enter the lobby", FCVAR_NONE);
 
 	HookEnabler hook;
@@ -590,47 +624,42 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 
 	CCommand__Tokenize = (CCommand__TokenizeType)((char*)baseAddress + 0x418380);
 
+	uintptr_t ba = (uintptr_t)baseAddress;
+
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
 	{
-		void* ptr = (char*)baseAddress + 0x114655;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xEB; // jz => jmp
+		NSMem::BytePatch(
+			ba + 0x114655,
+			"EB" // jz => jmp
+		);
 	}
 
 	// patch to disable fairfight marking players as cheaters and kicking them
 	{
-		void* ptr = (char*)baseAddress + 0x101012;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xE9; // jz => jmp
-		*((char*)ptr + 1) = (char)0x90;
-		*((char*)ptr + 2) = (char)0x0;
+		NSMem::BytePatch(
+			ba + 0x101012,
+			"E9 90 00" // jz => jmp
+		);
 	}
 
 	// patch to allow same of multiple account
 	{
-		void* ptr = (char*)baseAddress + 0x114510;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xEB; // jz => jmp
+		NSMem::BytePatch(
+			ba + 0x114510,
+			"EB" // jz => jmp
+		);
 	}
 
 	// patch to set bWasWritingStringTableSuccessful in CNetworkStringTableContainer::WriteBaselines if it fails
 	{
-		bool* writeAddress = (bool*)(&bWasWritingStringTableSuccessful - ((bool*)baseAddress + 0x234EDC));
+		uintptr_t writeAddress = (uintptr_t)(&bWasWritingStringTableSuccessful - (ba + 0x234EDC));
 
-		void* ptr = (char*)baseAddress + 0x234ED2;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xC7;
-		*((char*)ptr + 1) = (char)0x05;
-		*(int*)((char*)ptr + 2) = (int)writeAddress;
-		*((char*)ptr + 6) = (char)0x00;
-		*((char*)ptr + 7) = (char)0x00;
-		*((char*)ptr + 8) = (char)0x00;
-		*((char*)ptr + 9) = (char)0x00;
+		auto addr = ba + 0x234ED2;
+		NSMem::BytePatch(addr, "C7 05");
+		NSMem::BytePatch(addr + 2, (BYTE*)&writeAddress, sizeof(writeAddress));
 
-		*((char*)ptr + 10) = (char)0x90;
-		*((char*)ptr + 11) = (char)0x90;
-		*((char*)ptr + 12) = (char)0x90;
-		*((char*)ptr + 13) = (char)0x90;
-		*((char*)ptr + 14) = (char)0x90;
+		NSMem::BytePatch(addr + 6, "00 00 00 00");
+
+		NSMem::NOP(addr + 10, 5);
 	}
 }
