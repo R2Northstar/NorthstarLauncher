@@ -1481,8 +1481,10 @@
     </ClInclude>
     <ClInclude Include="tts.h">
       <Filter>Header Files\Client</Filter>
+    </ClInclude>
     <ClInclude Include="voicebasic.h">
       <Filter>Header Files\Client</Filter>
+    </ClInclude>
     <ClInclude Include="plugins.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1661,6 +1663,7 @@
     </ClCompile>
     <ClCompile Include="voicebasic.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
     <ClCompile Include="plugins.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
