@@ -220,8 +220,12 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// set persistent data as ready, we use 0x3 internally to mark the client as using local persistence
 		*((char*)player + 0x4a0) = (char)0x3;
 
-		if (!CVar_ns_auth_allow_insecure->GetBool()) // no auth data and insecure connections aren't allowed, so dc the client
+		if (g_MasterServerManager->m_reportedToMasterServer && !CVar_ns_auth_allow_insecure->GetBool())
+		{
+			// no auth data and insecure connections aren't allowed, so dc the client
+			DBLOG("Blocking unauthenticated client");
 			return false;
+		}
 
 		// insecure connections are allowed, try reading from disk
 		// uuid
