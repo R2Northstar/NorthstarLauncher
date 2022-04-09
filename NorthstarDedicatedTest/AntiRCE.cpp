@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "AntiRCE.h"
 #include "cvar.h"
-void OnGameFileAccess(const char* path)
+
+KHookList antiRCEHooks;
+
+void OnGameFileAccess(const char* path, bool readOnly)
 {
 	static char curDirectory[MAX_PATH];
 	static DWORD curDirectoryResult = GetCurrentDirectoryA(MAX_PATH, curDirectory);
@@ -17,20 +20,20 @@ void OnGameFileAccess(const char* path)
 		spdlog::info("File handle opened to \"{}\", thread ID: {}", path, (void*)GetCurrentThreadId());
 	}
 
-	if (strstr(path, "\\respawn\\titanfall2\\"))
-		return; // Perfectly fine
-
 	int pathLen = strlen(path);
 
 	const char* extension = strrchr(path, '.');
 	if (extension)
 	{
-		constexpr const char* EVIL_EXTENTIONS[] = {".dll", ".exe", ".bat", ".cmd", ".lib"};
-		for (auto evil : EVIL_EXTENTIONS)
+		if (!readOnly)
 		{
-			if (!_stricmp(evil, extension))
+			constexpr const char* EVIL_EXTENTIONS[] = {".dll", ".exe", ".bat", ".cmd", ".lib"};
+			for (auto evil : EVIL_EXTENTIONS)
 			{
-				AntiRCE::EmergencyReport("Tried to access file \"" + std::string(path) + "\"");
+				if (!_stricmp(evil, extension))
+				{
+					AntiRCE::EmergencyReport("Tried to access file \"" + std::string(path) + "\"");
+				}
 			}
 		}
 
@@ -43,6 +46,9 @@ void OnGameFileAccess(const char* path)
 			}
 		}
 	}
+
+	if (strstr(path, "\\respawn\\titanfall2\\"))
+		return; // Perfectly fine, just the temporary data path
 
 	bool isRelativePath;
 	if (pathLen >= curDirectoryLen)
@@ -79,14 +85,14 @@ void OnGameFileAccess(const char* path)
 
 // its 3 am and idk what this function is but it get called whenever file opened sooo
 KHOOK(
-	FileSytem_OpenFileFuncIdk,
+	antiRCEHooks, FileSytem_OpenFileFuncIdk,
 	("filesystem_stdio.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 8B 05"), void*,
-	__fastcall, (char* fileName, void* fart, void* poop))
+	__fastcall, (char* fileName, char* openTypeStr, void* unk))
 {
 
-	OnGameFileAccess(fileName);
+	OnGameFileAccess(fileName, openTypeStr[0] == 'r');
 
-	return oFileSytem_OpenFileFuncIdk(fileName, fart, poop);
+	return oFileSytem_OpenFileFuncIdk(fileName, openTypeStr, unk);
 }
 
 // NOTE: These hooks do not prevent RCE attacks from using these funtions, as an attacker could just disable these hooks
@@ -96,12 +102,21 @@ KHOOK(
 //	as well as to prevent any exploits that might utilize these functions from being able to do actual damage
 void AntiRCE::EmergencyReport(std::string msg)
 {
+
+#ifdef NS_DEBUG // For easier debugging
+	assert(false, "AntiRCE::EmergencyReport triggered");
+#endif
+
 	spdlog::critical("AntiRCE EMERGENCY REPORT: " + msg + "\n\tCallstack:");
 	PrintCallStack("\t");
+
+#ifndef NS_DEBUG // This gets annoying during testing
 
 	// Beep an out-of-tune tri-tone for 400ms so user knows something is up
 	Beep(494 * 2, 200);
 	Beep(349 * 2, 200);
+
+#endif
 
 	// clang-format off
 	MessageBoxA(NULL, (
@@ -114,4 +129,15 @@ void AntiRCE::EmergencyReport(std::string msg)
 	// clang-format on
 
 	exit(EXITCODE_TERRIBLE);
+}
+
+bool AntiRCE::InitHooks()
+{
+	bool result = true;
+	for (auto hook : antiRCEHooks)
+	{
+		if (!hook->Setup())
+			result = false;
+	}
+	return result;
 }
