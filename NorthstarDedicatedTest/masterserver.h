@@ -87,6 +87,7 @@ class MasterServerManager
 
 	bool m_scriptRequestingServerList = false;
 	bool m_successfullyConnected = true;
+	bool m_reportedToMasterServer = false;
 
 	bool m_bNewgameAfterSelfAuth = false;
 	bool m_scriptAuthenticatingWithGameServer = false;

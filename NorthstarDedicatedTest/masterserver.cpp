@@ -885,6 +885,8 @@ void MasterServerManager::AddSelfToServerList(
 					goto REQUEST_END_CLEANUP;
 				}
 
+				m_reportedToMasterServer = true;
+
 				strncpy(m_ownServerId, serverAddedJson["id"].GetString(), sizeof(m_ownServerId));
 				m_ownServerId[sizeof(m_ownServerId) - 1] = 0;
 
@@ -1156,24 +1158,30 @@ void MasterServerManager::RemoveSelfFromServerList()
 	std::thread requestThread(
 		[this]
 		{
-			CURL* curl = curl_easy_init();
-			SetCommonHttpClientOptions(curl);
+		CURL* curl = curl_easy_init();
+		SetCommonHttpClientOptions(curl);
 
-			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(
-				curl, CURLOPT_URL,
-				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId).c_str());
+		std::string readBuffer;
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		curl_easy_setopt(
+			curl, CURLOPT_URL,
+			fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId).c_str());
 
-			*m_ownServerId = 0;
-			CURLcode result = curl_easy_perform(curl);
+		*m_ownServerId = 0;
+		CURLcode result = curl_easy_perform(curl);
 
-			if (result == CURLcode::CURLE_OK)
-				m_successfullyConnected = true;
-			else
-				m_successfullyConnected = false;
+		if (result == CURLcode::CURLE_OK)
+		{
+			m_reportedToMasterServer = false;
+			m_successfullyConnected = true;
+		}
+		else
+		{
+			m_successfullyConnected = false;
+		}
+			
 
 			curl_easy_cleanup(curl);
 		});
