@@ -47,7 +47,7 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 #ifdef _DEBUG
 #define DBLOG(s, ...) spdlog::info(s, ##__VA_ARGS__)
 #else
-#define DLOG(s)
+#define DBLOG(s)
 #endif
 
 // Concatiations of some compile-time macros line __LINE__ require 2 levels of macro indirection
