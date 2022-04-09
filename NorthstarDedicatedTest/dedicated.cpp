@@ -212,11 +212,7 @@ void InitialiseDedicated(HMODULE engineAddress)
 	{
 		// func that checks if origin is inited
 		// always return 1
-		NSMem::BytePatch(
-			ea + 0x183B70, {
-							   0xB0, 0x01, // mov al,01
-							   0xC3		   // ret
-						   });
+		NSMem::BytePatch(ea + 0x183B70, "B0 01 C3");
 	}
 
 	{
