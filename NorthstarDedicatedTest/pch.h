@@ -3,7 +3,7 @@
 #define PCH_H
 
 #ifdef _DEBUG
-#define NSDEBUG
+#define NS_DEBUG
 #endif
 
 #define WIN32_LEAN_AND_MEAN
