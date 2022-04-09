@@ -44,7 +44,7 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 	FORCEINLINE returnType name args noexcept { return CallVFunc_Alt<returnType, index> argsRaw; }
 
 // Logs a message only if in debug mode
-#ifdef _DEBUG
+#ifdef NS_DEBUG
 #define DBLOG(s, ...) spdlog::info(s, ##__VA_ARGS__)
 #else
 #define DBLOG(s)
