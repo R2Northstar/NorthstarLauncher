@@ -247,3 +247,5 @@ extern GetBaseLocalClientType GetBaseLocalClient;
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress);
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress);
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress);
+
+bool IsRunningLocalServer();

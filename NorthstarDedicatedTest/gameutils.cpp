@@ -117,3 +117,9 @@ void InitialiseTier0GameUtilFunctions(HMODULE baseAddress)
 	Plat_FloatTime = reinterpret_cast<Plat_FloatTimeType>(GetProcAddress(baseAddress, "Plat_FloatTime"));
 	ThreadInServerFrameThread = reinterpret_cast<ThreadInServerFrameThreadType>(GetProcAddress(baseAddress, "ThreadInServerFrameThread"));
 }
+
+bool IsRunningLocalServer() { 
+	static auto ba = (uintptr_t)GetModuleHandleA("engine.dll");
+	int serverState = *(int*)(ba + 0x12A53D48);
+	return serverState > 0;
+}
