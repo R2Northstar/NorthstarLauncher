@@ -165,6 +165,8 @@ struct KHookPatternInfo
 	KHookPatternInfo(void* preFound) : preFound(preFound) {}
 };
 
+typedef std::list<struct KHook*> KHookList;
+
 struct KHook
 {
 	KHookPatternInfo targetFunc;
@@ -172,13 +174,11 @@ struct KHook
 	void* hookFunc;
 	void** original;
 
-	static inline std::vector<KHook*> _allHooks;
-
-	KHook(KHookPatternInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
+	KHook(KHookList& hookList, KHookPatternInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
 	{
 		this->hookFunc = hookFunc;
 		this->original = original;
-		_allHooks.push_back(this);
+		hookList.push_back(this);
 	}
 
 	bool Setup()
@@ -188,32 +188,25 @@ struct KHook
 		if (!targetFuncAddr)
 			return false;
 
-		return MH_CreateHook(targetFuncAddr, hookFunc, original) == MH_OK;
-	}
-
-	// Returns true if succeeded
-	static bool InitAllHooks()
-	{
-		for (KHook* hook : _allHooks)
+		bool result = MH_CreateHook(targetFuncAddr, hookFunc, original) == MH_OK;
+		if (result)
 		{
-			if (hook->Setup())
-			{
-				DBLOG("KHook hooked at {}", hook->targetFuncAddr);
-			}
-			else
-			{
-				return false;
-			}
+			DBLOG("KHook hooked at {}", this->targetFuncAddr);
 		}
+		else
+		{
+			DBLOG("Failed to hook at {}", this->targetFuncAddr);
+		}
+		MH_EnableHook(targetFuncAddr);
 
-		return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
+		return result;
 	}
 };
 
-#define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                         \
+#define KHOOK(list, name, funcPatternInfo, returnType, convention, args)                                                                         \
 	returnType convention hk##name args;                                                                                                   \
 	auto o##name = (returnType(convention*) args)0;                                                                                        \
-	KHook k##name = KHook(KHookPatternInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                  \
+	KHook k##name = KHook(list, KHookPatternInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                  \
 	returnType convention hk##name args
 
 #pragma endregion

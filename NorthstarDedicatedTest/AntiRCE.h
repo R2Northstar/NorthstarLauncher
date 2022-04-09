@@ -9,4 +9,6 @@ namespace AntiRCE
 // Something has gone TERRIBLY wrong, a dangerous exploit may be in use
 void EmergencyReport(std::string msg);
 
+bool InitHooks();
+
 } // namespace AntiRCE
