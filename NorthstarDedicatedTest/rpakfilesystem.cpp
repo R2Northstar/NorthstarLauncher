@@ -6,9 +6,9 @@
 typedef void* (*LoadCommonPaksForMapType)(char* map);
 LoadCommonPaksForMapType LoadCommonPaksForMap;
 
-typedef void*(*LoadPakSyncType)(const char* path, void* unknownSingleton, int flags);
-typedef int(*LoadPakAsyncType)(const char* path, void* unknownSingleton, int flags, void* callback0, void* callback1);
-typedef void*(*ReadFullFileFromDiskType)(const char* requestedPath, void* a2);
+typedef void* (*LoadPakSyncType)(const char* path, void* unknownSingleton, int flags);
+typedef int (*LoadPakAsyncType)(const char* path, void* unknownSingleton, int flags, void* callback0, void* callback1);
+typedef void* (*ReadFullFileFromDiskType)(const char* requestedPath, void* a2);
 
 // there are more i'm just too lazy to add
 struct PakLoadFuncs
@@ -58,10 +58,10 @@ void LoadPreloadPaks()
 		for (ModRpakEntry& pak : mod.Rpaks)
 			if (pak.m_bAutoLoad)
 				g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str());
-	} 
+	}
 }
 
-void LoadCustomMapPaks(char** pakName) 
+void LoadCustomMapPaks(char** pakName)
 {
 	// whether the vanilla game has this rpak
 	bool bHasOriginalPak = fs::exists(fs::path("./r2/paks") / *pakName);
@@ -89,18 +89,17 @@ void LoadCustomMapPaks(char** pakName)
 					g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str());
 			}
 		}
-
 	}
 }
-
-bool bShouldLoadPaks = true;
 
 LoadPakSyncType LoadPakSyncOriginal;
 void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 {
 	HandlePakAliases(&path);
 
-	// note: we don't handle loading any preloaded custom paks synchronously since LoadPakSync is never actually called in retail, just load them async instead
+	// note: we don't handle loading any preloaded custom paks synchronously since LoadPakSync is never actually called in retail, just load
+	// them async instead
+	static bool bShouldLoadPaks = true;
 	if (bShouldLoadPaks)
 	{
 		// disable preloading while we're doing this
@@ -121,6 +120,7 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 {
 	HandlePakAliases(&path);
 
+	static bool bShouldLoadPaks = true;
 	if (bShouldLoadPaks)
 	{
 		// disable preloading while we're doing this
@@ -140,8 +140,8 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
 // possibly just async loading all together?
 ReadFullFileFromDiskType ReadFullFileFromDiskOriginal;
-void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2) 
-{ 
+void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
+{
 	fs::path path(requestedPath);
 	char* allocatedNewPath = nullptr;
 
@@ -181,6 +181,5 @@ void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, g_pakLoadApi->LoadPakSync, &LoadPakSyncHook, reinterpret_cast<LPVOID*>(&LoadPakSyncOriginal));
 	ENABLER_CREATEHOOK(hook, g_pakLoadApi->LoadPakAsync, &LoadPakAsyncHook, reinterpret_cast<LPVOID*>(&LoadPakAsyncOriginal));
 	ENABLER_CREATEHOOK(
-		hook, g_pakLoadApi->ReadFullFileFromDisk, &ReadFullFileFromDiskHook,
-		reinterpret_cast<LPVOID*>(&ReadFullFileFromDiskOriginal));
+		hook, g_pakLoadApi->ReadFullFileFromDisk, &ReadFullFileFromDiskHook, reinterpret_cast<LPVOID*>(&ReadFullFileFromDiskOriginal));
 }
