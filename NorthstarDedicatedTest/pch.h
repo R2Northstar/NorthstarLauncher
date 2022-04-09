@@ -2,6 +2,10 @@
 #ifndef PCH_H
 #define PCH_H
 
+#ifdef _DEBUG
+#define NSDEBUG
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #define _CRT_SECURE_NO_WARNINGS
 #define RAPIDJSON_NOMEMBERITERATORCLASS // need this for rapidjson
