@@ -31,6 +31,8 @@ HRESULT __stdcall D3D11CreateDeviceHook(
 
 void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 {
+	DBLOG("InitialiseDedicatedMaterialSystem");
+
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xD9A0E, &D3D11CreateDeviceHook, reinterpret_cast<LPVOID*>(&D3D11CreateDevice));
 
