@@ -389,8 +389,6 @@ bool ConVar::SetColorFromString(const char* pszValue)
 		if (nRGBA[0] >= 0 && nRGBA[0] <= 255 && nRGBA[1] >= 0 && nRGBA[1] <= 255 && nRGBA[2] >= 0 && nRGBA[2] <= 255 && nRGBA[3] >= 0 &&
 			nRGBA[3] <= 255)
 		{
-			// printf("*** WOW! Found a color!! ***\n");
-
 			// This is definitely a color!
 			bColor = true;
 
