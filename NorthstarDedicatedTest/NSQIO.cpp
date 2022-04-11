@@ -8,7 +8,7 @@
 #include <rapidjson/writer.h>
 #include "configurables.h"
 
-/*
+#if 0 // Old code
 const static std::pair<std::string, std::string> NSQField_StrReplacements[] = {
 	{"\\n", "\n"},
 	{"\\r", "\r"},
@@ -125,7 +125,7 @@ std::string NSQField::WriteToLine()
 
 void NSQFile::Save(std::string fileName) {}
 bool NSQFile::Load(std::string fileName) {}
-*/
+#endif
 
 bool IsJSONPathBad(std::string namePath)
 {
