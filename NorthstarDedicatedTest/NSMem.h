@@ -100,20 +100,33 @@ inline void* PatternScan(const char* moduleName, const char* pattern, int offset
 	return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
 }
 
-inline void BytePatch(uintptr_t address, const BYTE* vals, int size)
+inline bool BytePatch(uintptr_t address, const BYTE* vals, int size)
 {
-	DBLOG("Patching {} bytes at {}", size, address);
-	WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
+	DBLOG("Patching {} bytes at {}", size, (void*)address);
+
+	DWORD oldProtect;
+	VirtualProtectEx(GetCurrentProcess(), (LPVOID)address, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+	auto result = WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
+	VirtualProtectEx(GetCurrentProcess(), (LPVOID)address, size, oldProtect, &oldProtect);
+
+	if (!result)
+	{
+		DBLOG("\tFAILED to patch! Error: {:X}", GetLastError());
+		assert(false);
+	}
+
+	return result;
 }
 
-inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
+inline bool BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
 {
 	std::vector<BYTE> bytes = vals;
 	if (!bytes.empty())
-		BytePatch(address, &bytes[0], bytes.size());
+		return BytePatch(address, &bytes[0], bytes.size());
+	return false;
 }
 
-inline void BytePatch(uintptr_t address, const char* bytesStr)
+inline bool BytePatch(uintptr_t address, const char* bytesStr)
 {
 	std::vector<int> byteInts = HexBytesToString(bytesStr);
 	std::vector<BYTE> bytes;
@@ -121,15 +134,17 @@ inline void BytePatch(uintptr_t address, const char* bytesStr)
 		bytes.push_back(v);
 
 	if (!bytes.empty())
-		BytePatch(address, &bytes[0], bytes.size());
+		return BytePatch(address, &bytes[0], bytes.size());
+	return false;
 }
 
-inline void NOP(uintptr_t address, int size)
+inline bool NOP(uintptr_t address, int size)
 {
 	BYTE* buf = (BYTE*)malloc(size);
 	memset(buf, 0x90, size);
-	BytePatch(address, buf, size);
+	auto result = BytePatch(address, buf, size);
 	free(buf);
+	return result;
 }
 
 inline bool IsMemoryReadable(void* ptr, size_t size)
@@ -195,6 +210,7 @@ struct KHook
 		}
 		else
 		{
+			assert(false);
 			DBLOG("Failed to hook at {}", this->targetFuncAddr);
 		}
 		MH_EnableHook(targetFuncAddr);
