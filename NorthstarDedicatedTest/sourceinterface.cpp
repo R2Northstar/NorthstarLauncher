@@ -27,7 +27,7 @@ void* ServerCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
 	void* ret = serverCreateInterfaceOriginal(pName, pReturnCode);
 
-	std::cout << "CreateInterface SERVER " << pName << std::endl;
+	spdlog::info("CreateInterface SERVER {}", pName);
 
 	return ret;
 }
@@ -37,7 +37,7 @@ void* EngineCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
 	void* ret = engineCreateInterfaceOriginal(pName, pReturnCode);
 
-	std::cout << "CreateInterface ENGINE " << pName << std::endl;
+	spdlog::info("CreateInterface SERVER {}", pName);
 
 	return ret;
 }

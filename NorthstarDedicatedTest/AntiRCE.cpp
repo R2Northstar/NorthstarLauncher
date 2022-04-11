@@ -10,7 +10,14 @@ void OnGameFileAccess(const char* path, bool readOnly)
 	static DWORD curDirectoryResult = GetCurrentDirectoryA(MAX_PATH, curDirectory);
 	static int curDirectoryLen = strlen(curDirectory);
 
-	static ConVar* ns_log_all_file_access = new ConVar("ns_log_all_file_access", "0", FCVAR_GAMEDLL, "Log all file access from the game");
+	static ConVar* ns_log_all_file_access = new ConVar(
+		"ns_log_all_file_access",
+#ifdef NS_DEBUG
+		"1",
+#else
+		"0",
+#endif
+		FCVAR_GAMEDLL, "Log all file access from the game");
 
 	if (!path)
 		return;
