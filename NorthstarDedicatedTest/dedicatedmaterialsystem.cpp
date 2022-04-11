@@ -70,34 +70,6 @@ void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 	// check commit history if needed
 }
 
-typedef void* (*PakLoadAPI__LoadRpakType)(char* filename, void* unknown, int flags);
-PakLoadAPI__LoadRpakType PakLoadAPI__LoadRpak;
-
-void* PakLoadAPI__LoadRpakHook(char* filename, void* unknown, int flags)
-{
-	spdlog::info("PakLoadAPI__LoadRpakHook {}", filename);
-
-	// on dedi, don't load any paks that aren't required
-	if (strncmp(filename, "common", 6))
-		return 0;
-
-	return PakLoadAPI__LoadRpak(filename, unknown, flags);
-}
-
-typedef void* (*PakLoadAPI__LoadRpak2Type)(char* filename, void* unknown, int flags, void* callback, void* callback2);
-PakLoadAPI__LoadRpak2Type PakLoadAPI__LoadRpak2;
-
-void* PakLoadAPI__LoadRpak2Hook(char* filename, void* unknown, int flags, void* callback, void* callback2)
-{
-	spdlog::info("PakLoadAPI__LoadRpak2Hook {}", filename);
-
-	// on dedi, don't load any paks that aren't required
-	if (strncmp(filename, "common", 6))
-		return 0;
-
-	return PakLoadAPI__LoadRpak2(filename, unknown, flags, callback, callback2);
-}
-
 void InitialiseDedicatedRtechGame(HMODULE baseAddress)
 {
 	baseAddress = GetModuleHandleA("rtech_game.dll");
