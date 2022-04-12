@@ -23,6 +23,8 @@ ConVar* Cvar_ns_server_name;
 ConVar* Cvar_ns_server_desc;
 ConVar* Cvar_ns_server_password;
 
+ConVar* Cvar_ns_curl_log_enable;
+
 // Source ConVar
 ConVar* Cvar_hostname;
 
@@ -167,7 +169,7 @@ RemoteServerInfo::RemoteServerInfo(
 void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 {
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, Cvar_ns_curl_log_enable->GetBool());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
@@ -1273,6 +1275,8 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
+
+	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "");
 
 	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
 
