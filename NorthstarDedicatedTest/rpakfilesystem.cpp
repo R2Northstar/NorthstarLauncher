@@ -29,7 +29,7 @@ void** pUnknownPakLoadSingleton;
 
 PakLoadManager* g_PakLoadManager;
 void PakLoadManager::LoadPakSync(const char* path) { g_pakLoadApi->LoadPakSync(path, *pUnknownPakLoadSingleton, 0); }
-void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload) 
+void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload)
 {
 	int handle = g_pakLoadApi->LoadPakAsync(path, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
 
@@ -37,7 +37,7 @@ void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload)
 		m_pakHandlesToUnload.push_back(handle);
 }
 
-void PakLoadManager::UnloadPaks() 
+void PakLoadManager::UnloadPaks()
 {
 	for (int pakHandle : m_pakHandlesToUnload)
 		g_pakLoadApi->UnloadPak(pakHandle, nullptr);
@@ -106,7 +106,8 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 					(*pakName)[path.size()] = '\0';
 
 					bHasOriginalPak = true;
-					*bNeedToFreePakName = true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
+					*bNeedToFreePakName =
+						true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
 				}
 				else
 					g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), true);
@@ -192,7 +193,6 @@ void* UnloadPakHook(int pakHandle, void* callback)
 	spdlog::info("UnloadPak {}", pakHandle);
 	return UnloadPakOriginal(pakHandle, callback);
 }
-
 
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
 // possibly just async loading all together?
