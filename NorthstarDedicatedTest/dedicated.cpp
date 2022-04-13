@@ -220,7 +220,7 @@ void InitialiseDedicated(HMODULE engineAddress)
 			{
 				0xB0,
 				0x01, // mov al,01
-				0xC3 // ret
+				0xC3  // ret
 			});
 	}
 

@@ -707,15 +707,15 @@ class BFRead : public BitBufferBase
 	}
 
   private:
-	size_t m_DataBits; // 0x0010
+	size_t m_DataBits;	// 0x0010
 	size_t m_DataBytes; // 0x0018
 
-	u32 m_CachedBufWord; // 0x0020
+	u32 m_CachedBufWord;  // 0x0020
 	u32 m_CachedBitsLeft; // 0x0024
 
-	const u32* m_DataIn; // 0x0028
+	const u32* m_DataIn;  // 0x0028
 	const u32* m_DataEnd; // 0x0030
-	const u32* m_Data; // 0x0038
+	const u32* m_Data;	  // 0x0038
 };
 
 class BFWrite : public BitBufferBase

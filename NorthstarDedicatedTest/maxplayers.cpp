@@ -9,7 +9,7 @@
 #define PAD_NUMBER(number, boundary) (((number) + ((boundary)-1)) / (boundary)) * (boundary)
 
 // this is horrible
-constexpr int PlayerResource_Name_Start = 0; // Start of modded allocated space.
+constexpr int PlayerResource_Name_Start = 0;						  // Start of modded allocated space.
 constexpr int PlayerResource_Name_Size = ((NEW_MAX_PLAYERS + 1) * 8); // const char* m_szName[MAX_PLAYERS + 1];
 
 constexpr int PlayerResource_Ping_Start = PlayerResource_Name_Start + PlayerResource_Name_Size;
@@ -169,27 +169,27 @@ auto RandomIntZeroMax = (__int64(__fastcall*)())0;
 // lazy rebuild
 void RunUserCmds_Hook(bool a1, float a2)
 {
-	unsigned char v3; // bl
-	int v5; // er14
-	int i; // edi
-	__int64 v7; // rax
-	DWORD* v8; // rbx
-	int v9; // edi
-	__int64* v10; // rsi
-	__int64 v11; // rax
-	int v12; // er12
-	__int64 v13; // rdi
-	int v14; // ebx
-	int v15; // eax
-	__int64 v16; // r8
-	int v17; // edx
-	char v18; // r15
-	char v19; // bp
-	int v20; // esi
-	__int64* v21; // rdi
-	__int64 v22; // rcx
-	bool v23; // al
-	__int64 v24; // rax
+	unsigned char v3;			  // bl
+	int v5;						  // er14
+	int i;						  // edi
+	__int64 v7;					  // rax
+	DWORD* v8;					  // rbx
+	int v9;						  // edi
+	__int64* v10;				  // rsi
+	__int64 v11;				  // rax
+	int v12;					  // er12
+	__int64 v13;				  // rdi
+	int v14;					  // ebx
+	int v15;					  // eax
+	__int64 v16;				  // r8
+	int v17;					  // edx
+	char v18;					  // r15
+	char v19;					  // bp
+	int v20;					  // esi
+	__int64* v21;				  // rdi
+	__int64 v22;				  // rcx
+	bool v23;					  // al
+	__int64 v24;				  // rax
 	__int64 v25[NEW_MAX_PLAYERS]; // [rsp+20h] [rbp-138h] BYREF
 
 	uintptr_t base = (__int64)serverBase;
