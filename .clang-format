@@ -3,7 +3,7 @@ Standard: Cpp11
 IndentWidth: 4
 TabWidth: 4
 UseCRLF: false
-AlignTrailingComments: false
+AlignTrailingComments: True
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortFunctionsOnASingleLine: Empty
