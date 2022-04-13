@@ -318,7 +318,7 @@ void CustomAudioManager::ClearAudioOverrides()
 		// this is cancer but it works
 		Sleep(50);
 	}
-	
+
 	// slightly (very) bad
 	// wait for all audio reads to complete so we don't kill preexisting audio buffers as we're writing to them
 	std::unique_lock lock(g_CustomAudioManager.m_loadingMutex);
