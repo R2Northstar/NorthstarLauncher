@@ -214,7 +214,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 			// thread off the file read
 			// should we spawn one thread per read? or should there be a cap to the number of reads at once?
 			std::thread readThread(
-				[pathString, fileSize, data] 
+				[pathString, fileSize, data]
 				{
 					std::shared_lock lock(g_CustomAudioManager.m_loadingMutex);
 					std::basic_ifstream<uint8_t> wavStream(pathString, std::ios::binary);
