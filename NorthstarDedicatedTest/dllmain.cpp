@@ -158,13 +158,34 @@ bool LoadPlugins()
 		{
 			spdlog::error("{} does not have a version number in its manifest", pathstring);
 			continue;
-			// spdlog::info(manifestJSON["version"].GetString());
+		}
+		if (!manifestJSON.HasMember("run_on_client") || !manifestJSON.HasMember("run_on_server"))
+		{
+			spdlog::error("{} does not specify run_on_client and run_on_server. It will not be loaded!", pathstring);
+			continue;
 		}
 		if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 		{
-			spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
+			spdlog::error("{} has an incompatible ABI version number in its manifest", pathstring);
 			continue;
 		}
+
+		bool shouldLoad = false;
+		if (IsDedicated())
+		{
+			shouldLoad = manifestJSON["run_on_server"].GetBool();
+		}
+		else
+		{
+			shouldLoad = manifestJSON["run_on_client"].GetBool();
+		}
+
+		if (!shouldLoad)
+		{
+			spdlog::info("{} will not be loaded due to run_on requirements.", pathstring);
+			continue;
+		}
+
 		// Passed all checks, going to actually load it now
 
 		HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
