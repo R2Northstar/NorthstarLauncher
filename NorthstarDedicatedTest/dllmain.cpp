@@ -182,7 +182,7 @@ bool LoadPlugins()
 
 		if (!shouldLoad)
 		{
-			spdlog::info("{} will not be loaded due to run_on requirements.", pathstring);
+			spdlog::info("{} will not be loaded due to run_on requirements", pathstring);
 			continue;
 		}
 
