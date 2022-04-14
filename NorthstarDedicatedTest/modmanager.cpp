@@ -486,6 +486,8 @@ void ModManager::LoadMods()
 		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
 		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
 		modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember(
+			"DownloadLink", rapidjson::StringRef(&mod.DownloadLink[0]), modinfoDoc.GetAllocator());
 
 		currentModIndex++;
 	}

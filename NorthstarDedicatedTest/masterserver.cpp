@@ -412,6 +412,10 @@ void MasterServerManager::RequestServerList()
 							continue;
 						modInfo.Version = requiredMod["Version"].GetString();
 
+						if (!requiredMod.HasMember("DownloadLink") || !requiredMod["Version"].IsString())
+							continue;
+						modInfo.DownloadLink = requiredMod["DownloadLink"].GetString();
+
 						newServer->requiredMods.push_back(modInfo);
 					}
 					// Can probably re-enable this later with a -verbose flag, but slows down loading of the server browser quite a bit as

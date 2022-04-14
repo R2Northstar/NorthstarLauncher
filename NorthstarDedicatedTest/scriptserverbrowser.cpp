@@ -299,6 +299,40 @@ SQRESULT SQ_GetServerRequiredModVersion(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// string function NSGetServerRequiredModDownloadLink( int serverIndex, int modIndex )
+SQRESULT SQ_GetServerRequiredModDownloadLink(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+	SQInteger modIndex = ClientSq_getinteger(sqvm, 2);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(
+			sqvm,
+			fmt::format(
+				"Tried to get required mod downloadlink of server index {} when only {} servers are available",
+				serverIndex,
+				g_MasterServerManager->m_remoteServers.size())
+				.c_str());
+		return SQRESULT_ERROR;
+	}
+
+	if (modIndex >= g_MasterServerManager->m_remoteServers[serverIndex].requiredMods.size())
+	{
+		ClientSq_pusherror(
+			sqvm,
+			fmt::format(
+				"Tried to get required mod downloadlink of mod index {} when only {} mods are available",
+				modIndex,
+				g_MasterServerManager->m_remoteServers[serverIndex].requiredMods.size())
+				.c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].requiredMods[modIndex].DownloadLink.c_str(), -1);
+	return SQRESULT_NOTNULL;
+}
+
 // void function NSClearRecievedServerList()
 SQRESULT SQ_ClearRecievedServerList(void* sqvm)
 {
@@ -429,6 +463,8 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 		"string", "NSGetServerRequiredModName", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModName);
 	g_UISquirrelManager->AddFuncRegistration(
 		"string", "NSGetServerRequiredModVersion", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModVersion);
+	g_UISquirrelManager->AddFuncRegistration(
+		"string", "NSGetServerRequiredModDownloadLink", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModDownloadLink);
 
 	g_UISquirrelManager->AddFuncRegistration(
 		"void", "NSTryAuthWithServer", "int serverIndex, string password = \"\"", "", SQ_TryAuthWithServer);
