@@ -574,14 +574,46 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			SetCommonHttpClientOptions(curl);
 
 			std::string readBuffer;
+			curl_easy_setopt(curl, CURLOPT_POST, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+			curl_mime* mime = curl_mime_init(curl);
+			curl_mimepart* part = curl_mime_addpart(mime);
+
+			curl_mime_data(part, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
+			curl_mime_name(part, "modinfo");
+			curl_mime_filename(part, "modinfo.json");
+			curl_mime_type(part, "application/json");
+
+			curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+
+			/* std::string readBuffer;
 			curl_easy_setopt(
 				curl,
 				CURLOPT_URL,
-				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr)
+				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", 
+					Cvar_ns_masterserver_hostname->GetString(), 
+					uidStr, 
+					tokenStr)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);*/
+
+			
+
+
+			curl_easy_setopt(
+				curl,
+				CURLOPT_URL,
+				fmt::format(
+					"{}/client/auth_with_self?id={}&playerToken={}",
+					Cvar_ns_masterserver_hostname->GetString(),
+					uidStr,
+					tokenStr)
+					.c_str());
+			
 
 			CURLcode result = curl_easy_perform(curl);
 
