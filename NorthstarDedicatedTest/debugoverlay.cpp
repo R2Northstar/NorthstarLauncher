@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "debugoverlay.h"
 #include "dedicated.h"
+#include "cvar.h"
 
 struct Vector3
 {
@@ -69,7 +70,8 @@ struct OverlayBox_t : public OverlayBase_t
 	int a;
 };
 
-class Color
+// this is in cvar.h, don't need it here
+/*class Color
 {
   public:
 	Color(int r, int g, int b, int a)
@@ -82,7 +84,7 @@ class Color
 
   private:
 	unsigned char _color[4];
-};
+};*/
 
 static HMODULE sEngineModule;
 
@@ -148,4 +150,10 @@ void InitialiseDebugOverlay(HMODULE baseAddress)
 	RenderWireframeBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x193DA0);
 
 	sEngineModule = baseAddress;
+
+	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory
+	ConVar* Cvar_enable_debug_overlays = (ConVar*)((char*)baseAddress + 0x10DB0990);
+	Cvar_enable_debug_overlays->SetValue(false);
+	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
+	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);
 }
