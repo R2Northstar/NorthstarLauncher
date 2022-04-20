@@ -388,7 +388,7 @@ void CRConServer::Execute(const cl_rcon::request& cl_request) const
 	}
 	else // Execute command with "<val>".
 	{
-		std::string svExec = cl_request.requestbuf() + " \"" + cl_request.requestval() + "\"";
+		std::string svExec = cl_request.requestbuf() + " " + cl_request.requestval();
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), svExec.c_str(), cmd_source_t::kCommandSrcCode);
 		Cbuf_Execute();
 	}
