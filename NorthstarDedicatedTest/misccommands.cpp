@@ -10,7 +10,9 @@
 void AddMiscConCommands()
 {
 	MAKE_CONCMD(
-		"force_newgame", "forces a map load through directly setting g_pHostState->m_iNextState to HS_NEW_GAME", FCVAR_NONE,
+		"force_newgame",
+		"forces a map load through directly setting g_pHostState->m_iNextState to HS_NEW_GAME",
+		FCVAR_NONE,
 		[](const CCommand& arg)
 		{
 			if (arg.ArgC() < 2)
@@ -21,7 +23,8 @@ void AddMiscConCommands()
 		});
 
 	MAKE_CONCMD(
-		"ns_start_reauth_and_leave_to_lobby", "called by the server, used to reauth and return the player to lobby when leaving a game",
+		"ns_start_reauth_and_leave_to_lobby",
+		"called by the server, used to reauth and return the player to lobby when leaving a game",
 		FCVAR_SERVER_CAN_EXECUTE,
 		[](const CCommand& arg)
 		{
@@ -32,11 +35,14 @@ void AddMiscConCommands()
 
 	// this is a concommand because we make a deferred call to it from another thread
 	MAKE_CONCMD(
-		"ns_end_reauth_and_leave_to_lobby", "", FCVAR_NONE,
+		"ns_end_reauth_and_leave_to_lobby",
+		"",
+		FCVAR_NONE,
 		[](const CCommand& arg)
 		{
 			Cbuf_AddText(
-				Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", g_ServerAuthenticationManager->m_authData.begin()->first).c_str(),
+				Cbuf_GetCurrentPlayer(),
+				fmt::format("serverfilter {}", g_ServerAuthenticationManager->m_authData.begin()->first).c_str(),
 				cmd_source_t::kCommandSrcCode);
 			Cbuf_Execute();
 
