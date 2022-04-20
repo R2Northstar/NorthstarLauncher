@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "languagehooks.h"
 #include "gameutils.h"
-#include "dedicated.h"
 #include <filesystem>
 #include <regex>
 
@@ -16,7 +15,7 @@ GetGameLanguageType GetGameLanguageOriginal;
 
 bool CheckLangAudioExists(char* lang)
 {
-	std::string path{"r2\\sound\\general_"};
+	std::string path {"r2\\sound\\general_"};
 	path += lang;
 	path += ".mstr";
 	return fs::exists(path);
@@ -32,7 +31,7 @@ std::vector<std::string> file_list(fs::path dir, std::regex ext_pattern)
 	using iterator = fs::directory_iterator;
 
 	const iterator end;
-	for (iterator iter{dir}; iter != end; ++iter)
+	for (iterator iter {dir}; iter != end; ++iter)
 	{
 		const std::string filename = iter->path().filename().string();
 		std::smatch matches;
@@ -97,7 +96,7 @@ char* GetGameLanguageHook()
 
 	Tier0_DetectDefaultLanguageType(); // force the global in tier0 to be populated with language inferred from user's system rather than
 									   // defaulting to Russian
-	canOriginDictateLang = false;	   // Origin has no say anymore, we will fallback to user's system setup language
+	canOriginDictateLang = false; // Origin has no say anymore, we will fallback to user's system setup language
 	auto lang = GetGameLanguageOriginal();
 	spdlog::info("Detected system language: {}", lang);
 	if (!CheckLangAudioExists(lang))
@@ -115,9 +114,6 @@ char* GetGameLanguageHook()
 
 void InitialiseTier0LanguageHooks(HMODULE baseAddress)
 {
-	if (IsDedicated())
-		return;
-
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xF560, &GetGameLanguageHook, reinterpret_cast<LPVOID*>(&GetGameLanguageOriginal));
 }

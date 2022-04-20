@@ -2,7 +2,6 @@
 #include "scriptmodmenu.h"
 #include "modmanager.h"
 #include "squirrel.h"
-#include "dedicated.h"
 
 // array<string> function NSGetModNames()
 SQRESULT SQ_GetModNames(void* sqvm)
@@ -178,9 +177,6 @@ SQRESULT SQ_ReloadMods(void* sqvm)
 
 void InitialiseScriptModMenu(HMODULE baseAddress)
 {
-	if (IsDedicated())
-		return;
-
 	g_UISquirrelManager->AddFuncRegistration("array<string>", "NSGetModNames", "", "Returns the names of all loaded mods", SQ_GetModNames);
 	g_UISquirrelManager->AddFuncRegistration(
 		"bool", "NSIsModEnabled", "string modName", "Returns whether a given mod is enabled", SQ_IsModEnabled);
@@ -193,7 +189,10 @@ void InitialiseScriptModMenu(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration(
 		"string", "NSGetModDownloadLinkByModName", "string modName", "Returns a given mod's download link", SQ_GetModDownloadLink);
 	g_UISquirrelManager->AddFuncRegistration(
-		"bool", "NSIsModRequiredOnClient", "string modName", "Returns whether a given mod is required on connecting clients",
+		"bool",
+		"NSIsModRequiredOnClient",
+		"string modName",
+		"Returns whether a given mod is required on connecting clients",
 		SQ_IsModRequiredOnClient);
 	g_UISquirrelManager->AddFuncRegistration(
 		"int", "NSGetModLoadPriority", "string modName", "Returns a given mod's load priority", SQ_GetModLoadPriority);

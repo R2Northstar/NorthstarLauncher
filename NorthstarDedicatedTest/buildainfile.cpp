@@ -4,6 +4,7 @@
 #include "hookutils.h"
 #include <fstream>
 #include <filesystem>
+#include "NSMem.h"
 
 namespace fs = std::filesystem;
 
@@ -42,23 +43,23 @@ struct CAI_Node
 	float hulls[MAX_HULLS];
 	float yaw;
 
-	int unk0;			 // always 2 in buildainfile, maps directly to unk0 in disk struct
-	int unk1;			 // maps directly to unk1 in disk struct
+	int unk0; // always 2 in buildainfile, maps directly to unk0 in disk struct
+	int unk1; // maps directly to unk1 in disk struct
 	int unk2[MAX_HULLS]; // maps directly to unk2 in disk struct, despite being ints rather than shorts
 
 	// view server.dll+393672 for context and death wish
-	char unk3[MAX_HULLS];  // hell on earth, should map to unk3 on disk
-	char pad[3];		   // aligns next bytes
+	char unk3[MAX_HULLS]; // hell on earth, should map to unk3 on disk
+	char pad[3]; // aligns next bytes
 	float unk4[MAX_HULLS]; // i have no fucking clue, calculated using some kind of demon hell function float magic
 
 	CAI_NodeLink** links;
 	char unk5[16];
 	int linkcount;
-	int unk11;	   // bad name lmao
-	short unk6;	   // should match up to unk4 on disk
+	int unk11; // bad name lmao
+	short unk6; // should match up to unk4 on disk
 	char unk7[16]; // padding until next bit
-	short unk8;	   // should match up to unk5 on disk
-	char unk9[8];  // padding until next bit
+	short unk8; // should match up to unk5 on disk
+	char unk9[8]; // padding until next bit
 	char unk10[8]; // should match up to unk6 on disk
 };
 
@@ -85,7 +86,7 @@ struct UnkNodeStruct0
 {
 	int index;
 	char unk0;
-	char unk1;	  // maps to unk1 on disk
+	char unk1; // maps to unk1 on disk
 	char pad0[2]; // padding to +8
 
 	float x;
@@ -93,7 +94,7 @@ struct UnkNodeStruct0
 	float z;
 
 	char pad5[4];
-	int* unk2;	   // maps to unk5 on disk;
+	int* unk2; // maps to unk5 on disk;
 	char pad1[16]; // pad to +48
 	int unkcount0; // maps to unkcount0 on disk
 
@@ -390,27 +391,10 @@ void InitialiseBuildAINFileHooks(HMODULE baseAddress)
 	pUnkServerMapversionGlobal = (char**)((char*)baseAddress + 0xBFBE08);
 	pMapName = (char*)baseAddress + 0x1053370;
 
+	uintptr_t base = (uintptr_t)baseAddress;
+
 	// remove a check that prevents a logging function in link generation from working
 	// due to the sheer amount of logging this is a massive perf hit to generation, but spewlog_enable 0 exists so whatever
-	{
-		void* ptr = (char*)baseAddress + 0x3889B6;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0x90;
-		*((char*)ptr + 1) = (char)0x90;
-		*((char*)ptr + 2) = (char)0x90;
-		*((char*)ptr + 3) = (char)0x90;
-		*((char*)ptr + 4) = (char)0x90;
-		*((char*)ptr + 5) = (char)0x90;
-	}
-
-	{
-		void* ptr = (char*)baseAddress + 0x3889BF;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0x90;
-		*((char*)ptr + 1) = (char)0x90;
-		*((char*)ptr + 2) = (char)0x90;
-		*((char*)ptr + 3) = (char)0x90;
-		*((char*)ptr + 4) = (char)0x90;
-		*((char*)ptr + 5) = (char)0x90;
-	}
+	NSMem::NOP(base + 0x3889B6, 6);
+	NSMem::NOP(base + 0x3889BF, 6);
 }

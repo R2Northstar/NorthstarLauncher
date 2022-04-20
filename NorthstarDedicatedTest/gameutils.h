@@ -164,10 +164,10 @@ enum EngineQuitState
 enum EngineState_t
 {
 	DLL_INACTIVE = 0, // no dll
-	DLL_ACTIVE,		  // engine is focused
-	DLL_CLOSE,		  // closing down dll
-	DLL_RESTART,	  // engine is shutting down but will restart right away
-	DLL_PAUSED,		  // engine is paused, can become active from this state
+	DLL_ACTIVE, // engine is focused
+	DLL_CLOSE, // closing down dll
+	DLL_RESTART, // engine is shutting down but will restart right away
+	DLL_PAUSED, // engine is paused, can become active from this state
 };
 
 class CEngine
@@ -197,16 +197,15 @@ extern CEngine* g_pEngine;
 enum server_state_t
 {
 	ss_dead = 0, // Dead
-	ss_loading,	 // Spawning
-	ss_active,	 // Running
-	ss_paused,	 // Running, but paused
+	ss_loading, // Spawning
+	ss_active, // Running
+	ss_paused, // Running, but paused
 };
 
 extern server_state_t* sv_m_State;
 
 // network stuff
 extern ConVar* Cvar_hostport;
-extern ConVar* Cvar_net_datablock_enabled;
 
 // playlist stuff
 typedef const char* (*GetCurrentPlaylistType)();
@@ -225,18 +224,11 @@ extern GetCurrentPlaylistVarType GetCurrentPlaylistVar;
 typedef void* (*Server_GetEntityByIndexType)(int index);
 extern Server_GetEntityByIndexType Server_GetEntityByIndex;
 
-// server tickrate stuff
-extern ConVar* Cvar_base_tickinterval_mp;
-extern ConVar* Cvar_base_tickinterval_sp;
-
 // auth
 extern char* g_LocalPlayerUserID;
 extern char* g_LocalPlayerOriginToken;
 
 // misc stuff
-extern ConVar* Cvar_match_defaultMap;
-extern ConVar* Cvar_communities_hostname;
-
 typedef void (*ErrorType)(const char* fmt, ...);
 extern ErrorType Error;
 

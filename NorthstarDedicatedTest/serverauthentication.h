@@ -7,6 +7,7 @@
 struct AuthData
 {
 	char uid[33];
+	char username[64];
 
 	// pdata
 	char* pdata;
@@ -56,7 +57,7 @@ typedef struct netpacket_s
 	char unk[10];
 	double received_time;
 	unsigned char* data; // pointer to raw packet data
-	void* message;		 // easy bitbuf data access // 'inpacket.message' etc etc (pointer)
+	void* message; // easy bitbuf data access // 'inpacket.message' etc etc (pointer)
 	char unk2[16];
 	int size;
 
@@ -94,6 +95,7 @@ class ServerAuthenticationManager
 	void StartPlayerAuthServer();
 	void StopPlayerAuthServer();
 	bool AuthenticatePlayer(void* player, int64_t uid, char* authToken);
+	char* VerifyPlayerName(void* player, char* authToken, char* name);
 	bool RemovePlayerAuthData(void* player);
 	void WritePersistentData(void* player);
 	bool CheckPlayerChatRatelimit(void* player);

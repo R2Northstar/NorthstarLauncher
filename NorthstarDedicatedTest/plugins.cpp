@@ -128,11 +128,12 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
 	gameState.players = ClientSq_getinteger(sqvm, 1);
-	gameState.ourScore = ClientSq_getinteger(sqvm, 2);
-	gameState.secondHighestScore = ClientSq_getinteger(sqvm, 3);
-	gameState.highestScore = ClientSq_getinteger(sqvm, 4);
-	serverInfo.roundBased = ClientSq_getbool(sqvm, 5);
-	serverInfo.scoreLimit = ClientSq_getbool(sqvm, 6);
+	serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 2);
+	gameState.ourScore = ClientSq_getinteger(sqvm, 3);
+	gameState.secondHighestScore = ClientSq_getinteger(sqvm, 4);
+	gameState.highestScore = ClientSq_getinteger(sqvm, 5);
+	serverInfo.roundBased = ClientSq_getbool(sqvm, 6);
+	serverInfo.scoreLimit = ClientSq_getbool(sqvm, 7);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
@@ -174,9 +175,7 @@ SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
-	int endTimeFromNow = ceil(ClientSq_getfloat(sqvm, 1));
-	const auto p1 = std::chrono::system_clock::now().time_since_epoch();
-	serverInfo.endTime = std::chrono::duration_cast<std::chrono::seconds>(p1).count() + endTimeFromNow;
+	serverInfo.endTime = ceil(ClientSq_getfloat(sqvm, 1));
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }
@@ -390,21 +389,32 @@ void InitialisePluginCommands(HMODULE baseAddress)
 	// i swear there's a way to make this not have be run in 2 contexts but i can't figure it out
 	// some funcs i need are just not available in UI or CLIENT
 
-	g_UISquirrelManager->AddFuncRegistration(
-		"void", "NSUpdateGameStateUI", "string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading", "",
-		SQ_UpdateGameStateUI);
-	g_ClientSquirrelManager->AddFuncRegistration(
-		"void", "NSUpdateGameStateClient",
-		"int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit", "",
-		SQ_UpdateGameStateClient);
-	g_UISquirrelManager->AddFuncRegistration(
-		"void", "NSUpdateServerInfo",
-		"string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string "
-		"playlistDisplayName",
-		"", SQ_UpdateServerInfo);
-	g_ClientSquirrelManager->AddFuncRegistration(
-		"void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
-	g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
-	g_UISquirrelManager->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
-	g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
+	if (g_UISquirrelManager && g_ClientSquirrelManager)
+	{
+		g_UISquirrelManager->AddFuncRegistration(
+			"void",
+			"NSUpdateGameStateUI",
+			"string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading",
+			"",
+			SQ_UpdateGameStateUI);
+		g_ClientSquirrelManager->AddFuncRegistration(
+			"void",
+			"NSUpdateGameStateClient",
+			"int playerCount, int maxPlayers, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit",
+			"",
+			SQ_UpdateGameStateClient);
+		g_UISquirrelManager->AddFuncRegistration(
+			"void",
+			"NSUpdateServerInfo",
+			"string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, "
+			"string "
+			"playlistDisplayName",
+			"",
+			SQ_UpdateServerInfo);
+		g_ClientSquirrelManager->AddFuncRegistration(
+			"void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
+		g_ClientSquirrelManager->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
+		g_UISquirrelManager->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
+		g_UISquirrelManager->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
+	}
 }

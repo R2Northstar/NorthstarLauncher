@@ -4,15 +4,32 @@
 #include "dedicatedmaterialsystem.h"
 #include "hookutils.h"
 #include "gameutils.h"
+#include "NSMem.h"
 
 typedef HRESULT (*__stdcall D3D11CreateDeviceType)(
-	void* pAdapter, int DriverType, HMODULE Software, UINT Flags, int* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, void** ppDevice,
-	int* pFeatureLevel, void** ppImmediateContext);
+	void* pAdapter,
+	int DriverType,
+	HMODULE Software,
+	UINT Flags,
+	int* pFeatureLevels,
+	UINT FeatureLevels,
+	UINT SDKVersion,
+	void** ppDevice,
+	int* pFeatureLevel,
+	void** ppImmediateContext);
 D3D11CreateDeviceType D3D11CreateDevice;
 
 HRESULT __stdcall D3D11CreateDeviceHook(
-	void* pAdapter, int DriverType, HMODULE Software, UINT Flags, int* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, void** ppDevice,
-	int* pFeatureLevel, void** ppImmediateContext)
+	void* pAdapter,
+	int DriverType,
+	HMODULE Software,
+	UINT Flags,
+	int* pFeatureLevels,
+	UINT FeatureLevels,
+	UINT SDKVersion,
+	void** ppDevice,
+	int* pFeatureLevel,
+	void** ppImmediateContext)
 {
 	// note: this is super duper temp pretty much just messing around with it
 	// does run surprisingly well on dedi for a software driver tho if you ignore the +1gb ram usage at times, seems like dedi doesn't
@@ -30,9 +47,6 @@ HRESULT __stdcall D3D11CreateDeviceHook(
 
 void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 {
-	if (!IsDedicated())
-		return;
-
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xD9A0E, &D3D11CreateDeviceHook, reinterpret_cast<LPVOID*>(&D3D11CreateDevice));
 
@@ -62,14 +76,8 @@ void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 
 	{
 		// CMaterialSystem::FindMaterial
-		char* ptr = (char*)baseAddress + 0x5F0F1;
-		TempReadWrite rw(ptr);
-
 		// make the game always use the error material
-		*ptr = (char)0xE9;
-		*(ptr + 1) = (char)0x34;
-		*(ptr + 2) = (char)0x03;
-		*(ptr + 3) = (char)0x00;
+		NSMem::BytePatch((uintptr_t)baseAddress + 0x5F0F1, {0xE9, 0x34, 0x03, 0x00});
 	}
 
 	// previously had DisableDedicatedWindowCreation stuff here, removing for now since shit and unstable
@@ -106,9 +114,6 @@ void* PakLoadAPI__LoadRpak2Hook(char* filename, void* unknown, int flags, void* 
 
 void InitialiseDedicatedRtechGame(HMODULE baseAddress)
 {
-	if (!IsDedicated())
-		return;
-
 	baseAddress = GetModuleHandleA("rtech_game.dll");
 
 	HookEnabler hook;

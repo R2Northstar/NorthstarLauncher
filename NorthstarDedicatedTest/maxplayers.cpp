@@ -9,7 +9,7 @@
 #define PAD_NUMBER(number, boundary) (((number) + ((boundary)-1)) / (boundary)) * (boundary)
 
 // this is horrible
-constexpr int PlayerResource_Name_Start = 0;						  // Start of modded allocated space.
+constexpr int PlayerResource_Name_Start = 0; // Start of modded allocated space.
 constexpr int PlayerResource_Name_Size = ((NEW_MAX_PLAYERS + 1) * 8); // const char* m_szName[MAX_PLAYERS + 1];
 
 constexpr int PlayerResource_Ping_Start = PlayerResource_Name_Start + PlayerResource_Name_Size;
@@ -45,10 +45,10 @@ constexpr int Team_PlayerArray_AddedLength = NEW_MAX_PLAYERS - 32;
 constexpr int Team_PlayerArray_AddedSize = PAD_NUMBER(Team_PlayerArray_AddedLength * 8, 4);
 constexpr int Team_AddedSize = Team_PlayerArray_AddedSize;
 
+#include "NSMem.h"
 template <class T> void ChangeOffset(void* addr, unsigned int offset)
 {
-	TempReadWrite rw(addr);
-	*((T*)addr) = offset;
+	NSMem::BytePatch((uintptr_t)addr, (BYTE*)&offset, sizeof(T));
 }
 
 /*
@@ -103,7 +103,10 @@ void* StringTables_CreateStringTable_Hook(
 	return StringTables_CreateStringTable_Original(thisptr, name, maxentries, userdatafixedsize, userdatanetworkbits, flags);
 }
 
-bool MaxPlayersIncreaseEnabled() { return CommandLine() && CommandLine()->CheckParm("-experimentalmaxplayersincrease"); }
+bool MaxPlayersIncreaseEnabled()
+{
+	return CommandLine() && CommandLine()->CheckParm("-experimentalmaxplayersincrease");
+}
 
 void InitialiseMaxPlayersOverride_Engine(HMODULE baseAddress)
 {
@@ -151,7 +154,9 @@ void InitialiseMaxPlayersOverride_Engine(HMODULE baseAddress)
 	// &DataTable_SetupReceiveTableFromSendTable_Hook, reinterpret_cast<LPVOID*>(&DataTable_SetupReceiveTableFromSendTable_Original));
 
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x22E220, &StringTables_CreateStringTable_Hook,
+		hook,
+		(char*)baseAddress + 0x22E220,
+		&StringTables_CreateStringTable_Hook,
 		reinterpret_cast<LPVOID*>(&StringTables_CreateStringTable_Original));
 }
 
@@ -164,27 +169,27 @@ auto RandomIntZeroMax = (__int64(__fastcall*)())0;
 // lazy rebuild
 void RunUserCmds_Hook(bool a1, float a2)
 {
-	unsigned char v3;			  // bl
-	int v5;						  // er14
-	int i;						  // edi
-	__int64 v7;					  // rax
-	DWORD* v8;					  // rbx
-	int v9;						  // edi
-	__int64* v10;				  // rsi
-	__int64 v11;				  // rax
-	int v12;					  // er12
-	__int64 v13;				  // rdi
-	int v14;					  // ebx
-	int v15;					  // eax
-	__int64 v16;				  // r8
-	int v17;					  // edx
-	char v18;					  // r15
-	char v19;					  // bp
-	int v20;					  // esi
-	__int64* v21;				  // rdi
-	__int64 v22;				  // rcx
-	bool v23;					  // al
-	__int64 v24;				  // rax
+	unsigned char v3; // bl
+	int v5; // er14
+	int i; // edi
+	__int64 v7; // rax
+	DWORD* v8; // rbx
+	int v9; // edi
+	__int64* v10; // rsi
+	__int64 v11; // rax
+	int v12; // er12
+	__int64 v13; // rdi
+	int v14; // ebx
+	int v15; // eax
+	__int64 v16; // r8
+	int v17; // edx
+	char v18; // r15
+	char v19; // bp
+	int v20; // esi
+	__int64* v21; // rdi
+	__int64 v22; // rcx
+	bool v23; // al
+	__int64 v24; // rax
 	__int64 v25[NEW_MAX_PLAYERS]; // [rsp+20h] [rbp-138h] BYREF
 
 	uintptr_t base = (__int64)serverBase;

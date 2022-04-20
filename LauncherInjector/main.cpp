@@ -78,7 +78,10 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 		text,
 		"Failed to load the %ls at \"%ls\" (%lu):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "
 		"before reaching out for help.",
-		libName, location, dwMessageId, message.c_str());
+		libName,
+		location,
+		dwMessageId,
+		message.c_str());
 
 	if (dwMessageId == 126 && std::filesystem::exists(location))
 	{
@@ -98,7 +101,9 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 			"%s\n\nWe detected that in your case you have extracted the files into a *subdirectory* of your Titanfall 2 "
 			"installation.\nPlease move all the files and folders from current folder (\"%s\") into the Titanfall 2 installation directory "
 			"just above (\"%s\").\n\nPlease try out the above steps by yourself before reaching out to the community for support.",
-			text, curDir.c_str(), aboveDir.c_str());
+			text,
+			curDir.c_str(),
+			aboveDir.c_str());
 	}
 	else if (!fs::exists("Titanfall2.exe"))
 	{
@@ -142,12 +147,25 @@ void EnsureOriginStarted()
 		return;
 	}
 
+	printf("[*] Starting Origin...\n");
+
 	PROCESS_INFORMATION pi;
 	memset(&pi, 0, sizeof(pi));
 	STARTUPINFO si;
 	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(STARTUPINFO);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_MINIMIZE;
 	CreateProcessA(
-		originPath, (char*)"", NULL, NULL, false, CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP, NULL, NULL, (LPSTARTUPINFOA)&si,
+		originPath,
+		(char*)"",
+		NULL,
+		NULL,
+		false,
+		CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP,
+		NULL,
+		NULL,
+		(LPSTARTUPINFOA)&si,
 		&pi);
 
 	printf("[*] Waiting for Origin...\n");
@@ -175,7 +193,8 @@ void PrependPath()
 				GetForegroundWindow(),
 				L"Warning: could not prepend the current directory to app's PATH environment variable. Something may break because of "
 				L"that.",
-				L"Northstar Launcher Warning", 0);
+				L"Northstar Launcher Warning",
+				0);
 		}
 		free(pPath);
 	}
@@ -185,7 +204,8 @@ void PrependPath()
 			GetForegroundWindow(),
 			L"Warning: could not get current PATH environment variable in order to prepend the current directory to it. Something may "
 			L"break because of that.",
-			L"Northstar Launcher Warning", 0);
+			L"Northstar Launcher Warning",
+			0);
 	}
 }
 
@@ -262,7 +282,9 @@ int main(int argc, char* argv[])
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
 		MessageBoxA(
-			GetForegroundWindow(), "Failed getting game directory.\nThe game cannot continue and has to exit.", "Northstar Launcher Error",
+			GetForegroundWindow(),
+			"Failed getting game directory.\nThe game cannot continue and has to exit.",
+			"Northstar Launcher Error",
 			0);
 		return 1;
 	}
@@ -288,25 +310,18 @@ int main(int argc, char* argv[])
 
 	if (dedicated && !nostubs)
 	{
-		// clang-format keeps messing with the easy-to-read if statements, so
-		// clang-format off
 		printf("[*] Loading stubs\n");
 		HMODULE gssao, gtxaa, d3d11;
-		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) &&
-			!(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
+		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) && !(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
 			!(d3d11 = GetModuleHandleA("d3d11.dll")))
 		{
-			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) ||
-				!(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
+			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) || !(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
 				!(d3d11 = LoadDediStub("d3d11.dll")))
 			{
-				if ((!gssao || FreeLibrary(gssao)) &&
-					(!gtxaa || FreeLibrary(gtxaa)) &&
-					(!d3d11 || FreeLibrary(d3d11)))
+				if ((!gssao || FreeLibrary(gssao)) && (!gtxaa || FreeLibrary(gtxaa)) && (!d3d11 || FreeLibrary(d3d11)))
 				{
-					printf(
-						"[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
-						"The stubs have been unloaded and the original libraries will be used instead.\n");
+					printf("[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
+						   "The stubs have been unloaded and the original libraries will be used instead.\n");
 				}
 				else
 				{
@@ -315,7 +330,8 @@ int main(int argc, char* argv[])
 						GetForegroundWindow(),
 						"Failed to load one or more stubs, but could not unload them either.\n"
 						"The game cannot continue and has to exit.",
-						"Northstar Launcher Error", 0);
+						"Northstar Launcher Error",
+						0);
 					return 1;
 				}
 			}
@@ -323,11 +339,9 @@ int main(int argc, char* argv[])
 		else
 		{
 			// this should never happen
-			printf(
-				"[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
-				"(did Northstar initialize too late?).\n");
+			printf("[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
+				   "(did Northstar initialize too late?).\n");
 		}
-		// clang-format on
 	}
 
 	{
@@ -381,7 +395,9 @@ int main(int argc, char* argv[])
 	auto LauncherMain = GetLauncherMain();
 	if (!LauncherMain)
 		MessageBoxA(
-			GetForegroundWindow(), "Failed loading launcher.dll.\nThe game cannot continue and has to exit.", "Northstar Launcher Error",
+			GetForegroundWindow(),
+			"Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
+			"Northstar Launcher Error",
 			0);
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);

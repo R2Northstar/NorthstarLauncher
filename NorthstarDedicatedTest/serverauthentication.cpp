@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "serverauthentication.h"
+#include "cvar.h"
 #include "convar.h"
 #include "hookutils.h"
 #include "masterserver.h"
@@ -13,14 +14,30 @@
 #include <filesystem>
 #include <thread>
 #include "configurables.h"
+#include "NSMem.h"
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
 // hook types
 
 typedef void* (*CBaseServer__ConnectClientType)(
-	void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11,
-	void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17);
+	void* server,
+	void* a2,
+	void* a3,
+	uint32_t a4,
+	uint32_t a5,
+	int32_t a6,
+	void* a7,
+	void* a8,
+	char* serverFilter,
+	void* a10,
+	char a11,
+	void* a12,
+	char a13,
+	char a14,
+	int64_t uid,
+	uint32_t a16,
+	uint32_t a17);
 CBaseServer__ConnectClientType CBaseServer__ConnectClient;
 
 typedef bool (*CBaseClient__ConnectType)(
@@ -63,6 +80,8 @@ ConVar* Cvar_net_chan_limit_msec_per_sec;
 ConVar* Cvar_sv_querylimit_per_sec;
 ConVar* Cvar_sv_max_chat_messages_per_sec;
 
+ConVar* Cvar_net_datablock_enabled;
+
 void ServerAuthenticationManager::StartPlayerAuthServer()
 {
 	if (m_runningPlayerAuthThread)
@@ -80,7 +99,8 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 			// this is just a super basic way to verify that servers have ports open, masterserver will try to read this before ensuring
 			// server is legit
 			m_playerAuthServer.Get(
-				"/verify", [](const httplib::Request& request, httplib::Response& response)
+				"/verify",
+				[](const httplib::Request& request, httplib::Response& response)
 				{ response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain"); });
 
 			m_playerAuthServer.Post(
@@ -113,6 +133,9 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
 					newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
+					strncpy(newAuthData.username, request.get_param_value("username").c_str(), sizeof(newAuthData.username));
+					newAuthData.username[sizeof(newAuthData.username) - 1] = 0;
+
 					newAuthData.pdataSize = request.body.size();
 					newAuthData.pdata = new char[newAuthData.pdataSize];
 					memcpy(newAuthData.pdata, request.body.c_str(), newAuthData.pdataSize);
@@ -141,6 +164,27 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_playerAuthServer.stop();
 }
 
+char* ServerAuthenticationManager::VerifyPlayerName(void* player, char* authToken, char* name)
+{
+	std::lock_guard<std::mutex> guard(m_authDataMutex);
+
+	if (!m_authData.empty() && m_authData.count(std::string(authToken)))
+	{
+		AuthData authData = m_authData[authToken];
+
+		bool nameAccepted = (!*authData.username || !strcmp(name, authData.username));
+
+		if (!nameAccepted && g_MasterServerManager->m_bRequireClientAuth && !CVar_ns_auth_allow_insecure->GetInt())
+		{
+			// limit name length to 64 characters just in case something changes, this technically shouldn't be needed given the master
+			// server gets usernames from origin but we have it just in case
+			strncpy(name, authData.username, 64);
+			name[63] = 0;
+		}
+	}
+	return name;
+}
+
 bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, char* authToken)
 {
 	std::string strUid = std::to_string(uid);
@@ -151,6 +195,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 	{
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
+
 		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
 		{
 			authFail = false;
@@ -285,8 +330,23 @@ char* nextPlayerToken;
 uint64_t nextPlayerUid;
 
 void* CBaseServer__ConnectClientHook(
-	void* server, void* a2, void* a3, uint32_t a4, uint32_t a5, int32_t a6, void* a7, void* a8, char* serverFilter, void* a10, char a11,
-	void* a12, char a13, char a14, int64_t uid, uint32_t a16, uint32_t a17)
+	void* server,
+	void* a2,
+	void* a3,
+	uint32_t a4,
+	uint32_t a5,
+	int32_t a6,
+	void* a7,
+	void* a8,
+	char* serverFilter,
+	void* a10,
+	char a11,
+	void* a12,
+	char a13,
+	char a14,
+	int64_t uid,
+	uint32_t a16,
+	uint32_t a17)
 {
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	nextPlayerToken = serverFilter;
@@ -297,6 +357,9 @@ void* CBaseServer__ConnectClientHook(
 
 bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7)
 {
+	// try changing name before all else
+	name = g_ServerAuthenticationManager->VerifyPlayerName(self, nextPlayerToken, name);
+
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
@@ -456,12 +519,13 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 			Cvar_net_chan_limit_msec_per_sec->GetInt())
 		{
 			spdlog::warn(
-				"Client {} hit netchan processing limit with {}ms of processing time this second (max is {})", (char*)sender + 0x16,
+				"Client {} hit netchan processing limit with {}ms of processing time this second (max is {})",
+				(char*)sender + 0x16,
 				g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime,
 				Cvar_net_chan_limit_msec_per_sec->GetInt());
 
-			// nonzero = kick, 0 = warn
-			if (Cvar_net_chan_limit_mode->GetInt())
+			// nonzero = kick, 0 = warn, but never kick local player
+			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(g_LocalPlayerUserID, (char*)sender + 0xF500))
 			{
 				CBaseClient__Disconnect(sender, 1, "Exceeded net channel processing limit");
 				return false;
@@ -519,7 +583,8 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 		if (sendData->packetCount >= Cvar_sv_querylimit_per_sec->GetInt())
 		{
 			spdlog::warn(
-				"Client went over connectionless ratelimit of {} per sec with packet of type {}", Cvar_sv_querylimit_per_sec->GetInt(),
+				"Client went over connectionless ratelimit of {} per sec with packet of type {}",
+				Cvar_sv_querylimit_per_sec->GetInt(),
 				packet->data[4]);
 
 			// timeout for a minute
@@ -552,21 +617,29 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	CVar_ns_auth_allow_insecure =
 		new ConVar("ns_auth_allow_insecure", "0", FCVAR_GAMEDLL, "Whether this server will allow unauthenicated players to connect");
 	CVar_ns_auth_allow_insecure_write = new ConVar(
-		"ns_auth_allow_insecure_write", "0", FCVAR_GAMEDLL,
+		"ns_auth_allow_insecure_write",
+		"0",
+		FCVAR_GAMEDLL,
 		"Whether the pdata of unauthenticated clients will be written to disk when changed");
 	// literally just stolen from a fix valve used in csgo
 	CVar_sv_quota_stringcmdspersecond = new ConVar(
-		"sv_quota_stringcmdspersecond", "60", FCVAR_GAMEDLL,
+		"sv_quota_stringcmdspersecond",
+		"60",
+		FCVAR_GAMEDLL,
 		"How many string commands per second clients are allowed to submit, 0 to disallow all string commands");
 	// https://blog.counter-strike.net/index.php/2019/07/24922/ but different because idk how to check what current tick number is
 	Cvar_net_chan_limit_mode =
 		new ConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
 	Cvar_net_chan_limit_msec_per_sec = new ConVar(
-		"net_chan_limit_msec_per_sec", "0", FCVAR_GAMEDLL,
+		"net_chan_limit_msec_per_sec",
+		"0",
+		FCVAR_GAMEDLL,
 		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	Cvar_ns_player_auth_port = new ConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	Cvar_sv_querylimit_per_sec = new ConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
 	Cvar_sv_max_chat_messages_per_sec = new ConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
+
+	Cvar_net_datablock_enabled = g_pCVar->FindVar("net_datablock_enabled");
 
 	RegisterConCommand("ns_resetpersistence", ResetPdataCommand, "resets your pdata when you next enter the lobby", FCVAR_NONE);
 
@@ -579,7 +652,9 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x1012C0, &CBaseClient__DisconnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Disconnect));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x1022E0, &CGameClient__ExecuteStringCommandHook,
+		hook,
+		(char*)baseAddress + 0x1022E0,
+		&CGameClient__ExecuteStringCommandHook,
 		reinterpret_cast<LPVOID*>(&CGameClient__ExecuteStringCommand));
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x2140A0, &CNetChan___ProcessMessagesHook, reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
@@ -590,47 +665,42 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 
 	CCommand__Tokenize = (CCommand__TokenizeType)((char*)baseAddress + 0x418380);
 
+	uintptr_t ba = (uintptr_t)baseAddress;
+
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
 	{
-		void* ptr = (char*)baseAddress + 0x114655;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xEB; // jz => jmp
+		NSMem::BytePatch(
+			ba + 0x114655,
+			"EB" // jz => jmp
+		);
 	}
 
 	// patch to disable fairfight marking players as cheaters and kicking them
 	{
-		void* ptr = (char*)baseAddress + 0x101012;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xE9; // jz => jmp
-		*((char*)ptr + 1) = (char)0x90;
-		*((char*)ptr + 2) = (char)0x0;
+		NSMem::BytePatch(
+			ba + 0x101012,
+			"E9 90 00" // jz => jmp
+		);
 	}
 
 	// patch to allow same of multiple account
 	{
-		void* ptr = (char*)baseAddress + 0x114510;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xEB; // jz => jmp
+		NSMem::BytePatch(
+			ba + 0x114510,
+			"EB" // jz => jmp
+		);
 	}
 
 	// patch to set bWasWritingStringTableSuccessful in CNetworkStringTableContainer::WriteBaselines if it fails
 	{
-		bool* writeAddress = (bool*)(&bWasWritingStringTableSuccessful - ((bool*)baseAddress + 0x234EDC));
+		uintptr_t writeAddress = (uintptr_t)(&bWasWritingStringTableSuccessful - (ba + 0x234EDC));
 
-		void* ptr = (char*)baseAddress + 0x234ED2;
-		TempReadWrite rw(ptr);
-		*((char*)ptr) = (char)0xC7;
-		*((char*)ptr + 1) = (char)0x05;
-		*(int*)((char*)ptr + 2) = (int)writeAddress;
-		*((char*)ptr + 6) = (char)0x00;
-		*((char*)ptr + 7) = (char)0x00;
-		*((char*)ptr + 8) = (char)0x00;
-		*((char*)ptr + 9) = (char)0x00;
+		auto addr = ba + 0x234ED2;
+		NSMem::BytePatch(addr, "C7 05");
+		NSMem::BytePatch(addr + 2, (BYTE*)&writeAddress, sizeof(writeAddress));
 
-		*((char*)ptr + 10) = (char)0x90;
-		*((char*)ptr + 11) = (char)0x90;
-		*((char*)ptr + 12) = (char)0x90;
-		*((char*)ptr + 13) = (char)0x90;
-		*((char*)ptr + 14) = (char)0x90;
+		NSMem::BytePatch(addr + 6, "00 00 00 00");
+
+		NSMem::NOP(addr + 10, 5);
 	}
 }
