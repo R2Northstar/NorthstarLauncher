@@ -1521,6 +1521,9 @@
     <ClInclude Include="host_state.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
+    <ClInclude Include="debugoverlay.h">
+      <Filter>Header Files\Client</Filter>
+    </ClInclude>
     <ClInclude Include="clientvideooverrides.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
@@ -1720,6 +1723,9 @@
     </ClCompile>
     <ClCompile Include="host_state.cpp">
       <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="debugoverlay.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
