@@ -606,7 +606,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 					goto REQUEST_END_CLEANUP;
 				}
 
-				AuthData newAuthData;
+				AuthData newAuthData {};
 				strncpy(newAuthData.uid, authInfoJson["id"].GetString(), sizeof(newAuthData.uid));
 				newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
