@@ -287,5 +287,8 @@ bool InitialiseNorthstar()
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
 
+	// Write launcher version to log
+	spdlog::info("NorthstarLauncher version: {}", version);
+
 	return true;
 }
