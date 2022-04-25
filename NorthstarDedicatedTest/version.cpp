@@ -7,7 +7,7 @@ char NSUserAgent[32];
 
 void InitialiseVersion()
 {
-	int northstar_version[] = {NORTHSTAR_VERSION};
+	constexpr int northstar_version[4]{NORTHSTAR_VERSION};
 
 	// We actually use the rightmost integer do determine whether or not we're a debug/dev build
 	// If it is set to 1, we are a dev build
