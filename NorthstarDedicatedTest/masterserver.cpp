@@ -678,8 +678,11 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 						goto REQUEST_END_CLEANUP;
 					}
 
-					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
+					newAuthData.pdata[i] = static_cast<char>(byte.GetUint());
+					i++;
 				}
+				spdlog::info(i);
+				spdlog::info("GOT PDATA FROM MASTERSERVER:\n" + std::string(authInfoJson["persistentData"].GetString()));
 
 				std::lock_guard<std::mutex> guard(g_ServerAuthenticationManager->m_authDataMutex);
 				g_ServerAuthenticationManager->m_authData.clear();
@@ -1216,9 +1219,8 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 
 			//curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 
-			// this is probably HORRIBLE code
-			curl_mime* mime2 = curl_mime_init(curl);
-			curl_mimepart* part2 = curl_mime_addpart(mime2);
+			// this is probably HORRIBLE code - SPOON
+			curl_mimepart* part2 = curl_mime_addpart(mime);
 
 			curl_mime_data(part2, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
 			curl_mime_name(part2, "modinfo");
@@ -1226,7 +1228,6 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 			curl_mime_type(part2, "application/json");
 
 			curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-			curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime2);
 
 			CURLcode result = curl_easy_perform(curl);
 
