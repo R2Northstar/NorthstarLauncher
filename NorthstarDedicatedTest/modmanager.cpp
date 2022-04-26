@@ -329,7 +329,6 @@ void ModManager::LoadMods()
 					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
 														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
 					modVpk.m_sVpkPath = vpkName;
-					spdlog::info("ADDED VPK: {}", vpkName);
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
 						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
