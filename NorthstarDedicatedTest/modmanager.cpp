@@ -337,7 +337,7 @@ void ModManager::LoadMods()
 				if (bUseVPKJson && dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject())
 				{
 					rapidjson::Value::MemberIterator v;
-					auto matchesV = [&v](const ModVPKEntry& match) { return match.m_sVpkPath != v->value.GetString(); };
+					auto matchesV = [&v](const ModVPKEntry& match) { return match.m_sVpkPath != v->name.GetString(); };
 
 					for (v = dVpkJson["Preload"].MemberBegin(); v != dVpkJson["Preload"].MemberEnd(); v++)
 					{
