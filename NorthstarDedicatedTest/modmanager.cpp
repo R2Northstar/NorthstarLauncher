@@ -329,6 +329,7 @@ void ModManager::LoadMods()
 					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
 														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
 					modVpk.m_sVpkPath = vpkName;
+					spdlog::info("ADDED VPK: {}", vpkName);
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
 						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
@@ -350,7 +351,9 @@ void ModManager::LoadMods()
 						spdlog::info("VANILLA VPK: {}", v->name.GetString());
 						ModVPKEntry& modVpk = mod.Vpks.emplace_back();
 						modVpk.m_bAutoLoad = true;
-						modVpk.m_sVpkPath = v->name.GetString();
+						std::string path = "vpk/client_";
+						path += v->name.GetString(); // for some reason these have to be done separately but fine
+						modVpk.m_sVpkPath = path;
 					}
 				}
 			}
