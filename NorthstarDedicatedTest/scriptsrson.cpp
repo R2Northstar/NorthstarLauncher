@@ -11,7 +11,6 @@ void ModManager::BuildScriptsRson()
 	spdlog::info("Building custom scripts.rson");
 	fs::path MOD_SCRIPTS_RSON_PATH = fs::path(GetCompiledAssetsPath() / MOD_SCRIPTS_RSON_SUFFIX);
 	fs::remove(MOD_SCRIPTS_RSON_PATH);
-	std::vector<std::string> scriptsAdded;
 
 	// not really important since it doesn't affect actual functionality at all, but the rson we output is really weird
 	// has a shitload of newlines added, even in places where we don't modify it at all
@@ -38,12 +37,6 @@ void ModManager::BuildScriptsRson()
 				_coolscript.gnut
 			]*/
 
-			// check if the same script has been added already.
-			if (std::find(scriptsAdded.begin(), scriptsAdded.end(), script.Path) != scriptsAdded.end())
-			{
-				continue;
-			}
-
 			scriptsRson += "When: \"";
 			scriptsRson += script.RsonRunOn;
 			scriptsRson += "\"\n";
@@ -51,10 +44,8 @@ void ModManager::BuildScriptsRson()
 			scriptsRson += "Scripts:\n[\n\t";
 			scriptsRson += script.Path;
 			scriptsRson += "\n]\n\n";
-			scriptsAdded.push_back(script.Path);
 		}
 	}
-	scriptsAdded.clear();
 
 	fs::create_directories(MOD_SCRIPTS_RSON_PATH.parent_path());
 

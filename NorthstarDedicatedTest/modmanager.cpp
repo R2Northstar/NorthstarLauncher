@@ -331,6 +331,26 @@ void ModManager::LoadMods()
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
 						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
 				}
+				// Load vanilla vpks based on vpk.json
+				if (bUseVPKJson && dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject())
+				{
+					rapidjson::Value::MemberIterator v;
+					auto matchesV = [&v](const ModVPKEntry& match) { return match.m_sVpkPath != v->value.GetString(); };
+
+					for (v = dVpkJson["Preload"].MemberBegin(); v != dVpkJson["Preload"].MemberEnd(); v++)
+					{
+						// if it's a vpk that was taken care of in the previous for loop, skip it.
+						bool shouldSkip = mod.Vpks.size() != 0 && std::find_if(mod.Vpks.begin(), mod.Vpks.end(), matchesV) != mod.Vpks.end();
+						if (shouldSkip)
+							continue;
+						if (!v->value.IsTrue())
+							continue;
+						spdlog::info("VANILLA VPK: {}", v->name.GetString());
+						ModVPKEntry& modVpk = mod.Vpks.emplace_back();
+						modVpk.m_bAutoLoad = true;
+						modVpk.m_sVpkPath = v->name.GetString();
+					}
+				}
 			}
 		}
 
