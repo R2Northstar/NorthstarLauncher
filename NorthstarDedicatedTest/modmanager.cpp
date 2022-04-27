@@ -194,13 +194,13 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				continue;
 
 			spdlog::info("Constant {} defined by {} for mod {}", v->name.GetString(), Name, v->value.GetString());
-			if (g_ModManager->DependencyConstants.find(v->name.GetString()) != g_ModManager->DependencyConstants.end())
+			if (DependencyConstants.find(v->name.GetString()) != DependencyConstants.end())
 			{
 				spdlog::error("A dependency constant with the same name already exists for another mod. Change the constant name.");
 				return;
 			}
 
-			g_ModManager->DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
+			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
 		}
 	}
 
@@ -230,8 +230,7 @@ void ModManager::LoadMods()
 	fs::remove_all(GetCompiledAssetsPath());
 	fs::create_directories(GetModFolderPath());
 
-	// remove all dependency constants
-	g_ModManager->DependencyConstants.clear();
+	DependencyConstants.clear();
 
 	// read enabled mods cfg
 	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/enabledmods.json");
@@ -273,6 +272,17 @@ void ModManager::LoadMods()
 		jsonStream.close();
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
+
+		for (auto& pair : mod.DependencyConstants)
+		{
+			if (DependencyConstants.find(pair.first) != DependencyConstants.end())
+			{
+				spdlog::error("Constant {} in mod {} already exists in another mod.", pair.first, mod.Name);
+				mod.wasReadSuccessfully = false;
+				break;
+			}
+			DependencyConstants.emplace(pair);
+		}
 
 		if (m_hasEnabledModsCfg && m_enabledModsCfg.HasMember(mod.Name.c_str()))
 			mod.Enabled = m_enabledModsCfg[mod.Name.c_str()].IsTrue();

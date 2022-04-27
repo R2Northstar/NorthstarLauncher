@@ -159,14 +159,15 @@ template <ScriptContext context> class SquirrelManager
 			else
 				ServerRegisterSquirrelFunc(sqvm, funcReg, 1);
 		}
-		for (auto pair : g_ModManager->DependencyConstants)
+		// This could be optimized by adding the dependency constants to 
+		for (auto& pair : g_ModManager->DependencyConstants)
 		{
 			bool wasFound = false;
-			for (Mod& mod : g_ModManager->m_loadedMods)
+			for (Mod& dependency : g_ModManager->m_loadedMods)
 			{
-				if (mod.Name == pair.second)
+				if (dependency.Name == pair.second)
 				{
-					wasFound = true;
+					wasFound = dependency.Enabled;
 					break;
 				}
 			}
