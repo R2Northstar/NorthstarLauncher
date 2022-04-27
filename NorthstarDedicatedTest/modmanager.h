@@ -131,8 +131,7 @@ class ModManager
 	std::unordered_map<std::string, ModOverrideFile> m_modFiles;
 	// iterated over to create squirrel VM constants depending if a mod exists or not.
 	// not mod specific because constants are defined globally anyways.
-	std::unordered_map<std::string, std::string>
-		DependencyConstants;
+	std::unordered_map<std::string, std::string> DependencyConstants;
 
   public:
 	ModManager();
