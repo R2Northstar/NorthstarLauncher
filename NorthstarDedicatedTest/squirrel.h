@@ -1,3 +1,4 @@
+#include <../modmanager.h>
 #pragma once
 
 void InitialiseClientSquirrel(HMODULE baseAddress);
@@ -107,6 +108,10 @@ typedef SQInteger (*sq_pusherrorType)(void* sqvm, const SQChar* error);
 extern sq_pusherrorType ClientSq_pusherror;
 extern sq_pusherrorType ServerSq_pusherror;
 
+typedef void (*sq_defconst)(void* sqvm, const SQChar* name, int value);
+extern sq_defconst ClientSq_defconst;
+extern sq_defconst ServerSq_defconst;
+
 // sq stack get funcs
 typedef const SQChar* (*sq_getstringType)(void* sqvm, SQInteger stackpos);
 extern sq_getstringType ClientSq_getstring;
@@ -153,6 +158,22 @@ template <ScriptContext context> class SquirrelManager
 				ClientRegisterSquirrelFunc(sqvm, funcReg, 1);
 			else
 				ServerRegisterSquirrelFunc(sqvm, funcReg, 1);
+		}
+		for (auto pair : g_ModManager->DependencyConstants)
+		{
+			bool wasFound = false;
+			for (Mod& mod : g_ModManager->m_loadedMods)
+			{
+				if (mod.Name == pair.second)
+				{
+					wasFound = true;
+					break;
+				}
+			}
+			if (context == ScriptContext::SERVER)
+				ServerSq_defconst(sqvm, pair.first.c_str(), wasFound);
+			else
+				ClientSq_defconst(sqvm, pair.first.c_str(), wasFound);
 		}
 	}
 

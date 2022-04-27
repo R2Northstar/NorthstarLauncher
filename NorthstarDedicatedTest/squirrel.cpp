@@ -70,6 +70,9 @@ sq_pushboolType ServerSq_pushbool;
 sq_pusherrorType ClientSq_pusherror;
 sq_pusherrorType ServerSq_pusherror;
 
+sq_defconst ClientSq_defconst;
+sq_defconst ServerSq_defconst;
+
 // sq stack get funcs
 sq_getstringType ClientSq_getstring;
 sq_getstringType ServerSq_getstring;
@@ -142,6 +145,8 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 
 	ClientSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
 
+	ClientSq_defconst = (sq_defconst)((char*)baseAddress + 0x12120);
+
 	ENABLER_CREATEHOOK(
 		hook,
 		(char*)baseAddress + 0x26130,
@@ -190,6 +195,8 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 	ServerSq_getbool = (sq_getboolType)((char*)baseAddress + 0x6110);
 
 	ServerSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C00);
+
+	ServerSq_defconst = (sq_defconst)((char*)baseAddress + 0x1F550);
 
 	ENABLER_CREATEHOOK(
 		hook,
