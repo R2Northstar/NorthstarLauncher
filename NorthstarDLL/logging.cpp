@@ -154,19 +154,36 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 		PVOID framesToCapture[62];
 		int frames = RtlCaptureStackBackTrace(0, 62, framesToCapture, NULL);
-		for (int i = 0; i < frames; i++)
+		bool haveSkippedErrorHandlingFrames = false;
+		if (frames > 0)
 		{
-			HMODULE backtraceModuleHandle;
-			GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(framesToCapture[i]), &backtraceModuleHandle);
+			for (int i = 1; i < frames; i++)
+			{
+				HMODULE backtraceModuleHandle;
+				GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(framesToCapture[i]), &backtraceModuleHandle);
 
-			char backtraceModuleFullName[MAX_PATH];
-			GetModuleFileNameExA(GetCurrentProcess(), backtraceModuleHandle, backtraceModuleFullName, MAX_PATH);
-			char* backtraceModuleName = strrchr(backtraceModuleFullName, '\\') + 1;
+				char backtraceModuleFullName[MAX_PATH];
+				GetModuleFileNameExA(GetCurrentProcess(), backtraceModuleHandle, backtraceModuleFullName, MAX_PATH);
+				char* backtraceModuleName = strrchr(backtraceModuleFullName, '\\') + 1;
 
-			void* actualAddress = (void*)framesToCapture[i];
-			void* relativeAddress = (void*)(uintptr_t(actualAddress) - uintptr_t(backtraceModuleHandle));
+				if (!haveSkippedErrorHandlingFrames)
+				{
+					if (!strncmp(backtraceModuleFullName, crashedModuleFullName, MAX_PATH) &&
+						!strncmp(backtraceModuleName, crashedModuleName, MAX_PATH))
+					{
+						haveSkippedErrorHandlingFrames = true;
+					}
+					else
+					{
+						continue;
+					}
+				}
 
-			spdlog::error("    {} + {} ({})", backtraceModuleName, relativeAddress, actualAddress);
+				void* actualAddress = (void*)framesToCapture[i];
+				void* relativeAddress = (void*)(uintptr_t(actualAddress) - uintptr_t(backtraceModuleHandle));
+
+				spdlog::error("    {} + {} ({})", backtraceModuleName, relativeAddress, actualAddress);
+			}
 		}
 
 		spdlog::error("RAX: 0x{0:x}", exceptionContext->Rax);
