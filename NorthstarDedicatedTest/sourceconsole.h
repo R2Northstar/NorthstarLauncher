@@ -103,4 +103,5 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 };
 
 void InitialiseSourceConsole(HMODULE baseAddress);
+void InitializeConCommandPrintFunctions(HMODULE baseAddress);
 void InitialiseConsoleOnInterfaceCreation();

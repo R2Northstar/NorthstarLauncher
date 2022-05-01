@@ -255,8 +255,10 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
+		AddDllLoadCallbackForClient("engine.dll", InitializeConCommandPrintFunctions);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
+		
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);

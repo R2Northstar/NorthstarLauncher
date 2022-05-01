@@ -147,3 +147,5 @@ class ConVar
 }; // Size: 0x0080
 
 void InitialiseConVars(HMODULE baseAddress);
+
+extern void* g_pConVar_Vtable;
