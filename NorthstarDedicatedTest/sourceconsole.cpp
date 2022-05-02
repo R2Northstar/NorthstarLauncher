@@ -5,10 +5,8 @@
 #include "concommand.h"
 #include "hookutils.h"
 
-
 SourceInterface<CGameConsole>* g_SourceGameConsole;
 ConVar* ns_log_printfs;
-
 
 void ConCommand_toggleconsole(const CCommand& arg)
 {
@@ -80,8 +78,7 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		->m_pConsole->m_pConsolePanel->ColorPrint(logColours[msg.level], fmt::to_string(formatted).c_str()); // todo needs colour support
 }
 
-
-//show all convars and commands
+// show all convars and commands
 
 __int64 Q_snprintf(char* a1, signed __int64 a2, const char* a3, ...)
 {
@@ -122,19 +119,21 @@ bool bIsPrintingConvarDesc;
 
 char* lastCvarDesc;
 
-__int64 __fastcall ConVar_PrintDescription(const struct ConCommandBase near* a1) {
+__int64 __fastcall ConVar_PrintDescription(const struct ConCommandBase near* a1)
+{
 	bIsPrintingConvarDesc = true;
 	__int64 ret = ConVar_PrintDescriptionOriginal(a1);
 	bIsPrintingConvarDesc = false;
 	std::string fmt2 = std::string(lastCvarDesc);
 
-	if (ret && ((char*)ret)[0]) {
+	if (ret && ((char*)ret)[0])
+	{
 		std::string fmt = std::string((char*)ret);
 
 		spdlog::info("{} - {}", fmt2, fmt);
-
 	}
-	else {
+	else
+	{
 		spdlog::info("{}", fmt2);
 	}
 	return ret;
@@ -181,7 +180,7 @@ char const* stristr(char const* pStr, char const* pSearch)
 }
 void Find(const CCommand& args)
 {
-	
+
 	const char* search;
 	const ConCommandBase* var;
 
@@ -196,21 +195,17 @@ void Find(const CCommand& args)
 
 	// Loop through vars and print out findings
 
-
 	for (auto& map : g_pCVar->DumpToMap())
 	{
 		ConCommandBase* var = g_pCVar->FindCommandBase(map.first.c_str());
 		if (!var)
 			continue;
-		if (!stristr(var->m_pszName, search) &&
-			!stristr(var->GetHelpText(), search))
+		if (!stristr(var->m_pszName, search) && !stristr(var->GetHelpText(), search))
 			continue;
 
 		ConVar_PrintDescription((const ConCommandBase*)var);
 	}
-
 }
-
 
 static char* StripTabsAndReturns(const char* inbuffer, char* outbuffer, int outbufferSize)
 {
@@ -222,9 +217,7 @@ static char* StripTabsAndReturns(const char* inbuffer, char* outbuffer, int outb
 
 	while (*i && o - out < outbufferSize - 1)
 	{
-		if (*i == '\n' ||
-			*i == '\r' ||
-			*i == '\t')
+		if (*i == '\n' || *i == '\r' || *i == '\t')
 		{
 			*o++ = ' ';
 			i++;
@@ -247,14 +240,16 @@ static char* StripTabsAndReturns(const char* inbuffer, char* outbuffer, int outb
 
 struct ConVarFlags_t
 {
-	int			bit;
+	int bit;
 	const char* desc;
 	const char* shortdesc;
 };
-#define CONVARFLAG( x, y )	{ FCVAR_##x, #x, #y }
+#define CONVARFLAG(x, y)                                                                                                                   \
+	{                                                                                                                                      \
+		FCVAR_##x, #x, #y                                                                                                                  \
+	}
 
-static ConVarFlags_t g_ConVarFlags[] =
-{
+static ConVarFlags_t g_ConVarFlags[] = {
 	//	CONVARFLAG( UNREGISTERED, "u" ),
 	CONVARFLAG(ARCHIVE, "a"),
 	CONVARFLAG(SPONLY, "sp"),
@@ -348,10 +343,11 @@ void ConMsg(const char* pMsgFormat, ...)
 	spdlog::info(pTempBuffer);
 }
 
-
-bool strcasecmp(const char* a1, const char*a2) {
+bool strcasecmp(const char* a1, const char* a2)
+{
 	int i = 0;
-	while (!a1[i]) {
+	while (!a1[i])
+	{
 		if (tolower(a1[i]) != tolower(a2[i]))
 			return false;
 		i++;
@@ -361,15 +357,15 @@ bool strcasecmp(const char* a1, const char*a2) {
 
 void CvarList(const CCommand& args)
 {
-	const ConCommandBase* var;	// Temporary Pointer to cvars
-	int iArgs;						// Argument count
-	const char* partial = NULL;		// Partial cvar to search for...
-									// E.eg
-	int ipLen = 0;  				// Length of the partial cvar
+	const ConCommandBase* var; // Temporary Pointer to cvars
+	int iArgs; // Argument count
+	const char* partial = NULL; // Partial cvar to search for...
+								// E.eg
+	int ipLen = 0; // Length of the partial cvar
 
 	bool bLogging = false;
 	// Are we logging?
-	iArgs = args.ArgC();		// Get count
+	iArgs = args.ArgC(); // Get count
 
 	// Print usage?
 	if (iArgs == 2 && !strcasecmp(args[1], "?"))
@@ -379,7 +375,6 @@ void CvarList(const CCommand& args)
 	}
 	partial = args[1];
 	ipLen = strlen(partial);
-
 
 	// Banner
 	spdlog::info("cvar list\n--------------");
@@ -393,7 +388,7 @@ void CvarList(const CCommand& args)
 			continue;
 		bool print = false;
 
-		if (partial)  // Partial string searching?
+		if (partial) // Partial string searching?
 		{
 			if (!_strnicmp(var->m_pszName, partial, ipLen))
 			{
@@ -410,18 +405,25 @@ void CvarList(const CCommand& args)
 
 		sorted.push_back(var);
 	}
-	std::sort(sorted.begin(), sorted.end(), [](const ConCommandBase* a, const ConCommandBase* b) -> bool
-		{
-			return std::string(a->m_pszName).compare(std::string(b->m_pszName)) < 0;
-		});
+	std::sort(
+		sorted.begin(),
+		sorted.end(),
+		[](const ConCommandBase* a, const ConCommandBase* b) -> bool
+		{ return std::string(a->m_pszName).compare(std::string(b->m_pszName)) < 0; });
 
-	for (auto& base : sorted) {
+	for (auto& base : sorted)
+	{
 		if (base->IsCommand())
 		{
 			const ConCommand* cmd = reinterpret_cast<const ConCommand*>(base);
 
 			char tempbuff[128];
-			ConMsg("%-40s : %-8s : %-16s : %s", cmd->m_pszName, "cmd", "", StripTabsAndReturns(cmd->GetHelpText(), tempbuff, sizeof(tempbuff)));
+			ConMsg(
+				"%-40s : %-8s : %-16s : %s",
+				cmd->m_pszName,
+				"cmd",
+				"",
+				StripTabsAndReturns(cmd->GetHelpText(), tempbuff, sizeof(tempbuff)));
 		}
 		else
 		{
@@ -456,7 +458,6 @@ void CvarList(const CCommand& args)
 				Q_strncat(csvflagstr, csvf, sizeof(csvflagstr), COPY_ALL_CHARACTERS);
 			}
 
-
 			char valstr[32];
 			char tempbuff[128];
 
@@ -471,10 +472,14 @@ void CvarList(const CCommand& args)
 			}
 
 			// Print to console
-			ConMsg("%-40s : %-8s : %-16s : %s", var->GetBaseName(), valstr, flagstr, StripTabsAndReturns(var->GetHelpText(), tempbuff, sizeof(tempbuff)));
+			ConMsg(
+				"%-40s : %-8s : %-16s : %s",
+				var->GetBaseName(),
+				valstr,
+				flagstr,
+				StripTabsAndReturns(var->GetHelpText(), tempbuff, sizeof(tempbuff)));
 		}
 	}
-
 
 	// Show total and syntax help...
 	if (partial && partial[0])
@@ -485,15 +490,13 @@ void CvarList(const CCommand& args)
 	{
 		ConMsg("--------------\n%3i total convars/concommands", sorted.size());
 	}
-
-
 }
-
 
 typedef __int64 __fastcall Host_InitType(char a1);
 Host_InitType* Host_InitOrig;
 
-__int64 __fastcall Host_InitHook(char a1) {
+__int64 __fastcall Host_InitHook(char a1)
+{
 	auto ret = Host_InitOrig(a1);
 	for (auto& map : g_pCVar->DumpToMap())
 	{
@@ -506,20 +509,19 @@ __int64 __fastcall Host_InitHook(char a1) {
 	return ret;
 }
 
-
 void SourceConsoleSink::flush_() {}
-
 
 void InitializeConCommandPrintFunctions(HMODULE baseAddress)
 {
 
 	HookEnabler hook;
 	ns_log_printfs = new ConVar("ns_log_printfs", "0", FCVAR_NONE, "");
-	
+
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x414990, &Q_snprintf, reinterpret_cast<LPVOID*>(NULL));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x414BC0, &Q_strncatConvar, reinterpret_cast<LPVOID*>(NULL));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x123680, &printCCommand, reinterpret_cast<LPVOID*>(NULL));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x416E20, &ConVar_PrintDescription, reinterpret_cast<LPVOID*>(&ConVar_PrintDescriptionOriginal));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x416E20, &ConVar_PrintDescription, reinterpret_cast<LPVOID*>(&ConVar_PrintDescriptionOriginal));
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1567E0, &Host_InitHook, reinterpret_cast<LPVOID*>(&Host_InitOrig));
 	RegisterConCommand("find", Find, "Find concommands with the specified string in their name / help text.", 0);
 	RegisterConCommand("cvarlist", CvarList, "Show the list of convars/concommands.", 0);
