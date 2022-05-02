@@ -258,7 +258,6 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("engine.dll", InitializeConCommandPrintFunctions);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
-		
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
