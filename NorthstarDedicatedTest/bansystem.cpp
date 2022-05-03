@@ -36,17 +36,24 @@ void ServerBanSystem::ClearBanlist()
 	// reopen the file, don't provide std::ofstream::app so it clears on open
 	m_sBanlistStream.close();
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
+	m_sBanlistStream.close();
 }
 
 void ServerBanSystem::BanUID(uint64_t uid)
 {
+	g_ServerBanSystem->OpenBanlist();
+
 	m_vBannedUids.push_back(uid);
 	m_sBanlistStream << std::to_string(uid) << std::endl;
 	spdlog::info("{} was banned", uid);
+
+	m_sBanlistStream.close();
 }
 
 void ServerBanSystem::UnbanUID(uint64_t uid)
 {
+	g_ServerBanSystem->OpenBanlist();
+
 	auto findResult = std::find(m_vBannedUids.begin(), m_vBannedUids.end(), uid);
 	if (findResult == m_vBannedUids.end())
 		return;
@@ -55,10 +62,14 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	spdlog::info("{} was unbanned", uid);
 	// todo: this needs to erase from the banlist file
 	// atm unsure how to do this aside from just clearing and fully rewriting the file
+	m_sBanlistStream.close();
 }
 
 bool ServerBanSystem::IsUIDAllowed(uint64_t uid)
 {
+	g_ServerBanSystem->OpenBanlist();
+	m_sBanlistStream.close();
+
 	return std::find(m_vBannedUids.begin(), m_vBannedUids.end(), uid) == m_vBannedUids.end();
 }
 
@@ -98,7 +109,6 @@ void ClearBanlistCommand(const CCommand& args)
 void InitialiseBanSystem(HMODULE baseAddress)
 {
 	g_ServerBanSystem = new ServerBanSystem;
-	g_ServerBanSystem->OpenBanlist();
 
 	RegisterConCommand("ban", BanPlayerCommand, "bans a given player by uid or name", FCVAR_GAMEDLL);
 	RegisterConCommand("unban", UnbanPlayerCommand, "unbans a given player by uid", FCVAR_NONE);
