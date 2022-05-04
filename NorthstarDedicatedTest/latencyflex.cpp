@@ -26,12 +26,12 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 	// LatencyFleX is an open source vendor agnostic replacement for Nvidia Reflex input latency reduction technology.
 	// https://ishitatsuyuki.github.io/post/latencyflex/
 	bool useFallbackEntrypoints = false;
-        m_lfxModule = ::LoadLibraryA("latencyflex_layer.dll");
-        if (m_lfxModule == nullptr && ::GetLastError() == ERROR_MOD_NOT_FOUND) {
-            //Fallback to previous LatencyFlex library.
-            m_lfxModule = ::LoadLibraryA("latencyflex_wine.dll");
-            useFallbackEntrypoints = true;
-        }
+	m_lfxModule = ::LoadLibraryA("latencyflex_layer.dll");
+	if (m_lfxModule == nullptr && ::GetLastError() == ERROR_MOD_NOT_FOUND) {
+		//Fallback to previous LatencyFlex library.
+		m_lfxModule = ::LoadLibraryA("latencyflex_wine.dll");
+		useFallbackEntrypoints = true;
+	}
 
 	if (m_lfxModule == nullptr)
 	{
