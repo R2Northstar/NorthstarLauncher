@@ -29,7 +29,7 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 	m_lfxModule = ::LoadLibraryA("latencyflex_layer.dll");
 	if (m_lfxModule == nullptr && ::GetLastError() == ERROR_MOD_NOT_FOUND)
 	{
-		//Fallback to previous LatencyFleX library.
+		// Fallback to previous LatencyFleX library.
 		m_lfxModule = ::LoadLibraryA("latencyflex_wine.dll");
 		useFallbackEntrypoints = true;
 	}
@@ -40,8 +40,8 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 		return;
 	}
 
-	m_winelfx_WaitAndBeginFrame =
-		reinterpret_cast<PFN_winelfx_WaitAndBeginFrame>(reinterpret_cast<void*>(GetProcAddress(m_lfxModule, !useFallbackEntrypoints ? "lfx_WaitAndBeginFrame" : "winelfx_WaitAndBeginFrame")));
+	m_winelfx_WaitAndBeginFrame = reinterpret_cast<PFN_winelfx_WaitAndBeginFrame>(reinterpret_cast<void*>(
+		GetProcAddress(m_lfxModule, !useFallbackEntrypoints ? "lfx_WaitAndBeginFrame" : "winelfx_WaitAndBeginFrame")));
 	spdlog::info("LatencyFleX initialized.");
 
 	Cvar_r_latencyflex = new ConVar("r_latencyflex", "1", FCVAR_ARCHIVE, "Whether or not to use LatencyFleX input latency reduction.");
