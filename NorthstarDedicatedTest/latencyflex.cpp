@@ -25,7 +25,13 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 	// Connect to the LatencyFleX service
 	// LatencyFleX is an open source vendor agnostic replacement for Nvidia Reflex input latency reduction technology.
 	// https://ishitatsuyuki.github.io/post/latencyflex/
-	m_lfxModule = LoadLibraryA("latencyflex_wine.dll");
+	bool useFallbackEntrypoints = false;
+        m_lfxModule = ::LoadLibraryA("latencyflex_layer.dll");
+        if (m_lfxModule == nullptr && ::GetLastError() == ERROR_MOD_NOT_FOUND) {
+            //Fallback to previous LatencyFlex library.
+            m_lfxModule = ::LoadLibraryA("latencyflex_wine.dll");
+            useFallbackEntrypoints = true;
+        }
 
 	if (m_lfxModule == nullptr)
 	{
@@ -34,7 +40,7 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 	}
 
 	m_winelfx_WaitAndBeginFrame =
-		reinterpret_cast<PFN_winelfx_WaitAndBeginFrame>(reinterpret_cast<void*>(GetProcAddress(m_lfxModule, "winelfx_WaitAndBeginFrame")));
+		reinterpret_cast<PFN_winelfx_WaitAndBeginFrame>(reinterpret_cast<void*>(GetProcAddress(m_lfxModule, !useFallbackEntrypoints ? "lfx_WaitAndBeginFrame" : "winelfx_WaitAndBeginFrame")));
 	spdlog::info("LatencyFleX initialized.");
 
 	Cvar_r_latencyflex = new ConVar("r_latencyflex", "1", FCVAR_ARCHIVE, "Whether or not to use LatencyFleX input latency reduction.");
