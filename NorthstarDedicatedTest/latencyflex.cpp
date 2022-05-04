@@ -27,8 +27,9 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 	// https://ishitatsuyuki.github.io/post/latencyflex/
 	bool useFallbackEntrypoints = false;
 	m_lfxModule = ::LoadLibraryA("latencyflex_layer.dll");
-	if (m_lfxModule == nullptr && ::GetLastError() == ERROR_MOD_NOT_FOUND) {
-		//Fallback to previous LatencyFlex library.
+	if (m_lfxModule == nullptr && ::GetLastError() == ERROR_MOD_NOT_FOUND)
+	{
+		//Fallback to previous LatencyFleX library.
 		m_lfxModule = ::LoadLibraryA("latencyflex_wine.dll");
 		useFallbackEntrypoints = true;
 	}
