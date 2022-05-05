@@ -128,7 +128,7 @@ void CRConServer::Send(const std::string& svMessage) const
 void CRConServer::Recv(void)
 {
 	int nCount = m_pSocket->GetAcceptedSocketCount();
-	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN]{};
+	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN] {};
 
 	for (m_nConnIndex = nCount - 1; m_nConnIndex >= 0; m_nConnIndex--)
 	{

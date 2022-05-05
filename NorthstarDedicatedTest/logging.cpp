@@ -378,7 +378,7 @@ void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format,
 	{
 		if (CVar_sv_rcon_sendlogs->GetBool())
 		{
-			char sendbuf[2048]{};
+			char sendbuf[2048] {};
 			snprintf(sendbuf, sizeof(sendbuf), "[SERVER %s] %s", typeStr, formatted);
 			g_pRConServer->Send(sendbuf);
 		}

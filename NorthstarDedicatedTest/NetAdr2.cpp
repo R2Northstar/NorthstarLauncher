@@ -11,7 +11,10 @@
 // Purpose: constructor (use this when string contains <[IP]:PORT>).
 // Input  : svInAdr -
 //-----------------------------------------------------------------------------
-CNetAdr2::CNetAdr2(std::string svInAdr) { SetIPAndPort(svInAdr); }
+CNetAdr2::CNetAdr2(std::string svInAdr)
+{
+	SetIPAndPort(svInAdr);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor (expects string format <IPv4/IPv6> <PORT>).
@@ -51,19 +54,28 @@ CNetAdr2::CNetAdr2(std::string svInAdr, std::string svInPort)
 //-----------------------------------------------------------------------------
 // Purpose: destructor.
 //-----------------------------------------------------------------------------
-CNetAdr2::~CNetAdr2(void) { Clear(); }
+CNetAdr2::~CNetAdr2(void)
+{
+	Clear();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP address.
 // Input  : *svInAdr -
 //-----------------------------------------------------------------------------
-void CNetAdr2::SetIP(const std::string& svInAdr) { m_svip = "[" + svInAdr + "]"; }
+void CNetAdr2::SetIP(const std::string& svInAdr)
+{
+	m_svip = "[" + svInAdr + "]";
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the port.
 // Input  : *svInPort -
 //-----------------------------------------------------------------------------
-void CNetAdr2::SetPort(const std::string& svInPort) { m_svip += ":" + svInPort; }
+void CNetAdr2::SetPort(const std::string& svInPort)
+{
+	m_svip += ":" + svInPort;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP address and port.
@@ -135,7 +147,10 @@ void CNetAdr2::SetIPAndPort(std::string svInAdr, std::string svInPort)
 // Purpose: sets the type.
 // Input  : *type -
 //-----------------------------------------------------------------------------
-void CNetAdr2::SetType(const netadrtype_t& type) { m_type = type; }
+void CNetAdr2::SetType(const netadrtype_t& type)
+{
+	m_type = type;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: sets the IP version (IPv4/IPv6/INVALID) based on input.
@@ -150,7 +165,8 @@ void CNetAdr2::SetVersion(void)
 		return;
 	}
 	else if (inet_pton(
-				 reinterpret_cast<sockaddr_in6*>(&m_sadr)->sin6_family, GetBase().c_str(),
+				 reinterpret_cast<sockaddr_in6*>(&m_sadr)->sin6_family,
+				 GetBase().c_str(),
 				 &reinterpret_cast<sockaddr_in6*>(m_sadr)->sin6_addr))
 	{
 		m_version = netadrversion_t::NA_V6;
@@ -168,7 +184,7 @@ void CNetAdr2::SetFromSocket(const int& hSocket)
 	Clear();
 	m_type = netadrtype_t::NA_IP;
 
-	sockaddr_storage address{};
+	sockaddr_storage address {};
 	socklen_t namelen = sizeof(address);
 	if (getsockname(hSocket, (sockaddr*)&address, &namelen) == 0)
 	{
@@ -184,7 +200,7 @@ bool CNetAdr2::SetFromSockadr(sockaddr_storage* s)
 {
 	if (reinterpret_cast<sockaddr_in*>(s)->sin_family == AF_INET)
 	{
-		char szAdrv4[INET_ADDRSTRLEN]{};
+		char szAdrv4[INET_ADDRSTRLEN] {};
 		sockaddr_in* pAdrv4 = reinterpret_cast<sockaddr_in*>(s);
 
 		inet_ntop(pAdrv4->sin_family, &pAdrv4->sin_addr, szAdrv4, sizeof(sockaddr_in));
@@ -193,7 +209,7 @@ bool CNetAdr2::SetFromSockadr(sockaddr_storage* s)
 	}
 	else if (reinterpret_cast<sockaddr_in6*>(s)->sin6_family == AF_INET6)
 	{
-		char szAdrv6[INET6_ADDRSTRLEN]{};
+		char szAdrv6[INET6_ADDRSTRLEN] {};
 		sockaddr_in6* pAdrv6 = reinterpret_cast<sockaddr_in6*>(s);
 
 		inet_ntop(pAdrv6->sin6_family, &pAdrv6->sin6_addr, szAdrv6, sizeof(sockaddr_in6));
@@ -293,17 +309,26 @@ std::string CNetAdr2::GetPort(std::string svInPort) const
 //-----------------------------------------------------------------------------
 // Purpose: returns the IP address and port.
 //-----------------------------------------------------------------------------
-std::string CNetAdr2::GetIPAndPort(void) const { return m_svip; }
+std::string CNetAdr2::GetIPAndPort(void) const
+{
+	return m_svip;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: returns the address type.
 //-----------------------------------------------------------------------------
-netadrtype_t CNetAdr2::GetType(void) const { return m_type; }
+netadrtype_t CNetAdr2::GetType(void) const
+{
+	return m_type;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: returns the IP version.
 //-----------------------------------------------------------------------------
-netadrversion_t CNetAdr2::GetVersion(void) const { return m_version; }
+netadrversion_t CNetAdr2::GetVersion(void) const
+{
+	return m_version;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: splits IP address into parts by their delimiters.
@@ -423,8 +448,8 @@ void CNetAdr2::ToSockadr(sockaddr_storage* pSadr) const
 //-----------------------------------------------------------------------------
 void CNetAdr2::ToAdrinfo(addrinfo* pHint) const
 {
-	int results{};
-	addrinfo hint{}; // <-- TODO: Pass these instead.
+	int results {};
+	addrinfo hint {}; // <-- TODO: Pass these instead.
 	if (GetVersion() == netadrversion_t::NA_V4)
 	{
 		hint.ai_flags = AI_PASSIVE;
@@ -477,12 +502,18 @@ bool CNetAdr2::IsValidPort(const std::string& svInPort) const
 //-----------------------------------------------------------------------------
 // Purpose: returns true if we are localhost.
 //-----------------------------------------------------------------------------
-bool CNetAdr2::IsLocalhost(void) const { return (strcmp(GetBase().c_str(), "127.0.0.1") == 0); }
+bool CNetAdr2::IsLocalhost(void) const
+{
+	return (strcmp(GetBase().c_str(), "127.0.0.1") == 0);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: returns true if we use the loopback buffers.
 //-----------------------------------------------------------------------------
-bool CNetAdr2::IsLoopback(void) const { return GetType() == netadrtype_t::NA_LOOPBACK; }
+bool CNetAdr2::IsLoopback(void) const
+{
+	return GetType() == netadrtype_t::NA_LOOPBACK;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: check if address is reserved and not routable.
@@ -501,10 +532,10 @@ bool CNetAdr2::IsReservedAdr(void) const
 		int n0 = stoi(ip_parts[0]);
 		int n1 = stoi(ip_parts[1]);
 
-		if ((n0 == 10) ||						   // 10.x.x.x is reserved
-			(n0 == 127) ||						   // 127.x.x.x
+		if ((n0 == 10) || // 10.x.x.x is reserved
+			(n0 == 127) || // 127.x.x.x
 			(n0 == 172 && n1 >= 16 && n1 <= 31) || // 172.16.x.x - 172.31.x.x
-			(n0 == 192 && n1 >= 168))			   // 192.168.x.x
+			(n0 == 192 && n1 >= 168)) // 192.168.x.x
 		{
 			return true;
 		}

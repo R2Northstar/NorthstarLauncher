@@ -17,7 +17,10 @@
 //-----------------------------------------------------------------------------
 // Purpose: NETCON systems init
 //-----------------------------------------------------------------------------
-void CRConClient::Init(void) { m_bInitialized = true; }
+void CRConClient::Init(void)
+{
+	m_bInitialized = true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: NETCON systems shutdown
@@ -116,7 +119,7 @@ void CRConClient::Send(const std::string& svMessage) const
 //-----------------------------------------------------------------------------
 void CRConClient::Recv(void)
 {
-	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN]{};
+	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN] {};
 
 	{ //////////////////////////////////////////////
 		int nPendingLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, sizeof(szRecvBuf), MSG_PEEK);
@@ -164,7 +167,7 @@ void CRConClient::Recv(void)
 void CRConClient::ProcessBuffer(const char* pszIn, int nRecvLen) const
 {
 	int nCharsInRespondBuffer = 0;
-	char szInputRespondBuffer[MAX_NETCONSOLE_INPUT_LEN]{};
+	char szInputRespondBuffer[MAX_NETCONSOLE_INPUT_LEN] {};
 
 	while (nRecvLen)
 	{
@@ -274,12 +277,18 @@ sv_rcon::response CRConClient::Deserialize(const std::string& svBuf) const
 // Purpose: checks if client rcon is initialized
 // Output : true if initialized, false otherwise
 //-----------------------------------------------------------------------------
-bool CRConClient::IsInitialized(void) const { return m_bInitialized; }
+bool CRConClient::IsInitialized(void) const
+{
+	return m_bInitialized;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: checks if client rcon is connected
 // Output : true if connected, false otherwise
 //-----------------------------------------------------------------------------
-bool CRConClient::IsConnected(void) const { return m_bConnEstablished; }
+bool CRConClient::IsConnected(void) const
+{
+	return m_bConnEstablished;
+}
 ///////////////////////////////////////////////////////////////////////////////
 CRConClient* g_pRConClient = new CRConClient();

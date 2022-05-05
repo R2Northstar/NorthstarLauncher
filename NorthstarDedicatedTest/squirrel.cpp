@@ -248,7 +248,7 @@ template <ScriptContext context> SQInteger SQPrintHook(void* sqvm, char* fmt, ..
 		{
 			if (CVar_sv_rcon_sendlogs->GetBool())
 			{
-				char sendbuf[1024]{};
+				char sendbuf[1024] {};
 
 				snprintf(sendbuf, sizeof(sendbuf), "[%s SCRIPT] %s", GetContextName(context), buf);
 				g_pRConServer->Send(sendbuf);
@@ -286,7 +286,7 @@ template <ScriptContext context> void* CreateNewVMHook(void* a1, ScriptContext r
 template <ScriptContext context> void DestroyVMHook(void* a1, void* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
-	char buffer[2048]{};
+	char buffer[2048] {};
 
 	if (context == ScriptContext::CLIENT)
 	{
@@ -311,13 +311,19 @@ template <ScriptContext context> void DestroyVMHook(void* a1, void* sqvm)
 
 template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const char* error, const char* file, int line, int column)
 {
-	char buffer[2048]{};
+	char buffer[2048] {};
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
 	if (context == ScriptContext::CLIENT && sqvm == g_UISquirrelManager->sqvm)
 		realContext = ScriptContext::UI;
 
 	snprintf(
-		buffer, sizeof(buffer), "%s SCRIPT COMPILE ERROR: %s\n%s line [%d] column [%d]", GetContextName(realContext), error, file, line,
+		buffer,
+		sizeof(buffer),
+		"%s SCRIPT COMPILE ERROR: %s\n%s line [%d] column [%d]",
+		GetContextName(realContext),
+		error,
+		file,
+		line,
 		column);
 	spdlog::error("{}", buffer);
 	if (IsDedicated())
