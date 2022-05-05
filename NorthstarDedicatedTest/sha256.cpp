@@ -11,8 +11,8 @@ const unsigned int SHA256::sha256_k[64] = // UL = uint32
 
 void SHA256::transform(const unsigned char* message, unsigned int block_nb)
 {
-	uint32 w[64]{};
-	uint32 wv[8]{};
+	uint32 w[64] {};
+	uint32 wv[8] {};
 	uint32 t1, t2;
 	const unsigned char* sub_block;
 	int i;
@@ -119,7 +119,7 @@ std::string sha256(std::string input)
 	ctx.update(const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(input.c_str())), input.length());
 	ctx.final(digest);
 
-	char buf[2 * SHA256::DIGEST_SIZE + 1]{};
+	char buf[2 * SHA256::DIGEST_SIZE + 1] {};
 	buf[2 * SHA256::DIGEST_SIZE] = 0;
 	for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
 	{
