@@ -44,7 +44,7 @@ enum class netadrversion_t
 class CNetAdr2
 {
   public:
-	CNetAdr2(void){};
+	CNetAdr2(void) {};
 	CNetAdr2(std::string svInAdr);
 	CNetAdr2(std::string svInAdr, std::string svInPort);
 	~CNetAdr2(void);
@@ -88,7 +88,7 @@ class CNetAdr2
 
   private:
 	std::string m_svip;
-	netadrtype_t m_type{};
-	netadrversion_t m_version{};
-	sockaddr_storage* m_sadr{};
+	netadrtype_t m_type {};
+	netadrversion_t m_version {};
+	sockaddr_storage* m_sadr {};
 };

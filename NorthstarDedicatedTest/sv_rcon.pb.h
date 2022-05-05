@@ -28,7 +28,7 @@
 #include <protobuf/metadata_lite.h>
 #include <protobuf/message_lite.h>
 #include <protobuf/repeated_field.h> // IWYU pragma: export
-#include <protobuf/extension_set.h>	 // IWYU pragma: export
+#include <protobuf/extension_set.h> // IWYU pragma: export
 #include <protobuf/generated_enum_util.h>
 // @@protoc_insertion_point(includes)
 #include <protobuf/port_def.inc>
@@ -36,7 +36,7 @@
 PROTOBUF_NAMESPACE_OPEN
 namespace internal
 {
-class AnyMetadata;
+	class AnyMetadata;
 } // namespace internal
 PROTOBUF_NAMESPACE_CLOSE
 
@@ -52,9 +52,9 @@ struct TableStruct_sv_5frcon_2eproto
 };
 namespace sv_rcon
 {
-class response;
-struct responseDefaultTypeInternal;
-extern responseDefaultTypeInternal _response_default_instance_;
+	class response;
+	struct responseDefaultTypeInternal;
+	extern responseDefaultTypeInternal _response_default_instance_;
 } // namespace sv_rcon
 PROTOBUF_NAMESPACE_OPEN
 template <>::sv_rcon::response* Arena::CreateMaybeMessage<::sv_rcon::response>(Arena*);
@@ -62,458 +62,511 @@ PROTOBUF_NAMESPACE_CLOSE
 namespace sv_rcon
 {
 
-enum response_t : int
-{
-	SERVERDATA_RESPONSE_VALUE = 0,
-	SERVERDATA_RESPONSE_UPDATE = 1,
-	SERVERDATA_RESPONSE_AUTH = 2,
-	SERVERDATA_RESPONSE_CONSOLE_LOG = 3,
-	SERVERDATA_RESPONSE_STRING = 4,
-	SERVERDATA_RESPONSE_REMOTEBUG = 5,
-	response_t_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-	response_t_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool response_t_IsValid(int value);
-constexpr response_t response_t_MIN = SERVERDATA_RESPONSE_VALUE;
-constexpr response_t response_t_MAX = SERVERDATA_RESPONSE_REMOTEBUG;
-constexpr int response_t_ARRAYSIZE = response_t_MAX + 1;
-
-const std::string& response_t_Name(response_t value);
-template <typename T> inline const std::string& response_t_Name(T enum_t_value)
-{
-	static_assert(
-		::std::is_same<T, response_t>::value || ::std::is_integral<T>::value, "Incorrect type passed to function response_t_Name.");
-	return response_t_Name(static_cast<response_t>(enum_t_value));
-}
-bool response_t_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name, response_t* value);
-// ===================================================================
-
-class response final : public ::PROTOBUF_NAMESPACE_ID::MessageLite /* @@protoc_insertion_point(class_definition:sv_rcon.response) */
-{
-  public:
-	inline response() : response(nullptr) {}
-	~response() override;
-	explicit constexpr response(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
-
-	response(const response& from);
-	response(response&& from) noexcept : response() { *this = ::std::move(from); }
-
-	inline response& operator=(const response& from)
+	enum response_t : int
 	{
-		CopyFrom(from);
-		return *this;
+		SERVERDATA_RESPONSE_VALUE = 0,
+		SERVERDATA_RESPONSE_UPDATE = 1,
+		SERVERDATA_RESPONSE_AUTH = 2,
+		SERVERDATA_RESPONSE_CONSOLE_LOG = 3,
+		SERVERDATA_RESPONSE_STRING = 4,
+		SERVERDATA_RESPONSE_REMOTEBUG = 5,
+		response_t_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+		response_t_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+	};
+	bool response_t_IsValid(int value);
+	constexpr response_t response_t_MIN = SERVERDATA_RESPONSE_VALUE;
+	constexpr response_t response_t_MAX = SERVERDATA_RESPONSE_REMOTEBUG;
+	constexpr int response_t_ARRAYSIZE = response_t_MAX + 1;
+
+	const std::string& response_t_Name(response_t value);
+	template <typename T> inline const std::string& response_t_Name(T enum_t_value)
+	{
+		static_assert(
+			::std::is_same<T, response_t>::value || ::std::is_integral<T>::value, "Incorrect type passed to function response_t_Name.");
+		return response_t_Name(static_cast<response_t>(enum_t_value));
 	}
-	inline response& operator=(response&& from) noexcept
+	bool response_t_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name, response_t* value);
+	// ===================================================================
+
+	class response final : public ::PROTOBUF_NAMESPACE_ID::MessageLite /* @@protoc_insertion_point(class_definition:sv_rcon.response) */
 	{
-		if (this == &from)
-			return *this;
-		if (GetOwningArena() == from.GetOwningArena()
-#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
-			&& GetOwningArena() != nullptr
-#endif // !PROTOBUF_FORCE_COPY_IN_MOVE
-		)
+	  public:
+		inline response() : response(nullptr) {}
+		~response() override;
+		explicit constexpr response(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+		response(const response& from);
+		response(response&& from) noexcept : response()
 		{
-			InternalSwap(&from);
+			*this = ::std::move(from);
 		}
-		else
+
+		inline response& operator=(const response& from)
 		{
 			CopyFrom(from);
+			return *this;
 		}
-		return *this;
-	}
+		inline response& operator=(response&& from) noexcept
+		{
+			if (this == &from)
+				return *this;
+			if (GetOwningArena() == from.GetOwningArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+				&& GetOwningArena() != nullptr
+#endif // !PROTOBUF_FORCE_COPY_IN_MOVE
+			)
+			{
+				InternalSwap(&from);
+			}
+			else
+			{
+				CopyFrom(from);
+			}
+			return *this;
+		}
 
-	static const response& default_instance() { return *internal_default_instance(); }
-	static inline const response* internal_default_instance() { return reinterpret_cast<const response*>(&_response_default_instance_); }
-	static constexpr int kIndexInFileMessages = 0;
+		static const response& default_instance()
+		{
+			return *internal_default_instance();
+		}
+		static inline const response* internal_default_instance()
+		{
+			return reinterpret_cast<const response*>(&_response_default_instance_);
+		}
+		static constexpr int kIndexInFileMessages = 0;
 
-	friend void swap(response& a, response& b) { a.Swap(&b); }
-	inline void Swap(response* other)
-	{
-		if (other == this)
-			return;
+		friend void swap(response& a, response& b)
+		{
+			a.Swap(&b);
+		}
+		inline void Swap(response* other)
+		{
+			if (other == this)
+				return;
 #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
-		if (GetOwningArena() != nullptr && GetOwningArena() == other->GetOwningArena())
-		{
-#else  // PROTOBUF_FORCE_COPY_IN_SWAP
-		if (GetOwningArena() == other->GetOwningArena())
-		{
+			if (GetOwningArena() != nullptr && GetOwningArena() == other->GetOwningArena())
+			{
+#else // PROTOBUF_FORCE_COPY_IN_SWAP
+			if (GetOwningArena() == other->GetOwningArena())
+			{
 #endif // !PROTOBUF_FORCE_COPY_IN_SWAP
+				InternalSwap(other);
+			}
+			else
+			{
+				::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+			}
+		}
+		void UnsafeArenaSwap(response* other)
+		{
+			if (other == this)
+				return;
+			GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
 			InternalSwap(other);
 		}
-		else
+
+		// implements Message ----------------------------------------------
+
+		response* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final
 		{
-			::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+			return CreateMaybeMessage<response>(arena);
 		}
-	}
-	void UnsafeArenaSwap(response* other)
-	{
-		if (other == this)
-			return;
-		GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
-		InternalSwap(other);
-	}
+		void CheckTypeAndMergeFrom(const ::PROTOBUF_NAMESPACE_ID::MessageLite& from) final;
+		void CopyFrom(const response& from);
+		void MergeFrom(const response& from);
+		PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+		bool IsInitialized() const final;
 
-	// implements Message ----------------------------------------------
+		size_t ByteSizeLong() const final;
+		const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+		uint8_t* _InternalSerialize(uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+		int GetCachedSize() const final
+		{
+			return _cached_size_.Get();
+		}
 
-	response* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final { return CreateMaybeMessage<response>(arena); }
-	void CheckTypeAndMergeFrom(const ::PROTOBUF_NAMESPACE_ID::MessageLite& from) final;
-	void CopyFrom(const response& from);
-	void MergeFrom(const response& from);
-	PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-	bool IsInitialized() const final;
+	  private:
+		void SharedCtor();
+		void SharedDtor();
+		void SetCachedSize(int size) const;
+		void InternalSwap(response* other);
 
-	size_t ByteSizeLong() const final;
-	const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
-	uint8_t* _InternalSerialize(uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
-	int GetCachedSize() const final { return _cached_size_.Get(); }
+	  private:
+		friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+		static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName()
+		{
+			return "sv_rcon.response";
+		}
 
-  private:
-	void SharedCtor();
-	void SharedDtor();
-	void SetCachedSize(int size) const;
-	void InternalSwap(response* other);
+	  protected:
+		explicit response(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned = false);
 
-  private:
-	friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
-	static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() { return "sv_rcon.response"; }
+	  private:
+		static void ArenaDtor(void* object);
+		inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
 
-  protected:
-	explicit response(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned = false);
+	  public:
+		std::string GetTypeName() const final;
 
-  private:
-	static void ArenaDtor(void* object);
-	inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+		// nested types ----------------------------------------------------
 
-  public:
-	std::string GetTypeName() const final;
+		// accessors -------------------------------------------------------
 
-	// nested types ----------------------------------------------------
+		enum : int
+		{
+			kResponseBufFieldNumber = 3,
+			kResponseValFieldNumber = 4,
+			kResponseIDFieldNumber = 1,
+			kResponseTypeFieldNumber = 2,
+		};
+		// optional string responseBuf = 3;
+		bool has_responsebuf() const;
 
-	// accessors -------------------------------------------------------
+	  private:
+		bool _internal_has_responsebuf() const;
 
-	enum : int
-	{
-		kResponseBufFieldNumber = 3,
-		kResponseValFieldNumber = 4,
-		kResponseIDFieldNumber = 1,
-		kResponseTypeFieldNumber = 2,
+	  public:
+		void clear_responsebuf();
+		const std::string& responsebuf() const;
+		template <typename ArgT0 = const std::string&, typename... ArgT> void set_responsebuf(ArgT0&& arg0, ArgT... args);
+		std::string* mutable_responsebuf();
+		PROTOBUF_NODISCARD std::string* release_responsebuf();
+		void set_allocated_responsebuf(std::string* responsebuf);
+
+	  private:
+		const std::string& _internal_responsebuf() const;
+		inline PROTOBUF_ALWAYS_INLINE void _internal_set_responsebuf(const std::string& value);
+		std::string* _internal_mutable_responsebuf();
+
+	  public:
+		// optional string responseVal = 4;
+		bool has_responseval() const;
+
+	  private:
+		bool _internal_has_responseval() const;
+
+	  public:
+		void clear_responseval();
+		const std::string& responseval() const;
+		template <typename ArgT0 = const std::string&, typename... ArgT> void set_responseval(ArgT0&& arg0, ArgT... args);
+		std::string* mutable_responseval();
+		PROTOBUF_NODISCARD std::string* release_responseval();
+		void set_allocated_responseval(std::string* responseval);
+
+	  private:
+		const std::string& _internal_responseval() const;
+		inline PROTOBUF_ALWAYS_INLINE void _internal_set_responseval(const std::string& value);
+		std::string* _internal_mutable_responseval();
+
+	  public:
+		// optional int32 responseID = 1;
+		bool has_responseid() const;
+
+	  private:
+		bool _internal_has_responseid() const;
+
+	  public:
+		void clear_responseid();
+		int32_t responseid() const;
+		void set_responseid(int32_t value);
+
+	  private:
+		int32_t _internal_responseid() const;
+		void _internal_set_responseid(int32_t value);
+
+	  public:
+		// optional .sv_rcon.response_t responseType = 2;
+		bool has_responsetype() const;
+
+	  private:
+		bool _internal_has_responsetype() const;
+
+	  public:
+		void clear_responsetype();
+		::sv_rcon::response_t responsetype() const;
+		void set_responsetype(::sv_rcon::response_t value);
+
+	  private:
+		::sv_rcon::response_t _internal_responsetype() const;
+		void _internal_set_responsetype(::sv_rcon::response_t value);
+
+	  public:
+		// @@protoc_insertion_point(class_scope:sv_rcon.response)
+	  private:
+		class _Internal;
+
+		template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+		typedef void InternalArenaConstructable_;
+		typedef void DestructorSkippable_;
+		::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+		mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+		::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr responsebuf_;
+		::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr responseval_;
+		int32_t responseid_;
+		int responsetype_;
+		friend struct ::TableStruct_sv_5frcon_2eproto;
 	};
-	// optional string responseBuf = 3;
-	bool has_responsebuf() const;
+	// ===================================================================
 
-  private:
-	bool _internal_has_responsebuf() const;
-
-  public:
-	void clear_responsebuf();
-	const std::string& responsebuf() const;
-	template <typename ArgT0 = const std::string&, typename... ArgT> void set_responsebuf(ArgT0&& arg0, ArgT... args);
-	std::string* mutable_responsebuf();
-	PROTOBUF_NODISCARD std::string* release_responsebuf();
-	void set_allocated_responsebuf(std::string* responsebuf);
-
-  private:
-	const std::string& _internal_responsebuf() const;
-	inline PROTOBUF_ALWAYS_INLINE void _internal_set_responsebuf(const std::string& value);
-	std::string* _internal_mutable_responsebuf();
-
-  public:
-	// optional string responseVal = 4;
-	bool has_responseval() const;
-
-  private:
-	bool _internal_has_responseval() const;
-
-  public:
-	void clear_responseval();
-	const std::string& responseval() const;
-	template <typename ArgT0 = const std::string&, typename... ArgT> void set_responseval(ArgT0&& arg0, ArgT... args);
-	std::string* mutable_responseval();
-	PROTOBUF_NODISCARD std::string* release_responseval();
-	void set_allocated_responseval(std::string* responseval);
-
-  private:
-	const std::string& _internal_responseval() const;
-	inline PROTOBUF_ALWAYS_INLINE void _internal_set_responseval(const std::string& value);
-	std::string* _internal_mutable_responseval();
-
-  public:
-	// optional int32 responseID = 1;
-	bool has_responseid() const;
-
-  private:
-	bool _internal_has_responseid() const;
-
-  public:
-	void clear_responseid();
-	int32_t responseid() const;
-	void set_responseid(int32_t value);
-
-  private:
-	int32_t _internal_responseid() const;
-	void _internal_set_responseid(int32_t value);
-
-  public:
-	// optional .sv_rcon.response_t responseType = 2;
-	bool has_responsetype() const;
-
-  private:
-	bool _internal_has_responsetype() const;
-
-  public:
-	void clear_responsetype();
-	::sv_rcon::response_t responsetype() const;
-	void set_responsetype(::sv_rcon::response_t value);
-
-  private:
-	::sv_rcon::response_t _internal_responsetype() const;
-	void _internal_set_responsetype(::sv_rcon::response_t value);
-
-  public:
-	// @@protoc_insertion_point(class_scope:sv_rcon.response)
-  private:
-	class _Internal;
-
-	template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
-	typedef void InternalArenaConstructable_;
-	typedef void DestructorSkippable_;
-	::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
-	mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-	::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr responsebuf_;
-	::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr responseval_;
-	int32_t responseid_;
-	int responsetype_;
-	friend struct ::TableStruct_sv_5frcon_2eproto;
-};
-// ===================================================================
-
-// ===================================================================
+	// ===================================================================
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif // __GNUC__
-// response
+	// response
 
-// optional int32 responseID = 1;
-inline bool response::_internal_has_responseid() const
-{
-	bool value = (_has_bits_[0] & 0x00000004u) != 0;
-	return value;
-}
-inline bool response::has_responseid() const { return _internal_has_responseid(); }
-inline void response::clear_responseid()
-{
-	responseid_ = 0;
-	_has_bits_[0] &= ~0x00000004u;
-}
-inline int32_t response::_internal_responseid() const { return responseid_; }
-inline int32_t response::responseid() const
-{
-	// @@protoc_insertion_point(field_get:sv_rcon.response.responseID)
-	return _internal_responseid();
-}
-inline void response::_internal_set_responseid(int32_t value)
-{
-	_has_bits_[0] |= 0x00000004u;
-	responseid_ = value;
-}
-inline void response::set_responseid(int32_t value)
-{
-	_internal_set_responseid(value);
-	// @@protoc_insertion_point(field_set:sv_rcon.response.responseID)
-}
+	// optional int32 responseID = 1;
+	inline bool response::_internal_has_responseid() const
+	{
+		bool value = (_has_bits_[0] & 0x00000004u) != 0;
+		return value;
+	}
+	inline bool response::has_responseid() const
+	{
+		return _internal_has_responseid();
+	}
+	inline void response::clear_responseid()
+	{
+		responseid_ = 0;
+		_has_bits_[0] &= ~0x00000004u;
+	}
+	inline int32_t response::_internal_responseid() const
+	{
+		return responseid_;
+	}
+	inline int32_t response::responseid() const
+	{
+		// @@protoc_insertion_point(field_get:sv_rcon.response.responseID)
+		return _internal_responseid();
+	}
+	inline void response::_internal_set_responseid(int32_t value)
+	{
+		_has_bits_[0] |= 0x00000004u;
+		responseid_ = value;
+	}
+	inline void response::set_responseid(int32_t value)
+	{
+		_internal_set_responseid(value);
+		// @@protoc_insertion_point(field_set:sv_rcon.response.responseID)
+	}
 
-// optional .sv_rcon.response_t responseType = 2;
-inline bool response::_internal_has_responsetype() const
-{
-	bool value = (_has_bits_[0] & 0x00000008u) != 0;
-	return value;
-}
-inline bool response::has_responsetype() const { return _internal_has_responsetype(); }
-inline void response::clear_responsetype()
-{
-	responsetype_ = 0;
-	_has_bits_[0] &= ~0x00000008u;
-}
-inline ::sv_rcon::response_t response::_internal_responsetype() const { return static_cast<::sv_rcon::response_t>(responsetype_); }
-inline ::sv_rcon::response_t response::responsetype() const
-{
-	// @@protoc_insertion_point(field_get:sv_rcon.response.responseType)
-	return _internal_responsetype();
-}
-inline void response::_internal_set_responsetype(::sv_rcon::response_t value)
-{
-	_has_bits_[0] |= 0x00000008u;
-	responsetype_ = value;
-}
-inline void response::set_responsetype(::sv_rcon::response_t value)
-{
-	_internal_set_responsetype(value);
-	// @@protoc_insertion_point(field_set:sv_rcon.response.responseType)
-}
+	// optional .sv_rcon.response_t responseType = 2;
+	inline bool response::_internal_has_responsetype() const
+	{
+		bool value = (_has_bits_[0] & 0x00000008u) != 0;
+		return value;
+	}
+	inline bool response::has_responsetype() const
+	{
+		return _internal_has_responsetype();
+	}
+	inline void response::clear_responsetype()
+	{
+		responsetype_ = 0;
+		_has_bits_[0] &= ~0x00000008u;
+	}
+	inline ::sv_rcon::response_t response::_internal_responsetype() const
+	{
+		return static_cast<::sv_rcon::response_t>(responsetype_);
+	}
+	inline ::sv_rcon::response_t response::responsetype() const
+	{
+		// @@protoc_insertion_point(field_get:sv_rcon.response.responseType)
+		return _internal_responsetype();
+	}
+	inline void response::_internal_set_responsetype(::sv_rcon::response_t value)
+	{
+		_has_bits_[0] |= 0x00000008u;
+		responsetype_ = value;
+	}
+	inline void response::set_responsetype(::sv_rcon::response_t value)
+	{
+		_internal_set_responsetype(value);
+		// @@protoc_insertion_point(field_set:sv_rcon.response.responseType)
+	}
 
-// optional string responseBuf = 3;
-inline bool response::_internal_has_responsebuf() const
-{
-	bool value = (_has_bits_[0] & 0x00000001u) != 0;
-	return value;
-}
-inline bool response::has_responsebuf() const { return _internal_has_responsebuf(); }
-inline void response::clear_responsebuf()
-{
-	responsebuf_.ClearToEmpty();
-	_has_bits_[0] &= ~0x00000001u;
-}
-inline const std::string& response::responsebuf() const
-{
-	// @@protoc_insertion_point(field_get:sv_rcon.response.responseBuf)
-	return _internal_responsebuf();
-}
-template <typename ArgT0, typename... ArgT> inline PROTOBUF_ALWAYS_INLINE void response::set_responsebuf(ArgT0&& arg0, ArgT... args)
-{
-	_has_bits_[0] |= 0x00000001u;
-	responsebuf_.Set(
-		::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0&&>(arg0), args..., GetArenaForAllocation());
-	// @@protoc_insertion_point(field_set:sv_rcon.response.responseBuf)
-}
-inline std::string* response::mutable_responsebuf()
-{
-	std::string* _s = _internal_mutable_responsebuf();
-	// @@protoc_insertion_point(field_mutable:sv_rcon.response.responseBuf)
-	return _s;
-}
-inline const std::string& response::_internal_responsebuf() const { return responsebuf_.Get(); }
-inline void response::_internal_set_responsebuf(const std::string& value)
-{
-	_has_bits_[0] |= 0x00000001u;
-	responsebuf_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
-}
-inline std::string* response::_internal_mutable_responsebuf()
-{
-	_has_bits_[0] |= 0x00000001u;
-	return responsebuf_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
-}
-inline std::string* response::release_responsebuf()
-{
-	// @@protoc_insertion_point(field_release:sv_rcon.response.responseBuf)
-	if (!_internal_has_responsebuf())
+	// optional string responseBuf = 3;
+	inline bool response::_internal_has_responsebuf() const
 	{
-		return nullptr;
+		bool value = (_has_bits_[0] & 0x00000001u) != 0;
+		return value;
 	}
-	_has_bits_[0] &= ~0x00000001u;
-	auto* p = responsebuf_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-	if (responsebuf_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+	inline bool response::has_responsebuf() const
 	{
-		responsebuf_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		return _internal_has_responsebuf();
 	}
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-	return p;
-}
-inline void response::set_allocated_responsebuf(std::string* responsebuf)
-{
-	if (responsebuf != nullptr)
+	inline void response::clear_responsebuf()
 	{
-		_has_bits_[0] |= 0x00000001u;
-	}
-	else
-	{
+		responsebuf_.ClearToEmpty();
 		_has_bits_[0] &= ~0x00000001u;
 	}
-	responsebuf_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), responsebuf, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-	if (responsebuf_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+	inline const std::string& response::responsebuf() const
 	{
-		responsebuf_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		// @@protoc_insertion_point(field_get:sv_rcon.response.responseBuf)
+		return _internal_responsebuf();
 	}
+	template <typename ArgT0, typename... ArgT> inline PROTOBUF_ALWAYS_INLINE void response::set_responsebuf(ArgT0&& arg0, ArgT... args)
+	{
+		_has_bits_[0] |= 0x00000001u;
+		responsebuf_.Set(
+			::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault {},
+			static_cast<ArgT0&&>(arg0),
+			args...,
+			GetArenaForAllocation());
+		// @@protoc_insertion_point(field_set:sv_rcon.response.responseBuf)
+	}
+	inline std::string* response::mutable_responsebuf()
+	{
+		std::string* _s = _internal_mutable_responsebuf();
+		// @@protoc_insertion_point(field_mutable:sv_rcon.response.responseBuf)
+		return _s;
+	}
+	inline const std::string& response::_internal_responsebuf() const
+	{
+		return responsebuf_.Get();
+	}
+	inline void response::_internal_set_responsebuf(const std::string& value)
+	{
+		_has_bits_[0] |= 0x00000001u;
+		responsebuf_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault {}, value, GetArenaForAllocation());
+	}
+	inline std::string* response::_internal_mutable_responsebuf()
+	{
+		_has_bits_[0] |= 0x00000001u;
+		return responsebuf_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault {}, GetArenaForAllocation());
+	}
+	inline std::string* response::release_responsebuf()
+	{
+		// @@protoc_insertion_point(field_release:sv_rcon.response.responseBuf)
+		if (!_internal_has_responsebuf())
+		{
+			return nullptr;
+		}
+		_has_bits_[0] &= ~0x00000001u;
+		auto* p =
+			responsebuf_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+		if (responsebuf_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+		{
+			responsebuf_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		}
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+		return p;
+	}
+	inline void response::set_allocated_responsebuf(std::string* responsebuf)
+	{
+		if (responsebuf != nullptr)
+		{
+			_has_bits_[0] |= 0x00000001u;
+		}
+		else
+		{
+			_has_bits_[0] &= ~0x00000001u;
+		}
+		responsebuf_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), responsebuf, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+		if (responsebuf_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+		{
+			responsebuf_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		}
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 	   // @@protoc_insertion_point(field_set_allocated:sv_rcon.response.responseBuf)
-}
+	}
 
-// optional string responseVal = 4;
-inline bool response::_internal_has_responseval() const
-{
-	bool value = (_has_bits_[0] & 0x00000002u) != 0;
-	return value;
-}
-inline bool response::has_responseval() const { return _internal_has_responseval(); }
-inline void response::clear_responseval()
-{
-	responseval_.ClearToEmpty();
-	_has_bits_[0] &= ~0x00000002u;
-}
-inline const std::string& response::responseval() const
-{
-	// @@protoc_insertion_point(field_get:sv_rcon.response.responseVal)
-	return _internal_responseval();
-}
-template <typename ArgT0, typename... ArgT> inline PROTOBUF_ALWAYS_INLINE void response::set_responseval(ArgT0&& arg0, ArgT... args)
-{
-	_has_bits_[0] |= 0x00000002u;
-	responseval_.Set(
-		::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, static_cast<ArgT0&&>(arg0), args..., GetArenaForAllocation());
-	// @@protoc_insertion_point(field_set:sv_rcon.response.responseVal)
-}
-inline std::string* response::mutable_responseval()
-{
-	std::string* _s = _internal_mutable_responseval();
-	// @@protoc_insertion_point(field_mutable:sv_rcon.response.responseVal)
-	return _s;
-}
-inline const std::string& response::_internal_responseval() const { return responseval_.Get(); }
-inline void response::_internal_set_responseval(const std::string& value)
-{
-	_has_bits_[0] |= 0x00000002u;
-	responseval_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArenaForAllocation());
-}
-inline std::string* response::_internal_mutable_responseval()
-{
-	_has_bits_[0] |= 0x00000002u;
-	return responseval_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArenaForAllocation());
-}
-inline std::string* response::release_responseval()
-{
-	// @@protoc_insertion_point(field_release:sv_rcon.response.responseVal)
-	if (!_internal_has_responseval())
+	// optional string responseVal = 4;
+	inline bool response::_internal_has_responseval() const
 	{
-		return nullptr;
+		bool value = (_has_bits_[0] & 0x00000002u) != 0;
+		return value;
 	}
-	_has_bits_[0] &= ~0x00000002u;
-	auto* p = responseval_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-	if (responseval_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+	inline bool response::has_responseval() const
 	{
-		responseval_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		return _internal_has_responseval();
 	}
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-	return p;
-}
-inline void response::set_allocated_responseval(std::string* responseval)
-{
-	if (responseval != nullptr)
+	inline void response::clear_responseval()
 	{
-		_has_bits_[0] |= 0x00000002u;
-	}
-	else
-	{
+		responseval_.ClearToEmpty();
 		_has_bits_[0] &= ~0x00000002u;
 	}
-	responseval_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), responseval, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-	if (responseval_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+	inline const std::string& response::responseval() const
 	{
-		responseval_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		// @@protoc_insertion_point(field_get:sv_rcon.response.responseVal)
+		return _internal_responseval();
 	}
+	template <typename ArgT0, typename... ArgT> inline PROTOBUF_ALWAYS_INLINE void response::set_responseval(ArgT0&& arg0, ArgT... args)
+	{
+		_has_bits_[0] |= 0x00000002u;
+		responseval_.Set(
+			::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault {},
+			static_cast<ArgT0&&>(arg0),
+			args...,
+			GetArenaForAllocation());
+		// @@protoc_insertion_point(field_set:sv_rcon.response.responseVal)
+	}
+	inline std::string* response::mutable_responseval()
+	{
+		std::string* _s = _internal_mutable_responseval();
+		// @@protoc_insertion_point(field_mutable:sv_rcon.response.responseVal)
+		return _s;
+	}
+	inline const std::string& response::_internal_responseval() const
+	{
+		return responseval_.Get();
+	}
+	inline void response::_internal_set_responseval(const std::string& value)
+	{
+		_has_bits_[0] |= 0x00000002u;
+		responseval_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault {}, value, GetArenaForAllocation());
+	}
+	inline std::string* response::_internal_mutable_responseval()
+	{
+		_has_bits_[0] |= 0x00000002u;
+		return responseval_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault {}, GetArenaForAllocation());
+	}
+	inline std::string* response::release_responseval()
+	{
+		// @@protoc_insertion_point(field_release:sv_rcon.response.responseVal)
+		if (!_internal_has_responseval())
+		{
+			return nullptr;
+		}
+		_has_bits_[0] &= ~0x00000002u;
+		auto* p =
+			responseval_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+		if (responseval_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+		{
+			responseval_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		}
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+		return p;
+	}
+	inline void response::set_allocated_responseval(std::string* responseval)
+	{
+		if (responseval != nullptr)
+		{
+			_has_bits_[0] |= 0x00000002u;
+		}
+		else
+		{
+			_has_bits_[0] &= ~0x00000002u;
+		}
+		responseval_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), responseval, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+		if (responseval_.IsDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited()))
+		{
+			responseval_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), "", GetArenaForAllocation());
+		}
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 	   // @@protoc_insertion_point(field_set_allocated:sv_rcon.response.responseVal)
-}
+	}
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif // __GNUC__
 
-// @@protoc_insertion_point(namespace_scope)
+	// @@protoc_insertion_point(namespace_scope)
 
 } // namespace sv_rcon
 
