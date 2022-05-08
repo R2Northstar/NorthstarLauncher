@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "debugoverlay.h"
 #include "dedicated.h"
 #include "cvar.h"
@@ -151,11 +152,8 @@ void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
 
-void InitialiseDebugOverlay(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (HMODULE baseAddress)
 {
-	if (IsDedicated())
-		return;
-
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xABCB0, &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));
 
@@ -172,4 +170,4 @@ void InitialiseDebugOverlay(HMODULE baseAddress)
 	Cvar_enable_debug_overlays->SetValue(false);
 	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
 	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);
-}
+})

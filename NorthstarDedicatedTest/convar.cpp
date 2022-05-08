@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "bits.h"
 #include "cvar.h"
 #include "convar.h"
@@ -31,7 +32,7 @@ CvarIsFlagSetType CvarIsFlagSet;
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
-void InitialiseConVars(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", ConVar, (HMODULE baseAddress)
 {
 	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
 	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
@@ -44,7 +45,7 @@ void InitialiseConVars(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417FA0, &ConVar::IsFlagSet, reinterpret_cast<LPVOID*>(&CvarIsFlagSet));
-}
+})
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor

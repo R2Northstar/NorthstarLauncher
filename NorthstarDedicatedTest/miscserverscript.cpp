@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "miscserverscript.h"
+#include "hooks.h"
 #include "squirrel.h"
 #include "masterserver.h"
 #include "serverauthentication.h"
@@ -57,10 +58,10 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, (HMODULE baseAddress)
 {
 	g_ServerSquirrelManager->AddFuncRegistration(
 		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
 	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
-}
+})

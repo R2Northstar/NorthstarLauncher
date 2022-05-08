@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include "hooks.h"
 #include "dedicated.h"
 #include "dedicatedmaterialsystem.h"
 #include "hookutils.h"
@@ -45,7 +46,7 @@ HRESULT __stdcall D3D11CreateDeviceHook(
 		pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel, ppImmediateContext);
 }
 
-void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xD9A0E, &D3D11CreateDeviceHook, reinterpret_cast<LPVOID*>(&D3D11CreateDevice));
@@ -82,42 +83,4 @@ void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 
 	// previously had DisableDedicatedWindowCreation stuff here, removing for now since shit and unstable
 	// check commit history if needed
-}
-
-typedef void* (*PakLoadAPI__LoadRpakType)(char* filename, void* unknown, int flags);
-PakLoadAPI__LoadRpakType PakLoadAPI__LoadRpak;
-
-void* PakLoadAPI__LoadRpakHook(char* filename, void* unknown, int flags)
-{
-	spdlog::info("PakLoadAPI__LoadRpakHook {}", filename);
-
-	// on dedi, don't load any paks that aren't required
-	if (strncmp(filename, "common", 6))
-		return 0;
-
-	return PakLoadAPI__LoadRpak(filename, unknown, flags);
-}
-
-typedef void* (*PakLoadAPI__LoadRpak2Type)(char* filename, void* unknown, int flags, void* callback, void* callback2);
-PakLoadAPI__LoadRpak2Type PakLoadAPI__LoadRpak2;
-
-void* PakLoadAPI__LoadRpak2Hook(char* filename, void* unknown, int flags, void* callback, void* callback2)
-{
-	spdlog::info("PakLoadAPI__LoadRpak2Hook {}", filename);
-
-	// on dedi, don't load any paks that aren't required
-	if (strncmp(filename, "common", 6))
-		return 0;
-
-	return PakLoadAPI__LoadRpak2(filename, unknown, flags, callback, callback2);
-}
-
-void InitialiseDedicatedRtechGame(HMODULE baseAddress)
-{
-	baseAddress = GetModuleHandleA("rtech_game.dll");
-
-	HookEnabler hook;
-	// unfortunately this is unstable, seems to freeze when changing maps
-	// ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xB0F0, &PakLoadAPI__LoadRpakHook, reinterpret_cast<LPVOID*>(&PakLoadAPI__LoadRpak));
-	// ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xB170, &PakLoadAPI__LoadRpak2Hook, reinterpret_cast<LPVOID*>(&PakLoadAPI__LoadRpak2));
-}
+})

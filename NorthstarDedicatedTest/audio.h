@@ -46,5 +46,3 @@ class CustomAudioManager
 };
 
 extern CustomAudioManager g_CustomAudioManager;
-
-void InitialiseMilesAudioHooks(HMODULE baseAddress);

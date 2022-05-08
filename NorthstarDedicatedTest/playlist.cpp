@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "playlist.h"
+#include "hooks.h"
 #include "concommand.h"
 #include "convar.h"
 #include "gameutils.h"
@@ -72,7 +73,7 @@ int GetCurrentGamemodeMaxPlayersHook()
 }
 
 #include "NSMem.h"
-void InitialisePlaylistHooks(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, (HMODULE baseAddress)
 {
 	RegisterConCommand("setplaylist", SetPlaylistCommand, "Sets the current playlist", FCVAR_NONE);
 	RegisterConCommand("setplaylistvaroverrides", SetPlaylistVarOverrideCommand, "sets a playlist var override", FCVAR_NONE);
@@ -103,4 +104,4 @@ void InitialisePlaylistHooks(HMODULE baseAddress)
 
 	// patch to allow setplaylistvaroverride to be called before map init on dedicated and private match launched through the game
 	NSMem::NOP(ba + 0x18ED17, 6);
-}
+})

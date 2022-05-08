@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "bansystem.h"
+#include "hooks.h"
 #include "serverauthentication.h"
 #include "concommand.h"
 #include "miscserverscript.h"
@@ -95,7 +96,7 @@ void ClearBanlistCommand(const CCommand& args)
 	g_ServerBanSystem->ClearBanlist();
 }
 
-void InitialiseBanSystem(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (HMODULE baseAddress)
 {
 	g_ServerBanSystem = new ServerBanSystem;
 	g_ServerBanSystem->OpenBanlist();
@@ -103,4 +104,4 @@ void InitialiseBanSystem(HMODULE baseAddress)
 	RegisterConCommand("ban", BanPlayerCommand, "bans a given player by uid or name", FCVAR_GAMEDLL);
 	RegisterConCommand("unban", UnbanPlayerCommand, "unbans a given player by uid", FCVAR_NONE);
 	RegisterConCommand("clearbanlist", ClearBanlistCommand, "clears all uids on the banlist", FCVAR_NONE);
-}
+})

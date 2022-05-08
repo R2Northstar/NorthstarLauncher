@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "rpakfilesystem.h"
+#include "hooks.h"
 #include "hookutils.h"
 #include "modmanager.h"
 #include "dedicated.h"
@@ -119,36 +120,6 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-LoadPakSyncType LoadPakSyncOriginal;
-void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
-{
-	HandlePakAliases(&path);
-
-	bool bNeedToFreePakName = false;
-
-	// note: we don't handle loading any preloaded custom paks synchronously since LoadPakSync is never actually called in retail, just load
-	// them async instead
-	static bool bShouldLoadPaks = true;
-	if (bShouldLoadPaks)
-	{
-		// disable preloading while we're doing this
-		bShouldLoadPaks = false;
-
-		LoadPreloadPaks();
-		LoadCustomMapPaks(&path, &bNeedToFreePakName);
-
-		bShouldLoadPaks = true;
-	}
-
-	spdlog::info("LoadPakSync {}", path);
-	void* ret = LoadPakSyncOriginal(path, unknownSingleton, flags);
-
-	if (bNeedToFreePakName)
-		delete[] path;
-
-	return ret;
-}
-
 LoadPakAsyncType LoadPakAsyncOriginal;
 int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callback0, void* callback1)
 {
@@ -159,6 +130,9 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 	static bool bShouldLoadPaks = true;
 	if (bShouldLoadPaks)
 	{
+		// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by LoadCustomMapPaks
+		std::string originalPath(path);
+
 		// disable preloading while we're doing this
 		bShouldLoadPaks = false;
 
@@ -169,8 +143,11 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
-		if (IsDedicated() && strncmp(path, "common", 6)) // dedicated only needs common and common_mp
-			return -1;
+		if (IsDedicated() && strncmp(&originalPath[0], "common", 6)) // dedicated only needs common and common_mp
+		{
+			spdlog::info("Not loading pak {} for dedicated server", originalPath);
+			return -1;	
+		}
 	}
 
 	int ret = LoadPakAsyncOriginal(path, unknownSingleton, flags, callback0, callback1);
@@ -230,7 +207,7 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 	return ret;
 }
 
-void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", RpakFilesystem, (HMODULE baseAddress)
 {
 	g_PakLoadManager = new PakLoadManager;
 
@@ -238,9 +215,8 @@ void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
 	pUnknownPakLoadSingleton = (void**)((char*)baseAddress + 0x7C5E20);
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, g_pakLoadApi->LoadPakSync, &LoadPakSyncHook, reinterpret_cast<LPVOID*>(&LoadPakSyncOriginal));
 	ENABLER_CREATEHOOK(hook, g_pakLoadApi->LoadPakAsync, &LoadPakAsyncHook, reinterpret_cast<LPVOID*>(&LoadPakAsyncOriginal));
 	ENABLER_CREATEHOOK(hook, g_pakLoadApi->UnloadPak, &UnloadPakHook, reinterpret_cast<LPVOID*>(&UnloadPakOriginal));
 	ENABLER_CREATEHOOK(
 		hook, g_pakLoadApi->ReadFullFileFromDisk, &ReadFullFileFromDiskHook, reinterpret_cast<LPVOID*>(&ReadFullFileFromDiskOriginal));
-}
+})

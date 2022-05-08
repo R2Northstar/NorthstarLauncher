@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "masterserver.h"
+#include "hooks.h"
 #include "concommand.h"
 #include "gameutils.h"
 #include "hookutils.h"
@@ -1239,6 +1240,8 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 	g_MasterServerManager->RequestServerList();
 }
 
+// todo: this should be somewhere else, not masterserver code
+
 void CHostState__State_NewGameHook(CHostState* hostState)
 {
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
@@ -1256,7 +1259,9 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		Cbuf_Execute();
 	}
 
+	double dStartTime = Plat_FloatTime();
 	CHostState__State_NewGame(hostState);
+	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	int maxPlayers = 6;
 	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
@@ -1297,7 +1302,10 @@ void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 	}
 
 	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
+
+	double dStartTime = Plat_FloatTime();
 	CHostState__State_ChangeLevelMP(hostState);
+	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
 }
 
 void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
@@ -1325,7 +1333,7 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_ownServerId {""}, m_ownClientAuthToken {""} {}
 
-void InitialiseSharedMasterServer(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddress)
 {
 	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
 	// unfortunately lib doesn't let us specify a port and still have https work
@@ -1363,4 +1371,4 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 		(char*)baseAddress + 0x16E640,
 		CHostState__State_GameShutdownHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
-}
+})

@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "clientvideooverrides.h"
 #include "modmanager.h"
 
@@ -31,9 +32,9 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 		return BinkOpen(path, flags);
 }
 
-void InitialiseClientVideoOverrides(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("client.dll", BinkVideo, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
 		hook, GetProcAddress(GetModuleHandleA("bink2w64.dll"), "BinkOpen"), &BinkOpenHook, reinterpret_cast<LPVOID*>(&BinkOpen));
-}
+})

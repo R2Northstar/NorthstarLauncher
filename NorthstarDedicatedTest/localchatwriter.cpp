@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "localchatwriter.h"
 
 class vgui_BaseRichText_vtable;
@@ -436,7 +437,7 @@ void LocalChatWriter::InsertDefaultFade()
 	}
 }
 
-void InitialiseLocalChatWriter(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, (HMODULE baseAddress)
 {
 	gGameSettings = (CGameSettings**)((char*)baseAddress + 0x11BAA48);
 	gChatFadeLength = (CGameFloatVar**)((char*)baseAddress + 0x11BAB78);
@@ -444,4 +445,4 @@ void InitialiseLocalChatWriter(HMODULE baseAddress)
 	CHudChat::allHuds = (CHudChat**)((char*)baseAddress + 0x11BA9E8);
 
 	ConvertANSIToUnicode = (ConvertANSIToUnicodeType)((char*)baseAddress + 0x7339A0);
-}
+})

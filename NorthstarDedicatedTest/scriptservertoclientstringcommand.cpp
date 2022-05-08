@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "scriptservertoclientstringcommand.h"
 #include "squirrel.h"
 #include "convar.h"
@@ -14,11 +15,11 @@ void ConCommand_ns_script_servertoclientstringcommand(const CCommand& arg)
 	}
 }
 
-void InitialiseScriptServerToClientStringCommands(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerToClientStringCommand, ClientSquirrel, (HMODULE baseAddress)
 {
 	RegisterConCommand(
 		"ns_script_servertoclientstringcommand",
 		ConCommand_ns_script_servertoclientstringcommand,
 		"",
 		FCVAR_CLIENTDLL | FCVAR_SERVER_CAN_EXECUTE);
-}
+})

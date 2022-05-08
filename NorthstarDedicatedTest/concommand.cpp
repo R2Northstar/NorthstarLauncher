@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "concommand.h"
 #include "gameutils.h"
 #include "misccommands.h"
@@ -17,11 +18,11 @@ void RegisterConCommand(const char* name, void (*callback)(const CCommand&), con
 	conCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
 }
 
-void InitialiseConCommands(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", ConCommand, (HMODULE baseAddress)
 {
 	conCommandConstructor = (ConCommandConstructorType)((char*)baseAddress + 0x415F60);
 	AddMiscConCommands();
-}
+})
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if this is a command

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "modmanager.h"
+#include "hooks.h"
 #include "convar.h"
 #include "concommand.h"
 #include "audio.h"
@@ -570,12 +571,12 @@ void ReloadModsCommand(const CCommand& args)
 	g_ModManager->LoadMods();
 }
 
-void InitialiseModManager(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, (HMODULE baseAddress)
 {
 	g_ModManager = new ModManager;
 
-	RegisterConCommand("reload_mods", ReloadModsCommand, "idk", FCVAR_NONE);
-}
+	RegisterConCommand("reload_mods", ReloadModsCommand, "reloads mods", FCVAR_NONE);
+})
 
 fs::path GetModFolderPath()
 {

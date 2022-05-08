@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "scriptmodmenu.h"
 #include "modmanager.h"
 #include "squirrel.h"
@@ -175,7 +176,7 @@ SQRESULT SQ_ReloadMods(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-void InitialiseScriptModMenu(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptModMenu, ClientSquirrel, (HMODULE baseAddress)
 {
 	g_UISquirrelManager->AddFuncRegistration("array<string>", "NSGetModNames", "", "Returns the names of all loaded mods", SQ_GetModNames);
 	g_UISquirrelManager->AddFuncRegistration(
@@ -200,4 +201,4 @@ void InitialiseScriptModMenu(HMODULE baseAddress)
 		"array<string>", "NSGetModConvarsByModName", "string modName", "Returns the names of all a given mod's cvars", SQ_GetModConvars);
 
 	g_UISquirrelManager->AddFuncRegistration("void", "NSReloadMods", "", "Reloads mods", SQ_ReloadMods);
-}
+})

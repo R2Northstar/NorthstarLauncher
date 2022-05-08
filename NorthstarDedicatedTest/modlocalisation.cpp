@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "modlocalisation.h"
 #include "hookutils.h"
 #include "modmanager.h"
@@ -30,8 +31,8 @@ bool AddLocalisationFileHook(void* g_pVguiLocalize, const char* path, const char
 	return ret;
 }
 
-void InitialiseModLocalisation(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("localize.dll", Localize, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x6D80, AddLocalisationFileHook, reinterpret_cast<LPVOID*>(&AddLocalisationFile));
-}
+})

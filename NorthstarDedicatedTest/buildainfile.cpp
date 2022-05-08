@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "buildainfile.h"
 #include "convar.h"
+#include "hooks.h"
 #include "hookutils.h"
 #include <fstream>
 #include <filesystem>
@@ -373,7 +374,7 @@ void LoadAINFileHook(void* aimanager, void* buf, const char* filename)
 	}
 }
 
-void InitialiseBuildAINFileHooks(HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", BuildAINFile, (HMODULE baseAddress)
 {
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
 		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
@@ -397,4 +398,4 @@ void InitialiseBuildAINFileHooks(HMODULE baseAddress)
 	// due to the sheer amount of logging this is a massive perf hit to generation, but spewlog_enable 0 exists so whatever
 	NSMem::NOP(base + 0x3889B6, 6);
 	NSMem::NOP(base + 0x3889BF, 6);
-}
+});

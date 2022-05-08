@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "keyvalues.h"
 #include "modmanager.h"
+#include "hooks.h"
 #include "filesystem.h"
 #include "hookutils.h"
 
@@ -13,24 +14,24 @@ KeyValues__LoadFromBufferType KeyValues__LoadFromBuffer;
 char KeyValues__LoadFromBufferHook(
 	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
 
-void InitialiseKeyValues(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", KeyValues, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
-}
-
-void* savedFilesystemPtr;
+})
 
 char KeyValues__LoadFromBufferHook(void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7)
 {
+	static void* pSavedFilesystemPtr = nullptr;
+
 	// this is just to allow playlists to get a valid pFileSystem ptr for kv building, other functions that call this particular overload of
 	// LoadFromBuffer seem to get called on network stuff exclusively not exactly sure what the address wanted here is, so just taking it
 	// from a function call that always happens before playlists is loaded
 	if (pFileSystem != nullptr)
-		savedFilesystemPtr = pFileSystem;
+		pSavedFilesystemPtr = pFileSystem;
 	if (!pFileSystem && !strcmp(resourceName, "playlists"))
-		pFileSystem = savedFilesystemPtr;
+		pFileSystem = pSavedFilesystemPtr;
 
 	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
 }
