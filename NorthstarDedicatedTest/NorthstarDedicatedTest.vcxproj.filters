@@ -165,9 +165,6 @@
     <ClInclude Include="logging.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
-    <ClInclude Include="context.h">
-      <Filter>Header Files\Shared</Filter>
-    </ClInclude>
     <ClInclude Include="sourceinterface.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
@@ -1539,9 +1536,6 @@
       <Filter>Source Files\Shared\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="logging.cpp">
-      <Filter>Source Files\Shared</Filter>
-    </ClCompile>
-    <ClCompile Include="context.cpp">
       <Filter>Source Files\Shared</Filter>
     </ClCompile>
     <ClCompile Include="sourceinterface.cpp">

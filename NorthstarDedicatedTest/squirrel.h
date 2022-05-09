@@ -58,6 +58,16 @@ struct SQFuncRegistration
 	}
 };
 
+enum class ScriptContext : int
+{
+	SERVER,
+	CLIENT,
+	UI,
+	NONE
+};
+
+const char* GetContextName(ScriptContext context);
+
 // core sqvm funcs
 typedef int64_t (*RegisterSquirrelFuncType)(void* sqvm, SQFuncRegistration* funcReg, char unknown);
 extern RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
@@ -222,3 +232,4 @@ template <ScriptContext context> class SquirrelManager
 extern SquirrelManager<ScriptContext::CLIENT>* g_ClientSquirrelManager;
 extern SquirrelManager<ScriptContext::SERVER>* g_ServerSquirrelManager;
 extern SquirrelManager<ScriptContext::UI>* g_UISquirrelManager;
+template <ScriptContext context> SquirrelManager<context>* GetSquirrelManager();

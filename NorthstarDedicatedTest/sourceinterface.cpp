@@ -2,11 +2,7 @@
 #include "sourceinterface.h"
 #include "hooks.h"
 #include "hookutils.h"
-
 #include "sourceconsole.h"
-#include "context.h"
-#include "convar.h"
-#include <iostream>
 
 // really wanted to do a modular callback system here but honestly couldn't be bothered so hardcoding stuff for now: todo later
 

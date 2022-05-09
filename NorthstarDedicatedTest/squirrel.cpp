@@ -44,6 +44,32 @@ SquirrelManager<ScriptContext::CLIENT>* g_ClientSquirrelManager;
 SquirrelManager<ScriptContext::SERVER>* g_ServerSquirrelManager;
 SquirrelManager<ScriptContext::UI>* g_UISquirrelManager;
 
+template <ScriptContext context> SquirrelManager<context>* GetSquirrelManager() 
+{
+	switch (context)
+	{
+	case ScriptContext::CLIENT:
+		return g_ClientSquirrelManager;
+	case ScriptContext::SERVER:
+		return g_ServerSquirrelManager;
+	case ScriptContext::UI:
+		return g_UISquirrelManager;
+	}
+}
+
+const char* GetContextName(ScriptContext context)
+{
+	switch (context)
+	{
+	case ScriptContext::CLIENT:
+		return "CLIENT";
+	case ScriptContext::SERVER:
+		return "SERVER";
+	case ScriptContext::UI:
+		return "UI";
+	}
+}
+
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddress)
 {
 	HookEnabler hook;
