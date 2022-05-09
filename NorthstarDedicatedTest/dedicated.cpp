@@ -31,7 +31,7 @@ struct CDedicatedExports
 
 void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
 {
-	spdlog::info("[DEDICATED PRINT] {}", msg);
+	spdlog::info("[DEDICATED SERVER] {}", msg);
 }
 
 typedef void (*CHostState__InitType)(CHostState* self);
@@ -82,7 +82,7 @@ void RunServer(CDedicatedExports* dedicated)
 
 			SetConsoleTitleA(fmt::format(
 								 "{} - {} {}/{} players ({})",
-								 g_MasterServerManager->ns_auth_srvName,
+								 g_MasterServerManager->m_sUnicodeServerName,
 								 g_pHostState->m_levelName,
 								 g_ServerAuthenticationManager->m_additionalPlayerData.size(),
 								 maxPlayers,

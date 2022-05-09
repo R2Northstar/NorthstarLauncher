@@ -149,18 +149,17 @@ struct DllLoadCallback
 	bool called;
 };
 
-bool how = false;
-std::vector<DllLoadCallback> dllLoadCallbacks = std::vector<DllLoadCallback>();
+// for whatever reason, just declaring and initialising the vector at file scope crashes on debug builds
+// but this works, idk sucks but just how it is
+std::vector<DllLoadCallback>& GetDllLoadCallbacks()
+{
+	static std::vector<DllLoadCallback> vec = std::vector<DllLoadCallback>();
+	return vec;
+}
 
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
 {
-	if (!how) // WHY IS THIS A THING WE NEED ON DEBUG?????
-	{
-		dllLoadCallbacks = std::vector<DllLoadCallback>();
-		how = true;
-	}
-
-	DllLoadCallback& callbackStruct = dllLoadCallbacks.emplace_back();
+	DllLoadCallback& callbackStruct = GetDllLoadCallbacks().emplace_back(); // <-- crashes here
 
 	callbackStruct.dll = dll;
 	callbackStruct.callback = callback;
@@ -194,7 +193,7 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 	{
 		bool doneCalling = true;
 
-		for (auto& callbackStruct : dllLoadCallbacks)
+		for (auto& callbackStruct : GetDllLoadCallbacks())
 		{
 			if (!callbackStruct.called && fs::path(lpLibFileName).filename() == fs::path(callbackStruct.dll).filename())
 			{
@@ -222,7 +221,7 @@ void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 	{
 		bool doneCalling = true;
 
-		for (auto& callbackStruct : dllLoadCallbacks)
+		for (auto& callbackStruct : GetDllLoadCallbacks())
 		{
 			if (!callbackStruct.called && fs::path(lpLibFileName).filename() == fs::path(callbackStruct.dll).filename())
 			{

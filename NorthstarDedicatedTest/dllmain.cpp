@@ -181,8 +181,8 @@ bool InitialiseNorthstar()
 	// Write launcher version to log
 	spdlog::info("NorthstarLauncher version: {}", version);
 
-	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
 	AddDllLoadCallback("engine.dll", WaitForDebugger);
+	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
