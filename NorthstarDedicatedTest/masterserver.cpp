@@ -1297,28 +1297,27 @@ MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnS
 
 ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddress)
 {
-	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
-	// unfortunately lib doesn't let us specify a port and still have https work
-	// Cvar_ns_masterserver_port = new ConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
+	g_MasterServerManager = new MasterServerManager;
 
-	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
+
+	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
 			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
 		});
-	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
 			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_desc->GetString());
 		});
-	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
-	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
-	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
 
-	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "");
+	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password");
+	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver");
+	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver, when started in singleplayer");
+
+	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "Whether curl should log to the console");
 
 	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 
-	g_MasterServerManager = new MasterServerManager;
-
-	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "", FCVAR_CLIENTDLL);
+	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "Fetch all servers from the masterserver", FCVAR_CLIENTDLL);
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
