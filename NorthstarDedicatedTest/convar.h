@@ -74,6 +74,8 @@ class ConCommandBase;
 class ConCommand;
 class ConVar;
 
+typedef void (*FnChangeCallback_t)(ConVar* var, const char* pOldValue, float flOldValue);
+
 //-----------------------------------------------------------------------------
 // Purpose: A console variable
 //-----------------------------------------------------------------------------
@@ -91,7 +93,7 @@ class ConVar
 		float fMin,
 		bool bMax,
 		float fMax,
-		void* pCallback);
+		FnChangeCallback_t pCallback);
 	~ConVar(void);
 
 	const char* GetBaseName(void) const;

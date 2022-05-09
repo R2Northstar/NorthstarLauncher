@@ -73,7 +73,7 @@ ConVar::ConVar(
 	float fMin,
 	bool bMax,
 	float fMax,
-	void* pCallback)
+	FnChangeCallback_t pCallback)
 {
 	spdlog::info("Registering Convar {}", pszName);
 

@@ -110,12 +110,6 @@ std::string unescape_unicode(const std::string& str)
 	return result;
 }
 
-void UpdateServerInfoFromUnicodeToUTF8()
-{
-	g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
-	g_MasterServerManager->m_sUnicodeServerDesc = unescape_unicode(Cvar_ns_server_desc->GetString());
-}
-
 RemoteServerInfo::RemoteServerInfo(
 	const char* newId,
 	const char* newName,
@@ -1240,8 +1234,6 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 
 	// Copy new server name cvar to source
 	Cvar_hostname->SetValue(Cvar_ns_server_name->GetString());
-	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
-	UpdateServerInfoFromUnicodeToUTF8();
 
 	g_MasterServerManager->AddSelfToServerList(
 		Cvar_hostport->GetInt(),
@@ -1309,8 +1301,12 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddr
 	// unfortunately lib doesn't let us specify a port and still have https work
 	// Cvar_ns_masterserver_port = new ConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
 
-	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "");
-	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "");
+	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
+		});
+	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_desc->GetString());
+		});
 	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
