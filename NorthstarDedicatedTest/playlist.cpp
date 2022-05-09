@@ -17,7 +17,7 @@ namespace R2
 	GetCurrentPlaylistVarType GetCurrentPlaylistVar;
 } // namespace R2
 
-void SetPlaylistCommand(const CCommand& args)
+void ConCommand_playlist(const CCommand& args)
 {
 	if (args.ArgC() < 2)
 		return;
@@ -25,7 +25,7 @@ void SetPlaylistCommand(const CCommand& args)
 	R2::SetCurrentPlaylist(args.Arg(1));
 }
 
-void SetPlaylistVarOverrideCommand(const CCommand& args)
+void ConCommand_setplaylistvaroverride(const CCommand& args)
 {
 	if (args.ArgC() < 3)
 		return;
@@ -79,9 +79,9 @@ int GetCurrentGamemodeMaxPlayersHook()
 ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, (HMODULE baseAddress)
 {
 	// playlist is the name of the command on respawn servers, but we already use setplaylist so can't get rid of it
-	RegisterConCommand("playlist", SetPlaylistCommand, "Sets the current playlist", FCVAR_NONE);
-	RegisterConCommand("setplaylist", SetPlaylistCommand, "Sets the current playlist", FCVAR_NONE);
-	RegisterConCommand("setplaylistvaroverrides", SetPlaylistVarOverrideCommand, "sets a playlist var override", FCVAR_NONE);
+	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
+	RegisterConCommand("setplaylist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
+	RegisterConCommand("setplaylistvaroverrides", ConCommand_setplaylistvaroverride, "sets a playlist var override", FCVAR_NONE);
 	
 	// note: clc_SetPlaylistVarOverride is pretty insecure, since it allows for entirely arbitrary playlist var overrides to be sent to the
 	// server, this is somewhat restricted on custom servers to prevent it being done outside of private matches, but ideally it should be

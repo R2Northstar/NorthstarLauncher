@@ -566,7 +566,7 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ReloadModsCommand(const CCommand& args)
+void ConCommand_reload_mods(const CCommand& args)
 {
 	g_ModManager->LoadMods();
 }
@@ -575,7 +575,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, (HMODULE baseAddress)
 {
 	g_ModManager = new ModManager;
 
-	RegisterConCommand("reload_mods", ReloadModsCommand, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
 })
 
 fs::path GetModFolderPath()
