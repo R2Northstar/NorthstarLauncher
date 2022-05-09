@@ -77,12 +77,12 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 		return;
 	}
 
-	if (g_ServerSquirrelManager->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		g_ServerSquirrelManager->pusharg((int)senderPlayerId - 1);
-		g_ServerSquirrelManager->pusharg(text);
-		g_ServerSquirrelManager->pusharg(isTeam);
-		g_ServerSquirrelManager->call(3);
+		g_pServerSquirrel->pusharg((int)senderPlayerId - 1);
+		g_pServerSquirrel->pusharg(text);
+		g_pServerSquirrel->pusharg(isTeam);
+		g_pServerSquirrel->call(3);
 	}
 	else
 		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerId, text, isTeam);
@@ -142,9 +142,9 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 
 SQRESULT SQ_SendMessage(void* sqvm)
 {
-	int playerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
-	const char* text = g_ServerSquirrelManager->sq_getstring(sqvm, 2);
-	bool isTeam = g_ServerSquirrelManager->sq_getbool(sqvm, 3);
+	int playerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
+	const char* text = g_pServerSquirrel->sq_getstring(sqvm, 2);
+	bool isTeam = g_pServerSquirrel->sq_getbool(sqvm, 3);
 
 	ChatSendMessage(playerIndex, text, isTeam);
 
@@ -153,16 +153,16 @@ SQRESULT SQ_SendMessage(void* sqvm)
 
 SQRESULT SQ_BroadcastMessage(void* sqvm)
 {
-	int fromPlayerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
-	int toPlayerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 2);
-	const char* text = g_ServerSquirrelManager->sq_getstring(sqvm, 3);
-	bool isTeam = g_ServerSquirrelManager->sq_getbool(sqvm, 4);
-	bool isDead = g_ServerSquirrelManager->sq_getbool(sqvm, 5);
-	int messageType = g_ServerSquirrelManager->sq_getinteger(sqvm, 6);
+	int fromPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
+	int toPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 2);
+	const char* text = g_pServerSquirrel->sq_getstring(sqvm, 3);
+	bool isTeam = g_pServerSquirrel->sq_getbool(sqvm, 4);
+	bool isDead = g_pServerSquirrel->sq_getbool(sqvm, 5);
+	int messageType = g_pServerSquirrel->sq_getinteger(sqvm, 6);
 
 	if (messageType < 1)
 	{
-		g_ServerSquirrelManager->sq_raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		g_pServerSquirrel->sq_raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -200,8 +200,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (HMODULE bas
 		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessageHookBase));
 
 	// Chat sending functions
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
-	g_ServerSquirrelManager->AddFuncRegistration(
+	g_pServerSquirrel->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
+	g_pServerSquirrel->AddFuncRegistration(
 		"void",
 		"NSBroadcastMessage",
 		"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",

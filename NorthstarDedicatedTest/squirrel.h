@@ -5,7 +5,6 @@ typedef float SQFloat;
 typedef long SQInteger;
 typedef unsigned long SQUnsignedInteger;
 typedef char SQChar;
-
 typedef SQUnsignedInteger SQBool;
 
 enum SQRESULT : SQInteger
@@ -70,8 +69,6 @@ const char* GetContextName(ScriptContext context);
 
 // core sqvm funcs
 typedef int64_t (*RegisterSquirrelFuncType)(void* sqvm, SQFuncRegistration* funcReg, char unknown);
-extern RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
-extern RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
 
 typedef SQRESULT (*sq_compilebufferType)(void* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, ScriptContext a2);
 typedef SQRESULT (*sq_callType)(void* sqvm, SQInteger s1, SQBool a2, SQBool a3);
@@ -104,6 +101,8 @@ template <ScriptContext context> class SquirrelManager
 	void* sqvm;
 	void* sqvm2;
 	#pragma region SQVM funcs
+	RegisterSquirrelFuncType RegisterSquirrelFunc;
+
 	sq_compilebufferType sq_compilebuffer;
 	sq_callType sq_call;
 	sq_newarrayType sq_newarray;
@@ -133,11 +132,7 @@ template <ScriptContext context> class SquirrelManager
 		for (SQFuncRegistration* funcReg : m_funcRegistrations)
 		{
 			spdlog::info("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
-
-			if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-				ClientRegisterSquirrelFunc(sqvm, funcReg, 1);
-			else
-				ServerRegisterSquirrelFunc(sqvm, funcReg, 1);
+			RegisterSquirrelFunc(sqvm, funcReg, 1);
 		}
 	}
 
@@ -229,7 +224,7 @@ template <ScriptContext context> class SquirrelManager
 	}
 };
 
-extern SquirrelManager<ScriptContext::CLIENT>* g_ClientSquirrelManager;
-extern SquirrelManager<ScriptContext::SERVER>* g_ServerSquirrelManager;
-extern SquirrelManager<ScriptContext::UI>* g_UISquirrelManager;
+extern SquirrelManager<ScriptContext::CLIENT>* g_pClientSquirrel;
+extern SquirrelManager<ScriptContext::SERVER>* g_pServerSquirrel;
+extern SquirrelManager<ScriptContext::UI>* g_pUISquirrel;
 template <ScriptContext context> SquirrelManager<context>* GetSquirrelManager();

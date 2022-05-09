@@ -22,12 +22,12 @@ void* GetPlayerByIndex(int playerIndex)
 // void function NSEarlyWritePlayerIndexPersistenceForLeave( int playerIndex )
 SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 {
-	int playerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
+	int playerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
 	void* player = GetPlayerByIndex(playerIndex);
 
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
-		g_ServerSquirrelManager->sq_raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
+		g_pServerSquirrel->sq_raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -39,29 +39,29 @@ SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 // bool function NSIsWritingPlayerPersistence()
 SQRESULT SQ_IsWritingPlayerPersistence(void* sqvm)
 {
-	g_ServerSquirrelManager->sq_pushbool(sqvm, g_MasterServerManager->m_bSavingPersistentData);
+	g_pServerSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSIsPlayerIndexLocalPlayer( int playerIndex )
 SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 {
-	int playerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
+	int playerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
 	void* player = GetPlayerByIndex(playerIndex);
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
-		g_ServerSquirrelManager->sq_raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
+		g_pServerSquirrel->sq_raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
 		return SQRESULT_ERROR;
 	}
 
-	g_ServerSquirrelManager->sq_pushbool(sqvm, !strcmp(g_LocalPlayerUserID, (char*)player + 0xF500));
+	g_pServerSquirrel->sq_pushbool(sqvm, !strcmp(g_LocalPlayerUserID, (char*)player + 0xF500));
 	return SQRESULT_NOTNULL;
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, (HMODULE baseAddress)
 {
-	g_ServerSquirrelManager->AddFuncRegistration(
+	g_pServerSquirrel->AddFuncRegistration(
 		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
-	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
-	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
+	g_pServerSquirrel->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
+	g_pServerSquirrel->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
 })

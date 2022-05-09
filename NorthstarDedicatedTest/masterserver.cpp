@@ -113,39 +113,6 @@ void UpdateServerInfoFromUnicodeToUTF8()
 	g_MasterServerManager->m_sUnicodeServerDesc = unescape_unicode(Cvar_ns_server_desc->GetString());
 }
 
-const char* HttplibErrorToString(httplib::Error error)
-{
-	switch (error)
-	{
-	case httplib::Error::Success:
-		return "httplib::Error::Success";
-	case httplib::Error::Unknown:
-		return "httplib::Error::Unknown";
-	case httplib::Error::Connection:
-		return "httplib::Error::Connection";
-	case httplib::Error::BindIPAddress:
-		return "httplib::Error::BindIPAddress";
-	case httplib::Error::Read:
-		return "httplib::Error::Read";
-	case httplib::Error::Write:
-		return "httplib::Error::Write";
-	case httplib::Error::ExceedRedirectCount:
-		return "httplib::Error::ExceedRedirectCount";
-	case httplib::Error::Canceled:
-		return "httplib::Error::Canceled";
-	case httplib::Error::SSLConnection:
-		return "httplib::Error::SSLConnection";
-	case httplib::Error::SSLLoadingCerts:
-		return "httplib::Error::SSLLoadingCerts";
-	case httplib::Error::SSLServerVerification:
-		return "httplib::Error::SSLServerVerification";
-	case httplib::Error::UnsupportedMultipartBoundaryChars:
-		return "httplib::Error::UnsupportedMultipartBoundaryChars";
-	}
-
-	return "";
-}
-
 RemoteServerInfo::RemoteServerInfo(
 	const char* newId,
 	const char* newName,

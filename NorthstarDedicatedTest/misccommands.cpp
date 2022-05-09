@@ -46,7 +46,7 @@ void AddMiscConCommands()
 			Cbuf_Execute();
 
 			// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
-			if (g_ClientSquirrelManager->sqvm)
+			if (g_pClientSquirrel->sqvm)
 			{
 				g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = true;
 
