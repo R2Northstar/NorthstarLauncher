@@ -53,8 +53,6 @@ void InstallInitialHooks()
 __dllLoadCallback::__dllLoadCallback(
 	eDllLoadCallbackSide side, const std::string dllName, DllLoadCallbackFuncType callback, std::string uniqueStr, std::string reliesOn)
 {
-	spdlog::info("calling loadcallback {} for dll {}", uniqueStr, dllName);
-
 	switch (side)
 	{
 		case eDllLoadCallbackSide::UNSIDED:
@@ -192,21 +190,14 @@ std::vector<std::string> calledTags;
 
 void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 {
-	spdlog::info((char*)lpLibFileName);
-
 	while (true)
 	{
 		bool doneCalling = true;
 
 		for (auto& callbackStruct : dllLoadCallbacks)
 		{
-			spdlog::info("{} {}", callbackStruct.tag, callbackStruct.reliesOn);
-
 			if (!callbackStruct.called && fs::path(lpLibFileName).filename() == fs::path(callbackStruct.dll).filename())
 			{
-				//spdlog::info(callbackStruct.tag);
-				//spdlog::info(callbackStruct.reliesOn);
-
 				if (callbackStruct.reliesOn != "" &&
 					std::find(calledTags.begin(), calledTags.end(), callbackStruct.reliesOn) == calledTags.end())
 				{
@@ -227,21 +218,14 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 
 void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 {
-	spdlog::info((char*)lpLibFileName);
-
 	while (true)
 	{
 		bool doneCalling = true;
 
 		for (auto& callbackStruct : dllLoadCallbacks)
 		{
-			spdlog::info("{} {}", callbackStruct.tag, callbackStruct.reliesOn);
-
 			if (!callbackStruct.called && fs::path(lpLibFileName).filename() == fs::path(callbackStruct.dll).filename())
 			{
-				//spdlog::info(callbackStruct.tag);
-				//spdlog::info(callbackStruct.reliesOn);
-
 				if (callbackStruct.reliesOn != "" &&
 					std::find(calledTags.begin(), calledTags.end(), callbackStruct.reliesOn) == calledTags.end())
 				{

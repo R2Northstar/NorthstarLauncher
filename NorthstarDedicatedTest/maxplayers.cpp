@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "maxplayers.h"
 #include "gameutils.h"
 
@@ -108,7 +109,7 @@ bool MaxPlayersIncreaseEnabled()
 	return CommandLine() && CommandLine()->CheckParm("-experimentalmaxplayersincrease");
 }
 
-void InitialiseMaxPlayersOverride_Engine(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -158,7 +159,7 @@ void InitialiseMaxPlayersOverride_Engine(HMODULE baseAddress)
 		(char*)baseAddress + 0x22E220,
 		&StringTables_CreateStringTable_Hook,
 		reinterpret_cast<LPVOID*>(&StringTables_CreateStringTable_Original));
-}
+})
 
 typedef void (*RunUserCmds_Type)(bool a1, float a2);
 RunUserCmds_Type RunUserCmds_Original;
@@ -320,7 +321,7 @@ __int64 __fastcall SendPropArray2_Hook(__int64 recvProp, int elements, int flags
 	return SendPropArray2_Original(recvProp, elements, flags, name, proxyFn, unk1);
 }
 
-void InitialiseMaxPlayersOverride_Server(HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -484,7 +485,7 @@ void InitialiseMaxPlayersOverride_Server(HMODULE baseAddress)
 	*(DWORD*)((char*)baseAddress + 0xC945A0) = 0;
 	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x238F50);
 	DT_Team_Construct();
-}
+})
 
 typedef __int64 (*RecvPropArray2_Type)(__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn);
 RecvPropArray2_Type RecvPropArray2_Original;
@@ -498,7 +499,7 @@ __int64 __fastcall RecvPropArray2_Hook(__int64 recvProp, int elements, int flags
 	return RecvPropArray2_Original(recvProp, elements, flags, name, proxyFn);
 }
 
-void InitialiseMaxPlayersOverride_Client(HMODULE baseAddress)
+ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -679,4 +680,4 @@ void InitialiseMaxPlayersOverride_Client(HMODULE baseAddress)
 	*(DWORD*)((char*)baseAddress + 0xC3AFF8) = 0;
 	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x17F950);
 	DT_Team_Construct();
-}
+})

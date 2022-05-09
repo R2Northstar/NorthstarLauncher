@@ -14,8 +14,8 @@ CreateInterfaceFn clientCreateInterfaceOriginal;
 void* ClientCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
 	void* ret = clientCreateInterfaceOriginal(pName, pReturnCode);
-
 	spdlog::info("CreateInterface CLIENT {}", pName);
+
 	if (!strcmp(pName, "GameClientExports001"))
 		InitialiseConsoleOnInterfaceCreation();
 
@@ -26,8 +26,7 @@ CreateInterfaceFn serverCreateInterfaceOriginal;
 void* ServerCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
 	void* ret = serverCreateInterfaceOriginal(pName, pReturnCode);
-
-	std::cout << "CreateInterface SERVER " << pName << std::endl;
+	spdlog::info("CreateInterface SERVER {}", pName);
 
 	return ret;
 }
@@ -36,13 +35,12 @@ CreateInterfaceFn engineCreateInterfaceOriginal;
 void* EngineCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
 	void* ret = engineCreateInterfaceOriginal(pName, pReturnCode);
-
-	std::cout << "CreateInterface ENGINE " << pName << std::endl;
+	spdlog::info("CreateInterface ENGINE {}", pName);
 
 	return ret;
 }
 
-void HookClientCreateInterface(HMODULE baseAddress)
+ON_DLL_LOAD("client.dll", ClientInterface, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
@@ -50,9 +48,9 @@ void HookClientCreateInterface(HMODULE baseAddress)
 		GetProcAddress(baseAddress, "CreateInterface"),
 		&ClientCreateInterfaceHook,
 		reinterpret_cast<LPVOID*>(&clientCreateInterfaceOriginal));
-}
+})
 
-void HookServerCreateInterface(HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", ServerInterface, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
@@ -60,9 +58,9 @@ void HookServerCreateInterface(HMODULE baseAddress)
 		GetProcAddress(baseAddress, "CreateInterface"),
 		&ServerCreateInterfaceHook,
 		reinterpret_cast<LPVOID*>(&serverCreateInterfaceOriginal));
-}
+})
 
-void HookEngineCreateInterface(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineInterface, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
@@ -70,13 +68,4 @@ void HookEngineCreateInterface(HMODULE baseAddress)
 		GetProcAddress(baseAddress, "CreateInterface"),
 		&EngineCreateInterfaceHook,
 		reinterpret_cast<LPVOID*>(&engineCreateInterfaceOriginal));
-}
-
-void InitialiseInterfaceCreationHooks()
-{
-	AddDllLoadCallback("client.dll", HookClientCreateInterface);
-
-	// not used atm
-	// AddDllLoadCallback("server.dll", HookServerCreateInterface);
-	// AddDllLoadCallback("engine.dll", HookEngineCreateInterface);
-}
+})

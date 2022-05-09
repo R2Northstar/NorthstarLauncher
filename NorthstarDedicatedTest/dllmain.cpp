@@ -24,8 +24,6 @@ namespace fs = std::filesystem;
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
-bool initialised = false;
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	switch (ul_reason_for_call)
@@ -158,13 +156,15 @@ bool LoadPlugins()
 
 bool InitialiseNorthstar()
 {
-	if (initialised)
+	static bool bInitialised = false;
+
+	if (bInitialised)
 	{
 		// spdlog::warn("Called InitialiseNorthstar more than once!"); // it's actually 100% fine for that to happen
 		return false;
 	}
 
-	initialised = true;
+	bInitialised = true;
 
 	parseConfigurables();
 	InitialiseVersion();
@@ -181,23 +181,10 @@ bool InitialiseNorthstar()
 	// Write launcher version to log
 	spdlog::info("NorthstarLauncher version: {}", version);
 
-	InitialiseInterfaceCreationHooks();
-
 	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
 	AddDllLoadCallback("engine.dll", WaitForDebugger);
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
-
-	// client-exclusive patches
-	{
-
-		AddDllLoadCallbackForClient("client.dll", InitialisePluginCommands);
-	}
-
-	// maxplayers increase
-	AddDllLoadCallback("engine.dll", InitialiseMaxPlayersOverride_Engine);
-	AddDllLoadCallback("client.dll", InitialiseMaxPlayersOverride_Client);
-	AddDllLoadCallback("server.dll", InitialiseMaxPlayersOverride_Server);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
