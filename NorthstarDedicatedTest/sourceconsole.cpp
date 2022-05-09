@@ -16,6 +16,16 @@ void ConCommand_toggleconsole(const CCommand& arg)
 		(*g_SourceGameConsole)->Activate();
 }
 
+void ConCommand_showconsole(const CCommand& arg)
+{
+	(*g_SourceGameConsole)->Activate();
+}
+
+void ConCommand_hideconsole(const CCommand& arg)
+{
+	(*g_SourceGameConsole)->Hide();
+}
+
 typedef void (*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char* pCommand);
 OnCommandSubmittedType onCommandSubmittedOriginal;
 void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
@@ -48,12 +58,6 @@ void InitialiseConsoleOnInterfaceCreation()
 		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (HMODULE baseAddress)
-{
-	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
-	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);
-})
-
 // logging stuff
 
 SourceConsoleSink::SourceConsoleSink()
@@ -79,3 +83,11 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 }
 
 void SourceConsoleSink::flush_() {}
+
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (HMODULE baseAddress)
+{
+	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
+	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);
+	RegisterConCommand("showconsole", ConCommand_showconsole, "shows the console", FCVAR_DONTRECORD);
+	RegisterConCommand("hideconsole", ConCommand_hideconsole, "hides the console", FCVAR_DONTRECORD);
+})

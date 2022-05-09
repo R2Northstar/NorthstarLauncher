@@ -144,7 +144,7 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 			cmd_source_t::kCommandSrcCode);
 
 		if (realContext == ScriptContext::UI)
-			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "toggleconsole", cmd_source_t::kCommandSrcCode); // likely temp: show console so user can see any errors
+			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "showconsole", cmd_source_t::kCommandSrcCode); // likely temp: show console so user can see any errors
 	}
 
 	// dont call the original function since it kills game lol
@@ -225,7 +225,7 @@ template <ScriptContext context> bool CallScriptInitCallbackHook(void* sqvm, con
 	return ret;
 }
 
-template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
+template <ScriptContext context> void ConCommand_script(const CCommand& args)
 {
 	if (context == ScriptContext::CLIENT)
 		g_pClientSquirrel->ExecuteCode(args.ArgS());
@@ -247,8 +247,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddr
 		(char*)baseAddress + 0x12B00,
 		&SQPrintHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientSQPrint)); // client print function
-	RegisterConCommand(
-		"script_client", ExecuteCodeCommand<ScriptContext::CLIENT>, "Executes script code on the client vm", FCVAR_CLIENTDLL);
+	RegisterConCommand("script_client", ConCommand_script<ScriptContext::CLIENT>, "Executes script code on the client vm", FCVAR_CLIENTDLL);
 
 	// ui inits
 	g_pUISquirrel = new SquirrelManager<ScriptContext::UI>;
@@ -258,7 +257,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddr
 		(char*)baseAddress + 0x12BA0,
 		&SQPrintHook<ScriptContext::UI>,
 		reinterpret_cast<LPVOID*>(&UISQPrint)); // ui print function
-	RegisterConCommand("script_ui", ExecuteCodeCommand<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
+	RegisterConCommand("script_ui", ConCommand_script<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
 
 	g_pClientSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
 	g_pUISquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
@@ -379,7 +378,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (HMODULE baseAddr
 	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
 		"script",
-		ExecuteCodeCommand<ScriptContext::SERVER>,
+		ConCommand_script<ScriptContext::SERVER>,
 		"Executes script code on the server vm",
 		FCVAR_GAMEDLL | FCVAR_CLIENTCMD_CAN_EXECUTE | FCVAR_CHEAT);
 })
