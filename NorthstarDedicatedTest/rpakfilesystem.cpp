@@ -28,7 +28,7 @@ struct PakLoadFuncs
 PakLoadFuncs* g_pakLoadApi;
 void** pUnknownPakLoadSingleton;
 
-PakLoadManager* g_PakLoadManager;
+PakLoadManager* g_pPakLoadManager;
 void PakLoadManager::LoadPakSync(const char* path)
 {
 	g_pakLoadApi->LoadPakSync(path, *pUnknownPakLoadSingleton, 0);
@@ -79,7 +79,7 @@ void LoadPreloadPaks()
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 			if (pak.m_bAutoLoad)
-				g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), false);
+				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), false);
 	}
 }
 
@@ -114,7 +114,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 						true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
 				}
 				else
-					g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), true);
+					g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), true);
 			}
 		}
 	}
@@ -166,7 +166,7 @@ void* UnloadPakHook(int pakHandle, void* callback)
 	if (bShouldUnloadPaks)
 	{
 		bShouldUnloadPaks = false;
-		g_PakLoadManager->UnloadPaks();
+		g_pPakLoadManager->UnloadPaks();
 		bShouldUnloadPaks = true;
 	}
 
@@ -209,7 +209,7 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (HMODULE baseAddress)
 {
-	g_PakLoadManager = new PakLoadManager;
+	g_pPakLoadManager = new PakLoadManager;
 
 	g_pakLoadApi = *(PakLoadFuncs**)((char*)baseAddress + 0x5BED78);
 	pUnknownPakLoadSingleton = (void**)((char*)baseAddress + 0x7C5E20);

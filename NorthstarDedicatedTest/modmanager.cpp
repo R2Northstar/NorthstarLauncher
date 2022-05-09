@@ -388,7 +388,7 @@ void ModManager::LoadMods()
 
 					// not using atm because we need to resolve path to rpak
 					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
-					//	g_PakLoadManager->LoadPakAsync(pakName.c_str());
+					//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
 		}

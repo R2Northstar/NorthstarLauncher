@@ -140,6 +140,7 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	CRecipientFilter__Destruct(&filter);
 }
 
+// void function NSSendMessage( int playerIndex, string text, bool isTeam )
 SQRESULT SQ_SendMessage(void* sqvm)
 {
 	int playerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
@@ -151,6 +152,7 @@ SQRESULT SQ_SendMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
+// void function NSBroadcastMessage( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
 SQRESULT SQ_BroadcastMessage(void* sqvm)
 {
 	int fromPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);

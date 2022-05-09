@@ -582,9 +582,6 @@
     <ClInclude Include="modlocalisation.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
-    <ClInclude Include="playlist.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
     <ClInclude Include="dedicatedmaterialsystem.h">
       <Filter>Header Files\Dedicated</Filter>
     </ClInclude>
@@ -1509,6 +1506,12 @@
     <ClInclude Include="ns_version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="playlist.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="tier0.h">
+      <Filter>Header Files\Shared\Game Functions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1579,9 +1582,6 @@
     </ClCompile>
     <ClCompile Include="modlocalisation.cpp">
       <Filter>Source Files\Client</Filter>
-    </ClCompile>
-    <ClCompile Include="playlist.cpp">
-      <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="dedicatedmaterialsystem.cpp">
       <Filter>Source Files\Server\Dedicated</Filter>
@@ -1672,6 +1672,12 @@
     </ClCompile>
     <ClCompile Include="clientruihooks.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="playlist.cpp">
+      <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="tier0.cpp">
+      <Filter>Source Files\Shared\Game Functions</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

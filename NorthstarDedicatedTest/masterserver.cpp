@@ -3,9 +3,11 @@
 #include "hooks.h"
 #include "concommand.h"
 #include "gameutils.h"
+#include "playlist.h"
 #include "hookutils.h"
 #include "serverauthentication.h"
 #include "gameutils.h"
+#include "tier0.h"
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -30,6 +32,7 @@ ConVar* Cvar_ns_curl_log_enable;
 
 // Source ConVar
 ConVar* Cvar_hostname;
+ConVar* Cvar_hostport;
 
 MasterServerManager* g_MasterServerManager;
 
@@ -148,7 +151,7 @@ void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, Cvar_ns_curl_log_enable->GetBool());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
-	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
+	if (Tier0::CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -921,11 +924,11 @@ void MasterServerManager::AddSelfToServerList(
 								char* escapedNameNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerName.c_str(), NULL);
 								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerDesc.c_str(), NULL);
 								char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
-								char* escapedPlaylistNew = curl_easy_escape(curl, GetCurrentPlaylistName(), NULL);
+								char* escapedPlaylistNew = curl_easy_escape(curl, R2::GetCurrentPlaylistName(), NULL);
 								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->GetString(), NULL);
 
 								int maxPlayers = 6;
-								char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+								const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
 								if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 									maxPlayers = std::stoi(maxPlayersVar);
 
@@ -1216,7 +1219,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 
 	// need to do this to ensure we don't go to private match
 	if (g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame)
-		SetCurrentPlaylist("tdm");
+		R2::SetCurrentPlaylist("tdm");
 
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
 	// sucks for security but just how it be
@@ -1226,12 +1229,12 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		Cbuf_Execute();
 	}
 
-	double dStartTime = Plat_FloatTime();
+	double dStartTime = Tier0::Plat_FloatTime();
 	CHostState__State_NewGame(hostState);
-	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
+	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
 
 	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+	const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
 	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 		maxPlayers = std::stoi(maxPlayersVar);
 
@@ -1246,7 +1249,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		(char*)Cvar_ns_server_name->GetString(),
 		(char*)Cvar_ns_server_desc->GetString(),
 		hostState->m_levelName,
-		(char*)GetCurrentPlaylistName(),
+		(char*)R2::GetCurrentPlaylistName(),
 		maxPlayers,
 		(char*)Cvar_ns_server_password->GetString());
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
@@ -1256,7 +1259,7 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 {
 	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+	const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
 	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 		maxPlayers = std::stoi(maxPlayersVar);
 
@@ -1268,11 +1271,11 @@ void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 		Cbuf_Execute();
 	}
 
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
+	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)R2::GetCurrentPlaylistName(), maxPlayers);
 
-	double dStartTime = Plat_FloatTime();
+	double dStartTime = Tier0::Plat_FloatTime();
 	CHostState__State_ChangeLevelMP(hostState);
-	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
+	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
 }
 
 void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
@@ -1282,11 +1285,11 @@ void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
 	// so idk it's fucked
 
 	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+	const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
 	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 		maxPlayers = std::stoi(maxPlayersVar);
 
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
+	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)R2::GetCurrentPlaylistName(), maxPlayers);
 	CHostState__State_ChangeLevelSP(hostState);
 }
 
@@ -1315,6 +1318,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddres
 	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "");
 
 	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
+	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 
 	g_MasterServerManager = new MasterServerManager;
 

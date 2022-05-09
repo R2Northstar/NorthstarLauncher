@@ -11,4 +11,4 @@ class PakLoadManager
 	std::vector<int> m_pakHandlesToUnload;
 };
 
-extern PakLoadManager* g_PakLoadManager;
+extern PakLoadManager* g_pPakLoadManager;

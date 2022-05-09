@@ -5,6 +5,7 @@
 #include "keyvalues.h"
 #include "masterserver.h"
 #include "gameutils.h"
+#include "tier0.h"
 #include "memalloc.h"
 #include "maxplayers.h"
 #include "configurables.h"
@@ -36,18 +37,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	}
 
 	return TRUE;
-}
-
-void WaitForDebugger(HMODULE baseAddress)
-{
-	// earlier waitfordebugger call than is in vanilla, just so we can debug stuff a little easier
-	if (CommandLine()->CheckParm("-waitfordebugger"))
-	{
-		spdlog::info("waiting for debugger...");
-
-		while (!IsDebuggerPresent())
-			Sleep(100);
-	}
 }
 
 void freeLibrary(HMODULE hLib)
@@ -157,12 +146,8 @@ bool LoadPlugins()
 bool InitialiseNorthstar()
 {
 	static bool bInitialised = false;
-
 	if (bInitialised)
-	{
-		// spdlog::warn("Called InitialiseNorthstar more than once!"); // it's actually 100% fine for that to happen
 		return false;
-	}
 
 	bInitialised = true;
 
@@ -181,8 +166,6 @@ bool InitialiseNorthstar()
 	// Write launcher version to log
 	spdlog::info("NorthstarLauncher version: {}", version);
 
-	AddDllLoadCallback("engine.dll", WaitForDebugger);
-	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 

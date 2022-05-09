@@ -3,8 +3,12 @@
 #include "dedicated.h"
 #include "hookutils.h"
 #include "gameutils.h"
+#include "tier0.h"
+#include "playlist.h"
 #include "serverauthentication.h"
 #include "masterserver.h"
+
+using namespace Tier0;
 
 bool IsDedicated()
 {
@@ -55,7 +59,7 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_Execute();
 
 	// ensure playlist initialises right, if we've not explicitly called setplaylist
-	SetCurrentPlaylist(GetCurrentPlaylistName());
+	R2::SetCurrentPlaylist(R2::GetCurrentPlaylistName());
 
 	// note: we no longer manually set map and hoststate to start server in g_pHostState, we just use +map which seems to initialise stuff
 	// better
@@ -76,7 +80,7 @@ void RunServer(CDedicatedExports* dedicated)
 			frameTitle = frameStart;
 
 			// this way of getting playercount/maxplayers honestly really sucks, but not got any other methods of doing it rn
-			const char* maxPlayers = GetCurrentPlaylistVar("max_players", false);
+			const char* maxPlayers = R2::GetCurrentPlaylistVar("max_players", false);
 			if (!maxPlayers)
 				maxPlayers = "6";
 
@@ -86,7 +90,7 @@ void RunServer(CDedicatedExports* dedicated)
 								 g_pHostState->m_levelName,
 								 g_ServerAuthenticationManager->m_additionalPlayerData.size(),
 								 maxPlayers,
-								 GetCurrentPlaylistName())
+								 R2::GetCurrentPlaylistName())
 								 .c_str());
 		}
 

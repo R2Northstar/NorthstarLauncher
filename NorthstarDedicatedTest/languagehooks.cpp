@@ -2,6 +2,7 @@
 #include "hooks.h"
 #include "languagehooks.h"
 #include "gameutils.h"
+#include "tier0.h"
 #include <filesystem>
 #include <regex>
 
@@ -61,7 +62,7 @@ char* GetGameLanguageHook()
 	bool& canOriginDictateLang = *(bool*)((char*)tier0Handle + 0xA9A90);
 
 	const char* forcedLanguage;
-	if (CommandLine()->CheckParm("-language", &forcedLanguage))
+	if (Tier0::CommandLine()->CheckParm("-language", &forcedLanguage))
 	{
 		if (!CheckLangAudioExists((char*)forcedLanguage))
 		{

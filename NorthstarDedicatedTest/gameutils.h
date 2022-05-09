@@ -1,34 +1,6 @@
 #pragma once
 #include "convar.h"
 
-// memory
-class IMemAlloc
-{
-  public:
-	struct VTable
-	{
-		void* unknown[1]; // alloc debug
-		void* (*Alloc)(IMemAlloc* memAlloc, size_t nSize);
-		void* unknown2[1]; // realloc debug
-		void* (*Realloc)(IMemAlloc* memAlloc, void* pMem, size_t nSize);
-		void* unknown3[1]; // free #1
-		void (*Free)(IMemAlloc* memAlloc, void* pMem);
-		void* unknown4[2]; // nullsubs, maybe CrtSetDbgFlag
-		size_t (*GetSize)(IMemAlloc* memAlloc, void* pMem);
-		void* unknown5[9]; // they all do literally nothing
-		void (*DumpStats)(IMemAlloc* memAlloc);
-		void (*DumpStatsFileBase)(IMemAlloc* memAlloc, const char* pchFileBase);
-		void* unknown6[4];
-		int (*heapchk)(IMemAlloc* memAlloc);
-	};
-
-	VTable* m_vtable;
-};
-
-extern IMemAlloc* g_pMemAllocSingleton;
-typedef IMemAlloc* (*CreateGlobalMemAllocType)();
-extern CreateGlobalMemAllocType CreateGlobalMemAlloc;
-
 // cmd.h
 enum class ECommandTarget_t
 {
@@ -84,33 +56,6 @@ extern Cbuf_AddTextType Cbuf_AddText;
 
 typedef void (*Cbuf_ExecuteType)();
 extern Cbuf_ExecuteType Cbuf_Execute;
-
-// commandline stuff
-class CCommandLine
-{
-  public:
-	// based on the defs in the 2013 source sdk, but for some reason has an extra function (may be another CreateCmdLine overload?)
-	// these seem to line up with what they should be though
-	virtual void CreateCmdLine(const char* commandline) {}
-	virtual void CreateCmdLine(int argc, char** argv) {}
-	virtual void unknown() {}
-	virtual const char* GetCmdLine(void) const {}
-
-	virtual const char* CheckParm(const char* psz, const char** ppszValue = 0) const {}
-	virtual void RemoveParm() const {}
-	virtual void AppendParm(const char* pszParm, const char* pszValues) {}
-
-	virtual const char* ParmValue(const char* psz, const char* pDefaultVal = 0) const {}
-	virtual int ParmValue(const char* psz, int nDefaultVal) const {}
-	virtual float ParmValue(const char* psz, float flDefaultVal) const {}
-
-	virtual int ParmCount() const {}
-	virtual int FindParm(const char* psz) const {}
-	virtual const char* GetParm(int nIndex) const {}
-	virtual void SetParm(int nIndex, char const* pParm) {}
-
-	// virtual const char** GetParms() const {}
-};
 
 // hoststate stuff
 enum HostState_t
@@ -204,22 +149,6 @@ enum server_state_t
 
 extern server_state_t* sv_m_State;
 
-// network stuff
-extern ConVar* Cvar_hostport;
-
-// playlist stuff
-typedef const char* (*GetCurrentPlaylistType)();
-extern GetCurrentPlaylistType GetCurrentPlaylistName;
-
-typedef void (*SetCurrentPlaylistType)(const char* playlistName);
-extern SetCurrentPlaylistType SetCurrentPlaylist;
-
-typedef void (*SetPlaylistVarOverrideType)(const char* varName, const char* value);
-extern SetPlaylistVarOverrideType SetPlaylistVarOverride;
-
-typedef char* (*GetCurrentPlaylistVarType)(const char* varName, bool useOverrides);
-extern GetCurrentPlaylistVarType GetCurrentPlaylistVar;
-
 // server entity stuff
 typedef void* (*Server_GetEntityByIndexType)(int index);
 extern Server_GetEntityByIndexType Server_GetEntityByIndex;
@@ -229,21 +158,9 @@ extern char* g_LocalPlayerUserID;
 extern char* g_LocalPlayerOriginToken;
 
 // misc stuff
-typedef void (*ErrorType)(const char* fmt, ...);
-extern ErrorType Error;
-
-typedef CCommandLine* (*CommandLineType)();
-extern CommandLineType CommandLine;
-
-typedef double (*Plat_FloatTimeType)();
-extern Plat_FloatTimeType Plat_FloatTime;
-
-typedef bool (*ThreadInServerFrameThreadType)();
-extern ThreadInServerFrameThreadType ThreadInServerFrameThread;
 
 typedef void* (*GetBaseLocalClientType)();
 extern GetBaseLocalClientType GetBaseLocalClient;
 
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress);
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress);
-void InitialiseTier0GameUtilFunctions(HMODULE baseAddress);

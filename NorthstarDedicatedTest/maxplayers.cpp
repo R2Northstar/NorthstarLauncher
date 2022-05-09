@@ -2,6 +2,7 @@
 #include "hooks.h"
 #include "maxplayers.h"
 #include "gameutils.h"
+#include "tier0.h"
 
 // never set this to anything below 32
 #define NEW_MAX_PLAYERS 64
@@ -106,7 +107,7 @@ void* StringTables_CreateStringTable_Hook(
 
 bool MaxPlayersIncreaseEnabled()
 {
-	return CommandLine() && CommandLine()->CheckParm("-experimentalmaxplayersincrease");
+	return Tier0::CommandLine() && Tier0::CommandLine()->CheckParm("-experimentalmaxplayersincrease");
 }
 
 ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress)

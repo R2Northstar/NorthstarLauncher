@@ -570,6 +570,7 @@
     <ClInclude Include="ExploitFixes.h" />
     <ClInclude Include="ExploitFixes_UTF8Parser.h" />
     <ClInclude Include="NSMem.h" />
+    <ClInclude Include="tier0.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
@@ -629,6 +630,7 @@
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="ExploitFixes.cpp" />
+    <ClCompile Include="tier0.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
