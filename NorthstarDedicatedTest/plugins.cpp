@@ -113,12 +113,12 @@ void initGameState()
 SQRESULT SQ_UpdateGameStateUI(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
-	gameState.map = ClientSq_getstring(sqvm, 1);
-	gameState.mapDisplayName = ClientSq_getstring(sqvm, 2);
-	gameState.playlist = ClientSq_getstring(sqvm, 3);
-	gameState.playlistDisplayName = ClientSq_getstring(sqvm, 4);
-	gameState.connected = ClientSq_getbool(sqvm, 5);
-	gameState.loading = ClientSq_getbool(sqvm, 6);
+	gameState.map = g_ClientSquirrelManager->sq_getstring(sqvm, 1);
+	gameState.mapDisplayName = g_ClientSquirrelManager->sq_getstring(sqvm, 2);
+	gameState.playlist = g_ClientSquirrelManager->sq_getstring(sqvm, 3);
+	gameState.playlistDisplayName = g_ClientSquirrelManager->sq_getstring(sqvm, 4);
+	gameState.connected = g_ClientSquirrelManager->sq_getbool(sqvm, 5);
+	gameState.loading = g_ClientSquirrelManager->sq_getbool(sqvm, 6);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	return SQRESULT_NOTNULL;
 }
@@ -128,13 +128,13 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
-	gameState.players = ClientSq_getinteger(sqvm, 1);
-	serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 2);
-	gameState.ourScore = ClientSq_getinteger(sqvm, 3);
-	gameState.secondHighestScore = ClientSq_getinteger(sqvm, 4);
-	gameState.highestScore = ClientSq_getinteger(sqvm, 5);
-	serverInfo.roundBased = ClientSq_getbool(sqvm, 6);
-	serverInfo.scoreLimit = ClientSq_getbool(sqvm, 7);
+	gameState.players = g_ClientSquirrelManager->sq_getinteger(sqvm, 1);
+	serverInfo.maxPlayers = g_ClientSquirrelManager->sq_getinteger(sqvm, 2);
+	gameState.ourScore = g_ClientSquirrelManager->sq_getinteger(sqvm, 3);
+	gameState.secondHighestScore = g_ClientSquirrelManager->sq_getinteger(sqvm, 4);
+	gameState.highestScore = g_ClientSquirrelManager->sq_getinteger(sqvm, 5);
+	serverInfo.roundBased = g_ClientSquirrelManager->sq_getbool(sqvm, 6);
+	serverInfo.scoreLimit = g_ClientSquirrelManager->sq_getbool(sqvm, 7);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
@@ -146,15 +146,15 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = ClientSq_getstring(sqvm, 1);
-	serverInfo.name = ClientSq_getstring(sqvm, 2);
-	serverInfo.password = ClientSq_getstring(sqvm, 3);
-	gameState.players = ClientSq_getinteger(sqvm, 4);
-	serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 5);
-	gameState.map = ClientSq_getstring(sqvm, 6);
-	gameState.mapDisplayName = ClientSq_getstring(sqvm, 7);
-	gameState.playlist = ClientSq_getstring(sqvm, 8);
-	gameState.playlistDisplayName = ClientSq_getstring(sqvm, 9);
+	serverInfo.id = g_ClientSquirrelManager->sq_getstring(sqvm, 1);
+	serverInfo.name = g_ClientSquirrelManager->sq_getstring(sqvm, 2);
+	serverInfo.password = g_ClientSquirrelManager->sq_getstring(sqvm, 3);
+	gameState.players = g_ClientSquirrelManager->sq_getinteger(sqvm, 4);
+	serverInfo.maxPlayers = g_ClientSquirrelManager->sq_getinteger(sqvm, 5);
+	gameState.map = g_ClientSquirrelManager->sq_getstring(sqvm, 6);
+	gameState.mapDisplayName = g_ClientSquirrelManager->sq_getstring(sqvm, 7);
+	gameState.playlist = g_ClientSquirrelManager->sq_getstring(sqvm, 8);
+	gameState.playlistDisplayName = g_ClientSquirrelManager->sq_getstring(sqvm, 9);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
@@ -164,10 +164,10 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = ClientSq_getstring(sqvm, 1);
-	serverInfo.name = ClientSq_getstring(sqvm, 2);
-	serverInfo.password = ClientSq_getstring(sqvm, 3);
-	serverInfo.maxPlayers = ClientSq_getinteger(sqvm, 4);
+	serverInfo.id = g_ClientSquirrelManager->sq_getstring(sqvm, 1);
+	serverInfo.name = g_ClientSquirrelManager->sq_getstring(sqvm, 2);
+	serverInfo.password = g_ClientSquirrelManager->sq_getstring(sqvm, 3);
+	serverInfo.maxPlayers = g_ClientSquirrelManager->sq_getinteger(sqvm, 4);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }
@@ -176,7 +176,7 @@ SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.endTime = ceil(ClientSq_getfloat(sqvm, 1));
+	serverInfo.endTime = ceil(g_ClientSquirrelManager->sq_getfloat(sqvm, 1));
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }
@@ -185,7 +185,7 @@ SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 SQRESULT SQ_SetConnected(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
-	gameState.loading = ClientSq_getbool(sqvm, 1);
+	gameState.loading = g_ClientSquirrelManager->sq_getbool(sqvm, 1);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	return SQRESULT_NOTNULL;
 }

@@ -7,13 +7,15 @@ typedef unsigned long SQUnsignedInteger;
 typedef char SQChar;
 
 typedef SQUnsignedInteger SQBool;
-typedef SQInteger SQRESULT;
 
-const SQRESULT SQRESULT_ERROR = -1;
-const SQRESULT SQRESULT_NULL = 0;
-const SQRESULT SQRESULT_NOTNULL = 1;
+enum SQRESULT : SQInteger
+{
+	SQRESULT_ERROR = -1,
+	SQRESULT_NULL = 0,
+	SQRESULT_NOTNULL = 1,
+};
 
-typedef SQInteger (*SQFunction)(void* sqvm);
+typedef SQRESULT (*SQFunction)(void* sqvm);
 
 struct CompileBufferState
 {
@@ -57,73 +59,31 @@ struct SQFuncRegistration
 };
 
 // core sqvm funcs
-typedef SQRESULT (*sq_compilebufferType)(void* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, ScriptContext a2);
-extern sq_compilebufferType ClientSq_compilebuffer;
-extern sq_compilebufferType ServerSq_compilebuffer;
-
-typedef void (*sq_pushroottableType)(void* sqvm);
-extern sq_pushroottableType ClientSq_pushroottable;
-extern sq_pushroottableType ServerSq_pushroottable;
-
-typedef SQRESULT (*sq_callType)(void* sqvm, SQInteger s1, SQBool a2, SQBool a3);
-extern sq_callType ClientSq_call;
-extern sq_callType ServerSq_call;
-
 typedef int64_t (*RegisterSquirrelFuncType)(void* sqvm, SQFuncRegistration* funcReg, char unknown);
 extern RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
 extern RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
 
+typedef SQRESULT (*sq_compilebufferType)(void* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, ScriptContext a2);
+typedef SQRESULT (*sq_callType)(void* sqvm, SQInteger s1, SQBool a2, SQBool a3);
+
 // sq stack array funcs
 typedef void (*sq_newarrayType)(void* sqvm, SQInteger stackpos);
-extern sq_newarrayType ClientSq_newarray;
-extern sq_newarrayType ServerSq_newarray;
-
 typedef SQRESULT (*sq_arrayappendType)(void* sqvm, SQInteger stackpos);
-extern sq_arrayappendType ClientSq_arrayappend;
-extern sq_arrayappendType ServerSq_arrayappend;
 
 // sq stack push funcs
-typedef void (*sq_pushstringType)(void* sqvm, const SQChar* str, SQInteger stackpos);
-extern sq_pushstringType ClientSq_pushstring;
-extern sq_pushstringType ServerSq_pushstring;
-
-// weird how these don't take a stackpos arg?
+typedef void (*sq_pushroottableType)(void* sqvm);
+typedef void (*sq_pushstringType)(void* sqvm, const SQChar* str, SQInteger length);
 typedef void (*sq_pushintegerType)(void* sqvm, SQInteger i);
-extern sq_pushintegerType ClientSq_pushinteger;
-extern sq_pushintegerType ServerSq_pushinteger;
-
 typedef void (*sq_pushfloatType)(void* sqvm, SQFloat f);
-extern sq_pushfloatType ClientSq_pushfloat;
-extern sq_pushfloatType ServerSq_pushfloat;
-
 typedef void (*sq_pushboolType)(void* sqvm, SQBool b);
-extern sq_pushboolType ClientSq_pushbool;
-extern sq_pushboolType ServerSq_pushbool;
-
-typedef SQInteger (*sq_pusherrorType)(void* sqvm, const SQChar* error);
-extern sq_pusherrorType ClientSq_pusherror;
-extern sq_pusherrorType ServerSq_pusherror;
+typedef SQInteger (*sq_raiseerrorType)(void* sqvm, const SQChar* error);
 
 // sq stack get funcs
 typedef const SQChar* (*sq_getstringType)(void* sqvm, SQInteger stackpos);
-extern sq_getstringType ClientSq_getstring;
-extern sq_getstringType ServerSq_getstring;
-
 typedef SQInteger (*sq_getintegerType)(void* sqvm, SQInteger stackpos);
-extern sq_getintegerType ClientSq_getinteger;
-extern sq_getintegerType ServerSq_getinteger;
-
 typedef SQFloat (*sq_getfloatType)(void*, SQInteger stackpos);
-extern sq_getfloatType ClientSq_getfloat;
-extern sq_getfloatType ServerSq_getfloat;
-
 typedef SQBool (*sq_getboolType)(void*, SQInteger stackpos);
-extern sq_getboolType ClientSq_getbool;
-extern sq_getboolType ServerSq_getbool;
-
-typedef SQRESULT (*sq_getType)(void* sqvm, SQInteger idx);
-extern sq_getType ServerSq_sq_get;
-extern sq_getType ClientSq_sq_get;
+typedef SQRESULT (*sq_getType)(void* sqvm, SQInteger stackpos);
 
 template <ScriptContext context> class SquirrelManager
 {
@@ -133,6 +93,24 @@ template <ScriptContext context> class SquirrelManager
   public:
 	void* sqvm;
 	void* sqvm2;
+	#pragma region SQVM funcs
+	sq_compilebufferType sq_compilebuffer;
+	sq_callType sq_call;
+	sq_newarrayType sq_newarray;
+	sq_arrayappendType sq_arrayappend;
+	sq_pushroottableType sq_pushroottable;
+	sq_pushstringType sq_pushstring;
+	sq_pushintegerType sq_pushinteger;
+	sq_pushfloatType sq_pushfloat;
+	sq_pushboolType sq_pushbool;
+	sq_raiseerrorType sq_raiseerror;
+
+	sq_getstringType sq_getstring;
+	sq_getintegerType sq_getinteger;
+	sq_getfloatType sq_getfloat;
+	sq_getboolType sq_getbool;
+	sq_getType sq_get;
+	#pragma endregion
 
   public:
 	SquirrelManager() : sqvm(nullptr) {}
@@ -160,8 +138,6 @@ template <ScriptContext context> class SquirrelManager
 
 	void ExecuteCode(const char* code)
 	{
-		// ttf2sdk checks ThreadIsInMainThread here, might be good to do that? doesn't seem like an issue rn tho
-
 		if (!sqvm)
 		{
 			spdlog::error("Cannot execute code, {} squirrel vm is not initialised", GetContextName(context));
@@ -173,94 +149,51 @@ template <ScriptContext context> class SquirrelManager
 		std::string strCode(code);
 		CompileBufferState bufferState = CompileBufferState(strCode);
 
-		SQRESULT compileResult;
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			compileResult = ClientSq_compilebuffer(sqvm2, &bufferState, "console", -1, context);
-		else if (context == ScriptContext::SERVER)
-			compileResult = ServerSq_compilebuffer(sqvm2, &bufferState, "console", -1, context);
-
+		SQRESULT compileResult = sq_compilebuffer(sqvm2, &bufferState, "console", -1, context);
 		spdlog::info("sq_compilebuffer returned {}", compileResult);
 		if (compileResult >= 0)
 		{
-			if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			{
-				ClientSq_pushroottable(sqvm2);
-				SQRESULT callResult = ClientSq_call(sqvm2, 1, false, false);
-				spdlog::info("sq_call returned {}", callResult);
-			}
-			else if (context == ScriptContext::SERVER)
-			{
-				ServerSq_pushroottable(sqvm2);
-				SQRESULT callResult = ServerSq_call(sqvm2, 1, false, false);
-				spdlog::info("sq_call returned {}", callResult);
-			}
+			sq_pushroottable(sqvm2);
+			SQRESULT callResult = sq_call(sqvm2, 1, false, false);
+			spdlog::info("sq_call returned {}", callResult);
 		}
 	}
 
 	int setupfunc(const char* funcname)
 	{
-		int result = -2;
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-		{
-			ClientSq_pushroottable(sqvm2);
-			ClientSq_pushstring(sqvm2, funcname, -1);
-			result = ClientSq_sq_get(sqvm2, -2);
-			if (result != SQRESULT_ERROR)
-			{
-				ClientSq_pushroottable(sqvm2);
-			}
-		}
-		else if (context == ScriptContext::SERVER)
-		{
-			ServerSq_pushroottable(sqvm2);
-			ServerSq_pushstring(sqvm2, funcname, -1);
-			result = ServerSq_sq_get(sqvm2, -2);
-			if (result != SQRESULT_ERROR)
-			{
-				ServerSq_pushroottable(sqvm2);
-			}
-		}
+		sq_pushroottable(sqvm2);
+		sq_pushstring(sqvm2, funcname, -1);
+
+		int result = sq_get(sqvm2, -2);
+		if (result != SQRESULT_ERROR)
+			sq_pushroottable(sqvm2);
+
 		return result;
 	}
 
 	void pusharg(int arg)
 	{
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			ClientSq_pushinteger(sqvm2, arg);
-		else if (context == ScriptContext::SERVER)
-			ServerSq_pushinteger(sqvm2, arg);
+		sq_pushinteger(sqvm2, arg);
 	}
+
 	void pusharg(const char* arg)
 	{
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			ClientSq_pushstring(sqvm2, arg, -1);
-		else if (context == ScriptContext::SERVER)
-			ServerSq_pushstring(sqvm2, arg, -1);
+		sq_pushstring(sqvm2, arg, -1);
 	}
+
 	void pusharg(float arg)
 	{
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			ClientSq_pushfloat(sqvm2, arg);
-		else if (context == ScriptContext::SERVER)
-			ServerSq_pushfloat(sqvm2, arg);
+		sq_pushfloat(sqvm2, arg);
 	}
+
 	void pusharg(bool arg)
 	{
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			ClientSq_pushbool(sqvm2, arg);
-		else if (context == ScriptContext::SERVER)
-			ServerSq_pushbool(sqvm2, arg);
+		sq_pushbool(sqvm2, arg);
 	}
 
 	int call(int args)
 	{
-		int result = -2;
-		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
-			result = ClientSq_call(sqvm2, args + 1, false, false);
-		else if (context == ScriptContext::SERVER)
-			result = ServerSq_call(sqvm2, args + 1, false, false);
-
-		return result;
+		return sq_call(sqvm2, args + 1, false, false);
 	}
 
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func)

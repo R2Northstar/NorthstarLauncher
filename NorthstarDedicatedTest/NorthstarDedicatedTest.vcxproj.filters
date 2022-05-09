@@ -82,9 +82,6 @@
     <Filter Include="Header Files\Shared\Mods\Compiled">
       <UniqueIdentifier>{d1f93d1e-0ecb-44fe-a277-d3e75aec2570}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Shared\Mods\Compiled">
-      <UniqueIdentifier>{14fc0931-acad-46ec-a55e-94f4469d4235}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Server">
       <UniqueIdentifier>{3d41d3fc-8a3b-4358-b3e8-4f06dc96abfe}</UniqueIdentifier>
     </Filter>
@@ -132,6 +129,9 @@
     </Filter>
     <Filter Include="Source Files\Server\Dedicated">
       <UniqueIdentifier>{947835db-67d6-42c0-870d-62743f85231f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shared\Mods\Compiled Assets">
+      <UniqueIdentifier>{14fc0931-acad-46ec-a55e-94f4469d4235}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1560,7 +1560,7 @@
       <Filter>Source Files\Shared</Filter>
     </ClCompile>
     <ClCompile Include="scriptsrson.cpp">
-      <Filter>Source Files\Shared\Mods\Compiled</Filter>
+      <Filter>Source Files\Shared\Mods\Compiled Assets</Filter>
     </ClCompile>
     <ClCompile Include="serverauthentication.cpp">
       <Filter>Source Files\Server\Authentication</Filter>
@@ -1572,7 +1572,7 @@
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="keyvalues.cpp">
-      <Filter>Source Files\Shared\Mods\Compiled</Filter>
+      <Filter>Source Files\Shared\Mods\Compiled Assets</Filter>
     </ClCompile>
     <ClCompile Include="masterserver.cpp">
       <Filter>Source Files\Shared</Filter>
@@ -1599,7 +1599,7 @@
       <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="pdef.cpp">
-      <Filter>Source Files\Shared\Mods\Compiled</Filter>
+      <Filter>Source Files\Shared\Mods\Compiled Assets</Filter>
     </ClCompile>
     <ClCompile Include="clientauthhooks.cpp">
       <Filter>Source Files\Client</Filter>

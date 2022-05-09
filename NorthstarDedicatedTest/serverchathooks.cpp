@@ -142,9 +142,9 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 
 SQRESULT SQ_SendMessage(void* sqvm)
 {
-	int playerIndex = ServerSq_getinteger(sqvm, 1);
-	const char* text = ServerSq_getstring(sqvm, 2);
-	bool isTeam = ServerSq_getbool(sqvm, 3);
+	int playerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
+	const char* text = g_ServerSquirrelManager->sq_getstring(sqvm, 2);
+	bool isTeam = g_ServerSquirrelManager->sq_getbool(sqvm, 3);
 
 	ChatSendMessage(playerIndex, text, isTeam);
 
@@ -153,16 +153,16 @@ SQRESULT SQ_SendMessage(void* sqvm)
 
 SQRESULT SQ_BroadcastMessage(void* sqvm)
 {
-	int fromPlayerIndex = ServerSq_getinteger(sqvm, 1);
-	int toPlayerIndex = ServerSq_getinteger(sqvm, 2);
-	const char* text = ServerSq_getstring(sqvm, 3);
-	bool isTeam = ServerSq_getbool(sqvm, 4);
-	bool isDead = ServerSq_getbool(sqvm, 5);
-	int messageType = ServerSq_getinteger(sqvm, 6);
+	int fromPlayerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
+	int toPlayerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 2);
+	const char* text = g_ServerSquirrelManager->sq_getstring(sqvm, 3);
+	bool isTeam = g_ServerSquirrelManager->sq_getbool(sqvm, 4);
+	bool isDead = g_ServerSquirrelManager->sq_getbool(sqvm, 5);
+	int messageType = g_ServerSquirrelManager->sq_getinteger(sqvm, 6);
 
 	if (messageType < 1)
 	{
-		ServerSq_pusherror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		g_ServerSquirrelManager->sq_raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
 

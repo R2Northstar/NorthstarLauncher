@@ -58,8 +58,8 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 // void NSChatWrite( int context, string str )
 static SQRESULT SQ_ChatWrite(void* sqvm)
 {
-	int context = ClientSq_getinteger(sqvm, 1);
-	const char* str = ClientSq_getstring(sqvm, 2);
+	int context = g_ClientSquirrelManager->sq_getinteger(sqvm, 1);
+	const char* str = g_ClientSquirrelManager->sq_getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).Write(str);
 	return SQRESULT_NOTNULL;
@@ -68,8 +68,8 @@ static SQRESULT SQ_ChatWrite(void* sqvm)
 // void NSChatWriteRaw( int context, string str )
 static SQRESULT SQ_ChatWriteRaw(void* sqvm)
 {
-	int context = ClientSq_getinteger(sqvm, 1);
-	const char* str = ClientSq_getstring(sqvm, 2);
+	int context = g_ClientSquirrelManager->sq_getinteger(sqvm, 1);
+	const char* str = g_ClientSquirrelManager->sq_getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).InsertText(str);
 	return SQRESULT_NOTNULL;
@@ -78,8 +78,8 @@ static SQRESULT SQ_ChatWriteRaw(void* sqvm)
 // void NSChatWriteLine( int context, string str )
 static SQRESULT SQ_ChatWriteLine(void* sqvm)
 {
-	int context = ClientSq_getinteger(sqvm, 1);
-	const char* str = ClientSq_getstring(sqvm, 2);
+	int context = g_ClientSquirrelManager->sq_getinteger(sqvm, 1);
+	const char* str = g_ClientSquirrelManager->sq_getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).WriteLine(str);
 	return SQRESULT_NOTNULL;

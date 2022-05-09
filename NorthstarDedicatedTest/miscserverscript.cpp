@@ -22,12 +22,12 @@ void* GetPlayerByIndex(int playerIndex)
 // void function NSEarlyWritePlayerIndexPersistenceForLeave( int playerIndex )
 SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 {
-	int playerIndex = ServerSq_getinteger(sqvm, 1);
+	int playerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
 	void* player = GetPlayerByIndex(playerIndex);
 
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
-		ServerSq_pusherror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
+		g_ServerSquirrelManager->sq_raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -39,22 +39,22 @@ SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 // bool function NSIsWritingPlayerPersistence()
 SQRESULT SQ_IsWritingPlayerPersistence(void* sqvm)
 {
-	ServerSq_pushbool(sqvm, g_MasterServerManager->m_bSavingPersistentData);
+	g_ServerSquirrelManager->sq_pushbool(sqvm, g_MasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSIsPlayerIndexLocalPlayer( int playerIndex )
 SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 {
-	int playerIndex = ServerSq_getinteger(sqvm, 1);
+	int playerIndex = g_ServerSquirrelManager->sq_getinteger(sqvm, 1);
 	void* player = GetPlayerByIndex(playerIndex);
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
-		ServerSq_pusherror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
+		g_ServerSquirrelManager->sq_raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
 		return SQRESULT_ERROR;
 	}
 
-	ServerSq_pushbool(sqvm, !strcmp(g_LocalPlayerUserID, (char*)player + 0xF500));
+	g_ServerSquirrelManager->sq_pushbool(sqvm, !strcmp(g_LocalPlayerUserID, (char*)player + 0xF500));
 	return SQRESULT_NOTNULL;
 }
 
