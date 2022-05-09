@@ -23,7 +23,7 @@ void TryCreateGlobalMemAlloc()
 	Tier0::g_pMemAllocSingleton = CreateGlobalMemAlloc(); // if it already exists, this returns the preexisting IMemAlloc instance
 }
 
-ON_DLL_LOAD("tier0.dll", Tier0GameFuncs, (HMODULE baseAddress)
+ON_DLL_LOAD("tier0.dll", Tier0GameFuncs, [](HMODULE baseAddress)
 {
 	// shouldn't be necessary, but do this just in case
 	TryCreateGlobalMemAlloc();

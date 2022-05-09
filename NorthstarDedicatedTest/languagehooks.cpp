@@ -114,7 +114,7 @@ char* GetGameLanguageHook()
 	return lang;
 }
 
-ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xF560, &GetGameLanguageHook, reinterpret_cast<LPVOID*>(&GetGameLanguageOriginal));

@@ -173,12 +173,12 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineServerChatHooks, [](HMODULE baseAddress)
 {
 	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
 })
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, [](HMODULE baseAddress)
 {
 	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)((char*)baseAddress + 0x1595C0);
 	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)((char*)baseAddress + 0x26AA10);

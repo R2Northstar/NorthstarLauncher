@@ -37,8 +37,7 @@ class __dllLoadCallback
 #define __STR(s) #s
 
 #define __ON_DLL_LOAD(dllName, func, side, counter, uniquestr, reliesOn) \
-void CONCAT(__callbackFunc, uniquestr, counter) func \
-__dllLoadCallback CONCAT(__dllLoadCallbackInstance, uniquestr, counter)(side, dllName, CONCAT(__callbackFunc, uniquestr, counter), __STR(uniquestr), reliesOn); 
+__dllLoadCallback CONCAT(__dllLoadCallbackInstance, uniquestr, counter)(side, dllName, func, __STR(uniquestr), reliesOn); 
 
 #define ON_DLL_LOAD(dllName, uniquestr, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::UNSIDED, __LINE__, uniquestr, "")
 #define ON_DLL_LOAD_RELIESON(dllName, uniquestr, reliesOn, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::UNSIDED, __LINE__, uniquestr, __STR(reliesOn))

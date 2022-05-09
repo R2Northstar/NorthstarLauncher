@@ -207,7 +207,7 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 	return ret;
 }
 
-ON_DLL_LOAD("engine.dll", RpakFilesystem, (HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", RpakFilesystem, [](HMODULE baseAddress)
 {
 	g_pPakLoadManager = new PakLoadManager;
 

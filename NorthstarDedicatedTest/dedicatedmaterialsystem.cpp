@@ -47,7 +47,7 @@ HRESULT __stdcall D3D11CreateDeviceHook(
 		pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel, ppImmediateContext);
 }
 
-ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, (HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xD9A0E, &D3D11CreateDeviceHook, reinterpret_cast<LPVOID*>(&D3D11CreateDevice));

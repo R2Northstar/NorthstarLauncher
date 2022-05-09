@@ -76,7 +76,7 @@ int GetCurrentGamemodeMaxPlayersHook()
 	return maxPlayers;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAddress)
 {
 	// playlist is the name of the command on respawn servers, but we already use setplaylist so can't get rid of it
 	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);

@@ -235,7 +235,7 @@ template <ScriptContext context> void ConCommand_script(const CCommand& args)
 		g_pServerSquirrel->ExecuteCode(args.ArgS());
 }
 
-ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 
@@ -258,7 +258,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddr
 		&SQPrintHook<ScriptContext::UI>,
 		reinterpret_cast<LPVOID*>(&UISQPrint)); // ui print function
 	RegisterConCommand("script_ui", ConCommand_script<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
-
+	
 	g_pClientSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
 	g_pUISquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
 
@@ -322,7 +322,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddr
 		reinterpret_cast<LPVOID*>(&ClientCallScriptInitCallback)); // client callscriptinitcallback function
 })
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, [](HMODULE baseAddress)
 {
 	g_pServerSquirrel = new SquirrelManager<ScriptContext::SERVER>;
 

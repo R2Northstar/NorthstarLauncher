@@ -32,7 +32,7 @@ CvarIsFlagSetType CvarIsFlagSet;
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
-ON_DLL_LOAD("engine.dll", ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", ConVar, [](HMODULE baseAddress)
 {
 	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
 	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);

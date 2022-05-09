@@ -571,7 +571,7 @@ void ConCommand_reload_mods(const CCommand& args)
 	g_ModManager->LoadMods();
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, [](HMODULE baseAddress)
 {
 	g_ModManager = new ModManager;
 

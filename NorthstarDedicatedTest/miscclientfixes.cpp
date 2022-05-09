@@ -29,7 +29,7 @@ void* CrashingWeaponActivityFunc1Hook(void* a1)
 	return CrashingWeaponActivityFunc1(a1);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", MiscClientFixes, ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", MiscClientFixes, ConVar, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 

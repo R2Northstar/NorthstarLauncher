@@ -110,7 +110,7 @@ bool MaxPlayersIncreaseEnabled()
 	return Tier0::CommandLine() && Tier0::CommandLine()->CheckParm("-experimentalmaxplayersincrease");
 }
 
-ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, [](HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -322,7 +322,7 @@ __int64 __fastcall SendPropArray2_Hook(__int64 recvProp, int elements, int flags
 	return SendPropArray2_Original(recvProp, elements, flags, name, proxyFn, unk1);
 }
 
-ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -500,7 +500,7 @@ __int64 __fastcall RecvPropArray2_Hook(__int64 recvProp, int elements, int flags
 	return RecvPropArray2_Original(recvProp, elements, flags, name, proxyFn);
 }
 
-ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (HMODULE baseAddress)
+ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, [](HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;

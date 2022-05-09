@@ -16,7 +16,7 @@ char DrawRUIFuncHook(void* a1, float* a2)
 	return DrawRUIFunc(a1, a2);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", RUI, ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", RUI, ConVar, [](HMODULE baseAddress)
 {
 	Cvar_rui_drawEnable = new ConVar("rui_drawEnable", "1", FCVAR_CLIENTDLL, "Controls whether RUI should be drawn");
 

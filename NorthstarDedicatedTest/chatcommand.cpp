@@ -30,7 +30,7 @@ void ConCommand_log(const CCommand& args)
 	}
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientChatCommand, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientChatCommand, ConCommand, [](HMODULE baseAddress)
 {
 	ClientSayText = (ClientSayTextType)((char*)baseAddress + 0x54780);
 	RegisterConCommand("say", ConCommand_say, "Enters a message in public chat", FCVAR_CLIENTDLL);

@@ -34,7 +34,7 @@ bool readingOriginalFile;
 std::string currentModPath;
 SourceInterface<IFileSystem>* g_Filesystem;
 
-ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (HMODULE baseAddress)
+ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, [](HMODULE baseAddress)
 {
 	g_Filesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 

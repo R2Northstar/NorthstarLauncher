@@ -85,7 +85,7 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x22E580, &CHudChat__AddGameLineHook, reinterpret_cast<LPVOID*>(&CHudChat__AddGameLine));

@@ -612,7 +612,7 @@ void ConCommand_ns_resetpersistence(const CCommand& args)
 	g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = true;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, [](HMODULE baseAddress)
 {
 	g_ServerAuthenticationManager = new ServerAuthenticationManager;
 

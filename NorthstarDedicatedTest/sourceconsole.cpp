@@ -84,7 +84,7 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 void SourceConsoleSink::flush_() {}
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, [](HMODULE baseAddress)
 {
 	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
 	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);

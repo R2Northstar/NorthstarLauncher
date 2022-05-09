@@ -408,7 +408,7 @@ SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, [](HMODULE baseAddress)
 {
 	g_pUISquirrel->AddFuncRegistration("bool", "NSIsMasterServerAuthenticated", "", "", SQ_IsMasterServerAuthenticated);
 	g_pUISquirrel->AddFuncRegistration("void", "NSRequestServerList", "", "", SQ_RequestServerList);

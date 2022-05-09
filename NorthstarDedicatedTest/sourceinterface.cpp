@@ -36,7 +36,7 @@ void* EngineCreateInterfaceHook(const char* pName, int* pReturnCode)
 	return ret;
 }
 
-ON_DLL_LOAD("client.dll", ClientInterface, (HMODULE baseAddress)
+ON_DLL_LOAD("client.dll", ClientInterface, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
@@ -46,7 +46,7 @@ ON_DLL_LOAD("client.dll", ClientInterface, (HMODULE baseAddress)
 		reinterpret_cast<LPVOID*>(&ClientCreateInterfaceOriginal));
 })
 
-ON_DLL_LOAD("server.dll", ServerInterface, (HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", ServerInterface, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
@@ -56,7 +56,7 @@ ON_DLL_LOAD("server.dll", ServerInterface, (HMODULE baseAddress)
 		reinterpret_cast<LPVOID*>(&ServerCreateInterfaceOriginal));
 })
 
-ON_DLL_LOAD("engine.dll", EngineInterface, (HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineInterface, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

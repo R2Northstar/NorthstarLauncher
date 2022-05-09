@@ -1303,7 +1303,7 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
 
-ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddress)
 {
 	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
 	// unfortunately lib doesn't let us specify a port and still have https work

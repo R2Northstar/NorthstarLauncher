@@ -14,7 +14,7 @@ KeyValues__LoadFromBufferType KeyValues__LoadFromBuffer;
 char KeyValues__LoadFromBufferHook(
 	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
 
-ON_DLL_LOAD("engine.dll", KeyValues, (HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

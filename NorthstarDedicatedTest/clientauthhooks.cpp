@@ -34,7 +34,7 @@ void AuthWithStryderHook(void* a1)
 	AuthWithStryder(a1);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, [](HMODULE baseAddress)
 {
 	// this cvar will save to cfg once initially agreed with
 	Cvar_ns_has_agreed_to_send_token = new ConVar(

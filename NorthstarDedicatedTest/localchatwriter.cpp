@@ -437,7 +437,7 @@ void LocalChatWriter::InsertDefaultFade()
 	}
 }
 
-ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, [](HMODULE baseAddress)
 {
 	gGameSettings = (CGameSettings**)((char*)baseAddress + 0x11BAA48);
 	gChatFadeLength = (CGameFloatVar**)((char*)baseAddress + 0x11BAB78);

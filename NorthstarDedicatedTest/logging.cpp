@@ -408,7 +408,7 @@ bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
 	return true;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 
@@ -475,7 +475,7 @@ void TextMsgHook(BFRead* msg)
 	}
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 

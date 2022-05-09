@@ -152,7 +152,7 @@ void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xABCB0, &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));

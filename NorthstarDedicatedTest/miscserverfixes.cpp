@@ -5,7 +5,7 @@
 
 #include "NSMem.h"
 
-ON_DLL_LOAD("server.dll", MiscServerFixes, (HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", MiscServerFixes, [](HMODULE baseAddress)
 {
 	uintptr_t ba = (uintptr_t)baseAddress;
 
