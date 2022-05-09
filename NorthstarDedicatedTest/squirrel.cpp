@@ -5,6 +5,7 @@
 #include "concommand.h"
 #include "modmanager.h"
 #include "gameutils.h"
+#include "NSMem.h"
 
 RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
 RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
@@ -142,7 +143,8 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 				.c_str(),
 			cmd_source_t::kCommandSrcCode);
 
-		// TODO: for ui script, we need to prevent the infinite compilation error loop the game will get into on uiscript_reset if there is a compilation error
+		if (realContext == ScriptContext::UI)
+			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "toggleconsole", cmd_source_t::kCommandSrcCode); // likely temp: show console so user can see any errors
 	}
 
 	// dont call the original function since it kills game lol
@@ -295,6 +297,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddr
 	g_pUISquirrel->sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
 	g_pClientSquirrel->sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
 	g_pUISquirrel->sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
+
+	// uiscript_reset concommand: don't loop forever if compilation fails
+	NSMem::NOP((uintptr_t)baseAddress + 0x3C6E4C, 6);
 
 	ENABLER_CREATEHOOK(
 		hook,
