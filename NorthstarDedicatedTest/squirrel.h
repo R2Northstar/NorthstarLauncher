@@ -14,14 +14,11 @@ typedef SQInteger SQRESULT;
 
 #define uint8 char
 
-
-
 const SQRESULT SQRESULT_ERROR = -1;
 const SQRESULT SQRESULT_NULL = 0;
 const SQRESULT SQRESULT_NOTNULL = 1;
 
 typedef SQInteger (*SQFunction)(void* sqvm);
-
 
 const char* sq_getTypeName(int type);
 
@@ -534,10 +531,6 @@ struct SQArray
 		}                                                                                                                                  \
 	}
 
-
-
-
-
 // core sqvm funcs
 typedef SQRESULT (*sq_compilebufferType)(void* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, ScriptContext a2);
 extern sq_compilebufferType ClientSq_compilebuffer;
@@ -608,16 +601,13 @@ extern sq_getType ServerSq_sq_get;
 extern sq_getType ClientSq_sq_get;
 
 // sq table functions
-typedef SQRESULT(*sq_newTableType)(void* sqvm);
+typedef SQRESULT (*sq_newTableType)(void* sqvm);
 extern sq_newTableType ServerSq_newTable;
 extern sq_newTableType ClientSq_newTable;
 
-typedef SQRESULT(*sq_newSlotType)(void* sqvm, int idx, bool bStatic);
+typedef SQRESULT (*sq_newSlotType)(void* sqvm, int idx, bool bStatic);
 extern sq_newSlotType ServerSq_newSlot;
 extern sq_newSlotType ClientSq_newSlot;
-
-
-
 
 template <ScriptContext context> class SquirrelManager
 {
