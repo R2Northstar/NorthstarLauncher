@@ -92,10 +92,7 @@ sq_newSlotType ClientSq_newSlot;
 sq_newTableType ServerSq_newTable;
 sq_newTableType ClientSq_newTable;
 
-
 template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args);
-
-
 
 // inits
 SquirrelManager<ScriptContext::CLIENT>* g_ClientSquirrelManager;
@@ -151,7 +148,7 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 
 	ClientSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
 
-	//Table functions
+	// Table functions
 	ClientSq_newTable = (sq_newTableType)((char*)baseAddress + 0x5940);
 	ClientSq_newSlot = (sq_newSlotType)((char*)baseAddress + 0x70B0);
 
@@ -207,7 +204,6 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 	ServerSq_newSlot = (sq_newSlotType)((char*)baseAddress + 0x7080);
 	ServerSq_newTable = (sq_newTableType)((char*)baseAddress + 0x3960);
 
-	
 	ENABLER_CREATEHOOK(
 		hook,
 		(char*)baseAddress + 0x1FE90,
@@ -465,8 +461,6 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 	else if (context == ScriptContext::SERVER)
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
 }
-
-
 
 const char* sq_getTypeName(int type)
 {
