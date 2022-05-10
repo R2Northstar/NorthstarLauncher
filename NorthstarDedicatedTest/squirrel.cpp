@@ -470,7 +470,8 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 
 const char* sq_getTypeName(int type)
 {
-	switch (type) {
+	switch (type)
+	{
 	case OT_ASSET:
 		return "asset";
 	case OT_INTEGER:
@@ -515,7 +516,6 @@ const char* sq_getTypeName(int type)
 		return "instance";
 	case 0xA400000:
 		return "entity";
-
 	}
 	return "";
 }
