@@ -107,11 +107,55 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			else
 				convar->HelpString = "";
 
-			// todo: could possibly parse FCVAR names here instead, would be easier
+			convar->Flags = FCVAR_NONE;
+
 			if (convarObj.HasMember("Flags"))
-				convar->Flags = convarObj["Flags"].GetInt();
-			else
-				convar->Flags = FCVAR_NONE;
+			{
+				// read raw integer flags
+				if (convarObj["Flags"].IsInt())
+					convar->Flags = convarObj["Flags"].GetInt();
+				else if (convarObj["Flags"].IsString())
+				{
+					// parse cvar flags from string
+					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
+
+					std::string sFlags = convarObj["Flags"].GetString();
+					sFlags += '|'; // add additional | so we register the last flag
+					std::string sCurrentFlag;
+
+					for (int i = 0; i < sFlags.length(); i++)
+					{
+						if (isspace(sFlags[i]))
+							continue;
+
+						// if we encounter a |, add current string as a flag
+						if (sFlags[i] == '|')
+						{
+							bool bHasFlags = false;
+							int iCurrentFlags;
+
+							for (auto& flagPair : g_PrintCommandFlags)
+							{
+								if (!sCurrentFlag.compare(flagPair.second))
+								{
+									iCurrentFlags = flagPair.first;
+									bHasFlags = true;
+									break;
+								}
+							}
+
+							if (bHasFlags)
+								convar->Flags |= iCurrentFlags;
+							else
+								spdlog::warn("Mod ConVar {} has unknown flag {}", convar->Name, sCurrentFlag);
+
+							sCurrentFlag = "";
+						}
+						else
+							sCurrentFlag += sFlags[i];
+					}
+				}
+			}
 
 			ConVars.push_back(convar);
 		}
