@@ -3,6 +3,20 @@
 #include <WinSock2.h>
 #include <string>
 #include <cstring>
+
+extern ConVar* Cvar_ns_masterserver_hostname;
+extern ConVar* Cvar_ns_report_server_to_masterserver;
+extern ConVar* Cvar_ns_report_sp_server_to_masterserver;
+
+extern ConVar* Cvar_ns_server_name;
+extern ConVar* Cvar_ns_server_desc;
+extern ConVar* Cvar_ns_server_password;
+
+extern ConVar* Cvar_ns_curl_log_enable;
+
+extern ConVar* Cvar_hostname;
+extern ConVar* Cvar_hostport;
+
 struct RemoteModInfo
 {
   public:
@@ -114,14 +128,21 @@ class MasterServerManager
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
-	void AuthenticateWithOwnServer(char* uid, char* playerToken);
-	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
-	void
-	AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
-	void UpdateServerMapAndPlaylist(char* map, char* playlist, int playerCount);
+	void AuthenticateOriginWithMasterServer(const char* uid, const char* originToken);
+	void AuthenticateWithOwnServer(const char* uid, const char* playerToken);
+	void AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password);
+	void AddSelfToServerList(
+		int port,
+		int authPort,
+		const char* name,
+		const char* description,
+		const char* map,
+		const char* playlist,
+		int maxPlayers,
+		const char* password);
+	void UpdateServerMapAndPlaylist(const char* map, const char* playlist, int playerCount);
 	void UpdateServerPlayerCount(int playerCount);
-	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
+	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
 };
 std::string unescape_unicode(const std::string& str);

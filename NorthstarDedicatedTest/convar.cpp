@@ -26,9 +26,6 @@ ConVarMallocType conVarMalloc;
 void* g_pConVar_Vtable = nullptr;
 void* g_pIConVar_Vtable = nullptr;
 
-typedef bool (*CvarIsFlagSetType)(ConVar* self, int flags);
-CvarIsFlagSetType CvarIsFlagSet;
-
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
@@ -42,9 +39,6 @@ ON_DLL_LOAD("engine.dll", ConVar, [](HMODULE baseAddress)
 
 	g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	g_pCVar = *g_pCVarInterface;
-
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417FA0, &ConVar::IsFlagSet, reinterpret_cast<LPVOID*>(&CvarIsFlagSet));
 })
 
 //-----------------------------------------------------------------------------
@@ -475,16 +469,12 @@ bool ConVar::IsCommand(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: Test each ConVar query before setting the value.
-// Input  : *pConVar - nFlags
+// Input  : nFlags
 // Output : False if change is permitted, true if not.
 //-----------------------------------------------------------------------------
-bool ConVar::IsFlagSet(ConVar* pConVar, int nFlags)
+bool ConVar::IsFlagSet(int nFlags) const
 {
-	// unrestrict FCVAR_DEVELOPMENTONLY and FCVAR_HIDDEN
-	if (pConVar && (nFlags == FCVAR_DEVELOPMENTONLY || nFlags == FCVAR_HIDDEN))
-		return false;
-
-	return CvarIsFlagSet(pConVar, nFlags);
+	return m_ConCommandBase.IsFlagSet(nFlags);
 }
 
 //-----------------------------------------------------------------------------

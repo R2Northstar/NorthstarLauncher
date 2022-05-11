@@ -5,10 +5,12 @@
 #include "gameutils.h"
 #include "tier0.h"
 #include "playlist.h"
+#include "hoststate.h"
 #include "serverauthentication.h"
 #include "masterserver.h"
 
 using namespace Tier0;
+using namespace R2;
 
 bool IsDedicated()
 {
@@ -53,16 +55,13 @@ void RunServer(CDedicatedExports* dedicated)
 	if (!CommandLine()->CheckParm("+map"))
 		CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
+	// ensure playlist initialises right, if we've not explicitly called setplaylist
+	SetCurrentPlaylist(GetCurrentPlaylistName());
+
 	// run server autoexec and re-run commandline
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
-
-	// ensure playlist initialises right, if we've not explicitly called setplaylist
-	R2::SetCurrentPlaylist(R2::GetCurrentPlaylistName());
-
-	// note: we no longer manually set map and hoststate to start server in g_pHostState, we just use +map which seems to initialise stuff
-	// better
 
 	// get tickinterval
 	ConVar* Cvar_base_tickinterval_mp = g_pCVar->FindVar("base_tickinterval_mp");
@@ -80,7 +79,7 @@ void RunServer(CDedicatedExports* dedicated)
 			frameTitle = frameStart;
 
 			// this way of getting playercount/maxplayers honestly really sucks, but not got any other methods of doing it rn
-			const char* maxPlayers = R2::GetCurrentPlaylistVar("max_players", false);
+			const char* maxPlayers = GetCurrentPlaylistVar("max_players", false);
 			if (!maxPlayers)
 				maxPlayers = "6";
 
@@ -90,7 +89,7 @@ void RunServer(CDedicatedExports* dedicated)
 								 g_pHostState->m_levelName,
 								 g_ServerAuthenticationManager->m_additionalPlayerData.size(),
 								 maxPlayers,
-								 R2::GetCurrentPlaylistName())
+								 GetCurrentPlaylistName())
 								 .c_str());
 		}
 

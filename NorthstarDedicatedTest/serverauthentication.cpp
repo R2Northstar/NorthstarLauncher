@@ -7,6 +7,7 @@
 #include "masterserver.h"
 #include "httplib.h"
 #include "gameutils.h"
+#include "hoststate.h"
 #include "bansystem.h"
 #include "miscserverscript.h"
 #include "concommand.h"
@@ -499,7 +500,7 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 	char ret = CNetChan___ProcessMessages(self, buf);
 
 	// check processing limits, unless we're in a level transition
-	if (g_pHostState->m_iCurrentState == HostState_t::HS_RUN && ThreadInServerFrameThread())
+	if (R2::g_pHostState->m_iCurrentState == R2::HostState_t::HS_RUN && ThreadInServerFrameThread())
 	{
 		// player that sent the message
 		void* sender = *(void**)((char*)self + 368);

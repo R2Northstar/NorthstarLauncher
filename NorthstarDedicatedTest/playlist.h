@@ -1,4 +1,6 @@
 #pragma once
+
+// use the R2 namespace for game funcs
 namespace R2
 {
 	typedef const char* (*GetCurrentPlaylistNameType)();

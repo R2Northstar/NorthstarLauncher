@@ -123,6 +123,8 @@
     <ClInclude Include="debugoverlay.h" />
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
+    <ClInclude Include="host.h" />
+    <ClInclude Include="hoststate.h" />
     <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
@@ -595,6 +597,8 @@
     <ClCompile Include="gameutils.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="hookutils.cpp" />
+    <ClCompile Include="host.cpp" />
+    <ClCompile Include="hoststate.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
     <ClCompile Include="localchatwriter.cpp" />

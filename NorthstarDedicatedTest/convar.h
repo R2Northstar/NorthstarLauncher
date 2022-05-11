@@ -161,7 +161,7 @@ class ConVar
 
 	bool IsRegistered(void) const;
 	bool IsCommand(void) const;
-	static bool IsFlagSet(ConVar* pConVar, int nFlags);
+	bool IsFlagSet(int nFlags) const;
 
 	struct CVValue_t
 	{

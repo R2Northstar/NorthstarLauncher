@@ -7,6 +7,7 @@
 #include "hookutils.h"
 #include "serverauthentication.h"
 #include "gameutils.h"
+#include "hoststate.h"
 #include "tier0.h"
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -17,8 +18,6 @@
 #include <cstring>
 #include <regex>
 #include "version.h"
-// NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
-// requests so httplib is used exclusively for server stuff now
 
 ConVar* Cvar_ns_masterserver_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
@@ -35,18 +34,6 @@ ConVar* Cvar_hostname;
 ConVar* Cvar_hostport;
 
 MasterServerManager* g_MasterServerManager;
-
-typedef void (*CHostState__State_NewGameType)(CHostState* hostState);
-CHostState__State_NewGameType CHostState__State_NewGame;
-
-typedef void (*CHostState__State_ChangeLevelMPType)(CHostState* hostState);
-CHostState__State_ChangeLevelMPType CHostState__State_ChangeLevelMP;
-
-typedef void (*CHostState__State_ChangeLevelSPType)(CHostState* hostState);
-CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
-
-typedef void (*CHostState__State_GameShutdownType)(CHostState* hostState);
-CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
 // Convert a hex digit char to integer.
 inline int hctod(char c)
@@ -168,7 +155,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	return size * nmemb;
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
+void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, const char* originToken)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
@@ -519,7 +506,7 @@ void MasterServerManager::RequestMainMenuPromos()
 	requestThread.detach();
 }
 
-void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken)
+void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char* playerToken)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
 	if (m_bAuthenticatingWithGameServer)
@@ -645,7 +632,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 	requestThread.detach();
 }
 
-void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password)
+void MasterServerManager::AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
 	if (m_bAuthenticatingWithGameServer)
@@ -767,7 +754,14 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 }
 
 void MasterServerManager::AddSelfToServerList(
-	int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
+	int port,
+	int authPort,
+	const char* name,
+	const char* description,
+	const char* map,
+	const char* playlist,
+	int maxPlayers,
+	const char* password)
 {
 	if (!Cvar_ns_report_server_to_masterserver->GetBool())
 		return;
@@ -917,7 +911,7 @@ void MasterServerManager::AddSelfToServerList(
 							{
 								char* escapedNameNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerName.c_str(), NULL);
 								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerDesc.c_str(), NULL);
-								char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
+								char* escapedMapNew = curl_easy_escape(curl, R2::g_pHostState->m_levelName, NULL);
 								char* escapedPlaylistNew = curl_easy_escape(curl, R2::GetCurrentPlaylistName(), NULL);
 								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->GetString(), NULL);
 
@@ -1016,7 +1010,7 @@ void MasterServerManager::AddSelfToServerList(
 	requestThread.detach();
 }
 
-void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, int maxPlayers)
+void MasterServerManager::UpdateServerMapAndPlaylist(const char* map, const char* playlist, int maxPlayers)
 {
 	// dont call this if we don't have a server id
 	if (!*m_sOwnServerId)
@@ -1106,7 +1100,7 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 	requestThread.detach();
 }
 
-void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize)
+void MasterServerManager::WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize)
 {
 	// still call this if we don't have a server id, since lobbies that aren't port forwarded need to be able to call it
 	m_bSavingPersistentData = true;
@@ -1204,95 +1198,6 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 	g_MasterServerManager->RequestServerList();
 }
 
-// todo: this should be somewhere else, not masterserver code
-
-void CHostState__State_NewGameHook(CHostState* hostState)
-{
-	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
-	Cbuf_Execute();
-
-	// need to do this to ensure we don't go to private match
-	if (g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame)
-		R2::SetCurrentPlaylist("tdm");
-
-	// net_data_block_enabled is required for sp, force it if we're on an sp map
-	// sucks for security but just how it be
-	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
-	{
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "net_data_block_enabled 1", cmd_source_t::kCommandSrcCode);
-		Cbuf_Execute();
-	}
-
-	double dStartTime = Tier0::Plat_FloatTime();
-	CHostState__State_NewGame(hostState);
-	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
-
-	int maxPlayers = 6;
-	const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	// Copy new server name cvar to source
-	Cvar_hostname->SetValue(Cvar_ns_server_name->GetString());
-
-	g_MasterServerManager->AddSelfToServerList(
-		Cvar_hostport->GetInt(),
-		Cvar_ns_player_auth_port->GetInt(),
-		(char*)Cvar_ns_server_name->GetString(),
-		(char*)Cvar_ns_server_desc->GetString(),
-		hostState->m_levelName,
-		(char*)R2::GetCurrentPlaylistName(),
-		maxPlayers,
-		(char*)Cvar_ns_server_password->GetString());
-	g_ServerAuthenticationManager->StartPlayerAuthServer();
-	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
-}
-
-void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
-{
-	int maxPlayers = 6;
-	const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	// net_data_block_enabled is required for sp, force it if we're on an sp map
-	// sucks for security but just how it be
-	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
-	{
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "net_data_block_enabled 1", cmd_source_t::kCommandSrcCode);
-		Cbuf_Execute();
-	}
-
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)R2::GetCurrentPlaylistName(), maxPlayers);
-
-	double dStartTime = Tier0::Plat_FloatTime();
-	CHostState__State_ChangeLevelMP(hostState);
-	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
-}
-
-void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
-{
-	// is this even called? genuinely i don't think so
-	// from what i can tell, it's not called on mp=>sp change or sp=>sp change
-	// so idk it's fucked
-
-	int maxPlayers = 6;
-	const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)R2::GetCurrentPlaylistName(), maxPlayers);
-	CHostState__State_ChangeLevelSP(hostState);
-}
-
-void CHostState__State_GameShutdownHook(CHostState* hostState)
-{
-	g_MasterServerManager->RemoveSelfFromServerList();
-	g_ServerAuthenticationManager->StopPlayerAuthServer();
-
-	CHostState__State_GameShutdown(hostState);
-}
-
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
 
 ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddress)
@@ -1318,23 +1223,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddr
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 
 	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "Fetch all servers from the masterserver", FCVAR_CLIENTDLL);
-
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E7D0, CHostState__State_NewGameHook, reinterpret_cast<LPVOID*>(&CHostState__State_NewGame));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x16E520,
-		CHostState__State_ChangeLevelMPHook,
-		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelMP));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x16E5D0,
-		CHostState__State_ChangeLevelSPHook,
-		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelSP));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x16E640,
-		CHostState__State_GameShutdownHook,
-		reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
 })

@@ -3,6 +3,7 @@
 #include "concommand.h"
 #include "gameutils.h"
 #include "playlist.h"
+#include "hoststate.h"
 #include "masterserver.h"
 #include "serverauthentication.h"
 #include "squirrel.h"
@@ -18,8 +19,8 @@ void AddMiscConCommands()
 			if (arg.ArgC() < 2)
 				return;
 
-			g_pHostState->m_iNextState = HS_NEW_GAME;
-			strncpy(g_pHostState->m_levelName, arg.Arg(1), sizeof(g_pHostState->m_levelName));
+			R2::g_pHostState->m_iNextState = R2::HostState_t::HS_NEW_GAME;
+			strncpy(R2::g_pHostState->m_levelName, arg.Arg(1), sizeof(R2::g_pHostState->m_levelName));
 		});
 
 	MAKE_CONCMD(
@@ -54,8 +55,8 @@ void AddMiscConCommands()
 				// this won't set playlist correctly on remote clients, don't think they can set playlist until they've left which sorta
 				// fucks things should maybe set this in HostState_NewGame?
 				R2::SetCurrentPlaylist("tdm");
-				strcpy(g_pHostState->m_levelName, "mp_lobby");
-				g_pHostState->m_iNextState = HS_NEW_GAME;
+				strcpy(R2::g_pHostState->m_levelName, "mp_lobby");
+				R2::g_pHostState->m_iNextState = R2::HostState_t::HS_NEW_GAME;
 			}
 		});
 }
