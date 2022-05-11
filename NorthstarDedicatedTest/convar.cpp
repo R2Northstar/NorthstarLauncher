@@ -474,7 +474,7 @@ bool ConVar::IsCommand(void) const
 //-----------------------------------------------------------------------------
 bool ConVar::IsFlagSet(int nFlags) const
 {
-	return m_ConCommandBase.IsFlagSet(nFlags);
+	return m_ConCommandBase.m_nFlags & nFlags;
 }
 
 //-----------------------------------------------------------------------------
