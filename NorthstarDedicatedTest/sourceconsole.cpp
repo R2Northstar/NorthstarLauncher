@@ -4,7 +4,7 @@
 #include "sourceconsole.h"
 #include "sourceinterface.h"
 #include "concommand.h"
-#include "hookutils.h"
+#include "commandprint.h"
 
 SourceInterface<CGameConsole>* g_SourceGameConsole;
 
@@ -26,89 +26,6 @@ void ConCommand_hideconsole(const CCommand& arg)
 	(*g_SourceGameConsole)->Hide();
 }
 
-void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
-{
-	if (!command)
-	{
-		spdlog::info("unknown command {}", name);
-		return;
-	}
-
-	// build string for flags if not FCVAR_NONE
-	std::string flagString;
-	if (command->GetFlags() != FCVAR_NONE)
-	{
-		flagString = "( ";
-
-		for (auto& flagPair : g_PrintCommandFlags)
-		{
-			if (command->GetFlags() & flagPair.first)
-			{
-				flagString += flagPair.second;
-				flagString += " ";
-			}
-		}
-
-		flagString += ") ";
-	}
-
-	// temp because command->IsCommand does not currently work
-	ConVar* cvar = g_pCVar->FindVar(command->m_pszName);
-	if (cvar)
-		spdlog::info("\"{}\" = \"{}\" {}- {}", cvar->GetBaseName(), cvar->GetString(), flagString, cvar->GetHelpText());
-	else
-		spdlog::info("\"{}\" {} - {}", command->m_pszName, flagString, command->GetHelpText());
-}
-
-void ConCommand_help(const CCommand& arg) 
-{
-	if (arg.ArgC() < 2)
-	{
-		spdlog::info("Usage: help <cvarname>");
-		return;
-	}
-
-	PrintCommandHelpDialogue(g_pCVar->FindCommandBase(arg.Arg(1)), arg.Arg(1));
-}
-
-void ConCommand_find(const CCommand& arg) 
-{
-	if (arg.ArgC() < 2)
-	{
-		spdlog::info("Usage: find <string> [<string>...]");
-		return;
-	}
-
-	char pTempName[256];
-	char pTempSearchTerm[256];
-
-	for (auto& map : g_pCVar->DumpToMap())
-	{
-		bool bPrintCommand = true;
-		for (int i = 0; i < arg.ArgC() - 1; i++)
-		{
-			// make lowercase to avoid case sensitivity
-			strncpy(pTempName, map.second->m_pszName, sizeof(pTempName));
-			strncpy(pTempSearchTerm, arg.Arg(i + 1), sizeof(pTempSearchTerm));
-
-			for (int i = 0; pTempName[i]; i++)
-				pTempName[i] = tolower(pTempName[i]);
-
-			for (int i = 0; pTempSearchTerm[i]; i++)
-				pTempSearchTerm[i] = tolower(pTempSearchTerm[i]);
-
-			if (!strstr(pTempName, pTempSearchTerm))
-			{
-				bPrintCommand = false;
-				break;
-			}
-		}
-
-		if (bPrintCommand)
-			PrintCommandHelpDialogue(map.second, map.second->m_pszName);
-	}
-}
-
 typedef void (*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char* pCommand);
 OnCommandSubmittedType onCommandSubmittedOriginal;
 void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
@@ -117,28 +34,7 @@ void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
 	consoleDialog->m_pConsolePanel->Print(pCommand);
 	consoleDialog->m_pConsolePanel->Print("\n");
 
-	// try to display help text for this cvar
-	{
-		int pCommandLen = strlen(pCommand);
-		char* pCvarStr = new char[pCommandLen];
-		strcpy(pCvarStr, pCommand);
-
-		// trim whitespace from right
-		for (int i = pCommandLen - 1; i; i--)
-		{
-			if (isspace(pCvarStr[i]))
-				pCvarStr[i] = '\0';
-			else
-				break;
-		}
-
-		// check if we're inputting a cvar, but not setting it at all
-		ConVar* cvar = g_pCVar->FindVar(pCvarStr);
-		if (cvar)
-			PrintCommandHelpDialogue(&cvar->m_ConCommandBase, pCvarStr);
-
-		delete[] pCvarStr;
-	}
+	TryPrintCvarHelpForCommand(pCommand);
 
 	onCommandSubmittedOriginal(consoleDialog, pCommand);
 }
@@ -161,8 +57,6 @@ void InitialiseConsoleOnInterfaceCreation()
 		&OnCommandSubmittedHook,
 		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
 }
-
-// logging stuff
 
 SourceConsoleSink::SourceConsoleSink()
 {
@@ -194,11 +88,4 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, [](HMODULE 
 	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "Show/hide the console.", FCVAR_DONTRECORD);
 	RegisterConCommand("showconsole", ConCommand_showconsole, "Show the console.", FCVAR_DONTRECORD);
 	RegisterConCommand("hideconsole", ConCommand_hideconsole, "Hide the console.", FCVAR_DONTRECORD);
-	RegisterConCommand("find", ConCommand_find, "Find concommands with the specified string in their name/help text.", FCVAR_NONE);
-
-	// help is already a command, so we need to modify the preexisting command to use our func instead
-	// and clear the flags also
-	ConCommand* helpCommand = g_pCVar->FindCommand("help");
-	helpCommand->m_nFlags = 0;
-	helpCommand->m_pCommandCallback = ConCommand_help;
 })

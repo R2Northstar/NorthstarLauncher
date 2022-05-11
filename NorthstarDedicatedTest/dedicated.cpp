@@ -8,6 +8,7 @@
 #include "hoststate.h"
 #include "serverauthentication.h"
 #include "masterserver.h"
+#include "commandprint.h"
 
 using namespace Tier0;
 using namespace R2;
@@ -125,6 +126,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 		{
 			input += "\n";
 			Cbuf_AddText(Cbuf_GetCurrentPlayer(), input.c_str(), cmd_source_t::kCommandSrcCode);
+			TryPrintCvarHelpForCommand(input.c_str());
 		}
 	}
 

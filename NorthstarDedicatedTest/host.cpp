@@ -3,6 +3,8 @@
 #include "convar.h"
 #include "modmanager.h"
 #include "gameutils.h"
+#include "commandprint.h"
+#include "mapsprint.h"
 
 typedef void (*Host_InitType)(bool bDedicated);
 Host_InitType Host_Init;
@@ -45,6 +47,10 @@ void Host_InitHook(bool bDedicated)
 
 	// make servers able to run disconnect on clients
 	g_pCVar->FindCommand("disconnect")->m_nFlags |= FCVAR_SERVER_CAN_EXECUTE;
+
+	// need to initialise these after host_init since they do stuff to preexisting concommands/convars
+	InitialiseCommandPrint();
+	InitialiseMapsPrint();
 
 	// run client autoexec if on client
 	if (!bDedicated)

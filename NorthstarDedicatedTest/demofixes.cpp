@@ -1,38 +1,10 @@
 #include "pch.h"
-#include "hooks.h"
-#include "miscclientfixes.h"
+#include "demofixes.h"
 #include "convar.h"
-#include "hookutils.h"
 #include "NSMem.h"
 
-typedef void* (*CrashingWeaponActivityFuncType)(void* a1);
-CrashingWeaponActivityFuncType CrashingWeaponActivityFunc0;
-CrashingWeaponActivityFuncType CrashingWeaponActivityFunc1;
-
-ConVar* Cvar_ns_cl_move_always_send;
-
-void* CrashingWeaponActivityFunc0Hook(void* a1)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", DemoFixes, ConVar, [](HMODULE baseAddress)
 {
-	// this return is safe, other functions that use this value seemingly dont care about it being null
-	if (!a1)
-		return 0;
-
-	return CrashingWeaponActivityFunc0(a1);
-}
-
-void* CrashingWeaponActivityFunc1Hook(void* a1)
-{
-	// this return is safe, other functions that use this value seemingly dont care about it being null
-	if (!a1)
-		return 0;
-
-	return CrashingWeaponActivityFunc1(a1);
-}
-
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", MiscClientFixes, ConVar, [](HMODULE baseAddress)
-{
-	HookEnabler hook;
-
 	// allow demo recording on loopback
 	NSMem::NOP((uintptr_t)GetModuleHandleA("engine.dll") + 0x8E1B1, 2);
 	NSMem::NOP((uintptr_t)GetModuleHandleA("engine.dll") + 0x56CC3, 2);

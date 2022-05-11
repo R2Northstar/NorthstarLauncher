@@ -25,9 +25,6 @@
     <Filter Include="Source Files\Shared">
       <UniqueIdentifier>{4f525372-34a8-40b3-8a95-81d77cdfcf7f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Dedicated">
-      <UniqueIdentifier>{8b8ed12a-9269-4dc3-b932-0daefdf6a388}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Client">
       <UniqueIdentifier>{b6f79919-9735-476d-8798-067a75cbeca0}</UniqueIdentifier>
     </Filter>
@@ -142,6 +139,18 @@
     <Filter Include="Source Files\Shared\Console">
       <UniqueIdentifier>{04fd662a-6e70-494c-b720-c694a5cc2fb1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Server\Scripted">
+      <UniqueIdentifier>{325e0d7d-6832-496d-8d8e-968fdfa5dd40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Server\Scripted">
+      <UniqueIdentifier>{802d0771-62f1-4733-89f9-57a4d8864b8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Server\Dedicated">
+      <UniqueIdentifier>{0f1ba4c4-78ee-4b05-afa5-6f598063f5c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shared\Console">
+      <UniqueIdentifier>{bf0769d8-40fd-4701-85e9-7ed94aab2283}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -158,9 +167,6 @@
     </ClInclude>
     <ClInclude Include="main.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dedicated.h">
-      <Filter>Header Files\Dedicated</Filter>
     </ClInclude>
     <ClInclude Include="sourceconsole.h">
       <Filter>Header Files\Client</Filter>
@@ -585,14 +591,8 @@
     <ClInclude Include="modlocalisation.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
-    <ClInclude Include="dedicatedmaterialsystem.h">
-      <Filter>Header Files\Dedicated</Filter>
-    </ClInclude>
     <ClInclude Include="misccommands.h">
       <Filter>Header Files\Shared\Convar</Filter>
-    </ClInclude>
-    <ClInclude Include="miscserverscript.h">
-      <Filter>Header Files\Server</Filter>
     </ClInclude>
     <ClInclude Include="pdef.h">
       <Filter>Header Files\Shared\Mods\Compiled</Filter>
@@ -1458,9 +1458,6 @@
     <ClInclude Include="bits.h">
       <Filter>Header Files\Shared\Math</Filter>
     </ClInclude>
-    <ClInclude Include="serverchathooks.h">
-      <Filter>Header Files\Server</Filter>
-    </ClInclude>
     <ClInclude Include="localchatwriter.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
@@ -1526,6 +1523,27 @@
     </ClInclude>
     <ClInclude Include="hoststate.h">
       <Filter>Header Files\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="miscserverscript.h">
+      <Filter>Header Files\Server\Scripted</Filter>
+    </ClInclude>
+    <ClInclude Include="serverchathooks.h">
+      <Filter>Header Files\Server\Scripted</Filter>
+    </ClInclude>
+    <ClInclude Include="dedicated.h">
+      <Filter>Header Files\Server\Dedicated</Filter>
+    </ClInclude>
+    <ClInclude Include="dedicatedmaterialsystem.h">
+      <Filter>Header Files\Server\Dedicated</Filter>
+    </ClInclude>
+    <ClInclude Include="commandprint.h">
+      <Filter>Header Files\Shared\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="mapsprint.h">
+      <Filter>Header Files\Shared\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="demofixes.h">
+      <Filter>Header Files\Client</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1598,9 +1616,6 @@
     <ClCompile Include="misccommands.cpp">
       <Filter>Source Files\Shared\Convar</Filter>
     </ClCompile>
-    <ClCompile Include="miscserverscript.cpp">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
     <ClCompile Include="pdef.cpp">
       <Filter>Source Files\Shared\Mods\Compiled Assets</Filter>
     </ClCompile>
@@ -1645,9 +1660,6 @@
     </ClCompile>
     <ClCompile Include="bits.cpp">
       <Filter>Source Files\Shared\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="serverchathooks.cpp">
-      <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="localchatwriter.cpp">
       <Filter>Source Files\Client</Filter>
@@ -1699,6 +1711,21 @@
     </ClCompile>
     <ClCompile Include="scriptbrowserhooks.cpp">
       <Filter>Source Files\Client\Scripted</Filter>
+    </ClCompile>
+    <ClCompile Include="serverchathooks.cpp">
+      <Filter>Source Files\Server\Scripted</Filter>
+    </ClCompile>
+    <ClCompile Include="miscserverscript.cpp">
+      <Filter>Source Files\Server\Scripted</Filter>
+    </ClCompile>
+    <ClCompile Include="commandprint.cpp">
+      <Filter>Source Files\Shared\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="demofixes.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="mapsprint.cpp">
+      <Filter>Source Files\Shared\Console</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
