@@ -52,9 +52,9 @@ void PakLoadManager::UnloadPaks()
 void HandlePakAliases(char** map)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (int64_t i = g_ModManager->m_loadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = g_pModManager->m_loadedMods.size() - 1; i > -1; i--)
 	{
-		Mod* mod = &g_ModManager->m_loadedMods[i];
+		Mod* mod = &g_pModManager->m_loadedMods[i];
 		if (!mod->Enabled)
 			continue;
 
@@ -69,7 +69,7 @@ void HandlePakAliases(char** map)
 void LoadPreloadPaks()
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_ModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Enabled)
 			continue;
@@ -89,7 +89,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	bool bHasOriginalPak = fs::exists(fs::path("./r2/paks/Win64/") / *pakName);
 
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_ModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Enabled)
 			continue;
@@ -189,8 +189,8 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 
 		// resolve modded stbsp path so we can load mod stbsps
 
-		auto modFile = g_ModManager->m_modFiles.find(g_ModManager->NormaliseModFilePath(fs::path("maps" / filename)));
-		if (modFile != g_ModManager->m_modFiles.end())
+		auto modFile = g_pModManager->m_modFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
+		if (modFile != g_pModManager->m_modFiles.end())
 		{
 			// need to allocate a new string for this
 			std::string newPath = (modFile->second.owningMod->ModDirectory / "mod" / modFile->second.path).string();

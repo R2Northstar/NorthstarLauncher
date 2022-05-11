@@ -18,7 +18,7 @@
 #include "rpakfilesystem.h"
 #include "configurables.h"
 
-ModManager* g_ModManager;
+ModManager* g_pModManager;
 
 Mod::Mod(fs::path modDir, char* jsonBuf)
 {
@@ -444,7 +444,7 @@ void ModManager::LoadMods()
 			{
 				if (fs::is_regular_file(file))
 				{
-					std::string kvStr = g_ModManager->NormaliseModFilePath(file.path().lexically_relative(mod.ModDirectory / "keyvalues"));
+					std::string kvStr = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.ModDirectory / "keyvalues"));
 					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
 				}
 			}
@@ -503,7 +503,7 @@ void ModManager::LoadMods()
 			for (fs::directory_entry file : fs::recursive_directory_iterator(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR))
 			{
 				std::string path =
-					g_ModManager->NormaliseModFilePath(file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR));
+					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR));
 				if (file.is_regular_file() && m_modFiles.find(path) == m_modFiles.end())
 				{
 					ModOverrideFile modFile;
@@ -624,7 +624,7 @@ void ModManager::CompileAssetsForFile(const char* filename)
 
 void ConCommand_reload_mods(const CCommand& args)
 {
-	g_ModManager->LoadMods();
+	g_pModManager->LoadMods();
 }
 
 fs::path GetModFolderPath()
@@ -638,7 +638,7 @@ fs::path GetCompiledAssetsPath()
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, [](HMODULE baseAddress)
 {
-	g_ModManager = new ModManager;
+	g_pModManager = new ModManager;
 
 	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
 })

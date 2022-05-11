@@ -29,7 +29,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 {
 	spdlog::info("Building KeyValues for file {}", filename);
 
-	std::string normalisedPath = g_ModManager->NormaliseModFilePath(fs::path(filename));
+	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(filename));
 	fs::path compiledPath = GetCompiledAssetsPath() / filename;
 	fs::path compiledDir = compiledPath.parent_path();
 	fs::create_directories(compiledDir);

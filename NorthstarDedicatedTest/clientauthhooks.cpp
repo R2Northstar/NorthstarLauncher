@@ -6,9 +6,6 @@
 #include "masterserver.h"
 #include "convar.h"
 
-typedef void (*AuthWithStryderType)(void* a1);
-AuthWithStryderType AuthWithStryder;
-
 ConVar* Cvar_ns_has_agreed_to_send_token;
 
 // mirrored in script
@@ -16,6 +13,8 @@ const int NOT_DECIDED_TO_SEND_TOKEN = 0;
 const int AGREED_TO_SEND_TOKEN = 1;
 const int DISAGREED_TO_SEND_TOKEN = 2;
 
+typedef void (*AuthWithStryderType)(void* a1);
+AuthWithStryderType AuthWithStryder;
 void AuthWithStryderHook(void* a1)
 {
 	// game will call this forever, until it gets a valid auth key

@@ -176,7 +176,7 @@ template <ScriptContext context> bool CallScriptInitCallbackHook(void* sqvm, con
 
 	if (shouldCallCustomCallbacks)
 	{
-		for (Mod mod : g_ModManager->m_loadedMods)
+		for (Mod mod : g_pModManager->m_loadedMods)
 		{
 			if (!mod.Enabled)
 				continue;
@@ -203,7 +203,7 @@ template <ScriptContext context> bool CallScriptInitCallbackHook(void* sqvm, con
 	// run after callbacks
 	if (shouldCallCustomCallbacks)
 	{
-		for (Mod mod : g_ModManager->m_loadedMods)
+		for (Mod mod : g_pModManager->m_loadedMods)
 		{
 			if (!mod.Enabled)
 				continue;

@@ -144,4 +144,4 @@ class ModManager
 fs::path GetModFolderPath();
 fs::path GetCompiledAssetsPath();
 
-extern ModManager* g_ModManager;
+extern ModManager* g_pModManager;

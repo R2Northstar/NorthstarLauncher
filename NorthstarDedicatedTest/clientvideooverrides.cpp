@@ -13,7 +13,7 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 
 	// figure out which mod is handling the bink
 	Mod* fileOwner = nullptr;
-	for (Mod& mod : g_ModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Enabled)
 			continue;

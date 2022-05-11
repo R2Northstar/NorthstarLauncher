@@ -12,7 +12,7 @@ void Host_InitHook(bool bDedicated)
 
 	// get all mod convars
 	std::vector<std::string> vModConvarNames;
-	for (auto& mod : g_ModManager->m_loadedMods)
+	for (auto& mod : g_pModManager->m_loadedMods)
 		for (auto& cvar : mod.ConVars)
 			vModConvarNames.push_back(cvar->Name);
 

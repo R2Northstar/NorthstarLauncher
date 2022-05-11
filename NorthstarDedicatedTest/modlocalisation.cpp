@@ -21,7 +21,7 @@ bool AddLocalisationFileHook(void* g_pVguiLocalize, const char* path, const char
 
 	loadModLocalisationFiles = false;
 
-	for (Mod mod : g_ModManager->m_loadedMods)
+	for (Mod mod : g_pModManager->m_loadedMods)
 		if (mod.Enabled)
 			for (std::string& localisationFile : mod.LocalisationFiles)
 				AddLocalisationFile(g_pVguiLocalize, localisationFile.c_str(), pathId, unknown);
