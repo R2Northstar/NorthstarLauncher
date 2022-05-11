@@ -72,6 +72,19 @@ inline const char* CCommand::operator[](int nIndex) const
 	return Arg(nIndex);
 }
 
+//-----------------------------------------------------------------------------
+// Called when a ConCommand needs to execute
+//-----------------------------------------------------------------------------
+typedef void (*FnCommandCallback_t)(const CCommand& command);
+
+#define COMMAND_COMPLETION_MAXITEMS 64
+#define COMMAND_COMPLETION_ITEM_LENGTH 128
+
+//-----------------------------------------------------------------------------
+// Returns 0 to COMMAND_COMPLETION_MAXITEMS worth of completion strings
+//-----------------------------------------------------------------------------
+typedef int (*FnCommandCompletionCallback)(const char* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]);
+
 // From r5reloaded
 class ConCommandBase
 {
@@ -113,8 +126,8 @@ class ConCommand : public ConCommandBase
 	void Init(void);
 	bool IsCommand(void) const;
 
-	void* m_pCommandCallback {}; // 0x0040 <- starts from 0x40 since we inherit ConCommandBase.
-	void* m_pCompletionCallback {}; // 0x0048 <- defaults to sub_180417410 ('xor eax, eax').
+	FnCommandCallback_t m_pCommandCallback {}; // 0x0040 <- starts from 0x40 since we inherit ConCommandBase.
+	FnCommandCompletionCallback m_pCompletionCallback {}; // 0x0048 <- defaults to sub_180417410 ('xor eax, eax').
 	int m_nCallbackFlags {}; // 0x0050
 	char pad_0054[4]; // 0x0054
 	int unk0; // 0x0058
