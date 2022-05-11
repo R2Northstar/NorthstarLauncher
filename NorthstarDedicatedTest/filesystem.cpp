@@ -101,25 +101,23 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 	return false;
 }
 
+// force modded files to be read from mods, not cache
 typedef bool (*ReadFromCacheType)(IFileSystem* filesystem, char* path, void* result);
 ReadFromCacheType ReadFromCache;
 bool ReadFromCacheHook(IFileSystem* filesystem, char* pPath, void* result)
 {
-	if (TryReplaceFile(pPath, false))
+	if (TryReplaceFile(pPath, true))
 		return false;
 
 	return ReadFromCache(filesystem, pPath, result);
 }
 
+// force modded files to be read from mods, not vpk
 typedef FileHandle_t (*ReadFileFromVPKType)(VPKData* vpkInfo, __int64* b, char* filename);
 ReadFileFromVPKType ReadFileFromVPK;
 FileHandle_t ReadFileFromVPKHook(VPKData* vpkInfo, __int64* b, char* filename)
 {
-	// move this to a convar at some point when we can read them in native
-	//spdlog::info("ReadFileFromVPKHook {} {}", filename, vpkInfo->path);
-
-	// there is literally never any reason to compile here, since we'll always compile in ReadFileFromFilesystemHook in the same codepath
-	// this is called
+	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
 	{
 		*b = -1;
@@ -134,13 +132,7 @@ typedef FileHandle_t (*CBaseFileSystem__OpenExType)(
 CBaseFileSystem__OpenExType CBaseFileSystem__OpenEx;
 FileHandle_t CBaseFileSystem__OpenExHook(IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename)
 {
-	//if (Cvar_ns_fs_log_reads->GetBool())
-	
-	// this isn't super efficient, but it's necessary, since calling addsearchpath in readfilefromvpk doesn't work, possibly refactor later
-	// it also might be possible to hook functions that are called later, idk look into callstack for ReadFileFromVPK
-	if (!bReadingOriginalFile)
-		TryReplaceFile(pPath, true);
-
+	TryReplaceFile(pPath, true);
 	return CBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
 }
 

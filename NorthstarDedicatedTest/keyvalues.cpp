@@ -7,20 +7,9 @@
 
 #include <fstream>
 
-// hook forward defs
 typedef char (*KeyValues__LoadFromBufferType)(
 	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
 KeyValues__LoadFromBufferType KeyValues__LoadFromBuffer;
-char KeyValues__LoadFromBufferHook(
-	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
-
-ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
-{
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
-})
-
 char KeyValues__LoadFromBufferHook(void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7)
 {
 	static void* pSavedFilesystemPtr = nullptr;
@@ -136,3 +125,10 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	else
 		m_modFiles[normalisedPath] = overrideFile;
 }
+
+ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
+{
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
+})

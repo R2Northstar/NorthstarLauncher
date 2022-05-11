@@ -588,7 +588,8 @@ void ModManager::UnloadMods()
 std::string ModManager::NormaliseModFilePath(const fs::path path)
 {
 	std::string str = path.lexically_normal().string();
-	// go to lowercase
+
+	// force to lowercase
 	for (char& c : str)
 		if (c <= 'Z' && c >= 'A')
 			c = c - ('Z' - 'z');
@@ -598,7 +599,7 @@ std::string ModManager::NormaliseModFilePath(const fs::path path)
 
 void ModManager::CompileAssetsForFile(const char* filename)
 {
-	size_t fileHash = STR_HASH(fs::path(filename).lexically_normal().string());
+	size_t fileHash = STR_HASH(NormaliseModFilePath(fs::path(filename)));
 
 	if (fileHash == m_hScriptsRsonHash)
 		BuildScriptsRson();
