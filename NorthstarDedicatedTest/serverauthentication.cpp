@@ -23,54 +23,6 @@ using namespace Tier0;
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
-// hook types
-
-typedef void* (*CBaseServer__ConnectClientType)(
-	void* server,
-	void* a2,
-	void* a3,
-	uint32_t a4,
-	uint32_t a5,
-	int32_t a6,
-	void* a7,
-	void* a8,
-	char* serverFilter,
-	void* a10,
-	char a11,
-	void* a12,
-	char a13,
-	char a14,
-	int64_t uid,
-	uint32_t a16,
-	uint32_t a17);
-CBaseServer__ConnectClientType CBaseServer__ConnectClient;
-
-typedef bool (*CBaseClient__ConnectType)(
-	void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7);
-CBaseClient__ConnectType CBaseClient__Connect;
-
-typedef void (*CBaseClient__ActivatePlayerType)(void* self);
-CBaseClient__ActivatePlayerType CBaseClient__ActivatePlayer;
-
-CBaseClient__DisconnectType CBaseClient__Disconnect;
-
-typedef char (*CGameClient__ExecuteStringCommandType)(void* self, uint32_t unknown, const char* pCommandString);
-CGameClient__ExecuteStringCommandType CGameClient__ExecuteStringCommand;
-
-typedef char (*__fastcall CNetChan___ProcessMessagesType)(void* self, void* buf);
-CNetChan___ProcessMessagesType CNetChan___ProcessMessages;
-
-typedef char (*CBaseClient__SendServerInfoType)(void* self);
-CBaseClient__SendServerInfoType CBaseClient__SendServerInfo;
-
-typedef bool (*ProcessConnectionlessPacketType)(void* a1, netpacket_t* packet);
-ProcessConnectionlessPacketType ProcessConnectionlessPacket;
-
-typedef void (*CServerGameDLL__OnReceivedSayTextMessageType)(void* self, unsigned int senderClientIndex, const char* message, char unknown);
-CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessage;
-
-typedef void (*ConCommand__DispatchType)(ConCommand* command, const CCommand& args, void* a3);
-ConCommand__DispatchType ConCommand__Dispatch;
 
 // global vars
 ServerAuthenticationManager* g_ServerAuthenticationManager;
@@ -334,6 +286,25 @@ bool ServerAuthenticationManager::CheckPlayerChatRatelimit(void* player)
 char* nextPlayerToken;
 uint64_t nextPlayerUid;
 
+typedef void* (*CBaseServer__ConnectClientType)(
+	void* server,
+	void* a2,
+	void* a3,
+	uint32_t a4,
+	uint32_t a5,
+	int32_t a6,
+	void* a7,
+	void* a8,
+	char* serverFilter,
+	void* a10,
+	char a11,
+	void* a12,
+	char a13,
+	char a14,
+	int64_t uid,
+	uint32_t a16,
+	uint32_t a17);
+CBaseServer__ConnectClientType CBaseServer__ConnectClient;
 void* CBaseServer__ConnectClientHook(
 	void* server,
 	void* a2,
@@ -360,6 +331,9 @@ void* CBaseServer__ConnectClientHook(
 	return CBaseServer__ConnectClient(server, a2, a3, a4, a5, a6, a7, a8, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
+typedef bool (*CBaseClient__ConnectType)(
+	void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7);
+CBaseClient__ConnectType CBaseClient__Connect;
 bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7)
 {
 	// try changing name before all else
@@ -397,6 +371,8 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 	return ret;
 }
 
+typedef void (*CBaseClient__ActivatePlayerType)(void* self);
+CBaseClient__ActivatePlayerType CBaseClient__ActivatePlayer;
 void CBaseClient__ActivatePlayerHook(void* self)
 {
 	// if we're authed, write our persistent data
@@ -412,6 +388,7 @@ void CBaseClient__ActivatePlayerHook(void* self)
 	CBaseClient__ActivatePlayer(self);
 }
 
+CBaseClient__DisconnectType CBaseClient__Disconnect;
 void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const char* reason, ...)
 {
 	// have to manually format message because can't pass varargs to original func
@@ -446,6 +423,8 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 typedef bool (*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, cmd_source_t commandSource);
 CCommand__TokenizeType CCommand__Tokenize;
 
+typedef char (*CGameClient__ExecuteStringCommandType)(void* self, uint32_t unknown, const char* pCommandString);
+CGameClient__ExecuteStringCommandType CGameClient__ExecuteStringCommand;
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
 {
 	if (CVar_sv_quota_stringcmdspersecond->GetInt() != -1)
@@ -494,6 +473,8 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	return CGameClient__ExecuteStringCommand(self, unknown, pCommandString);
 }
 
+typedef char (*__fastcall CNetChan___ProcessMessagesType)(void* self, void* buf);
+CNetChan___ProcessMessagesType CNetChan___ProcessMessages;
 char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 {
 	double startTime = Plat_FloatTime();
@@ -543,6 +524,8 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 
 bool bWasWritingStringTableSuccessful;
 
+typedef char (*CBaseClient__SendServerInfoType)(void* self);
+CBaseClient__SendServerInfoType CBaseClient__SendServerInfo;
 void CBaseClient__SendServerInfoHook(void* self)
 {
 	bWasWritingStringTableSuccessful = true;
@@ -552,6 +535,8 @@ void CBaseClient__SendServerInfoHook(void* self)
 			self, 1, "Overflowed CNetworkStringTableContainer::WriteBaselines, try restarting your client and reconnecting");
 }
 
+typedef bool (*ProcessConnectionlessPacketType)(void* a1, netpacket_t* packet);
+ProcessConnectionlessPacketType ProcessConnectionlessPacket;
 bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 {
 	if (packet->adr.type == NA_IP &&
@@ -674,28 +659,22 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, [](HMODULE 
 	uintptr_t ba = (uintptr_t)baseAddress;
 
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
-	{
-		NSMem::BytePatch(
-			ba + 0x114655,
-			"EB" // jz => jmp
-		);
-	}
-
+	NSMem::BytePatch(
+		ba + 0x114655,
+		"EB" // jz => jmp
+	);
+	
 	// patch to disable fairfight marking players as cheaters and kicking them
-	{
-		NSMem::BytePatch(
-			ba + 0x101012,
-			"E9 90 00" // jz => jmp
-		);
-	}
-
+	NSMem::BytePatch(
+		ba + 0x101012,
+		"E9 90 00" // jz => jmp
+	);
+	
 	// patch to allow same of multiple account
-	{
-		NSMem::BytePatch(
-			ba + 0x114510,
-			"EB" // jz => jmp
-		);
-	}
+	NSMem::BytePatch(
+		ba + 0x114510,
+		"EB" // jz => jmp
+	);
 
 	// patch to set bWasWritingStringTableSuccessful in CNetworkStringTableContainer::WriteBaselines if it fails
 	{

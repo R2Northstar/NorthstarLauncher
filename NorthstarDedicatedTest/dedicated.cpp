@@ -138,113 +138,79 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 
 	uintptr_t ea = (uintptr_t)engineAddress;
 
-	{
-		// Host_Init
-		// prevent a particle init that relies on client dll
-		NSMem::NOP(ea + 0x156799, 5);
-	}
+	// Host_Init
+	// prevent a particle init that relies on client dll
+	NSMem::NOP(ea + 0x156799, 5);
 
-	{
-		// Host_Init
-		// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely)
-		NSMem::NOP(ea + 0x1565B0, 5);
-	}
+	// Host_Init
+	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely)
+	NSMem::NOP(ea + 0x1565B0, 5);
 
-	{
-		// CModAppSystemGroup::Create
-		// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
-		auto ptr = ea + 0x1C4EBD;
 
-		// cmp => mov
-		NSMem::BytePatch(ptr + 1, "C6 87");
+	// CModAppSystemGroup::Create
+	// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
+	auto ptr = ea + 0x1C4EBD;
 
-		// 00 => 01
-		NSMem::BytePatch(ptr + 7, "01");
-	}
+	// cmp => mov
+	NSMem::BytePatch(ptr + 1, "C6 87");
 
-	{
-		// Some init that i'm not sure of that crashes
-		// nop the call to it
-		NSMem::NOP(ea + 0x156A63, 5);
-	}
+	// 00 => 01
+	NSMem::BytePatch(ptr + 7, "01");
 
-	{
-		// runframeserver
-		// nop some access violations
-		NSMem::NOP(ea + 0x159819, 17);
-	}
+	// Some init that i'm not sure of that crashes
+	// nop the call to it
+	NSMem::NOP(ea + 0x156A63, 5);
 
-	{
-		NSMem::NOP(ea + 0x156B4C, 7);
+	// runframeserver
+	// nop some access violations
+	NSMem::NOP(ea + 0x159819, 17);
 
-		// previously patched these, took me a couple weeks to figure out they were the issue
-		// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
-		// so uhh, don't do that
-		// NSMem::NOP(ea + 0x156B4C + 7, 8);
+	NSMem::NOP(ea + 0x156B4C, 7);
 
-		NSMem::NOP(ea + 0x156B4C + 15, 9);
-	}
+	// previously patched these, took me a couple weeks to figure out they were the issue
+	// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
+	// so uhh, don't do that
+	// NSMem::NOP(ea + 0x156B4C + 7, 8);
 
-	{
-		// HostState_State_NewGame
-		// nop an access violation
-		NSMem::NOP(ea + 0xB934C, 9);
-	}
+	NSMem::NOP(ea + 0x156B4C + 15, 9);
 
-	{
-		// CEngineAPI::Connect
-		// remove call to Shader_Connect
-		NSMem::NOP(ea + 0x1C4D7D, 5);
-	}
+	// HostState_State_NewGame
+	// nop an access violation
+	NSMem::NOP(ea + 0xB934C, 9);
 
-	// currently does not work, crashes stuff, likely gotta keep this here
-	//{
-	//	// CEngineAPI::Connect
-	//  // remove calls to register ui rpak asset types
-	//	NSMem::NOP(ea + 0x1C4E07, 5);
-	//}
+	// CEngineAPI::Connect
+	// remove call to Shader_Connect
+	NSMem::NOP(ea + 0x1C4D7D, 5);
 
-	{
-		// Host_Init
-		// remove call to ui loading stuff
-		NSMem::NOP(ea + 0x156595, 5);
-	}
+	// Host_Init
+	// remove call to ui loading stuff
+	NSMem::NOP(ea + 0x156595, 5);
 
-	{
-		// some function that gets called from RunFrameServer
-		// nop a function that makes requests to stryder, this will eventually access violation if left alone and isn't necessary anyway
-		NSMem::NOP(ea + 0x15A0BB, 5);
-	}
+	// some function that gets called from RunFrameServer
+	// nop a function that makes requests to stryder, this will eventually access violation if left alone and isn't necessary anyway
+	NSMem::NOP(ea + 0x15A0BB, 5);
 
-	{
-		// RunFrameServer
-		// nop a function that access violations
-		NSMem::NOP(ea + 0x159BF3, 5);
-	}
+	// RunFrameServer
+	// nop a function that access violations
+	NSMem::NOP(ea + 0x159BF3, 5);
 
-	{
-		// func that checks if origin is inited
-		// always return 1
-		NSMem::BytePatch(
-			ea + 0x183B70,
-			{
-				0xB0,
-				0x01, // mov al,01
-				0xC3 // ret
-			});
-	}
+	// func that checks if origin is inited
+	// always return 1
+	NSMem::BytePatch(
+		ea + 0x183B70,
+		{
+			0xB0,
+			0x01, // mov al,01
+			0xC3 // ret
+		});
 
-	{
-		// HostState_State_ChangeLevel
-		// nop clientinterface call
-		NSMem::NOP(ea + 0x1552ED, 16);
-	}
+	// HostState_State_ChangeLevel
+	// nop clientinterface call
+	NSMem::NOP(ea + 0x1552ED, 16);
 
-	{
-		// HostState_State_ChangeLevel
-		// nop clientinterface call
-		NSMem::NOP(ea + 0x155363, 16);
-	}
+	// HostState_State_ChangeLevel
+	// nop clientinterface call
+	NSMem::NOP(ea + 0x155363, 16);
 
 	// note: previously had DisableDedicatedWindowCreation patches here, but removing those rn since they're all shit and unstable and bad
 	// and such check commit history if any are needed for reimplementation

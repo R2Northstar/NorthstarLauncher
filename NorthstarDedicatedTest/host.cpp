@@ -43,6 +43,9 @@ void Host_InitHook(bool bDedicated)
 
 	spdlog::info("Removed {} hidden/devonly cvar flags", iCvarsAltered);
 
+	// make servers able to run disconnect on clients
+	g_pCVar->FindCommand("disconnect")->m_nFlags |= FCVAR_SERVER_CAN_EXECUTE;
+
 	// run client autoexec if on client
 	if (!bDedicated)
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_client", cmd_source_t::kCommandSrcCode);

@@ -76,11 +76,9 @@ ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, [](HM
 	//	*ptr = (char)0xC3;
 	//}
 
-	{
-		// CMaterialSystem::FindMaterial
-		// make the game always use the error material
-		NSMem::BytePatch((uintptr_t)baseAddress + 0x5F0F1, {0xE9, 0x34, 0x03, 0x00});
-	}
+	// CMaterialSystem::FindMaterial
+	// make the game always use the error material
+	NSMem::BytePatch((uintptr_t)baseAddress + 0x5F0F1, {0xE9, 0x34, 0x03, 0x00});
 
 	// previously had DisableDedicatedWindowCreation stuff here, removing for now since shit and unstable
 	// check commit history if needed

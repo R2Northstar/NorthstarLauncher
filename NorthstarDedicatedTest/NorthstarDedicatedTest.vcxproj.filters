@@ -139,6 +139,9 @@
     <Filter Include="Source Files\Client\Scripted">
       <UniqueIdentifier>{51910ba0-2ff8-461d-9f67-8d7907b57d22}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shared\Console">
+      <UniqueIdentifier>{04fd662a-6e70-494c-b720-c694a5cc2fb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
