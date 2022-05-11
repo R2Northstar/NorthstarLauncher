@@ -143,8 +143,8 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 				.c_str(),
 			cmd_source_t::kCommandSrcCode);
 
-		if (realContext == ScriptContext::UI)
-			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "showconsole", cmd_source_t::kCommandSrcCode); // likely temp: show console so user can see any errors
+		if (realContext == ScriptContext::UI) // likely temp: show console so user can see any errors
+			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "showconsole", cmd_source_t::kCommandSrcCode); 
 	}
 
 	// dont call the original function since it kills game lol

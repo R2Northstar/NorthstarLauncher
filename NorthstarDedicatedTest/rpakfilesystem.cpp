@@ -188,7 +188,8 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 		spdlog::info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
-		auto modFile = g_ModManager->m_modFiles.find(fs::path("maps" / filename).lexically_normal().string());
+
+		auto modFile = g_ModManager->m_modFiles.find(g_ModManager->NormaliseModFilePath(fs::path("maps" / filename)));
 		if (modFile != g_ModManager->m_modFiles.end())
 		{
 			// need to allocate a new string for this

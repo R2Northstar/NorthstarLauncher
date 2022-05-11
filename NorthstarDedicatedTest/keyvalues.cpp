@@ -40,7 +40,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 {
 	spdlog::info("Building KeyValues for file {}", filename);
 
-	std::string normalisedPath = fs::path(filename).lexically_normal().string();
+	std::string normalisedPath = g_ModManager->NormaliseModFilePath(fs::path(filename));
 	fs::path compiledPath = GetCompiledAssetsPath() / filename;
 	fs::path compiledDir = compiledPath.parent_path();
 	fs::create_directories(compiledDir);
@@ -87,7 +87,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	newKvs += "\"\n";
 
 	// load original file, so we can parse out the name of the root obj (e.g. WeaponData for weapons)
-	std::string originalFile = ReadVPKOriginalFile(filename);
+	std::string originalFile = R2FS::ReadVPKOriginalFile(filename);
 
 	if (!originalFile.length())
 	{

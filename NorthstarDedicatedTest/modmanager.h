@@ -132,6 +132,7 @@ class ModManager
 	ModManager();
 	void LoadMods();
 	void UnloadMods();
+	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
 
 	// compile asset type stuff, these are done in files under Mods/Compiled/

@@ -236,8 +236,9 @@ void InitialiseLogging()
 	hExceptionFilter = AddVectoredExceptionHandler(TRUE, ExceptionFilter);
 
 	AllocConsole();
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+	// seem to cause issues with console log initialisation occasionally
+	//freopen("CONOUT$", "w", stdout);
+	//freopen("CONOUT$", "w", stderr);
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 
 	SetConsoleCtrlHandler(ConsoleHandlerRoutine, true);

@@ -376,7 +376,7 @@ void ModManager::LoadMods()
 					modVpk.m_sVpkPath = vpkName;
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
-						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
+						(*R2FS::g_pFilesystem)->m_vtable->MountVPK(*R2FS::g_pFilesystem, vpkName.c_str());
 				}
 			}
 		}
@@ -444,7 +444,7 @@ void ModManager::LoadMods()
 			{
 				if (fs::is_regular_file(file))
 				{
-					std::string kvStr = file.path().lexically_relative(mod.ModDirectory / "keyvalues").lexically_normal().string();
+					std::string kvStr = g_ModManager->NormaliseModFilePath(file.path().lexically_relative(mod.ModDirectory / "keyvalues"));
 					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
 				}
 			}
@@ -502,14 +502,14 @@ void ModManager::LoadMods()
 		{
 			for (fs::directory_entry file : fs::recursive_directory_iterator(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR))
 			{
-				fs::path path = file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR).lexically_normal();
-
-				if (file.is_regular_file() && m_modFiles.find(path.string()) == m_modFiles.end())
+				std::string path =
+					g_ModManager->NormaliseModFilePath(file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR));
+				if (file.is_regular_file() && m_modFiles.find(path) == m_modFiles.end())
 				{
 					ModOverrideFile modFile;
 					modFile.owningMod = &m_loadedMods[i];
 					modFile.path = path;
-					m_modFiles.insert(std::make_pair(path.string(), modFile));
+					m_modFiles.insert(std::make_pair(path, modFile));
 				}
 			}
 		}
@@ -585,6 +585,17 @@ void ModManager::UnloadMods()
 	m_loadedMods.clear();
 }
 
+std::string ModManager::NormaliseModFilePath(const fs::path path)
+{
+	std::string str = path.lexically_normal().string();
+	// go to lowercase
+	for (char& c : str)
+		if (c <= 'Z' && c >= 'A')
+			c = c - ('Z' - 'z');
+
+	return str;
+}
+
 void ModManager::CompileAssetsForFile(const char* filename)
 {
 	size_t fileHash = STR_HASH(fs::path(filename).lexically_normal().string());
@@ -615,13 +626,6 @@ void ConCommand_reload_mods(const CCommand& args)
 	g_ModManager->LoadMods();
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, [](HMODULE baseAddress)
-{
-	g_ModManager = new ModManager;
-
-	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
-})
-
 fs::path GetModFolderPath()
 {
 	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
@@ -630,3 +634,10 @@ fs::path GetCompiledAssetsPath()
 {
 	return fs::path(GetNorthstarPrefix() + COMPILED_ASSETS_SUFFIX);
 }
+
+ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, [](HMODULE baseAddress)
+{
+	g_ModManager = new ModManager;
+
+	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
+})

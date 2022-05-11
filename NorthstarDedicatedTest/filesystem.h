@@ -67,7 +67,10 @@ class IFileSystem
 	VTable2* m_vtable2;
 };
 
-std::string ReadVPKFile(const char* path);
-std::string ReadVPKOriginalFile(const char* path);
+namespace R2FS
+{
+	extern SourceInterface<IFileSystem>* g_pFilesystem;
 
-extern SourceInterface<IFileSystem>* g_Filesystem;
+	std::string ReadVPKFile(const char* path);
+	std::string ReadVPKOriginalFile(const char* path);
+} // namespace R2FS

@@ -230,10 +230,8 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					}
 
 					// read from after the header first to preserve the empty header, then read the header last
-					wavStream.seekg(sizeof(EMPTY_WAVE), std::ios::beg);
-					wavStream.read(&data[sizeof(EMPTY_WAVE)], fileSize - sizeof(EMPTY_WAVE));
 					wavStream.seekg(0, std::ios::beg);
-					wavStream.read(data, sizeof(EMPTY_WAVE));
+					wavStream.read(data, fileSize);
 					wavStream.close();
 
 					spdlog::info("Finished async read of audio sample {}", pathString);
