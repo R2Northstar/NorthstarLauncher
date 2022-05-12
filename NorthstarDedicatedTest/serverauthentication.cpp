@@ -389,11 +389,28 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		g_ServerAuthenticationManager->m_additionalPlayerData.insert(std::make_pair(self, additionalData));
 	}
 
+	g_ServerAuthenticationManager->m_additionalPlayerData[self].uid = nextPlayerUid;
+
 	return ret;
 }
 
 void CBaseClient__ActivatePlayerHook(void* self)
 {
+	bool uidMatches = false;
+	if (g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
+	{
+		std::string strUid = std::to_string(g_ServerAuthenticationManager->m_additionalPlayerData[self].uid);
+		if (!strcmp(strUid.c_str(), (char*)self + 0xF500)) // connecting client's uid is the same as auth's uid
+		{
+			uidMatches = true;
+		}
+	}
+	if (!uidMatches)
+	{
+		CBaseClient__Disconnect(self, 1, "Authentication Failed");
+		return;
+	}
+
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
 	// (since this func is called on map loads)
