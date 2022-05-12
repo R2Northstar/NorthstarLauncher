@@ -1,9 +1,9 @@
 #include "pch.h"
+#include "hooks.h"
 #include "bits.h"
 #include "cvar.h"
 #include "convar.h"
 #include "hookutils.h"
-#include "gameutils.h"
 #include "sourceinterface.h"
 
 typedef void (*ConVarRegisterType)(
@@ -25,13 +25,10 @@ ConVarMallocType conVarMalloc;
 void* g_pConVar_Vtable = nullptr;
 void* g_pIConVar_Vtable = nullptr;
 
-typedef bool (*CvarIsFlagSetType)(ConVar* self, int flags);
-CvarIsFlagSetType CvarIsFlagSet;
-
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
-void InitialiseConVars(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", ConVar, [](HMODULE baseAddress)
 {
 	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
 	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
@@ -41,10 +38,7 @@ void InitialiseConVars(HMODULE baseAddress)
 
 	g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	g_pCVar = *g_pCVarInterface;
-
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417FA0, &ConVar::IsFlagSet, reinterpret_cast<LPVOID*>(&CvarIsFlagSet));
-}
+})
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor
@@ -72,7 +66,7 @@ ConVar::ConVar(
 	float fMin,
 	bool bMax,
 	float fMax,
-	void* pCallback)
+	FnChangeCallback_t pCallback)
 {
 	spdlog::info("Registering Convar {}", pszName);
 
@@ -474,16 +468,12 @@ bool ConVar::IsCommand(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: Test each ConVar query before setting the value.
-// Input  : *pConVar - nFlags
+// Input  : nFlags
 // Output : False if change is permitted, true if not.
 //-----------------------------------------------------------------------------
-bool ConVar::IsFlagSet(ConVar* pConVar, int nFlags)
+bool ConVar::IsFlagSet(int nFlags) const
 {
-	// unrestrict FCVAR_DEVELOPMENTONLY and FCVAR_HIDDEN
-	if (pConVar && (nFlags == FCVAR_DEVELOPMENTONLY || nFlags == FCVAR_HIDDEN))
-		return false;
-
-	return CvarIsFlagSet(pConVar, nFlags);
+	return m_ConCommandBase.m_nFlags & nFlags;
 }
 
 //-----------------------------------------------------------------------------

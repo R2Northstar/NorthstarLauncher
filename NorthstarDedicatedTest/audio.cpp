@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "audio.h"
 #include "dedicated.h"
 
@@ -229,10 +230,8 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					}
 
 					// read from after the header first to preserve the empty header, then read the header last
-					wavStream.seekg(sizeof(EMPTY_WAVE), std::ios::beg);
-					wavStream.read(&data[sizeof(EMPTY_WAVE)], fileSize - sizeof(EMPTY_WAVE));
 					wavStream.seekg(0, std::ios::beg);
-					wavStream.read(data, sizeof(EMPTY_WAVE));
+					wavStream.read(data, fileSize);
 					wavStream.close();
 
 					spdlog::info("Finished async read of audio sample {}", pathString);
@@ -493,7 +492,7 @@ void __fastcall MilesLog_Hook(int level, const char* string)
 	spdlog::info("[MSS] {} - {}", level, string);
 }
 
-void InitialiseMilesAudioHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, [](HMODULE baseAddress)
 {
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
 
@@ -512,4 +511,4 @@ void InitialiseMilesAudioHooks(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x57DAD0, &MilesLog_Hook, reinterpret_cast<LPVOID*>(&MilesLog_Original));
 
 	MilesStopAll = (MilesStopAll_Type)((char*)baseAddress + 0x580850);
-}
+})

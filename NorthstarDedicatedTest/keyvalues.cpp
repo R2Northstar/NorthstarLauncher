@@ -1,36 +1,26 @@
 #include "pch.h"
 #include "keyvalues.h"
 #include "modmanager.h"
+#include "hooks.h"
 #include "filesystem.h"
 #include "hookutils.h"
 
 #include <fstream>
 
-// hook forward defs
 typedef char (*KeyValues__LoadFromBufferType)(
 	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
 KeyValues__LoadFromBufferType KeyValues__LoadFromBuffer;
-char KeyValues__LoadFromBufferHook(
-	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
-
-void InitialiseKeyValues(HMODULE baseAddress)
-{
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
-}
-
-void* savedFilesystemPtr;
-
 char KeyValues__LoadFromBufferHook(void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7)
 {
+	static void* pSavedFilesystemPtr = nullptr;
+
 	// this is just to allow playlists to get a valid pFileSystem ptr for kv building, other functions that call this particular overload of
 	// LoadFromBuffer seem to get called on network stuff exclusively not exactly sure what the address wanted here is, so just taking it
 	// from a function call that always happens before playlists is loaded
 	if (pFileSystem != nullptr)
-		savedFilesystemPtr = pFileSystem;
+		pSavedFilesystemPtr = pFileSystem;
 	if (!pFileSystem && !strcmp(resourceName, "playlists"))
-		pFileSystem = savedFilesystemPtr;
+		pFileSystem = pSavedFilesystemPtr;
 
 	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
 }
@@ -39,7 +29,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 {
 	spdlog::info("Building KeyValues for file {}", filename);
 
-	std::string normalisedPath = fs::path(filename).lexically_normal().string();
+	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(filename));
 	fs::path compiledPath = GetCompiledAssetsPath() / filename;
 	fs::path compiledDir = compiledPath.parent_path();
 	fs::create_directories(compiledDir);
@@ -86,7 +76,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	newKvs += "\"\n";
 
 	// load original file, so we can parse out the name of the root obj (e.g. WeaponData for weapons)
-	std::string originalFile = ReadVPKOriginalFile(filename);
+	std::string originalFile = R2FS::ReadVPKOriginalFile(filename);
 
 	if (!originalFile.length())
 	{
@@ -96,7 +86,6 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	char rootName[64];
 	memset(rootName, 0, sizeof(rootName));
-	rootName[63] = '\0';
 
 	// iterate until we hit an ascii char that isn't in a # command or comment to get root obj name
 	int i = 0;
@@ -135,3 +124,10 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	else
 		m_modFiles[normalisedPath] = overrideFile;
 }
+
+ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
+{
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
+})

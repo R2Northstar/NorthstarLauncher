@@ -1,6 +1,7 @@
 #include "pch.h"
+#include "hooks.h"
 #include "languagehooks.h"
-#include "gameutils.h"
+#include "tier0.h"
 #include <filesystem>
 #include <regex>
 
@@ -60,7 +61,7 @@ char* GetGameLanguageHook()
 	bool& canOriginDictateLang = *(bool*)((char*)tier0Handle + 0xA9A90);
 
 	const char* forcedLanguage;
-	if (CommandLine()->CheckParm("-language", &forcedLanguage))
+	if (Tier0::CommandLine()->CheckParm("-language", &forcedLanguage))
 	{
 		if (!CheckLangAudioExists((char*)forcedLanguage))
 		{
@@ -112,8 +113,8 @@ char* GetGameLanguageHook()
 	return lang;
 }
 
-void InitialiseTier0LanguageHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xF560, &GetGameLanguageHook, reinterpret_cast<LPVOID*>(&GetGameLanguageOriginal));
-}
+})

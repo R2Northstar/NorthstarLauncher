@@ -1,1 +1,1 @@
-void InitialiseMiscServerFixes(HMODULE baseAddress);
+#pragma once

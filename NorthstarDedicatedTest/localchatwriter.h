@@ -70,5 +70,3 @@ class LocalChatWriter
 	const char* ApplyAnsiEscape(const char* escape);
 	void InsertDefaultFade();
 };
-
-void InitialiseLocalChatWriter(HMODULE baseAddress);

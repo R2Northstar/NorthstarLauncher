@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "serverchathooks.h"
+#include "hooks.h"
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -76,12 +77,12 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 		return;
 	}
 
-	if (g_ServerSquirrelManager->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		g_ServerSquirrelManager->pusharg((int)senderPlayerId - 1);
-		g_ServerSquirrelManager->pusharg(text);
-		g_ServerSquirrelManager->pusharg(isTeam);
-		g_ServerSquirrelManager->call(3);
+		g_pServerSquirrel->pusharg((int)senderPlayerId - 1);
+		g_pServerSquirrel->pusharg(text);
+		g_pServerSquirrel->pusharg(isTeam);
+		g_pServerSquirrel->call(3);
 	}
 	else
 		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerId, text, isTeam);
@@ -139,29 +140,31 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	CRecipientFilter__Destruct(&filter);
 }
 
+// void function NSSendMessage( int playerIndex, string text, bool isTeam )
 SQRESULT SQ_SendMessage(void* sqvm)
 {
-	int playerIndex = ServerSq_getinteger(sqvm, 1);
-	const char* text = ServerSq_getstring(sqvm, 2);
-	bool isTeam = ServerSq_getbool(sqvm, 3);
+	int playerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
+	const char* text = g_pServerSquirrel->sq_getstring(sqvm, 2);
+	bool isTeam = g_pServerSquirrel->sq_getbool(sqvm, 3);
 
 	ChatSendMessage(playerIndex, text, isTeam);
 
 	return SQRESULT_NULL;
 }
 
+// void function NSBroadcastMessage( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
 SQRESULT SQ_BroadcastMessage(void* sqvm)
 {
-	int fromPlayerIndex = ServerSq_getinteger(sqvm, 1);
-	int toPlayerIndex = ServerSq_getinteger(sqvm, 2);
-	const char* text = ServerSq_getstring(sqvm, 3);
-	bool isTeam = ServerSq_getbool(sqvm, 4);
-	bool isDead = ServerSq_getbool(sqvm, 5);
-	int messageType = ServerSq_getinteger(sqvm, 6);
+	int fromPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
+	int toPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 2);
+	const char* text = g_pServerSquirrel->sq_getstring(sqvm, 3);
+	bool isTeam = g_pServerSquirrel->sq_getbool(sqvm, 4);
+	bool isDead = g_pServerSquirrel->sq_getbool(sqvm, 5);
+	int messageType = g_pServerSquirrel->sq_getinteger(sqvm, 6);
 
 	if (messageType < 1)
 	{
-		ServerSq_pusherror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		g_pServerSquirrel->sq_raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -170,12 +173,12 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-void InitialiseServerChatHooks_Engine(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineServerChatHooks, [](HMODULE baseAddress)
 {
 	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
-}
+})
 
-void InitialiseServerChatHooks_Server(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, [](HMODULE baseAddress)
 {
 	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)((char*)baseAddress + 0x1595C0);
 	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)((char*)baseAddress + 0x26AA10);
@@ -199,11 +202,11 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessageHookBase));
 
 	// Chat sending functions
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
-	g_ServerSquirrelManager->AddFuncRegistration(
+	g_pServerSquirrel->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
+	g_pServerSquirrel->AddFuncRegistration(
 		"void",
 		"NSBroadcastMessage",
 		"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",
 		"",
 		SQ_BroadcastMessage);
-}
+})

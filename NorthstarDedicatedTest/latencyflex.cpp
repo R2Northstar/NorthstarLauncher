@@ -1,10 +1,8 @@
 #include "pch.h"
+#include "hooks.h"
 #include "latencyflex.h"
 #include "hookutils.h"
 #include "convar.h"
-
-typedef void (*OnRenderStartType)();
-OnRenderStartType OnRenderStart;
 
 ConVar* Cvar_r_latencyflex;
 
@@ -12,6 +10,8 @@ HMODULE m_lfxModule {};
 typedef void (*PFN_winelfx_WaitAndBeginFrame)();
 PFN_winelfx_WaitAndBeginFrame m_winelfx_WaitAndBeginFrame {};
 
+typedef void (*OnRenderStartType)();
+OnRenderStartType OnRenderStart;
 void OnRenderStartHook()
 {
 	if (Cvar_r_latencyflex->GetInt())
@@ -20,7 +20,7 @@ void OnRenderStartHook()
 	OnRenderStart();
 }
 
-void InitialiseLatencyFleX(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, [](HMODULE baseAddress)
 {
 	// Connect to the LatencyFleX service
 	// LatencyFleX is an open source vendor agnostic replacement for Nvidia Reflex input latency reduction technology.
@@ -41,4 +41,4 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1952C0, &OnRenderStartHook, reinterpret_cast<LPVOID*>(&OnRenderStart));
-}
+})

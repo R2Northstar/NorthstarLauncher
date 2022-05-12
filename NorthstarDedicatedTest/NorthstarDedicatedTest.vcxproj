@@ -75,6 +75,9 @@
       <Command>
       </Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetPath)" "D:\origin\titanfall\Titanfall2"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -105,6 +108,9 @@
       <Command>
       </Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /Y "$(TargetPath)" "D:\origin\titanfall\Titanfall2"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
@@ -114,25 +120,31 @@
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
+    <ClInclude Include="commandprint.h" />
     <ClInclude Include="debugoverlay.h" />
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
+    <ClInclude Include="demofixes.h" />
+    <ClInclude Include="host.h" />
+    <ClInclude Include="hoststate.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="mapsprint.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
+    <ClInclude Include="r2client.h" />
+    <ClInclude Include="r2engine.h" />
+    <ClInclude Include="r2server.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="concommand.h" />
     <ClInclude Include="configurables.h" />
-    <ClInclude Include="context.h" />
     <ClInclude Include="convar.h" />
     <ClInclude Include="cvar.h" />
     <ClInclude Include="dedicated.h" />
     <ClInclude Include="dedicatedmaterialsystem.h" />
     <ClInclude Include="filesystem.h" />
-    <ClInclude Include="gameutils.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="hookutils.h" />
     <ClInclude Include="include\crypto\aes_platform.h" />
@@ -565,6 +577,7 @@
     <ClInclude Include="ExploitFixes.h" />
     <ClInclude Include="ExploitFixes_UTF8Parser.h" />
     <ClInclude Include="NSMem.h" />
+    <ClInclude Include="tier0.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
@@ -579,20 +592,22 @@
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="configurables.cpp" />
-    <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="cvar.cpp" />
     <ClCompile Include="debugoverlay.cpp" />
     <ClCompile Include="dedicated.cpp" />
     <ClCompile Include="dedicatedmaterialsystem.cpp" />
+    <ClCompile Include="demofixes.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="filesystem.cpp" />
-    <ClCompile Include="gameutils.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="hookutils.cpp" />
+    <ClCompile Include="host.cpp" />
+    <ClCompile Include="hoststate.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
     <ClCompile Include="localchatwriter.cpp" />
+    <ClCompile Include="mapsprint.cpp" />
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />
     <ClCompile Include="memalloc.cpp" />
@@ -610,6 +625,10 @@
     <ClCompile Include="pdef.cpp" />
     <ClCompile Include="playlist.cpp" />
     <ClCompile Include="plugins.cpp" />
+    <ClCompile Include="commandprint.cpp" />
+    <ClCompile Include="r2client.cpp" />
+    <ClCompile Include="r2engine.cpp" />
+    <ClCompile Include="r2server.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
@@ -625,6 +644,7 @@
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="ExploitFixes.cpp" />
+    <ClCompile Include="tier0.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>

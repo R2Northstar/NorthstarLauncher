@@ -67,12 +67,48 @@
 // #define FCVAR_AVAILABLE			(1<<27)
 // #define FCVAR_AVAILABLE			(1<<31)
 
+// flag => string stuff
+const std::map<int, const char*> g_PrintCommandFlags = {
+	{FCVAR_UNREGISTERED, "UNREGISTERED"},
+	{FCVAR_DEVELOPMENTONLY, "DEVELOPMENTONLY"},
+	{FCVAR_GAMEDLL, "GAMEDLL"},
+	{FCVAR_CLIENTDLL, "CLIENTDLL"},
+	{FCVAR_HIDDEN, "HIDDEN"},
+	{FCVAR_PROTECTED, "PROTECTED"},
+	{FCVAR_SPONLY, "SPONLY"},
+	{FCVAR_ARCHIVE, "ARCHIVE"},
+	{FCVAR_NOTIFY, "NOTIFY"},
+	{FCVAR_USERINFO, "USERINFO"},
+	{FCVAR_PRINTABLEONLY, "PRINTABLEONLY"},
+	{FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS, "GAMEDLL_FOR_REMOTE_CLIENTS"},
+	{FCVAR_UNLOGGED, "UNLOGGED"},
+	{FCVAR_NEVER_AS_STRING, "NEVER_AS_STRING"},
+	{FCVAR_REPLICATED, "REPLICATED"},
+	{FCVAR_CHEAT, "CHEAT"},
+	{FCVAR_SS, "SS"},
+	{FCVAR_DEMO, "DEMO"},
+	{FCVAR_DONTRECORD, "DONTRECORD"},
+	{FCVAR_SS_ADDED, "SS_ADDED"},
+	{FCVAR_RELEASE, "RELEASE"},
+	{FCVAR_RELOAD_MATERIALS, "RELOAD_MATERIALS"},
+	{FCVAR_RELOAD_TEXTURES, "RELOAD_TEXTURES"},
+	{FCVAR_NOT_CONNECTED, "NOT_CONNECTED"},
+	{FCVAR_MATERIAL_SYSTEM_THREAD, "MATERIAL_SYSTEM_THREAD"},
+	{FCVAR_ARCHIVE_PLAYERPROFILE, "ARCHIVE_PLAYERPROFILE"},
+	{FCVAR_SERVER_CAN_EXECUTE, "SERVER_CAN_EXECUTE"},
+	{FCVAR_SERVER_CANNOT_QUERY, "SERVER_CANNOT_QUERY"},
+	{FCVAR_CLIENTCMD_CAN_EXECUTE, "CLIENTCMD_CAN_EXECUTE"},
+	{FCVAR_ACCESSIBLE_FROM_THREADS, "ACCESSIBLE_FROM_THREADS"}
+};
+
 //-----------------------------------------------------------------------------
 // Forward declarations
 //-----------------------------------------------------------------------------
 class ConCommandBase;
 class ConCommand;
 class ConVar;
+
+typedef void (*FnChangeCallback_t)(ConVar* var, const char* pOldValue, float flOldValue);
 
 //-----------------------------------------------------------------------------
 // Purpose: A console variable
@@ -91,7 +127,7 @@ class ConVar
 		float fMin,
 		bool bMax,
 		float fMax,
-		void* pCallback);
+		FnChangeCallback_t pCallback);
 	~ConVar(void);
 
 	const char* GetBaseName(void) const;
@@ -125,7 +161,7 @@ class ConVar
 
 	bool IsRegistered(void) const;
 	bool IsCommand(void) const;
-	static bool IsFlagSet(ConVar* pConVar, int nFlags);
+	bool IsFlagSet(int nFlags) const;
 
 	struct CVValue_t
 	{
@@ -145,5 +181,3 @@ class ConVar
 	void* m_pMalloc {}; // 0x0070
 	char m_pPad80[10] {}; // 0x0080
 }; // Size: 0x0080
-
-void InitialiseConVars(HMODULE baseAddress);

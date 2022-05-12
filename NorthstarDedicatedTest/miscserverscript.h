@@ -1,2 +1,2 @@
-void InitialiseMiscServerScriptCommand(HMODULE baseAddress);
+#pragma once
 void* GetPlayerByIndex(int playerIndex);

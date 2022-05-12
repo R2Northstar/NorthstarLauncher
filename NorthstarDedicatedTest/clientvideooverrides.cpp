@@ -1,10 +1,10 @@
 #include "pch.h"
+#include "hooks.h"
 #include "clientvideooverrides.h"
 #include "modmanager.h"
 
 typedef void* (*BinkOpenType)(const char* path, uint32_t flags);
 BinkOpenType BinkOpen;
-
 void* BinkOpenHook(const char* path, uint32_t flags)
 {
 	std::string filename(fs::path(path).filename().string());
@@ -12,7 +12,7 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 
 	// figure out which mod is handling the bink
 	Mod* fileOwner = nullptr;
-	for (Mod& mod : g_ModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Enabled)
 			continue;
@@ -31,9 +31,9 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 		return BinkOpen(path, flags);
 }
 
-void InitialiseClientVideoOverrides(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("client.dll", BinkVideo, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
 		hook, GetProcAddress(GetModuleHandleA("bink2w64.dll"), "BinkOpen"), &BinkOpenHook, reinterpret_cast<LPVOID*>(&BinkOpen));
-}
+})

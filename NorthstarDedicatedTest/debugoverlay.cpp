@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "debugoverlay.h"
 #include "dedicated.h"
 #include "cvar.h"
@@ -76,36 +77,17 @@ struct OverlayBox_t : public OverlayBase_t
 	int a;
 };
 
-// this is in cvar.h, don't need it here
-/*class Color
-{
-  public:
-	Color(int r, int g, int b, int a)
-	{
-		_color[0] = (unsigned char)r;
-		_color[1] = (unsigned char)g;
-		_color[2] = (unsigned char)b;
-		_color[3] = (unsigned char)a;
-	}
-
-  private:
-	unsigned char _color[4];
-};*/
-
 static HMODULE sEngineModule;
-
-typedef void (*DrawOverlayType)(OverlayBase_t* a1);
-DrawOverlayType DrawOverlay;
 
 typedef void (*RenderLineType)(Vector3 v1, Vector3 v2, Color c, bool bZBuffer);
 static RenderLineType RenderLine;
-
 typedef void (*RenderBoxType)(Vector3 vOrigin, QAngle angles, Vector3 vMins, Vector3 vMaxs, Color c, bool bZBuffer, bool bInsideOut);
 static RenderBoxType RenderBox;
-
 static RenderBoxType RenderWireframeBox;
 
 // engine.dll+0xABCB0
+typedef void (*DrawOverlayType)(OverlayBase_t* a1);
+DrawOverlayType DrawOverlay;
 void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
@@ -151,11 +133,8 @@ void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
 
-void InitialiseDebugOverlay(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, [](HMODULE baseAddress)
 {
-	if (IsDedicated())
-		return;
-
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xABCB0, &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));
 
@@ -172,4 +151,4 @@ void InitialiseDebugOverlay(HMODULE baseAddress)
 	Cvar_enable_debug_overlays->SetValue(false);
 	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
 	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);
-}
+})

@@ -1,9 +1,17 @@
 #include "pch.h"
+#include "hooks.h"
 #include "dedicated.h"
 #include "hookutils.h"
-#include "gameutils.h"
+#include "tier0.h"
+#include "playlist.h"
+#include "r2engine.h"
+#include "hoststate.h"
 #include "serverauthentication.h"
 #include "masterserver.h"
+#include "commandprint.h"
+
+using namespace Tier0;
+using namespace R2;
 
 bool IsDedicated()
 {
@@ -30,7 +38,7 @@ struct CDedicatedExports
 
 void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
 {
-	spdlog::info("[DEDICATED PRINT] {}", msg);
+	spdlog::info("[DEDICATED SERVER] {}", msg);
 }
 
 typedef void (*CHostState__InitType)(CHostState* self);
@@ -48,16 +56,13 @@ void RunServer(CDedicatedExports* dedicated)
 	if (!CommandLine()->CheckParm("+map"))
 		CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
+	// ensure playlist initialises right, if we've not explicitly called setplaylist
+	SetCurrentPlaylist(GetCurrentPlaylistName());
+
 	// run server autoexec and re-run commandline
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
-
-	// ensure playlist initialises right, if we've not explicitly called setplaylist
-	SetCurrentPlaylist(GetCurrentPlaylistName());
-
-	// note: we no longer manually set map and hoststate to start server in g_pHostState, we just use +map which seems to initialise stuff
-	// better
 
 	// get tickinterval
 	ConVar* Cvar_base_tickinterval_mp = g_pCVar->FindVar("base_tickinterval_mp");
@@ -81,7 +86,7 @@ void RunServer(CDedicatedExports* dedicated)
 
 			SetConsoleTitleA(fmt::format(
 								 "{} - {} {}/{} players ({})",
-								 g_MasterServerManager->ns_auth_srvName,
+								 g_MasterServerManager->m_sUnicodeServerName,
 								 g_pHostState->m_levelName,
 								 g_ServerAuthenticationManager->m_additionalPlayerData.size(),
 								 maxPlayers,
@@ -121,6 +126,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 		{
 			input += "\n";
 			Cbuf_AddText(Cbuf_GetCurrentPlayer(), input.c_str(), cmd_source_t::kCommandSrcCode);
+			TryPrintCvarHelpForCommand(input.c_str());
 		}
 	}
 
@@ -128,113 +134,85 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 }
 
 #include "NSMem.h"
-void InitialiseDedicated(HMODULE engineAddress)
+ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 {
 	spdlog::info("InitialiseDedicated");
 
 	uintptr_t ea = (uintptr_t)engineAddress;
 
-	{
-		// Host_Init
-		// prevent a particle init that relies on client dll
-		NSMem::NOP(ea + 0x156799, 5);
-	}
+	// Host_Init
+	// prevent a particle init that relies on client dll
+	NSMem::NOP(ea + 0x156799, 5);
 
-	{
-		// CModAppSystemGroup::Create
-		// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
-		auto ptr = ea + 0x1C4EBD;
+	// Host_Init
+	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely)
+	NSMem::NOP(ea + 0x1565B0, 5);
 
-		// cmp => mov
-		NSMem::BytePatch(ptr + 1, "C6 87");
 
-		// 00 => 01
-		NSMem::BytePatch(ptr + 7, "01");
-	}
+	// CModAppSystemGroup::Create
+	// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
+	auto ptr = ea + 0x1C4EBD;
 
-	{
-		// Some init that i'm not sure of that crashes
-		// nop the call to it
-		NSMem::NOP(ea + 0x156A63, 5);
-	}
+	// cmp => mov
+	NSMem::BytePatch(ptr + 1, "C6 87");
 
-	{
-		// runframeserver
-		// nop some access violations
-		NSMem::NOP(ea + 0x159819, 17);
-	}
+	// 00 => 01
+	NSMem::BytePatch(ptr + 7, "01");
 
-	{
-		NSMem::NOP(ea + 0x156B4C, 7);
+	// Some init that i'm not sure of that crashes
+	// nop the call to it
+	NSMem::NOP(ea + 0x156A63, 5);
 
-		// previously patched these, took me a couple weeks to figure out they were the issue
-		// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
-		// so uhh, don't do that
-		// NSMem::NOP(ea + 0x156B4C + 7, 8);
+	// runframeserver
+	// nop some access violations
+	NSMem::NOP(ea + 0x159819, 17);
 
-		NSMem::NOP(ea + 0x156B4C + 15, 9);
-	}
+	NSMem::NOP(ea + 0x156B4C, 7);
 
-	{
-		// HostState_State_NewGame
-		// nop an access violation
-		NSMem::NOP(ea + 0xB934C, 9);
-	}
+	// previously patched these, took me a couple weeks to figure out they were the issue
+	// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
+	// so uhh, don't do that
+	// NSMem::NOP(ea + 0x156B4C + 7, 8);
 
-	{
-		// CEngineAPI::Connect
-		// remove call to Shader_Connect
-		NSMem::NOP(ea + 0x1C4D7D, 5);
-	}
+	NSMem::NOP(ea + 0x156B4C + 15, 9);
 
-	// currently does not work, crashes stuff, likely gotta keep this here
-	//{
-	//	// CEngineAPI::Connect
-	//  // remove calls to register ui rpak asset types
-	//	NSMem::NOP(ea + 0x1C4E07, 5);
-	//}
+	// HostState_State_NewGame
+	// nop an access violation
+	NSMem::NOP(ea + 0xB934C, 9);
 
-	{
-		// Host_Init
-		// remove call to ui loading stuff
-		NSMem::NOP(ea + 0x156595, 5);
-	}
+	// CEngineAPI::Connect
+	// remove call to Shader_Connect
+	NSMem::NOP(ea + 0x1C4D7D, 5);
 
-	{
-		// some function that gets called from RunFrameServer
-		// nop a function that makes requests to stryder, this will eventually access violation if left alone and isn't necessary anyway
-		NSMem::NOP(ea + 0x15A0BB, 5);
-	}
+	// Host_Init
+	// remove call to ui loading stuff
+	NSMem::NOP(ea + 0x156595, 5);
 
-	{
-		// RunFrameServer
-		// nop a function that access violations
-		NSMem::NOP(ea + 0x159BF3, 5);
-	}
+	// some function that gets called from RunFrameServer
+	// nop a function that makes requests to stryder, this will eventually access violation if left alone and isn't necessary anyway
+	NSMem::NOP(ea + 0x15A0BB, 5);
 
-	{
-		// func that checks if origin is inited
-		// always return 1
-		NSMem::BytePatch(
-			ea + 0x183B70,
-			{
-				0xB0,
-				0x01, // mov al,01
-				0xC3 // ret
-			});
-	}
+	// RunFrameServer
+	// nop a function that access violations
+	NSMem::NOP(ea + 0x159BF3, 5);
 
-	{
-		// HostState_State_ChangeLevel
-		// nop clientinterface call
-		NSMem::NOP(ea + 0x1552ED, 16);
-	}
+	// func that checks if origin is inited
+	// always return 1
+	NSMem::BytePatch(
+		ea + 0x183B70,
+		{
+			0xB0,
+			0x01, // mov al,01
+			0xC3 // ret
+		});
 
-	{
-		// HostState_State_ChangeLevel
-		// nop clientinterface call
-		NSMem::NOP(ea + 0x155363, 16);
-	}
+	// HostState_State_ChangeLevel
+	// nop clientinterface call
+	NSMem::NOP(ea + 0x1552ED, 16);
+
+	// HostState_State_ChangeLevel
+	// nop clientinterface call
+	NSMem::NOP(ea + 0x155363, 16);
 
 	// note: previously had DisableDedicatedWindowCreation patches here, but removing those rn since they're all shit and unstable and bad
 	// and such check commit history if any are needed for reimplementation
@@ -299,9 +277,9 @@ void InitialiseDedicated(HMODULE engineAddress)
 		consoleInputThreadHandle = CreateThread(0, 0, ConsoleInputThread, 0, 0, NULL);
 	else
 		spdlog::info("Console input disabled by user request");
-}
+})
 
-void InitialiseDedicatedOrigin(HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, [](HMODULE baseAddress)
 {
 	// disable origin on dedicated
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
@@ -312,7 +290,7 @@ void InitialiseDedicatedOrigin(HMODULE baseAddress)
 		{
 			0xC3 // ret
 		});
-}
+})
 
 typedef void (*PrintFatalSquirrelErrorType)(void* sqvm);
 PrintFatalSquirrelErrorType PrintFatalSquirrelError;
@@ -322,8 +300,8 @@ void PrintFatalSquirrelErrorHook(void* sqvm)
 	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
 }
 
-void InitialiseDedicatedServerGameDLL(HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, [](HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, baseAddress + 0x794D0, &PrintFatalSquirrelErrorHook, reinterpret_cast<LPVOID*>(&PrintFatalSquirrelError));
-}
+})

@@ -16,5 +16,3 @@ class ServerBanSystem
 };
 
 extern ServerBanSystem* g_ServerBanSystem;
-
-void InitialiseBanSystem(HMODULE baseAddress);

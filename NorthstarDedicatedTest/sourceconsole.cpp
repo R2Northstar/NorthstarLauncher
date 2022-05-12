@@ -1,9 +1,10 @@
 #include "pch.h"
+#include "hooks.h"
 #include "convar.h"
 #include "sourceconsole.h"
 #include "sourceinterface.h"
 #include "concommand.h"
-#include "hookutils.h"
+#include "commandprint.h"
 
 SourceInterface<CGameConsole>* g_SourceGameConsole;
 
@@ -15,6 +16,16 @@ void ConCommand_toggleconsole(const CCommand& arg)
 		(*g_SourceGameConsole)->Activate();
 }
 
+void ConCommand_showconsole(const CCommand& arg)
+{
+	(*g_SourceGameConsole)->Activate();
+}
+
+void ConCommand_hideconsole(const CCommand& arg)
+{
+	(*g_SourceGameConsole)->Hide();
+}
+
 typedef void (*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char* pCommand);
 OnCommandSubmittedType onCommandSubmittedOriginal;
 void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
@@ -23,7 +34,7 @@ void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
 	consoleDialog->m_pConsolePanel->Print(pCommand);
 	consoleDialog->m_pConsolePanel->Print("\n");
 
-	// todo: call the help command in the future
+	TryPrintCvarHelpForCommand(pCommand);
 
 	onCommandSubmittedOriginal(consoleDialog, pCommand);
 }
@@ -46,14 +57,6 @@ void InitialiseConsoleOnInterfaceCreation()
 		&OnCommandSubmittedHook,
 		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
 }
-
-void InitialiseSourceConsole(HMODULE baseAddress)
-{
-	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
-	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);
-}
-
-// logging stuff
 
 SourceConsoleSink::SourceConsoleSink()
 {
@@ -78,3 +81,11 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 }
 
 void SourceConsoleSink::flush_() {}
+
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, [](HMODULE baseAddress)
+{
+	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
+	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "Show/hide the console.", FCVAR_DONTRECORD);
+	RegisterConCommand("showconsole", ConCommand_showconsole, "Show the console.", FCVAR_DONTRECORD);
+	RegisterConCommand("hideconsole", ConCommand_hideconsole, "Hide the console.", FCVAR_DONTRECORD);
+})

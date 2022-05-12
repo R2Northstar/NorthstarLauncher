@@ -1,21 +1,22 @@
 #include "pch.h"
 #include "masterserver.h"
 #include "concommand.h"
-#include "gameutils.h"
-#include "hookutils.h"
+#include "playlist.h"
 #include "serverauthentication.h"
-#include "gameutils.h"
+#include "hoststate.h"
+#include "tier0.h"
+#include "r2engine.h"
+#include "modmanager.h"
+#include "misccommands.h"
+#include "version.h"
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
-#include "modmanager.h"
-#include "misccommands.h"
+
 #include <cstring>
 #include <regex>
-#include "version.h"
-// NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
-// requests so httplib is used exclusively for server stuff now
 
 ConVar* Cvar_ns_masterserver_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
@@ -29,20 +30,9 @@ ConVar* Cvar_ns_curl_log_enable;
 
 // Source ConVar
 ConVar* Cvar_hostname;
+ConVar* Cvar_hostport;
 
 MasterServerManager* g_MasterServerManager;
-
-typedef void (*CHostState__State_NewGameType)(CHostState* hostState);
-CHostState__State_NewGameType CHostState__State_NewGame;
-
-typedef void (*CHostState__State_ChangeLevelMPType)(CHostState* hostState);
-CHostState__State_ChangeLevelMPType CHostState__State_ChangeLevelMP;
-
-typedef void (*CHostState__State_ChangeLevelSPType)(CHostState* hostState);
-CHostState__State_ChangeLevelSPType CHostState__State_ChangeLevelSP;
-
-typedef void (*CHostState__State_GameShutdownType)(CHostState* hostState);
-CHostState__State_GameShutdownType CHostState__State_GameShutdown;
 
 // Convert a hex digit char to integer.
 inline int hctod(char c)
@@ -106,45 +96,6 @@ std::string unescape_unicode(const std::string& str)
 	return result;
 }
 
-void UpdateServerInfoFromUnicodeToUTF8()
-{
-	g_MasterServerManager->ns_auth_srvName = unescape_unicode(Cvar_ns_server_name->GetString());
-	g_MasterServerManager->ns_auth_srvDesc = unescape_unicode(Cvar_ns_server_desc->GetString());
-}
-
-const char* HttplibErrorToString(httplib::Error error)
-{
-	switch (error)
-	{
-	case httplib::Error::Success:
-		return "httplib::Error::Success";
-	case httplib::Error::Unknown:
-		return "httplib::Error::Unknown";
-	case httplib::Error::Connection:
-		return "httplib::Error::Connection";
-	case httplib::Error::BindIPAddress:
-		return "httplib::Error::BindIPAddress";
-	case httplib::Error::Read:
-		return "httplib::Error::Read";
-	case httplib::Error::Write:
-		return "httplib::Error::Write";
-	case httplib::Error::ExceedRedirectCount:
-		return "httplib::Error::ExceedRedirectCount";
-	case httplib::Error::Canceled:
-		return "httplib::Error::Canceled";
-	case httplib::Error::SSLConnection:
-		return "httplib::Error::SSLConnection";
-	case httplib::Error::SSLLoadingCerts:
-		return "httplib::Error::SSLLoadingCerts";
-	case httplib::Error::SSLServerVerification:
-		return "httplib::Error::SSLServerVerification";
-	case httplib::Error::UnsupportedMultipartBoundaryChars:
-		return "httplib::Error::UnsupportedMultipartBoundaryChars";
-	}
-
-	return "";
-}
-
 RemoteServerInfo::RemoteServerInfo(
 	const char* newId,
 	const char* newName,
@@ -180,7 +131,7 @@ void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, Cvar_ns_curl_log_enable->GetBool());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
-	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
+	if (Tier0::CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -190,11 +141,11 @@ void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 void MasterServerManager::ClearServerList()
 {
 	// this doesn't really do anything lol, probably isn't threadsafe
-	m_requestingServerList = true;
+	m_bRequestingServerList = true;
 
-	m_remoteServers.clear();
+	m_vRemoteServers.clear();
 
-	m_requestingServerList = false;
+	m_bRequestingServerList = false;
 }
 
 size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp)
@@ -203,7 +154,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	return size * nmemb;
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
+void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, const char* originToken)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
@@ -233,7 +184,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 
 				rapidjson_document originAuthInfo;
 				originAuthInfo.Parse(readBuffer.c_str());
@@ -254,8 +205,8 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 
 				if (originAuthInfo["success"].IsTrue() && originAuthInfo.HasMember("token") && originAuthInfo["token"].IsString())
 				{
-					strncpy(m_ownClientAuthToken, originAuthInfo["token"].GetString(), sizeof(m_ownClientAuthToken));
-					m_ownClientAuthToken[sizeof(m_ownClientAuthToken) - 1] = 0;
+					strncpy(m_sOwnClientAuthToken, originAuthInfo["token"].GetString(), sizeof(m_sOwnClientAuthToken));
+					m_sOwnClientAuthToken[sizeof(m_sOwnClientAuthToken) - 1] = 0;
 					spdlog::info("Northstar origin authentication completed successfully!");
 				}
 				else
@@ -264,7 +215,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			else
 			{
 				spdlog::error("Failed performing northstar origin auth: error {}", curl_easy_strerror(result));
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 			}
 
 			// we goto this instead of returning so we always hit this
@@ -280,18 +231,18 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 void MasterServerManager::RequestServerList()
 {
 	// do this here so it's instantly set on call for scripts
-	m_scriptRequestingServerList = true;
+	m_bScriptRequestingServerList = true;
 
 	std::thread requestThread(
 		[this]()
 		{
 			// make sure we never have 2 threads writing at once
 			// i sure do hope this is actually threadsafe
-			while (m_requestingServerList)
+			while (m_bRequestingServerList)
 				Sleep(100);
 
-			m_requestingServerList = true;
-			m_scriptRequestingServerList = true;
+			m_bRequestingServerList = true;
+			m_bScriptRequestingServerList = true;
 
 			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->GetString());
 
@@ -308,7 +259,7 @@ void MasterServerManager::RequestServerList()
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 
 				rapidjson_document serverInfoJson;
 				serverInfoJson.Parse(readBuffer.c_str());
@@ -364,7 +315,7 @@ void MasterServerManager::RequestServerList()
 					RemoteServerInfo* newServer = nullptr;
 
 					bool createNewServerInfo = true;
-					for (RemoteServerInfo& server : m_remoteServers)
+					for (RemoteServerInfo& server : m_vRemoteServers)
 					{
 						// if server already exists, update info rather than adding to it
 						if (!strncmp((const char*)server.id, id, 32))
@@ -386,7 +337,7 @@ void MasterServerManager::RequestServerList()
 
 					// server didn't exist
 					if (createNewServerInfo)
-						newServer = &m_remoteServers.emplace_back(
+						newServer = &m_vRemoteServers.emplace_back(
 							id,
 							serverObj["name"].GetString(),
 							serverObj["description"].GetString(),
@@ -423,20 +374,20 @@ void MasterServerManager::RequestServerList()
 				}
 
 				std::sort(
-					m_remoteServers.begin(),
-					m_remoteServers.end(),
+					m_vRemoteServers.begin(),
+					m_vRemoteServers.end(),
 					[](RemoteServerInfo& a, RemoteServerInfo& b) { return a.playerCount > b.playerCount; });
 			}
 			else
 			{
 				spdlog::error("Failed requesting servers: error {}", curl_easy_strerror(result));
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 			}
 
 			// we goto this instead of returning so we always hit this
 		REQUEST_END_CLEANUP:
-			m_requestingServerList = false;
-			m_scriptRequestingServerList = false;
+			m_bRequestingServerList = false;
+			m_bScriptRequestingServerList = false;
 			curl_easy_cleanup(curl);
 		});
 
@@ -467,7 +418,7 @@ void MasterServerManager::RequestMainMenuPromos()
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 
 				rapidjson_document mainMenuPromoJson;
 				mainMenuPromoJson.Parse(readBuffer.c_str());
@@ -521,29 +472,29 @@ void MasterServerManager::RequestMainMenuPromos()
 					goto REQUEST_END_CLEANUP;
 				}
 
-				m_MainMenuPromoData.newInfoTitle1 = mainMenuPromoJson["newInfo"]["Title1"].GetString();
-				m_MainMenuPromoData.newInfoTitle2 = mainMenuPromoJson["newInfo"]["Title2"].GetString();
-				m_MainMenuPromoData.newInfoTitle3 = mainMenuPromoJson["newInfo"]["Title3"].GetString();
+				m_sMainMenuPromoData.newInfoTitle1 = mainMenuPromoJson["newInfo"]["Title1"].GetString();
+				m_sMainMenuPromoData.newInfoTitle2 = mainMenuPromoJson["newInfo"]["Title2"].GetString();
+				m_sMainMenuPromoData.newInfoTitle3 = mainMenuPromoJson["newInfo"]["Title3"].GetString();
 
-				m_MainMenuPromoData.largeButtonTitle = mainMenuPromoJson["largeButton"]["Title"].GetString();
-				m_MainMenuPromoData.largeButtonText = mainMenuPromoJson["largeButton"]["Text"].GetString();
-				m_MainMenuPromoData.largeButtonUrl = mainMenuPromoJson["largeButton"]["Url"].GetString();
-				m_MainMenuPromoData.largeButtonImageIndex = mainMenuPromoJson["largeButton"]["ImageIndex"].GetInt();
+				m_sMainMenuPromoData.largeButtonTitle = mainMenuPromoJson["largeButton"]["Title"].GetString();
+				m_sMainMenuPromoData.largeButtonText = mainMenuPromoJson["largeButton"]["Text"].GetString();
+				m_sMainMenuPromoData.largeButtonUrl = mainMenuPromoJson["largeButton"]["Url"].GetString();
+				m_sMainMenuPromoData.largeButtonImageIndex = mainMenuPromoJson["largeButton"]["ImageIndex"].GetInt();
 
-				m_MainMenuPromoData.smallButton1Title = mainMenuPromoJson["smallButton1"]["Title"].GetString();
-				m_MainMenuPromoData.smallButton1Url = mainMenuPromoJson["smallButton1"]["Url"].GetString();
-				m_MainMenuPromoData.smallButton1ImageIndex = mainMenuPromoJson["smallButton1"]["ImageIndex"].GetInt();
+				m_sMainMenuPromoData.smallButton1Title = mainMenuPromoJson["smallButton1"]["Title"].GetString();
+				m_sMainMenuPromoData.smallButton1Url = mainMenuPromoJson["smallButton1"]["Url"].GetString();
+				m_sMainMenuPromoData.smallButton1ImageIndex = mainMenuPromoJson["smallButton1"]["ImageIndex"].GetInt();
 
-				m_MainMenuPromoData.smallButton2Title = mainMenuPromoJson["smallButton2"]["Title"].GetString();
-				m_MainMenuPromoData.smallButton2Url = mainMenuPromoJson["smallButton2"]["Url"].GetString();
-				m_MainMenuPromoData.smallButton2ImageIndex = mainMenuPromoJson["smallButton2"]["ImageIndex"].GetInt();
+				m_sMainMenuPromoData.smallButton2Title = mainMenuPromoJson["smallButton2"]["Title"].GetString();
+				m_sMainMenuPromoData.smallButton2Url = mainMenuPromoJson["smallButton2"]["Url"].GetString();
+				m_sMainMenuPromoData.smallButton2ImageIndex = mainMenuPromoJson["smallButton2"]["ImageIndex"].GetInt();
 
 				m_bHasMainMenuPromoData = true;
 			}
 			else
 			{
 				spdlog::error("Failed requesting main menu promos: error {}", curl_easy_strerror(result));
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 			}
 
 		REQUEST_END_CLEANUP:
@@ -554,15 +505,15 @@ void MasterServerManager::RequestMainMenuPromos()
 	requestThread.detach();
 }
 
-void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken)
+void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char* playerToken)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_authenticatingWithGameServer)
+	if (m_bAuthenticatingWithGameServer)
 		return;
 
-	m_authenticatingWithGameServer = true;
-	m_scriptAuthenticatingWithGameServer = true;
-	m_successfullyAuthenticatedWithGameServer = false;
+	m_bAuthenticatingWithGameServer = true;
+	m_bScriptAuthenticatingWithGameServer = true;
+	m_bSuccessfullyAuthenticatedWithGameServer = false;
 
 	std::string uidStr(uid);
 	std::string tokenStr(playerToken);
@@ -587,7 +538,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 
 				rapidjson_document authInfoJson;
 				authInfoJson.Parse(readBuffer.c_str());
@@ -653,24 +604,24 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 				g_ServerAuthenticationManager->m_authData.clear();
 				g_ServerAuthenticationManager->m_authData.insert(std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
 
-				m_successfullyAuthenticatedWithGameServer = true;
+				m_bSuccessfullyAuthenticatedWithGameServer = true;
 			}
 			else
 			{
 				spdlog::error("Failed authenticating with own server: error {}", curl_easy_strerror(result));
-				m_successfullyConnected = false;
-				m_successfullyAuthenticatedWithGameServer = false;
-				m_scriptAuthenticatingWithGameServer = false;
+				m_bSuccessfullyConnected = false;
+				m_bSuccessfullyAuthenticatedWithGameServer = false;
+				m_bScriptAuthenticatingWithGameServer = false;
 			}
 
 		REQUEST_END_CLEANUP:
-			m_authenticatingWithGameServer = false;
-			m_scriptAuthenticatingWithGameServer = false;
+			m_bAuthenticatingWithGameServer = false;
+			m_bScriptAuthenticatingWithGameServer = false;
 
 			if (m_bNewgameAfterSelfAuth)
 			{
 				// pretty sure this is threadsafe?
-				Cbuf_AddText(Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", cmd_source_t::kCommandSrcCode);
+				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", R2::cmd_source_t::kCommandSrcCode);
 				m_bNewgameAfterSelfAuth = false;
 			}
 
@@ -680,15 +631,15 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 	requestThread.detach();
 }
 
-void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password)
+void MasterServerManager::AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_authenticatingWithGameServer)
+	if (m_bAuthenticatingWithGameServer)
 		return;
 
-	m_authenticatingWithGameServer = true;
-	m_scriptAuthenticatingWithGameServer = true;
-	m_successfullyAuthenticatedWithGameServer = false;
+	m_bAuthenticatingWithGameServer = true;
+	m_bScriptAuthenticatingWithGameServer = true;
+	m_bSuccessfullyAuthenticatedWithGameServer = false;
 
 	std::string uidStr(uid);
 	std::string tokenStr(playerToken);
@@ -699,7 +650,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 		[this, uidStr, tokenStr, serverIdStr, passwordStr]()
 		{
 			// esnure that any persistence saving is done, so we know masterserver has newest
-			while (m_savingPersistentData)
+			while (m_bSavingPersistentData)
 				Sleep(100);
 
 			spdlog::info("Attempting authentication with server of id \"{}\"", serverIdStr);
@@ -734,7 +685,7 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 
 				rapidjson_document connectionInfoJson;
 				connectionInfoJson.Parse(readBuffer.c_str());
@@ -781,20 +732,20 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 				strncpy(m_pendingConnectionInfo.authToken, connectionInfoJson["authToken"].GetString(), 31);
 				m_pendingConnectionInfo.authToken[31] = 0;
 
-				m_hasPendingConnectionInfo = true;
-				m_successfullyAuthenticatedWithGameServer = true;
+				m_bHasPendingConnectionInfo = true;
+				m_bSuccessfullyAuthenticatedWithGameServer = true;
 			}
 			else
 			{
 				spdlog::error("Failed authenticating with server: error {}", curl_easy_strerror(result));
-				m_successfullyConnected = false;
-				m_successfullyAuthenticatedWithGameServer = false;
-				m_scriptAuthenticatingWithGameServer = false;
+				m_bSuccessfullyConnected = false;
+				m_bSuccessfullyAuthenticatedWithGameServer = false;
+				m_bScriptAuthenticatingWithGameServer = false;
 			}
 
 		REQUEST_END_CLEANUP:
-			m_authenticatingWithGameServer = false;
-			m_scriptAuthenticatingWithGameServer = false;
+			m_bAuthenticatingWithGameServer = false;
+			m_bScriptAuthenticatingWithGameServer = false;
 			curl_easy_cleanup(curl);
 		});
 
@@ -802,7 +753,14 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 }
 
 void MasterServerManager::AddSelfToServerList(
-	int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password)
+	int port,
+	int authPort,
+	const char* name,
+	const char* description,
+	const char* map,
+	const char* playlist,
+	int maxPlayers,
+	const char* password)
 {
 	if (!Cvar_ns_report_server_to_masterserver->GetBool())
 		return;
@@ -824,8 +782,8 @@ void MasterServerManager::AddSelfToServerList(
 	std::thread requestThread(
 		[this, port, authPort, strName, strDescription, strMap, strPlaylist, maxPlayers, strPassword]
 		{
-			m_ownServerId[0] = 0;
-			m_ownServerAuthToken[0] = 0;
+			m_sOwnServerId[0] = 0;
+			m_sOwnServerAuthToken[0] = 0;
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -838,7 +796,7 @@ void MasterServerManager::AddSelfToServerList(
 			curl_mime* mime = curl_mime_init(curl);
 			curl_mimepart* part = curl_mime_addpart(mime);
 
-			curl_mime_data(part, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
+			curl_mime_data(part, m_sOwnModInfoJson.c_str(), m_sOwnModInfoJson.size());
 			curl_mime_name(part, "modinfo");
 			curl_mime_filename(part, "modinfo.json");
 			curl_mime_type(part, "application/json");
@@ -880,7 +838,7 @@ void MasterServerManager::AddSelfToServerList(
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 
 				rapidjson_document serverAddedJson;
 				serverAddedJson.Parse(readBuffer.c_str());
@@ -919,11 +877,11 @@ void MasterServerManager::AddSelfToServerList(
 					goto REQUEST_END_CLEANUP;
 				}
 
-				strncpy(m_ownServerId, serverAddedJson["id"].GetString(), sizeof(m_ownServerId));
-				m_ownServerId[sizeof(m_ownServerId) - 1] = 0;
+				strncpy(m_sOwnServerId, serverAddedJson["id"].GetString(), sizeof(m_sOwnServerId));
+				m_sOwnServerId[sizeof(m_sOwnServerId) - 1] = 0;
 
-				strncpy(m_ownServerAuthToken, serverAddedJson["serverAuthToken"].GetString(), sizeof(m_ownServerAuthToken));
-				m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
+				strncpy(m_sOwnServerAuthToken, serverAddedJson["serverAuthToken"].GetString(), sizeof(m_sOwnServerAuthToken));
+				m_sOwnServerAuthToken[sizeof(m_sOwnServerAuthToken) - 1] = 0;
 
 				// heartbeat thread
 				// ideally this should actually be done in main thread, rather than on it's own thread, so it'd stop if server freezes
@@ -933,7 +891,7 @@ void MasterServerManager::AddSelfToServerList(
 						Sleep(5000);
 
 						// defensive check, as m_ownServer could be set to null during the Sleep(5000) above
-						if (!*m_ownServerId)
+						if (!*m_sOwnServerId)
 							return;
 
 						do
@@ -950,14 +908,14 @@ void MasterServerManager::AddSelfToServerList(
 							// send all registration info so we have all necessary info to reregister our server if masterserver goes down,
 							// without a restart this isn't threadsafe :terror:
 							{
-								char* escapedNameNew = curl_easy_escape(curl, g_MasterServerManager->ns_auth_srvName.c_str(), NULL);
-								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->ns_auth_srvDesc.c_str(), NULL);
-								char* escapedMapNew = curl_easy_escape(curl, g_pHostState->m_levelName, NULL);
-								char* escapedPlaylistNew = curl_easy_escape(curl, GetCurrentPlaylistName(), NULL);
+								char* escapedNameNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerName.c_str(), NULL);
+								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerDesc.c_str(), NULL);
+								char* escapedMapNew = curl_easy_escape(curl, R2::g_pHostState->m_levelName, NULL);
+								char* escapedPlaylistNew = curl_easy_escape(curl, R2::GetCurrentPlaylistName(), NULL);
 								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->GetString(), NULL);
 
 								int maxPlayers = 6;
-								char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
+								const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
 								if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
 									maxPlayers = std::stoi(maxPlayersVar);
 
@@ -969,7 +927,7 @@ void MasterServerManager::AddSelfToServerList(
 										"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
 										"maxPlayers={}&password={}",
 										Cvar_ns_masterserver_hostname->GetString(),
-										m_ownServerId,
+										m_sOwnServerId,
 										Cvar_hostport->GetInt(),
 										Cvar_ns_player_auth_port->GetInt(),
 										escapedNameNew,
@@ -991,7 +949,7 @@ void MasterServerManager::AddSelfToServerList(
 							curl_mime* mime = curl_mime_init(curl);
 							curl_mimepart* part = curl_mime_addpart(mime);
 
-							curl_mime_data(part, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
+							curl_mime_data(part, m_sOwnModInfoJson.c_str(), m_sOwnModInfoJson.size());
 							curl_mime_name(part, "modinfo");
 							curl_mime_filename(part, "modinfo.json");
 							curl_mime_type(part, "application/json");
@@ -1001,7 +959,7 @@ void MasterServerManager::AddSelfToServerList(
 							CURLcode result = curl_easy_perform(curl);
 
 							// defensive check, as m_ownServerId could be set to null before this request gets processed
-							if (!*m_ownServerId)
+							if (!*m_sOwnServerId)
 								return;
 
 							if (result == CURLcode::CURLE_OK)
@@ -1013,17 +971,17 @@ void MasterServerManager::AddSelfToServerList(
 								{
 									if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
 									{
-										strncpy(m_ownServerId, serverAddedJson["id"].GetString(), sizeof(m_ownServerId));
-										m_ownServerId[sizeof(m_ownServerId) - 1] = 0;
+										strncpy(m_sOwnServerId, serverAddedJson["id"].GetString(), sizeof(m_sOwnServerId));
+										m_sOwnServerId[sizeof(m_sOwnServerId) - 1] = 0;
 									}
 
 									if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
 									{
 										strncpy(
-											m_ownServerAuthToken,
+											m_sOwnServerAuthToken,
 											serverAddedJson["serverAuthToken"].GetString(),
-											sizeof(m_ownServerAuthToken));
-										m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
+											sizeof(m_sOwnServerAuthToken));
+										m_sOwnServerAuthToken[sizeof(m_sOwnServerAuthToken) - 1] = 0;
 									}
 								}
 							}
@@ -1032,7 +990,7 @@ void MasterServerManager::AddSelfToServerList(
 
 							curl_easy_cleanup(curl);
 							Sleep(10000);
-						} while (*m_ownServerId);
+						} while (*m_sOwnServerId);
 					});
 
 				heartbeatThread.detach();
@@ -1040,7 +998,7 @@ void MasterServerManager::AddSelfToServerList(
 			else
 			{
 				spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 			}
 
 		REQUEST_END_CLEANUP:
@@ -1051,10 +1009,10 @@ void MasterServerManager::AddSelfToServerList(
 	requestThread.detach();
 }
 
-void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, int maxPlayers)
+void MasterServerManager::UpdateServerMapAndPlaylist(const char* map, const char* playlist, int maxPlayers)
 {
 	// dont call this if we don't have a server id
-	if (!*m_ownServerId)
+	if (!*m_sOwnServerId)
 		return;
 
 	std::string strMap(map);
@@ -1082,7 +1040,7 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 					fmt::format(
 						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}",
 						Cvar_ns_masterserver_hostname->GetString(),
-						m_ownServerId,
+						m_sOwnServerId,
 						mapEscaped,
 						playlistEscaped,
 						maxPlayers)
@@ -1095,9 +1053,9 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 			CURLcode result = curl_easy_perform(curl);
 
 			if (result == CURLcode::CURLE_OK)
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 			else
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 
 			curl_easy_cleanup(curl);
 		});
@@ -1108,7 +1066,7 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 {
 	// dont call this if we don't have a server id
-	if (!*m_ownServerId)
+	if (!*m_sOwnServerId)
 		return;
 
 	std::thread requestThread(
@@ -1125,15 +1083,15 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 				curl,
 				CURLOPT_URL,
 				fmt::format(
-					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId, playerCount)
+					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->GetString(), m_sOwnServerId, playerCount)
 					.c_str());
 
 			CURLcode result = curl_easy_perform(curl);
 
 			if (result == CURLcode::CURLE_OK)
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 			else
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 
 			curl_easy_cleanup(curl);
 		});
@@ -1141,10 +1099,10 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 	requestThread.detach();
 }
 
-void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize)
+void MasterServerManager::WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize)
 {
 	// still call this if we don't have a server id, since lobbies that aren't port forwarded need to be able to call it
-	m_savingPersistentData = true;
+	m_bSavingPersistentData = true;
 	if (!pdataSize)
 	{
 		spdlog::warn("attempted to write pdata of size 0!");
@@ -1168,7 +1126,7 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 					"{}/accounts/write_persistence?id={}&serverId={}",
 					Cvar_ns_masterserver_hostname->GetString(),
 					strPlayerId,
-					m_ownServerId)
+					m_sOwnServerId)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
@@ -1187,13 +1145,13 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 			CURLcode result = curl_easy_perform(curl);
 
 			if (result == CURLcode::CURLE_OK)
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 			else
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 
 			curl_easy_cleanup(curl);
 
-			m_savingPersistentData = false;
+			m_bSavingPersistentData = false;
 		});
 
 	requestThread.detach();
@@ -1202,7 +1160,7 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 void MasterServerManager::RemoveSelfFromServerList()
 {
 	// dont call this if we don't have a server id
-	if (!*m_ownServerId || !Cvar_ns_report_server_to_masterserver->GetBool())
+	if (!*m_sOwnServerId || !Cvar_ns_report_server_to_masterserver->GetBool())
 		return;
 
 	std::thread requestThread(
@@ -1218,15 +1176,15 @@ void MasterServerManager::RemoveSelfFromServerList()
 			curl_easy_setopt(
 				curl,
 				CURLOPT_URL,
-				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId).c_str());
+				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_sOwnServerId).c_str());
 
-			*m_ownServerId = 0;
+			*m_sOwnServerId = 0;
 			CURLcode result = curl_easy_perform(curl);
 
 			if (result == CURLcode::CURLE_OK)
-				m_successfullyConnected = true;
+				m_bSuccessfullyConnected = true;
 			else
-				m_successfullyConnected = false;
+				m_bSuccessfullyConnected = false;
 
 			curl_easy_cleanup(curl);
 		});
@@ -1239,128 +1197,29 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 	g_MasterServerManager->RequestServerList();
 }
 
-void CHostState__State_NewGameHook(CHostState* hostState)
+MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
+
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddress)
 {
-	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
-	Cbuf_Execute();
-
-	// need to do this to ensure we don't go to private match
-	if (g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame)
-		SetCurrentPlaylist("tdm");
-
-	// net_data_block_enabled is required for sp, force it if we're on an sp map
-	// sucks for security but just how it be
-	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
-	{
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "net_data_block_enabled 1", cmd_source_t::kCommandSrcCode);
-		Cbuf_Execute();
-	}
-
-	CHostState__State_NewGame(hostState);
-
-	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	// Copy new server name cvar to source
-	Cvar_hostname->SetValue(Cvar_ns_server_name->GetString());
-	// This calls the function that converts unicode strings from servername and serverdesc to UTF-8
-	UpdateServerInfoFromUnicodeToUTF8();
-
-	g_MasterServerManager->AddSelfToServerList(
-		Cvar_hostport->GetInt(),
-		Cvar_ns_player_auth_port->GetInt(),
-		(char*)Cvar_ns_server_name->GetString(),
-		(char*)Cvar_ns_server_desc->GetString(),
-		hostState->m_levelName,
-		(char*)GetCurrentPlaylistName(),
-		maxPlayers,
-		(char*)Cvar_ns_server_password->GetString());
-	g_ServerAuthenticationManager->StartPlayerAuthServer();
-	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
-}
-
-void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
-{
-	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	// net_data_block_enabled is required for sp, force it if we're on an sp map
-	// sucks for security but just how it be
-	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
-	{
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "net_data_block_enabled 1", cmd_source_t::kCommandSrcCode);
-		Cbuf_Execute();
-	}
-
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
-	CHostState__State_ChangeLevelMP(hostState);
-}
-
-void CHostState__State_ChangeLevelSPHook(CHostState* hostState)
-{
-	// is this even called? genuinely i don't think so
-	// from what i can tell, it's not called on mp=>sp change or sp=>sp change
-	// so idk it's fucked
-
-	int maxPlayers = 6;
-	char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers);
-	CHostState__State_ChangeLevelSP(hostState);
-}
-
-void CHostState__State_GameShutdownHook(CHostState* hostState)
-{
-	g_MasterServerManager->RemoveSelfFromServerList();
-	g_ServerAuthenticationManager->StopPlayerAuthServer();
-
-	CHostState__State_GameShutdown(hostState);
-}
-
-MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_ownServerId {""}, m_ownClientAuthToken {""} {}
-
-void InitialiseSharedMasterServer(HMODULE baseAddress)
-{
-	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
-	// unfortunately lib doesn't let us specify a port and still have https work
-	// Cvar_ns_masterserver_port = new ConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
-
-	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "");
-	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "");
-	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "");
-	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
-	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
-
-	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "");
-
-	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
-
 	g_MasterServerManager = new MasterServerManager;
 
-	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "", FCVAR_CLIENTDLL);
+	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E7D0, CHostState__State_NewGameHook, reinterpret_cast<LPVOID*>(&CHostState__State_NewGame));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x16E520,
-		CHostState__State_ChangeLevelMPHook,
-		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelMP));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x16E5D0,
-		CHostState__State_ChangeLevelSPHook,
-		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelSP));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x16E640,
-		CHostState__State_GameShutdownHook,
-		reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
-}
+	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
+		});
+	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_desc->GetString());
+		});
+
+	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password");
+	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver");
+	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver, when started in singleplayer");
+
+	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "Whether curl should log to the console");
+
+	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
+	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
+
+	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "Fetch all servers from the masterserver", FCVAR_CLIENTDLL);
+})

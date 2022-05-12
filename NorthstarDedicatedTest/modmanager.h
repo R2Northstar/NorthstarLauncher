@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "rapidjson/document.h"
 #include "memalloc.h"
+#include "squirrel.h"
 
 namespace fs = std::filesystem;
 
@@ -24,9 +25,6 @@ struct ModConVar
 struct ModScriptCallback
 {
   public:
-	// would've liked to make it possible to hook arbitrary codecallbacks, but couldn't find a function that calls some ui ones
-	// std::string HookedCodeCallback;
-
 	ScriptContext Context;
 
 	// called before the codecallback is executed
@@ -134,6 +132,7 @@ class ModManager
 	ModManager();
 	void LoadMods();
 	void UnloadMods();
+	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
 
 	// compile asset type stuff, these are done in files under Mods/Compiled/
@@ -142,8 +141,7 @@ class ModManager
 	void BuildPdef();
 };
 
-void InitialiseModManager(HMODULE baseAddress);
 fs::path GetModFolderPath();
 fs::path GetCompiledAssetsPath();
 
-extern ModManager* g_ModManager;
+extern ModManager* g_pModManager;

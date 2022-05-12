@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "modmanager.h"
+#include "hooks.h"
 #include "convar.h"
 #include "concommand.h"
 #include "audio.h"
@@ -17,7 +18,7 @@
 #include "rpakfilesystem.h"
 #include "configurables.h"
 
-ModManager* g_ModManager;
+ModManager* g_pModManager;
 
 Mod::Mod(fs::path modDir, char* jsonBuf)
 {
@@ -106,11 +107,55 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			else
 				convar->HelpString = "";
 
-			// todo: could possibly parse FCVAR names here instead, would be easier
+			convar->Flags = FCVAR_NONE;
+
 			if (convarObj.HasMember("Flags"))
-				convar->Flags = convarObj["Flags"].GetInt();
-			else
-				convar->Flags = FCVAR_NONE;
+			{
+				// read raw integer flags
+				if (convarObj["Flags"].IsInt())
+					convar->Flags = convarObj["Flags"].GetInt();
+				else if (convarObj["Flags"].IsString())
+				{
+					// parse cvar flags from string
+					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
+
+					std::string sFlags = convarObj["Flags"].GetString();
+					sFlags += '|'; // add additional | so we register the last flag
+					std::string sCurrentFlag;
+
+					for (int i = 0; i < sFlags.length(); i++)
+					{
+						if (isspace(sFlags[i]))
+							continue;
+
+						// if we encounter a |, add current string as a flag
+						if (sFlags[i] == '|')
+						{
+							bool bHasFlags = false;
+							int iCurrentFlags;
+
+							for (auto& flagPair : g_PrintCommandFlags)
+							{
+								if (!sCurrentFlag.compare(flagPair.second))
+								{
+									iCurrentFlags = flagPair.first;
+									bHasFlags = true;
+									break;
+								}
+							}
+
+							if (bHasFlags)
+								convar->Flags |= iCurrentFlags;
+							else
+								spdlog::warn("Mod ConVar {} has unknown flag {}", convar->Name, sCurrentFlag);
+
+							sCurrentFlag = "";
+						}
+						else
+							sCurrentFlag += sFlags[i];
+					}
+				}
+			}
 
 			ConVars.push_back(convar);
 		}
@@ -331,7 +376,7 @@ void ModManager::LoadMods()
 					modVpk.m_sVpkPath = vpkName;
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
-						(*g_Filesystem)->m_vtable->MountVPK(*g_Filesystem, vpkName.c_str());
+						(*R2FS::g_pFilesystem)->m_vtable->MountVPK(*R2FS::g_pFilesystem, vpkName.c_str());
 				}
 			}
 		}
@@ -387,7 +432,7 @@ void ModManager::LoadMods()
 
 					// not using atm because we need to resolve path to rpak
 					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
-					//	g_PakLoadManager->LoadPakAsync(pakName.c_str());
+					//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
 		}
@@ -399,7 +444,7 @@ void ModManager::LoadMods()
 			{
 				if (fs::is_regular_file(file))
 				{
-					std::string kvStr = file.path().lexically_relative(mod.ModDirectory / "keyvalues").lexically_normal().string();
+					std::string kvStr = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.ModDirectory / "keyvalues"));
 					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
 				}
 			}
@@ -457,14 +502,14 @@ void ModManager::LoadMods()
 		{
 			for (fs::directory_entry file : fs::recursive_directory_iterator(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR))
 			{
-				fs::path path = file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR).lexically_normal();
-
-				if (file.is_regular_file() && m_modFiles.find(path.string()) == m_modFiles.end())
+				std::string path =
+					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR));
+				if (file.is_regular_file() && m_modFiles.find(path) == m_modFiles.end())
 				{
 					ModOverrideFile modFile;
 					modFile.owningMod = &m_loadedMods[i];
 					modFile.path = path;
-					m_modFiles.insert(std::make_pair(path.string(), modFile));
+					m_modFiles.insert(std::make_pair(path, modFile));
 				}
 			}
 		}
@@ -494,7 +539,7 @@ void ModManager::LoadMods()
 	buffer.Clear();
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	modinfoDoc.Accept(writer);
-	g_MasterServerManager->m_ownModInfoJson = std::string(buffer.GetString());
+	g_MasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
 
 	m_hasLoadedMods = true;
 }
@@ -540,9 +585,21 @@ void ModManager::UnloadMods()
 	m_loadedMods.clear();
 }
 
+std::string ModManager::NormaliseModFilePath(const fs::path path)
+{
+	std::string str = path.lexically_normal().string();
+
+	// force to lowercase
+	for (char& c : str)
+		if (c <= 'Z' && c >= 'A')
+			c = c - ('Z' - 'z');
+
+	return str;
+}
+
 void ModManager::CompileAssetsForFile(const char* filename)
 {
-	size_t fileHash = STR_HASH(fs::path(filename).lexically_normal().string());
+	size_t fileHash = STR_HASH(NormaliseModFilePath(fs::path(filename)));
 
 	if (fileHash == m_hScriptsRsonHash)
 		BuildScriptsRson();
@@ -565,16 +622,9 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ReloadModsCommand(const CCommand& args)
+void ConCommand_reload_mods(const CCommand& args)
 {
-	g_ModManager->LoadMods();
-}
-
-void InitialiseModManager(HMODULE baseAddress)
-{
-	g_ModManager = new ModManager;
-
-	RegisterConCommand("reload_mods", ReloadModsCommand, "idk", FCVAR_NONE);
+	g_pModManager->LoadMods();
 }
 
 fs::path GetModFolderPath()
@@ -585,3 +635,10 @@ fs::path GetCompiledAssetsPath()
 {
 	return fs::path(GetNorthstarPrefix() + COMPILED_ASSETS_SUFFIX);
 }
+
+ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, [](HMODULE baseAddress)
+{
+	g_pModManager = new ModManager;
+
+	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
+})

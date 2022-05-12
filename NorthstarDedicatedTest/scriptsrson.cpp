@@ -12,10 +12,7 @@ void ModManager::BuildScriptsRson()
 	fs::path MOD_SCRIPTS_RSON_PATH = fs::path(GetCompiledAssetsPath() / MOD_SCRIPTS_RSON_SUFFIX);
 	fs::remove(MOD_SCRIPTS_RSON_PATH);
 
-	// not really important since it doesn't affect actual functionality at all, but the rson we output is really weird
-	// has a shitload of newlines added, even in places where we don't modify it at all
-
-	std::string scriptsRson = ReadVPKOriginalFile(VPK_SCRIPTS_RSON_PATH);
+	std::string scriptsRson = R2FS::ReadVPKOriginalFile(VPK_SCRIPTS_RSON_PATH);
 	scriptsRson += "\n\n// START MODDED SCRIPT CONTENT\n\n"; // newline before we start custom stuff
 
 	for (Mod& mod : m_loadedMods)
