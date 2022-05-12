@@ -133,6 +133,9 @@
     <Filter Include="Source Files\Shared\Exploit Fixes\UTF8Parser">
       <UniqueIdentifier>{b30e08b1-b962-4264-8cbb-a0a31924b93e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Shared\ExploitFixes">
+      <UniqueIdentifier>{7f609cee-d2c0-46a2-b06e-83b9f0511915}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1491,12 +1494,6 @@
     <ClInclude Include="clientvideooverrides.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
-    <ClInclude Include="ExploitFixes.h">
-      <Filter>Source Files\Shared\Exploit Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="NSMem.h">
-      <Filter>Source Files\Shared\Exploit Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="ExploitFixes_UTF8Parser.h">
       <Filter>Source Files\Shared\Exploit Fixes\UTF8Parser</Filter>
     </ClInclude>
@@ -1505,6 +1502,15 @@
     </ClInclude>
     <ClInclude Include="ns_version.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExploitFixes.h">
+      <Filter>Header Files\Shared\ExploitFixes</Filter>
+    </ClInclude>
+    <ClInclude Include="NSMem.h">
+      <Filter>Header Files\Shared\ExploitFixes</Filter>
+    </ClInclude>
+    <ClInclude Include="emit_blocker.h">
+      <Filter>Header Files\Shared\ExploitFixes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1666,6 +1672,9 @@
     </ClCompile>
     <ClCompile Include="version.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="emit_blocker.cpp">
+      <Filter>Source Files\Shared\Exploit Fixes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
