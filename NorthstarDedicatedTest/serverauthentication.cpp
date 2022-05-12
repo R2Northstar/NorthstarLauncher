@@ -387,9 +387,9 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		additionalData.usingLocalPdata = *((char*)self + 0x4a0) == (char)0x3;
 
 		g_ServerAuthenticationManager->m_additionalPlayerData.insert(std::make_pair(self, additionalData));
-	}
 
-	g_ServerAuthenticationManager->m_additionalPlayerData[self].uid = nextPlayerUid;
+		g_ServerAuthenticationManager->m_additionalPlayerData[self].uid = nextPlayerUid;
+	}
 
 	return ret;
 }
