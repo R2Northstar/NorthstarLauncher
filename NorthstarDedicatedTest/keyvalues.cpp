@@ -86,7 +86,6 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	char rootName[64];
 	memset(rootName, 0, sizeof(rootName));
-	rootName[63] = '\0';
 
 	// iterate until we hit an ascii char that isn't in a # command or comment to get root obj name
 	int i = 0;
