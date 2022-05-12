@@ -420,6 +420,8 @@ void CBaseClient__ActivatePlayerHook(void* self)
 		g_ServerAuthenticationManager->WritePersistentData(self);
 		g_MasterServerManager->UpdateServerPlayerCount(g_ServerAuthenticationManager->m_additionalPlayerData.size());
 	}
+	// Log UID
+	spdlog::info("In CBaseClient__ActivatePlayerHook, activating UID \"{}\"", (char*)self + 0xF500);
 
 	CBaseClient__ActivatePlayer(self);
 }
