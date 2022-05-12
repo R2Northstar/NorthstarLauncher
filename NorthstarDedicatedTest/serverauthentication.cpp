@@ -23,7 +23,6 @@ using namespace Tier0;
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
-
 // global vars
 ServerAuthenticationManager* g_ServerAuthenticationManager;
 

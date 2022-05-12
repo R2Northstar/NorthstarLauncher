@@ -6,9 +6,6 @@
 #include "serverchathooks.h"
 #include "localchatwriter.h"
 
-typedef void(__fastcall* CHudChat__AddGameLineType)(void* self, const char* message, int fromPlayerId, bool isteam, bool isdead);
-CHudChat__AddGameLineType CHudChat__AddGameLine;
-
 struct ChatTags
 {
 	bool whisper;
@@ -16,6 +13,8 @@ struct ChatTags
 	bool dead;
 };
 
+typedef void(__fastcall* CHudChat__AddGameLineType)(void* self, const char* message, int fromPlayerId, bool isteam, bool isdead);
+CHudChat__AddGameLineType CHudChat__AddGameLine;
 static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
 {
 	// This hook is called for each HUD, but we only want our logic to run once.

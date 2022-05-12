@@ -3,11 +3,10 @@
 #include "scriptbrowserhooks.h"
 #include "hookutils.h"
 
-typedef void (*OpenExternalWebBrowserType)(char* url, char flags);
-OpenExternalWebBrowserType OpenExternalWebBrowser;
-
 bool* bIsOriginOverlayEnabled;
 
+typedef void (*OpenExternalWebBrowserType)(char* url, char flags);
+OpenExternalWebBrowserType OpenExternalWebBrowser;
 void OpenExternalWebBrowserHook(char* url, char flags)
 {
 	bool bIsOriginOverlayEnabledOriginal = *bIsOriginOverlayEnabled;

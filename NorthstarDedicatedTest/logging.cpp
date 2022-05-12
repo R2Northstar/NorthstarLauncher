@@ -396,7 +396,6 @@ void Status_ConMsg_Hook(const char* text, ...)
 
 typedef bool (*CClientState_ProcessPrint_Type)(__int64 thisptr, __int64 msg);
 CClientState_ProcessPrint_Type CClientState_ProcessPrint_Original;
-
 bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
 {
 	char* text = *(char**)(msg + 0x20);

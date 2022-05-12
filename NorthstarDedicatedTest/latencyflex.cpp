@@ -4,15 +4,14 @@
 #include "hookutils.h"
 #include "convar.h"
 
-typedef void (*OnRenderStartType)();
-OnRenderStartType OnRenderStart;
-
 ConVar* Cvar_r_latencyflex;
 
 HMODULE m_lfxModule {};
 typedef void (*PFN_winelfx_WaitAndBeginFrame)();
 PFN_winelfx_WaitAndBeginFrame m_winelfx_WaitAndBeginFrame {};
 
+typedef void (*OnRenderStartType)();
+OnRenderStartType OnRenderStart;
 void OnRenderStartHook()
 {
 	if (Cvar_r_latencyflex->GetInt())

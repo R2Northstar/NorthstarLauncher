@@ -5,7 +5,6 @@
 
 typedef void* (*BinkOpenType)(const char* path, uint32_t flags);
 BinkOpenType BinkOpen;
-
 void* BinkOpenHook(const char* path, uint32_t flags)
 {
 	std::string filename(fs::path(path).filename().string());

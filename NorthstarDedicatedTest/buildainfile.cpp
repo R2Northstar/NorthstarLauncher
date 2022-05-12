@@ -352,7 +352,6 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 
 typedef void (*CAI_NetworkBuilder__BuildType)(void* builder, CAI_Network* aiNetwork, void* unknown);
 CAI_NetworkBuilder__BuildType CAI_NetworkBuilder__Build;
-
 void CAI_NetworkBuilder__BuildHook(void* builder, CAI_Network* aiNetwork, void* unknown)
 {
 	CAI_NetworkBuilder__Build(builder, aiNetwork, unknown);
@@ -362,7 +361,6 @@ void CAI_NetworkBuilder__BuildHook(void* builder, CAI_Network* aiNetwork, void* 
 
 typedef void (*LoadAINFileType)(void* aimanager, void* buf, const char* filename);
 LoadAINFileType LoadAINFile;
-
 void LoadAINFileHook(void* aimanager, void* buf, const char* filename)
 {
 	LoadAINFile(aimanager, buf, filename);

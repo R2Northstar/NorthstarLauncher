@@ -7,7 +7,6 @@ ConVar* Cvar_rui_drawEnable;
 
 typedef char (*DrawRUIFuncType)(void* a1, float* a2);
 DrawRUIFuncType DrawRUIFunc;
-
 char DrawRUIFuncHook(void* a1, float* a2)
 {
 	if (!Cvar_rui_drawEnable->GetBool())

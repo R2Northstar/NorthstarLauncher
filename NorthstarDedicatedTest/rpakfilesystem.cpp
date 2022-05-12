@@ -5,9 +5,6 @@
 #include "modmanager.h"
 #include "dedicated.h"
 
-typedef void* (*LoadCommonPaksForMapType)(char* map);
-LoadCommonPaksForMapType LoadCommonPaksForMap;
-
 typedef void* (*LoadPakSyncType)(const char* path, void* unknownSingleton, int flags);
 typedef int (*LoadPakAsyncType)(const char* path, void* unknownSingleton, int flags, void* callback0, void* callback1);
 typedef void* (*UnloadPakType)(int pakHandle, void* callback);
@@ -33,6 +30,7 @@ void PakLoadManager::LoadPakSync(const char* path)
 {
 	g_pakLoadApi->LoadPakSync(path, *pUnknownPakLoadSingleton, 0);
 }
+
 void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload)
 {
 	int handle = g_pakLoadApi->LoadPakAsync(path, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);

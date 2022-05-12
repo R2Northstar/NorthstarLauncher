@@ -15,40 +15,6 @@
 
 namespace fs = std::filesystem;
 
-typedef LPSTR (*GetCommandLineAType)();
-LPSTR GetCommandLineAHook();
-
-typedef HMODULE (*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-
-typedef HMODULE (*LoadLibraryAType)(LPCSTR lpLibFileName);
-HMODULE LoadLibraryAHook(LPCSTR lpLibFileName);
-
-typedef HMODULE (*LoadLibraryExWType)(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE LoadLibraryExWHook(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-
-typedef HMODULE (*LoadLibraryWType)(LPCWSTR lpLibFileName);
-HMODULE LoadLibraryWHook(LPCWSTR lpLibFileName);
-
-GetCommandLineAType GetCommandLineAOriginal;
-LoadLibraryExAType LoadLibraryExAOriginal;
-LoadLibraryAType LoadLibraryAOriginal;
-LoadLibraryExWType LoadLibraryExWOriginal;
-LoadLibraryWType LoadLibraryWOriginal;
-
-void InstallInitialHooks()
-{
-	if (MH_Initialize() != MH_OK)
-		spdlog::error("MH_Initialize (minhook initialization) failed");
-
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, &GetCommandLineA, &GetCommandLineAHook, reinterpret_cast<LPVOID*>(&GetCommandLineAOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryExA, &LoadLibraryExAHook, reinterpret_cast<LPVOID*>(&LoadLibraryExAOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryA, &LoadLibraryAHook, reinterpret_cast<LPVOID*>(&LoadLibraryAOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryExW, &LoadLibraryExWHook, reinterpret_cast<LPVOID*>(&LoadLibraryExWOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryW, &LoadLibraryWHook, reinterpret_cast<LPVOID*>(&LoadLibraryWOriginal));
-}
-
 // called from the ON_DLL_LOAD macros
 __dllLoadCallback::__dllLoadCallback(
 	eDllLoadCallbackSide side, const std::string dllName, DllLoadCallbackFuncType callback, std::string uniqueStr, std::string reliesOn)
@@ -75,6 +41,8 @@ __dllLoadCallback::__dllLoadCallback(
 	}
 }
 
+typedef LPSTR (*GetCommandLineAType)();
+GetCommandLineAType GetCommandLineAOriginal;
 LPSTR GetCommandLineAHook()
 {
 	static char* cmdlineModified;
@@ -266,6 +234,9 @@ void CallAllPendingDLLLoadCallbacks()
 	}
 }
 
+
+typedef HMODULE (*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+LoadLibraryExAType LoadLibraryExAOriginal;
 HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	HMODULE moduleAddress = LoadLibraryExAOriginal(lpLibFileName, hFile, dwFlags);
@@ -278,6 +249,8 @@ HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 	return moduleAddress;
 }
 
+typedef HMODULE (*LoadLibraryAType)(LPCSTR lpLibFileName);
+LoadLibraryAType LoadLibraryAOriginal;
 HMODULE LoadLibraryAHook(LPCSTR lpLibFileName)
 {
 	HMODULE moduleAddress = LoadLibraryAOriginal(lpLibFileName);
@@ -290,6 +263,8 @@ HMODULE LoadLibraryAHook(LPCSTR lpLibFileName)
 	return moduleAddress;
 }
 
+typedef HMODULE (*LoadLibraryExWType)(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+LoadLibraryExWType LoadLibraryExWOriginal;
 HMODULE LoadLibraryExWHook(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	HMODULE moduleAddress = LoadLibraryExWOriginal(lpLibFileName, hFile, dwFlags);
@@ -302,6 +277,8 @@ HMODULE LoadLibraryExWHook(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 	return moduleAddress;
 }
 
+typedef HMODULE (*LoadLibraryWType)(LPCWSTR lpLibFileName);
+LoadLibraryWType LoadLibraryWOriginal;
 HMODULE LoadLibraryWHook(LPCWSTR lpLibFileName)
 {
 	HMODULE moduleAddress = LoadLibraryWOriginal(lpLibFileName);
@@ -312,4 +289,17 @@ HMODULE LoadLibraryWHook(LPCWSTR lpLibFileName)
 	}
 
 	return moduleAddress;
+}
+
+void InstallInitialHooks()
+{
+	if (MH_Initialize() != MH_OK)
+		spdlog::error("MH_Initialize (minhook initialization) failed");
+
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, &GetCommandLineA, &GetCommandLineAHook, reinterpret_cast<LPVOID*>(&GetCommandLineAOriginal));
+	ENABLER_CREATEHOOK(hook, &LoadLibraryExA, &LoadLibraryExAHook, reinterpret_cast<LPVOID*>(&LoadLibraryExAOriginal));
+	ENABLER_CREATEHOOK(hook, &LoadLibraryA, &LoadLibraryAHook, reinterpret_cast<LPVOID*>(&LoadLibraryAOriginal));
+	ENABLER_CREATEHOOK(hook, &LoadLibraryExW, &LoadLibraryExWHook, reinterpret_cast<LPVOID*>(&LoadLibraryExWOriginal));
+	ENABLER_CREATEHOOK(hook, &LoadLibraryW, &LoadLibraryWHook, reinterpret_cast<LPVOID*>(&LoadLibraryWOriginal));
 }
