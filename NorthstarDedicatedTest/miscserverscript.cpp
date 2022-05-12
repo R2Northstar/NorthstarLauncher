@@ -1,10 +1,9 @@
 #include "pch.h"
 #include "miscserverscript.h"
-#include "hooks.h"
 #include "squirrel.h"
 #include "masterserver.h"
 #include "serverauthentication.h"
-#include "gameutils.h"
+#include "r2client.h"
 
 // annoying helper function because i can't figure out getting players or entities from sqvm rn
 // wish i didn't have to do it like this, but here we are
@@ -54,7 +53,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pServerSquirrel->sq_pushbool(sqvm, !strcmp(g_LocalPlayerUserID, (char*)player + 0xF500));
+	g_pServerSquirrel->sq_pushbool(sqvm, !strcmp(R2::g_LocalPlayerUserID, (char*)player + 0xF500));
 	return SQRESULT_NOTNULL;
 }
 

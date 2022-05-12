@@ -132,6 +132,9 @@
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
+    <ClInclude Include="r2client.h" />
+    <ClInclude Include="r2engine.h" />
+    <ClInclude Include="r2server.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
@@ -142,7 +145,6 @@
     <ClInclude Include="dedicated.h" />
     <ClInclude Include="dedicatedmaterialsystem.h" />
     <ClInclude Include="filesystem.h" />
-    <ClInclude Include="gameutils.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="hookutils.h" />
     <ClInclude Include="include\crypto\aes_platform.h" />
@@ -598,7 +600,6 @@
     <ClCompile Include="demofixes.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="filesystem.cpp" />
-    <ClCompile Include="gameutils.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="host.cpp" />
@@ -625,6 +626,9 @@
     <ClCompile Include="playlist.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="commandprint.cpp" />
+    <ClCompile Include="r2client.cpp" />
+    <ClCompile Include="r2engine.cpp" />
+    <ClCompile Include="r2server.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />

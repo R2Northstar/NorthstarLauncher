@@ -1,10 +1,8 @@
 #include "pch.h"
 #include "squirrel.h"
-#include "hooks.h"
-#include "hookutils.h"
 #include "concommand.h"
 #include "modmanager.h"
-#include "gameutils.h"
+#include "r2engine.h"
 #include "NSMem.h"
 
 RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
@@ -137,14 +135,14 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 	// ideally we'd just check if the sqvm was fully initialised here, somehow
 	if (strcmp(file, "console") && strcmp(file, "unnamedbuffer"))
 	{
-		Cbuf_AddText(
-			Cbuf_GetCurrentPlayer(),
+		R2::Cbuf_AddText(
+			R2::Cbuf_GetCurrentPlayer(),
 			fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
 				.c_str(),
-			cmd_source_t::kCommandSrcCode);
+			R2::cmd_source_t::kCommandSrcCode);
 
 		if (realContext == ScriptContext::UI) // likely temp: show console so user can see any errors
-			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "showconsole", cmd_source_t::kCommandSrcCode); 
+			R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode); 
 	}
 
 	// dont call the original function since it kills game lol

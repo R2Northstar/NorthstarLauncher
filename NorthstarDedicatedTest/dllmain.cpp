@@ -4,7 +4,6 @@
 #include "logging.h"
 #include "keyvalues.h"
 #include "masterserver.h"
-#include "gameutils.h"
 #include "tier0.h"
 #include "memalloc.h"
 #include "maxplayers.h"
@@ -165,9 +164,6 @@ bool InitialiseNorthstar()
 
 	// Write launcher version to log
 	spdlog::info("NorthstarLauncher version: {}", version);
-
-	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
-	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();

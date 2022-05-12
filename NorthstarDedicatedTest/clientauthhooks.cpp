@@ -2,9 +2,9 @@
 #include "hooks.h"
 #include "clientauthhooks.h"
 #include "hookutils.h"
-#include "gameutils.h"
 #include "masterserver.h"
 #include "convar.h"
+#include "r2client.h"
 
 ConVar* Cvar_ns_has_agreed_to_send_token;
 
@@ -24,10 +24,10 @@ void AuthWithStryderHook(void* a1)
 		// if player has agreed to send token and we aren't already authing, try to auth
 		if (Cvar_ns_has_agreed_to_send_token->GetInt() == AGREED_TO_SEND_TOKEN &&
 			!g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
-			g_MasterServerManager->AuthenticateOriginWithMasterServer(g_LocalPlayerUserID, g_LocalPlayerOriginToken);
+			g_MasterServerManager->AuthenticateOriginWithMasterServer(R2::g_LocalPlayerUserID, R2::g_LocalPlayerOriginToken);
 
 		// invalidate key so auth will fail
-		*g_LocalPlayerOriginToken = 0;
+		*R2::g_LocalPlayerOriginToken = 0;
 	}
 
 	AuthWithStryder(a1);

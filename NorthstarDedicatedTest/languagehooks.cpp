@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "hooks.h"
 #include "languagehooks.h"
-#include "gameutils.h"
 #include "tier0.h"
 #include <filesystem>
 #include <regex>

@@ -3,8 +3,8 @@
 #include "masterserver.h"
 #include "serverauthentication.h"
 #include "playlist.h"
-#include "gameutils.h"
 #include "tier0.h"
+#include "r2engine.h"
 
 using namespace R2;
 
@@ -94,8 +94,7 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, [](HMODULE baseAddress)
 {
-	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
-	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
+	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

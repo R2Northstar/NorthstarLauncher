@@ -2,9 +2,9 @@
 #include "host.h"
 #include "convar.h"
 #include "modmanager.h"
-#include "gameutils.h"
 #include "commandprint.h"
 #include "mapsprint.h"
+#include "r2engine.h"
 
 typedef void (*Host_InitType)(bool bDedicated);
 Host_InitType Host_Init;
@@ -54,7 +54,7 @@ void Host_InitHook(bool bDedicated)
 
 	// run client autoexec if on client
 	if (!bDedicated)
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_client", cmd_source_t::kCommandSrcCode);
+		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "exec autoexec_ns_client", R2::cmd_source_t::kCommandSrcCode);
 }
 
 ON_DLL_LOAD("engine.dll", Host_Init, [](HMODULE baseAddress)

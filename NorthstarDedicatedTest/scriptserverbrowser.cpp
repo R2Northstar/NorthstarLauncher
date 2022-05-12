@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "hooks.h"
 #include "scriptserverbrowser.h"
 #include "squirrel.h"
 #include "masterserver.h"
-#include "gameutils.h"
 #include "serverauthentication.h"
+#include "r2engine.h"
+#include "r2client.h"
 
 // functions for viewing server browser
 
@@ -334,7 +334,7 @@ SQRESULT SQ_TryAuthWithServer(void* sqvm)
 
 	// do auth
 	g_MasterServerManager->AuthenticateWithServer(
-		g_LocalPlayerUserID,
+		R2::g_LocalPlayerUserID,
 		g_MasterServerManager->m_sOwnClientAuthToken,
 		g_MasterServerManager->m_vRemoteServers[serverIndex].id,
 		(char*)password);
@@ -369,9 +369,10 @@ SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
 
 	// set auth token, then try to connect
 	// i'm honestly not entirely sure how silentconnect works regarding ports and encryption so using connect for now
-	Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), cmd_source_t::kCommandSrcCode);
-	Cbuf_AddText(
-		Cbuf_GetCurrentPlayer(),
+	R2::Cbuf_AddText(
+		R2::Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), R2::cmd_source_t::kCommandSrcCode);
+	R2::Cbuf_AddText(
+		R2::Cbuf_GetCurrentPlayer(),
 		fmt::format(
 			"connect {}.{}.{}.{}:{}",
 			info.ip.S_un.S_un_b.s_b1,
@@ -380,7 +381,7 @@ SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
 			info.ip.S_un.S_un_b.s_b4,
 			info.port)
 			.c_str(),
-		cmd_source_t::kCommandSrcCode);
+		R2::cmd_source_t::kCommandSrcCode);
 
 	g_MasterServerManager->m_bHasPendingConnectionInfo = false;
 	return SQRESULT_NULL;
@@ -390,7 +391,7 @@ SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
 SQRESULT SQ_TryAuthWithLocalServer(void* sqvm)
 {
 	// do auth request
-	g_MasterServerManager->AuthenticateWithOwnServer(g_LocalPlayerUserID, g_MasterServerManager->m_sOwnClientAuthToken);
+	g_MasterServerManager->AuthenticateWithOwnServer(R2::g_LocalPlayerUserID, g_MasterServerManager->m_sOwnClientAuthToken);
 
 	return SQRESULT_NULL;
 }
@@ -400,10 +401,10 @@ SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
 {
 	// literally just set serverfilter
 	// note: this assumes we have no authdata other than our own
-	Cbuf_AddText(
-		Cbuf_GetCurrentPlayer(),
+	R2::Cbuf_AddText(
+		R2::Cbuf_GetCurrentPlayer(),
 		fmt::format("serverfilter {}", g_ServerAuthenticationManager->m_authData.begin()->first).c_str(),
-		cmd_source_t::kCommandSrcCode);
+		R2::cmd_source_t::kCommandSrcCode);
 
 	return SQRESULT_NULL;
 }

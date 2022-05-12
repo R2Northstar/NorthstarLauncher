@@ -1,23 +1,22 @@
 #include "pch.h"
 #include "masterserver.h"
-#include "hooks.h"
 #include "concommand.h"
-#include "gameutils.h"
 #include "playlist.h"
-#include "hookutils.h"
 #include "serverauthentication.h"
-#include "gameutils.h"
 #include "hoststate.h"
 #include "tier0.h"
+#include "r2engine.h"
+#include "modmanager.h"
+#include "misccommands.h"
+#include "version.h"
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
-#include "modmanager.h"
-#include "misccommands.h"
+
 #include <cstring>
 #include <regex>
-#include "version.h"
 
 ConVar* Cvar_ns_masterserver_hostname;
 ConVar* Cvar_ns_report_server_to_masterserver;
@@ -622,7 +621,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 			if (m_bNewgameAfterSelfAuth)
 			{
 				// pretty sure this is threadsafe?
-				Cbuf_AddText(Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", cmd_source_t::kCommandSrcCode);
+				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", R2::cmd_source_t::kCommandSrcCode);
 				m_bNewgameAfterSelfAuth = false;
 			}
 

@@ -4,7 +4,6 @@
 #include "hooks.h"
 #include "concommand.h"
 #include "convar.h"
-#include "gameutils.h"
 #include "hookutils.h"
 #include "squirrel.h"
 

@@ -4,7 +4,6 @@
 #include "dedicated.h"
 #include "dedicatedmaterialsystem.h"
 #include "hookutils.h"
-#include "gameutils.h"
 #include "tier0.h"
 #include "NSMem.h"
 

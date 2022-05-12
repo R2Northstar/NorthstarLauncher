@@ -135,5 +135,5 @@ class ConCommand : public ConCommandBase
 }; // Size: 0x0060
 
 void RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags);
-
-#define MAKE_CONCMD(name, helpStr, flags, fn) RegisterConCommand(name, fn, helpStr, flags);
+void RegisterConCommand(
+	const char* name, void (*callback)(const CCommand&), const char* helpString, int flags, FnCommandCompletionCallback completionCallback);

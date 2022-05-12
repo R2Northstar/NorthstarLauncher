@@ -600,9 +600,6 @@
     <ClInclude Include="clientauthhooks.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
-    <ClInclude Include="gameutils.h">
-      <Filter>Header Files\Shared\Game Functions</Filter>
-    </ClInclude>
     <ClInclude Include="memalloc.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
@@ -1545,6 +1542,15 @@
     <ClInclude Include="demofixes.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="r2engine.h">
+      <Filter>Header Files\Shared\Game Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="r2server.h">
+      <Filter>Header Files\Shared\Game Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="r2client.h">
+      <Filter>Header Files\Shared\Game Functions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1600,9 +1606,6 @@
     </ClCompile>
     <ClCompile Include="masterserver.cpp">
       <Filter>Source Files\Shared</Filter>
-    </ClCompile>
-    <ClCompile Include="gameutils.cpp">
-      <Filter>Source Files\Shared\Game Functions</Filter>
     </ClCompile>
     <ClCompile Include="chatcommand.cpp">
       <Filter>Source Files\Client</Filter>
@@ -1726,6 +1729,15 @@
     </ClCompile>
     <ClCompile Include="mapsprint.cpp">
       <Filter>Source Files\Shared\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="r2client.cpp">
+      <Filter>Source Files\Shared\Game Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="r2server.cpp">
+      <Filter>Source Files\Shared\Game Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="r2engine.cpp">
+      <Filter>Source Files\Shared\Game Functions</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

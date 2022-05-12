@@ -1,23 +1,25 @@
 #include "pch.h"
 #include "serverauthentication.h"
-#include "hooks.h"
 #include "cvar.h"
 #include "convar.h"
-#include "hookutils.h"
 #include "masterserver.h"
-#include "httplib.h"
-#include "gameutils.h"
 #include "hoststate.h"
 #include "bansystem.h"
 #include "miscserverscript.h"
 #include "concommand.h"
 #include "dedicated.h"
-#include <fstream>
-#include <filesystem>
-#include <thread>
 #include "configurables.h"
 #include "NSMem.h"
 #include "tier0.h"
+#include "r2engine.h"
+#include "r2client.h"
+#include "r2server.h"
+
+#include "httplib.h"
+
+#include <fstream>
+#include <filesystem>
+#include <thread>
 
 using namespace Tier0;
 
@@ -159,7 +161,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 			strcpy((char*)player + 0xF500, strUid.c_str());
 
 			// reset from disk if we're doing that
-			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
+			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, R2::g_LocalPlayerUserID))
 			{
 				std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
@@ -228,7 +230,7 @@ bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
 		return false;
 
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
-	if (m_bNeedLocalAuthForNewgame && !strcmp((char*)player + 0xF500, g_LocalPlayerUserID))
+	if (m_bNeedLocalAuthForNewgame && !strcmp((char*)player + 0xF500, R2::g_LocalPlayerUserID))
 		return false;
 
 	// we don't have our auth token at this point, so lookup authdata by uid
@@ -419,7 +421,7 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 }
 
 // maybe this should be done outside of auth code, but effort to refactor rn and it sorta fits
-typedef bool (*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, cmd_source_t commandSource);
+typedef bool (*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, R2::cmd_source_t commandSource);
 CCommand__TokenizeType CCommand__Tokenize;
 
 typedef char (*CGameClient__ExecuteStringCommandType)(void* self, uint32_t unknown, const char* pCommandString);
@@ -452,7 +454,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	memset(commandBuf, 0, sizeof(commandBuf));
 	CCommand tempCommand = *(CCommand*)&commandBuf;
 
-	if (!CCommand__Tokenize(tempCommand, pCommandString, cmd_source_t::kCommandSrcCode) || !tempCommand.ArgC())
+	if (!CCommand__Tokenize(tempCommand, pCommandString, R2::cmd_source_t::kCommandSrcCode) || !tempCommand.ArgC())
 		return false;
 
 	ConCommand* command = g_pCVar->FindCommand(tempCommand.Arg(0));
@@ -464,7 +466,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 		if (IsDedicated())
 			return false;
 
-		if (strcmp((char*)self + 0xF500, g_LocalPlayerUserID))
+		if (strcmp((char*)self + 0xF500, R2::g_LocalPlayerUserID))
 			return false;
 	}
 
@@ -510,7 +512,7 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 				Cvar_net_chan_limit_msec_per_sec->GetInt());
 
 			// nonzero = kick, 0 = warn, but never kick local player
-			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(g_LocalPlayerUserID, (char*)sender + 0xF500))
+			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(R2::g_LocalPlayerUserID, (char*)sender + 0xF500))
 			{
 				CBaseClient__Disconnect(sender, 1, "Exceeded net channel processing limit");
 				return false;
@@ -587,7 +589,7 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 
 void ConCommand_ns_resetpersistence(const CCommand& args)
 {
-	if (*sv_m_State == server_state_t::ss_active)
+	if (*R2::g_pServerState == R2::server_state_t::ss_active)
 	{
 		spdlog::error("ns_resetpersistence must be entered from the main menu");
 		return;

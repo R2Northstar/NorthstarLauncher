@@ -4,7 +4,6 @@
 #include "cvar.h"
 #include "convar.h"
 #include "hookutils.h"
-#include "gameutils.h"
 #include "sourceinterface.h"
 
 typedef void (*ConVarRegisterType)(
