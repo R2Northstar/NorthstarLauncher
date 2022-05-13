@@ -260,40 +260,40 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, [](HMODULE baseAd
 	g_pClientSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
 	g_pUISquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
 
-	g_pClientSquirrel->sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	g_pUISquirrel->sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	g_pClientSquirrel->sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
-	g_pUISquirrel->sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
+	g_pClientSquirrel->__sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
+	g_pUISquirrel->__sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
+	g_pClientSquirrel->__sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
+	g_pUISquirrel->__sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
 
-	g_pClientSquirrel->sq_call = (sq_callType)((char*)baseAddress + 0x8650);
-	g_pUISquirrel->sq_call = (sq_callType)((char*)baseAddress + 0x8650);
+	g_pClientSquirrel->__sq_call = (sq_callType)((char*)baseAddress + 0x8650);
+	g_pUISquirrel->__sq_call = (sq_callType)((char*)baseAddress + 0x8650);
 
-	g_pClientSquirrel->sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	g_pUISquirrel->sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	g_pClientSquirrel->sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
-	g_pUISquirrel->sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	g_pClientSquirrel->__sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
+	g_pUISquirrel->__sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
+	g_pClientSquirrel->__sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	g_pUISquirrel->__sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
 
-	g_pClientSquirrel->sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	g_pUISquirrel->sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	g_pClientSquirrel->sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	g_pUISquirrel->sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	g_pClientSquirrel->sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	g_pUISquirrel->sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	g_pClientSquirrel->sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	g_pUISquirrel->sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	g_pClientSquirrel->sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8470);
-	g_pUISquirrel->sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8470);
+	g_pClientSquirrel->__sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
+	g_pUISquirrel->__sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
+	g_pClientSquirrel->__sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
+	g_pUISquirrel->__sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
+	g_pClientSquirrel->__sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
+	g_pUISquirrel->__sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
+	g_pClientSquirrel->__sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
+	g_pUISquirrel->__sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
+	g_pClientSquirrel->__sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8470);
+	g_pUISquirrel->__sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8470);
 
-	g_pClientSquirrel->sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
-	g_pUISquirrel->sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
-	g_pClientSquirrel->sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
-	g_pUISquirrel->sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
-	g_pClientSquirrel->sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
-	g_pUISquirrel->sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
-	g_pClientSquirrel->sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
-	g_pUISquirrel->sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
-	g_pClientSquirrel->sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
-	g_pUISquirrel->sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
+	g_pClientSquirrel->__sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
+	g_pUISquirrel->__sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
+	g_pClientSquirrel->__sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
+	g_pUISquirrel->__sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
+	g_pClientSquirrel->__sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
+	g_pUISquirrel->__sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
+	g_pClientSquirrel->__sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
+	g_pUISquirrel->__sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
+	g_pClientSquirrel->__sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
+	g_pUISquirrel->__sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
 
 	// uiscript_reset concommand: don't loop forever if compilation fails
 	NSMem::NOP((uintptr_t)baseAddress + 0x3C6E4C, 6);
@@ -326,24 +326,24 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, [](HMODULE baseAd
 
 	g_pServerSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x1DD10);
 
-	g_pServerSquirrel->sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	g_pServerSquirrel->sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5840);
-	g_pServerSquirrel->sq_call = (sq_callType)((char*)baseAddress + 0x8620);
+	g_pServerSquirrel->__sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
+	g_pServerSquirrel->__sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5840);
+	g_pServerSquirrel->__sq_call = (sq_callType)((char*)baseAddress + 0x8620);
 
-	g_pServerSquirrel->sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	g_pServerSquirrel->sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	g_pServerSquirrel->__sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
+	g_pServerSquirrel->__sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
 
-	g_pServerSquirrel->sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	g_pServerSquirrel->sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	g_pServerSquirrel->sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	g_pServerSquirrel->sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	g_pServerSquirrel->sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8440);
+	g_pServerSquirrel->__sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
+	g_pServerSquirrel->__sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
+	g_pServerSquirrel->__sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
+	g_pServerSquirrel->__sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
+	g_pServerSquirrel->__sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8440);
 
-	g_pServerSquirrel->sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60A0);
-	g_pServerSquirrel->sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60C0);
-	g_pServerSquirrel->sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x60E0);
-	g_pServerSquirrel->sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6110);
-	g_pServerSquirrel->sq_get = (sq_getType)((char*)baseAddress + 0x7C00);
+	g_pServerSquirrel->__sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60A0);
+	g_pServerSquirrel->__sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60C0);
+	g_pServerSquirrel->__sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x60E0);
+	g_pServerSquirrel->__sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6110);
+	g_pServerSquirrel->__sq_get = (sq_getType)((char*)baseAddress + 0x7C00);
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

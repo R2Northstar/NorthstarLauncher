@@ -7,12 +7,12 @@
 // array<string> function NSGetModNames()
 SQRESULT SQ_GetModNames(void* sqvm)
 {
-	g_pClientSquirrel->sq_newarray(sqvm, 0);
+	g_pUISquirrel->newarray(sqvm, 0);
 
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
-		g_pClientSquirrel->sq_pushstring(sqvm, mod.Name.c_str(), -1);
-		g_pClientSquirrel->sq_arrayappend(sqvm, -2);
+		g_pUISquirrel->pushstring(sqvm, mod.Name.c_str());
+		g_pUISquirrel->arrayappend(sqvm, -2);
 	}
 
 	return SQRESULT_NOTNULL;
@@ -21,14 +21,14 @@ SQRESULT SQ_GetModNames(void* sqvm)
 // bool function NSIsModEnabled(string modName)
 SQRESULT SQ_IsModEnabled(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pClientSquirrel->sq_pushbool(sqvm, mod.Enabled);
+			g_pUISquirrel->pushbool(sqvm, mod.Enabled);
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -39,8 +39,8 @@ SQRESULT SQ_IsModEnabled(void* sqvm)
 // void function NSSetModEnabled(string modName, bool enabled)
 SQRESULT SQ_SetModEnabled(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
-	const SQBool enabled = g_pClientSquirrel->sq_getbool(sqvm, 2);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
+	const SQBool enabled = g_pUISquirrel->getbool(sqvm, 2);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
@@ -58,14 +58,14 @@ SQRESULT SQ_SetModEnabled(void* sqvm)
 // string function NSGetModDescriptionByModName(string modName)
 SQRESULT SQ_GetModDescription(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pClientSquirrel->sq_pushstring(sqvm, mod.Description.c_str(), -1);
+			g_pUISquirrel->pushstring(sqvm, mod.Description.c_str());
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -76,14 +76,14 @@ SQRESULT SQ_GetModDescription(void* sqvm)
 // string function NSGetModVersionByModName(string modName)
 SQRESULT SQ_GetModVersion(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pClientSquirrel->sq_pushstring(sqvm, mod.Version.c_str(), -1);
+			g_pUISquirrel->pushstring(sqvm, mod.Version.c_str());
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -94,14 +94,14 @@ SQRESULT SQ_GetModVersion(void* sqvm)
 // string function NSGetModDownloadLinkByModName(string modName)
 SQRESULT SQ_GetModDownloadLink(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pClientSquirrel->sq_pushstring(sqvm, mod.DownloadLink.c_str(), -1);
+			g_pUISquirrel->pushstring(sqvm, mod.DownloadLink.c_str());
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -112,14 +112,14 @@ SQRESULT SQ_GetModDownloadLink(void* sqvm)
 // int function NSGetModLoadPriority(string modName)
 SQRESULT SQ_GetModLoadPriority(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pClientSquirrel->sq_pushinteger(sqvm, mod.LoadPriority);
+			g_pUISquirrel->pushinteger(sqvm, mod.LoadPriority);
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -130,14 +130,14 @@ SQRESULT SQ_GetModLoadPriority(void* sqvm)
 // bool function NSIsModRequiredOnClient(string modName)
 SQRESULT SQ_IsModRequiredOnClient(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pClientSquirrel->sq_pushbool(sqvm, mod.RequiredOnClient);
+			g_pUISquirrel->pushbool(sqvm, mod.RequiredOnClient);
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -148,8 +148,8 @@ SQRESULT SQ_IsModRequiredOnClient(void* sqvm)
 // array<string> function NSGetModConvarsByModName(string modName)
 SQRESULT SQ_GetModConvars(void* sqvm)
 {
-	const SQChar* modName = g_pClientSquirrel->sq_getstring(sqvm, 1);
-	g_pClientSquirrel->sq_newarray(sqvm, 0);
+	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
+	g_pUISquirrel->newarray(sqvm, 0);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_loadedMods)
@@ -158,8 +158,8 @@ SQRESULT SQ_GetModConvars(void* sqvm)
 		{
 			for (ModConVar* cvar : mod.ConVars)
 			{
-				g_pClientSquirrel->sq_pushstring(sqvm, cvar->Name.c_str(), -1);
-				g_pClientSquirrel->sq_arrayappend(sqvm, -2);
+				g_pUISquirrel->pushstring(sqvm, cvar->Name.c_str());
+				g_pUISquirrel->arrayappend(sqvm, -2);
 			}
 
 			return SQRESULT_NOTNULL;

@@ -79,10 +79,10 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 
 	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		g_pServerSquirrel->pusharg((int)senderPlayerId - 1);
-		g_pServerSquirrel->pusharg(text);
-		g_pServerSquirrel->pusharg(isTeam);
-		g_pServerSquirrel->call(3);
+		g_pServerSquirrel->pushinteger(g_pServerSquirrel->sqvm2, (int)senderPlayerId - 1);
+		g_pServerSquirrel->pushstring(g_pServerSquirrel->sqvm2, text);
+		g_pServerSquirrel->pushbool(g_pServerSquirrel->sqvm2, isTeam);
+		g_pServerSquirrel->call(g_pServerSquirrel->sqvm2, 3);
 	}
 	else
 		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerId, text, isTeam);
@@ -143,9 +143,9 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 // void function NSSendMessage( int playerIndex, string text, bool isTeam )
 SQRESULT SQ_SendMessage(void* sqvm)
 {
-	int playerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
-	const char* text = g_pServerSquirrel->sq_getstring(sqvm, 2);
-	bool isTeam = g_pServerSquirrel->sq_getbool(sqvm, 3);
+	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
+	const char* text = g_pServerSquirrel->getstring(sqvm, 2);
+	bool isTeam = g_pServerSquirrel->getbool(sqvm, 3);
 
 	ChatSendMessage(playerIndex, text, isTeam);
 
@@ -155,16 +155,16 @@ SQRESULT SQ_SendMessage(void* sqvm)
 // void function NSBroadcastMessage( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
 SQRESULT SQ_BroadcastMessage(void* sqvm)
 {
-	int fromPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 1);
-	int toPlayerIndex = g_pServerSquirrel->sq_getinteger(sqvm, 2);
-	const char* text = g_pServerSquirrel->sq_getstring(sqvm, 3);
-	bool isTeam = g_pServerSquirrel->sq_getbool(sqvm, 4);
-	bool isDead = g_pServerSquirrel->sq_getbool(sqvm, 5);
-	int messageType = g_pServerSquirrel->sq_getinteger(sqvm, 6);
+	int fromPlayerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
+	int toPlayerIndex = g_pServerSquirrel->getinteger(sqvm, 2);
+	const char* text = g_pServerSquirrel->getstring(sqvm, 3);
+	bool isTeam = g_pServerSquirrel->getbool(sqvm, 4);
+	bool isDead = g_pServerSquirrel->getbool(sqvm, 5);
+	int messageType = g_pServerSquirrel->getinteger(sqvm, 6);
 
 	if (messageType < 1)
 	{
-		g_pServerSquirrel->sq_raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		g_pServerSquirrel->raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
 

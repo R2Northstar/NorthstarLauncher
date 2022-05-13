@@ -11,7 +11,7 @@
 // bool function NSIsMasterServerAuthenticated()
 SQRESULT SQ_IsMasterServerAuthenticated(void* sqvm)
 {
-	g_pClientSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_bOriginAuthWithMasterServerDone);
+	g_pUISquirrel->pushbool(sqvm, g_MasterServerManager->m_bOriginAuthWithMasterServerDone);
 	return SQRESULT_NOTNULL;
 }
 
@@ -25,33 +25,33 @@ SQRESULT SQ_RequestServerList(void* sqvm)
 // bool function NSIsRequestingServerList()
 SQRESULT SQ_IsRequestingServerList(void* sqvm)
 {
-	g_pClientSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_bScriptRequestingServerList);
+	g_pUISquirrel->pushbool(sqvm, g_MasterServerManager->m_bScriptRequestingServerList);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSMasterServerConnectionSuccessful()
 SQRESULT SQ_MasterServerConnectionSuccessful(void* sqvm)
 {
-	g_pClientSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_bSuccessfullyConnected);
+	g_pUISquirrel->pushbool(sqvm, g_MasterServerManager->m_bSuccessfullyConnected);
 	return SQRESULT_NOTNULL;
 }
 
 // int function NSGetServerCount()
 SQRESULT SQ_GetServerCount(void* sqvm)
 {
-	g_pClientSquirrel->sq_pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers.size());
+	g_pUISquirrel->pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers.size());
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerName( int serverIndex )
 SQRESULT SQ_GetServerName(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get name of server index {} when only {} servers are available",
 				serverIndex,
@@ -60,19 +60,19 @@ SQRESULT SQ_GetServerName(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].name, -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].name);
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerDescription( int serverIndex )
 SQRESULT SQ_GetServerDescription(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get description of server index {} when only {} servers are available",
 				serverIndex,
@@ -81,19 +81,19 @@ SQRESULT SQ_GetServerDescription(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].description.c_str(), -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].description.c_str());
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerMap( int serverIndex )
 SQRESULT SQ_GetServerMap(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get map of server index {} when only {} servers are available",
 				serverIndex,
@@ -102,19 +102,19 @@ SQRESULT SQ_GetServerMap(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].map, -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].map);
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerPlaylist( int serverIndex )
 SQRESULT SQ_GetServerPlaylist(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get playlist of server index {} when only {} servers are available",
 				serverIndex,
@@ -123,19 +123,19 @@ SQRESULT SQ_GetServerPlaylist(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].playlist, -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].playlist);
 	return SQRESULT_NOTNULL;
 }
 
 // int function NSGetServerPlayerCount( int serverIndex )
 SQRESULT SQ_GetServerPlayerCount(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get playercount of server index {} when only {} servers are available",
 				serverIndex,
@@ -144,19 +144,19 @@ SQRESULT SQ_GetServerPlayerCount(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].playerCount);
+	g_pUISquirrel->pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].playerCount);
 	return SQRESULT_NOTNULL;
 }
 
 // int function NSGetServerMaxPlayerCount( int serverIndex )
 SQRESULT SQ_GetServerMaxPlayerCount(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get max playercount of server index {} when only {} servers are available",
 				serverIndex,
@@ -165,19 +165,19 @@ SQRESULT SQ_GetServerMaxPlayerCount(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].maxPlayers);
+	g_pUISquirrel->pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].maxPlayers);
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerID( int serverIndex )
 SQRESULT SQ_GetServerID(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get id of server index {} when only {} servers are available",
 				serverIndex,
@@ -186,19 +186,19 @@ SQRESULT SQ_GetServerID(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].id, -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].id);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSServerRequiresPassword( int serverIndex )
 SQRESULT SQ_ServerRequiresPassword(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get hasPassword of server index {} when only {} servers are available",
 				serverIndex,
@@ -207,19 +207,19 @@ SQRESULT SQ_ServerRequiresPassword(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiresPassword);
+	g_pUISquirrel->pushbool(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiresPassword);
 	return SQRESULT_NOTNULL;
 }
 
 // int function NSGetServerRequiredModsCount( int serverIndex )
 SQRESULT SQ_GetServerRequiredModsCount(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get required mods count of server index {} when only {} servers are available",
 				serverIndex,
@@ -228,20 +228,20 @@ SQRESULT SQ_GetServerRequiredModsCount(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods.size());
+	g_pUISquirrel->pushinteger(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods.size());
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerRequiredModName( int serverIndex, int modIndex )
 SQRESULT SQ_GetServerRequiredModName(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
-	SQInteger modIndex = g_pClientSquirrel->sq_getinteger(sqvm, 2);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
+	SQInteger modIndex = g_pUISquirrel->getinteger(sqvm, 2);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get hasPassword of server index {} when only {} servers are available",
 				serverIndex,
@@ -252,8 +252,8 @@ SQRESULT SQ_GetServerRequiredModName(void* sqvm)
 
 	if (modIndex >= g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get required mod name of mod index {} when only {} mod are available",
 				modIndex,
@@ -262,20 +262,20 @@ SQRESULT SQ_GetServerRequiredModName(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Name.c_str(), -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Name.c_str());
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerRequiredModVersion( int serverIndex, int modIndex )
 SQRESULT SQ_GetServerRequiredModVersion(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
-	SQInteger modIndex = g_pClientSquirrel->sq_getinteger(sqvm, 2);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
+	SQInteger modIndex = g_pUISquirrel->getinteger(sqvm, 2);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get required mod version of server index {} when only {} servers are available",
 				serverIndex,
@@ -286,8 +286,8 @@ SQRESULT SQ_GetServerRequiredModVersion(void* sqvm)
 
 	if (modIndex >= g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to get required mod version of mod index {} when only {} mod are available",
 				modIndex,
@@ -296,7 +296,7 @@ SQRESULT SQ_GetServerRequiredModVersion(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pClientSquirrel->sq_pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Version.c_str(), -1);
+	g_pUISquirrel->pushstring(sqvm, g_MasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Version.c_str());
 	return SQRESULT_NOTNULL;
 }
 
@@ -312,13 +312,13 @@ SQRESULT SQ_ClearRecievedServerList(void* sqvm)
 // void function NSTryAuthWithServer( int serverIndex, string password = "" )
 SQRESULT SQ_TryAuthWithServer(void* sqvm)
 {
-	SQInteger serverIndex = g_pClientSquirrel->sq_getinteger(sqvm, 1);
-	const SQChar* password = g_pClientSquirrel->sq_getstring(sqvm, 2);
+	SQInteger serverIndex = g_pUISquirrel->getinteger(sqvm, 1);
+	const SQChar* password = g_pUISquirrel->getstring(sqvm, 2);
 
 	if (serverIndex >= g_MasterServerManager->m_vRemoteServers.size())
 	{
-		g_pClientSquirrel->sq_raiseerror(
-			sqvm,
+		g_pUISquirrel->raiseerror(
+			sqvm, 
 			fmt::format(
 				"Tried to auth with server index {} when only {} servers are available",
 				serverIndex,
@@ -345,14 +345,14 @@ SQRESULT SQ_TryAuthWithServer(void* sqvm)
 // bool function NSIsAuthenticatingWithServer()
 SQRESULT SQ_IsAuthComplete(void* sqvm)
 {
-	g_pClientSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_bScriptAuthenticatingWithGameServer);
+	g_pUISquirrel->pushbool(sqvm, g_MasterServerManager->m_bScriptAuthenticatingWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSWasAuthSuccessful()
 SQRESULT SQ_WasAuthSuccessful(void* sqvm)
 {
-	g_pClientSquirrel->sq_pushbool(sqvm, g_MasterServerManager->m_bSuccessfullyAuthenticatedWithGameServer);
+	g_pUISquirrel->pushbool(sqvm, g_MasterServerManager->m_bSuccessfullyAuthenticatedWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
@@ -361,7 +361,8 @@ SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
 {
 	if (!g_MasterServerManager->m_bHasPendingConnectionInfo)
 	{
-		g_pClientSquirrel->sq_raiseerror(sqvm, fmt::format("Tried to connect to authed server before any pending connection info was available").c_str());
+		g_pUISquirrel->raiseerror(
+			sqvm, fmt::format("Tried to connect to authed server before any pending connection info was available").c_str());
 		return SQRESULT_ERROR;
 	}
 

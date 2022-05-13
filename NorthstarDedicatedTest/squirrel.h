@@ -100,25 +100,28 @@ template <ScriptContext context> class SquirrelManager
   public:
 	void* sqvm;
 	void* sqvm2;
+
 	#pragma region SQVM funcs
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
 
-	sq_compilebufferType sq_compilebuffer;
-	sq_callType sq_call;
-	sq_newarrayType sq_newarray;
-	sq_arrayappendType sq_arrayappend;
-	sq_pushroottableType sq_pushroottable;
-	sq_pushstringType sq_pushstring;
-	sq_pushintegerType sq_pushinteger;
-	sq_pushfloatType sq_pushfloat;
-	sq_pushboolType sq_pushbool;
-	sq_raiseerrorType sq_raiseerror;
+	sq_compilebufferType __sq_compilebuffer;
+	sq_callType __sq_call;
+	sq_raiseerrorType __sq_raiseerror;
 
-	sq_getstringType sq_getstring;
-	sq_getintegerType sq_getinteger;
-	sq_getfloatType sq_getfloat;
-	sq_getboolType sq_getbool;
-	sq_getType sq_get;
+	sq_newarrayType __sq_newarray;
+	sq_arrayappendType __sq_arrayappend;
+
+	sq_pushroottableType __sq_pushroottable;
+	sq_pushstringType __sq_pushstring;
+	sq_pushintegerType __sq_pushinteger;
+	sq_pushfloatType __sq_pushfloat;
+	sq_pushboolType __sq_pushbool;
+
+	sq_getstringType __sq_getstring;
+	sq_getintegerType __sq_getinteger;
+	sq_getfloatType __sq_getfloat;
+	sq_getboolType __sq_getbool;
+	sq_getType __sq_get;
 	#pragma endregion
 
   public:
@@ -154,51 +157,14 @@ template <ScriptContext context> class SquirrelManager
 		std::string strCode(code);
 		CompileBufferState bufferState = CompileBufferState(strCode);
 
-		SQRESULT compileResult = sq_compilebuffer(sqvm2, &bufferState, "console", -1, context);
+		SQRESULT compileResult = compilebuffer(&bufferState, "console");
 		spdlog::info("sq_compilebuffer returned {}", compileResult);
-		if (compileResult >= 0)
+		if (compileResult != SQRESULT_ERROR)
 		{
-			sq_pushroottable(sqvm2);
-			SQRESULT callResult = sq_call(sqvm2, 1, false, false);
+			pushroottable(sqvm2);
+			SQRESULT callResult = call(sqvm2, 1);
 			spdlog::info("sq_call returned {}", callResult);
 		}
-	}
-
-	int setupfunc(const char* funcname)
-	{
-		sq_pushroottable(sqvm2);
-		sq_pushstring(sqvm2, funcname, -1);
-
-		int result = sq_get(sqvm2, -2);
-		if (result != SQRESULT_ERROR)
-			sq_pushroottable(sqvm2);
-
-		return result;
-	}
-
-	void pusharg(int arg)
-	{
-		sq_pushinteger(sqvm2, arg);
-	}
-
-	void pusharg(const char* arg)
-	{
-		sq_pushstring(sqvm2, arg, -1);
-	}
-
-	void pusharg(float arg)
-	{
-		sq_pushfloat(sqvm2, arg);
-	}
-
-	void pusharg(bool arg)
-	{
-		sq_pushbool(sqvm2, arg);
-	}
-
-	int call(int args)
-	{
-		return sq_call(sqvm2, args + 1, false, false);
 	}
 
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func)
@@ -222,6 +188,95 @@ template <ScriptContext context> class SquirrelManager
 
 		m_funcRegistrations.push_back(reg);
 	}
+
+	SQRESULT setupfunc(const SQChar* funcname)
+	{
+		pushroottable(sqvm2);
+		pushstring(sqvm2, funcname, -1);
+
+		SQRESULT result = get(sqvm2, -2);
+		if (result != SQRESULT_ERROR)
+			pushroottable(sqvm2);
+
+		return result;
+	}
+
+	#pragma region SQVM func wrappers
+	SQRESULT compilebuffer(CompileBufferState* bufferState, const SQChar* bufferName = "unnamedbuffer")
+	{
+		return __sq_compilebuffer(sqvm2, bufferState, bufferName, -1, context);
+	}
+
+	SQRESULT call(void* sqvm, const SQInteger args)
+	{
+		return __sq_call(sqvm, args + 1, false, false);
+	}
+
+	SQInteger raiseerror(void* sqvm, const const SQChar* sError)
+	{
+		return __sq_raiseerror(sqvm, sError);
+	}
+
+	void newarray(void* sqvm, const SQInteger stackpos = 0) 
+	{
+		__sq_newarray(sqvm, stackpos);
+	}
+
+	SQRESULT arrayappend(void* sqvm, const SQInteger stackpos) 
+	{
+		return __sq_arrayappend(sqvm, stackpos);
+	}
+
+	void pushroottable(void* sqvm)
+	{
+		__sq_pushroottable(sqvm);
+	}
+
+	void pushstring(void* sqvm, const SQChar* sVal, int length = -1)
+	{
+		__sq_pushstring(sqvm, sVal, length);
+	}
+
+	void pushinteger(void* sqvm, const SQInteger iVal)
+	{
+		__sq_pushinteger(sqvm, iVal);
+	}
+
+	void pushfloat(void* sqvm, const SQFloat flVal)
+	{
+		__sq_pushfloat(sqvm, flVal);
+	}
+
+	void pushbool(void* sqvm, const SQBool bVal)
+	{
+		__sq_pushbool(sqvm, bVal);
+	}
+
+	const SQChar* getstring(void* sqvm, const SQInteger stackpos)
+	{
+		return __sq_getstring(sqvm, stackpos);
+	}
+
+	SQInteger getinteger(void* sqvm, const SQInteger stackpos)
+	{
+		return __sq_getinteger(sqvm, stackpos);
+	}
+
+	SQFloat getfloat(void* sqvm, const SQInteger stackpos)
+	{
+		return __sq_getfloat(sqvm, stackpos);
+	}
+
+	SQBool getbool(void* sqvm, const SQInteger stackpos)
+	{
+		return __sq_getbool(sqvm, stackpos);
+	}
+
+	SQRESULT get(void* sqvm, const SQInteger stackpos)
+	{
+		return __sq_get(sqvm, stackpos);
+	}
+	#pragma endregion
 };
 
 extern SquirrelManager<ScriptContext::CLIENT>* g_pClientSquirrel;

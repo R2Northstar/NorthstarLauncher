@@ -38,12 +38,12 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 			payload = message + 1;
 		}
 
-		g_pClientSquirrel->pusharg((int)senderId - 1);
-		g_pClientSquirrel->pusharg(payload);
-		g_pClientSquirrel->pusharg(isTeam);
-		g_pClientSquirrel->pusharg(isDead);
-		g_pClientSquirrel->pusharg(type);
-		g_pClientSquirrel->call(5);
+		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, (int) senderId - 1);
+		g_pClientSquirrel->pushstring(g_pClientSquirrel->sqvm2, payload);
+		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isTeam);
+		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isDead);
+		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, type);
+		g_pClientSquirrel->call(g_pClientSquirrel->sqvm2, 5);
 	}
 	else
 	{
@@ -57,8 +57,8 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 // void NSChatWrite( int context, string str )
 static SQRESULT SQ_ChatWrite(void* sqvm)
 {
-	int context = g_pClientSquirrel->sq_getinteger(sqvm, 1);
-	const char* str = g_pClientSquirrel->sq_getstring(sqvm, 2);
+	int context = g_pClientSquirrel->getinteger(g_pClientSquirrel->sqvm2, 1);
+	const char* str = g_pClientSquirrel->getstring(g_pClientSquirrel->sqvm2, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).Write(str);
 	return SQRESULT_NOTNULL;
@@ -67,8 +67,8 @@ static SQRESULT SQ_ChatWrite(void* sqvm)
 // void NSChatWriteRaw( int context, string str )
 static SQRESULT SQ_ChatWriteRaw(void* sqvm)
 {
-	int context = g_pClientSquirrel->sq_getinteger(sqvm, 1);
-	const char* str = g_pClientSquirrel->sq_getstring(sqvm, 2);
+	int context = g_pClientSquirrel->getinteger(g_pClientSquirrel->sqvm2, 1);
+	const char* str = g_pClientSquirrel->getstring(g_pClientSquirrel->sqvm2, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).InsertText(str);
 	return SQRESULT_NOTNULL;
@@ -77,8 +77,8 @@ static SQRESULT SQ_ChatWriteRaw(void* sqvm)
 // void NSChatWriteLine( int context, string str )
 static SQRESULT SQ_ChatWriteLine(void* sqvm)
 {
-	int context = g_pClientSquirrel->sq_getinteger(sqvm, 1);
-	const char* str = g_pClientSquirrel->sq_getstring(sqvm, 2);
+	int context = g_pClientSquirrel->getinteger(g_pClientSquirrel->sqvm2, 1);
+	const char* str = g_pClientSquirrel->getstring(g_pClientSquirrel->sqvm2, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).WriteLine(str);
 	return SQRESULT_NOTNULL;
