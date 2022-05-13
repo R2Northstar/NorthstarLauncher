@@ -27,6 +27,8 @@ struct AdditionalPlayerData
 
 	double lastSayTextLimitStart = -1.0;
 	int sayTextLimitCount = 0;
+
+	uint64_t uid;
 };
 
 #pragma pack(push, 1)
