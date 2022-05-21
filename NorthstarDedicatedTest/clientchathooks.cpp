@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "clientchathooks.h"
 #include <rapidjson/document.h>
 #include "squirrel.h"
 #include "serverchathooks.h"

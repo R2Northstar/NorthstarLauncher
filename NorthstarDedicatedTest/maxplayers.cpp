@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "maxplayers.h"
 #include "tier0.h"
 
 // never set this to anything below 32

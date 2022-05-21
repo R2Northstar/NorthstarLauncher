@@ -463,7 +463,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE))
 	{
 		// ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
-		if (IsDedicated())
+		if (IsDedicatedServer())
 			return false;
 
 		if (strcmp((char*)self + 0xF500, R2::g_LocalPlayerUserID))

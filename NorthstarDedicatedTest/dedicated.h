@@ -1,3 +1,3 @@
 #pragma once
 
-bool IsDedicated();
+bool IsDedicatedServer();

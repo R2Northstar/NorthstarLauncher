@@ -264,7 +264,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 
 bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath)
 {
-	if (IsDedicated())
+	if (IsDedicatedServer())
 		return true; // silently fail
 
 	std::ifstream jsonStream(defPath);
@@ -307,7 +307,7 @@ MilesStopAll_Type MilesStopAll;
 
 void CustomAudioManager::ClearAudioOverrides()
 {
-	if (IsDedicated())
+	if (IsDedicatedServer())
 		return;
 
 	if (m_loadedAudioOverrides.size() > 0 || m_loadedAudioOverridesRegex.size() > 0)
@@ -496,7 +496,7 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, [](HMODULE baseAdd
 {
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
 
-	if (IsDedicated())
+	if (IsDedicatedServer())
 		return;
 
 	uintptr_t milesAudioBase = (uintptr_t)GetModuleHandleA("mileswin64.dll");

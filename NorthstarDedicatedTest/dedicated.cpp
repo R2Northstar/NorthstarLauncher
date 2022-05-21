@@ -13,7 +13,7 @@
 using namespace Tier0;
 using namespace R2;
 
-bool IsDedicated()
+bool IsDedicatedServer()
 {
 	static bool result = strstr(GetCommandLineA(), "-dedicated");
 	return result;

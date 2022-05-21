@@ -139,7 +139,7 @@ void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::
 void AddDllLoadCallbackForDedicatedServer(
 	std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
 {
-	if (!IsDedicated())
+	if (!IsDedicatedServer())
 		return;
 
 	AddDllLoadCallback(dll, callback, tag, reliesOn);
@@ -147,7 +147,7 @@ void AddDllLoadCallbackForDedicatedServer(
 
 void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
 {
-	if (IsDedicated())
+	if (IsDedicatedServer())
 		return;
 
 	AddDllLoadCallback(dll, callback, tag, reliesOn);

@@ -2,7 +2,6 @@
 #include "hooks.h"
 #include "convar.h"
 #include "concommand.h"
-#include "chatcommand.h"
 #include "localchatwriter.h"
 
 // note: isIngameChat is an int64 because the whole register the arg is stored in needs to be 0'd out to work

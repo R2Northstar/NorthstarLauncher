@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "scriptserverbrowser.h"
 #include "squirrel.h"
 #include "masterserver.h"
 #include "serverauthentication.h"

@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "scriptmainmenupromos.h"
 #include "squirrel.h"
 #include "masterserver.h"
 

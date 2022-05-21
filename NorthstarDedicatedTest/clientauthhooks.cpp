@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "clientauthhooks.h"
 #include "hookutils.h"
 #include "masterserver.h"
 #include "convar.h"

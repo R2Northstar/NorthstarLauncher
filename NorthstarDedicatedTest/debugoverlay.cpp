@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "debugoverlay.h"
 #include "dedicated.h"
 #include "cvar.h"
 

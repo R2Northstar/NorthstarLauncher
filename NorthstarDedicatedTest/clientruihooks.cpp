@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "clientruihooks.h"
 #include "convar.h"
 
 ConVar* Cvar_rui_drawEnable;

@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "scriptservertoclientstringcommand.h"
 #include "squirrel.h"
 #include "convar.h"
 #include "concommand.h"

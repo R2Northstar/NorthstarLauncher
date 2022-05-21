@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "modlocalisation.h"
 #include "hookutils.h"
 #include "modmanager.h"
 

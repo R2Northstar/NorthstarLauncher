@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "keyvalues.h"
 #include "modmanager.h"
 #include "hooks.h"
 #include "filesystem.h"

@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "scriptbrowserhooks.h"
 #include "hookutils.h"
 
 bool* bIsOriginOverlayEnabled;

@@ -106,10 +106,10 @@ void RefreshMapList()
 	}
 }
 
-typedef int (*_Host_Map_f_CompletionFuncType)(
+typedef int (*__fastcall _Host_Map_f_CompletionFuncType)(
 	char const* cmdname, char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]);
 _Host_Map_f_CompletionFuncType _Host_Map_f_CompletionFunc;
-int _Host_Map_f_CompletionFuncHook(
+int __fastcall _Host_Map_f_CompletionFuncHook(
 	char const* cmdname, char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
 {
 	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs

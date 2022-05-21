@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "hooks.h"
 #include "dedicated.h"
-#include "dedicatedmaterialsystem.h"
 #include "hookutils.h"
 #include "tier0.h"
 #include "NSMem.h"

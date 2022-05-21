@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "miscclientfixes.h"
 #include "convar.h"
 #include "hookutils.h"
 #include "NSMem.h"

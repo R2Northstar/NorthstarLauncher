@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "clientvideooverrides.h"
 #include "modmanager.h"
 
 typedef void* (*BinkOpenType)(const char* path, uint32_t flags);

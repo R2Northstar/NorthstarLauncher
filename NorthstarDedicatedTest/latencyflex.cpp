@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "hooks.h"
-#include "latencyflex.h"
 #include "hookutils.h"
 #include "convar.h"
 
