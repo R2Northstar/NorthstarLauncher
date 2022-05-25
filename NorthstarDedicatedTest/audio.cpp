@@ -57,8 +57,10 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	if (dataJson.HasParseError())
 	{
 		spdlog::error(
-			"Failed reading audio override file {}: encountered parse error \"{}\" at offset {}", path.string(),
-			GetParseError_En(dataJson.GetParseError()), dataJson.GetErrorOffset());
+			"Failed reading audio override file {}: encountered parse error \"{}\" at offset {}",
+			path.string(),
+			GetParseError_En(dataJson.GetParseError()),
+			dataJson.GetErrorOffset());
 		return;
 	}
 
@@ -214,7 +216,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 			// thread off the file read
 			// should we spawn one thread per read? or should there be a cap to the number of reads at once?
 			std::thread readThread(
-				[pathString, fileSize, data] 
+				[pathString, fileSize, data]
 				{
 					std::shared_lock lock(g_CustomAudioManager.m_loadingMutex);
 					std::basic_ifstream<uint8_t> wavStream(pathString, std::ios::binary);
@@ -318,7 +320,7 @@ void CustomAudioManager::ClearAudioOverrides()
 		// this is cancer but it works
 		Sleep(50);
 	}
-	
+
 	// slightly (very) bad
 	// wait for all audio reads to complete so we don't kill preexisting audio buffers as we're writing to them
 	std::unique_lock lock(g_CustomAudioManager.m_loadingMutex);
@@ -486,7 +488,10 @@ bool __fastcall LoadSampleMetadata_Hook(void* sample, void* audioBuffer, unsigne
 typedef bool (*MilesLog_Type)(int level, const char* string);
 MilesLog_Type MilesLog_Original;
 
-void __fastcall MilesLog_Hook(int level, const char* string) { spdlog::info("[MSS] {} - {}", level, string); }
+void __fastcall MilesLog_Hook(int level, const char* string)
+{
+	spdlog::info("[MSS] {} - {}", level, string);
+}
 
 void InitialiseMilesAudioHooks(HMODULE baseAddress)
 {

@@ -90,7 +90,10 @@ void UnbanPlayerCommand(const CCommand& args)
 	g_ServerBanSystem->UnbanUID(strtoull(args.Arg(1), nullptr, 10));
 }
 
-void ClearBanlistCommand(const CCommand& args) { g_ServerBanSystem->ClearBanlist(); }
+void ClearBanlistCommand(const CCommand& args)
+{
+	g_ServerBanSystem->ClearBanlist();
+}
 
 void InitialiseBanSystem(HMODULE baseAddress)
 {

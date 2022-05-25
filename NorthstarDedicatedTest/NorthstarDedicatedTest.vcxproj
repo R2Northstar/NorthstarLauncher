@@ -107,7 +107,6 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AntiRCE.h" />
     <ClInclude Include="audio.h" />
     <ClInclude Include="bansystem.h" />
     <ClInclude Include="bitbuf.h" />
@@ -115,11 +114,12 @@
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
+    <ClInclude Include="debugoverlay.h" />
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
+    <ClInclude Include="emit_blocker.h" />
     <ClInclude Include="localchatwriter.h" />
-    <ClInclude Include="NSQApi.h" />
-    <ClInclude Include="NSQIO.h" />
+    <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
     <ClInclude Include="serverchathooks.h" />
@@ -569,7 +569,6 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AntiRCE.cpp" />
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
     <ClCompile Include="bits.cpp" />
@@ -584,9 +583,11 @@
     <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="cvar.cpp" />
+    <ClCompile Include="debugoverlay.cpp" />
     <ClCompile Include="dedicated.cpp" />
     <ClCompile Include="dedicatedmaterialsystem.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="emit_blocker.cpp" />
     <ClCompile Include="filesystem.cpp" />
     <ClCompile Include="gameutils.cpp" />
     <ClCompile Include="hooks.cpp" />
@@ -604,8 +605,6 @@
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="masterserver.cpp" />
     <ClCompile Include="modmanager.cpp" />
-    <ClCompile Include="NSQApi.cpp" />
-    <ClCompile Include="NSQIO.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

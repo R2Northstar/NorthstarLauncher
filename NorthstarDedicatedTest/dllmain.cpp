@@ -39,6 +39,7 @@
 #include "scriptservertoclientstringcommand.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "debugoverlay.h"
 #include "clientvideooverrides.h"
 #include "clientruihooks.h"
 #include <string.h>
@@ -50,9 +51,11 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
-#include "NSQApi.h"
+#include "emit_blocker.h"
 
-typedef void (*initPluginFuncPtr)(void* fnGetPluginObject);
+typedef void (*initPluginFuncPtr)(void* getPluginObject);
+
+bool initialised = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -111,7 +114,7 @@ bool LoadPlugins()
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-	InitGameState();
+	initGameState();
 	for (fs::path path : paths)
 	{
 		std::string pathstring = (pluginPath / path).string();
@@ -179,18 +182,22 @@ bool LoadPlugins()
 			continue;
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
-		initPlugin(&GetPluginObject);
+		initPlugin(&getPluginObject);
 	}
 	return true;
 }
 
 bool InitialiseNorthstar()
 {
-	IF_ONCE { } else { 
-		return false; // Prevent multi-initialization
+	if (initialised)
+	{
+		// spdlog::warn("Called InitialiseNorthstar more than once!"); // it's actually 100% fine for that to happen
+		return false;
 	}
-	
-	ParseConfigurables();
+
+	initialised = true;
+
+	parseConfigurables();
 	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters
@@ -201,6 +208,10 @@ bool InitialiseNorthstar()
 	InitialiseLogging();
 	InstallInitialHooks();
 	CreateLogFiles();
+
+	// Write launcher version to log
+	spdlog::info("NorthstarLauncher version: {}", version);
+
 	InitialiseInterfaceCreationHooks();
 
 	AddDllLoadCallback("tier0.dll", InitialiseTier0GameUtilFunctions);
@@ -224,6 +235,7 @@ bool InitialiseNorthstar()
 
 	// client-exclusive patches
 	{
+
 		AddDllLoadCallbackForClient("tier0.dll", InitialiseTier0LanguageHooks);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrel);
 		AddDllLoadCallbackForClient("client.dll", InitialiseSourceConsole);
@@ -243,7 +255,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerToClientStringCommands);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
-
+		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
 	}
@@ -276,9 +288,7 @@ bool InitialiseNorthstar()
 
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
-
-	// active NSQApi
-	AddDllLoadCallbackForClient("client.dll", NSQApi::InitClient);
+	AddDllLoadCallback("server.dll", InitialiseServerEmit_Blocker);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
