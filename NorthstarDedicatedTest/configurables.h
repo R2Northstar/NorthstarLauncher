@@ -4,4 +4,4 @@
 static std::string NORTHSTAR_FOLDER_PREFIX;
 
 std::string GetNorthstarPrefix();
-void ParseConfigurables();
+void parseConfigurables();
