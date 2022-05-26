@@ -50,8 +50,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
+
 #include "ExploitFixes.h"
-#include "emit_blocker.h"
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -288,7 +288,6 @@ bool InitialiseNorthstar()
 
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
-	AddDllLoadCallback("server.dll", InitialiseServerEmit_Blocker);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
