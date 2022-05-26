@@ -5,14 +5,113 @@
 #include "hookutils.h"
 #include "dedicated.h"
 #include "convar.h"
+#include "configurables.h"
 #include <iomanip>
 #include <sstream>
 #include <Psapi.h>
 #include <minidumpapiset.h>
-#include "configurables.h"
 #include <unordered_set>
+#include <fstream>
 
-void PrintCallStack(std::string prefix)
+std::string GetAdvancedDebugInfo(CONTEXT* threadContext)
+{
+	std::stringstream output;
+
+	output << "// This file contains information for advanced debugging of stack-corrupting Northstar crashes.\n";
+	output << "// This Northstar.dll was build on " __DATE__ "\n";
+#ifdef _DEBUG 
+	output << "// We were running in DEBUG mode\n";
+#else
+	output << "// We were running in RELEASE mode\n";
+#endif
+	MEMORYSTATUSEX memInfo;
+	memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&memInfo);
+	output << "\n\nMEMORY STATUS:";
+	output << "\tSwap + Ram Usage: " << memInfo.ullTotalPageFile << std::endl;
+	output << "\tPhysical Usage: " << memInfo.ullTotalPhys << std::endl;
+	output << "\tVirtul Usage: " << memInfo.ullTotalPhys << std::endl;
+	output << "\tAvailable: " << memInfo.ullAvailVirtual << std::endl;
+
+	uintptr_t stackMax = threadContext->Rsp - sizeof(void*) + 1;
+	uintptr_t stackMin = stackMax - 0x10000;
+
+	struct ModuleMemoryInfo
+	{
+		uintptr_t baseAddress;
+		uintptr_t textSectionStart, textSectionSize;
+	};
+
+	std::map<std::string, ModuleMemoryInfo> moduleInfos;
+
+	// Loop through all of our modules
+	HMODULE hMods[1024];
+	DWORD cbNeeded;
+	if (EnumProcessModules(GetCurrentProcess(), hMods, sizeof(hMods), &cbNeeded))
+	{
+		for (int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++)
+		{
+			char szModName[MAX_PATH];
+			if (GetModuleFileNameA(hMods[i], szModName, MAX_PATH)) // Check if valid module at all
+			{
+				uintptr_t addr = (uintptr_t)hMods[i];
+				auto dosHeader = (IMAGE_DOS_HEADER*)addr;
+				auto ntHeaders = (IMAGE_NT_HEADERS*)(addr + dosHeader->e_lfanew);
+				if (ntHeaders->Signature == IMAGE_NT_SIGNATURE) // Make sure its a real module
+				{
+					auto firstSection = IMAGE_FIRST_SECTION(ntHeaders);
+					if (!strcmp((const char*)firstSection->Name, ".text")) // Make sure this is actually the text section
+					{
+						moduleInfos[strrchr(szModName, '\\') + 1] =
+							ModuleMemoryInfo {addr, addr + firstSection->VirtualAddress, firstSection->SizeOfRawData};
+					}
+				}
+			}
+		}
+	}
+
+	output << "MODULES LOADED:\n";
+	for (auto moduleEntry : moduleInfos)
+	{
+		output << "\t" << (void*)moduleEntry.second.baseAddress << ": " << moduleEntry.first << std::endl;
+	}
+
+	std::stringstream stackModuleDump, stackRawDataDump;
+	stackRawDataDump << std::hex << "\t";
+
+	for (uintptr_t i = stackMax; i >= stackMin; i--)
+	{
+		if (IsBadReadPtr((void*)i, sizeof(void*)))
+			break;
+
+		stackRawDataDump << std::setw(2) << std::setfill('0') << (int)(*(BYTE*)i);
+		if (i < stackMax && i % 32 == 0)
+			stackRawDataDump << "\n\t";
+
+		auto curStackPtr = *(uintptr_t*)i;
+		if (!curStackPtr)
+			continue;
+
+		for (auto moduleEntry : moduleInfos)
+		{
+			auto& modInfo = moduleEntry.second;
+			if (curStackPtr >= modInfo.textSectionStart && curStackPtr < modInfo.textSectionStart + modInfo.textSectionSize)
+			{
+				stackModuleDump << "\t{" << (void*)i << "} " << (void*)curStackPtr << " [" << moduleEntry.first << " + "
+							 << (void*)(curStackPtr - modInfo.baseAddress)
+							 << "]\n";
+				break;
+			}
+		}
+	}
+
+	output << "STACK POTENTIAL FRAMES:\n" << stackModuleDump.str() << std::endl;
+	output << "FULL STACK DUMP:\n" << stackRawDataDump.str() << std::endl;
+
+	return output.str();
+}
+
+int PrintCallStack(std::string prefix)
 {
 	PVOID framesToCapture[62];
 	int frames = RtlCaptureStackBackTrace(0, 62, framesToCapture, NULL);
@@ -30,6 +129,7 @@ void PrintCallStack(std::string prefix)
 
 		spdlog::error(prefix + "{} + {} ({})", backtraceModuleName, relativeAddress, actualAddress);
 	}
+	return frames;
 }
 
 // This needs to be called after hooks are loaded so we can access the command line args
@@ -64,22 +164,31 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 		// Ideally we could just ignore uncaught instead... but there seem to be so many not listed (i.e. E06D7363, etc.)
 		const static std::unordered_set<DWORD> caughtExceptionCodes = {
-			EXCEPTION_ACCESS_VIOLATION,		 EXCEPTION_DATATYPE_MISALIGNMENT,
-			EXCEPTION_ARRAY_BOUNDS_EXCEEDED, EXCEPTION_FLT_DENORMAL_OPERAND,
-			EXCEPTION_FLT_DIVIDE_BY_ZERO,	 EXCEPTION_FLT_INEXACT_RESULT,
-			EXCEPTION_FLT_INVALID_OPERATION, EXCEPTION_FLT_OVERFLOW,
-			EXCEPTION_FLT_STACK_CHECK,		 EXCEPTION_FLT_UNDERFLOW,
-			EXCEPTION_INT_DIVIDE_BY_ZERO,	 EXCEPTION_INT_OVERFLOW,
-			EXCEPTION_PRIV_INSTRUCTION,		 EXCEPTION_IN_PAGE_ERROR,
-			EXCEPTION_ILLEGAL_INSTRUCTION,	 EXCEPTION_NONCONTINUABLE_EXCEPTION,
-			EXCEPTION_STACK_OVERFLOW,		 EXCEPTION_GUARD_PAGE,
+			EXCEPTION_ACCESS_VIOLATION,
+			EXCEPTION_DATATYPE_MISALIGNMENT,
+			EXCEPTION_ARRAY_BOUNDS_EXCEEDED,
+			EXCEPTION_FLT_DENORMAL_OPERAND,
+			EXCEPTION_FLT_DIVIDE_BY_ZERO,
+			EXCEPTION_FLT_INEXACT_RESULT,
+			EXCEPTION_FLT_INVALID_OPERATION,
+			EXCEPTION_FLT_OVERFLOW,
+			EXCEPTION_FLT_STACK_CHECK,
+			EXCEPTION_FLT_UNDERFLOW,
+			EXCEPTION_INT_DIVIDE_BY_ZERO,
+			EXCEPTION_INT_OVERFLOW,
+			EXCEPTION_PRIV_INSTRUCTION,
+			EXCEPTION_IN_PAGE_ERROR,
+			EXCEPTION_ILLEGAL_INSTRUCTION,
+			EXCEPTION_NONCONTINUABLE_EXCEPTION,
+			EXCEPTION_STACK_OVERFLOW,
+			EXCEPTION_GUARD_PAGE,
 		};
 
 		if (caughtExceptionCodes.find(record->ExceptionCode) == caughtExceptionCodes.end())
 			return EXCEPTION_CONTINUE_SEARCH; // didnt ask + dont care
 
 		std::stringstream exceptionCause;
-		exceptionCause << "Cause: ";
+		exceptionCause << "Crash Exception Cause: ";
 
 		switch (record->ExceptionCode)
 		{
@@ -87,7 +196,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		case EXCEPTION_IN_PAGE_ERROR:
 		{
 
-			exceptionCause << "Access Violation" << std::endl;
+			exceptionCause << "Access Violation (";
 
 			auto exceptionInfoType = record->ExceptionInformation[0];
 			auto exceptionInfo1 = (void*)record->ExceptionInformation[1];
@@ -106,16 +215,23 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			default:
 				exceptionCause << "Unknown access violation at: 0x" << exceptionInfo1;
 			}
+
+			exceptionCause << ")";
 			break;
 		}
 		default:
 		{
 
 			static HANDLE ntdll = GetModuleHandleA("ntdll.dll");
-			char buf[MAX_PATH];
+			char buf[MAX_PATH] = {0};
 			DWORD res = FormatMessageA(
-				FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, ntdll, record->ExceptionCode,
-				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, MAX_PATH, NULL);
+				FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
+				ntdll,
+				record->ExceptionCode,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				buf,
+				MAX_PATH,
+				NULL);
 
 			exceptionCause << buf;
 			break;
@@ -124,79 +240,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 		exceptionCause << " [" << (void*)record->ExceptionCode << "]";
 
-		/*
-		switch (exceptionCode)
-		{
-		case EXCEPTION_ACCESS_VIOLATION:
-		case EXCEPTION_IN_PAGE_ERROR:
-		{
-			exceptionCause << "Access Violation" << std::endl;
-
-			auto exceptionInfo0 = record->ExceptionInformation[0];
-			auto exceptionInfo1 = record->ExceptionInformation[1];
-
-			if (!exceptionInfo0)
-				exceptionCause << "Attempted to read from: 0x" << (void*)exceptionInfo1;
-			else if (exceptionInfo0 == 1)
-				exceptionCause << "Attempted to write to: 0x" << (void*)exceptionInfo1;
-			else if (exceptionInfo0 == 8)
-				exceptionCause << "Data Execution Prevention (DEP) at: 0x" << (void*)std::hex << exceptionInfo1;
-			else
-				exceptionCause << "Unknown access violation at: 0x" << (void*)exceptionInfo1;
-
-			break;
-		}
-		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-			exceptionCause << "Array bounds exceeded";
-			break;
-		case EXCEPTION_DATATYPE_MISALIGNMENT:
-			exceptionCause << "Datatype misalignment";
-			break;
-		case EXCEPTION_FLT_DENORMAL_OPERAND:
-			exceptionCause << "Denormal operand";
-			break;
-		case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-			exceptionCause << "Divide by zero (float)";
-			break;
-		case EXCEPTION_INT_DIVIDE_BY_ZERO:
-			exceptionCause << "Divide by zero (int)";
-			break;
-		case EXCEPTION_FLT_INEXACT_RESULT:
-			exceptionCause << "Inexact result";
-			break;
-		case EXCEPTION_FLT_INVALID_OPERATION:
-			exceptionCause << "Invalid operation";
-			break;
-		case EXCEPTION_FLT_OVERFLOW:
-		case EXCEPTION_INT_OVERFLOW:
-			exceptionCause << "Numeric overflow";
-			break;
-		case EXCEPTION_FLT_UNDERFLOW:
-			exceptionCause << "Numeric underflow";
-			break;
-		case EXCEPTION_FLT_STACK_CHECK:
-			exceptionCause << "Stack check";
-			break;
-		case EXCEPTION_ILLEGAL_INSTRUCTION:
-			exceptionCause << "Illegal instruction";
-			break;
-		case EXCEPTION_INVALID_DISPOSITION:
-			exceptionCause << "Invalid disposition";
-			break;
-		case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-			exceptionCause << "Noncontinuable exception";
-			break;
-		case EXCEPTION_PRIV_INSTRUCTION:
-			exceptionCause << "Priviledged instruction";
-			break;
-		case EXCEPTION_STACK_OVERFLOW:
-			exceptionCause << "Stack overflow";
-			break;
-		default:
-			exceptionCause << "Unknown";
-			break;
-		}
-		*/
+		std::stringstream crashDevInfo;
 
 		void* exceptionAddress = record->ExceptionAddress;
 
@@ -213,35 +257,43 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		DWORD64 crashedModuleOffset = ((DWORD64)exceptionAddress) - ((DWORD64)crashedModuleInfo.lpBaseOfDll);
 		CONTEXT* exceptionContext = exceptionInfo->ContextRecord;
 
-		spdlog::error("Northstar has crashed! a minidump has been written and exception info is available below:");
+		printf_s("\n\n");
+		spdlog::error("###### NORTHSTAR HAS CRASHED :( ######");
+		spdlog::error("A minidump has been written and exception information for developers/staff is available below:\n");
 		spdlog::error(exceptionCause.str());
-		spdlog::error("At: {} + {}", crashedModuleName, (void*)crashedModuleOffset);
+		spdlog::error("Crashing Instruction Address: {} + {}", crashedModuleName, (void*)crashedModuleOffset);
 
-		PrintCallStack("\t");
+		int callstackSize = PrintCallStack("\t");
 
-		spdlog::error("RAX: 0x{0:x}", exceptionContext->Rax);
-		spdlog::error("RBX: 0x{0:x}", exceptionContext->Rbx);
-		spdlog::error("RCX: 0x{0:x}", exceptionContext->Rcx);
-		spdlog::error("RDX: 0x{0:x}", exceptionContext->Rdx);
-		spdlog::error("RSI: 0x{0:x}", exceptionContext->Rsi);
-		spdlog::error("RDI: 0x{0:x}", exceptionContext->Rdi);
-		spdlog::error("RBP: 0x{0:x}", exceptionContext->Rbp);
-		spdlog::error("RSP: 0x{0:x}", exceptionContext->Rsp);
-		spdlog::error("R8: 0x{0:x}", exceptionContext->R8);
-		spdlog::error("R9: 0x{0:x}", exceptionContext->R9);
-		spdlog::error("R10: 0x{0:x}", exceptionContext->R10);
-		spdlog::error("R11: 0x{0:x}", exceptionContext->R11);
-		spdlog::error("R12: 0x{0:x}", exceptionContext->R12);
-		spdlog::error("R13: 0x{0:x}", exceptionContext->R13);
-		spdlog::error("R14: 0x{0:x}", exceptionContext->R14);
-		spdlog::error("R15: 0x{0:x}", exceptionContext->R15);
+		{ // Print all registers using minimal code (a little silly, but it works well and is easier on the eyes)
+			std::stringstream regDataLog;
+			regDataLog << std::hex;
+
+#define P(regName) << #regName << "=" << exceptionContext->regName << ", "
+			regDataLog P(Rax) P(Rbx) P(Rcx) P(Rdx) P(Rdi) P(Rbp) P(Rsp) P(R8) P(R9) P(R10) P(R11) P(R12) P(R13) P(R14) P(R15);
+#undef P
+			spdlog::error("Registers: " + regDataLog.str());
+		}
+
+		constexpr const char* quotes[] = {
+			"Protocol three: I will NOT lose another pilot."
+			"We had no other option.",
+			"It is good to see you too, Pilot.",
+			"Noted.",
+			"Look, a developer! Now the odds are in our favor!",
+			"It was fun.",
+			"And sometimes, when you fall, you fly.",
+			"Go get em, tiger.",
+			"Support ticket sighted, moving to engage.",
+		};
 
 		time_t time = std::time(nullptr);
 		tm currentTime = *std::localtime(&time);
-		std::stringstream stream;
-		stream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nsdump%Y-%m-%d %H-%M-%S.dmp").c_str());
-
-		auto hMinidumpFile = CreateFileA(stream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+		
+		std::stringstream dumpPathStream;
+		dumpPathStream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nsdump %Y-%m-%d %H-%M-%S.dmp").c_str());
+		auto hMinidumpFile =
+			CreateFileA(dumpPathStream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 		if (hMinidumpFile)
 		{
 			MINIDUMP_EXCEPTION_INFORMATION dumpExceptionInfo;
@@ -260,11 +312,25 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 			CloseHandle(hMinidumpFile);
 		}
 		else
-			spdlog::error("Failed to write minidump file {}!", stream.str());
+		{
+			spdlog::error("Failed to write minidump file to {}!", dumpPathStream.str());
+		}
+			
+
+		std::stringstream advDbgInfoPathStream;
+		advDbgInfoPathStream << std::put_time(
+			&currentTime, (GetNorthstarPrefix() + "/logs/ns-advanced-debug-info %Y-%m-%d %H-%M-%S.ndi").c_str());
+
+		// Write advanced debug info
+		std::ofstream advDbgInfoDump = std::ofstream(advDbgInfoPathStream.str());
+		advDbgInfoDump << GetAdvancedDebugInfo(exceptionContext);
+		advDbgInfoDump.close();
+		spdlog::error(
+			"Wrote advanced debugging information to \"{}\".\n\n\t\"{}\"", advDbgInfoPathStream.str(), quotes[time % ARRAYSIZE(quotes)]);
 
 		if (!IsDedicated())
 			MessageBoxA(
-				0, "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+				0, "Northstar has crashed! Crash info can be found in R2Northstar/logs.", "Northstar has crashed!", MB_ICONERROR | MB_OK);
 	}
 
 	logged = true;

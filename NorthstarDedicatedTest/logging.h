@@ -1,7 +1,9 @@
 #pragma once
 #include "context.h"
 
-void PrintCallStack(std::string prefix = "");
+// Returns number of frames found
+int PrintCallStack(std::string prefix = "");
+
 void CreateLogFiles();
 void InitialiseLogging();
 void InitialiseEngineSpewFuncHooks(HMODULE baseAddress);
