@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "hooks.h"
 #include "squirrel.h"
 #include "plugins.h"
-#include <chrono>
 #include "masterserver.h"
 #include "convar.h"
+
+#include <chrono>
 #include <windows.h>
 
 /// <summary>

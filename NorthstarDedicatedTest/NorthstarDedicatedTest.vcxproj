@@ -117,10 +117,10 @@
     <ClInclude Include="bansystem.h" />
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
-    <ClInclude Include="commandprint.h" />
+    <ClInclude Include="printcommand.h" />
     <ClInclude Include="hoststate.h" />
     <ClInclude Include="localchatwriter.h" />
-    <ClInclude Include="mapsprint.h" />
+    <ClInclude Include="printmaps.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
@@ -585,7 +585,7 @@
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
     <ClCompile Include="localchatwriter.cpp" />
-    <ClCompile Include="mapsprint.cpp" />
+    <ClCompile Include="printmaps.cpp" />
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />
     <ClCompile Include="memalloc.cpp" />
@@ -603,7 +603,7 @@
     <ClCompile Include="pdef.cpp" />
     <ClCompile Include="playlist.cpp" />
     <ClCompile Include="plugins.cpp" />
-    <ClCompile Include="commandprint.cpp" />
+    <ClCompile Include="printcommands.cpp" />
     <ClCompile Include="r2client.cpp" />
     <ClCompile Include="r2engine.cpp" />
     <ClCompile Include="r2server.cpp" />

@@ -1,10 +1,9 @@
 #include "pch.h"
-#include "hooks.h"
 #include "convar.h"
 #include "sourceconsole.h"
 #include "sourceinterface.h"
 #include "concommand.h"
-#include "commandprint.h"
+#include "printcommand.h"
 
 SourceInterface<CGameConsole>* g_SourceGameConsole;
 

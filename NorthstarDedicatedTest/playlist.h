@@ -12,6 +12,6 @@ namespace R2
 	typedef void (*SetPlaylistVarOverrideType)(const char* varName, const char* value);
 	extern SetPlaylistVarOverrideType SetPlaylistVarOverride;
 
-	typedef char* (*GetCurrentPlaylistVarType)(const char* varName, bool useOverrides);
+	typedef const char* (*GetCurrentPlaylistVarType)(const char* varName, bool useOverrides);
 	extern GetCurrentPlaylistVarType GetCurrentPlaylistVar;
 } // namespace R2

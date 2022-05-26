@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "hooks.h"
 #include "concommand.h"
 #include "misccommands.h"
+
 #include <iostream>
 
 //-----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ bool ConCommandBase::IsRegistered(void) const
 //-----------------------------------------------------------------------------
 bool ConCommandBase::IsFlagSet(int nFlags) const
 {
-	return false; // !TODO: Returning false on every query? (original implementation in Northstar before ConCommandBase refactor)
+	return m_nFlags & nFlags;
 }
 
 //-----------------------------------------------------------------------------

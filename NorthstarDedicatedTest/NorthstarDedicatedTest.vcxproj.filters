@@ -1467,10 +1467,10 @@
     <ClInclude Include="dedicated.h">
       <Filter>Header Files\Server\Dedicated</Filter>
     </ClInclude>
-    <ClInclude Include="commandprint.h">
+    <ClInclude Include="printcommand.h">
       <Filter>Header Files\Shared\Console</Filter>
     </ClInclude>
-    <ClInclude Include="mapsprint.h">
+    <ClInclude Include="printmaps.h">
       <Filter>Header Files\Shared\Console</Filter>
     </ClInclude>
     <ClInclude Include="r2engine.h">
@@ -1652,13 +1652,13 @@
     <ClCompile Include="miscserverscript.cpp">
       <Filter>Source Files\Server\Scripted</Filter>
     </ClCompile>
-    <ClCompile Include="commandprint.cpp">
+    <ClCompile Include="printcommands.cpp">
       <Filter>Source Files\Shared\Console</Filter>
     </ClCompile>
     <ClCompile Include="demofixes.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="mapsprint.cpp">
+    <ClCompile Include="printmaps.cpp">
       <Filter>Source Files\Shared\Console</Filter>
     </ClCompile>
     <ClCompile Include="r2client.cpp">

@@ -1,12 +1,12 @@
 #pragma once
 #include "pch.h"
 #include "bansystem.h"
-#include "hooks.h"
 #include "serverauthentication.h"
 #include "concommand.h"
 #include "miscserverscript.h"
-#include <filesystem>
 #include "configurables.h"
+
+#include <filesystem>
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 

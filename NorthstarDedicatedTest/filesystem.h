@@ -67,10 +67,11 @@ class IFileSystem
 	VTable2* m_vtable2;
 };
 
-namespace R2FS
+// use the R2 namespace for game funcs
+namespace R2
 {
 	extern SourceInterface<IFileSystem>* g_pFilesystem;
 
 	std::string ReadVPKFile(const char* path);
 	std::string ReadVPKOriginalFile(const char* path);
-} // namespace R2FS
+} // namespace R2

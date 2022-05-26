@@ -21,8 +21,6 @@
 #include <filesystem>
 #include <thread>
 
-using namespace Tier0;
-
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
 // global vars
@@ -161,7 +159,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 			strcpy((char*)player + 0xF500, strUid.c_str());
 
 			// reset from disk if we're doing that
-			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, R2::g_LocalPlayerUserID))
+			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, R2::g_pLocalPlayerUserID))
 			{
 				std::fstream pdataStream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
@@ -230,7 +228,7 @@ bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
 		return false;
 
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
-	if (m_bNeedLocalAuthForNewgame && !strcmp((char*)player + 0xF500, R2::g_LocalPlayerUserID))
+	if (m_bNeedLocalAuthForNewgame && !strcmp((char*)player + 0xF500, R2::g_pLocalPlayerUserID))
 		return false;
 
 	// we don't have our auth token at this point, so lookup authdata by uid
@@ -267,9 +265,9 @@ void ServerAuthenticationManager::WritePersistentData(void* player)
 
 bool ServerAuthenticationManager::CheckPlayerChatRatelimit(void* player)
 {
-	if (Plat_FloatTime() - m_additionalPlayerData[player].lastSayTextLimitStart >= 1.0)
+	if (Tier0::Plat_FloatTime() - m_additionalPlayerData[player].lastSayTextLimitStart >= 1.0)
 	{
-		m_additionalPlayerData[player].lastSayTextLimitStart = Plat_FloatTime();
+		m_additionalPlayerData[player].lastSayTextLimitStart = Tier0::Plat_FloatTime();
 		m_additionalPlayerData[player].sayTextLimitCount = 0;
 	}
 
@@ -432,10 +430,10 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	{
 		// note: this isn't super perfect, legit clients can trigger it in lobby, mostly good enough tho imo
 		// https://github.com/perilouswithadollarsign/cstrike15_src/blob/f82112a2388b841d72cb62ca48ab1846dfcc11c8/engine/sv_client.cpp#L1513
-		if (Plat_FloatTime() - g_ServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart >= 1.0)
+		if (Tier0::Plat_FloatTime() - g_ServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart >= 1.0)
 		{
 			// reset quota
-			g_ServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart = Plat_FloatTime();
+			g_ServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart = Tier0::Plat_FloatTime();
 			g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota = 0;
 		}
 
@@ -457,7 +455,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	if (!CCommand__Tokenize(tempCommand, pCommandString, R2::cmd_source_t::kCommandSrcCode) || !tempCommand.ArgC())
 		return false;
 
-	ConCommand* command = g_pCVar->FindCommand(tempCommand.Arg(0));
+	ConCommand* command = R2::g_pCVar->FindCommand(tempCommand.Arg(0));
 
 	// if the command doesn't exist pass it on to ExecuteStringCommand for script clientcommands and stuff
 	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE))
@@ -466,11 +464,10 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 		if (IsDedicatedServer())
 			return false;
 
-		if (strcmp((char*)self + 0xF500, R2::g_LocalPlayerUserID))
+		if (strcmp((char*)self + 0xF500, R2::g_pLocalPlayerUserID))
 			return false;
 	}
 
-	// todo later, basically just limit to CVar_sv_quota_stringcmdspersecond->GetInt() stringcmds per client per second
 	return CGameClient__ExecuteStringCommand(self, unknown, pCommandString);
 }
 
@@ -478,11 +475,11 @@ typedef char (*__fastcall CNetChan___ProcessMessagesType)(void* self, void* buf)
 CNetChan___ProcessMessagesType CNetChan___ProcessMessages;
 char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 {
-	double startTime = Plat_FloatTime();
+	double startTime = Tier0::Plat_FloatTime();
 	char ret = CNetChan___ProcessMessages(self, buf);
 
 	// check processing limits, unless we're in a level transition
-	if (R2::g_pHostState->m_iCurrentState == R2::HostState_t::HS_RUN && ThreadInServerFrameThread())
+	if (R2::g_pHostState->m_iCurrentState == R2::HostState_t::HS_RUN && Tier0::ThreadInServerFrameThread())
 	{
 		// player that sent the message
 		void* sender = *(void**)((char*)self + 368);
@@ -500,7 +497,7 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 			g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime = 0.0;
 		}
 		g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime +=
-			(Plat_FloatTime() * 1000) - (startTime * 1000);
+			(Tier0::Plat_FloatTime() * 1000) - (startTime * 1000);
 
 		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >=
 			Cvar_net_chan_limit_msec_per_sec->GetInt())
@@ -512,7 +509,7 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 				Cvar_net_chan_limit_msec_per_sec->GetInt());
 
 			// nonzero = kick, 0 = warn, but never kick local player
-			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(R2::g_LocalPlayerUserID, (char*)sender + 0xF500))
+			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(R2::g_pLocalPlayerUserID, (char*)sender + 0xF500))
 			{
 				CBaseClient__Disconnect(sender, 1, "Exceeded net channel processing limit");
 				return false;
@@ -560,12 +557,12 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 			memcpy(sendData->ip, packet->adr.ip, 16);
 		}
 
-		if (Plat_FloatTime() < sendData->timeoutEnd)
+		if (Tier0::Plat_FloatTime() < sendData->timeoutEnd)
 			return false;
 
-		if (Plat_FloatTime() - sendData->lastQuotaStart >= 1.0)
+		if (Tier0::Plat_FloatTime() - sendData->lastQuotaStart >= 1.0)
 		{
-			sendData->lastQuotaStart = Plat_FloatTime();
+			sendData->lastQuotaStart = Tier0::Plat_FloatTime();
 			sendData->packetCount = 0;
 		}
 
@@ -579,7 +576,7 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 				packet->data[4]);
 
 			// timeout for a minute
-			sendData->timeoutEnd = Plat_FloatTime() + 60.0;
+			sendData->timeoutEnd = Tier0::Plat_FloatTime() + 60.0;
 			return false;
 		}
 	}
@@ -630,7 +627,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, [](HMODULE 
 	Cvar_sv_querylimit_per_sec = new ConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
 	Cvar_sv_max_chat_messages_per_sec = new ConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
 
-	Cvar_net_datablock_enabled = g_pCVar->FindVar("net_datablock_enabled");
+	Cvar_net_datablock_enabled = R2::g_pCVar->FindVar("net_datablock_enabled");
 
 	RegisterConCommand(
 		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);

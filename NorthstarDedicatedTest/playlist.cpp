@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "playlist.h"
 #include "NSMem.h"
-#include "hooks.h"
 #include "concommand.h"
 #include "convar.h"
-#include "hookutils.h"
 #include "squirrel.h"
+
+AUTOHOOK_INIT()
 
 // use the R2 namespace for game funcs
 namespace R2
@@ -15,23 +15,6 @@ namespace R2
 	SetPlaylistVarOverrideType SetPlaylistVarOverride;
 	GetCurrentPlaylistVarType GetCurrentPlaylistVar;
 } // namespace R2
-
-void ConCommand_playlist(const CCommand& args)
-{
-	if (args.ArgC() < 2)
-		return;
-
-	R2::SetCurrentPlaylist(args.Arg(1));
-}
-
-void ConCommand_setplaylistvaroverride(const CCommand& args)
-{
-	if (args.ArgC() < 3)
-		return;
-
-	for (int i = 1; i < args.ArgC(); i += 2)
-		R2::SetPlaylistVarOverride(args.Arg(i), args.Arg(i + 1));
-}
 
 ConVar* Cvar_ns_use_clc_SetPlaylistVarOverride;
 
@@ -67,12 +50,29 @@ typedef int (*GetCurrentGamemodeMaxPlayersType)();
 GetCurrentGamemodeMaxPlayersType GetCurrentGamemodeMaxPlayers;
 int GetCurrentGamemodeMaxPlayersHook()
 {
-	char* maxPlayersStr = R2::GetCurrentPlaylistVar("max_players", 0);
+	const char* maxPlayersStr = R2::GetCurrentPlaylistVar("max_players", 0);
 	if (!maxPlayersStr)
 		return GetCurrentGamemodeMaxPlayers();
 
 	int maxPlayers = atoi(maxPlayersStr);
 	return maxPlayers;
+}
+
+void ConCommand_playlist(const CCommand& args)
+{
+	if (args.ArgC() < 2)
+		return;
+
+	R2::SetCurrentPlaylist(args.Arg(1));
+}
+
+void ConCommand_setplaylistvaroverride(const CCommand& args)
+{
+	if (args.ArgC() < 3)
+		return;
+
+	for (int i = 1; i < args.ArgC(); i += 2)
+		R2::SetPlaylistVarOverride(args.Arg(i), args.Arg(i + 1));
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAddress)
@@ -81,18 +81,18 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAdd
 	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
 	RegisterConCommand("setplaylist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
 	RegisterConCommand("setplaylistvaroverrides", ConCommand_setplaylistvaroverride, "sets a playlist var override", FCVAR_NONE);
-	
+
+	R2::GetCurrentPlaylistName = (R2::GetCurrentPlaylistNameType)((char*)baseAddress + 0x18C640);
+	R2::SetCurrentPlaylist = (R2::SetCurrentPlaylistType)((char*)baseAddress + 0x18EB20);
+	R2::SetPlaylistVarOverride = (R2::SetPlaylistVarOverrideType)((char*)baseAddress + 0x18ED00);
+	R2::GetCurrentPlaylistVar = (R2::GetCurrentPlaylistVarType)((char*)baseAddress + 0x18C680);
+
 	// note: clc_SetPlaylistVarOverride is pretty insecure, since it allows for entirely arbitrary playlist var overrides to be sent to the
 	// server, this is somewhat restricted on custom servers to prevent it being done outside of private matches, but ideally it should be
 	// disabled altogether, since the custom menus won't use it anyway this should only really be accepted if you want vanilla client
 	// compatibility
 	Cvar_ns_use_clc_SetPlaylistVarOverride = new ConVar(
 		"ns_use_clc_SetPlaylistVarOverride", "0", FCVAR_GAMEDLL, "Whether the server should accept clc_SetPlaylistVarOverride messages");
-
-	R2::GetCurrentPlaylistName = (R2::GetCurrentPlaylistNameType)((char*)baseAddress + 0x18C640);
-	R2::SetCurrentPlaylist = (R2::SetCurrentPlaylistType)((char*)baseAddress + 0x18EB20);
-	R2::SetPlaylistVarOverride = (R2::SetPlaylistVarOverrideType)((char*)baseAddress + 0x18ED00);
-	R2::GetCurrentPlaylistVar = (R2::GetCurrentPlaylistVarType)((char*)baseAddress + 0x18C680);
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

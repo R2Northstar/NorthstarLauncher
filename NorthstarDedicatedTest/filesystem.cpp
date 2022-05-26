@@ -1,22 +1,23 @@
 #include "pch.h"
 #include "filesystem.h"
-#include "hooks.h"
-#include "hookutils.h"
 #include "sourceinterface.h"
 #include "modmanager.h"
 
 #include <iostream>
 #include <sstream>
 
-using namespace R2FS;
+using namespace R2;
 
 bool bReadingOriginalFile = false;
 std::string sCurrentModPath;
 
 ConVar* Cvar_ns_fs_log_reads;
 
-namespace R2FS
+// use the R2 namespace for game funcs
+namespace R2
 {
+	SourceInterface<IFileSystem>* g_pFilesystem;
+
 	std::string ReadVPKFile(const char* path)
 	{
 		// read scripts.rson file, todo: check if this can be overwritten
@@ -44,9 +45,7 @@ namespace R2FS
 
 		return ret;
 	}
-
-	SourceInterface<IFileSystem>* g_pFilesystem;
-}
+} // namespace R2
 
 typedef void (*AddSearchPathType)(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType);
 AddSearchPathType AddSearchPath;
@@ -172,7 +171,7 @@ VPKData* MountVPKHook(IFileSystem* fileSystem, const char* vpkPath)
 
 ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, [](HMODULE baseAddress)
 {
-	R2FS::g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
+	R2::g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
 	// create hooks
 	HookEnabler hook;

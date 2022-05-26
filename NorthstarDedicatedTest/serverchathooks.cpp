@@ -1,12 +1,13 @@
 #include "pch.h"
 #include "serverchathooks.h"
-#include "hooks.h"
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include "serverauthentication.h"
 #include "squirrel.h"
 #include "miscserverscript.h"
+
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 
 class CServerGameDLL;
 class CBasePlayer;

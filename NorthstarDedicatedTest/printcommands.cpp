@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "commandprint.h"
+#include "printcommand.h"
 #include "convar.h"
 #include "concommand.h"
 
@@ -30,7 +30,7 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 	}
 
 	// temp because command->IsCommand does not currently work
-	ConVar* cvar = g_pCVar->FindVar(command->m_pszName);
+	ConVar* cvar = R2::g_pCVar->FindVar(command->m_pszName);
 	if (cvar)
 		spdlog::info("\"{}\" = \"{}\" {}- {}", cvar->GetBaseName(), cvar->GetString(), flagString, cvar->GetHelpText());
 	else
@@ -54,7 +54,7 @@ void TryPrintCvarHelpForCommand(const char* pCommand)
 	}
 
 	// check if we're inputting a cvar, but not setting it at all
-	ConVar* cvar = g_pCVar->FindVar(pCvarStr);
+	ConVar* cvar = R2::g_pCVar->FindVar(pCvarStr);
 	if (cvar)
 		PrintCommandHelpDialogue(&cvar->m_ConCommandBase, pCvarStr);
 
@@ -69,7 +69,7 @@ void ConCommand_help(const CCommand& arg)
 		return;
 	}
 
-	PrintCommandHelpDialogue(g_pCVar->FindCommandBase(arg.Arg(1)), arg.Arg(1));
+	PrintCommandHelpDialogue(R2::g_pCVar->FindCommandBase(arg.Arg(1)), arg.Arg(1));
 }
 
 void ConCommand_find(const CCommand& arg)
@@ -83,7 +83,7 @@ void ConCommand_find(const CCommand& arg)
 	char pTempName[256];
 	char pTempSearchTerm[256];
 
-	for (auto& map : g_pCVar->DumpToMap())
+	for (auto& map : R2::g_pCVar->DumpToMap())
 	{
 		bool bPrintCommand = true;
 		for (int i = 0; i < arg.ArgC() - 1; i++)
@@ -140,7 +140,7 @@ void ConCommand_findflags(const CCommand& arg)
 	}
 
 	// print cvars
-	for (auto& map : g_pCVar->DumpToMap())
+	for (auto& map : R2::g_pCVar->DumpToMap())
 	{
 		if (map.second->m_nFlags & resolvedFlag)
 			PrintCommandHelpDialogue(map.second, map.second->m_pszName);
@@ -155,7 +155,7 @@ void InitialiseCommandPrint()
 	RegisterConCommand("findflags", ConCommand_findflags, "Find concommands by flags.", FCVAR_NONE);
 	// help is already a command, so we need to modify the preexisting command to use our func instead
 	// and clear the flags also
-	ConCommand* helpCommand = g_pCVar->FindCommand("help");
+	ConCommand* helpCommand = R2::g_pCVar->FindCommand("help");
 	helpCommand->m_nFlags = FCVAR_NONE;
 	helpCommand->m_pCommandCallback = ConCommand_help;
 }

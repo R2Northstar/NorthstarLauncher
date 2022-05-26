@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
 #include "dedicated.h"
 #include "cvar.h"
 

@@ -162,7 +162,7 @@ template <ScriptContext context> class SquirrelManager
 		if (compileResult != SQRESULT_ERROR)
 		{
 			pushroottable(sqvm2);
-			SQRESULT callResult = call(sqvm2, 1);
+			SQRESULT callResult = call(sqvm2, 0);
 			spdlog::info("sq_call returned {}", callResult);
 		}
 	}

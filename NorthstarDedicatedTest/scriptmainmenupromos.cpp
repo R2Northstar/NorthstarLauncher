@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
 #include "squirrel.h"
 #include "masterserver.h"
 

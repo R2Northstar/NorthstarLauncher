@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "logging.h"
-#include "hooks.h"
 #include "sourceconsole.h"
 #include "spdlog/sinks/basic_file_sink.h"
-#include "hookutils.h"
 #include "dedicated.h"
 #include "convar.h"
 #include <iomanip>

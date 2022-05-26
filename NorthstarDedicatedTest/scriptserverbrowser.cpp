@@ -333,7 +333,7 @@ SQRESULT SQ_TryAuthWithServer(void* sqvm)
 
 	// do auth
 	g_MasterServerManager->AuthenticateWithServer(
-		R2::g_LocalPlayerUserID,
+		R2::g_pLocalPlayerUserID,
 		g_MasterServerManager->m_sOwnClientAuthToken,
 		g_MasterServerManager->m_vRemoteServers[serverIndex].id,
 		(char*)password);
@@ -391,7 +391,7 @@ SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
 SQRESULT SQ_TryAuthWithLocalServer(void* sqvm)
 {
 	// do auth request
-	g_MasterServerManager->AuthenticateWithOwnServer(R2::g_LocalPlayerUserID, g_MasterServerManager->m_sOwnClientAuthToken);
+	g_MasterServerManager->AuthenticateWithOwnServer(R2::g_pLocalPlayerUserID, g_MasterServerManager->m_sOwnClientAuthToken);
 
 	return SQRESULT_NULL;
 }

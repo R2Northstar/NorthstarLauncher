@@ -1,16 +1,13 @@
 #include "pch.h"
-#include "hooks.h"
 #include "dedicated.h"
-#include "hookutils.h"
 #include "tier0.h"
 #include "playlist.h"
 #include "r2engine.h"
 #include "hoststate.h"
 #include "serverauthentication.h"
 #include "masterserver.h"
-#include "commandprint.h"
+#include "printcommand.h"
 
-using namespace Tier0;
 using namespace R2;
 
 bool IsDedicatedServer()
@@ -46,21 +43,17 @@ typedef void (*CHostState__InitType)(CHostState* self);
 void RunServer(CDedicatedExports* dedicated)
 {
 	spdlog::info("CDedicatedExports::RunServer(): starting");
-	spdlog::info(CommandLine()->GetCmdLine());
+	spdlog::info(Tier0::CommandLine()->GetCmdLine());
 
 	// initialise engine
 	g_pEngine->Frame();
 
 	// add +map if not present
 	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
-	if (!CommandLine()->CheckParm("+map"))
-		CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
+	if (!Tier0::CommandLine()->CheckParm("+map"))
+		Tier0::CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
-	// ensure playlist initialises right, if we've not explicitly called setplaylist
-	SetCurrentPlaylist(GetCurrentPlaylistName());
-
-	// run server autoexec and re-run commandline
-	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
+	// re-run commandline
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
@@ -71,7 +64,7 @@ void RunServer(CDedicatedExports* dedicated)
 	double frameTitle = 0;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
 	{
-		double frameStart = Plat_FloatTime();
+		double frameStart = Tier0::Plat_FloatTime();
 		g_pEngine->Frame();
 
 		// only update the title after at least 500ms since the last update
@@ -80,7 +73,7 @@ void RunServer(CDedicatedExports* dedicated)
 			frameTitle = frameStart;
 
 			// this way of getting playercount/maxplayers honestly really sucks, but not got any other methods of doing it rn
-			const char* maxPlayers = GetCurrentPlaylistVar("max_players", false);
+			const char* maxPlayers = GetCurrentPlaylistVar("max_players", true);
 			if (!maxPlayers)
 				maxPlayers = "6";
 
@@ -95,7 +88,7 @@ void RunServer(CDedicatedExports* dedicated)
 		}
 
 		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(
-			Cvar_base_tickinterval_mp->GetFloat() - fmin(Plat_FloatTime() - frameStart, 0.25)));
+			Cvar_base_tickinterval_mp->GetFloat() - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
 
@@ -173,7 +166,6 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 	// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
 	// so uhh, don't do that
 	// NSMem::NOP(ea + 0x156B4C + 7, 8);
-
 	NSMem::NOP(ea + 0x156B4C + 15, 9);
 
 	// HostState_State_NewGame
@@ -243,15 +235,15 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 	// make sure it still gets registered
 
 	// add cmdline args that are good for dedi
-	CommandLine()->AppendParm("-nomenuvid", 0);
-	CommandLine()->AppendParm("-nosound", 0);
-	CommandLine()->AppendParm("-windowed", 0);
-	CommandLine()->AppendParm("-nomessagebox", 0);
-	CommandLine()->AppendParm("+host_preload_shaders", "0");
-	CommandLine()->AppendParm("+net_usesocketsforloopback", "1");
+	Tier0::CommandLine()->AppendParm("-nomenuvid", 0);
+	Tier0::CommandLine()->AppendParm("-nosound", 0);
+	Tier0::CommandLine()->AppendParm("-windowed", 0);
+	Tier0::CommandLine()->AppendParm("-nomessagebox", 0);
+	Tier0::CommandLine()->AppendParm("+host_preload_shaders", "0");
+	Tier0::CommandLine()->AppendParm("+net_usesocketsforloopback", "1");
 
 	// Disable Quick Edit mode to reduce chance of user unintentionally hanging their server by selecting something.
-	if (!CommandLine()->CheckParm("-bringbackquickedit"))
+	if (!Tier0::CommandLine()->CheckParm("-bringbackquickedit"))
 	{
 		HANDLE stdIn = GetStdHandle(STD_INPUT_HANDLE);
 		DWORD mode = 0;
@@ -273,7 +265,7 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 		spdlog::info("Quick Edit enabled by user request");
 
 	// create console input thread
-	if (!CommandLine()->CheckParm("-noconsoleinput"))
+	if (!Tier0::CommandLine()->CheckParm("-noconsoleinput"))
 		consoleInputThreadHandle = CreateThread(0, 0, ConsoleInputThread, 0, 0, NULL);
 	else
 		spdlog::info("Console input disabled by user request");
@@ -285,11 +277,10 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, [](HMODULE baseAddress)
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
 	// an origin id as a client for dedi it's fine though, game doesn't care if origin is disabled as long as there's only a server
 
-	NSMem::BytePatch(
-		(uintptr_t)GetProcAddress(GetModuleHandleA("tier0.dll"), "Tier0_InitOrigin"),
-		{
-			0xC3 // ret
-		});
+	NSMem::BytePatch((uintptr_t)GetProcAddress(GetModuleHandleA("tier0.dll"), "Tier0_InitOrigin"),
+	{
+		0xC3 // ret
+	});
 })
 
 typedef void (*PrintFatalSquirrelErrorType)(void* sqvm);

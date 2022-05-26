@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
 #include "convar.h"
 #include "concommand.h"
 #include "localchatwriter.h"

@@ -53,7 +53,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pServerSquirrel->pushbool(sqvm, !strcmp(R2::g_LocalPlayerUserID, (char*)player + 0xF500));
+	g_pServerSquirrel->pushbool(sqvm, !strcmp(R2::g_pLocalPlayerUserID, (char*)player + 0xF500));
 	return SQRESULT_NOTNULL;
 }
 

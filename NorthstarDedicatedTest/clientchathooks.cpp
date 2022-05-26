@@ -1,20 +1,14 @@
 #include "pch.h"
-#include "hooks.h"
-#include <rapidjson/document.h>
 #include "squirrel.h"
 #include "serverchathooks.h"
 #include "localchatwriter.h"
 
-struct ChatTags
-{
-	bool whisper;
-	bool team;
-	bool dead;
-};
+#include <rapidjson/document.h>
 
-typedef void(__fastcall* CHudChat__AddGameLineType)(void* self, const char* message, int fromPlayerId, bool isteam, bool isdead);
-CHudChat__AddGameLineType CHudChat__AddGameLine;
-static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
+AUTOHOOK_INIT()
+
+AUTOHOOK(CHudChat__AddGameLine, client.dll + 0x22E580, 
+void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead), 
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
 	if (self != *CHudChat::allHuds)
@@ -51,7 +45,7 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
 		}
 	}
-}
+})
 
 // void NSChatWrite( int context, string str )
 static SQRESULT SQ_ChatWrite(void* sqvm)
@@ -85,8 +79,7 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm)
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x22E580, &CHudChat__AddGameLineHook, reinterpret_cast<LPVOID*>(&CHudChat__AddGameLine));
+	AUTOHOOK_DISPATCH()
 
 	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
 	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);

@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
 #include "convar.h"
 
 ConVar* Cvar_rui_drawEnable;

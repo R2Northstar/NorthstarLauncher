@@ -1,10 +1,13 @@
 #include "pch.h"
 #include "modmanager.h"
-#include "hooks.h"
 #include "convar.h"
 #include "concommand.h"
 #include "audio.h"
 #include "masterserver.h"
+#include "filesystem.h"
+#include "rpakfilesystem.h"
+#include "configurables.h"
+
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
@@ -14,9 +17,6 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "filesystem.h"
-#include "rpakfilesystem.h"
-#include "configurables.h"
 
 ModManager* g_pModManager;
 
@@ -330,7 +330,7 @@ void ModManager::LoadMods()
 		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
 		// causes us to leak memory on reload, but not much, potentially find a way to not do this at some point
 		for (ModConVar* convar : mod.ConVars)
-			if (!g_pCVar->FindVar(convar->Name.c_str())) // make sure convar isn't registered yet, unsure if necessary but idk what
+			if (!R2::g_pCVar->FindVar(convar->Name.c_str())) // make sure convar isn't registered yet, unsure if necessary but idk what
 														 // behaviour is for defining same convar multiple times
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
 
@@ -376,7 +376,7 @@ void ModManager::LoadMods()
 					modVpk.m_sVpkPath = vpkName;
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
-						(*R2FS::g_pFilesystem)->m_vtable->MountVPK(*R2FS::g_pFilesystem, vpkName.c_str());
+						(*R2::g_pFilesystem)->m_vtable->MountVPK(*R2::g_pFilesystem, vpkName.c_str());
 				}
 			}
 		}

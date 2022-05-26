@@ -1,6 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
-#include "hookutils.h"
 #include "convar.h"
 
 ConVar* Cvar_r_latencyflex;

@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "rpakfilesystem.h"
-#include "hooks.h"
-#include "hookutils.h"
 #include "modmanager.h"
 #include "dedicated.h"
 

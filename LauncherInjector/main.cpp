@@ -147,15 +147,22 @@ void AwaitOriginStartup()
 
 		std::cout << "LSX: connect()" << std::endl;
 		connect(sock, (struct sockaddr*)&lsxAddr, sizeof(lsxAddr));
-
+		
 		char buf[4096];
-		recv(sock, buf, 4096, 0);
-		std::cout << buf << std::endl;
+		memset(buf, 0, sizeof(buf));
 
-		Sleep(8000);
+		do
+		{
+			recv(sock, buf, 4096, 0);
+			std::cout << buf << std::endl;
+
+			// honestly really shit, this isn't needed for origin due to being able to check OriginClientService
+			// but for ea desktop we don't have anything like this, so atm we just have to wait to ensure that we start after logging in
+			Sleep(8000);
+		} while (!strstr(buf, "<LSX>")); // ensure we're actually getting data from lsx
 	}
 
-	WSACleanup();
+	WSACleanup(); // cleanup sockets and such so game can contact lsx itself
 }
 
 void EnsureOriginStarted()

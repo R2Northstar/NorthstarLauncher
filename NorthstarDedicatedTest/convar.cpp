@@ -1,9 +1,7 @@
 #include "pch.h"
-#include "hooks.h"
 #include "bits.h"
 #include "cvar.h"
 #include "convar.h"
-#include "hookutils.h"
 #include "sourceinterface.h"
 
 typedef void (*ConVarRegisterType)(
@@ -36,8 +34,8 @@ ON_DLL_LOAD("engine.dll", ConVar, [](HMODULE baseAddress)
 	g_pConVar_Vtable = (char*)baseAddress + 0x67FD28;
 	g_pIConVar_Vtable = (char*)baseAddress + 0x67FDC8;
 
-	g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
-	g_pCVar = *g_pCVarInterface;
+	R2::g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
+	R2::g_pCVar = *R2::g_pCVarInterface;
 })
 
 //-----------------------------------------------------------------------------

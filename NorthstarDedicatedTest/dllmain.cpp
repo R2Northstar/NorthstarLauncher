@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
 #include "main.h"
 #include "logging.h"
 #include "memalloc.h"

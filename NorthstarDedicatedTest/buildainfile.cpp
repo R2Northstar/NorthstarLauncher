@@ -1,16 +1,15 @@
 #include "pch.h"
 #include "convar.h"
-#include "hooks.h"
-#include "hookutils.h"
 #include <fstream>
 #include <filesystem>
 #include "NSMem.h"
+
+AUTOHOOK_INIT()
 
 namespace fs = std::filesystem;
 
 const int AINET_VERSION_NUMBER = 57;
 const int AINET_SCRIPT_VERSION_NUMBER = 21;
-const int MAP_VERSION_TEMP = 30;
 const int PLACEHOLDER_CRC = 0;
 const int MAX_HULLS = 5;
 
@@ -349,18 +348,16 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writeStream.close();
 }
 
-typedef void (*CAI_NetworkBuilder__BuildType)(void* builder, CAI_Network* aiNetwork, void* unknown);
-CAI_NetworkBuilder__BuildType CAI_NetworkBuilder__Build;
-void CAI_NetworkBuilder__BuildHook(void* builder, CAI_Network* aiNetwork, void* unknown)
+AUTOHOOK(CAI_NetworkBuilder__Build, server.dll + 0x385E20,
+void,, (void* builder, CAI_Network* aiNetwork, void* unknown), 
 {
 	CAI_NetworkBuilder__Build(builder, aiNetwork, unknown);
 
 	DumpAINInfo(aiNetwork);
-}
+})
 
-typedef void (*LoadAINFileType)(void* aimanager, void* buf, const char* filename);
-LoadAINFileType LoadAINFile;
-void LoadAINFileHook(void* aimanager, void* buf, const char* filename)
+AUTOHOOK(LoadAINFile, server.dll + 0x3933A0,
+void,, (void* aimanager, void* buf, const char* filename), 
 {
 	LoadAINFile(aimanager, buf, filename);
 
@@ -369,17 +366,12 @@ void LoadAINFileHook(void* aimanager, void* buf, const char* filename)
 		spdlog::info("running DumpAINInfo for loaded file {}", filename);
 		DumpAINInfo(*(CAI_Network**)((char*)aimanager + 2536));
 	}
-}
+})
 
 ON_DLL_LOAD("server.dll", BuildAINFile, [](HMODULE baseAddress)
 {
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
 		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
-
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x385E20, &CAI_NetworkBuilder__BuildHook, reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x3933A0, &LoadAINFileHook, reinterpret_cast<LPVOID*>(&LoadAINFile));
 
 	pUnkStruct0Count = (int*)((char*)baseAddress + 0x1063BF8);
 	pppUnkNodeStruct0s = (UnkNodeStruct0***)((char*)baseAddress + 0x1063BE0);
@@ -388,11 +380,4 @@ ON_DLL_LOAD("server.dll", BuildAINFile, [](HMODULE baseAddress)
 	pppUnkStruct1s = (UnkLinkStruct1***)((char*)baseAddress + 0x1063A90);
 	pUnkServerMapversionGlobal = (char**)((char*)baseAddress + 0xBFBE08);
 	pMapName = (char*)baseAddress + 0x1053370;
-
-	uintptr_t base = (uintptr_t)baseAddress;
-
-	// remove a check that prevents a logging function in link generation from working
-	// due to the sheer amount of logging this is a massive perf hit to generation, but spewlog_enable 0 exists so whatever
-	NSMem::NOP(base + 0x3889B6, 6);
-	NSMem::NOP(base + 0x3889BF, 6);
 });

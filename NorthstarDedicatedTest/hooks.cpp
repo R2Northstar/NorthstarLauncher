@@ -1,7 +1,4 @@
 #include "pch.h"
-#include "hooks.h"
-#include "hookutils.h"
-#include "sigscanning.h"
 #include "dedicated.h"
 
 #include <iostream>
@@ -14,6 +11,8 @@
 #include <Psapi.h>
 
 namespace fs = std::filesystem;
+
+AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros
 __dllLoadCallback::__dllLoadCallback(
@@ -39,6 +38,84 @@ __dllLoadCallback::__dllLoadCallback(
 			break;
 		}
 	}
+}
+
+void __fileAutohook::Dispatch()
+{
+	for (__autohook* hook : hooks)
+		hook->Dispatch();
+}
+
+ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) : pHookFunc(func), ppOrigFunc(orig)
+{
+	const int iFuncNameStrlen = strlen(funcName);
+	pFuncName = new char[iFuncNameStrlen];
+	memcpy(pFuncName, funcName, iFuncNameStrlen);
+}
+
+bool ManualHook::Dispatch(LPVOID addr)
+{
+	if (MH_CreateHook(addr, pHookFunc, ppOrigFunc) == MH_OK)
+	{
+		if (MH_EnableHook(addr) == MH_OK)
+		{
+			spdlog::info("Enabling hook {}", pFuncName);
+			return true;
+		}
+		else
+			spdlog::error("MH_EnableHook failed for function {}", pFuncName);
+	}
+	else
+		spdlog::error("MH_CreateHook failed for function {}", pFuncName);
+
+	return false;
+}
+
+// dll load callback stuff
+// this allows for code to register callbacks to be run as soon as a dll is loaded, mainly to allow for patches to be made on dll load
+struct DllLoadCallback
+{
+	std::string dll;
+	DllLoadCallbackFuncType callback;
+	std::string tag;
+	std::string reliesOn;
+	bool called;
+};
+
+// HACK: declaring and initialising this vector at file scope crashes on debug builds due to static initialisation order
+// using a static var like this ensures that the vector is initialised lazily when it's used
+std::vector<DllLoadCallback>& GetDllLoadCallbacks()
+{
+	static std::vector<DllLoadCallback> vec = std::vector<DllLoadCallback>();
+	return vec;
+}
+
+void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
+{
+	DllLoadCallback& callbackStruct = GetDllLoadCallbacks().emplace_back();
+
+	callbackStruct.dll = dll;
+	callbackStruct.callback = callback;
+	callbackStruct.tag = tag;
+	callbackStruct.reliesOn = reliesOn;
+	callbackStruct.called = false;
+}
+
+void AddDllLoadCallbackForDedicatedServer(
+	std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
+{
+	if (!IsDedicatedServer())
+		return;
+
+	AddDllLoadCallback(dll, callback, tag, reliesOn);
+}
+
+void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
+{
+	if (IsDedicatedServer())
+		return;
+
+	AddDllLoadCallback(dll, callback, tag, reliesOn);
 }
 
 typedef LPSTR (*GetCommandLineAType)();
@@ -106,60 +183,12 @@ LPSTR GetCommandLineAHook()
 	return cmdlineModified;
 }
 
-// dll load callback stuff
-// this allows for code to register callbacks to be run as soon as a dll is loaded, mainly to allow for patches to be made on dll load
-struct DllLoadCallback
-{
-	std::string dll;
-	DllLoadCallbackFuncType callback;
-	std::string tag;
-	std::string reliesOn;
-	bool called;
-};
-
-// for whatever reason, just declaring and initialising the vector at file scope crashes on debug builds
-// but this works, idk sucks but just how it is
-std::vector<DllLoadCallback>& GetDllLoadCallbacks()
-{
-	static std::vector<DllLoadCallback> vec = std::vector<DllLoadCallback>();
-	return vec;
-}
-
-void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
-{
-	DllLoadCallback& callbackStruct = GetDllLoadCallbacks().emplace_back(); // <-- crashes here
-
-	callbackStruct.dll = dll;
-	callbackStruct.callback = callback;
-	callbackStruct.tag = tag;
-	callbackStruct.reliesOn = reliesOn;
-	callbackStruct.called = false;
-}
-
-void AddDllLoadCallbackForDedicatedServer(
-	std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
-{
-	if (!IsDedicatedServer())
-		return;
-
-	AddDllLoadCallback(dll, callback, tag, reliesOn);
-}
-
-void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::string reliesOn)
-{
-	if (IsDedicatedServer())
-		return;
-
-	AddDllLoadCallback(dll, callback, tag, reliesOn);
-}
-
 std::vector<std::string> calledTags;
-
 void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 {
 	while (true)
 	{
-		bool doneCalling = true;
+		bool bDoneCalling = true;
 
 		for (auto& callbackStruct : GetDllLoadCallbacks())
 		{
@@ -168,7 +197,7 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 				if (callbackStruct.reliesOn != "" &&
 					std::find(calledTags.begin(), calledTags.end(), callbackStruct.reliesOn) == calledTags.end())
 				{
-					doneCalling = false;
+					bDoneCalling = false;
 					continue;
 				}
 
@@ -178,7 +207,7 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 			}
 		}
 
-		if (doneCalling)
+		if (bDoneCalling)
 			break;
 	}
 }
@@ -187,7 +216,7 @@ void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 {
 	while (true)
 	{
-		bool doneCalling = true;
+		bool bDoneCalling = true;
 
 		for (auto& callbackStruct : GetDllLoadCallbacks())
 		{
@@ -196,7 +225,7 @@ void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 				if (callbackStruct.reliesOn != "" &&
 					std::find(calledTags.begin(), calledTags.end(), callbackStruct.reliesOn) == calledTags.end())
 				{
-					doneCalling = false;
+					bDoneCalling = false;
 					continue;
 				}
 
@@ -206,7 +235,7 @@ void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 			}
 		}
 
-		if (doneCalling)
+		if (bDoneCalling)
 			break;
 	}
 }
@@ -234,72 +263,55 @@ void CallAllPendingDLLLoadCallbacks()
 	}
 }
 
-
-typedef HMODULE (*LoadLibraryExAType)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-LoadLibraryExAType LoadLibraryExAOriginal;
-HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
-{
-	HMODULE moduleAddress = LoadLibraryExAOriginal(lpLibFileName, hFile, dwFlags);
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, 
+HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags), 
+	{
+	HMODULE moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
 	if (moduleAddress)
-	{
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
-	}
 
 	return moduleAddress;
-}
+})
 
-typedef HMODULE (*LoadLibraryAType)(LPCSTR lpLibFileName);
-LoadLibraryAType LoadLibraryAOriginal;
-HMODULE LoadLibraryAHook(LPCSTR lpLibFileName)
+
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, 
+HMODULE, WINAPI, (LPCSTR lpLibFileName), 
 {
-	HMODULE moduleAddress = LoadLibraryAOriginal(lpLibFileName);
+	HMODULE moduleAddress = _LoadLibraryA(lpLibFileName);
 
 	if (moduleAddress)
-	{
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
-	}
 
 	return moduleAddress;
-}
+})
 
-typedef HMODULE (*LoadLibraryExWType)(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
-LoadLibraryExWType LoadLibraryExWOriginal;
-HMODULE LoadLibraryExWHook(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, 
+HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags), 
 {
-	HMODULE moduleAddress = LoadLibraryExWOriginal(lpLibFileName, hFile, dwFlags);
+	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
 	if (moduleAddress)
-	{
 		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
-	}
 
 	return moduleAddress;
-}
+})
 
-typedef HMODULE (*LoadLibraryWType)(LPCWSTR lpLibFileName);
-LoadLibraryWType LoadLibraryWOriginal;
-HMODULE LoadLibraryWHook(LPCWSTR lpLibFileName)
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW, 
+HMODULE, WINAPI, (LPCWSTR lpLibFileName), 
 {
-	HMODULE moduleAddress = LoadLibraryWOriginal(lpLibFileName);
+	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 
 	if (moduleAddress)
-	{
 		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
-	}
 
 	return moduleAddress;
-}
+})
 
 void InstallInitialHooks()
 {
 	if (MH_Initialize() != MH_OK)
 		spdlog::error("MH_Initialize (minhook initialization) failed");
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, &GetCommandLineA, &GetCommandLineAHook, reinterpret_cast<LPVOID*>(&GetCommandLineAOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryExA, &LoadLibraryExAHook, reinterpret_cast<LPVOID*>(&LoadLibraryExAOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryA, &LoadLibraryAHook, reinterpret_cast<LPVOID*>(&LoadLibraryAOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryExW, &LoadLibraryExWHook, reinterpret_cast<LPVOID*>(&LoadLibraryExWOriginal));
-	ENABLER_CREATEHOOK(hook, &LoadLibraryW, &LoadLibraryWHook, reinterpret_cast<LPVOID*>(&LoadLibraryWOriginal));
+	AUTOHOOK_DISPATCH()
 }

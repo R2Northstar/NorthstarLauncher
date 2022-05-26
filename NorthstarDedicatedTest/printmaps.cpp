@@ -1,11 +1,14 @@
 #include "pch.h"
-#include "mapsprint.h"
+#include "printmaps.h"
 #include "convar.h"
 #include "concommand.h"
 #include "modmanager.h"
 #include "tier0.h"
+
 #include <filesystem>
 #include <regex>
+
+AUTOHOOK_INIT()
 
 enum class MapSource_t
 {
@@ -39,7 +42,7 @@ void RefreshMapList()
 	for (auto& modFilePair : g_pModManager->m_modFiles)
 	{
 		ModOverrideFile file = modFilePair.second;
-		if (file.path.extension() == ".bsp" && file.path.parent_path().string() == "maps") // only allow mods actually in /maps atm
+		if (file.path.extension() == ".bsp" && file.path.parent_path().string() == "maps") // only allow mod maps actually in /maps atm
 		{
 			MapVPKInfo& map = vMapList.emplace_back();
 			map.name = file.path.stem().string();
@@ -51,7 +54,7 @@ void RefreshMapList()
 	// get maps in vpk
 	{
 		const int iNumRetailNonMapVpks = 1;
-		static const char* ppRetailNonMapVpks[] = {
+		static const char* const ppRetailNonMapVpks[] = {
 			"englishclient_frontend.bsp.pak000_dir.vpk"}; // don't include mp_common here as it contains mp_lobby
 
 		// matches directory vpks, and captures their map name in the first group
@@ -106,18 +109,15 @@ void RefreshMapList()
 	}
 }
 
-typedef int (*__fastcall _Host_Map_f_CompletionFuncType)(
-	char const* cmdname, char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]);
-_Host_Map_f_CompletionFuncType _Host_Map_f_CompletionFunc;
-int __fastcall _Host_Map_f_CompletionFuncHook(
-	char const* cmdname, char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
+AUTOHOOK(_Host_Map_f_CompletionFunc, engine.dll + 0x161AE0,
+int, __fastcall, (const char const* cmdname, const char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]),
 {
 	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs
 	static double flLastAutocompleteRefresh = -999;
 
 	if (flLastAutocompleteRefresh + 10.0 < Tier0::Plat_FloatTime())
 	{
-		RefreshMapList();	
+		RefreshMapList();
 		flLastAutocompleteRefresh = Tier0::Plat_FloatTime();
 	}
 
@@ -134,13 +134,15 @@ int __fastcall _Host_Map_f_CompletionFuncHook(
 			strcpy(commands[numMaps], cmdname);
 			strncpy_s(
 				commands[numMaps++] + cmdLength,
-				COMMAND_COMPLETION_ITEM_LENGTH, &vMapList[i].name[0],
+				COMMAND_COMPLETION_ITEM_LENGTH,
+				&vMapList[i].name[0],
 				COMMAND_COMPLETION_ITEM_LENGTH - cmdLength);
 		}
 	}
 
 	return numMaps;
-}
+})
+
 
 void ConCommand_maps(const CCommand& args) 
 {
@@ -160,13 +162,8 @@ void ConCommand_maps(const CCommand& args)
 
 void InitialiseMapsPrint()
 {
-	ConCommand* mapsCommand = g_pCVar->FindCommand("maps");
-	mapsCommand->m_pCommandCallback = ConCommand_maps;
+	AUTOHOOK_DISPATCH()
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)GetModuleHandleA("engine.dll") + 0x161AE0,
-		&_Host_Map_f_CompletionFuncHook,
-		reinterpret_cast<LPVOID*>(&_Host_Map_f_CompletionFunc));
+	ConCommand* mapsCommand = R2::g_pCVar->FindCommand("maps");
+	mapsCommand->m_pCommandCallback = ConCommand_maps;
 }
