@@ -5,9 +5,10 @@
 #include "printmaps.h"
 #include "r2engine.h"
 
-typedef void (*Host_InitType)(bool bDedicated);
-Host_InitType Host_Init;
-void Host_InitHook(bool bDedicated) 
+AUTOHOOK_INIT()
+
+AUTOHOOK(Host_Init, engine.dll + 0x155EA0,
+void,, (bool bDedicated),
 {
 	spdlog::info("Host_Init()");
 	Host_Init(bDedicated);
@@ -62,10 +63,9 @@ void Host_InitHook(bool bDedicated)
 		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", R2::cmd_source_t::kCommandSrcCode);
 	else
 		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "exec autoexec_ns_client", R2::cmd_source_t::kCommandSrcCode);
-}
+})
 
 ON_DLL_LOAD("engine.dll", Host_Init, [](HMODULE baseAddress)
 { 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x155EA0, &Host_InitHook, reinterpret_cast<LPVOID*>(&Host_Init));
+	AUTOHOOK_DISPATCH()
 })

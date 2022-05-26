@@ -4,23 +4,7 @@
 
 #include <fstream>
 
-typedef char (*KeyValues__LoadFromBufferType)(
-	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
-KeyValues__LoadFromBufferType KeyValues__LoadFromBuffer;
-char KeyValues__LoadFromBufferHook(void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7)
-{
-	static void* pSavedFilesystemPtr = nullptr;
-
-	// this is just to allow playlists to get a valid pFileSystem ptr for kv building, other functions that call this particular overload of
-	// LoadFromBuffer seem to get called on network stuff exclusively not exactly sure what the address wanted here is, so just taking it
-	// from a function call that always happens before playlists is loaded
-	if (pFileSystem != nullptr)
-		pSavedFilesystemPtr = pFileSystem;
-	if (!pFileSystem && !strcmp(resourceName, "playlists"))
-		pFileSystem = pSavedFilesystemPtr;
-
-	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
-}
+AUTOHOOK_INIT()
 
 void ModManager::TryBuildKeyValues(const char* filename)
 {
@@ -122,9 +106,23 @@ void ModManager::TryBuildKeyValues(const char* filename)
 		m_modFiles[normalisedPath] = overrideFile;
 }
 
+AUTOHOOK(KeyValues__LoadFromBuffer, engine.dll + 0x426C30,
+char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7),
+{
+	static void* pSavedFilesystemPtr = nullptr;
+
+	// this is just to allow playlists to get a valid pFileSystem ptr for kv building, other functions that call this particular overload of
+	// LoadFromBuffer seem to get called on network stuff exclusively not exactly sure what the address wanted here is, so just taking it
+	// from a function call that always happens before playlists is loaded
+	if (pFileSystem != nullptr)
+		pSavedFilesystemPtr = pFileSystem;
+	if (!pFileSystem && !strcmp(resourceName, "playlists"))
+		pFileSystem = pSavedFilesystemPtr;
+
+	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
+})
+
 ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
+	AUTOHOOK_DISPATCH()
 })

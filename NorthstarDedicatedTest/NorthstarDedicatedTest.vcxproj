@@ -117,6 +117,7 @@
     <ClInclude Include="bansystem.h" />
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
+    <ClInclude Include="crashhandler.h" />
     <ClInclude Include="printcommand.h" />
     <ClInclude Include="hoststate.h" />
     <ClInclude Include="localchatwriter.h" />
@@ -571,6 +572,7 @@
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="configurables.cpp" />
     <ClCompile Include="convar.cpp" />
+    <ClCompile Include="crashhandler.cpp" />
     <ClCompile Include="cvar.cpp" />
     <ClCompile Include="debugoverlay.cpp" />
     <ClCompile Include="dedicated.cpp" />

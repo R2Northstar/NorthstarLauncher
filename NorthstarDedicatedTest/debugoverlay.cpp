@@ -2,6 +2,8 @@
 #include "dedicated.h"
 #include "cvar.h"
 
+AUTOHOOK_INIT()
+
 struct Vector3
 {
 	float x, y, z;
@@ -83,10 +85,8 @@ typedef void (*RenderBoxType)(Vector3 vOrigin, QAngle angles, Vector3 vMins, Vec
 static RenderBoxType RenderBox;
 static RenderBoxType RenderWireframeBox;
 
-// engine.dll+0xABCB0
-typedef void (*DrawOverlayType)(OverlayBase_t* a1);
-DrawOverlayType DrawOverlay;
-void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
+AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
+void, __fastcall, (OverlayBase_t * pOverlay), 
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
 
@@ -129,12 +129,11 @@ void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
 	break;
 	}
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
-}
+})
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xABCB0, &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));
+	AUTOHOOK_DISPATCH()
 
 	RenderLine = reinterpret_cast<RenderLineType>((char*)baseAddress + 0x192A70);
 

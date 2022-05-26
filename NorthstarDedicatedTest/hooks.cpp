@@ -46,15 +46,37 @@ void __fileAutohook::Dispatch()
 		hook->Dispatch();
 }
 
-ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) : pHookFunc(func), ppOrigFunc(orig)
+void __fileAutohook::DispatchForModule(const char* pModuleName)
+{
+	const int iModuleNameLen = strlen(pModuleName);
+
+	for (__autohook* hook : hooks)
+		if ((hook->iAddressResolutionMode == __autohook::OFFSET_STRING && !strncmp(pModuleName, hook->pAddrString, iModuleNameLen)) ||
+			(hook->iAddressResolutionMode == __autohook::PROCADDRESS && !strcmp(pModuleName, hook->pModuleName)))
+			hook->Dispatch();
+}
+
+ManualHook::ManualHook(const char* funcName, LPVOID func)
+	: pHookFunc(func), ppOrigFunc(nullptr)
 {
 	const int iFuncNameStrlen = strlen(funcName);
 	pFuncName = new char[iFuncNameStrlen];
 	memcpy(pFuncName, funcName, iFuncNameStrlen);
 }
 
-bool ManualHook::Dispatch(LPVOID addr)
+ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) 
+	: pHookFunc(func), ppOrigFunc(orig)
 {
+	const int iFuncNameStrlen = strlen(funcName);
+	pFuncName = new char[iFuncNameStrlen];
+	memcpy(pFuncName, funcName, iFuncNameStrlen);
+}
+
+bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
+{
+	if (orig)
+		ppOrigFunc = orig;
+
 	if (MH_CreateHook(addr, pHookFunc, ppOrigFunc) == MH_OK)
 	{
 		if (MH_EnableHook(addr) == MH_OK)
@@ -118,16 +140,15 @@ void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callba
 	AddDllLoadCallback(dll, callback, tag, reliesOn);
 }
 
-typedef LPSTR (*GetCommandLineAType)();
-GetCommandLineAType GetCommandLineAOriginal;
-LPSTR GetCommandLineAHook()
+AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA,
+LPSTR, WINAPI, (),
 {
 	static char* cmdlineModified;
 	static char* cmdlineOrg;
 
 	if (cmdlineOrg == nullptr || cmdlineModified == nullptr)
 	{
-		cmdlineOrg = GetCommandLineAOriginal();
+		cmdlineOrg = _GetCommandLineA();
 		bool isDedi = strstr(cmdlineOrg, "-dedicated"); // well, this one has to be a real argument
 		bool ignoreStartupArgs = strstr(cmdlineOrg, "-nostartupargs");
 
@@ -181,7 +202,7 @@ LPSTR GetCommandLineAHook()
 	}
 
 	return cmdlineModified;
-}
+})
 
 std::vector<std::string> calledTags;
 void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)

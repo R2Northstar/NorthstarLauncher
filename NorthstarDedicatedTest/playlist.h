@@ -3,15 +3,8 @@
 // use the R2 namespace for game funcs
 namespace R2
 {
-	typedef const char* (*GetCurrentPlaylistNameType)();
-	extern GetCurrentPlaylistNameType GetCurrentPlaylistName;
-
-	typedef void (*SetCurrentPlaylistType)(const char* playlistName);
-	extern SetCurrentPlaylistType SetCurrentPlaylist;
-
-	typedef void (*SetPlaylistVarOverrideType)(const char* varName, const char* value);
-	extern SetPlaylistVarOverrideType SetPlaylistVarOverride;
-
-	typedef const char* (*GetCurrentPlaylistVarType)(const char* varName, bool useOverrides);
-	extern GetCurrentPlaylistVarType GetCurrentPlaylistVar;
+	extern const char* (*GetCurrentPlaylistName)();
+	extern void (*SetCurrentPlaylist)(const char* pPlaylistName);
+	extern void (*SetPlaylistVarOverride)(const char* pVarName, const char* pValue);
+	extern const char* (*GetCurrentPlaylistVar)(const char* pVarName, bool bUseOverrides);
 } // namespace R2

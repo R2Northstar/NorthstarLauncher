@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "modmanager.h"
 
-typedef void* (*BinkOpenType)(const char* path, uint32_t flags);
-BinkOpenType BinkOpen;
-void* BinkOpenHook(const char* path, uint32_t flags)
+AUTOHOOK_INIT()
+
+AUTOHOOK_PROCADDRESS(BinkOpen, bink2w64.dll, BinkOpen, 
+void*,, (const char* path, uint32_t flags),
 {
 	std::string filename(fs::path(path).filename().string());
 	spdlog::info("BinkOpen {}", filename);
@@ -27,11 +28,9 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 	}
 	else
 		return BinkOpen(path, flags);
-}
+})
 
 ON_DLL_LOAD_CLIENT("client.dll", BinkVideo, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, GetProcAddress(GetModuleHandleA("bink2w64.dll"), "BinkOpen"), &BinkOpenHook, reinterpret_cast<LPVOID*>(&BinkOpen));
+	AUTOHOOK_DISPATCH()
 })

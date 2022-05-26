@@ -1482,6 +1482,9 @@
     <ClInclude Include="r2client.h">
       <Filter>Header Files\Shared\Game Functions</Filter>
     </ClInclude>
+    <ClInclude Include="crashhandler.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1669,6 +1672,9 @@
     </ClCompile>
     <ClCompile Include="r2engine.cpp">
       <Filter>Source Files\Shared\Game Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="crashhandler.cpp">
+      <Filter>Source Files\Shared</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

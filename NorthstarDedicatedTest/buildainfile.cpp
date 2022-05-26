@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "convar.h"
+#include "hoststate.h"
+#include "NSMem.h"
+
 #include <fstream>
 #include <filesystem>
-#include "NSMem.h"
 
 AUTOHOOK_INIT()
 
@@ -161,14 +163,13 @@ struct CAI_Network
 };
 
 char** pUnkServerMapversionGlobal;
-char* pMapName;
 
 ConVar* Cvar_ns_ai_dumpAINfileFromLoad;
 
 void DumpAINInfo(CAI_Network* aiNetwork)
 {
 	fs::path writePath("r2/maps/graphs");
-	writePath /= pMapName;
+	writePath /= R2::g_pHostState->m_levelName;
 	writePath += ".ain";
 
 	// dump from memory
@@ -370,14 +371,14 @@ void,, (void* aimanager, void* buf, const char* filename),
 
 ON_DLL_LOAD("server.dll", BuildAINFile, [](HMODULE baseAddress)
 {
+	AUTOHOOK_DISPATCH()
+
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
 		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
 
 	pUnkStruct0Count = (int*)((char*)baseAddress + 0x1063BF8);
 	pppUnkNodeStruct0s = (UnkNodeStruct0***)((char*)baseAddress + 0x1063BE0);
-
 	pUnkLinkStruct1Count = (int*)((char*)baseAddress + 0x1063AA8);
 	pppUnkStruct1s = (UnkLinkStruct1***)((char*)baseAddress + 0x1063A90);
 	pUnkServerMapversionGlobal = (char**)((char*)baseAddress + 0xBFBE08);
-	pMapName = (char*)baseAddress + 0x1053370;
 });

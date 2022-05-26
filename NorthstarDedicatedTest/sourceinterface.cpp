@@ -2,64 +2,51 @@
 #include "sourceinterface.h"
 #include "sourceconsole.h"
 
+AUTOHOOK_INIT()
+
 // really wanted to do a modular callback system here but honestly couldn't be bothered so hardcoding stuff for now: todo later
 
-CreateInterfaceFn ClientCreateInterfaceOriginal;
-void* ClientCreateInterfaceHook(const char* pName, int* pReturnCode)
+AUTOHOOK_PROCADDRESS(ClientCreateInterface, "client.dll", CreateInterface, 
+void*,, (const char* pName, const int* pReturnCode),
 {
-	void* ret = ClientCreateInterfaceOriginal(pName, pReturnCode);
+	void* ret = ClientCreateInterface(pName, pReturnCode);
 	spdlog::info("CreateInterface CLIENT {}", pName);
 
 	if (!strcmp(pName, "GameClientExports001"))
 		InitialiseConsoleOnInterfaceCreation();
 
 	return ret;
-}
+})
 
-CreateInterfaceFn ServerCreateInterfaceOriginal;
-void* ServerCreateInterfaceHook(const char* pName, int* pReturnCode)
+AUTOHOOK_PROCADDRESS(ServerCreateInterface, "server.dll", CreateInterface, 
+void*,, (const char* pName, const int* pReturnCode),
 {
-	void* ret = ServerCreateInterfaceOriginal(pName, pReturnCode);
+	void* ret = ServerCreateInterface(pName, pReturnCode);
 	spdlog::info("CreateInterface SERVER {}", pName);
 
 	return ret;
-}
+})
 
-CreateInterfaceFn EngineCreateInterfaceOriginal;
-void* EngineCreateInterfaceHook(const char* pName, int* pReturnCode)
+AUTOHOOK_PROCADDRESS(EngineCreateInterface, "engine.dll", CreateInterface, 
+void*,, (const char* pName, const int* pReturnCode),
 {
-	void* ret = EngineCreateInterfaceOriginal(pName, pReturnCode);
+	void* ret = EngineCreateInterface(pName, pReturnCode);
 	spdlog::info("CreateInterface ENGINE {}", pName);
 
 	return ret;
-}
+})
 
 ON_DLL_LOAD("client.dll", ClientInterface, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook,
-		GetProcAddress(baseAddress, "CreateInterface"),
-		&ClientCreateInterfaceHook,
-		reinterpret_cast<LPVOID*>(&ClientCreateInterfaceOriginal));
+	AUTOHOOK_DISPATCH_MODULE("client.dll")
 })
 
 ON_DLL_LOAD("server.dll", ServerInterface, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook,
-		GetProcAddress(baseAddress, "CreateInterface"),
-		&ServerCreateInterfaceHook,
-		reinterpret_cast<LPVOID*>(&ServerCreateInterfaceOriginal));
+	AUTOHOOK_DISPATCH_MODULE("server.dll")
 })
 
 ON_DLL_LOAD("engine.dll", EngineInterface, [](HMODULE baseAddress)
-{
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook,
-		GetProcAddress(baseAddress, "CreateInterface"),
-		&EngineCreateInterfaceHook,
-		reinterpret_cast<LPVOID*>(&EngineCreateInterfaceOriginal));
+{ 
+	AUTOHOOK_DISPATCH_MODULE("engine.dll") 
 })

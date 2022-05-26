@@ -6,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 
+AUTOHOOK_INIT()
+
 using namespace R2;
 
 bool bReadingOriginalFile = false;
@@ -47,9 +49,8 @@ namespace R2
 	}
 } // namespace R2
 
-typedef void (*AddSearchPathType)(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType);
-AddSearchPathType AddSearchPath;
-void AddSearchPathHook(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType)
+HOOK(AddSearchPathHook, AddSearchPath,
+void,, (IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType),
 {
 	AddSearchPath(fileSystem, pPath, pathID, addType);
 
@@ -59,7 +60,7 @@ void AddSearchPathHook(IFileSystem* fileSystem, const char* pPath, const char* p
 		AddSearchPath(fileSystem, sCurrentModPath.c_str(), "GAME", PATH_ADD_TO_HEAD);
 		AddSearchPath(fileSystem, GetCompiledAssetsPath().string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 	}
-}
+})
 
 void SetNewModSearchPaths(Mod* mod)
 {
@@ -101,20 +102,18 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 }
 
 // force modded files to be read from mods, not cache
-typedef bool (*ReadFromCacheType)(IFileSystem* filesystem, char* path, void* result);
-ReadFromCacheType ReadFromCache;
-bool ReadFromCacheHook(IFileSystem* filesystem, char* pPath, void* result)
+HOOK(ReadFromCacheHook, ReadFromCache,
+bool,, (IFileSystem* filesystem, char* pPath, void* result),
 {
 	if (TryReplaceFile(pPath, true))
 		return false;
 
 	return ReadFromCache(filesystem, pPath, result);
-}
+})
 
 // force modded files to be read from mods, not vpk
-typedef FileHandle_t (*ReadFileFromVPKType)(VPKData* vpkInfo, __int64* b, char* filename);
-ReadFileFromVPKType ReadFileFromVPK;
-FileHandle_t ReadFileFromVPKHook(VPKData* vpkInfo, __int64* b, char* filename)
+AUTOHOOK(ReadFileFromVPK, filesystem_stdio.dll + 0x5CBA0,
+FileHandle_t,, (VPKData* vpkInfo, __int64* b, char* filename),
 {
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
@@ -124,23 +123,20 @@ FileHandle_t ReadFileFromVPKHook(VPKData* vpkInfo, __int64* b, char* filename)
 	}
 
 	return ReadFileFromVPK(vpkInfo, b, filename);
-} 
+})
 
-typedef FileHandle_t (*CBaseFileSystem__OpenExType)(
-	IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char** ppszResolvedFilename);
-CBaseFileSystem__OpenExType CBaseFileSystem__OpenEx;
-FileHandle_t CBaseFileSystem__OpenExHook(IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename)
+AUTOHOOK(CBaseFileSystem__OpenEx, filesystem_stdio.dll + 0x15F50,
+FileHandle_t,, (IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename),
 {
 	TryReplaceFile(pPath, true);
 	return CBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
-}
+})
 
-typedef VPKData* (*MountVPKType)(IFileSystem* fileSystem, const char* vpkPath);
-MountVPKType MountVPK;
-VPKData* MountVPKHook(IFileSystem* fileSystem, const char* vpkPath)
+HOOK(MountVPKHook, MountVPK, 
+VPKData*,, (IFileSystem * fileSystem, const char* pVpkPath),
 {
-	spdlog::info("MountVPK {}", vpkPath);
-	VPKData* ret = MountVPK(fileSystem, vpkPath);
+	spdlog::info("MountVPK {}", pVpkPath);
+	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
 	for (Mod mod : g_pModManager->m_loadedMods)
 	{
@@ -154,7 +150,7 @@ VPKData* MountVPKHook(IFileSystem* fileSystem, const char* vpkPath)
 			{
 				// resolve vpk name and try to load one with the same name
 				// todo: we should be unloading these on map unload manually
-				std::string mapName(fs::path(vpkPath).filename().string());
+				std::string mapName(fs::path(pVpkPath).filename().string());
 				std::string modMapName(fs::path(vpkEntry.m_sVpkPath.c_str()).filename().string());
 				if (mapName.compare(modMapName))
 					continue;
@@ -167,18 +163,15 @@ VPKData* MountVPKHook(IFileSystem* fileSystem, const char* vpkPath)
 	}
 
 	return ret;
-}
+})
 
 ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, [](HMODULE baseAddress)
 {
+	AUTOHOOK_DISPATCH()
+
 	R2::g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
-	// create hooks
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (*g_pFilesystem)->m_vtable->ReadFromCache, &ReadFromCacheHook, reinterpret_cast<LPVOID*>(&ReadFromCache));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x5CBA0, &ReadFileFromVPKHook, reinterpret_cast<LPVOID*>(&ReadFileFromVPK));
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x15F50, &CBaseFileSystem__OpenExHook, reinterpret_cast<LPVOID*>(&CBaseFileSystem__OpenEx));
-	ENABLER_CREATEHOOK(hook, (*g_pFilesystem)->m_vtable->AddSearchPath, &AddSearchPathHook, reinterpret_cast<LPVOID*>(&AddSearchPath));
-	ENABLER_CREATEHOOK(hook, (*g_pFilesystem)->m_vtable->MountVPK, &MountVPKHook, reinterpret_cast<LPVOID*>(&MountVPK));
+	AddSearchPathHook.Dispatch((*g_pFilesystem)->m_vtable->AddSearchPath);
+	ReadFromCacheHook.Dispatch((*g_pFilesystem)->m_vtable->ReadFromCache);
+	MountVPKHook.Dispatch((*g_pFilesystem)->m_vtable->MountVPK);
 })

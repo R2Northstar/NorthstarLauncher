@@ -8,6 +8,8 @@
 #include "masterserver.h"
 #include "printcommand.h"
 
+AUTOHOOK_INIT()
+
 using namespace R2;
 
 bool IsDedicatedServer()
@@ -92,12 +94,11 @@ void RunServer(CDedicatedExports* dedicated)
 	}
 }
 
-typedef bool (*IsGameActiveWindowType)();
-IsGameActiveWindowType IsGameActiveWindow;
-bool IsGameActiveWindowHook()
+AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80, 
+bool,, (), 
 {
-	return true;
-}
+	return true;	
+})
 
 HANDLE consoleInputThreadHandle = NULL;
 
@@ -130,6 +131,8 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 {
 	spdlog::info("InitialiseDedicated");
+
+	AUTOHOOK_DISPATCH_MODULE("engine.dll")
 
 	uintptr_t ea = (uintptr_t)engineAddress;
 
@@ -222,9 +225,6 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 	CDedicatedExports** exports = (CDedicatedExports**)((char*)engineAddress + 0x13F0B668);
 	*exports = dedicatedExports;
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)engineAddress + 0x1CDC80, &IsGameActiveWindowHook, reinterpret_cast<LPVOID*>(&IsGameActiveWindow));
-
 	// extra potential patches:
 	// nop engine.dll+1c67d1 and +1c67d8 to skip videomode creategamewindow
 	// also look into launcher.dll+d381, seems to cause renderthread to get made
@@ -283,16 +283,14 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, [](HMODULE baseAddress)
 	});
 })
 
-typedef void (*PrintFatalSquirrelErrorType)(void* sqvm);
-PrintFatalSquirrelErrorType PrintFatalSquirrelError;
-void PrintFatalSquirrelErrorHook(void* sqvm)
+AUTOHOOK(PrintFatalSquirrelError, server.dll + 0x794D0, 
+void, , (void* sqvm),
 {
 	PrintFatalSquirrelError(sqvm);
 	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
-}
+})
 
 ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, [](HMODULE baseAddress)
 {
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, baseAddress + 0x794D0, &PrintFatalSquirrelErrorHook, reinterpret_cast<LPVOID*>(&PrintFatalSquirrelError));
+	AUTOHOOK_DISPATCH_MODULE("server.dll")
 })

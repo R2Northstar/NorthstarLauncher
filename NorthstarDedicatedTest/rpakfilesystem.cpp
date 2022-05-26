@@ -3,21 +3,18 @@
 #include "modmanager.h"
 #include "dedicated.h"
 
-typedef void* (*LoadPakSyncType)(const char* path, void* unknownSingleton, int flags);
-typedef int (*LoadPakAsyncType)(const char* path, void* unknownSingleton, int flags, void* callback0, void* callback1);
-typedef void* (*UnloadPakType)(int pakHandle, void* callback);
-typedef void* (*ReadFullFileFromDiskType)(const char* requestedPath, void* a2);
+AUTOHOOK_INIT()
 
 // there are more i'm just too lazy to add
 struct PakLoadFuncs
 {
 	void* unk0[2];
-	LoadPakSyncType LoadPakSync;
-	LoadPakAsyncType LoadPakAsync;
+	void* (*LoadPakSync)(const char* pPath, void* unknownSingleton, int flags);
+	int (*LoadPakAsync)(const char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1);
 	void* unk1[2];
-	UnloadPakType UnloadPak;
+	void* (*UnloadPak)(int iPakHandle, void* callback);
 	void* unk2[17];
-	ReadFullFileFromDiskType ReadFullFileFromDisk;
+	void* (*ReadFullFileFromDisk)(const char* pPath, void* a2);
 };
 
 PakLoadFuncs* g_pakLoadApi;
@@ -116,10 +113,10 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-LoadPakAsyncType LoadPakAsyncOriginal;
-int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callback0, void* callback1)
+HOOK(LoadPakAsyncHook, LoadPakAsync,
+int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1),
 {
-	HandlePakAliases(&path);
+	HandlePakAliases(&pPath);
 
 	bool bNeedToFreePakName = false;
 
@@ -127,13 +124,13 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 	if (bShouldLoadPaks)
 	{
 		// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by LoadCustomMapPaks
-		std::string originalPath(path);
+		std::string originalPath(pPath);
 
 		// disable preloading while we're doing this
 		bShouldLoadPaks = false;
 
 		LoadPreloadPaks();
-		LoadCustomMapPaks(&path, &bNeedToFreePakName);
+		LoadCustomMapPaks(&pPath, &bNeedToFreePakName);
 
 		bShouldLoadPaks = true;
 
@@ -146,17 +143,17 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 		}
 	}
 
-	int ret = LoadPakAsyncOriginal(path, unknownSingleton, flags, callback0, callback1);
-	spdlog::info("LoadPakAsync {} {}", path, ret);
+	int ret = LoadPakAsync(pPath, unknownSingleton, flags, callback0, callback1);
+	spdlog::info("LoadPakAsync {} {}", pPath, ret);
 
 	if (bNeedToFreePakName)
-		delete[] path;
+		delete[] pPath;
 
 	return ret;
-}
+})
 
-UnloadPakType UnloadPakOriginal;
-void* UnloadPakHook(int pakHandle, void* callback)
+HOOK(UnloadPakHook, UnloadPak,
+void*,, (int iPakHandle, void* callback),
 {
 	static bool bShouldUnloadPaks = true;
 	if (bShouldUnloadPaks)
@@ -166,16 +163,17 @@ void* UnloadPakHook(int pakHandle, void* callback)
 		bShouldUnloadPaks = true;
 	}
 
-	spdlog::info("UnloadPak {}", pakHandle);
-	return UnloadPakOriginal(pakHandle, callback);
-}
+	spdlog::info("UnloadPak {}", iPakHandle);
+	return UnloadPak(iPakHandle, callback);
+})
 
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
-// possibly just async loading all together?
-ReadFullFileFromDiskType ReadFullFileFromDiskOriginal;
-void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
+// possibly just async loading altogether?
+
+HOOK(ReadFullFileFromDiskHook, ReadFullFileFromDisk, 
+void*, , (const char* pPath, void* a2),
 {
-	fs::path path(requestedPath);
+	fs::path path(pPath);
 	char* allocatedNewPath = nullptr;
 
 	if (path.extension() == ".stbsp")
@@ -193,27 +191,28 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 			allocatedNewPath = new char[newPath.size() + 1];
 			strncpy(allocatedNewPath, newPath.c_str(), newPath.size());
 			allocatedNewPath[newPath.size()] = '\0';
-			requestedPath = allocatedNewPath;
+			pPath = allocatedNewPath;
 		}
 	}
 
-	void* ret = ReadFullFileFromDiskOriginal(requestedPath, a2);
+	void* ret = ReadFullFileFromDisk(pPath, a2);
 	if (allocatedNewPath)
 		delete[] allocatedNewPath;
 
 	return ret;
-}
+})
+
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, [](HMODULE baseAddress)
 {
+	AUTOHOOK_DISPATCH();
+
 	g_pPakLoadManager = new PakLoadManager;
 
 	g_pakLoadApi = *(PakLoadFuncs**)((char*)baseAddress + 0x5BED78);
 	pUnknownPakLoadSingleton = (void**)((char*)baseAddress + 0x7C5E20);
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, g_pakLoadApi->LoadPakAsync, &LoadPakAsyncHook, reinterpret_cast<LPVOID*>(&LoadPakAsyncOriginal));
-	ENABLER_CREATEHOOK(hook, g_pakLoadApi->UnloadPak, &UnloadPakHook, reinterpret_cast<LPVOID*>(&UnloadPakOriginal));
-	ENABLER_CREATEHOOK(
-		hook, g_pakLoadApi->ReadFullFileFromDisk, &ReadFullFileFromDiskHook, reinterpret_cast<LPVOID*>(&ReadFullFileFromDiskOriginal));
+	LoadPakAsyncHook.Dispatch(g_pakLoadApi->LoadPakAsync);
+	UnloadPakHook.Dispatch(g_pakLoadApi->UnloadPak);
+	ReadFullFileFromDiskHook.Dispatch(g_pakLoadApi->ReadFullFileFromDisk);
 })

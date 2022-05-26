@@ -6,6 +6,8 @@
 #include "tier0.h"
 #include "r2engine.h"
 
+AUTOHOOK_INIT()
+
 using namespace R2;
 
 // use the R2 namespace for game funcs
@@ -14,9 +16,8 @@ namespace R2
 	CHostState* g_pHostState;
 } // namespace R2
 
-typedef void (*CHostState__State_NewGameType)(CHostState* hostState);
-CHostState__State_NewGameType CHostState__State_NewGame;
-void CHostState__State_NewGameHook(CHostState* hostState)
+AUTOHOOK(CHostState__State_NewGame, engine.dll + 0x16E7D0,
+void,, (CHostState* hostState), 
 {
 	spdlog::info("HostState: NewGame");
 
@@ -55,11 +56,10 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 		Cvar_ns_server_password->GetString());
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
-}
+})
 
-typedef void (*CHostState__State_ChangeLevelMPType)(CHostState* hostState);
-CHostState__State_ChangeLevelMPType CHostState__State_ChangeLevelMP;
-void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
+AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
+void,, (CHostState* hostState),
 {
 	spdlog::info("HostState: ChangeLevelMP");
 
@@ -78,11 +78,10 @@ void CHostState__State_ChangeLevelMPHook(CHostState* hostState)
 	double dStartTime = Tier0::Plat_FloatTime();
 	CHostState__State_ChangeLevelMP(hostState);
 	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
-}
+})
 
-typedef void (*CHostState__State_GameShutdownType)(CHostState* hostState);
-CHostState__State_GameShutdownType CHostState__State_GameShutdown;
-void CHostState__State_GameShutdownHook(CHostState* hostState)
+AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E520,
+void,, (CHostState* hostState),
 {
 	spdlog::info("HostState: GameShutdown");
 
@@ -90,17 +89,11 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 	g_ServerAuthenticationManager->StopPlayerAuthServer();
 
 	CHostState__State_GameShutdown(hostState);
-}
+})
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, [](HMODULE baseAddress)
 {
-	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
+	AUTOHOOK_DISPATCH()
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E7D0, CHostState__State_NewGameHook, reinterpret_cast<LPVOID*>(&CHostState__State_NewGame));
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E520, CHostState__State_ChangeLevelMPHook, reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelMP));
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E640, CHostState__State_GameShutdownHook, reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
+	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
 })

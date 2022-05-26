@@ -10,53 +10,62 @@ AUTOHOOK_INIT()
 // use the R2 namespace for game funcs
 namespace R2
 {
-	GetCurrentPlaylistNameType GetCurrentPlaylistName;
-	SetCurrentPlaylistType SetCurrentPlaylist;
-	SetPlaylistVarOverrideType SetPlaylistVarOverride;
-	GetCurrentPlaylistVarType GetCurrentPlaylistVar;
+	const char* (*GetCurrentPlaylistName)();
+	void (*SetCurrentPlaylist)(const char* pPlaylistName);
+	void (*SetPlaylistVarOverride)(const char* pVarName, const char* pValue);
+	const char* (*GetCurrentPlaylistVar)(const char* pVarName, bool bUseOverrides);
 } // namespace R2
 
 ConVar* Cvar_ns_use_clc_SetPlaylistVarOverride;
 
-typedef char (*Onclc_SetPlaylistVarOverrideType)(void* a1, void* a2);
-Onclc_SetPlaylistVarOverrideType Onclc_SetPlaylistVarOverride;
-char Onclc_SetPlaylistVarOverrideHook(void* a1, void* a2)
+AUTOHOOK(clc_SetPlaylistVarOverride__Process, engine.dll + 0x222180,
+char,, (void* a1, void* a2), 
 {
 	// the private_match playlist is the only situation where there should be any legitimate sending of this netmessage
-	// todo: check mp_lobby here too
+	// todo: check map == mp_lobby here too
 	if (!Cvar_ns_use_clc_SetPlaylistVarOverride->GetBool() || strcmp(R2::GetCurrentPlaylistName(), "private_match"))
 		return 1;
 
-	return Onclc_SetPlaylistVarOverride(a1, a2);
-}
+	return clc_SetPlaylistVarOverride__Process(a1, a2);
+})
 
-void SetPlaylistVarOverrideHook(const char* varName, const char* value)
+AUTOHOOK(SetCurrentPlaylist, engine.dll + 0x18EB20,
+void,, (const char* pPlaylistName),
 {
-	if (strlen(value) >= 64)
+	SetCurrentPlaylist(pPlaylistName);
+	spdlog::info("Set playlist to {}", pPlaylistName);
+})
+
+AUTOHOOK(SetPlaylistVarOverride, engine.dll + 0x18ED00,
+void,, (const char* pVarName, const char* pValue),
+{
+	if (strlen(pValue) >= 64)
 		return;
 
-	R2::SetPlaylistVarOverride(varName, value);
-}
+	R2::SetPlaylistVarOverride(pVarName, pValue);
+})
 
-const char* GetCurrentPlaylistVarHook(const char* varName, bool useOverrides)
+AUTOHOOK(GetCurrentPlaylistVar, engine.dll + 0x18C680,
+const char*,, (const char* pVarName, bool bUseOverrides),
 {
-	if (!useOverrides && !strcmp(varName, "max_players"))
-		useOverrides = true;
+	if (!bUseOverrides && !strcmp(pVarName, "max_players"))
+		bUseOverrides = true;
 
-	return R2::GetCurrentPlaylistVar(varName, useOverrides);
-}
+	return R2::GetCurrentPlaylistVar(pVarName, bUseOverrides);
+})
 
-typedef int (*GetCurrentGamemodeMaxPlayersType)();
-GetCurrentGamemodeMaxPlayersType GetCurrentGamemodeMaxPlayers;
-int GetCurrentGamemodeMaxPlayersHook()
+
+AUTOHOOK(GetCurrentGamemodeMaxPlayers, engine.dll + 0x18C430,
+int,, (),
 {
-	const char* maxPlayersStr = R2::GetCurrentPlaylistVar("max_players", 0);
-	if (!maxPlayersStr)
+	const char* pMaxPlayers = R2::GetCurrentPlaylistVar("max_players", 0);
+	if (!pMaxPlayers)
 		return GetCurrentGamemodeMaxPlayers();
 
-	int maxPlayers = atoi(maxPlayersStr);
-	return maxPlayers;
-}
+	int iMaxPlayers = atoi(pMaxPlayers);
+	return iMaxPlayers;
+})
+
 
 void ConCommand_playlist(const CCommand& args)
 {
@@ -77,15 +86,17 @@ void ConCommand_setplaylistvaroverride(const CCommand& args)
 
 ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAddress)
 {
+	AUTOHOOK_DISPATCH()
+
+	R2::GetCurrentPlaylistName = (const char* (*)())((char*)baseAddress + 0x18C640);
+	R2::SetCurrentPlaylist = (void (*)(const char*))((char*)baseAddress + 0x18EB20);
+	R2::SetPlaylistVarOverride = (void (*)(const char*, const char*))((char*)baseAddress + 0x18ED00);
+	R2::GetCurrentPlaylistVar = (const char* (*)(const char*, bool))((char*)baseAddress + 0x18C680);
+
 	// playlist is the name of the command on respawn servers, but we already use setplaylist so can't get rid of it
 	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
 	RegisterConCommand("setplaylist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
 	RegisterConCommand("setplaylistvaroverrides", ConCommand_setplaylistvaroverride, "sets a playlist var override", FCVAR_NONE);
-
-	R2::GetCurrentPlaylistName = (R2::GetCurrentPlaylistNameType)((char*)baseAddress + 0x18C640);
-	R2::SetCurrentPlaylist = (R2::SetCurrentPlaylistType)((char*)baseAddress + 0x18EB20);
-	R2::SetPlaylistVarOverride = (R2::SetPlaylistVarOverrideType)((char*)baseAddress + 0x18ED00);
-	R2::GetCurrentPlaylistVar = (R2::GetCurrentPlaylistVarType)((char*)baseAddress + 0x18C680);
 
 	// note: clc_SetPlaylistVarOverride is pretty insecure, since it allows for entirely arbitrary playlist var overrides to be sent to the
 	// server, this is somewhat restricted on custom servers to prevent it being done outside of private matches, but ideally it should be
@@ -94,25 +105,10 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAdd
 	Cvar_ns_use_clc_SetPlaylistVarOverride = new ConVar(
 		"ns_use_clc_SetPlaylistVarOverride", "0", FCVAR_GAMEDLL, "Whether the server should accept clc_SetPlaylistVarOverride messages");
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x222180, &Onclc_SetPlaylistVarOverrideHook, reinterpret_cast<LPVOID*>(&Onclc_SetPlaylistVarOverride));
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x18ED00, &SetPlaylistVarOverrideHook, reinterpret_cast<LPVOID*>(&R2::SetPlaylistVarOverride));
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x18C680, &GetCurrentPlaylistVarHook, reinterpret_cast<LPVOID*>(&R2::GetCurrentPlaylistVar));
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x18C430,
-		&GetCurrentGamemodeMaxPlayersHook,
-		reinterpret_cast<LPVOID*>(&GetCurrentGamemodeMaxPlayers));
-
-	uintptr_t ba = (uintptr_t)baseAddress;
-
 	// patch to prevent clc_SetPlaylistVarOverride from being able to crash servers if we reach max overrides due to a call to Error (why is
 	// this possible respawn, wtf) todo: add a warning for this
-	NSMem::BytePatch(ba + 0x18ED8D, "C3");
+	NSMem::BytePatch((uintptr_t)baseAddress + 0x18ED8D, "C3");
 
 	// patch to allow setplaylistvaroverride to be called before map init on dedicated and private match launched through the game
-	NSMem::NOP(ba + 0x18ED17, 6);
+	NSMem::NOP((uintptr_t)baseAddress + 0x18ED17, 6);
 })

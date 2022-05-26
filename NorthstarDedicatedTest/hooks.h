@@ -58,6 +58,7 @@ class __fileAutohook
 	std::vector<__autohook*> hooks;
 
 	void Dispatch();
+	void DispatchForModule(const char* pModuleName);
 };
 
 // initialise autohooks for this file
@@ -68,6 +69,9 @@ namespace { __fileAutohook __FILEAUTOHOOK; } \
 #define AUTOHOOK_DISPATCH() \
 __FILEAUTOHOOK.Dispatch(); \
 
+#define AUTOHOOK_DISPATCH_MODULE(moduleName) \
+__FILEAUTOHOOK.DispatchForModule(__STR(moduleName)); \
+
 class __autohook
 {
   public:
@@ -75,6 +79,7 @@ class __autohook
 	{
 		OFFSET_STRING, // we're using a string that of the format dllname.dll + offset
 		ABSOLUTE_ADDR, // we're using an absolute address, we don't need to process it at all
+		PROCADDRESS // resolve using GetModuleHandle and GetProcAddress
 	};
 
 	char* pFuncName;
@@ -86,6 +91,8 @@ class __autohook
 	AddressResolutionMode iAddressResolutionMode;
 	char* pAddrString = nullptr; // for OFFSET_STRING
 	LPVOID iAbsoluteAddress = nullptr; // for ABSOLUTE_ADDR
+	char* pModuleName; // for PROCADDRESS
+	char* pProcName; // for PROCADDRESS
 
   public: 
 	__autohook() = delete;
@@ -118,12 +125,38 @@ class __autohook
 		autohook->hooks.push_back(this);
 	}
 
+	__autohook(__fileAutohook* autohook, const char* funcName, const char* moduleName, const char* procName, LPVOID* orig, LPVOID func)
+		: pHookFunc(func), ppOrigFunc(orig)
+	{
+		iAddressResolutionMode = PROCADDRESS;
+
+		const int iFuncNameStrlen = strlen(funcName) + 1;
+		pFuncName = new char[iFuncNameStrlen];
+		memcpy(pFuncName, funcName, iFuncNameStrlen);
+
+		const int iModuleNameStrlen = strlen(moduleName) + 1;
+		pModuleName = new char[iModuleNameStrlen];
+		memcpy(pModuleName, moduleName, iModuleNameStrlen);
+
+		const int iProcNameStrlen = strlen(procName) + 1;
+		pProcName = new char[iProcNameStrlen];
+		memcpy(pProcName, procName, iProcNameStrlen);
+
+		autohook->hooks.push_back(this);
+	}
+
 	~__autohook()
 	{
 		delete[] pFuncName;
 
 		if (pAddrString)
 			delete[] pAddrString;
+
+		if (pModuleName)
+			delete[] pModuleName;
+
+		if (pProcName)
+			delete[] pProcName;
 	}
 
 	void Dispatch() 
@@ -170,7 +203,13 @@ class __autohook
 			else
 				iOffset = std::stoi(pAddrString + iOffsetBegin);
 
-			targetAddr = (char*)pModuleAddr + iOffset;
+			targetAddr = (LPVOID)((uintptr_t)pModuleAddr + iOffset);
+			break;
+		}
+
+		case PROCADDRESS:
+		{
+			targetAddr = GetProcAddress(GetModuleHandleA(pModuleName), pProcName);
 			break;
 		}
 		}
@@ -203,6 +242,14 @@ namespace { \
 	__autohook CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
 } \
 
+// hook a function at a given module and exported function to be dispatched with AUTOHOOK_DISPATCH()
+#define AUTOHOOK_PROCADDRESS(name, moduleName, procName, type, callingConvention, args, func) \
+namespace { \
+	type(*callingConvention name) args; \
+	type callingConvention CONCAT2(__autohookfunc, name) args func \
+	__autohook CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), __STR(moduleName), __STR(procName), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
+} \
+
 class ManualHook
 {
   public:
@@ -213,8 +260,9 @@ class ManualHook
 
   public:
 	ManualHook() = delete;
+	ManualHook(const char* funcName, LPVOID func);
 	ManualHook(const char* funcName, LPVOID* orig, LPVOID func);
-	bool Dispatch(LPVOID addr);
+	bool Dispatch(LPVOID addr, LPVOID* orig = nullptr);
 };
 
 // hook a function to be dispatched manually later
@@ -223,4 +271,10 @@ namespace { \
 	type(*callingConvention originalFunc) args; \
 	type callingConvention CONCAT2(__manualhookfunc, varName) args func \
 } \
-ManualHook<type(*callingConvention)args> varName = ManualHook<type(*callingConvention)args>(varName, (LPVOID*)&originalFunc, (LPVOID)CONCAT2(__manualhookfunc, varName)); \
+ManualHook varName = ManualHook(__STR(varName), (LPVOID*)&originalFunc, (LPVOID)CONCAT2(__manualhookfunc, varName)); \
+
+#define HOOK_NOORIG(varName, type, callingConvention, args, func) \
+namespace { \
+	type callingConvention CONCAT2(__manualhookfunc, varName) args func \
+} \
+ManualHook varName = ManualHook(__STR(varName), (LPVOID)CONCAT2(__manualhookfunc, varName)); \
