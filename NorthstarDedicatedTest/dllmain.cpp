@@ -53,7 +53,7 @@
 
 #include "ExploitFixes.h"
 
-typedef void (*initPluginFuncPtr)(void* getPluginObject);
+typedef void (*initPluginFuncPtr)(void* GetPluginObject);
 
 bool initialised = false;
 
@@ -182,7 +182,7 @@ bool LoadPlugins()
 			continue;
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
-		initPlugin(&getPluginObject);
+		initPlugin(&GetPluginObject);
 	}
 	return true;
 }
@@ -197,7 +197,7 @@ bool InitialiseNorthstar()
 
 	initialised = true;
 
-	parseConfigurables();
+	ParseConfigurables();
 	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters

@@ -7,7 +7,7 @@ std::string GetNorthstarPrefix()
 	return NORTHSTAR_FOLDER_PREFIX;
 }
 
-void parseConfigurables()
+void ParseConfigurables()
 {
 	char* clachar = strstr(GetCommandLineA(), "-profile=");
 	if (clachar)

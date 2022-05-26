@@ -58,7 +58,7 @@ static SRWLOCK gameStateLock;
 static SRWLOCK serverInfoLock;
 static SRWLOCK playerInfoLock;
 
-void* getPluginObject(PluginObject var)
+void* GetPluginObject(PluginObject var)
 {
 	switch (var)
 	{
