@@ -17,7 +17,8 @@ void OnGameFileAccess(const char* path, bool readOnly)
 #else
 		"0",
 #endif
-		FCVAR_GAMEDLL, "Log all file access from the game");
+		FCVAR_GAMEDLL,
+		"Log all file access from the game");
 
 	if (!path)
 		return;
@@ -92,9 +93,12 @@ void OnGameFileAccess(const char* path, bool readOnly)
 
 // its 3 am and idk what this function is but it get called whenever file opened sooo
 KHOOK(
-	antiRCEHooks, FileSytem_OpenFileFuncIdk,
-	("filesystem_stdio.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 8B 05"), void*,
-	__fastcall, (char* fileName, char* openTypeStr, void* unk))
+	antiRCEHooks,
+	FileSytem_OpenFileFuncIdk,
+	("filesystem_stdio.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 8B 05"),
+	void*,
+	__fastcall,
+	(char* fileName, char* openTypeStr, void* unk))
 {
 
 	OnGameFileAccess(fileName, openTypeStr[0] == 'r');

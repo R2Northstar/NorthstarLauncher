@@ -6,9 +6,9 @@
 namespace AntiRCE
 {
 
-// Something has gone TERRIBLY wrong, a dangerous exploit may be in use
-void EmergencyReport(std::string msg);
+	// Something has gone TERRIBLY wrong, a dangerous exploit may be in use
+	void EmergencyReport(std::string msg);
 
-bool InitHooks();
+	bool InitHooks();
 
 } // namespace AntiRCE

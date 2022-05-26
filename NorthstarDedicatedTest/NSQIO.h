@@ -19,7 +19,7 @@ enum NSQFieldType
 struct NSQField
 {
 	// FORMAT: type=name=val
-	const static char FIELD_DELIM = '='; // Seperates fields in a NSQField										   
+	const static char FIELD_DELIM = '='; // Seperates fields in a NSQField
 
 	NSQFieldType type = NSQFIELD_INVALID;
 	std::string name;
@@ -27,7 +27,7 @@ struct NSQField
 	std::string val_str;
 	INT64 val_int;
 	double val_float;
-	
+
 	bool IsValid() { return type != NSQFIELD_INVALID; }
 	bool ReadFromLine(std::string line);
 	std::string WriteToLine();
@@ -39,7 +39,7 @@ struct NSQFile
 
 	bool HasField(std::string name) { return fields.find(name) != fields.end(); }
 
-	NSQField Get(std::string name) { 
+	NSQField Get(std::string name) {
 		auto itr = fields.find(name);
 		return (itr == fields.end()) ? NSQField() : itr->second;
 	}
@@ -69,8 +69,8 @@ struct NSQFile
 
 namespace NSQIO
 {
-rapidjson_document LoadJSON(std::string namePath);
+	rapidjson_document LoadJSON(std::string namePath);
 
-// Returns false if invalid path
-bool SaveJSON(std::string namePath, const rapidjson_document& document);
-}
+	// Returns false if invalid path
+	bool SaveJSON(std::string namePath, const rapidjson_document& document);
+} // namespace NSQIO

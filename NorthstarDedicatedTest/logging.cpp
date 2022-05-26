@@ -19,7 +19,7 @@ std::string GetAdvancedDebugInfo(CONTEXT* threadContext)
 
 	output << "// This file contains information for advanced debugging of stack-corrupting Northstar crashes.\n";
 	output << "// This Northstar.dll was build on " __DATE__ "\n";
-#ifdef _DEBUG 
+#ifdef _DEBUG
 	output << "// We were running in DEBUG mode\n";
 #else
 	output << "// We were running in RELEASE mode\n";
@@ -98,8 +98,7 @@ std::string GetAdvancedDebugInfo(CONTEXT* threadContext)
 			if (curStackPtr >= modInfo.textSectionStart && curStackPtr < modInfo.textSectionStart + modInfo.textSectionSize)
 			{
 				stackModuleDump << "\t{" << (void*)i << "} " << (void*)curStackPtr << " [" << moduleEntry.first << " + "
-							 << (void*)(curStackPtr - modInfo.baseAddress)
-							 << "]\n";
+								<< (void*)(curStackPtr - modInfo.baseAddress) << "]\n";
 				break;
 			}
 		}
@@ -289,7 +288,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 		time_t time = std::time(nullptr);
 		tm currentTime = *std::localtime(&time);
-		
+
 		std::stringstream dumpPathStream;
 		dumpPathStream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nsdump %Y-%m-%d %H-%M-%S.dmp").c_str());
 		auto hMinidumpFile =
@@ -315,7 +314,6 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		{
 			spdlog::error("Failed to write minidump file to {}!", dumpPathStream.str());
 		}
-			
 
 		std::stringstream advDbgInfoPathStream;
 		advDbgInfoPathStream << std::put_time(

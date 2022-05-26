@@ -138,7 +138,8 @@ bool IsJSONPathBad(std::string namePath)
 	return false;
 }
 
-rapidjson_document NSQIO::LoadJSON(std::string namePath) { 
+rapidjson_document NSQIO::LoadJSON(std::string namePath)
+{
 	DBLOG("NSQIO::LoadJSON \"{}\"", namePath);
 
 	if (IsJSONPathBad(namePath))
@@ -160,7 +161,7 @@ rapidjson_document NSQIO::LoadJSON(std::string namePath) {
 
 	std::stringstream stream;
 	stream << inStream.rdbuf();
-	
+
 	out.Parse(stream.str().c_str());
 
 	DBLOG("Loaded JSON from {}, member count: {}", path, out.MemberCount());
@@ -168,12 +169,12 @@ rapidjson_document NSQIO::LoadJSON(std::string namePath) {
 }
 
 bool NSQIO::SaveJSON(std::string namePath, const rapidjson_document& document)
-{ 
+{
 	DBLOG("NSQIO::SaveJSON \"{}\"", namePath);
 
 	if (IsJSONPathBad(namePath))
 		return false;
-	
+
 	std::string basePath = GetNorthstarPrefix() + "/" + NSQIO_DIRECTORY;
 	if (!std::filesystem::exists(basePath))
 	{
@@ -186,7 +187,6 @@ bool NSQIO::SaveJSON(std::string namePath, const rapidjson_document& document)
 			DBLOG("\tFailed to create directory \"{}\": {}", basePath, e.what());
 			return false;
 		}
-		
 	}
 
 	std::string path = basePath + "/" + namePath + ".json";
@@ -199,12 +199,11 @@ bool NSQIO::SaveJSON(std::string namePath, const rapidjson_document& document)
 		DBLOG("\tFailed to write, bad stream.");
 		return false;
 	}
-		
 
 	rapidjson::StringBuffer s;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(s);
 	if (document.Accept(writer))
-	{	
+	{
 		outStream << s.GetString();
 		return true;
 	}

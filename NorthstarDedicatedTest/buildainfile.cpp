@@ -376,8 +376,7 @@ void InitialiseBuildAINFileHooks(HMODULE baseAddress)
 	uintptr_t ba = (uintptr_t)baseAddress;
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook, (void*)(ba + 0x385E20), &CAI_NetworkBuilder__BuildHook, reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
+	ENABLER_CREATEHOOK(hook, (void*)(ba + 0x385E20), &CAI_NetworkBuilder__BuildHook, reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
 	ENABLER_CREATEHOOK(hook, (void*)(ba + 0x3933A0), &LoadAINFileHook, reinterpret_cast<LPVOID*>(&LoadAINFile));
 
 	pUnkStruct0Count = (int*)(ba + 0x1063BF8);

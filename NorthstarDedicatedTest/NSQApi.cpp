@@ -159,7 +159,9 @@ SQFUNC("void", NsSetJsonStr, "int id, string memberName, string value", "Set a m
 }
 
 SQFUNC(
-	"int", NsGetJsonInt, "int id, string memberName, int defaultValue",
+	"int",
+	NsGetJsonInt,
+	"int id, string memberName, int defaultValue",
 	"Get an int member of a loaded JSON file (if not valid, returns default value)")
 {
 	JSONID id = ClientSq_getinteger(sqvm, 1);

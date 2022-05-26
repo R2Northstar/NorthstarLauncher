@@ -118,7 +118,8 @@ void InitialiseTier0GameUtilFunctions(HMODULE baseAddress)
 	ThreadInServerFrameThread = reinterpret_cast<ThreadInServerFrameThreadType>(GetProcAddress(baseAddress, "ThreadInServerFrameThread"));
 }
 
-bool IsRunningLocalServer() { 
+bool IsRunningLocalServer()
+{
 	static auto ba = (uintptr_t)GetModuleHandleA("engine.dll");
 	int serverState = *(int*)(ba + 0x12A53D48);
 	return serverState > 0;

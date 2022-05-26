@@ -77,6 +77,12 @@ void* realloc(void* old_ptr, size_t size)
 	return nullptr;
 }
 
-void* operator new(size_t n) { return malloc(n); }
+void* operator new(size_t n)
+{
+	return malloc(n);
+}
 
-void operator delete(void* p) { return free(p); }
+void operator delete(void* p)
+{
+	return free(p);
+}
