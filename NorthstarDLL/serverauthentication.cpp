@@ -447,7 +447,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 		}
 	}
 
-	// verify the command we're trying to execute is FCVAR_CLIENTCMD_CAN_EXECUTE, if it's a concommand
+	// verify the command we're trying to execute is FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS, if it's a concommand
 	char* commandBuf[1040]; // assumedly this is the size of CCommand since we don't have an actual constructor
 	memset(commandBuf, 0, sizeof(commandBuf));
 	CCommand tempCommand = *(CCommand*)&commandBuf;
@@ -458,9 +458,9 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	ConCommand* command = R2::g_pCVar->FindCommand(tempCommand.Arg(0));
 
 	// if the command doesn't exist pass it on to ExecuteStringCommand for script clientcommands and stuff
-	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE))
+	if (command && !command->IsFlagSet(FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS))
 	{
-		// ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
+		// ensure FCVAR_GAMEDLL concommands without FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS can't be executed by remote clients
 		if (IsDedicatedServer())
 			return false;
 

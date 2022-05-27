@@ -42,7 +42,7 @@ void,, (const char* pVarName, const char* pValue),
 	if (strlen(pValue) >= 64)
 		return;
 
-	R2::SetPlaylistVarOverride(pVarName, pValue);
+	SetPlaylistVarOverride(pVarName, pValue);
 })
 
 AUTOHOOK(GetCurrentPlaylistVar, engine.dll + 0x18C680,
@@ -51,7 +51,7 @@ const char*,, (const char* pVarName, bool bUseOverrides),
 	if (!bUseOverrides && !strcmp(pVarName, "max_players"))
 		bUseOverrides = true;
 
-	return R2::GetCurrentPlaylistVar(pVarName, bUseOverrides);
+	return GetCurrentPlaylistVar(pVarName, bUseOverrides);
 })
 
 

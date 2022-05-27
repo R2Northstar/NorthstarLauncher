@@ -19,7 +19,7 @@ namespace R2
 		kCommandSrcCode,
 
 		// Sent from code via engine->ClientCmd, which is restricted to commands visible
-		// via FCVAR_CLIENTCMD_CAN_EXECUTE.
+		// via FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS.
 		kCommandSrcClientCmd,
 
 		// Typed in at the console or via a user key-bind.  Generally unrestricted, although

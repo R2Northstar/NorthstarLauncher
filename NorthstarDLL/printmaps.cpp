@@ -121,7 +121,7 @@ int, __fastcall, (const char const* cmdname, const char const* partial, char com
 		flLastAutocompleteRefresh = Tier0::Plat_FloatTime();
 	}
 
-	// use a custom autocomplete func for all map loading command
+	// use a custom autocomplete func for all map loading commands
 	const int cmdLength = strlen(cmdname);
 	const char* query = partial + cmdLength;
 	const int queryLength = strlen(query);

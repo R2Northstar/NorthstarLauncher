@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../NorthstarDedicatedTest/hookutils.h"
+#include "../NorthstarDLL/hookutils.h"
 
 #define ERROR(...) { char err[2048]; sprintf_s(err, __VA_ARGS__); MessageBoxA(GetForegroundWindow(), err, "Northstar Wsock32 Proxy Error", 0); }
 

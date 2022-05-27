@@ -11,6 +11,9 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 		return;
 	}
 
+	// temp because command->IsCommand does not currently work
+	ConVar* cvar = R2::g_pCVar->FindVar(command->m_pszName);
+
 	// build string for flags if not FCVAR_NONE
 	std::string flagString;
 	if (command->GetFlags() != FCVAR_NONE)
@@ -21,6 +24,16 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 		{
 			if (command->GetFlags() & flagPair.first)
 			{
+				// special case, slightly hacky: PRINTABLEONLY is for commands, GAMEDLL_FOR_REMOTE_CLIENTS is for concommands, both have the same value
+				if (flagPair.first == FCVAR_PRINTABLEONLY)
+				{
+					if (cvar && !strcmp(flagPair.second, "GAMEDLL_FOR_REMOTE_CLIENTS"))
+						continue;
+
+					if (!cvar && !strcmp(flagPair.second, "PRINTABLEONLY"))
+						continue;			
+				}
+
 				flagString += flagPair.second;
 				flagString += " ";
 			}
@@ -29,8 +42,6 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 		flagString += ") ";
 	}
 
-	// temp because command->IsCommand does not currently work
-	ConVar* cvar = R2::g_pCVar->FindVar(command->m_pszName);
 	if (cvar)
 		spdlog::info("\"{}\" = \"{}\" {}- {}", cvar->GetBaseName(), cvar->GetString(), flagString, cvar->GetHelpText());
 	else
@@ -153,6 +164,7 @@ void InitialiseCommandPrint()
 {
 	RegisterConCommand("find", ConCommand_find, "Find concommands with the specified string in their name/help text.", FCVAR_NONE);
 	RegisterConCommand("findflags", ConCommand_findflags, "Find concommands by flags.", FCVAR_NONE);
+
 	// help is already a command, so we need to modify the preexisting command to use our func instead
 	// and clear the flags also
 	ConCommand* helpCommand = R2::g_pCVar->FindCommand("help");

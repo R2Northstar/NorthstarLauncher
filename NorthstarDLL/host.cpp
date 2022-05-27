@@ -50,8 +50,8 @@ void,, (bool bDedicated),
 	R2::g_pCVar->FindCommand("disconnect")->m_nFlags |= FCVAR_SERVER_CAN_EXECUTE;
 
 	// make clients able to run status and ping
-	R2::g_pCVar->FindCommand("status")->m_nFlags |= FCVAR_CLIENTCMD_CAN_EXECUTE;
-	R2::g_pCVar->FindCommand("ping")->m_nFlags |= FCVAR_CLIENTCMD_CAN_EXECUTE;
+	R2::g_pCVar->FindCommand("status")->m_nFlags |= FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS;
+	R2::g_pCVar->FindCommand("ping")->m_nFlags |= FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS;
 
 	// need to initialise these after host_init since they do stuff to preexisting concommands/convars without being client/server specific
 	InitialiseCommandPrint();

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "logging.h"
 #include "convar.h"
+#include "concommand.h"
 #include "configurables.h"
 #include "bitbuf.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -98,9 +99,7 @@ void,, (void* pEngineServer, SpewType_t type, const char* format, va_list args),
 	if (bShouldFormat)
 		vsnprintf(formatted, sizeof(formatted), format, args);
 	else
-	{
 		spdlog::warn("Failed to format {} \"{}\"", typeStr, format);
-	}
 
 	auto endpos = strlen(formatted);
 	if (formatted[endpos - 1] == '\n')
@@ -195,6 +194,13 @@ void,, (BFRead* msg),
 	}
 })
 
+AUTOHOOK(ConCommand_echo, engine.dll + 0x123680,
+void,, (const CCommand& arg),
+{
+	if (arg.ArgC() >= 2)
+		spdlog::info("[echo] {}", arg.ArgS());
+})
+
 // This needs to be called after hooks are loaded so we can access the command line args
 void CreateLogFiles()
 {
@@ -218,13 +224,20 @@ void CreateLogFiles()
 void InitialiseLogging()
 {
 	AllocConsole();
-	// seem to cause issues with console log initialisation occasionally
-	// freopen("CONOUT$", "w", stdout);
-	// freopen("CONOUT$", "w", stderr);
+
+	// don't redirect conout if already open
+	FILE* pConoutFile = fopen("CONOUT$", "w");
+	if (pConoutFile)
+	{
+		fclose(pConoutFile);
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
+	}
+
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConCommand, [](HMODULE baseAddress)
 {
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 

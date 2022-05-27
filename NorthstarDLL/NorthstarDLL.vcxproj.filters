@@ -148,6 +148,12 @@
     <Filter Include="Header Files\Shared\Console">
       <UniqueIdentifier>{bf0769d8-40fd-4701-85e9-7ed94aab2283}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shared\Filesystem">
+      <UniqueIdentifier>{d8a83b5e-9a23-4124-824f-eab37880cb08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shared\Filesystem">
+      <UniqueIdentifier>{ee3ba13a-3061-41d7-981d-328ac2596fd2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -563,9 +569,6 @@
     </ClInclude>
     <ClInclude Include="include\rapidjson\msinttypes\stdint.h">
       <Filter>Header Files\include\rapidjson\msinttypes</Filter>
-    </ClInclude>
-    <ClInclude Include="filesystem.h">
-      <Filter>Header Files\Shared</Filter>
     </ClInclude>
     <ClInclude Include="scriptsrson.h">
       <Filter>Header Files\Shared\Mods\Compiled</Filter>
@@ -1398,9 +1401,6 @@
     <ClInclude Include="include\libcurl\include\curl\urlapi.h">
       <Filter>Header Files\include\libcurl</Filter>
     </ClInclude>
-    <ClInclude Include="rpakfilesystem.h">
-      <Filter>Header Files\Shared</Filter>
-    </ClInclude>
     <ClInclude Include="bansystem.h">
       <Filter>Header Files\Server\Authentication</Filter>
     </ClInclude>
@@ -1426,9 +1426,6 @@
       <Filter>Header Files\Client</Filter>
     </ClInclude>
     <ClInclude Include="plugins.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="state.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="plugin_abi.h">
@@ -1485,6 +1482,12 @@
     <ClInclude Include="crashhandler.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
+    <ClInclude Include="filesystem.h">
+      <Filter>Header Files\Shared\Filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="rpakfilesystem.h">
+      <Filter>Header Files\Shared\Filesystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1511,9 +1514,6 @@
     <ClCompile Include="sigscanning.cpp">
       <Filter>Source Files\Shared\Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="logging.cpp">
-      <Filter>Source Files\Shared</Filter>
-    </ClCompile>
     <ClCompile Include="sourceinterface.cpp">
       <Filter>Source Files\Shared</Filter>
     </ClCompile>
@@ -1525,9 +1525,6 @@
     </ClCompile>
     <ClCompile Include="modmanager.cpp">
       <Filter>Source Files\Shared\Mods</Filter>
-    </ClCompile>
-    <ClCompile Include="filesystem.cpp">
-      <Filter>Source Files\Shared</Filter>
     </ClCompile>
     <ClCompile Include="scriptsrson.cpp">
       <Filter>Source Files\Shared\Mods\Compiled Assets</Filter>
@@ -1570,9 +1567,6 @@
     </ClCompile>
     <ClCompile Include="miscserverfixes.cpp">
       <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="rpakfilesystem.cpp">
-      <Filter>Source Files\Shared</Filter>
     </ClCompile>
     <ClCompile Include="bansystem.cpp">
       <Filter>Source Files\Server\Authentication</Filter>
@@ -1675,6 +1669,15 @@
     </ClCompile>
     <ClCompile Include="crashhandler.cpp">
       <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="logging.cpp">
+      <Filter>Source Files\Shared\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystem.cpp">
+      <Filter>Source Files\Shared\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="rpakfilesystem.cpp">
+      <Filter>Source Files\Shared\Filesystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
