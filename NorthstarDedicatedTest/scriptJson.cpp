@@ -650,7 +650,7 @@ SQRESULT clientSq_castToArray(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void InitialiseSquirrelJson(HMODULE baseAddress)
+void InitialiseServerSquirrelJson(HMODULE baseAddress)
 {
 
 	g_ServerSquirrelManager->AddFuncRegistration("table", "DecodeJSON", "string json", "", serverSq_DecodeJSON);
@@ -658,6 +658,10 @@ void InitialiseSquirrelJson(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("table", "castToTable", "var tab", "", serverSq_castToTable);
 	g_ServerSquirrelManager->AddFuncRegistration("array", "castToArray", "var arr", "", serverSq_castToArray);
 
+}
+
+void InitialiseClientSquirrelJson(HMODULE baseAddress)
+{
 	g_ClientSquirrelManager->AddFuncRegistration("table", "DecodeJSON", "string json", "", clientSq_DecodeJSON);
 	g_ClientSquirrelManager->AddFuncRegistration("string", "EncodeJSON", "table data", "", sq_EncodeJSON);
 	g_ClientSquirrelManager->AddFuncRegistration("table", "castToTable", "var table", "", clientSq_castToTable);

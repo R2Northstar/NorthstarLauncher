@@ -51,6 +51,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
+#include "scriptJson.h"
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -255,6 +256,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
+		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelJson);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
 	}
@@ -267,6 +269,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
+	AddDllLoadCallback("server.dll", InitialiseServerSquirrelJson);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
 
