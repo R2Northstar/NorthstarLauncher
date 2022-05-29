@@ -657,7 +657,6 @@ void InitialiseServerSquirrelJson(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("string", "EncodeJSON", "table data", "", sq_EncodeJSON);
 	g_ServerSquirrelManager->AddFuncRegistration("table", "castToTable", "var tab", "", serverSq_castToTable);
 	g_ServerSquirrelManager->AddFuncRegistration("array", "castToArray", "var arr", "", serverSq_castToArray);
-
 }
 
 void InitialiseClientSquirrelJson(HMODULE baseAddress)
