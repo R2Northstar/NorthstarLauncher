@@ -98,7 +98,6 @@ void ModManager::BuildPdef()
 			pdef.insert(insertIdx, addStr);
 		}
 	}
-	spdlog::info(pdef);
 
 	fs::create_directories(MOD_PDEF_PATH.parent_path());
 
