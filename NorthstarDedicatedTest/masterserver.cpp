@@ -592,14 +592,14 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			curl_easy_setopt(
 				curl,
 				CURLOPT_URL,
-				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", 
-					Cvar_ns_masterserver_hostname->GetString(), 
-					uidStr, 
+				fmt::format("{}/client/auth_with_self?id={}&playerToken={}",
+					Cvar_ns_masterserver_hostname->GetString(),
+					uidStr,
 					tokenStr)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);*/
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer); */
 
 			
 
@@ -607,12 +607,8 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			curl_easy_setopt(
 				curl,
 				CURLOPT_URL,
-				fmt::format(
-					"{}/client/auth_with_self?id={}&playerToken={}",
-					Cvar_ns_masterserver_hostname->GetString(),
-					uidStr,
-					tokenStr)
-					.c_str());
+				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr)
+				.c_str());
 			
 
 			CURLcode result = curl_easy_perform(curl);
