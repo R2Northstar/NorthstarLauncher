@@ -1217,9 +1217,6 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 			curl_mime_filename(part, "file.pdata");
 			curl_mime_type(part, "application/octet-stream");
 
-			//curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-
-			// this is probably HORRIBLE code - SPOON
 			curl_mimepart* part2 = curl_mime_addpart(mime);
 
 			curl_mime_data(part2, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
