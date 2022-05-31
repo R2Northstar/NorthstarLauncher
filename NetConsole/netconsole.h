@@ -12,6 +12,8 @@ constexpr const char* NETCON_VERSION = "2.0.0.1";
 class CNetCon
 {
   public:
+	~CNetCon();
+
 	bool Init(void);
 	bool Shutdown(void);
 

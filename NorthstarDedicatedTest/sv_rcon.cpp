@@ -19,6 +19,15 @@
 #include "igameserverdata.h"
 
 //-----------------------------------------------------------------------------
+// Purpose: destructor
+//-----------------------------------------------------------------------------
+CRConServer::~CRConServer()
+{
+	delete m_pNetAdr2;
+	delete m_pSocket;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: NETCON systems init
 //-----------------------------------------------------------------------------
 void CRConServer::Init(void)
@@ -35,8 +44,8 @@ void CRConServer::Init(void)
 
 	static ConVar* hostport = g_pCVar->FindVar("hostport");
 
-	m_pAdr2 = new CNetAdr2(CVar_rcon_address->GetString(), hostport->GetString());
-	m_pSocket->CreateListenSocket(*m_pAdr2, false);
+	m_pNetAdr2->SetIPAndPort(CVar_rcon_address->GetString(), hostport->GetString());
+	m_pSocket->CreateListenSocket(*m_pNetAdr2, false);
 	m_svPasswordHash = sha256(CVar_rcon_password->GetString());
 
 	spdlog::info("Remote server access initialized");
@@ -84,7 +93,7 @@ void CRConServer::Think(void)
 	{
 		if (!m_pSocket->IsListening())
 		{
-			m_pSocket->CreateListenSocket(*m_pAdr2, false);
+			m_pSocket->CreateListenSocket(*m_pNetAdr2, false);
 		}
 	}
 }

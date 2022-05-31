@@ -11,7 +11,7 @@
 // Purpose: constructor (use this when string contains <[IP]:PORT>).
 // Input  : svInAdr -
 //-----------------------------------------------------------------------------
-CNetAdr2::CNetAdr2(std::string svInAdr)
+CNetAdr2::CNetAdr2(const std::string& svInAdr)
 {
 	SetIPAndPort(svInAdr);
 }
@@ -21,34 +21,9 @@ CNetAdr2::CNetAdr2(std::string svInAdr)
 // Input  : svInAdr -
 //			svInPort -
 //-----------------------------------------------------------------------------
-CNetAdr2::CNetAdr2(std::string svInAdr, std::string svInPort)
+CNetAdr2::CNetAdr2(const std::string& svInAdr, const std::string& svInPort)
 {
-	SetType(netadrtype_t::NA_IP);
-
-	if (strcmp(svInAdr.c_str(), "loopback") == 0 || strcmp(svInAdr.c_str(), "::1") == 0)
-	{
-		SetType(netadrtype_t::NA_LOOPBACK);
-	}
-	else if (strcmp(svInAdr.c_str(), "localhost") == 0)
-	{
-		svInAdr = "127.0.0.1";
-	}
-
-	if (strstr(svInAdr.c_str(), "["))
-	{
-		svInAdr = GetBase(svInAdr);
-	}
-
 	SetIPAndPort(svInAdr, svInPort);
-
-	if (m_version == netadrversion_t::NA_V4)
-	{
-		reinterpret_cast<sockaddr_in*>(&m_sadr)->sin_port = htons(stoi(GetPort()));
-	}
-	else if (m_version == netadrversion_t::NA_V6)
-	{
-		reinterpret_cast<sockaddr_in6*>(&m_sadr)->sin6_port = htons(stoi(GetPort()));
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -242,7 +217,7 @@ std::string CNetAdr2::GetBase(void) const
 // Purpose: removes brackets and port from IP address.
 // Input  : svInAdr -
 //-----------------------------------------------------------------------------
-std::string CNetAdr2::GetBase(std::string svInAdr) const
+std::string CNetAdr2::GetBase(const std::string& svInAdr) const
 {
 	static std::regex rx("[^\\[]*.(.*)(\\]).*");
 	std::smatch smRegexMatches;

@@ -8,7 +8,7 @@ class CRConClient
 {
   public:
 	CRConClient(void) {};
-	~CRConClient(void) {};
+	~CRConClient(void);
 
 	void Init(void);
 	void Shutdown(void);

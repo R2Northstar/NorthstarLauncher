@@ -13,6 +13,8 @@ constexpr char s_pszAuthMessage[] = "RCON authentication succesfull.\n\r";
 class CRConServer
 {
   public:
+	~CRConServer();
+
 	void Init(void);
 	void Shutdown(void);
 
@@ -40,7 +42,7 @@ class CRConServer
   private:
 	bool m_bInitialized = false;
 	int m_nConnIndex = 0;
-	CNetAdr2* m_pAdr2 = new CNetAdr2();
+	CNetAdr2* m_pNetAdr2 = new CNetAdr2();
 	CSocketCreator* m_pSocket = new CSocketCreator();
 	std::vector<std::string> m_vBannedAddress;
 	std::string m_svPasswordHash;
