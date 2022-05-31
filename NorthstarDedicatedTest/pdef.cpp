@@ -76,6 +76,7 @@ void ModManager::BuildPdef()
 				pdef += "\n";
 			}
 		}
+
 		// add new members to preexisting enums
 		// note: this code could 100% be messed up if people put //$ENUM_START comments and the like
 		// could make it protect against this, but honestly not worth atm

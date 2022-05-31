@@ -592,10 +592,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			curl_easy_setopt(
 				curl,
 				CURLOPT_URL,
-				fmt::format("{}/client/auth_with_self?id={}&playerToken={}",
-					Cvar_ns_masterserver_hostname->GetString(),
-					uidStr,
-					tokenStr)
+				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
@@ -670,11 +667,8 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 						goto REQUEST_END_CLEANUP;
 					}
 
-					newAuthData.pdata[i] = static_cast<char>(byte.GetUint());
-					i++;
+					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
 				}
-				spdlog::info(i);
-				spdlog::info("GOT PDATA FROM MASTERSERVER:\n" + std::string(authInfoJson["persistentData"].GetString()));
 
 				std::lock_guard<std::mutex> guard(g_ServerAuthenticationManager->m_authDataMutex);
 				g_ServerAuthenticationManager->m_authData.clear();
