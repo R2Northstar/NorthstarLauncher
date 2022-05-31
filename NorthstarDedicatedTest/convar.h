@@ -5,6 +5,7 @@
 #include "concommand.h"
 
 // taken directly from iconvar.h
+extern void* g_pConVar_Vtable;
 
 // The default, no flags at all
 #define FCVAR_NONE 0
