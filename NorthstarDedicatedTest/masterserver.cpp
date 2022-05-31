@@ -259,7 +259,15 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 					spdlog::info("Northstar origin authentication completed successfully!");
 				}
 				else
+				{
 					spdlog::error("Northstar origin authentication failed");
+				}
+
+				// check here to avoid printing out tokens
+				if (!originAuthInfo.HasMember("token"))
+				{
+					spdlog::error(readBuffer);
+				}
 			}
 			else
 			{
