@@ -10,15 +10,23 @@
 #undef GetObject // fuck microsoft developers
 #endif
 
-void sq_EncodeJSON_Table(rapidjson::Value* obj, SQTable* sqTable, rapidjson::Document* allocatorDoc);
-void sq_EncodeJSON_Array(rapidjson::Value* obj, SQArray* sqArray, rapidjson::Document* allocatorDoc);
-void serverSq_DecodeJSON_Table(void* sqvm, rapidjson::Value* obj);
-void serverSq_DecodeJSON_Array(void* sqvm, rapidjson::Value* arr);
+void sq_EncodeJSON_Table(
+	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+	SQTable* sqTable,
+	rapidjson_document* allocatorDoc);
+void sq_EncodeJSON_Array(
+	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+	SQArray* sqArray,
+	rapidjson_document* allocatorDoc);
+void serverSq_DecodeJSON_Table(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj);
+void serverSq_DecodeJSON_Array(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr);
 
 SQRESULT serverSq_DecodeJSON(void* sqvm)
 {
 	const char* json = ServerSq_getstring(sqvm, 1);
-	rapidjson::Document doc;
+	rapidjson_document doc;
 	doc.Parse(json);
 	if (doc.HasParseError())
 	{
@@ -30,21 +38,20 @@ SQRESULT serverSq_DecodeJSON(void* sqvm)
 	for (int i = 0; i < doc.MemberCount(); i++)
 	{
 
-		rapidjson::Value::Member& itr = doc.MemberBegin()[i];
-
-		if ((long long)itr.name.GetString() == 0xcdcdcdcdcdcd)
-			continue;
+		rapidjson::GenericMember<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>& itr = doc.MemberBegin()[i];
 
 		switch (itr.value.GetType())
 		{
 		case rapidjson::kObjectType:
 			ServerSq_pushstring(sqvm, itr.name.GetString(), -1);
-			serverSq_DecodeJSON_Table(sqvm, (rapidjson::Value*)&itr.value);
+			serverSq_DecodeJSON_Table(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ServerSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kArrayType:
 			ServerSq_pushstring(sqvm, itr.name.GetString(), -1);
-			serverSq_DecodeJSON_Array(sqvm, (rapidjson::Value*)&itr.value);
+			serverSq_DecodeJSON_Array(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ServerSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kStringType:
@@ -94,43 +101,35 @@ SQRESULT serverSq_DecodeJSON(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void serverSq_DecodeJSON_Table(void* sqvm, rapidjson::Value* obj)
+void serverSq_DecodeJSON_Table(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
 {
 	ServerSq_newTable(sqvm);
 
 	for (int i = 0; i < obj->MemberCount(); i++)
 	{
-		rapidjson::Value::Member& itr = obj->MemberBegin()[i];
+		rapidjson::GenericMember<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>& itr = obj->MemberBegin()[i];
 		if (!itr.name.IsString())
 		{
 			spdlog::info("Decoding table with non-string key");
 			continue;
 		}
 		const char* key = itr.name.GetString();
-		if ((long long)key == 0xcdcdcdcdcdcd)
-		{
-
-			spdlog::info("Decoding table with invalid key string pointer");
-			continue;
-		}
 		switch (itr.value.GetType())
 		{
 		case rapidjson::kObjectType:
 			ServerSq_pushstring(sqvm, key, -1);
-			serverSq_DecodeJSON_Table(sqvm, (rapidjson::Value*)&itr.value);
+			serverSq_DecodeJSON_Table(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ServerSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kArrayType:
 			ServerSq_pushstring(sqvm, key, -1);
-			serverSq_DecodeJSON_Array(sqvm, (rapidjson::Value*)&itr.value);
+			serverSq_DecodeJSON_Array(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ServerSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kStringType:
-			if ((long long)key == 0xcdcdcdcdcdcd)
-			{
-				spdlog::info("Invalid String pointer in value with key {}", itr.name.GetString());
-				continue;
-			}
 			ServerSq_pushstring(sqvm, key, -1);
 			ServerSq_pushstring(sqvm, itr.value.GetString(), -1);
 			ServerSq_newSlot(sqvm, -3, false);
@@ -163,7 +162,8 @@ void serverSq_DecodeJSON_Table(void* sqvm, rapidjson::Value* obj)
 	}
 }
 
-void serverSq_DecodeJSON_Array(void* sqvm, rapidjson::Value* arr)
+void serverSq_DecodeJSON_Array(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
 {
 	int usedType = arr->GetArray().Begin()->GetType();
 	bool isFloat = arr->GetArray().Begin()->IsDouble() || arr->GetArray().Begin()->IsFloat();
@@ -233,7 +233,7 @@ void serverSq_DecodeJSON_Array(void* sqvm, rapidjson::Value* arr)
 
 SQRESULT sq_EncodeJSON(void* sqvm)
 {
-	rapidjson::Document doc;
+	rapidjson_document doc;
 	doc.SetObject();
 
 	HSquirrelVM* vm = (HSquirrelVM*)sqvm;
@@ -248,7 +248,10 @@ SQRESULT sq_EncodeJSON(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void sq_EncodeJSON_Table(rapidjson::Value* obj, SQTable* table, rapidjson::Document* allocatorDoc)
+void sq_EncodeJSON_Table(
+	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+	SQTable* table,
+	rapidjson_document* allocatorDoc)
 {
 	for (int i = 0; i < table->_numOfNodes; i++)
 	{
@@ -256,8 +259,8 @@ void sq_EncodeJSON_Table(rapidjson::Value* obj, SQTable* table, rapidjson::Docum
 		if (node->key._Type == OT_STRING)
 		{
 
-			rapidjson::Value newObj(rapidjson::kObjectType);
-			rapidjson::Value newArray(rapidjson::kArrayType);
+			rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newObj(rapidjson::kObjectType);
+			rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newArray(rapidjson::kArrayType);
 
 			switch (node->val._Type)
 			{
@@ -271,26 +274,31 @@ void sq_EncodeJSON_Table(rapidjson::Value* obj, SQTable* table, rapidjson::Docum
 			case OT_INTEGER:
 				obj->AddMember(
 					rapidjson::StringRef(node->key._VAL.asString->_val),
-					rapidjson::Value((int)node->val._VAL.asInteger),
+					rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>(
+						(int)node->val._VAL.asInteger),
 					allocatorDoc->GetAllocator());
 				break;
 			case OT_FLOAT:
 
 				obj->AddMember(
 					rapidjson::StringRef(node->key._VAL.asString->_val),
-					rapidjson::Value(node->val._VAL.asFloat),
+					rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>(node->val._VAL.asFloat),
 					allocatorDoc->GetAllocator());
 				break;
 			case OT_BOOL:
 				if (node->val._VAL.asInteger)
 				{
 					obj->AddMember(
-						rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::Value(true), allocatorDoc->GetAllocator());
+						rapidjson::StringRef(node->key._VAL.asString->_val),
+						rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>(true),
+						allocatorDoc->GetAllocator());
 				}
 				else
 				{
 					obj->AddMember(
-						rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::Value(false), allocatorDoc->GetAllocator());
+						rapidjson::StringRef(node->key._VAL.asString->_val),
+						rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>(false),
+						allocatorDoc->GetAllocator());
 				}
 				break;
 			case OT_TABLE:
@@ -311,7 +319,10 @@ void sq_EncodeJSON_Table(rapidjson::Value* obj, SQTable* table, rapidjson::Docum
 	}
 }
 
-void sq_EncodeJSON_Array(rapidjson::Value* obj, SQArray* sqArray, rapidjson::Document* allocatorDoc)
+void sq_EncodeJSON_Array(
+	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+	SQArray* sqArray,
+	rapidjson_document* allocatorDoc)
 {
 	int usedType = sqArray->_values->_Type;
 	for (int i = 0; i < sqArray->_usedSlots; i++)
@@ -324,18 +335,22 @@ void sq_EncodeJSON_Array(rapidjson::Value* obj, SQArray* sqArray, rapidjson::Doc
 			spdlog::info("SQ encode Json array not same type got %s expected %s", typeName, usedTypeName);
 			continue;
 		}
-		rapidjson::Value newObj(rapidjson::kObjectType);
-		rapidjson::Value newArray(rapidjson::kArrayType);
+		rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newObj(rapidjson::kObjectType);
+		rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newArray(rapidjson::kArrayType);
 		switch (node->_Type)
 		{
 		case OT_STRING:
 			obj->PushBack(rapidjson::StringRef(node->_VAL.asString->_val), allocatorDoc->GetAllocator());
 			break;
 		case OT_INTEGER:
-			obj->PushBack(rapidjson::Value((int)node->_VAL.asInteger), allocatorDoc->GetAllocator());
+			obj->PushBack(
+				rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>((int)node->_VAL.asInteger),
+				allocatorDoc->GetAllocator());
 			break;
 		case OT_FLOAT:
-			obj->PushBack(rapidjson::Value(node->_VAL.asFloat), allocatorDoc->GetAllocator());
+			obj->PushBack(
+				rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>(node->_VAL.asFloat),
+				allocatorDoc->GetAllocator());
 			break;
 		case OT_BOOL:
 			if (node->_VAL.asInteger)
@@ -364,13 +379,15 @@ void sq_EncodeJSON_Array(rapidjson::Value* obj, SQArray* sqArray, rapidjson::Doc
 	}
 }
 
-void clientSq_DecodeJSON_Table(void* sqvm, rapidjson::Value* obj);
-void clientSq_DecodeJSON_Array(void* sqvm, rapidjson::Value* arr);
+void clientSq_DecodeJSON_Table(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj);
+void clientSq_DecodeJSON_Array(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr);
 
 SQRESULT clientSq_DecodeJSON(void* sqvm)
 {
 	const char* json = ClientSq_getstring(sqvm, 1);
-	rapidjson::Document doc;
+	rapidjson_document doc;
 	doc.Parse(json);
 	if (doc.HasParseError())
 	{
@@ -382,21 +399,20 @@ SQRESULT clientSq_DecodeJSON(void* sqvm)
 	for (int i = 0; i < doc.MemberCount(); i++)
 	{
 
-		rapidjson::Value::Member& itr = doc.MemberBegin()[i];
-
-		if ((long long)itr.name.GetString() == 0xcdcdcdcdcdcd)
-			continue;
+		rapidjson::GenericMember<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>& itr = doc.MemberBegin()[i];
 
 		switch (itr.value.GetType())
 		{
 		case rapidjson::kObjectType:
 			ClientSq_pushstring(sqvm, itr.name.GetString(), -1);
-			clientSq_DecodeJSON_Table(sqvm, (rapidjson::Value*)&itr.value);
+			clientSq_DecodeJSON_Table(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ClientSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kArrayType:
 			ClientSq_pushstring(sqvm, itr.name.GetString(), -1);
-			clientSq_DecodeJSON_Array(sqvm, (rapidjson::Value*)&itr.value);
+			clientSq_DecodeJSON_Array(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ClientSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kStringType:
@@ -446,43 +462,36 @@ SQRESULT clientSq_DecodeJSON(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void clientSq_DecodeJSON_Table(void* sqvm, rapidjson::Value* obj)
+void clientSq_DecodeJSON_Table(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
 {
 	ClientSq_newTable(sqvm);
 
 	for (int i = 0; i < obj->MemberCount(); i++)
 	{
-		rapidjson::Value::Member& itr = obj->MemberBegin()[i];
+		rapidjson::GenericMember<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>& itr = obj->MemberBegin()[i];
 		if (!itr.name.IsString())
 		{
 			spdlog::info("Decoding table with non-string key");
 			continue;
 		}
 		const char* key = itr.name.GetString();
-		if ((long long)key == 0xcdcdcdcdcdcd)
-		{
 
-			spdlog::info("Decoding table with invalid key string pointer");
-			continue;
-		}
 		switch (itr.value.GetType())
 		{
 		case rapidjson::kObjectType:
 			ClientSq_pushstring(sqvm, key, -1);
-			clientSq_DecodeJSON_Table(sqvm, (rapidjson::Value*)&itr.value);
+			clientSq_DecodeJSON_Table(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ClientSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kArrayType:
 			ClientSq_pushstring(sqvm, key, -1);
-			clientSq_DecodeJSON_Array(sqvm, (rapidjson::Value*)&itr.value);
+			clientSq_DecodeJSON_Array(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr.value);
 			ClientSq_newSlot(sqvm, -3, false);
 			break;
 		case rapidjson::kStringType:
-			if ((long long)key == 0xcdcdcdcdcdcd)
-			{
-				spdlog::info("Invalid String pointer in value with key {}", itr.name.GetString());
-				continue;
-			}
 			ClientSq_pushstring(sqvm, key, -1);
 			ClientSq_pushstring(sqvm, itr.value.GetString(), -1);
 			ClientSq_newSlot(sqvm, -3, false);
@@ -515,7 +524,8 @@ void clientSq_DecodeJSON_Table(void* sqvm, rapidjson::Value* obj)
 	}
 }
 
-void clientSq_DecodeJSON_Array(void* sqvm, rapidjson::Value* arr)
+void clientSq_DecodeJSON_Array(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
 {
 	int usedType = arr->GetArray().Begin()->GetType();
 	bool isFloat = arr->GetArray().Begin()->IsDouble() || arr->GetArray().Begin()->IsFloat();
