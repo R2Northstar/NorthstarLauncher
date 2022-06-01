@@ -2,8 +2,6 @@
 #include "AntiRCE.h"
 #include "cvar.h"
 
-KHookList antiRCEHooks;
-
 void OnGameFileAccess(const char* path, bool readOnly)
 {
 	static char curDirectory[MAX_PATH];
@@ -93,7 +91,6 @@ void OnGameFileAccess(const char* path, bool readOnly)
 
 // its 3 am and idk what this function is but it get called whenever file opened sooo
 KHOOK(
-	antiRCEHooks,
 	FileSytem_OpenFileFuncIdk,
 	("filesystem_stdio.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 8B 05"),
 	void*,
@@ -113,7 +110,6 @@ KHOOK(
 //	as well as to prevent any exploits that might utilize these functions from being able to do actual damage
 void AntiRCE::EmergencyReport(std::string msg)
 {
-
 #ifdef NS_DEBUG // For easier debugging
 	assert(false, "AntiRCE::EmergencyReport triggered");
 #endif
@@ -142,13 +138,11 @@ void AntiRCE::EmergencyReport(std::string msg)
 	exit(EXITCODE_TERRIBLE);
 }
 
-bool AntiRCE::InitHooks()
+bool AntiRCE::Init()
 {
 	bool result = true;
-	for (auto hook : antiRCEHooks)
-	{
-		if (!hook->Setup())
-			result = false;
-	}
+
+	// ...
+
 	return result;
 }
