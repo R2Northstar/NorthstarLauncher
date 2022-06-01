@@ -276,8 +276,79 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
+void StartSelfIfNeeded()
+{
+	if (strstr(GetCommandLineA(), "-selfstarted"))
+		return;
+
+#ifdef _DEBUG
+	return;
+#endif
+
+	// Start ourselves with various process mitigation policies
+	// See:
+	//  https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessmitigationpolicy
+	//  https://docs.microsoft.com/en-us/windows/security/threat-protection/override-mitigation-options-for-app-related-security-policies
+	//	https://www.ired.team/offensive-security/defense-evasion/preventing-3rd-party-dlls-from-injecting-into-your-processes
+	// NOTE: SetProcessMitigationPolicy will not work during runtime for most of these, so a duplicate process must be created
+	{
+
+		// Set up structs
+		PROCESS_INFORMATION pi = {};
+		STARTUPINFOEXA si = {};
+
+		SIZE_T attributeSize = 0;
+		InitializeProcThreadAttributeList(NULL, 1, 0, &attributeSize);
+		PPROC_THREAD_ATTRIBUTE_LIST threadAttributes = (PPROC_THREAD_ATTRIBUTE_LIST)calloc(attributeSize, 1);
+		InitializeProcThreadAttributeList(threadAttributes, 1, 0, &attributeSize);
+
+		DWORD64 policyFlags =
+			// Always good to be safe, help prevent lots of RCE control-flow trickery (i.e. ROP)
+			PROCESS_CREATION_MITIGATION_POLICY_CONTROL_FLOW_GUARD_ALWAYS_ON |
+
+			// Remote image loading should NEVER be used
+			PROCESS_CREATION_MITIGATION_POLICY_IMAGE_LOAD_NO_REMOTE_ALWAYS_ON |
+
+			// This is always a good idea, don't load "system" modules from a local folder
+			PROCESS_CREATION_MITIGATION_POLICY_IMAGE_LOAD_PREFER_SYSTEM32_ALWAYS_ON |
+
+			// Raw syscalls are a huge security risk when it comes to potential RCEs
+			PROCESS_CREATION_MITIGATION_POLICY_WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_OFF;
+
+		// Set mitigation flags
+		// See: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessmitigationpolicy
+		UpdateProcThreadAttribute(threadAttributes, 0, PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY, &policyFlags, sizeof(DWORD64), NULL, NULL);
+		si.lpAttributeList = threadAttributes;
+
+		char szFileName[MAX_PATH];
+		GetModuleFileNameA(NULL, szFileName, MAX_PATH);
+
+		std::string newCommandLine = GetCommandLineA();
+		newCommandLine += " -selfstarted"; // Inform the newly started application that it was started from here
+		if (!CreateProcessA(
+				NULL, (LPSTR)newCommandLine.c_str(), NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL, &si.StartupInfo, &pi))
+		{
+			char errorStr[1024];
+			sprintf_s(errorStr, "Failed to start self (error: %i)", GetLastError());
+			MessageBoxA(NULL, errorStr, "Northstar Launcher Error", MB_ICONERROR);
+		}
+
+		// Exit original (us)
+		free(threadAttributes);
+		exit(44);
+	}
+}
+
+void EnforceSafetyPolicies()
+{
+	StartSelfIfNeeded();
+
+	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
+}
+
 int main(int argc, char* argv[])
 {
+	EnforceSafetyPolicies();
 
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
@@ -285,7 +356,7 @@ int main(int argc, char* argv[])
 			GetForegroundWindow(),
 			"Failed getting game directory.\nThe game cannot continue and has to exit.",
 			"Northstar Launcher Error",
-			0);
+			MB_ICONERROR);
 		return 1;
 	}
 
@@ -331,7 +402,7 @@ int main(int argc, char* argv[])
 						"Failed to load one or more stubs, but could not unload them either.\n"
 						"The game cannot continue and has to exit.",
 						"Northstar Launcher Error",
-						0);
+						MB_ICONERROR);
 					return 1;
 				}
 			}
@@ -398,7 +469,7 @@ int main(int argc, char* argv[])
 			GetForegroundWindow(),
 			"Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
 			"Northstar Launcher Error",
-			0);
+			MB_ICONERROR);
 	// auto result = ((__int64(__fastcall*)())LauncherMain)();
 	// auto result = ((signed __int64(__fastcall*)(__int64))LauncherMain)(0i64);
 
