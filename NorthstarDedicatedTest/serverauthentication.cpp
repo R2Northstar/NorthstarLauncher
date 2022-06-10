@@ -397,7 +397,7 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		!g_ServerAuthenticationManager->AuthenticatePlayer(self, nextPlayerUid, nextPlayerToken) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		CBaseClient__Disconnect(self, 1, "Authentication Failed");
-		
+	
 	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
 	{
 		AdditionalPlayerData additionalData;
