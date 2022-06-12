@@ -45,6 +45,7 @@
 #include <string.h>
 #include "version.h"
 #include "pch.h"
+#include "forcedmods.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -256,6 +257,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
+		AddDllLoadCallbackForClient("client.dll", InitialiseExposedForcedMods);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
 	}

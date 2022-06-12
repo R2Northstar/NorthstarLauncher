@@ -118,6 +118,7 @@
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="emit_blocker.h" />
+    <ClInclude Include="forcedmods.h" />
     <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
@@ -592,6 +593,7 @@
     <ClCompile Include="gameutils.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="hookutils.cpp" />
+    <ClCompile Include="forcedmods.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
     <ClCompile Include="localchatwriter.cpp" />
