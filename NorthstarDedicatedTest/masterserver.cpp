@@ -828,7 +828,7 @@ void MasterServerManager::AddSelfToServerList(
 			// Keep track of attempted connects in case of DUPLICATE_SERVER response
 			int retry_counter = 0;
 
-			START_REQUEST:
+		START_REQUEST:
 			m_ownServerId[0] = 0;
 			m_ownServerAuthToken[0] = 0;
 
@@ -910,8 +910,10 @@ void MasterServerManager::AddSelfToServerList(
 					spdlog::error(readBuffer);
 
 					// Check for DUPLICATE_SERVER error response, stop if we tried 10 times
-					if (serverAddedJson["error"].HasMember("enum") && retry_counter < 1) {
-						if (strncmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER", 17) == 0) {
+					if (serverAddedJson["error"].HasMember("enum") && retry_counter < 1)
+					{
+						if (strncmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER", 17) == 0)
+						{
 
 							spdlog::info("Retrying request in 10 seconds.");
 							// Incremement retry counter
