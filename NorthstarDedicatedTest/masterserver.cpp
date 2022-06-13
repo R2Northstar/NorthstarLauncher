@@ -909,10 +909,11 @@ void MasterServerManager::AddSelfToServerList(
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
 
-					// Check for DUPLICATE_SERVER error response, stop if we tried 10 times
+					// Check for enum member in JSON
 					if (serverAddedJson["error"].HasMember("enum") && retry_counter < 1)
 					{
-						if (strncmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER", 17) == 0)
+						// Check for DUPLICATE_SERVER error response, stop if we tried 10 times
+						if (strncmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER", 17) == 0 && retry_counter < 1)
 						{
 
 							spdlog::info("Retrying request in 10 seconds.");
