@@ -6,6 +6,9 @@
 typedef void* (*CrashingWeaponActivityFuncType)(void* a1);
 CrashingWeaponActivityFuncType CrashingWeaponActivityFunc0;
 CrashingWeaponActivityFuncType CrashingWeaponActivityFunc1;
+typedef bool (*DevTextBufferDumpToFileType)(int a1);
+DevTextBufferDumpToFileType DevTextBufferDumpToFileClient;
+
 
 void* CrashingWeaponActivityFunc0Hook(void* a1)
 {
@@ -25,6 +28,12 @@ void* CrashingWeaponActivityFunc1Hook(void* a1)
 	return CrashingWeaponActivityFunc1(a1);
 }
 
+bool DevTextBufferDumpToFileHookClient(int a1)
+{
+	// Prevent arbitrary file writes from squirrel
+	return true;
+}
+
 void InitialiseMiscClientFixes(HMODULE baseAddress)
 {
 	if (IsDedicated())
@@ -40,6 +49,15 @@ void InitialiseMiscClientFixes(HMODULE baseAddress)
 		hook, (char*)baseAddress + 0x5A92D0, &CrashingWeaponActivityFunc0Hook, reinterpret_cast<LPVOID*>(&CrashingWeaponActivityFunc0));
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x5A9310, &CrashingWeaponActivityFunc1Hook, reinterpret_cast<LPVOID*>(&CrashingWeaponActivityFunc1));
+
+	if (!strstr(GetCommandLineA(), "-allowdevtextbuffer"))
+	{
+		ENABLER_CREATEHOOK(
+			hook,
+			(char*)baseAddress + 0x39D9F0,
+			&DevTextBufferDumpToFileHookClient,
+			reinterpret_cast<LPVOID*>(&DevTextBufferDumpToFileClient));
+	}
 
 	// experimental: allow cl_extrapolate to be enabled without cheats
 	{
