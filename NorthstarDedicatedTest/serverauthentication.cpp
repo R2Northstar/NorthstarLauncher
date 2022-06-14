@@ -477,6 +477,10 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 typedef bool (*CCommand__TokenizeType)(CCommand& self, const char* pCommandString, cmd_source_t commandSource);
 CCommand__TokenizeType CCommand__Tokenize;
 
+// thisptr isn't used
+typedef bool (*CGameClient__IsEngineClientCommandType)(__int64 a1, const CCommand& args);
+CGameClient__IsEngineClientCommandType CGameClient__IsEngineClientCommand;
+
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
 {
 	if (CVar_sv_quota_stringcmdspersecond->GetInt() != -1)
@@ -511,7 +515,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	ConCommand* command = g_pCVar->FindCommand(tempCommand.Arg(0));
 
 	// if the command doesn't exist pass it on to ExecuteStringCommand for script clientcommands and stuff
-	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE))
+	if (command && !command->IsFlagSet(FCVAR_CLIENTCMD_CAN_EXECUTE) && !CGameClient__IsEngineClientCommand(NULL, tempCommand))
 	{
 		// ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
 		if (IsDedicated())
@@ -700,6 +704,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 		hook, (char*)baseAddress + 0x117800, &ProcessConnectionlessPacketHook, reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
 
 	CCommand__Tokenize = (CCommand__TokenizeType)((char*)baseAddress + 0x418380);
+	CGameClient__IsEngineClientCommand = (CGameClient__IsEngineClientCommandType)((char*)baseAddress + 0x103590);
 
 	uintptr_t ba = (uintptr_t)baseAddress;
 
