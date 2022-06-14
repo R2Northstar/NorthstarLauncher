@@ -118,7 +118,6 @@
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="emit_blocker.h" />
-    <ClInclude Include="getentbyindexfix.h" />
     <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
@@ -591,7 +590,6 @@
     <ClCompile Include="emit_blocker.cpp" />
     <ClCompile Include="filesystem.cpp" />
     <ClCompile Include="gameutils.cpp" />
-    <ClCompile Include="getentbyindexfix.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="keyvalues.cpp" />
