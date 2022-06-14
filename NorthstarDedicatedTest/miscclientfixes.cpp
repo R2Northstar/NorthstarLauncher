@@ -7,7 +7,7 @@
 typedef void* (*CrashingWeaponActivityFuncType)(void* a1);
 CrashingWeaponActivityFuncType CrashingWeaponActivityFunc0;
 CrashingWeaponActivityFuncType CrashingWeaponActivityFunc1;
-typedef bool (*DevTextBufferDumpToFileType)(uint64_t a1);
+typedef bool (*DevTextBufferDumpToFileType)(char* a1);
 DevTextBufferDumpToFileType DevTextBufferDumpToFileClient;
 
 ConVar* cl_devtextbuffer_enable;
@@ -30,7 +30,7 @@ void* CrashingWeaponActivityFunc1Hook(void* a1)
 	return CrashingWeaponActivityFunc1(a1);
 }
 
-bool DevTextBufferDumpToFileHookClient(uint64_t a1)
+bool DevTextBufferDumpToFileHookClient(char* a1)
 {
 	// Prevent arbitrary file writes from squirrel
 	if (!cl_devtextbuffer_enable->m_Value.m_nValue)
