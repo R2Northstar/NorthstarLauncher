@@ -9,7 +9,6 @@ CrashingWeaponActivityFuncType CrashingWeaponActivityFunc1;
 typedef bool (*DevTextBufferDumpToFileType)(int a1);
 DevTextBufferDumpToFileType DevTextBufferDumpToFileClient;
 
-
 void* CrashingWeaponActivityFunc0Hook(void* a1)
 {
 	// this return is safe, other functions that use this value seemingly dont care about it being null
