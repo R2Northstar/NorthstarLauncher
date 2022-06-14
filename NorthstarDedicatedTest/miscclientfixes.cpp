@@ -9,6 +9,8 @@ CrashingWeaponActivityFuncType CrashingWeaponActivityFunc0;
 CrashingWeaponActivityFuncType CrashingWeaponActivityFunc1;
 typedef bool (*DevTextBufferDumpToFileType)(char* a1);
 DevTextBufferDumpToFileType DevTextBufferDumpToFileClient;
+typedef bool (*DevTextBufferWriteType)(char* a1);
+DevTextBufferWriteType DevTextBufferWrite;
 
 ConVar* cl_devtextbuffer_enable;
 
@@ -35,10 +37,21 @@ bool DevTextBufferDumpToFileHookClient(char* a1)
 	// Prevent arbitrary file writes from squirrel
 	if (!cl_devtextbuffer_enable->m_Value.m_nValue)
 	{
-		spdlog::info("Blocking write using DevTextBuffer because cl_devtextbufferenable was 0");
+		spdlog::info("Blocking dump to file \"{}\" from DevTextBuffer because cl_devtextbufferenable was 0", a1);
 		return true;
 	}
 	return DevTextBufferDumpToFileClient(a1);
+}
+
+bool DevTextBufferWriteHook(char* a1)
+{
+	// Prevent arbitrary file writes from squirrel
+	if (!cl_devtextbuffer_enable->m_Value.m_nValue)
+	{
+		spdlog::info("Blocking write to DevTextBuffer because cl_devtextbufferenable was 0");
+		return true;
+	}
+	return DevTextBufferWrite(a1);
 }
 
 void InitialiseMiscClientFixes(HMODULE baseAddress)
@@ -61,6 +74,7 @@ void InitialiseMiscClientFixes(HMODULE baseAddress)
 
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x39D9F0, &DevTextBufferDumpToFileHookClient, reinterpret_cast<LPVOID*>(&DevTextBufferDumpToFileClient));
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x390CA0, &DevTextBufferWriteHook, reinterpret_cast<LPVOID*>(&DevTextBufferWrite));
 
 	// experimental: allow cl_extrapolate to be enabled without cheats
 	{
