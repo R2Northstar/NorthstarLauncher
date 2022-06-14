@@ -45,6 +45,7 @@
 #include <string.h>
 #include "version.h"
 #include "pch.h"
+#include "getentbyindexfix.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -289,6 +290,7 @@ bool InitialiseNorthstar()
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
 	AddDllLoadCallback("server.dll", InitialiseServerEmit_Blocker);
+	AddDllLoadCallback("server.dll", InitialiseGetEntByIndexServerFix);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
