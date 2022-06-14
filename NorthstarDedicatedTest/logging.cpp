@@ -446,18 +446,11 @@ const char* COM_FormatSeconds(int seconds)
 
 void __fastcall Host_Status_PrintClient_Hook(__int64 client, char addresses, void (*print)(const char*, ...))
 {
-	__int64 nci;
-	int state;
+	__int64 playerUid = *(unsigned __int64*)(client + 185928);
+	DWORD playerSlot = *(DWORD*)(client + 16);
+	__int64 nci = *(unsigned __int64*)(client + 656);
+	int state = *(DWORD*)(client + 672);
 	const char* active;
-	int rate;
-	int loss;
-	int ping;
-	__int64 playerUid;
-	const char* connected;
-	char* address;
-	DWORD playerSlot;
-	nci = *(unsigned __int64*)(client + 656);
-	state = *(DWORD*)(client + 672);
 
 	if (state == 8)
 	{
@@ -473,25 +466,23 @@ void __fastcall Host_Status_PrintClient_Hook(__int64 client, char addresses, voi
 	{
 		active = "spawning";
 	}
-	playerUid = *(unsigned __int64*)(client + 185928);
+
 	if (nci)
 	{
-		playerSlot = *(DWORD*)(client + 16);
-		rate = *(unsigned int*)(nci + 232);
-		loss = (int)((*(float*)(6712 * 1 + nci + 500)) * 100.0);
-		ping = (int)((*(float*)(6712 * 0 + nci + 508)) * 1000.0);
-		connected = COM_FormatSeconds(GetTimeConnected(nci));
-		print(
-			"# %i \"%s\" %lld %s %i %i %s %d", (unsigned int)(playerSlot + 1), client + 22, playerUid, connected, ping, loss, active, rate);
+		int rate = *(unsigned int*)(nci + 232);
+		int loss = ((*(float*)(6712 * 1 + nci + 500)) * 100.0);
+		int ping = ((*(float*)(6712 * 0 + nci + 508)) * 1000.0);
+		const char* connected = COM_FormatSeconds(GetTimeConnected(nci));
+		print("# %i \"%s\" %lld %s %i %i %s %d", (unsigned int)(playerSlot + 1), client + 22, playerUid, connected, ping, loss, active, rate);
 		if (addresses)
 		{
-			address = GetAddress(nci);
+			char* address = GetAddress(nci);
 			print(" %s", address);
 		}
 	}
 	else
 	{
-		print("#%2i \"%s\" %lld %s", (unsigned int)(*(DWORD*)(client + 16) + 1), client + 22, playerUid, active);
+		print("#%2i \"%s\" %lld %s", (unsigned int)(playerSlot + 1), client + 22, playerUid, active);
 	}
 	print("\n");
 }
