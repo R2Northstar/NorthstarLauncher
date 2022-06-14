@@ -478,8 +478,8 @@ void __fastcall Host_Status_PrintClient_Hook(__int64 client, char addresses, voi
 	{
 		playerSlot = *(DWORD*)(client + 16);
 		rate = *(unsigned int*)(nci + 232);
-		loss = (int)(float)((*(float*)(6712 * 1 + nci + 500)) * 100.0);
-		ping = (int)(float)((*(float*)(6712 * 0 + nci + 508)) * 1000.0);
+		loss = (int)((*(float*)(6712 * 1 + nci + 500)) * 100.0);
+		ping = (int)((*(float*)(6712 * 0 + nci + 508)) * 1000.0);
 		connected = COM_FormatSeconds(GetTimeConnected(nci));
 		print(
 			"# %i \"%s\" %lld %s %i %i %s %d", (unsigned int)(playerSlot + 1), client + 22, playerUid, connected, ping, loss, active, rate);
