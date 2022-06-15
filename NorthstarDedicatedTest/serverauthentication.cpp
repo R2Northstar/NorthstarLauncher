@@ -479,23 +479,9 @@ CCommand__TokenizeType CCommand__Tokenize;
 
 // this function checks the command against several "engine client" commands.
 // the full array is named "s_clcommands" and can be found at 0x7C5EF0 in engine.dll and is as follows:
-// status
-// pause
-// recheck
-// migrateme
-// server_single_frame
-// setpause
-// unpause
-// ping
-// rpt_server_enable
-// rpt_client_enable
-// rpt
-// rpt_connect
-// rpt_password
-// rpt_screenshot
-// rpt_download_log
-// ss_connect
-// ss_disconnect
+// status, pause, recheck, migrateme, server_single_frame, setpause, unpause,
+// ping, rpt_server_enable, rpt_client_enable, rpt, rpt_connect, rpt_password,
+// rpt_screenshot, rpt_download_log, ss_connect, ss_disconnect
 typedef bool (*CGameClient__IsEngineClientCommandType)(__int64 thisptr_unused, const CCommand& args);
 CGameClient__IsEngineClientCommandType CGameClient__IsEngineClientCommand;
 
