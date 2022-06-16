@@ -553,7 +553,7 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 			(Plat_FloatTime() * 1000) - (startTime * 1000);
 
 		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >=
-			Cvar_net_chan_limit_msec_per_sec->GetInt() &&
+				Cvar_net_chan_limit_msec_per_sec->GetInt() &&
 			strcmp(GetCurrentPlaylistName(), "solo") != 0)
 		{
 			spdlog::warn(
