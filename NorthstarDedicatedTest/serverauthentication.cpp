@@ -257,7 +257,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 		std::fstream pdataStream(pdataPath, std::ios_base::in);
 		if (pdataStream.fail()) // file doesn't exist, use placeholder
-			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata");
+			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
 		// get file length
 		pdataStream.seekg(0, pdataStream.end);
@@ -666,7 +666,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 		new ConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
 	Cvar_net_chan_limit_msec_per_sec = new ConVar(
 		"net_chan_limit_msec_per_sec",
-		"0",
+		"100",
 		FCVAR_GAMEDLL,
 		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	Cvar_ns_player_auth_port = new ConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
