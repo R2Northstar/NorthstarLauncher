@@ -65,6 +65,25 @@ namespace NSMem
 	/// <param name="ptr">Address to check (start of region)</param>
 	/// <param name="size">Size of the region to check</param>
 	bool IsMemoryReadable(void* ptr, size_t size);
+
+	/// <summary>
+	/// Offset a pointer and convert it to a type
+	/// </summary>
+	/// <returns>(T)(uintptr_t(base) + offset)</returns>
+	template <typename T> T GetOffsetPtr(void* base, int64_t offset)
+	{
+		return (T)(uintptr_t(base) + offset);
+	}
+
+	/// <summary>
+	/// Offset a pointer and dereference it as a type
+	/// </summary>
+	/// <returns>*(T*)(uintptr_t(base) + offset)</returns>
+	template <typename T> T& GetOffsetVal(void* base, int64_t offset)
+	{
+		return *(T*)(uintptr_t(base) + offset);
+	}
+
 } // namespace NSMem
 
 #pragma region KHOOK
