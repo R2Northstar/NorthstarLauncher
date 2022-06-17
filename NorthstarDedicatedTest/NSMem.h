@@ -119,32 +119,11 @@ struct KHook
 		_allHooks.push_back(this);
 	}
 
-	bool Setup()
-	{
-		targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
-		if (!targetFuncAddr)
-			return false;
-
-		return MH_CreateHook(targetFuncAddr, hookFunc, original) == MH_OK;
-	}
+	// Actually create/enable the hook
+	bool Setup();
 
 	// Returns true if succeeded
-	static bool InitAllHooks()
-	{
-		for (KHook* hook : _allHooks)
-		{
-			if (hook->Setup())
-			{
-				spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
-	}
+	static bool InitAllHooks();
 };
 
 // Convenient macro for initializing a KHook as a function declaration in a single line

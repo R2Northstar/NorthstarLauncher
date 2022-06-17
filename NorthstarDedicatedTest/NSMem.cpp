@@ -142,3 +142,30 @@ bool NSMem::IsMemoryReadable(void* ptr, size_t size)
 
 	return (memInfo.State & MEM_COMMIT) && !(memInfo.Protect & PAGE_NOACCESS);
 }
+
+bool KHook::Setup()
+{
+	targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+	if (!targetFuncAddr)
+		return false;
+
+	return MH_CreateHook(targetFuncAddr, hookFunc, original) == MH_OK;
+}
+
+bool KHook::InitAllHooks()
+{
+
+	for (KHook* hook : _allHooks)
+	{
+		if (hook->Setup())
+		{
+			spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
+}
