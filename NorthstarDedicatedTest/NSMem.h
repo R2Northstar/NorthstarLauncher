@@ -6,7 +6,7 @@
 #pragma region Pattern Scanning
 namespace NSMem
 {
-	std::vector<int> HexBytesToString(const char* str);
+	std::vector<int> StringToHexBytes(const char* str);
 
 	void* PatternScan(void* module, const int* pattern, int patternSize, int offset);
 

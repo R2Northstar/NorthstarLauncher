@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "NSMem.h"
 
-std::vector<int> NSMem::HexBytesToString(const char* str)
+std::vector<int> NSMem::StringToHexBytes(const char* str)
 {
 	std::vector<int> patternNums;
 	int size = strlen(str);
@@ -90,7 +90,7 @@ void* NSMem::PatternScan(void* module, const int* pattern, int patternSize, int 
 
 void* NSMem::PatternScan(const char* moduleName, const char* pattern, int offset)
 {
-	std::vector<int> patternNums = HexBytesToString(pattern);
+	std::vector<int> patternNums = StringToHexBytes(pattern);
 
 	return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
 }
@@ -109,7 +109,7 @@ void NSMem::BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
 
 void NSMem::BytePatch(uintptr_t address, const char* bytesStr)
 {
-	std::vector<int> byteInts = HexBytesToString(bytesStr);
+	std::vector<int> byteInts = StringToHexBytes(bytesStr);
 	std::vector<BYTE> bytes;
 	for (int v : byteInts)
 		bytes.push_back(v);
