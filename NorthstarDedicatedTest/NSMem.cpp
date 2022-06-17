@@ -154,7 +154,6 @@ bool KHook::Setup()
 		targetFuncAddr = NSMem::GetOffsetPtr<void*>(GetModuleHandleA(targetFunc.moduleName), targetFunc.offset);
 	}
 	
-
 	if (!targetFuncAddr)
 		return false;
 

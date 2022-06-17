@@ -145,6 +145,13 @@ struct KHook
 };
 
 // Convenient macro for initializing a KHook as a function declaration in a single line
+// Supports both pattern scans and static module offsets
+// 
+// EXAMPLE 1 (using pattern scan):
+//	KHOOK(GetPlayerName, { "engine.dll", "48 83 EC ? ? 28 48" }, const char*, __fastcall, (void* playerPtr)) { ...
+// 
+// EXAMPLE 2 (using a static module offset):
+//	KHOOK(Script_GetEntByIndex, { "server.dll", 0x2A8A50 }, void*, __fastcall, (int entityIndex)) { ...
 #define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                         \
 	returnType convention hk##name args;                                                                                                   \
 	auto o##name = (returnType(convention*) args)0;                                                                                        \
