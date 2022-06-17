@@ -92,10 +92,28 @@ namespace NSMem
 struct KHookPatternInfo
 {
 	const char *moduleName, *pattern;
-	int offset = 0;
 
-	KHookPatternInfo(const char* moduleName, const char* pattern, int offset = 0) : moduleName(moduleName), pattern(pattern), offset(offset)
+	// Will be used as static module offset if "pattern" is null
+	int64_t offset;
+
+	// Construct as a pattern scan
+	KHookPatternInfo(const char* moduleName, const char* pattern, int64_t offset = 0)
 	{
+		this->moduleName = moduleName;
+		this->pattern = pattern;
+		this->offset = offset;
+	}
+
+	// Construct as a static module offset
+	KHookPatternInfo(const char* moduleName, int64_t offset = 0)
+	{
+		this->moduleName = moduleName;
+		this->pattern = nullptr;
+		this->offset = offset;
+	}
+
+	bool IsPatternScan() {
+		return pattern != nullptr;
 	}
 };
 

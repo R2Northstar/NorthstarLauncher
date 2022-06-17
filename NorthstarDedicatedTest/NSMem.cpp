@@ -145,7 +145,16 @@ bool NSMem::IsMemoryReadable(void* ptr, size_t size)
 
 bool KHook::Setup()
 {
-	targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+	if (targetFunc.IsPatternScan())
+	{
+		targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
+	}
+	else
+	{
+		targetFuncAddr = NSMem::GetOffsetPtr<void*>(GetModuleHandleA(targetFunc.moduleName), targetFunc.offset);
+	}
+	
+
 	if (!targetFuncAddr)
 		return false;
 
