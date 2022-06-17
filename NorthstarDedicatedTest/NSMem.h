@@ -89,7 +89,7 @@ namespace NSMem
 #pragma region KHOOK
 // Info for KHook to use when finding where you would like to hook
 // Currently stores pattern scan information only
-struct KHookPatternInfo
+struct KHookFuncInfo
 {
 	const char *moduleName, *pattern;
 
@@ -97,7 +97,7 @@ struct KHookPatternInfo
 	int64_t offset;
 
 	// Construct as a pattern scan
-	KHookPatternInfo(const char* moduleName, const char* pattern, int64_t offset = 0)
+	KHookFuncInfo(const char* moduleName, const char* pattern, int64_t offset = 0)
 	{
 		this->moduleName = moduleName;
 		this->pattern = pattern;
@@ -105,7 +105,7 @@ struct KHookPatternInfo
 	}
 
 	// Construct as a static module offset
-	KHookPatternInfo(const char* moduleName, int64_t offset = 0)
+	KHookFuncInfo(const char* moduleName, int64_t offset = 0)
 	{
 		this->moduleName = moduleName;
 		this->pattern = nullptr;
@@ -121,7 +121,7 @@ struct KHookPatternInfo
 // Does not do anything until Setup() is called
 struct KHook
 {
-	KHookPatternInfo targetFunc;
+	KHookFuncInfo targetFunc;
 	void* targetFuncAddr;
 	void* hookFunc;
 	void** original;
@@ -130,7 +130,7 @@ struct KHook
 	static inline std::vector<KHook*> _allHooks;
 
 	// NOTE: Will add this instance to KHook::_allHooks after construction
-	KHook(KHookPatternInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
+	KHook(KHookFuncInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
 	{
 		this->hookFunc = hookFunc;
 		this->original = original;
@@ -148,6 +148,6 @@ struct KHook
 #define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                         \
 	returnType convention hk##name args;                                                                                                   \
 	auto o##name = (returnType(convention*) args)0;                                                                                        \
-	KHook k##name = KHook(KHookPatternInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                  \
+	KHook k##name = KHook(KHookFuncInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                  \
 	returnType convention hk##name args
 #pragma endregion
