@@ -136,6 +136,12 @@
     <Filter Include="Header Files\Shared\ExploitFixes">
       <UniqueIdentifier>{7f609cee-d2c0-46a2-b06e-83b9f0511915}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Shared\Memory">
+      <UniqueIdentifier>{4d6b2bdf-7f2c-40bc-9365-f02d5ceff21f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shared\Memory">
+      <UniqueIdentifier>{2a02017f-85ce-4836-a6f5-0c0f657a9aa0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1513,7 +1519,7 @@
       <Filter>Header Files\Shared\ExploitFixes</Filter>
     </ClInclude>
     <ClInclude Include="NSMem.h">
-      <Filter>Header Files\Shared\ExploitFixes</Filter>
+      <Filter>Header Files\Shared\Memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1681,6 +1687,9 @@
     </ClCompile>
     <ClCompile Include="clientruihooks.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="NSMem.cpp">
+      <Filter>Source Files\Shared\Memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
