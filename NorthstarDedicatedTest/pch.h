@@ -46,3 +46,9 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 	}
 
 #endif
+
+// Example usage: GET_OFFSET(int, playerPtr, 0x69) translates to *(int*)((uintptr_t)playerPtr + 0x69)
+#define GET_OFFSET(type, ptr, offset) (*(type*)(uintptr_t(ptr) + offset))
+
+// Just like GET_OFFSET, but doesn't dereference
+#define GET_OFFSET_PTR(type, ptr, offset) ((type*)(uintptr_t(ptr) + offset))

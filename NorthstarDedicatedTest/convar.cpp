@@ -33,17 +33,17 @@ CvarIsFlagSetType CvarIsFlagSet;
 //-----------------------------------------------------------------------------
 void InitialiseConVars(HMODULE baseAddress)
 {
-	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
-	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
+	conVarMalloc = (ConVarMallocType)(GET_OFFSET_PTR(void, baseAddress, 0x415C20));
+	conVarRegister = (ConVarRegisterType)(GET_OFFSET_PTR(void, baseAddress, 0x417230));
 
-	g_pConVar_Vtable = (char*)baseAddress + 0x67FD28;
-	g_pIConVar_Vtable = (char*)baseAddress + 0x67FDC8;
+	g_pConVar_Vtable = GET_OFFSET_PTR(void, baseAddress, 0x67FD28);
+	g_pIConVar_Vtable = GET_OFFSET_PTR(void, baseAddress, 0x67FDC8);
 
 	g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	g_pCVar = *g_pCVarInterface;
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417FA0, &ConVar::IsFlagSet, reinterpret_cast<LPVOID*>(&CvarIsFlagSet));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0x417FA0), &ConVar::IsFlagSet, reinterpret_cast<LPVOID*>(&CvarIsFlagSet));
 }
 
 //-----------------------------------------------------------------------------

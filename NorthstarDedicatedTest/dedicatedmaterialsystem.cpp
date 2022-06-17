@@ -48,12 +48,13 @@ HRESULT __stdcall D3D11CreateDeviceHook(
 void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 {
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xD9A0E, &D3D11CreateDeviceHook, reinterpret_cast<LPVOID*>(&D3D11CreateDevice));
+	ENABLER_CREATEHOOK(
+		hook, GET_OFFSET_PTR(void, baseAddress, 0xD9A0E), &D3D11CreateDeviceHook, reinterpret_cast<LPVOID*>(&D3D11CreateDevice));
 
 	// not using these for now since they're related to nopping renderthread/gamewindow i.e. very hard
 	//{
 	//	// function that launches renderthread
-	//	char* ptr = (char*)baseAddress + 0x87047;
+	//	char* ptr = GET_OFFSET_PTR(void, baseAddress, 0x87047);
 	//	TempReadWrite rw(ptr);
 	//
 	//	// make it not launch renderthread
@@ -67,7 +68,7 @@ void InitialiseDedicatedMaterialSystem(HMODULE baseAddress)
 	//
 	//{
 	//	// some function that waits on renderthread job
-	//	char* ptr = (char*)baseAddress + 0x87d00;
+	//	char* ptr = GET_OFFSET_PTR(void, baseAddress, 0x87d00);
 	//	TempReadWrite rw(ptr);
 	//
 	//	// return immediately
@@ -118,6 +119,7 @@ void InitialiseDedicatedRtechGame(HMODULE baseAddress)
 
 	HookEnabler hook;
 	// unfortunately this is unstable, seems to freeze when changing maps
-	// ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xB0F0, &PakLoadAPI__LoadRpakHook, reinterpret_cast<LPVOID*>(&PakLoadAPI__LoadRpak));
-	// ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xB170, &PakLoadAPI__LoadRpak2Hook, reinterpret_cast<LPVOID*>(&PakLoadAPI__LoadRpak2));
+	// ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0xB0F0), &PakLoadAPI__LoadRpakHook,
+	// reinterpret_cast<LPVOID*>(&PakLoadAPI__LoadRpak)); ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0xB170),
+	// &PakLoadAPI__LoadRpak2Hook, reinterpret_cast<LPVOID*>(&PakLoadAPI__LoadRpak2));
 }

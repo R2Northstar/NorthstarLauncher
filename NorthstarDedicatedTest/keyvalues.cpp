@@ -17,7 +17,10 @@ void InitialiseKeyValues(HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x426C30),
+		&KeyValues__LoadFromBufferHook,
+		reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
 }
 
 void* savedFilesystemPtr;

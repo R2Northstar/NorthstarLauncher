@@ -157,18 +157,18 @@ void InitialiseDebugOverlay(HMODULE baseAddress)
 		return;
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xABCB0, &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0xABCB0), &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));
 
-	RenderLine = reinterpret_cast<RenderLineType>((char*)baseAddress + 0x192A70);
+	RenderLine = reinterpret_cast<RenderLineType>(GET_OFFSET_PTR(void, baseAddress, 0x192A70));
 
-	RenderBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x192520);
+	RenderBox = reinterpret_cast<RenderBoxType>(GET_OFFSET_PTR(void, baseAddress, 0x192520));
 
-	RenderWireframeBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x193DA0);
+	RenderWireframeBox = reinterpret_cast<RenderBoxType>(GET_OFFSET_PTR(void, baseAddress, 0x193DA0));
 
 	sEngineModule = baseAddress;
 
 	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory
-	ConVar* Cvar_enable_debug_overlays = (ConVar*)((char*)baseAddress + 0x10DB0990);
+	ConVar* Cvar_enable_debug_overlays = (ConVar*)(GET_OFFSET_PTR(void, baseAddress, 0x10DB0990));
 	Cvar_enable_debug_overlays->SetValue(false);
 	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
 	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);

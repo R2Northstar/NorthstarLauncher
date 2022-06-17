@@ -43,5 +43,6 @@ void InitialiseClientAuthHooks(HMODULE baseAddress)
 		"whether the user has agreed to send their origin token to the northstar masterserver");
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1843A0, &AuthWithStryderHook, reinterpret_cast<LPVOID*>(&AuthWithStryder));
+	ENABLER_CREATEHOOK(
+		hook, GET_OFFSET_PTR(void, baseAddress, 0x1843A0), &AuthWithStryderHook, reinterpret_cast<LPVOID*>(&AuthWithStryder));
 }

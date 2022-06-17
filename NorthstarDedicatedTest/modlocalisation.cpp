@@ -33,5 +33,6 @@ bool AddLocalisationFileHook(void* g_pVguiLocalize, const char* path, const char
 void InitialiseModLocalisation(HMODULE baseAddress)
 {
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x6D80, AddLocalisationFileHook, reinterpret_cast<LPVOID*>(&AddLocalisationFile));
+	ENABLER_CREATEHOOK(
+		hook, GET_OFFSET_PTR(void, baseAddress, 0x6D80), AddLocalisationFileHook, reinterpret_cast<LPVOID*>(&AddLocalisationFile));
 }

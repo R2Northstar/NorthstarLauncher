@@ -107,7 +107,7 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x12B00,
+		GET_OFFSET_PTR(void, baseAddress, 0x12B00),
 		&SQPrintHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientSQPrint)); // client print function
 	RegisterConCommand(
@@ -117,49 +117,52 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 	g_UISquirrelManager = new SquirrelManager<ScriptContext::UI>();
 
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x12BA0, &SQPrintHook<ScriptContext::UI>, reinterpret_cast<LPVOID*>(&UISQPrint)); // ui print function
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x12BA0),
+		&SQPrintHook<ScriptContext::UI>,
+		reinterpret_cast<LPVOID*>(&UISQPrint)); // ui print function
 	RegisterConCommand("script_ui", ExecuteCodeCommand<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
 
 	// inits for both client and ui, since they share some functions
-	ClientSq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	ClientSq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
-	ClientSq_call = (sq_callType)((char*)baseAddress + 0x8650);
-	ClientRegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
+	ClientSq_compilebuffer = (sq_compilebufferType)(GET_OFFSET_PTR(void, baseAddress, 0x3110));
+	ClientSq_pushroottable = (sq_pushroottableType)(GET_OFFSET_PTR(void, baseAddress, 0x5860));
+	ClientSq_call = (sq_callType)(GET_OFFSET_PTR(void, baseAddress, 0x8650));
+	ClientRegisterSquirrelFunc = (RegisterSquirrelFuncType)(GET_OFFSET_PTR(void, baseAddress, 0x108E0));
 
-	ClientSq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	ClientSq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	ClientSq_newarray = (sq_newarrayType)(GET_OFFSET_PTR(void, baseAddress, 0x39F0));
+	ClientSq_arrayappend = (sq_arrayappendType)(GET_OFFSET_PTR(void, baseAddress, 0x3C70));
 
-	ClientSq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	ClientSq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	ClientSq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	ClientSq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	ClientSq_pusherror = (sq_pusherrorType)((char*)baseAddress + 0x8470);
+	ClientSq_pushstring = (sq_pushstringType)(GET_OFFSET_PTR(void, baseAddress, 0x3440));
+	ClientSq_pushinteger = (sq_pushintegerType)(GET_OFFSET_PTR(void, baseAddress, 0x36A0));
+	ClientSq_pushfloat = (sq_pushfloatType)(GET_OFFSET_PTR(void, baseAddress, 0x3800));
+	ClientSq_pushbool = (sq_pushboolType)(GET_OFFSET_PTR(void, baseAddress, 0x3710));
+	ClientSq_pusherror = (sq_pusherrorType)(GET_OFFSET_PTR(void, baseAddress, 0x8470));
 
-	ClientSq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
-	ClientSq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
-	ClientSq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
-	ClientSq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
+	ClientSq_getstring = (sq_getstringType)(GET_OFFSET_PTR(void, baseAddress, 0x60C0));
+	ClientSq_getinteger = (sq_getintegerType)(GET_OFFSET_PTR(void, baseAddress, 0x60E0));
+	ClientSq_getfloat = (sq_getfloatType)(GET_OFFSET_PTR(void, baseAddress, 0x6100));
+	ClientSq_getbool = (sq_getboolType)(GET_OFFSET_PTR(void, baseAddress, 0x6130));
 
-	ClientSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
+	ClientSq_sq_get = (sq_getType)(GET_OFFSET_PTR(void, baseAddress, 0x7C30));
 
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x26130,
+		GET_OFFSET_PTR(void, baseAddress, 0x26130),
 		&CreateNewVMHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientCreateNewVM)); // client createnewvm function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x26E70,
+		GET_OFFSET_PTR(void, baseAddress, 0x26E70),
 		&DestroyVMHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientDestroyVM)); // client destroyvm function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x79A50,
+		GET_OFFSET_PTR(void, baseAddress, 0x79A50),
 		&ScriptCompileErrorHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientSQCompileError)); // client compileerror function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x10190,
+		GET_OFFSET_PTR(void, baseAddress, 0x10190),
 		&CallScriptInitCallbackHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientCallScriptInitCallback)); // client callscriptinitcallback function
 }
@@ -170,50 +173,50 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 
 	HookEnabler hook;
 
-	ServerSq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	ServerSq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5840);
-	ServerSq_call = (sq_callType)((char*)baseAddress + 0x8620);
-	ServerRegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x1DD10);
+	ServerSq_compilebuffer = (sq_compilebufferType)(GET_OFFSET_PTR(void, baseAddress, 0x3110));
+	ServerSq_pushroottable = (sq_pushroottableType)(GET_OFFSET_PTR(void, baseAddress, 0x5840));
+	ServerSq_call = (sq_callType)(GET_OFFSET_PTR(void, baseAddress, 0x8620));
+	ServerRegisterSquirrelFunc = (RegisterSquirrelFuncType)(GET_OFFSET_PTR(void, baseAddress, 0x1DD10));
 
-	ServerSq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	ServerSq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	ServerSq_newarray = (sq_newarrayType)(GET_OFFSET_PTR(void, baseAddress, 0x39F0));
+	ServerSq_arrayappend = (sq_arrayappendType)(GET_OFFSET_PTR(void, baseAddress, 0x3C70));
 
-	ServerSq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	ServerSq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	ServerSq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	ServerSq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	ServerSq_pusherror = (sq_pusherrorType)((char*)baseAddress + 0x8440);
+	ServerSq_pushstring = (sq_pushstringType)(GET_OFFSET_PTR(void, baseAddress, 0x3440));
+	ServerSq_pushinteger = (sq_pushintegerType)(GET_OFFSET_PTR(void, baseAddress, 0x36A0));
+	ServerSq_pushfloat = (sq_pushfloatType)(GET_OFFSET_PTR(void, baseAddress, 0x3800));
+	ServerSq_pushbool = (sq_pushboolType)(GET_OFFSET_PTR(void, baseAddress, 0x3710));
+	ServerSq_pusherror = (sq_pusherrorType)(GET_OFFSET_PTR(void, baseAddress, 0x8440));
 
-	ServerSq_getstring = (sq_getstringType)((char*)baseAddress + 0x60A0);
-	ServerSq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60C0);
-	ServerSq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x60E0);
-	ServerSq_getbool = (sq_getboolType)((char*)baseAddress + 0x6110);
+	ServerSq_getstring = (sq_getstringType)(GET_OFFSET_PTR(void, baseAddress, 0x60A0));
+	ServerSq_getinteger = (sq_getintegerType)(GET_OFFSET_PTR(void, baseAddress, 0x60C0));
+	ServerSq_getfloat = (sq_getfloatType)(GET_OFFSET_PTR(void, baseAddress, 0x60E0));
+	ServerSq_getbool = (sq_getboolType)(GET_OFFSET_PTR(void, baseAddress, 0x6110));
 
-	ServerSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C00);
+	ServerSq_sq_get = (sq_getType)(GET_OFFSET_PTR(void, baseAddress, 0x7C00));
 
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x1FE90,
+		GET_OFFSET_PTR(void, baseAddress, 0x1FE90),
 		&SQPrintHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerSQPrint)); // server print function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x260E0,
+		GET_OFFSET_PTR(void, baseAddress, 0x260E0),
 		&CreateNewVMHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerCreateNewVM)); // server createnewvm function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x26E20,
+		GET_OFFSET_PTR(void, baseAddress, 0x26E20),
 		&DestroyVMHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerDestroyVM)); // server destroyvm function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x799E0,
+		GET_OFFSET_PTR(void, baseAddress, 0x799E0),
 		&ScriptCompileErrorHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerSQCompileError)); // server compileerror function
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x1D5C0,
+		GET_OFFSET_PTR(void, baseAddress, 0x1D5C0),
 		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerCallScriptInitCallback)); // server callscriptinitcallback function
 

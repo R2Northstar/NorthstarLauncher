@@ -19,7 +19,7 @@ void RegisterConCommand(const char* name, void (*callback)(const CCommand&), con
 
 void InitialiseConCommands(HMODULE baseAddress)
 {
-	conCommandConstructor = (ConCommandConstructorType)((char*)baseAddress + 0x415F60);
+	conCommandConstructor = (ConCommandConstructorType)(GET_OFFSET_PTR(void, baseAddress, 0x415F60));
 	AddMiscConCommands();
 }
 

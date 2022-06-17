@@ -682,25 +682,44 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x114430, &CBaseServer__ConnectClientHook, reinterpret_cast<LPVOID*>(&CBaseServer__ConnectClient));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x101740, &CBaseClient__ConnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Connect));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x114430),
+		&CBaseServer__ConnectClientHook,
+		reinterpret_cast<LPVOID*>(&CBaseServer__ConnectClient));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x100F80, &CBaseClient__ActivatePlayerHook, reinterpret_cast<LPVOID*>(&CBaseClient__ActivatePlayer));
-	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x1012C0, &CBaseClient__DisconnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Disconnect));
+		hook, GET_OFFSET_PTR(void, baseAddress, 0x101740), &CBaseClient__ConnectHook, reinterpret_cast<LPVOID*>(&CBaseClient__Connect));
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x1022E0,
+		GET_OFFSET_PTR(void, baseAddress, 0x100F80),
+		&CBaseClient__ActivatePlayerHook,
+		reinterpret_cast<LPVOID*>(&CBaseClient__ActivatePlayer));
+	ENABLER_CREATEHOOK(
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x1012C0),
+		&CBaseClient__DisconnectHook,
+		reinterpret_cast<LPVOID*>(&CBaseClient__Disconnect));
+	ENABLER_CREATEHOOK(
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x1022E0),
 		&CGameClient__ExecuteStringCommandHook,
 		reinterpret_cast<LPVOID*>(&CGameClient__ExecuteStringCommand));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x2140A0, &CNetChan___ProcessMessagesHook, reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x2140A0),
+		&CNetChan___ProcessMessagesHook,
+		reinterpret_cast<LPVOID*>(&CNetChan___ProcessMessages));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x104FB0, &CBaseClient__SendServerInfoHook, reinterpret_cast<LPVOID*>(&CBaseClient__SendServerInfo));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x104FB0),
+		&CBaseClient__SendServerInfoHook,
+		reinterpret_cast<LPVOID*>(&CBaseClient__SendServerInfo));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x117800, &ProcessConnectionlessPacketHook, reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x117800),
+		&ProcessConnectionlessPacketHook,
+		reinterpret_cast<LPVOID*>(&ProcessConnectionlessPacket));
 
-	CCommand__Tokenize = (CCommand__TokenizeType)((char*)baseAddress + 0x418380);
+	CCommand__Tokenize = (CCommand__TokenizeType)(GET_OFFSET_PTR(void, baseAddress, 0x418380));
 
 	uintptr_t ba = (uintptr_t)baseAddress;
 

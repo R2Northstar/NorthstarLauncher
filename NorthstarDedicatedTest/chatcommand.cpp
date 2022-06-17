@@ -31,7 +31,7 @@ void ConCommand_log(const CCommand& args)
 
 void InitialiseChatCommands(HMODULE baseAddress)
 {
-	ClientSayText = (ClientSayTextType)((char*)baseAddress + 0x54780);
+	ClientSayText = (ClientSayTextType)(GET_OFFSET_PTR(void, baseAddress, 0x54780));
 	RegisterConCommand("say", ConCommand_say, "Enters a message in public chat", FCVAR_CLIENTDLL);
 	RegisterConCommand("say_team", ConCommand_say_team, "Enters a message in team chat", FCVAR_CLIENTDLL);
 	RegisterConCommand("log", ConCommand_log, "Log a message to the local chat window", FCVAR_CLIENTDLL);

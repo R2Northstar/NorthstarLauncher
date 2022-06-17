@@ -234,8 +234,8 @@ void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
 {
 	g_PakLoadManager = new PakLoadManager;
 
-	g_pakLoadApi = *(PakLoadFuncs**)((char*)baseAddress + 0x5BED78);
-	pUnknownPakLoadSingleton = (void**)((char*)baseAddress + 0x7C5E20);
+	g_pakLoadApi = *(PakLoadFuncs**)(GET_OFFSET_PTR(void, baseAddress, 0x5BED78));
+	pUnknownPakLoadSingleton = (void**)(GET_OFFSET_PTR(void, baseAddress, 0x7C5E20));
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, g_pakLoadApi->LoadPakSync, &LoadPakSyncHook, reinterpret_cast<LPVOID*>(&LoadPakSyncOriginal));

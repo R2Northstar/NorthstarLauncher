@@ -380,16 +380,19 @@ void InitialiseBuildAINFileHooks(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x385E20, &CAI_NetworkBuilder__BuildHook, reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x3933A0, &LoadAINFileHook, reinterpret_cast<LPVOID*>(&LoadAINFile));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x385E20),
+		&CAI_NetworkBuilder__BuildHook,
+		reinterpret_cast<LPVOID*>(&CAI_NetworkBuilder__Build));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0x3933A0), &LoadAINFileHook, reinterpret_cast<LPVOID*>(&LoadAINFile));
 
-	pUnkStruct0Count = (int*)((char*)baseAddress + 0x1063BF8);
-	pppUnkNodeStruct0s = (UnkNodeStruct0***)((char*)baseAddress + 0x1063BE0);
+	pUnkStruct0Count = GET_OFFSET_PTR(int, baseAddress, 0x1063BF8);
+	pppUnkNodeStruct0s = GET_OFFSET_PTR(UnkNodeStruct0**, baseAddress, 0x1063BE0);
 
-	pUnkLinkStruct1Count = (int*)((char*)baseAddress + 0x1063AA8);
-	pppUnkStruct1s = (UnkLinkStruct1***)((char*)baseAddress + 0x1063A90);
-	pUnkServerMapversionGlobal = (char**)((char*)baseAddress + 0xBFBE08);
-	pMapName = (char*)baseAddress + 0x1053370;
+	pUnkLinkStruct1Count = GET_OFFSET_PTR(int, baseAddress, 0x1063AA8);
+	pppUnkStruct1s = GET_OFFSET_PTR(UnkLinkStruct1**, baseAddress, 0x1063A90);
+	pUnkServerMapversionGlobal = GET_OFFSET_PTR(char*, baseAddress, 0xBFBE08);
+	pMapName = GET_OFFSET_PTR(char, baseAddress, 0x1053370);
 
 	uintptr_t base = (uintptr_t)baseAddress;
 

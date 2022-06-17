@@ -72,5 +72,5 @@ void InitialiseLatencyFleX(HMODULE baseAddress)
 	Cvar_r_latencyflex = new ConVar("r_latencyflex", "1", FCVAR_ARCHIVE, "Whether or not to use LatencyFleX input latency reduction.");
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1952C0, &OnRenderStartHook, reinterpret_cast<LPVOID*>(&OnRenderStart));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0x1952C0), &OnRenderStartHook, reinterpret_cast<LPVOID*>(&OnRenderStart));
 }

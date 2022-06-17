@@ -172,24 +172,24 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 
 void InitialiseServerChatHooks_Engine(HMODULE baseAddress)
 {
-	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
+	g_pServerGameDLL = (CServerGameDLL*)(GET_OFFSET_PTR(void, baseAddress, 0x13F0AA98));
 }
 
 void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 {
-	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)((char*)baseAddress + 0x1595C0);
-	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)((char*)baseAddress + 0x26AA10);
-	CRecipientFilter__Construct = (CRecipientFilter__ConstructType)((char*)baseAddress + 0x1E9440);
-	CRecipientFilter__Destruct = (CRecipientFilter__DestructType)((char*)baseAddress + 0x1E9700);
-	CRecipientFilter__AddAllPlayers = (CRecipientFilter__AddAllPlayersType)((char*)baseAddress + 0x1E9940);
-	CRecipientFilter__AddRecipient = (CRecipientFilter__AddRecipientType)((char*)baseAddress + 0x1E9b30);
-	CRecipientFilter__MakeReliable = (CRecipientFilter__MakeReliableType)((char*)baseAddress + 0x1EA4E0);
+	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)(GET_OFFSET_PTR(void, baseAddress, 0x1595C0));
+	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)(GET_OFFSET_PTR(void, baseAddress, 0x26AA10));
+	CRecipientFilter__Construct = (CRecipientFilter__ConstructType)(GET_OFFSET_PTR(void, baseAddress, 0x1E9440));
+	CRecipientFilter__Destruct = (CRecipientFilter__DestructType)(GET_OFFSET_PTR(void, baseAddress, 0x1E9700));
+	CRecipientFilter__AddAllPlayers = (CRecipientFilter__AddAllPlayersType)(GET_OFFSET_PTR(void, baseAddress, 0x1E9940));
+	CRecipientFilter__AddRecipient = (CRecipientFilter__AddRecipientType)(GET_OFFSET_PTR(void, baseAddress, 0x1E9b30));
+	CRecipientFilter__MakeReliable = (CRecipientFilter__MakeReliableType)(GET_OFFSET_PTR(void, baseAddress, 0x1EA4E0));
 
-	UserMessageBegin = (UserMessageBeginType)((char*)baseAddress + 0x15C520);
-	MessageEnd = (MessageEndType)((char*)baseAddress + 0x158880);
-	MessageWriteByte = (MessageWriteByteType)((char*)baseAddress + 0x158A90);
-	MessageWriteString = (MessageWriteStringType)((char*)baseAddress + 0x158D00);
-	MessageWriteBool = (MessageWriteBoolType)((char*)baseAddress + 0x158A00);
+	UserMessageBegin = (UserMessageBeginType)(GET_OFFSET_PTR(void, baseAddress, 0x15C520));
+	MessageEnd = (MessageEndType)(GET_OFFSET_PTR(void, baseAddress, 0x158880));
+	MessageWriteByte = (MessageWriteByteType)(GET_OFFSET_PTR(void, baseAddress, 0x158A90));
+	MessageWriteString = (MessageWriteStringType)(GET_OFFSET_PTR(void, baseAddress, 0x158D00));
+	MessageWriteBool = (MessageWriteBoolType)(GET_OFFSET_PTR(void, baseAddress, 0x158A00));
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

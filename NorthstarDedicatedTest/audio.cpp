@@ -509,7 +509,7 @@ void InitialiseMilesAudioHooks(HMODULE baseAddress)
 
 	ENABLER_CREATEHOOK(
 		hook, (char*)milesAudioBase + 0xF110, &LoadSampleMetadata_Hook, reinterpret_cast<LPVOID*>(&LoadSampleMetadata_Original));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x57DAD0, &MilesLog_Hook, reinterpret_cast<LPVOID*>(&MilesLog_Original));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0x57DAD0), &MilesLog_Hook, reinterpret_cast<LPVOID*>(&MilesLog_Original));
 
-	MilesStopAll = (MilesStopAll_Type)((char*)baseAddress + 0x580850);
+	MilesStopAll = (MilesStopAll_Type)(GET_OFFSET_PTR(void, baseAddress, 0x580850));
 }

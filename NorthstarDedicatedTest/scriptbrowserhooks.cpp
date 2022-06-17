@@ -23,5 +23,5 @@ void InitialiseScriptExternalBrowserHooks(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x184E40, &OpenExternalWebBrowserHook, reinterpret_cast<LPVOID*>(&OpenExternalWebBrowser));
+		hook, GET_OFFSET_PTR(void, baseAddress, 0x184E40), &OpenExternalWebBrowserHook, reinterpret_cast<LPVOID*>(&OpenExternalWebBrowser));
 }

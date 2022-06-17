@@ -438,10 +438,10 @@ void LocalChatWriter::InsertDefaultFade()
 
 void InitialiseLocalChatWriter(HMODULE baseAddress)
 {
-	gGameSettings = (CGameSettings**)((char*)baseAddress + 0x11BAA48);
-	gChatFadeLength = (CGameFloatVar**)((char*)baseAddress + 0x11BAB78);
-	gChatFadeSustain = (CGameFloatVar**)((char*)baseAddress + 0x11BAC08);
-	CHudChat::allHuds = (CHudChat**)((char*)baseAddress + 0x11BA9E8);
+	gGameSettings = (CGameSettings**)(GET_OFFSET_PTR(void, baseAddress, 0x11BAA48));
+	gChatFadeLength = (CGameFloatVar**)(GET_OFFSET_PTR(void, baseAddress, 0x11BAB78));
+	gChatFadeSustain = (CGameFloatVar**)(GET_OFFSET_PTR(void, baseAddress, 0x11BAC08));
+	CHudChat::allHuds = (CHudChat**)(GET_OFFSET_PTR(void, baseAddress, 0x11BA9E8));
 
-	ConvertANSIToUnicode = (ConvertANSIToUnicodeType)((char*)baseAddress + 0x7339A0);
+	ConvertANSIToUnicode = (ConvertANSIToUnicodeType)(GET_OFFSET_PTR(void, baseAddress, 0x7339A0));
 }

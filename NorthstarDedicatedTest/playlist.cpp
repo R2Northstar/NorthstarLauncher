@@ -85,13 +85,25 @@ void InitialisePlaylistHooks(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x222180, &Onclc_SetPlaylistVarOverrideHook, reinterpret_cast<LPVOID*>(&Onclc_SetPlaylistVarOverride));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x222180),
+		&Onclc_SetPlaylistVarOverrideHook,
+		reinterpret_cast<LPVOID*>(&Onclc_SetPlaylistVarOverride));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x18ED00, &SetPlaylistVarOverrideHook, reinterpret_cast<LPVOID*>(&SetPlaylistVarOverrideOriginal));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x18ED00),
+		&SetPlaylistVarOverrideHook,
+		reinterpret_cast<LPVOID*>(&SetPlaylistVarOverrideOriginal));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x18C680, &GetCurrentPlaylistVarHook, reinterpret_cast<LPVOID*>(&GetCurrentPlaylistVarOriginal));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x18C680),
+		&GetCurrentPlaylistVarHook,
+		reinterpret_cast<LPVOID*>(&GetCurrentPlaylistVarOriginal));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x18C430, &GetCurrentGamemodeMaxPlayersHook, reinterpret_cast<LPVOID*>(&GetCurrentGamemodeMaxPlayers));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x18C430),
+		&GetCurrentGamemodeMaxPlayersHook,
+		reinterpret_cast<LPVOID*>(&GetCurrentGamemodeMaxPlayers));
 
 	uintptr_t ba = (uintptr_t)baseAddress;
 

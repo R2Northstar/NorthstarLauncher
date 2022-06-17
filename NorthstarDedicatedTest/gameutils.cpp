@@ -44,23 +44,23 @@ GetBaseLocalClientType GetBaseLocalClient;
 
 void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 {
-	Cbuf_GetCurrentPlayer = (Cbuf_GetCurrentPlayerType)((char*)baseAddress + 0x120630);
-	Cbuf_AddText = (Cbuf_AddTextType)((char*)baseAddress + 0x1203B0);
-	Cbuf_Execute = (Cbuf_ExecuteType)((char*)baseAddress + 0x1204B0);
+	Cbuf_GetCurrentPlayer = (Cbuf_GetCurrentPlayerType)(GET_OFFSET_PTR(void, baseAddress, 0x120630));
+	Cbuf_AddText = (Cbuf_AddTextType)(GET_OFFSET_PTR(void, baseAddress, 0x1203B0));
+	Cbuf_Execute = (Cbuf_ExecuteType)(GET_OFFSET_PTR(void, baseAddress, 0x1204B0));
 
-	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
-	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
-	sv_m_State = (server_state_t*)((char*)baseAddress + 0x12A53D48);
+	g_pHostState = (CHostState*)(GET_OFFSET_PTR(void, baseAddress, 0x7CF180));
+	g_pEngine = *(CEngine**)(GET_OFFSET_PTR(void, baseAddress, 0x7D70C8));
+	sv_m_State = (server_state_t*)(GET_OFFSET_PTR(void, baseAddress, 0x12A53D48));
 
-	GetCurrentPlaylistName = (GetCurrentPlaylistType)((char*)baseAddress + 0x18C640);
-	SetCurrentPlaylist = (SetCurrentPlaylistType)((char*)baseAddress + 0x18EB20);
-	SetPlaylistVarOverride = (SetPlaylistVarOverrideType)((char*)baseAddress + 0x18ED00);
-	GetCurrentPlaylistVar = (GetCurrentPlaylistVarType)((char*)baseAddress + 0x18C680);
+	GetCurrentPlaylistName = (GetCurrentPlaylistType)(GET_OFFSET_PTR(void, baseAddress, 0x18C640));
+	SetCurrentPlaylist = (SetCurrentPlaylistType)(GET_OFFSET_PTR(void, baseAddress, 0x18EB20));
+	SetPlaylistVarOverride = (SetPlaylistVarOverrideType)(GET_OFFSET_PTR(void, baseAddress, 0x18ED00));
+	GetCurrentPlaylistVar = (GetCurrentPlaylistVarType)(GET_OFFSET_PTR(void, baseAddress, 0x18C680));
 
-	g_LocalPlayerUserID = (char*)baseAddress + 0x13F8E688;
-	g_LocalPlayerOriginToken = (char*)baseAddress + 0x13979C80;
+	g_LocalPlayerUserID = GET_OFFSET_PTR(char, baseAddress, 0x13F8E688);
+	g_LocalPlayerOriginToken = GET_OFFSET_PTR(char, baseAddress, 0x13979C80);
 
-	GetBaseLocalClient = (GetBaseLocalClientType)((char*)baseAddress + 0x78200);
+	GetBaseLocalClient = (GetBaseLocalClientType)(GET_OFFSET_PTR(void, baseAddress, 0x78200));
 
 	/* NOTE:
 		g_pCVar->FindVar("convar_name") now works. These are no longer needed.
@@ -77,12 +77,12 @@ void InitialiseEngineGameUtilFunctions(HMODULE baseAddress)
 			}
 		}*/
 
-	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
+	Cvar_hostport = (ConVar*)(GET_OFFSET_PTR(void, baseAddress, 0x13FA6070));
 }
 
 void InitialiseServerGameUtilFunctions(HMODULE baseAddress)
 {
-	Server_GetEntityByIndex = (Server_GetEntityByIndexType)((char*)baseAddress + 0xFB820);
+	Server_GetEntityByIndex = (Server_GetEntityByIndexType)(GET_OFFSET_PTR(void, baseAddress, 0xFB820));
 }
 
 void InitialiseTier0GameUtilFunctions(HMODULE baseAddress)

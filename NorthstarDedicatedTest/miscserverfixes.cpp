@@ -128,5 +128,6 @@ static unsigned int CLZSS__SafeUncompressHook(void* self, const unsigned char* p
 void InitialiseMiscEngineServerFixes(HMODULE baseAddress)
 {
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x432a10, &CLZSS__SafeUncompressHook, reinterpret_cast<LPVOID*>(&CLZSS__SafeUncompress));
+	ENABLER_CREATEHOOK(
+		hook, GET_OFFSET_PTR(void, baseAddress, 0x432a10), &CLZSS__SafeUncompressHook, reinterpret_cast<LPVOID*>(&CLZSS__SafeUncompress));
 }

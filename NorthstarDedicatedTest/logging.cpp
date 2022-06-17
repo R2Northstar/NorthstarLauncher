@@ -411,15 +411,16 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 {
 	HookEnabler hook;
 
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x11CA80, EngineSpewFuncHook, reinterpret_cast<LPVOID*>(&EngineSpewFunc));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0x11CA80), EngineSpewFuncHook, reinterpret_cast<LPVOID*>(&EngineSpewFunc));
 
 	// Hook print function that status concmd uses to actually print data
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x15ABD0, Status_ConMsg_Hook, reinterpret_cast<LPVOID*>(&Status_ConMsg_Original));
+	ENABLER_CREATEHOOK(
+		hook, GET_OFFSET_PTR(void, baseAddress, 0x15ABD0), Status_ConMsg_Hook, reinterpret_cast<LPVOID*>(&Status_ConMsg_Original));
 
 	// Hook CClientState::ProcessPrint
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x1A1530,
+		GET_OFFSET_PTR(void, baseAddress, 0x1A1530),
 		CClientState_ProcessPrint_Hook,
 		reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
 
@@ -478,10 +479,10 @@ void InitialiseClientPrintHooks(HMODULE baseAddress)
 {
 	HookEnabler hook;
 
-	internalCenterPrint = (ICenterPrint*)((char*)baseAddress + 0x216E940);
+	internalCenterPrint = (ICenterPrint*)(GET_OFFSET_PTR(void, baseAddress, 0x216E940));
 
 	// "TextMsg" usermessage
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x198710, TextMsgHook, reinterpret_cast<LPVOID*>(&TextMsg_Original));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0x198710), TextMsgHook, reinterpret_cast<LPVOID*>(&TextMsg_Original));
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
 }

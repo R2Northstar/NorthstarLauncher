@@ -37,13 +37,19 @@ void InitialiseMiscClientFixes(HMODULE baseAddress)
 	// vanilla compatibility to a degree tho will say i have about 0 clue what exactly these functions do, testing this it doesn't even seem
 	// like they do much of anything i can see tbh
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x5A92D0, &CrashingWeaponActivityFunc0Hook, reinterpret_cast<LPVOID*>(&CrashingWeaponActivityFunc0));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x5A92D0),
+		&CrashingWeaponActivityFunc0Hook,
+		reinterpret_cast<LPVOID*>(&CrashingWeaponActivityFunc0));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x5A9310, &CrashingWeaponActivityFunc1Hook, reinterpret_cast<LPVOID*>(&CrashingWeaponActivityFunc1));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x5A9310),
+		&CrashingWeaponActivityFunc1Hook,
+		reinterpret_cast<LPVOID*>(&CrashingWeaponActivityFunc1));
 
 	// experimental: allow cl_extrapolate to be enabled without cheats
 	{
-		void* ptr = (char*)baseAddress + 0x275F9D9;
+		void* ptr = GET_OFFSET_PTR(void, baseAddress, 0x275F9D9);
 		*((char*)ptr) = (char)0;
 	}
 }

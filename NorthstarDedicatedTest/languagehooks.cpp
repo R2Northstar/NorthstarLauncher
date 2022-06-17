@@ -115,5 +115,6 @@ char* GetGameLanguageHook()
 void InitialiseTier0LanguageHooks(HMODULE baseAddress)
 {
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xF560, &GetGameLanguageHook, reinterpret_cast<LPVOID*>(&GetGameLanguageOriginal));
+	ENABLER_CREATEHOOK(
+		hook, GET_OFFSET_PTR(void, baseAddress, 0xF560), &GetGameLanguageHook, reinterpret_cast<LPVOID*>(&GetGameLanguageOriginal));
 }

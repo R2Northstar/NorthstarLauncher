@@ -1381,7 +1381,7 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 
 	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "");
 
-	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
+	Cvar_hostname = *(ConVar**)(GET_OFFSET_PTR(void, baseAddress, 0x1315bae8));
 
 	g_MasterServerManager = new MasterServerManager;
 
@@ -1389,20 +1389,23 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E7D0, CHostState__State_NewGameHook, reinterpret_cast<LPVOID*>(&CHostState__State_NewGame));
+		hook,
+		GET_OFFSET_PTR(void, baseAddress, 0x16E7D0),
+		CHostState__State_NewGameHook,
+		reinterpret_cast<LPVOID*>(&CHostState__State_NewGame));
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x16E520,
+		GET_OFFSET_PTR(void, baseAddress, 0x16E520),
 		CHostState__State_ChangeLevelMPHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelMP));
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x16E5D0,
+		GET_OFFSET_PTR(void, baseAddress, 0x16E5D0),
 		CHostState__State_ChangeLevelSPHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelSP));
 	ENABLER_CREATEHOOK(
 		hook,
-		(char*)baseAddress + 0x16E640,
+		GET_OFFSET_PTR(void, baseAddress, 0x16E640),
 		CHostState__State_GameShutdownHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
 }

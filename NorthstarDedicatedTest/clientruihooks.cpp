@@ -20,5 +20,5 @@ void InitialiseEngineClientRUIHooks(HMODULE baseAddress)
 	Cvar_rui_drawEnable = new ConVar("rui_drawEnable", "1", FCVAR_CLIENTDLL, "Controls whether RUI should be drawn");
 
 	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xFC500, &DrawRUIFuncHook, reinterpret_cast<LPVOID*>(&DrawRUIFunc));
+	ENABLER_CREATEHOOK(hook, GET_OFFSET_PTR(void, baseAddress, 0xFC500), &DrawRUIFuncHook, reinterpret_cast<LPVOID*>(&DrawRUIFunc));
 }
