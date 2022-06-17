@@ -68,6 +68,8 @@ namespace NSMem
 } // namespace NSMem
 
 #pragma region KHOOK
+// Info for KHook to use when finding where you would like to hook
+// Currently stores pattern scan information only
 struct KHookPatternInfo
 {
 	const char *moduleName, *pattern;
@@ -78,6 +80,8 @@ struct KHookPatternInfo
 	}
 };
 
+// General structure for creating a hook (function trampoline detour) at any function
+// Does not do anything until Setup() is called
 struct KHook
 {
 	KHookPatternInfo targetFunc;
@@ -85,8 +89,10 @@ struct KHook
 	void* hookFunc;
 	void** original;
 
+	// NOTE: This is not thread-safe, perhaps a std::mutex lock should be used (?)
 	static inline std::vector<KHook*> _allHooks;
 
+	// NOTE: Will add this instance to KHook::_allHooks after construction
 	KHook(KHookPatternInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
 	{
 		this->hookFunc = hookFunc;
@@ -121,6 +127,8 @@ struct KHook
 		return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
 	}
 };
+
+// Convenient macro for initializing a KHook as a function declaration in a single line
 #define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                         \
 	returnType convention hk##name args;                                                                                                   \
 	auto o##name = (returnType(convention*) args)0;                                                                                        \
