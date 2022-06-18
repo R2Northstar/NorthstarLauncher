@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "NSMem.h"
 
+#include "include/MinHook.h"
+
 std::vector<int> NSMem::StringToHexBytes(const char* str)
 {
 	std::vector<int> patternNums;
@@ -54,22 +56,87 @@ std::vector<int> NSMem::StringToHexBytes(const char* str)
 	return patternNums;
 }
 
+// Tries its best to find potential start addresses to functions within a text section
+// Not extremely accurate, but will catch 99% of functions, and the cache can give us a huge performance boost when pattern scanning!
+void BuildFunctionAddressList(uintptr_t textSectionStart, size_t textSectionSize, std::vector<uintptr_t>& addressCacheOut)
+{
+
+	bool inFunction = false;
+
+	for (uintptr_t curAddr = textSectionStart; curAddr < textSectionStart + textSectionSize; curAddr++)
+	{
+		BYTE b = *(BYTE*)curAddr;
+
+		if (inFunction)
+		{
+			// Detect return instruction (there are others, but C3 is almost always used), see: https://www.felixcloutier.com/x86/ret
+			// NOTE: Obviously a byte equal to C3 could appear in any instruction, but the majority of the time it's a function return
+			if (b == 0xC3)
+			{
+				inFunction = false;
+			}
+		}
+		else
+		{
+			if (b == 0xCC)
+				continue; // Ignore padding between functions
+			inFunction = true;
+			addressCacheOut.push_back(curAddr);
+		}
+	}
+
+	spdlog::debug(
+		"NSMem: Built function address list lookup for .text at {} (list size: {})", (void*)textSectionStart, addressCacheOut.size());
+}
+
 void* NSMem::PatternScan(void* module, const int* pattern, int patternSize, int offset)
 {
-	if (!module)
-		return NULL;
+	assert(*pattern != -1, "First byte of pattern should never be a wildcard");
 
 	auto dosHeader = (PIMAGE_DOS_HEADER)module;
 	auto ntHeaders = (PIMAGE_NT_HEADERS)((BYTE*)module + dosHeader->e_lfanew);
 
 	auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
-
 	auto scanBytes = (BYTE*)module;
 
-	for (auto i = 0; i < sizeOfImage - patternSize; ++i)
+	// This static map will store lists of assumed function start addresses for each module
+	static std::unordered_map<void*, std::vector<uintptr_t>> moduleFuncAddrCacheMap;
+
+	if (!moduleFuncAddrCacheMap.count(module)) // We don't have a cache for this module yet, make one!
+	{
+		moduleFuncAddrCacheMap[module] = std::vector<uintptr_t>();
+		auto textSectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+		BuildFunctionAddressList(
+			(uintptr_t)module + textSectionHeader->VirtualAddress, textSectionHeader->SizeOfRawData, moduleFuncAddrCacheMap[module]);
+	}
+
+	// Scan through our function address lookup list
+	auto& funcAddrLookupList = moduleFuncAddrCacheMap[module];
+	for (uintptr_t address : funcAddrLookupList)
+	{
+		BYTE* funcBytes = (BYTE*)address;
+
+		bool found = true;
+		for (auto i = 0; i < patternSize; i++)
+		{
+			// In theory, if you had a ridiculously large signature (tens of thousands of bytes),
+			// you could eventually get this to read out of range - but that's obviously never going to happen
+			if (funcBytes[i] != pattern[i] && pattern[i] != -1)
+			{
+				found = false;
+				break;
+			}
+		}
+
+		if (found)
+			return (void*)address;
+	}
+
+	// Scan over every byte in the image after initial headers
+	for (auto i = sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS); i <= sizeOfImage - patternSize; i++)
 	{
 		bool found = true;
-		for (auto j = 0; j < patternSize; ++j)
+		for (auto j = 0; j < patternSize; j++)
 		{
 			if (scanBytes[i + j] != pattern[j] && pattern[j] != -1)
 			{
@@ -79,10 +146,7 @@ void* NSMem::PatternScan(void* module, const int* pattern, int patternSize, int 
 		}
 
 		if (found)
-		{
-			uintptr_t addressInt = (uintptr_t)(&scanBytes[i]) + offset;
-			return (uint8_t*)addressInt;
-		}
+			return scanBytes + i + offset;
 	}
 
 	return nullptr;
@@ -91,8 +155,14 @@ void* NSMem::PatternScan(void* module, const int* pattern, int patternSize, int 
 void* NSMem::PatternScan(const char* moduleName, const char* pattern, int offset)
 {
 	std::vector<int> patternNums = StringToHexBytes(pattern);
+	assert(patternNums.size() > 0);
 
-	return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
+	uint64_t start = GetTickCount64();
+	auto result = PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
+	uint64_t timeTaken = GetTickCount64() - start;
+
+	spdlog::debug("Found pattern in {}ms: \t\"{}\"", timeTaken, pattern);
+	return result;
 }
 
 void NSMem::BytePatch(uintptr_t address, const BYTE* vals, int size)
@@ -167,7 +237,7 @@ bool KHook::InitAllHooks()
 	{
 		if (hook->Setup())
 		{
-			spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
+			spdlog::debug("KHook hooked at {}", hook->targetFuncAddr);
 		}
 		else
 		{
