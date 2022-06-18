@@ -63,6 +63,7 @@ void BuildFunctionAddressList(uintptr_t textSectionStart, size_t textSectionSize
 
 	bool inFunction = false;
 
+	BYTE last = 0;
 	for (uintptr_t curAddr = textSectionStart; curAddr < textSectionStart + textSectionSize; curAddr++)
 	{
 		BYTE b = *(BYTE*)curAddr;
@@ -75,6 +76,10 @@ void BuildFunctionAddressList(uintptr_t textSectionStart, size_t textSectionSize
 			{
 				inFunction = false;
 			}
+			else if (b == 0xCC && last == 0xCC) // This is almost certainly padding between functions
+			{
+				inFunction = false;
+			}
 		}
 		else
 		{
@@ -83,6 +88,8 @@ void BuildFunctionAddressList(uintptr_t textSectionStart, size_t textSectionSize
 			inFunction = true;
 			addressCacheOut.push_back(curAddr);
 		}
+
+		last = b;
 	}
 
 	spdlog::debug(
@@ -161,7 +168,7 @@ void* NSMem::PatternScan(const char* moduleName, const char* pattern, int offset
 	auto result = PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
 	uint64_t timeTaken = GetTickCount64() - start;
 
-	spdlog::debug("Found pattern in {}ms: \t\"{}\"", timeTaken, pattern);
+	spdlog::debug("Found pattern in {}ms: \"{}\"", timeTaken, pattern);
 	return result;
 }
 
