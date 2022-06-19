@@ -107,6 +107,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AntiRCE.h" />
     <ClInclude Include="audio.h" />
     <ClInclude Include="bansystem.h" />
     <ClInclude Include="bitbuf.h" />
@@ -568,6 +569,7 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AntiRCE.cpp" />
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
     <ClCompile Include="bits.cpp" />

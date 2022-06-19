@@ -136,6 +136,12 @@
     <Filter Include="Header Files\Shared\ExploitFixes">
       <UniqueIdentifier>{7f609cee-d2c0-46a2-b06e-83b9f0511915}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Shared\ExploitFixes\AntiRCE">
+      <UniqueIdentifier>{8644744e-a9ef-4a66-b324-fe5f24989845}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shared\Exploit Fixes\AntiRCE">
+      <UniqueIdentifier>{585a4a76-39f8-472a-82c0-75d7bdfe6c99}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1515,6 +1521,9 @@
     <ClInclude Include="NSMem.h">
       <Filter>Header Files\Shared\ExploitFixes</Filter>
     </ClInclude>
+    <ClInclude Include="AntiRCE.h">
+      <Filter>Header Files\Shared\ExploitFixes\AntiRCE</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1681,6 +1690,9 @@
     </ClCompile>
     <ClCompile Include="clientruihooks.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="AntiRCE.cpp">
+      <Filter>Source Files\Shared\Exploit Fixes\AntiRCE</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
