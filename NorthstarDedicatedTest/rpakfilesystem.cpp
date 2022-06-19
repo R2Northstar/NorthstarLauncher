@@ -137,7 +137,7 @@ void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 		LoadPreloadPaks();
 		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
-		bShouldLoadPaks = true;
+		// bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
 	}
 
 	spdlog::info("LoadPakSync {}", path);
@@ -165,7 +165,7 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 		LoadPreloadPaks();
 		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
-		bShouldLoadPaks = true;
+		//bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
