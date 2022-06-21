@@ -7,7 +7,7 @@ typedef unsigned long SQUnsignedInteger;
 typedef char SQChar;
 typedef SQUnsignedInteger SQBool;
 
-int getReturnTypeEnumFromString(const char* name);
+int GetReturnTypeEnumFromString(const char* name);
 
 enum SQRESULT : SQInteger
 {
@@ -34,16 +34,16 @@ struct CompileBufferState
 
 
 enum SQReturnTypeEnum {
-	SqFloat = 0x1,
-	SqVector = 0x3,
-	SqInteger = 0x5,
-	SqBoolean = 0x6,
-	SqEntity = 0xD,
-	SqString = 0x21,
-	SqStringOrNull = 0x20,
-	SqArrays = 0x25,
-	SqAsset = 0x28,
-	SqTable = 0x26,
+	SqReturnFloat = 0x1,
+	SqReturnVector = 0x3,
+	SqReturnInteger = 0x5,
+	SqReturnBoolean = 0x6,
+	SqReturnEntity = 0xD,
+	SqReturnString = 0x21,
+	SqReturnStringOrNull = 0x20,
+	SqReturnArrays = 0x25,
+	SqReturnAsset = 0x28,
+	SqReturnTable = 0x26,
 };
 
 
@@ -201,7 +201,7 @@ template <ScriptContext context> class SquirrelManager
 		strcpy((char*)reg->argTypes, argTypes.c_str());
 
 		reg->funcPtr = func;
-		reg->returnValueTypeEnum = getReturnTypeEnumFromString(returnType.c_str());
+		reg->returnValueTypeEnum = GetReturnTypeEnumFromString(returnType.c_str());
 
 		m_funcRegistrations.push_back(reg);
 	}

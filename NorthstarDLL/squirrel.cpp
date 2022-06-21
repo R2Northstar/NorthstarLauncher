@@ -381,26 +381,25 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, [](HMODULE baseAd
 		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 })
 
-int getReturnTypeEnumFromString(const char* name)
-{
-	if (strcmp(name, "bool"))
-		return SQReturnTypeEnum::SqBoolean;
-	if (strcmp(name, "float"))
-		return SQReturnTypeEnum::SqFloat;
-	if (strcmp(name, "vector"))
-		return SQReturnTypeEnum::SqVector;
-	if (strcmp(name, "int"))
-		return SQReturnTypeEnum::SqInteger;
-	if (strcmp(name, "entity"))
-		return SQReturnTypeEnum::SqEntity;
-	if (strcmp(name, "string"))
-		return SQReturnTypeEnum::SqString;
-	if (strcmp(name, "array"))
-		return SQReturnTypeEnum::SqArrays;
-	if (strcmp(name, "asset"))
-		return SQReturnTypeEnum::SqAsset;
-	if (strcmp(name, "table"))
-		return SQReturnTypeEnum::SqTable;
+int GetReturnTypeEnumFromString(const char* name) {
+	
 
-	return SQReturnTypeEnum::SqStringOrNull;
+	static std::map<std::string, SQReturnTypeEnum> sqEnumStrMap = {
+		{"bool",	SqReturnBoolean },
+		{"float",	SqReturnFloat },
+		{"vector",	SqReturnVector },
+		{"int",		SqReturnInteger },
+		{"entity",	SqReturnEntity },
+		{"string",	SqReturnString },
+		{"array",	SqReturnArrays },
+		{"asset",	SqReturnAsset },
+		{"table",	SqReturnTable }
+	};
+
+	if (sqEnumStrMap.count(name)) {
+		return sqEnumStrMap[name];
+	}
+	else {
+		return SqReturnStringOrNull; //previous default value
+	}
 }
