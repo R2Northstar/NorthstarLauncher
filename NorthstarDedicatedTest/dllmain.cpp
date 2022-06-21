@@ -196,7 +196,7 @@ bool InitialiseNorthstar()
 
 	initialised = true;
 
-	parseConfigurables();
+	ParseConfigurables();
 	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters
