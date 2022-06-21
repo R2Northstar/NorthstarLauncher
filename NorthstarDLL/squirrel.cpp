@@ -380,3 +380,27 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, [](HMODULE baseAd
 		"Executes script code on the server vm",
 		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 })
+
+int getReturnTypeEnumFromString(const char* name)
+{
+	if (strcmp(name, "bool"))
+		return SQReturnTypeEnum::SqBoolean;
+	if (strcmp(name, "float"))
+		return SQReturnTypeEnum::SqFloat;
+	if (strcmp(name, "vector"))
+		return SQReturnTypeEnum::SqVector;
+	if (strcmp(name, "int"))
+		return SQReturnTypeEnum::SqInteger;
+	if (strcmp(name, "entity"))
+		return SQReturnTypeEnum::SqEntity;
+	if (strcmp(name, "string"))
+		return SQReturnTypeEnum::SqString;
+	if (strcmp(name, "array"))
+		return SQReturnTypeEnum::SqArrays;
+	if (strcmp(name, "asset"))
+		return SQReturnTypeEnum::SqAsset;
+	if (strcmp(name, "table"))
+		return SQReturnTypeEnum::SqTable;
+
+	return SQReturnTypeEnum::SqStringOrNull;
+}
