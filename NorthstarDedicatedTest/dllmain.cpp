@@ -82,7 +82,7 @@ void WaitForDebugger(HMODULE baseAddress)
 	}
 }
 
-void freeLibrary(HMODULE hLib)
+void TryFreeLibrary(HMODULE hLib)
 {
 	if (!FreeLibrary(hLib))
 	{
@@ -132,7 +132,7 @@ bool LoadPlugins()
 		if (manifestResource == NULL)
 		{
 			spdlog::info("Could not find manifest for library {}", pathstring);
-			freeLibrary(datafile);
+			TryFreeLibrary(datafile);
 			continue;
 		}
 		spdlog::info("Loading resource from library");
@@ -140,12 +140,12 @@ bool LoadPlugins()
 		if (myResourceData == NULL)
 		{
 			spdlog::error("Failed to load resource from library");
-			freeLibrary(datafile);
+			TryFreeLibrary(datafile);
 			continue;
 		}
 		int manifestSize = SizeofResource(datafile, manifestResource);
 		std::string manifest = std::string((const char*)LockResource(myResourceData), 0, manifestSize);
-		freeLibrary(datafile);
+		TryFreeLibrary(datafile);
 
 		rapidjson_document manifestJSON;
 		manifestJSON.Parse(manifest.c_str());
