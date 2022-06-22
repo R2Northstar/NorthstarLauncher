@@ -401,6 +401,6 @@ int GetReturnTypeEnumFromString(const char* name)
 	}
 	else
 	{
-		return SqReturnStringOrNull; // previous default value
+		return SqReturnDefault; // previous default value
 	}
 }

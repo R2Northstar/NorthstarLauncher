@@ -40,7 +40,7 @@ enum SQReturnTypeEnum {
 	SqReturnBoolean = 0x6,
 	SqReturnEntity = 0xD,
 	SqReturnString = 0x21,
-	SqReturnStringOrNull = 0x20,
+	SqReturnDefault = 0x20,
 	SqReturnArrays = 0x25,
 	SqReturnAsset = 0x28,
 	SqReturnTable = 0x26,
