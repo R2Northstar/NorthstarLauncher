@@ -43,10 +43,37 @@ void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload)
 void PakLoadManager::UnloadPaks()
 {
 	for (int pakHandle : m_pakHandlesToUnload)
+	{
 		g_pakLoadApi->UnloadPak(pakHandle, nullptr);
+		// remove pak from loadedPaks and loadedPaksInv
+		RemoveLoadedPak(pakHandle);
+	}
 
 	m_pakHandlesToUnload.clear();
 }
+
+bool PakLoadManager::IsPakLoaded(int32_t pakHandle)
+{
+	return loadedPaks.find(pakHandle) != loadedPaks.end();
+}
+
+bool PakLoadManager::IsPakLoaded(size_t hash)
+{
+	return loadedPaksInv.find(hash) != loadedPaksInv.end();
+}
+
+void PakLoadManager::AddLoadedPak(int32_t pakHandle, size_t hash)
+{
+	loadedPaks[pakHandle] = hash;
+	loadedPaksInv[hash] = pakHandle;
+}
+
+void PakLoadManager::RemoveLoadedPak(int32_t pakHandle)
+{
+	loadedPaksInv.erase(loadedPaks[pakHandle]);
+	loadedPaks.erase(pakHandle);
+}
+
 
 void HandlePakAliases(char** map)
 {
@@ -119,8 +146,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-// these are hashed with STR_HASH
-std::unordered_map<int32_t, size_t> loadedPaks {};
+
 
 LoadPakSyncType LoadPakSyncOriginal;
 void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
@@ -151,27 +177,13 @@ void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 
 	return ret;
 }
-// thing to do a lookup on the map but for value instead of key
-bool ContainsValue(size_t value)
-{
-	bool found = false;
-	uint32_t i = 0;
-	while (i != loadedPaks.size())
-	{
-		found = (loadedPaks[i] == value);
-		if (found)
-			break;
-		++i;
-	}
-	return found;
-}
 
 LoadPakAsyncType LoadPakAsyncOriginal;
 int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callback0, void* callback1)
 {
 	size_t hash = STR_HASH(path);
 	// if the hash is already in the map, dont load the pak, it has already been loaded
-	if (ContainsValue(hash))
+	if (g_PakLoadManager->IsPakLoaded(hash))
 	{
 		return -1;
 	}
@@ -201,7 +213,7 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 	spdlog::info("LoadPakAsync {} {}", path, ret);
 
 	// add the hash to the map
-	loadedPaks[ret] = hash;
+	g_PakLoadManager->AddLoadedPak(ret, hash);
 
 	if (bNeedToFreePakName)
 		delete[] path;
@@ -212,10 +224,10 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 UnloadPakType UnloadPakOriginal;
 void* UnloadPakHook(int pakHandle, void* callback)
 {
-	if (loadedPaks.find(pakHandle) != loadedPaks.end())
+	if (g_PakLoadManager->IsPakLoaded(pakHandle))
 	{
 		// remove the entry
-		loadedPaks.erase(pakHandle);
+		g_PakLoadManager->RemoveLoadedPak(pakHandle);
 	}
 
 	static bool bShouldUnloadPaks = true;
