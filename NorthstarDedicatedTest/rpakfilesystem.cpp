@@ -74,7 +74,6 @@ void PakLoadManager::RemoveLoadedPak(int32_t pakHandle)
 	loadedPaks.erase(pakHandle);
 }
 
-
 void HandlePakAliases(char** map)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
@@ -145,8 +144,6 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 		}
 	}
 }
-
-
 
 LoadPakSyncType LoadPakSyncOriginal;
 void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
