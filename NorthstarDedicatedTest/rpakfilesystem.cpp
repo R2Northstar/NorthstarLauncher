@@ -119,6 +119,10 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
+#include "pch.h"
+// these are hashed with STR_HASH
+std::unordered_map<int32_t, size_t> loadedPaks {};
+
 LoadPakSyncType LoadPakSyncOriginal;
 void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 {
@@ -137,7 +141,7 @@ void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 		LoadPreloadPaks();
 		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
-		// bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
+		bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
 	}
 
 	spdlog::info("LoadPakSync {}", path);
@@ -148,10 +152,33 @@ void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 
 	return ret;
 }
+// thing to do a lookup on the map but for value instead of key
+bool ContainsValue(size_t value)
+{
+	bool found = false;
+	uint32_t i = 0;
+	while (i != loadedPaks.size())
+	{
+		found = (loadedPaks[i] == value);
+		if (found)
+			break;
+		++i;
+	}
+	return found;
+}
 
 LoadPakAsyncType LoadPakAsyncOriginal;
 int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callback0, void* callback1)
 {
+	size_t hash = STR_HASH(path);
+	// if the hash is already in the map, dont load the pak, it has already been loaded
+	
+
+	if (ContainsValue(hash))
+	{
+		return -1;
+	}
+
 	HandlePakAliases(&path);
 
 	bool bNeedToFreePakName = false;
@@ -165,7 +192,7 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 		LoadPreloadPaks();
 		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
-		// bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
+		bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
@@ -176,15 +203,28 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 	int ret = LoadPakAsyncOriginal(path, unknownSingleton, flags, callback0, callback1);
 	spdlog::info("LoadPakAsync {} {}", path, ret);
 
+	// add the hash to the map
+	loadedPaks[ret] = hash;
+
 	if (bNeedToFreePakName)
 		delete[] path;
 
 	return ret;
 }
 
+#include "pch.h"
 UnloadPakType UnloadPakOriginal;
 void* UnloadPakHook(int pakHandle, void* callback)
 {
+	// using "" for a non-entry because idk how to nicely remove a member
+	if (loadedPaks.find(pakHandle) != loadedPaks.end())
+	{
+		// remove the entry 
+		loadedPaks.erase(pakHandle);
+	}
+
+	
+
 	static bool bShouldUnloadPaks = true;
 	if (bShouldUnloadPaks)
 	{
