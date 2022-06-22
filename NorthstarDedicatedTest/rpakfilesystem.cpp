@@ -172,8 +172,6 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 {
 	size_t hash = STR_HASH(path);
 	// if the hash is already in the map, dont load the pak, it has already been loaded
-	
-
 	if (ContainsValue(hash))
 	{
 		return -1;
@@ -219,11 +217,9 @@ void* UnloadPakHook(int pakHandle, void* callback)
 	// using "" for a non-entry because idk how to nicely remove a member
 	if (loadedPaks.find(pakHandle) != loadedPaks.end())
 	{
-		// remove the entry 
+		// remove the entry
 		loadedPaks.erase(pakHandle);
 	}
-
-	
 
 	static bool bShouldUnloadPaks = true;
 	if (bShouldUnloadPaks)
