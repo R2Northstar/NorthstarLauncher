@@ -119,7 +119,6 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-#include "pch.h"
 // these are hashed with STR_HASH
 std::unordered_map<int32_t, size_t> loadedPaks {};
 
@@ -141,7 +140,7 @@ void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 		LoadPreloadPaks();
 		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
-		bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
+		bShouldLoadPaks = true;
 	}
 
 	spdlog::info("LoadPakSync {}", path);
@@ -190,7 +189,7 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 		LoadPreloadPaks();
 		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
-		bShouldLoadPaks = true; // why are we ever loading these more than once? i dont understand why we were setting this to true again
+		bShouldLoadPaks = true;
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
@@ -210,11 +209,9 @@ int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callba
 	return ret;
 }
 
-#include "pch.h"
 UnloadPakType UnloadPakOriginal;
 void* UnloadPakHook(int pakHandle, void* callback)
 {
-	// using "" for a non-entry because idk how to nicely remove a member
 	if (loadedPaks.find(pakHandle) != loadedPaks.end())
 	{
 		// remove the entry
