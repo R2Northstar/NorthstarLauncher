@@ -283,7 +283,7 @@ void ModManager::LoadMods()
 				mod.wasReadSuccessfully = false;
 				break;
 			}
-			if (DependencyConstants.find(pair.first) != DependencyConstants.end())
+			if (DependencyConstants.find(pair.first) == DependencyConstants.end())
 				DependencyConstants.emplace(pair);
 		}
 
