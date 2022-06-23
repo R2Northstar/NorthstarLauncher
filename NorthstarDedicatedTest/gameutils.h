@@ -93,7 +93,7 @@ class CCommandLine
 	// these seem to line up with what they should be though
 	virtual void CreateCmdLine(const char* commandline) {}
 	virtual void CreateCmdLine(int argc, char** argv) {}
-	virtual void unknown() {}
+	virtual void _Unknown() {}
 	virtual const char* GetCmdLine(void) const {}
 
 	virtual const char* CheckParm(const char* psz, const char** ppszValue = 0) const {}
