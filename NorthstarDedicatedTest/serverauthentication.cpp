@@ -129,6 +129,12 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 						return;
 					}
 
+					// Log playername and UID from request
+					spdlog::info(
+						"Player \"{}\" with UID \"{}\" requested to join",
+						request.get_param_value("username").c_str(),
+						request.get_param_value("id").c_str());
+
 					AuthData newAuthData {};
 					strncpy(newAuthData.uid, request.get_param_value("id").c_str(), sizeof(newAuthData.uid));
 					newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
@@ -196,6 +202,9 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// use stored auth data
 		AuthData authData = m_authData[authToken];
 
+		// Log playnername and UID from request
+		spdlog::info("Comparing connecting UID \"{}\" against stored UID from ms auth request \"{}\"", strUid.c_str(), authData.uid);
+
 		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
 		{
 			authFail = false;
@@ -236,7 +245,8 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// set persistent data as ready, we use 0x3 internally to mark the client as using local persistence
 		*((char*)player + 0x4a0) = (char)0x3;
 
-		if (!CVar_ns_auth_allow_insecure->GetBool()) // no auth data and insecure connections aren't allowed, so dc the client
+		// no auth data and insecure connections aren't allowed, so dc the client
+		if (!CVar_ns_auth_allow_insecure->GetBool() && strncmp(GetCurrentPlaylistName(), "solo", 5) != 0)
 			return false;
 
 		// insecure connections are allowed, try reading from disk
@@ -250,7 +260,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 		std::fstream pdataStream(pdataPath, std::ios_base::in);
 		if (pdataStream.fail()) // file doesn't exist, use placeholder
-			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata");
+			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
 		// get file length
 		pdataStream.seekg(0, pdataStream.end);
@@ -280,6 +290,8 @@ bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
 	{
 		if (!strcmp((char*)player + 0xF500, auth.second.uid))
 		{
+			// Log UID
+			spdlog::info("Erasing auth data from UID \"{}\"", auth.second.uid);
 			// pretty sure this is fine, since we don't iterate after the erase
 			// i think if we iterated after it'd be undefined behaviour tho
 			std::lock_guard<std::mutex> guard(m_authDataMutex);
@@ -352,6 +364,9 @@ void* CBaseServer__ConnectClientHook(
 	nextPlayerToken = serverFilter;
 	nextPlayerUid = uid;
 
+	// Random UID log
+	spdlog::info("CBaseServer__ConnectClientHook says UID \"{}\"", uid);
+
 	return CBaseServer__ConnectClient(server, a2, a3, a4, a5, a6, a7, a8, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
@@ -363,6 +378,9 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
 	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
+
+	// Another UID log
+	spdlog::info("CBaseClient__ConnectHook says UID \"{}\"", nextPlayerUid);
 
 	if (!ret)
 		return ret;
@@ -387,6 +405,8 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		additionalData.usingLocalPdata = *((char*)self + 0x4a0) == (char)0x3;
 
 		g_ServerAuthenticationManager->m_additionalPlayerData.insert(std::make_pair(self, additionalData));
+
+		g_ServerAuthenticationManager->m_additionalPlayerData[self].uid = nextPlayerUid;
 	}
 
 	return ret;
@@ -394,6 +414,21 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 
 void CBaseClient__ActivatePlayerHook(void* self)
 {
+	bool uidMatches = false;
+	if (g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
+	{
+		std::string strUid = std::to_string(g_ServerAuthenticationManager->m_additionalPlayerData[self].uid);
+		if (!strcmp(strUid.c_str(), (char*)self + 0xF500)) // connecting client's uid is the same as auth's uid
+		{
+			uidMatches = true;
+		}
+	}
+	if (!uidMatches)
+	{
+		CBaseClient__Disconnect(self, 1, "Authentication Failed");
+		return;
+	}
+
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
 	// (since this func is called on map loads)
@@ -403,6 +438,8 @@ void CBaseClient__ActivatePlayerHook(void* self)
 		g_ServerAuthenticationManager->WritePersistentData(self);
 		g_MasterServerManager->UpdateServerPlayerCount(g_ServerAuthenticationManager->m_additionalPlayerData.size());
 	}
+	// Log UID
+	spdlog::info("In CBaseClient__ActivatePlayerHook, activating UID \"{}\"", (char*)self + 0xF500);
 
 	CBaseClient__ActivatePlayer(self);
 }
@@ -632,7 +669,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 		new ConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
 	Cvar_net_chan_limit_msec_per_sec = new ConVar(
 		"net_chan_limit_msec_per_sec",
-		"0",
+		"100",
 		FCVAR_GAMEDLL,
 		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	Cvar_ns_player_auth_port = new ConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
@@ -684,6 +721,7 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 	}
 
 	// patch to allow same of multiple account
+	if (CommandLine()->CheckParm("-allowdupeaccounts"))
 	{
 		NSMem::BytePatch(
 			ba + 0x114510,
