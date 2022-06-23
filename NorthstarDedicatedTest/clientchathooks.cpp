@@ -23,7 +23,7 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 		return;
 	}
 
-	if (g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_ClientSquirrelManager->SetupFunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
 		int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
 		bool isAnonymous = senderId == 0;

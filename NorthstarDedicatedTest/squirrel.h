@@ -200,7 +200,7 @@ template <ScriptContext context> class SquirrelManager
 		}
 	}
 
-	int setupfunc(const char* funcname)
+	int SetupFunc(const char* funcname)
 	{
 		int result = -2;
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
