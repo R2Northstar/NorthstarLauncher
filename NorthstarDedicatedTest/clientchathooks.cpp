@@ -43,7 +43,7 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 		g_ClientSquirrelManager->PushArg(isTeam);
 		g_ClientSquirrelManager->PushArg(isDead);
 		g_ClientSquirrelManager->PushArg(type);
-		g_ClientSquirrelManager->call(5);
+		g_ClientSquirrelManager->Call(5);
 	}
 	else
 	{

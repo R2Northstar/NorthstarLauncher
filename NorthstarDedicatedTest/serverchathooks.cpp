@@ -81,7 +81,7 @@ static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, u
 		g_ServerSquirrelManager->PushArg((int)senderPlayerId - 1);
 		g_ServerSquirrelManager->PushArg(text);
 		g_ServerSquirrelManager->PushArg(isTeam);
-		g_ServerSquirrelManager->call(3);
+		g_ServerSquirrelManager->Call(3);
 	}
 	else
 		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerId, text, isTeam);

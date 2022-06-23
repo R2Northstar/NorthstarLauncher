@@ -255,7 +255,7 @@ template <ScriptContext context> class SquirrelManager
 			ServerSq_pushbool(sqvm2, arg);
 	}
 
-	int call(int args)
+	int Call(int args)
 	{
 		int result = -2;
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
