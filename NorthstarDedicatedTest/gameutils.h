@@ -173,7 +173,7 @@ enum EngineState_t
 class CEngine
 {
   public:
-	virtual void unknown() {} // unsure if this is where
+	virtual CEngine _VectorDeletingConstructor() {} // See: (engine.dll + 0x1C8300)
 	virtual bool Load(bool dedicated, const char* baseDir) {}
 	virtual void Unload() {}
 	virtual void SetNextState(EngineState_t iNextState) {}
