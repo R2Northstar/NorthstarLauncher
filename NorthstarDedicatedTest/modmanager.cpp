@@ -201,7 +201,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				return;
 			}
 
-			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
+			if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
+				DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
 		}
 	}
 
@@ -276,13 +277,14 @@ void ModManager::LoadMods()
 
 		for (auto& pair : mod.DependencyConstants)
 		{
-			if (DependencyConstants.find(pair.first) != DependencyConstants.end())
+			if (DependencyConstants.find(pair.first) != DependencyConstants.end() && DependencyConstants[pair.first] != pair.second)
 			{
 				spdlog::error("Constant {} in mod {} already exists in another mod.", pair.first, mod.Name);
 				mod.wasReadSuccessfully = false;
 				break;
 			}
-			DependencyConstants.emplace(pair);
+			if (DependencyConstants.find(pair.first) != DependencyConstants.end())
+				DependencyConstants.emplace(pair);
 		}
 
 		if (m_hasEnabledModsCfg && m_enabledModsCfg.HasMember(mod.Name.c_str()))
