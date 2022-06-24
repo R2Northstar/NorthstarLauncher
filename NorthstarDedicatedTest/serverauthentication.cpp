@@ -484,7 +484,7 @@ CCommand__TokenizeType CCommand__Tokenize;
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
 {
 	// Only log clientcommands if the convar `ns_should_log_all_clientcommands` equals 1
-	if (Cvar_ns_should_log_all_clientcommands->GetInt() == 1)
+	if (Cvar_ns_should_log_all_clientcommands->GetBool())
 	{
 		spdlog::info("{} with UID {} sent stringcommand {}", (char*)self + 0x16, (char*)self + 0xF500, pCommandString);
 	}
