@@ -681,11 +681,8 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 		"100",
 		FCVAR_GAMEDLL,
 		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
-	Cvar_ns_should_log_all_clientcommands = new ConVar(
-		"ns_should_log_all_clientcommands",
-		"0",
-		FCVAR_NONE,
-		"Whether to log all clientcommands");
+	Cvar_ns_should_log_all_clientcommands =
+		new ConVar("ns_should_log_all_clientcommands", "0", FCVAR_NONE, "Whether to log all clientcommands");
 	Cvar_ns_player_auth_port = new ConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	Cvar_sv_querylimit_per_sec = new ConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
 	Cvar_sv_max_chat_messages_per_sec = new ConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
