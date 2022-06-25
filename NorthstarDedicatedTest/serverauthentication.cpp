@@ -486,7 +486,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	// Only log clientcommands if the convar `ns_should_log_all_clientcommands` equals 1
 	if (Cvar_ns_should_log_all_clientcommands->GetBool())
 	{
-		spdlog::info("{} with UID {} sent stringcommand {}", (char*)self + 0x16, (char*)self + 0xF500, pCommandString);
+		spdlog::info("{} (UID: {}) executed command: \"{}\"", (char*)self + 0x16, (char*)self + 0xF500, pCommandString);
 	}
 
 	if (CVar_sv_quota_stringcmdspersecond->GetInt() != -1)
