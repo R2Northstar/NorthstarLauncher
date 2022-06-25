@@ -86,7 +86,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	newKvs += "\"\n";
 
 	// load original file, so we can parse out the name of the root obj (e.g. WeaponData for weapons)
-	std::string originalFile = "";
+	std::string originalFile = ReadVPKOriginalFile(filename);
 	
 	// check if the file was overriden
 	if (m_modFiles.find(normalisedPath) != m_modFiles.end())
@@ -142,10 +142,8 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 				originalFile = stringstream.str();
 			}
-			else originalFile = ReadVPKOriginalFile(filename);
 		}
 	}
-	else originalFile = ReadVPKOriginalFile(filename);
 
 	if (!originalFile.length())
 	{
