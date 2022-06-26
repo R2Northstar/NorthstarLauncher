@@ -464,7 +464,8 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 
 SQRESULT SQ_DevFuncStub(void* sqvm)
 {
-	spdlog::info("Blocked execution of squirrel developer function for security reasons. To re-enable them use start parameter -allowSquirrelDevFunctions.");
+	spdlog::info("Blocked execution of squirrel developer function for security reasons. To re-enable them use start parameter "
+				 "-allowSquirrelDevFunctions.");
 	return SQRESULT_NULL;
 }
 
