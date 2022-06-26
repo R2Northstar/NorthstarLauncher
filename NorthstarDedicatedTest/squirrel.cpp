@@ -462,9 +462,9 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
 }
 
-SQRESULT SQ_Stub(void* sqvm)
+SQRESULT SQ_DevFuncStub(void* sqvm)
 {
-	spdlog::info("Blocked execution of squirrel developer function");
+	spdlog::info("Blocked execution of squirrel developer function for security reasons. To re-enable them use start parameter -allowSquirrelDevFunctions.");
 	return SQRESULT_NULL;
 }
 
@@ -478,7 +478,7 @@ template <ScriptContext context> int64_t RegisterSquirrelFuncHook(void* sqvm, SQ
 
 	if ((funcReg->devLevel == 1) && (!CommandLine()->CheckParm("-allowSquirrelDevFunctions")) &&
 		(!allowedDevFunctions.count(funcReg->squirrelFuncName)))
-		funcReg->funcPtr = SQ_Stub;
+		funcReg->funcPtr = SQ_DevFuncStub;
 
 	if (context == ScriptContext::SERVER)
 		return ServerRegisterSquirrelFunc(sqvm, funcReg, unknown);
