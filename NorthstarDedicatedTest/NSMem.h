@@ -6,206 +6,156 @@
 #pragma region Pattern Scanning
 namespace NSMem
 {
-	inline std::vector<int> HexBytesToString(const char* str)
+	// Returns an array of byte values from a hexadecimal string
+	// A byte value will be -1 where the input string contained a wildcard ('?')
+	std::vector<int> StringToHexBytes(const char* str);
+
+	/// <summary>
+	/// Find a byte pattern in a module (raw function alternative)
+	/// </summary>
+	/// <param name="module">Base address of the module (handle)</param>
+	/// <param name="pattern">Array of byte values to search for (-1 is for wildcard)</param>
+	/// <param name="patternSize">Size of the byte pattern array</param>
+	/// <param name="offset">Amount to shift output pointer address by</param>
+	/// <returns>Address of found result (+ offset), or NULL if not found</returns>
+	void* PatternScan(void* module, const int* pattern, int patternSize, int offset);
+
+	/// <summary>
+	/// Find a byte pattern in a module
+	/// </summary>
+	/// <param name="moduleName">Name of module, will be passed to GetModuleHandleA()</param>
+	/// <param name="pattern">The byte pattern to search for as a hex string (see StringToHexBytes())</param>
+	/// <param name="offset">Amount to shift output pointer address by</param>
+	/// <returns>Address of found result (+ offset), or NULL if not found</returns>
+	void* PatternScan(const char* moduleName, const char* pattern, int offset = 0);
+
+	/// <summary>
+	/// Byte patch memory at a given address
+	/// </summary>
+	/// <param name="address">Address to patch at</param>
+	/// <param name="vals">Array of byte values to replace with</param>
+	/// <param name="size">Size of byte value array</param>
+	void BytePatch(uintptr_t address, const BYTE* vals, int size);
+
+	/// <summary>
+	/// Byte patch memory at a given address
+	/// </summary>
+	/// <param name="address">Address to patch at</param>
+	/// <param name="vals">Initializer list of byte values to replace with</param>
+	void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals);
+
+	/// <summary>
+	/// Byte patch memory at a given address
+	/// </summary>
+	/// <param name="address">Address to patch at</param>
+	/// <param name="bytesStr">Hex string of bytes to patch with (see StringToHexBytes())</param>
+	void BytePatch(uintptr_t address, const char* bytesStr);
+
+	/// <summary>
+	/// Byte patch instructions at a given address to NOP opcodes, making them do nothing
+	/// Functionally identical to using BytePatch(address, { 0x90, 0x90, 0x90, ... })
+	/// </summary>
+	/// <param name="address">Address to patch at</param>
+	/// <param name="size">Amount of bytes to patch</param>
+	void NOP(uintptr_t address, int size);
+
+	/// <summary>
+	/// Checks if we are able to read memory from a given address
+	/// </summary>
+	/// <param name="ptr">Address to check (start of region)</param>
+	/// <param name="size">Size of the region to check</param>
+	bool IsMemoryReadable(void* ptr, size_t size);
+
+	/// <summary>
+	/// Offset a pointer and convert it to a type
+	/// </summary>
+	/// <returns>(T)(uintptr_t(base) + offset)</returns>
+	template <typename T> T GetOffsetPtr(void* base, int64_t offset)
 	{
-		std::vector<int> patternNums;
-		int size = strlen(str);
-		for (int i = 0; i < size; i++)
-		{
-			char c = str[i];
-
-			// If this is a space character, ignore it
-			if (c == ' ' || c == '\t')
-				continue;
-
-			if (c == '?')
-			{
-				// Add a wildcard (-1)
-				patternNums.push_back(-1);
-			}
-			else if (i < size - 1)
-			{
-				BYTE result = 0;
-				for (int j = 0; j < 2; j++)
-				{
-					int val = 0;
-					char c = *(str + i + j);
-					if (c >= 'a')
-					{
-						val = c - 'a' + 0xA;
-					}
-					else if (c >= 'A')
-					{
-						val = c - 'A' + 0xA;
-					}
-					else if (isdigit(c))
-					{
-						val = c - '0';
-					}
-					else
-					{
-						assert(false, "Failed to parse invalid hex string.");
-						val = -1;
-					}
-
-					result += (j == 0) ? val * 16 : val;
-				}
-				patternNums.push_back(result);
-			}
-
-			i++;
-		}
-
-		return patternNums;
+		return (T)(uintptr_t(base) + offset);
 	}
 
-	inline void* PatternScan(void* module, const int* pattern, int patternSize, int offset)
+	/// <summary>
+	/// Offset a pointer and dereference it as a type
+	/// </summary>
+	/// <returns>*(T*)(uintptr_t(base) + offset)</returns>
+	template <typename T> T& GetOffsetVal(void* base, int64_t offset)
 	{
-		if (!module)
-			return NULL;
-
-		auto dosHeader = (PIMAGE_DOS_HEADER)module;
-		auto ntHeaders = (PIMAGE_NT_HEADERS)((BYTE*)module + dosHeader->e_lfanew);
-
-		auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
-
-		auto scanBytes = (BYTE*)module;
-
-		for (auto i = 0; i < sizeOfImage - patternSize; ++i)
-		{
-			bool found = true;
-			for (auto j = 0; j < patternSize; ++j)
-			{
-				if (scanBytes[i + j] != pattern[j] && pattern[j] != -1)
-				{
-					found = false;
-					break;
-				}
-			}
-
-			if (found)
-			{
-				uintptr_t addressInt = (uintptr_t)(&scanBytes[i]) + offset;
-				return (uint8_t*)addressInt;
-			}
-		}
-
-		return nullptr;
+		return *(T*)(uintptr_t(base) + offset);
 	}
 
-	inline void* PatternScan(const char* moduleName, const char* pattern, int offset = 0)
-	{
-		std::vector<int> patternNums = HexBytesToString(pattern);
-
-		return PatternScan(GetModuleHandleA(moduleName), &patternNums[0], patternNums.size(), offset);
-	}
-
-	inline void BytePatch(uintptr_t address, const BYTE* vals, int size)
-	{
-		WriteProcessMemory(GetCurrentProcess(), (LPVOID)address, vals, size, NULL);
-	}
-
-	inline void BytePatch(uintptr_t address, std::initializer_list<BYTE> vals)
-	{
-		std::vector<BYTE> bytes = vals;
-		if (!bytes.empty())
-			BytePatch(address, &bytes[0], bytes.size());
-	}
-
-	inline void BytePatch(uintptr_t address, const char* bytesStr)
-	{
-		std::vector<int> byteInts = HexBytesToString(bytesStr);
-		std::vector<BYTE> bytes;
-		for (int v : byteInts)
-			bytes.push_back(v);
-
-		if (!bytes.empty())
-			BytePatch(address, &bytes[0], bytes.size());
-	}
-
-	inline void NOP(uintptr_t address, int size)
-	{
-		BYTE* buf = (BYTE*)malloc(size);
-		memset(buf, 0x90, size);
-		BytePatch(address, buf, size);
-		free(buf);
-	}
-
-	inline bool IsMemoryReadable(void* ptr, size_t size)
-	{
-		static SYSTEM_INFO sysInfo;
-		if (!sysInfo.dwPageSize)
-			GetSystemInfo(&sysInfo); // This should always be 4096 unless ur playing on NES or some shit but whatever
-
-		MEMORY_BASIC_INFORMATION memInfo;
-
-		if (!VirtualQuery(ptr, &memInfo, sizeof(memInfo)))
-			return false;
-
-		if (memInfo.RegionSize < size)
-			return false;
-
-		return (memInfo.State & MEM_COMMIT) && !(memInfo.Protect & PAGE_NOACCESS);
-	}
 } // namespace NSMem
 
 #pragma region KHOOK
-struct KHookPatternInfo
+// Info for KHook to use when finding where you would like to hook
+// Currently stores pattern scan information only
+struct KHookFuncInfo
 {
 	const char *moduleName, *pattern;
-	int offset = 0;
 
-	KHookPatternInfo(const char* moduleName, const char* pattern, int offset = 0) : moduleName(moduleName), pattern(pattern), offset(offset)
+	// Will be used as static module offset if "pattern" is null
+	int64_t offset;
+
+	// Construct as a pattern scan
+	KHookFuncInfo(const char* moduleName, const char* pattern, int64_t offset = 0)
 	{
+		this->moduleName = moduleName;
+		this->pattern = pattern;
+		this->offset = offset;
+	}
+
+	// Construct as a static module offset
+	KHookFuncInfo(const char* moduleName, int64_t offset = 0)
+	{
+		this->moduleName = moduleName;
+		this->pattern = nullptr;
+		this->offset = offset;
+	}
+
+	bool IsPatternScan()
+	{
+		return pattern != nullptr;
 	}
 };
 
+// General structure for creating a hook (function trampoline detour) at any function
+// Does not do anything until Setup() is called
 struct KHook
 {
-	KHookPatternInfo targetFunc;
+	KHookFuncInfo targetFunc;
 	void* targetFuncAddr;
 	void* hookFunc;
 	void** original;
 
+	// NOTE: This is not thread-safe, perhaps a std::mutex lock should be used (?)
 	static inline std::vector<KHook*> _allHooks;
 
-	KHook(KHookPatternInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
+	// NOTE: Will add this instance to KHook::_allHooks after construction
+	KHook(KHookFuncInfo targetFunc, void* hookFunc, void** original) : targetFunc(targetFunc)
 	{
 		this->hookFunc = hookFunc;
 		this->original = original;
 		_allHooks.push_back(this);
 	}
 
-	bool Setup()
-	{
-		targetFuncAddr = NSMem::PatternScan(targetFunc.moduleName, targetFunc.pattern, targetFunc.offset);
-		if (!targetFuncAddr)
-			return false;
-
-		return MH_CreateHook(targetFuncAddr, hookFunc, original) == MH_OK;
-	}
+	// Actually create/enable the hook
+	bool Setup();
 
 	// Returns true if succeeded
-	static bool InitAllHooks()
-	{
-		for (KHook* hook : _allHooks)
-		{
-			if (hook->Setup())
-			{
-				spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
-	}
+	static bool InitAllHooks();
 };
+
+// Convenient macro for initializing a KHook as a function declaration in a single line
+// Supports both pattern scans and static module offsets
+//
+// EXAMPLE 1 (using pattern scan):
+//	KHOOK(GetPlayerName, { "engine.dll", "48 83 EC ? ? 28 48" }, const char*, __fastcall, (void* playerPtr)) { ...
+//
+// EXAMPLE 2 (using a static module offset):
+//	KHOOK(Script_GetEntByIndex, { "server.dll", 0x2A8A50 }, void*, __fastcall, (int entityIndex)) { ...
 #define KHOOK(name, funcPatternInfo, returnType, convention, args)                                                                         \
 	returnType convention hk##name args;                                                                                                   \
 	auto o##name = (returnType(convention*) args)0;                                                                                        \
-	KHook k##name = KHook(KHookPatternInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                  \
+	KHook k##name = KHook(KHookFuncInfo funcPatternInfo, &hk##name, (void**)&o##name);                                                     \
 	returnType convention hk##name args
 #pragma endregion
