@@ -2,6 +2,13 @@
 #include "AntiRCE.h"
 #include "cvar.h"
 
+// These file extensions should NEVER be written to by the game, no matter what
+constexpr const char* EVIL_EXTENTIONS[] = {".dll", ".exe", ".bat", ".cmd", ".com", ".ps1", ".vbs", ".vb",  ".sys", ".msi", ".src",
+										   ".lnk", ".ps1", ".vbs", ".vb",  ".js",  ".sys", ".msi", ".scr", ".lnk", ".cpl"};
+
+// These file extensions are always safe
+constexpr const char* SAFE_EXTENTIONS[] = {".ttf", ".fon", ".ttc"};
+
 static bool initialized = false;
 
 void OnGameFileAccess(const char* pathArg, bool readOnly)
@@ -41,7 +48,6 @@ void OnGameFileAccess(const char* pathArg, bool readOnly)
 	{
 		if (!readOnly)
 		{
-			constexpr const char* EVIL_EXTENTIONS[] = {".dll", ".exe", ".bat", ".cmd", ".com"};
 			for (auto evil : EVIL_EXTENTIONS)
 			{
 				if (!_stricmp(evil, extension))
@@ -49,7 +55,6 @@ void OnGameFileAccess(const char* pathArg, bool readOnly)
 			}
 		}
 
-		constexpr const char* SAFE_EXTENTIONS[] = {".ttf", ".fon", ".ttc"};
 		for (auto safe : SAFE_EXTENTIONS)
 			if (!_stricmp(safe, extension))
 				return; // This file can be safely accessed
@@ -105,6 +110,79 @@ KHOOK(
 	return oFileSytem_OpenFileFuncIdk(fileName, openTypeStr, unk);
 }
 
+// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatefile
+void* oNtCreateFile;
+LONG WINAPI hkNtCreateFile(
+	PHANDLE pFileHandle,
+	ACCESS_MASK desiredAccess,
+	PVOID pObjectAttributes,
+	PVOID pIoStatusBlock,
+	PLARGE_INTEGER pAllocationSize,
+	ULONG fileAttributes,
+	ULONG shareAccess,
+	ULONG createDisposition,
+	ULONG createOptions,
+	PVOID eaBuffer,
+	ULONG eaLength)
+{
+
+	// Call original first, see if this call even succeeded
+	auto ofunc = (decltype(&hkNtCreateFile))oNtCreateFile;
+	LONG result = ofunc(
+		pFileHandle,
+		desiredAccess,
+		pObjectAttributes,
+		pIoStatusBlock,
+		pAllocationSize,
+		fileAttributes,
+		shareAccess,
+		createDisposition,
+		createOptions,
+		eaBuffer,
+		eaLength);
+
+	// clang-format off
+	// All ACCESS_MASK flags that allow modification of the file
+	constexpr DWORD ALL_WRITE_FLAGS[] = {
+		GENERIC_WRITE, GENERIC_ALL, 
+		WRITE_DAC, WRITE_OWNER, 
+		FILE_WRITE_DATA, FILE_APPEND_DATA, FILE_WRITE_EA, FILE_WRITE_ATTRIBUTES,
+		FILE_DELETE_CHILD, DELETE
+	};
+	// clang-format on
+
+	bool hasWriteAccess = false;
+	for (DWORD writeFlag : ALL_WRITE_FLAGS)
+	{
+		if (desiredAccess & writeFlag)
+		{
+			hasWriteAccess = true;
+			break;
+		}
+	}
+
+	if (hasWriteAccess)
+	{
+		char filePathBuf[MAX_PATH] = {};
+		if (GetFinalPathNameByHandleA(*pFileHandle, filePathBuf, MAX_PATH, FILE_NAME_NORMALIZED))
+		{
+			const char* extension = strrchr(filePathBuf, '.');
+			if (extension)
+			{
+				for (auto evil : EVIL_EXTENTIONS)
+				{
+					if (!_stricmp(evil, extension))
+					{
+						AntiRCE::EmergencyReport("Tried to access file \"" + std::string(filePathBuf) + "\"");
+					}
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 // NOTE: These hooks do not prevent RCE attacks from using these funtions, as an attacker could just disable these hooks
 // (particularly easy if you get a ROP-chain going and use MH_RemoveHook lol)
 //
@@ -136,12 +214,17 @@ void AntiRCE::EmergencyReport(std::string msg)
 	);
 	// clang-format on
 
-	exit(EXITCODE_TERRIBLE);
+	// Crash the game to cause a callstack to be dumped
+	char __ = *(char*)0x666;
 }
 
 bool AntiRCE::Init()
 {
 	spdlog::info("Initializing AntiRCE...");
+
+	// Temporary - to be replaced once improved NSMem PR is accepted
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, GetProcAddress(GetModuleHandleA("ntdll"), "NtCreateFile"), hkNtCreateFile, &oNtCreateFile);
 
 	bool result = true;
 
