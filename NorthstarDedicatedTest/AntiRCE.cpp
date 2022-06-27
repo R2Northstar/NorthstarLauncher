@@ -194,13 +194,13 @@ LONG WINAPI hkNtCreateFile(
 //	as well as to prevent any exploits that might utilize these functions from being able to do actual damage
 void AntiRCE::EmergencyReport(std::string msg)
 {
-#ifdef NS_DEBUG // For easier debugging
+#ifdef _DEBUG // For easier debugging
 	assert(false, "AntiRCE::EmergencyReport triggered");
 #endif
 
 	spdlog::critical("AntiRCE EMERGENCY REPORT: " + msg);
 
-#ifndef NS_DEBUG // Disabled in debugging, gets annoying during testing
+#ifndef _DEBUG // Disabled in debugging, gets annoying during testing
 
 	// Beep an out-of-tune tri-tone for 300ms so user knows something is up
 	Beep(494 * 2, 150);
