@@ -87,7 +87,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	// load original file, so we can parse out the name of the root obj (e.g. WeaponData for weapons)
 	std::string originalFile = ReadVPKOriginalFile(filename);
-	
+
 	// check if the file was overriden
 	if (m_modFiles.find(normalisedPath) != m_modFiles.end())
 	{
@@ -121,7 +121,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 			if (m_modFiles.find(ogFilePath) != m_modFiles.end())
 			{
 				ModOverrideFile f = m_modFiles[ogFilePath];
-				
+
 				if (f.owningMod == nullptr)
 				{
 					spdlog::warn("kv {} was overriden by a mod but no file was found!", ogFilePath);
