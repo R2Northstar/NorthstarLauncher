@@ -9,9 +9,10 @@ constexpr const char* EVIL_EXTENTIONS[] = {".dll", ".exe", ".bat", ".cmd", ".com
 // These file extensions are always safe, the game should be able to access them from whereever
 constexpr const char* SAFE_EXTENTIONS[] = {".ttf", ".fon", ".ttc"};
 
+// Global variable to track if the AntiRCE system is initialized or not
 static bool initialized = false;
 
-// When the game itself accesses a file
+// When the game itself accesses a file (called from hkFileSytem_OpenFileFuncIdk)
 void OnGameFileAccess(const char* pathArg, bool readOnly)
 {
 	if (!initialized)
@@ -105,16 +106,16 @@ KHOOK(
 	__fastcall,
 	(char* fileName, char* openTypeStr, void* unk))
 {
-
-	OnGameFileAccess(fileName, openTypeStr[0] == 'r');
+	bool writeAccess = openTypeStr[0] == 'r';
+	OnGameFileAccess(fileName, writeAccess);
 
 	return oFileSytem_OpenFileFuncIdk(fileName, openTypeStr, unk);
 }
 
 // This will catch ALL file access, even that which is not via source engine filesystem
 // NtCreateFile is the lowest level of file access (with modification) before we go to kernel mode
-// Because this could be called by all sorts of external software and basic windows procedures, the only check here is for writing to
-// binaries Windows Documentation: https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatefile
+// Because this could be called by all sorts of external software and windows procedures, the only check here is for writing to binaries
+// Windows Documentation: https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatefile
 void* oNtCreateFile;
 LONG WINAPI hkNtCreateFile(
 	PHANDLE pFileHandle,
