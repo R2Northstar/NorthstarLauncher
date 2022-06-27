@@ -6,11 +6,12 @@
 constexpr const char* EVIL_EXTENTIONS[] = {".dll", ".exe", ".bat", ".cmd", ".com", ".ps1", ".vbs", ".vb",  ".sys", ".msi", ".src",
 										   ".lnk", ".ps1", ".vbs", ".vb",  ".js",  ".sys", ".msi", ".scr", ".lnk", ".cpl"};
 
-// These file extensions are always safe
+// These file extensions are always safe, the game should be able to access them from whereever
 constexpr const char* SAFE_EXTENTIONS[] = {".ttf", ".fon", ".ttc"};
 
 static bool initialized = false;
 
+// When the game itself accesses a file
 void OnGameFileAccess(const char* pathArg, bool readOnly)
 {
 	if (!initialized)
@@ -96,7 +97,7 @@ void OnGameFileAccess(const char* pathArg, bool readOnly)
 	}
 }
 
-// Its 3 am and idk what this function is but it get called whenever file opened sooo
+// Lowest level function for source engine filesystem accessing a file
 KHOOK(
 	FileSytem_OpenFileFuncIdk,
 	("filesystem_stdio.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 8B 05"),
@@ -110,7 +111,10 @@ KHOOK(
 	return oFileSytem_OpenFileFuncIdk(fileName, openTypeStr, unk);
 }
 
-// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatefile
+// This will catch ALL file access, even that which is not via source engine filesystem
+// NtCreateFile is the lowest level of file access (with modification) before we go to kernel mode
+// Because this could be called by all sorts of external software and basic windows procedures, the only check here is for writing to
+// binaries Windows Documentation: https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatefile
 void* oNtCreateFile;
 LONG WINAPI hkNtCreateFile(
 	PHANDLE pFileHandle,
@@ -196,7 +200,7 @@ void AntiRCE::EmergencyReport(std::string msg)
 
 	spdlog::critical("AntiRCE EMERGENCY REPORT: " + msg);
 
-#ifndef NS_DEBUG // This gets annoying during testing
+#ifndef NS_DEBUG // Disabled in debugging, gets annoying during testing
 
 	// Beep an out-of-tune tri-tone for 300ms so user knows something is up
 	Beep(494 * 2, 150);
