@@ -264,7 +264,6 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseSharedMasterServer);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
-	AddDllLoadCallback("engine.dll", InitialiseMiscEngineServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
 
 	AddDllLoadCallback("engine.dll", InitializeCHostStateHooks);
@@ -289,6 +288,7 @@ bool InitialiseNorthstar()
 
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
+	AddDllLoadCallback("engine.dll", ExploitFixes::LoadCallbackEngine);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
