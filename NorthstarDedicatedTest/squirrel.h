@@ -18,7 +18,8 @@ const SQRESULT SQRESULT_NOTNULL = 1;
 
 typedef SQInteger (*SQFunction)(void* sqvm);
 
-enum SQReturnTypeEnum {
+enum SQReturnTypeEnum
+{
 	SqReturnFloat = 0x1,
 	SqReturnVector = 0x3,
 	SqReturnInteger = 0x5,
@@ -120,10 +121,9 @@ typedef SQInteger (*sq_pusherrorType)(void* sqvm, const SQChar* error);
 extern sq_pusherrorType ClientSq_pusherror;
 extern sq_pusherrorType ServerSq_pusherror;
 
-typedef SQRESULT(*sq_pushAssetType)(void* sqvm, const SQChar* assetName, SQInteger nameLength); // nameLength == -1 means assetName is a null terminated string
+typedef SQRESULT (*sq_pushAssetType)(void* sqvm, const SQChar* assetName, SQInteger nameLength);
 extern sq_pushAssetType ServerSq_pushAsset;
 extern sq_pushAssetType ClientSq_pushAsset;
-
 
 // sq stack get funcs
 typedef const SQChar* (*sq_getstringType)(void* sqvm, SQInteger stackpos);
@@ -283,7 +283,7 @@ template <ScriptContext context> class SquirrelManager
 
 		return result;
 	}
-	
+
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func)
 	{
 		SQFuncRegistration* reg = new SQFuncRegistration;
@@ -298,7 +298,7 @@ template <ScriptContext context> class SquirrelManager
 		reg->returnTypeString = new char[returnType.size() + 1];
 		strcpy((char*)reg->returnTypeString, returnType.c_str());
 		reg->returnTypeEnum = GetReturnTypeEnumFromString(returnType.c_str());
-			
+
 		reg->argTypes = new char[argTypes.size() + 1];
 		strcpy((char*)reg->argTypes, argTypes.c_str());
 

@@ -16,13 +16,13 @@ SQRESULT ClientSq_StringToAsset(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void InitialiseClientSquirrelUtilityFunctions(HMODULE baseAddress) 
+void InitialiseClientSquirrelUtilityFunctions(HMODULE baseAddress)
 {
 	g_ClientSquirrelManager->AddFuncRegistration("asset", "StringToAsset", "string assetName", "", ClientSq_StringToAsset);
 	g_UISquirrelManager->AddFuncRegistration("asset", "StringToAsset", "string assetName", "", ClientSq_StringToAsset);
 }
 
-void InitialiseServerSquirrelUtilityFunctions(HMODULE baseAddress) 
+void InitialiseServerSquirrelUtilityFunctions(HMODULE baseAddress)
 {
 	g_ServerSquirrelManager->AddFuncRegistration("asset", "StringToAsset", "string assetName", "", ServerSq_StringToAsset);
 }
