@@ -51,7 +51,6 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
-#include "emit_blocker.h"
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -267,7 +266,6 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseSharedMasterServer);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
-	AddDllLoadCallback("engine.dll", InitialiseMiscEngineServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
@@ -289,6 +287,7 @@ bool InitialiseNorthstar()
 
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
+	AddDllLoadCallback("engine.dll", ExploitFixes::LoadCallbackEngine);
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
