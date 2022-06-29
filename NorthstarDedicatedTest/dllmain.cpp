@@ -270,7 +270,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
 	AddDllLoadCallback("server.dll", InitialiseServerSquirrelUtilityFunctions);
-	
+
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
 
 	AddDllLoadCallback("filesystem_stdio.dll", InitialiseFilesystem);
@@ -291,7 +291,6 @@ bool InitialiseNorthstar()
 	// activate exploit fixes
 	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
 	AddDllLoadCallback("engine.dll", ExploitFixes::LoadCallbackEngine);
-	
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
