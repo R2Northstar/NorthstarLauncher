@@ -1515,9 +1515,6 @@
     <ClInclude Include="NSMem.h">
       <Filter>Header Files\Shared\ExploitFixes</Filter>
     </ClInclude>
-    <ClInclude Include="emit_blocker.h">
-      <Filter>Header Files\Shared\ExploitFixes</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1684,9 +1681,6 @@
     </ClCompile>
     <ClCompile Include="clientruihooks.cpp">
       <Filter>Source Files\Client</Filter>
-    </ClCompile>
-    <ClCompile Include="emit_blocker.cpp">
-      <Filter>Source Files\Shared\Exploit Fixes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

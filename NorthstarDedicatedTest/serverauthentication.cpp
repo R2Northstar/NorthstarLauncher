@@ -18,6 +18,9 @@
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
+// This convar defines whether to log all client commands
+ConVar* Cvar_ns_should_log_all_clientcommands;
+
 // hook types
 
 typedef void* (*CBaseServer__ConnectClientType)(
@@ -245,7 +248,8 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		// set persistent data as ready, we use 0x3 internally to mark the client as using local persistence
 		*((char*)player + 0x4a0) = (char)0x3;
 
-		if (!CVar_ns_auth_allow_insecure->GetBool()) // no auth data and insecure connections aren't allowed, so dc the client
+		// no auth data and insecure connections aren't allowed, so dc the client
+		if (!CVar_ns_auth_allow_insecure->GetBool() && strncmp(GetCurrentPlaylistName(), "solo", 5) != 0)
 			return false;
 
 		// insecure connections are allowed, try reading from disk
@@ -259,7 +263,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 		std::fstream pdataStream(pdataPath, std::ios_base::in);
 		if (pdataStream.fail()) // file doesn't exist, use placeholder
-			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata");
+			pdataStream = std::fstream(GetNorthstarPrefix() + "/placeholder_playerdata.pdata", std::ios_base::in);
 
 		// get file length
 		pdataStream.seekg(0, pdataStream.end);
@@ -479,6 +483,12 @@ CCommand__TokenizeType CCommand__Tokenize;
 
 char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const char* pCommandString)
 {
+	// Only log clientcommands if the convar `ns_should_log_all_clientcommands` equals 1
+	if (Cvar_ns_should_log_all_clientcommands->GetBool())
+	{
+		spdlog::info("{} (UID: {}) executed command: \"{}\"", (char*)self + 0x16, (char*)self + 0xF500, pCommandString);
+	}
+
 	if (CVar_sv_quota_stringcmdspersecond->GetInt() != -1)
 	{
 		// note: this isn't super perfect, legit clients can trigger it in lobby, mostly good enough tho imo
@@ -668,9 +678,11 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 		new ConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = log, 1 = kick");
 	Cvar_net_chan_limit_msec_per_sec = new ConVar(
 		"net_chan_limit_msec_per_sec",
-		"0",
+		"100",
 		FCVAR_GAMEDLL,
 		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
+	Cvar_ns_should_log_all_clientcommands =
+		new ConVar("ns_should_log_all_clientcommands", "0", FCVAR_NONE, "Whether to log all clientcommands");
 	Cvar_ns_player_auth_port = new ConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	Cvar_sv_querylimit_per_sec = new ConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");
 	Cvar_sv_max_chat_messages_per_sec = new ConVar("sv_max_chat_messages_per_sec", "5", FCVAR_GAMEDLL, "");
