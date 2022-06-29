@@ -24,5 +24,3 @@ void InitialiseMiscServerFixes(HMODULE baseAddress)
 		NSMem::BytePatch(ba + 0x153920, "C3");
 	}
 }
-
-void InitialiseMiscEngineServerFixes(HMODULE baseAddress) {}
