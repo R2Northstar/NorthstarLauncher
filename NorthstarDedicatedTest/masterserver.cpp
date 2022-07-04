@@ -14,6 +14,7 @@
 #include <cstring>
 #include <regex>
 #include "version.h"
+#include <chrono>
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver
 // requests so httplib is used exclusively for server stuff now
 
@@ -24,6 +25,8 @@ ConVar* Cvar_ns_report_sp_server_to_masterserver;
 ConVar* Cvar_ns_server_name;
 ConVar* Cvar_ns_server_desc;
 ConVar* Cvar_ns_server_password;
+
+ConVar* Cvar_ns_curl_log_enable;
 
 // Source ConVar
 ConVar* Cvar_hostname;
@@ -144,8 +147,14 @@ const char* HttplibErrorToString(httplib::Error error)
 }
 
 RemoteServerInfo::RemoteServerInfo(
-	const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount,
-	int newMaxPlayers, bool newRequiresPassword)
+	const char* newId,
+	const char* newName,
+	const char* newDescription,
+	const char* newMap,
+	const char* newPlaylist,
+	int newPlayerCount,
+	int newMaxPlayers,
+	bool newRequiresPassword)
 {
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
@@ -169,7 +178,7 @@ RemoteServerInfo::RemoteServerInfo(
 void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 {
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, Cvar_ns_curl_log_enable->GetBool());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
@@ -214,7 +223,8 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			SetCommonHttpClientOptions(curl);
 			std::string readBuffer;
 			curl_easy_setopt(
-				curl, CURLOPT_URL,
+				curl,
+				CURLOPT_URL,
 				fmt::format("{}/client/origin_auth?id={}&token={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr).c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
@@ -361,8 +371,13 @@ void MasterServerManager::RequestServerList()
 						if (!strncmp((const char*)server.id, id, 32))
 						{
 							server = RemoteServerInfo(
-								id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(),
-								serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(),
+								id,
+								serverObj["name"].GetString(),
+								serverObj["description"].GetString(),
+								serverObj["map"].GetString(),
+								serverObj["playlist"].GetString(),
+								serverObj["playerCount"].GetInt(),
+								serverObj["maxPlayers"].GetInt(),
 								serverObj["hasPassword"].IsTrue());
 							newServer = &server;
 							createNewServerInfo = false;
@@ -373,8 +388,13 @@ void MasterServerManager::RequestServerList()
 					// server didn't exist
 					if (createNewServerInfo)
 						newServer = &m_remoteServers.emplace_back(
-							id, serverObj["name"].GetString(), serverObj["description"].GetString(), serverObj["map"].GetString(),
-							serverObj["playlist"].GetString(), serverObj["playerCount"].GetInt(), serverObj["maxPlayers"].GetInt(),
+							id,
+							serverObj["name"].GetString(),
+							serverObj["description"].GetString(),
+							serverObj["map"].GetString(),
+							serverObj["playlist"].GetString(),
+							serverObj["playerCount"].GetInt(),
+							serverObj["maxPlayers"].GetInt(),
 							serverObj["hasPassword"].IsTrue());
 
 					newServer->requiredMods.clear();
@@ -404,7 +424,8 @@ void MasterServerManager::RequestServerList()
 				}
 
 				std::sort(
-					m_remoteServers.begin(), m_remoteServers.end(),
+					m_remoteServers.begin(),
+					m_remoteServers.end(),
 					[](RemoteServerInfo& a, RemoteServerInfo& b) { return a.playerCount > b.playerCount; });
 			}
 			else
@@ -470,6 +491,10 @@ void MasterServerManager::RequestMainMenuPromos()
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+					if (mainMenuPromoJson["error"].HasMember("enum"))
+						s_authfail_reason = std::string(mainMenuPromoJson["error"]["enum"].GetString());
+					else
+						s_authfail_reason = std::string("No error message provided");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -555,7 +580,8 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 
 			std::string readBuffer;
 			curl_easy_setopt(
-				curl, CURLOPT_URL,
+				curl,
+				CURLOPT_URL,
 				fmt::format("{}/client/auth_with_self?id={}&playerToken={}", Cvar_ns_masterserver_hostname->GetString(), uidStr, tokenStr)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -589,6 +615,10 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+					if (authInfoJson["error"].HasMember("enum"))
+						s_authfail_reason = std::string(authInfoJson["error"]["enum"].GetString());
+					else
+						s_authfail_reason = std::string("No error message provided");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -606,7 +636,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 					goto REQUEST_END_CLEANUP;
 				}
 
-				AuthData newAuthData;
+				AuthData newAuthData {};
 				strncpy(newAuthData.uid, authInfoJson["id"].GetString(), sizeof(newAuthData.uid));
 				newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
@@ -695,10 +725,15 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 				char* escapedPassword = curl_easy_escape(curl, passwordStr.c_str(), passwordStr.length());
 
 				curl_easy_setopt(
-					curl, CURLOPT_URL,
+					curl,
+					CURLOPT_URL,
 					fmt::format(
-						"{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}", Cvar_ns_masterserver_hostname->GetString(),
-						uidStr, tokenStr, serverIdStr, escapedPassword)
+						"{}/client/auth_with_server?id={}&playerToken={}&server={}&password={}",
+						Cvar_ns_masterserver_hostname->GetString(),
+						uidStr,
+						tokenStr,
+						serverIdStr,
+						escapedPassword)
 						.c_str());
 
 				curl_free(escapedPassword);
@@ -731,6 +766,10 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+					if (connectionInfoJson["error"].HasMember("enum"))
+						s_authfail_reason = std::string(connectionInfoJson["error"]["enum"].GetString());
+					else
+						s_authfail_reason = std::string("No error message provided");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -798,6 +837,10 @@ void MasterServerManager::AddSelfToServerList(
 	std::thread requestThread(
 		[this, port, authPort, strName, strDescription, strMap, strPlaylist, maxPlayers, strPassword]
 		{
+			// Keep track of attempted connects in case of DUPLICATE_SERVER response
+			int retry_counter = 0;
+
+		START_REQUEST:
 			m_ownServerId[0] = 0;
 			m_ownServerAuthToken[0] = 0;
 
@@ -828,11 +871,19 @@ void MasterServerManager::AddSelfToServerList(
 				char* passwordEscaped = curl_easy_escape(curl, strPassword.c_str(), strPassword.length());
 
 				curl_easy_setopt(
-					curl, CURLOPT_URL,
+					curl,
+					CURLOPT_URL,
 					fmt::format(
 						"{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
-						Cvar_ns_masterserver_hostname->GetString(), port, authPort, nameEscaped, descEscaped, mapEscaped, playlistEscaped,
-						maxPlayers, passwordEscaped)
+						Cvar_ns_masterserver_hostname->GetString(),
+						port,
+						authPort,
+						nameEscaped,
+						descEscaped,
+						mapEscaped,
+						playlistEscaped,
+						maxPlayers,
+						passwordEscaped)
 						.c_str());
 
 				curl_free(nameEscaped);
@@ -869,6 +920,29 @@ void MasterServerManager::AddSelfToServerList(
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+
+					// Check for enum member in JSON
+					if (serverAddedJson["error"].HasMember("enum"))
+					{
+						// Check for DUPLICATE_SERVER error response, stop if we tried 10 times
+						if (strncmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER", 17) == 0 && retry_counter < 10)
+						{
+
+							spdlog::info("Retrying request in 10 seconds.");
+							// Incremement retry counter
+							retry_counter++;
+
+							// Sleep for 10 seconds
+							std::this_thread::sleep_for(std::chrono::seconds(10));
+
+							// curl cleanup to retry request
+							curl_easy_cleanup(curl);
+							curl_mime_free(mime);
+
+							// go to beginning and retry
+							goto START_REQUEST;
+						}
+					}
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -890,6 +964,8 @@ void MasterServerManager::AddSelfToServerList(
 
 				strncpy(m_ownServerAuthToken, serverAddedJson["serverAuthToken"].GetString(), sizeof(m_ownServerAuthToken));
 				m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
+
+				spdlog::info("Succesfully added server to the master server.");
 
 				// heartbeat thread
 				// ideally this should actually be done in main thread, rather than on it's own thread, so it'd stop if server freezes
@@ -928,14 +1004,22 @@ void MasterServerManager::AddSelfToServerList(
 									maxPlayers = std::stoi(maxPlayersVar);
 
 								curl_easy_setopt(
-									curl, CURLOPT_URL,
+									curl,
+									CURLOPT_URL,
 									fmt::format(
 										"{}/server/"
 										"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
 										"maxPlayers={}&password={}",
-										Cvar_ns_masterserver_hostname->GetString(), m_ownServerId, Cvar_hostport->GetInt(),
-										Cvar_ns_player_auth_port->GetInt(), escapedNameNew, escapedDescNew, escapedMapNew,
-										escapedPlaylistNew, g_ServerAuthenticationManager->m_additionalPlayerData.size(), maxPlayers,
+										Cvar_ns_masterserver_hostname->GetString(),
+										m_ownServerId,
+										Cvar_hostport->GetInt(),
+										Cvar_ns_player_auth_port->GetInt(),
+										escapedNameNew,
+										escapedDescNew,
+										escapedMapNew,
+										escapedPlaylistNew,
+										g_ServerAuthenticationManager->m_additionalPlayerData.size(),
+										maxPlayers,
 										escapedPasswordNew)
 										.c_str());
 
@@ -978,7 +1062,8 @@ void MasterServerManager::AddSelfToServerList(
 									if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
 									{
 										strncpy(
-											m_ownServerAuthToken, serverAddedJson["serverAuthToken"].GetString(),
+											m_ownServerAuthToken,
+											serverAddedJson["serverAuthToken"].GetString(),
 											sizeof(m_ownServerAuthToken));
 										m_ownServerAuthToken[sizeof(m_ownServerAuthToken) - 1] = 0;
 									}
@@ -1034,10 +1119,15 @@ void MasterServerManager::UpdateServerMapAndPlaylist(char* map, char* playlist, 
 				char* playlistEscaped = curl_easy_escape(curl, strPlaylist.c_str(), strPlaylist.length());
 
 				curl_easy_setopt(
-					curl, CURLOPT_URL,
+					curl,
+					CURLOPT_URL,
 					fmt::format(
-						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}", Cvar_ns_masterserver_hostname->GetString(),
-						m_ownServerId, mapEscaped, playlistEscaped, maxPlayers)
+						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}",
+						Cvar_ns_masterserver_hostname->GetString(),
+						m_ownServerId,
+						mapEscaped,
+						playlistEscaped,
+						maxPlayers)
 						.c_str());
 
 				curl_free(mapEscaped);
@@ -1074,7 +1164,8 @@ void MasterServerManager::UpdateServerPlayerCount(int playerCount)
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(
-				curl, CURLOPT_URL,
+				curl,
+				CURLOPT_URL,
 				fmt::format(
 					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId, playerCount)
 					.c_str());
@@ -1113,9 +1204,12 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 
 			std::string readBuffer;
 			curl_easy_setopt(
-				curl, CURLOPT_URL,
+				curl,
+				CURLOPT_URL,
 				fmt::format(
-					"{}/accounts/write_persistence?id={}&serverId={}", Cvar_ns_masterserver_hostname->GetString(), strPlayerId,
+					"{}/accounts/write_persistence?id={}&serverId={}",
+					Cvar_ns_masterserver_hostname->GetString(),
+					strPlayerId,
 					m_ownServerId)
 					.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -1164,7 +1258,8 @@ void MasterServerManager::RemoveSelfFromServerList()
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(
-				curl, CURLOPT_URL,
+				curl,
+				CURLOPT_URL,
 				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_ownServerId).c_str());
 
 			*m_ownServerId = 0;
@@ -1181,7 +1276,10 @@ void MasterServerManager::RemoveSelfFromServerList()
 	requestThread.detach();
 }
 
-void ConCommand_ns_fetchservers(const CCommand& args) { g_MasterServerManager->RequestServerList(); }
+void ConCommand_ns_fetchservers(const CCommand& args)
+{
+	g_MasterServerManager->RequestServerList();
+}
 
 void CHostState__State_NewGameHook(CHostState* hostState)
 {
@@ -1213,8 +1311,13 @@ void CHostState__State_NewGameHook(CHostState* hostState)
 	UpdateServerInfoFromUnicodeToUTF8();
 
 	g_MasterServerManager->AddSelfToServerList(
-		Cvar_hostport->GetInt(), Cvar_ns_player_auth_port->GetInt(), (char*)Cvar_ns_server_name->GetString(),
-		(char*)Cvar_ns_server_desc->GetString(), hostState->m_levelName, (char*)GetCurrentPlaylistName(), maxPlayers,
+		Cvar_hostport->GetInt(),
+		Cvar_ns_player_auth_port->GetInt(),
+		(char*)Cvar_ns_server_name->GetString(),
+		(char*)Cvar_ns_server_desc->GetString(),
+		hostState->m_levelName,
+		(char*)GetCurrentPlaylistName(),
+		maxPlayers,
 		(char*)Cvar_ns_server_password->GetString());
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
@@ -1262,7 +1365,7 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 	CHostState__State_GameShutdown(hostState);
 }
 
-MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownServerId{""}, m_ownClientAuthToken{""} {}
+MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_ownServerId {""}, m_ownClientAuthToken {""} {}
 
 void InitialiseSharedMasterServer(HMODULE baseAddress)
 {
@@ -1276,6 +1379,8 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "");
 	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "");
 
+	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "");
+
 	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
 
 	g_MasterServerManager = new MasterServerManager;
@@ -1286,12 +1391,18 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x16E7D0, CHostState__State_NewGameHook, reinterpret_cast<LPVOID*>(&CHostState__State_NewGame));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E520, CHostState__State_ChangeLevelMPHook,
+		hook,
+		(char*)baseAddress + 0x16E520,
+		CHostState__State_ChangeLevelMPHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelMP));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E5D0, CHostState__State_ChangeLevelSPHook,
+		hook,
+		(char*)baseAddress + 0x16E5D0,
+		CHostState__State_ChangeLevelSPHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_ChangeLevelSP));
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x16E640, CHostState__State_GameShutdownHook,
+		hook,
+		(char*)baseAddress + 0x16E640,
+		CHostState__State_GameShutdownHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
 }

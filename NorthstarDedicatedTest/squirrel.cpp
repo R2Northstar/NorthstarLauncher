@@ -6,6 +6,7 @@
 #include "concommand.h"
 #include "modmanager.h"
 #include <iostream>
+#include "gameutils.h"
 
 // hook forward declarations
 typedef SQInteger (*SQPrintType)(void* sqvm, char* fmt, ...);
@@ -34,6 +35,10 @@ CallScriptInitCallbackType ClientCallScriptInitCallback;
 CallScriptInitCallbackType ServerCallScriptInitCallback;
 template <ScriptContext context> char CallScriptInitCallbackHook(void* sqvm, const char* callback);
 
+RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
+RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
+template <ScriptContext context> int64_t RegisterSquirrelFuncHook(void* sqvm, SQFuncRegistration* funcReg, char unknown);
+
 // core sqvm funcs
 sq_compilebufferType ClientSq_compilebuffer;
 sq_compilebufferType ServerSq_compilebuffer;
@@ -43,9 +48,6 @@ sq_pushroottableType ServerSq_pushroottable;
 
 sq_callType ClientSq_call;
 sq_callType ServerSq_call;
-
-RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
-RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
 
 // sq stack array funcs
 sq_newarrayType ClientSq_newarray;
@@ -93,7 +95,10 @@ SquirrelManager<ScriptContext::CLIENT>* g_ClientSquirrelManager;
 SquirrelManager<ScriptContext::SERVER>* g_ServerSquirrelManager;
 SquirrelManager<ScriptContext::UI>* g_UISquirrelManager;
 
-SQInteger NSTestFunc(void* sqvm) { return 1; }
+SQInteger NSTestFunc(void* sqvm)
+{
+	return 1;
+}
 
 void InitialiseClientSquirrel(HMODULE baseAddress)
 {
@@ -103,7 +108,9 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 	g_ClientSquirrelManager = new SquirrelManager<ScriptContext::CLIENT>();
 
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x12B00, &SQPrintHook<ScriptContext::CLIENT>,
+		hook,
+		(char*)baseAddress + 0x12B00,
+		&SQPrintHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientSQPrint)); // client print function
 	RegisterConCommand(
 		"script_client", ExecuteCodeCommand<ScriptContext::CLIENT>, "Executes script code on the client vm", FCVAR_CLIENTDLL);
@@ -138,17 +145,30 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 	ClientSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
 
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x26130, &CreateNewVMHook<ScriptContext::CLIENT>,
+		hook,
+		(char*)baseAddress + 0x26130,
+		&CreateNewVMHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientCreateNewVM)); // client createnewvm function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x26E70, &DestroyVMHook<ScriptContext::CLIENT>,
+		hook,
+		(char*)baseAddress + 0x26E70,
+		&DestroyVMHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientDestroyVM)); // client destroyvm function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x79A50, &ScriptCompileErrorHook<ScriptContext::CLIENT>,
+		hook,
+		(char*)baseAddress + 0x79A50,
+		&ScriptCompileErrorHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientSQCompileError)); // client compileerror function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x10190, &CallScriptInitCallbackHook<ScriptContext::CLIENT>,
+		hook,
+		(char*)baseAddress + 0x10190,
+		&CallScriptInitCallbackHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientCallScriptInitCallback)); // client callscriptinitcallback function
+	ENABLER_CREATEHOOK(
+		hook,
+		(char*)baseAddress + 0x108E0,
+		&RegisterSquirrelFuncHook<ScriptContext::CLIENT>,
+		reinterpret_cast<LPVOID*>(&ClientRegisterSquirrelFunc)); // client registersquirrelfunc function
 }
 
 void InitialiseServerSquirrel(HMODULE baseAddress)
@@ -179,25 +199,43 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 	ServerSq_sq_get = (sq_getType)((char*)baseAddress + 0x7C00);
 
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x1FE90, &SQPrintHook<ScriptContext::SERVER>,
+		hook,
+		(char*)baseAddress + 0x1FE90,
+		&SQPrintHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerSQPrint)); // server print function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x260E0, &CreateNewVMHook<ScriptContext::SERVER>,
+		hook,
+		(char*)baseAddress + 0x260E0,
+		&CreateNewVMHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerCreateNewVM)); // server createnewvm function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x26E20, &DestroyVMHook<ScriptContext::SERVER>,
+		hook,
+		(char*)baseAddress + 0x26E20,
+		&DestroyVMHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerDestroyVM)); // server destroyvm function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x799E0, &ScriptCompileErrorHook<ScriptContext::SERVER>,
+		hook,
+		(char*)baseAddress + 0x799E0,
+		&ScriptCompileErrorHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerSQCompileError)); // server compileerror function
 	ENABLER_CREATEHOOK(
-		hook, (char*)baseAddress + 0x1D5C0, &CallScriptInitCallbackHook<ScriptContext::SERVER>,
+		hook,
+		(char*)baseAddress + 0x1D5C0,
+		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerCallScriptInitCallback)); // server callscriptinitcallback function
+
+	ENABLER_CREATEHOOK(
+		hook,
+		(char*)baseAddress + 0x1DD10,
+		&RegisterSquirrelFuncHook<ScriptContext::SERVER>,
+		reinterpret_cast<LPVOID*>(&ServerRegisterSquirrelFunc)); // server registersquirrelfunc function
 
 	// cheat and clientcmd_can_execute allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
 	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
-		"script", ExecuteCodeCommand<ScriptContext::SERVER>, "Executes script code on the server vm",
+		"script",
+		ExecuteCodeCommand<ScriptContext::SERVER>,
+		"Executes script code on the server vm",
 		FCVAR_GAMEDLL | FCVAR_CLIENTCMD_CAN_EXECUTE | FCVAR_CHEAT);
 }
 
@@ -422,4 +460,29 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 		g_UISquirrelManager->ExecuteCode(args.ArgS());
 	else if (context == ScriptContext::SERVER)
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
+}
+
+SQRESULT SQ_DevFuncStub(void* sqvm)
+{
+	spdlog::warn("Blocked execution of squirrel developer function for security reasons. To re-enable them use start parameter "
+				 "-allowSquirrelDevFunctions.");
+	return SQRESULT_NULL;
+}
+
+template <ScriptContext context> int64_t RegisterSquirrelFuncHook(void* sqvm, SQFuncRegistration* funcReg, char unknown)
+{
+	static std::set<std::string> allowedDevFunctions = {
+		"Dev_CommandLineHasParm",
+		"Dev_CommandLineParmValue",
+		"Dev_CommandLineRemoveParm",
+	};
+
+	if ((funcReg->devLevel == 1) && (!CommandLine()->CheckParm("-allowSquirrelDevFunctions")) &&
+		(!allowedDevFunctions.count(funcReg->squirrelFuncName)))
+		funcReg->funcPtr = SQ_DevFuncStub;
+
+	if (context == ScriptContext::SERVER)
+		return ServerRegisterSquirrelFunc(sqvm, funcReg, unknown);
+	else
+		return ClientRegisterSquirrelFunc(sqvm, funcReg, unknown);
 }

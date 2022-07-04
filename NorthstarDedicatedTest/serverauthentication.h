@@ -28,6 +28,8 @@ struct AdditionalPlayerData
 
 	double lastSayTextLimitStart = -1.0;
 	int sayTextLimitCount = 0;
+
+	uint64_t uid;
 };
 
 #pragma once
@@ -57,7 +59,7 @@ typedef struct netpacket_s
 	char unk[10];
 	double received_time;
 	unsigned char* data; // pointer to raw packet data
-	void* message;		 // easy bitbuf data access // 'inpacket.message' etc etc (pointer)
+	void* message; // easy bitbuf data access // 'inpacket.message' etc etc (pointer)
 	char unk2[16];
 	int size;
 

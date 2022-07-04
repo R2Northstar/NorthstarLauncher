@@ -114,9 +114,11 @@
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
     <ClInclude Include="clientchathooks.h" />
+    <ClInclude Include="debugoverlay.h" />
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
     <ClInclude Include="serverchathooks.h" />
@@ -580,6 +582,7 @@
     <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="cvar.cpp" />
+    <ClCompile Include="debugoverlay.cpp" />
     <ClCompile Include="dedicated.cpp" />
     <ClCompile Include="dedicatedmaterialsystem.cpp" />
     <ClCompile Include="dllmain.cpp" />

@@ -41,14 +41,16 @@ void InitialiseConsoleOnInterfaceCreation()
 	// hook OnCommandSubmitted so we print inputted commands
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
-		hook, (void*)((*g_SourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted), &OnCommandSubmittedHook,
+		hook,
+		(void*)((*g_SourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted),
+		&OnCommandSubmittedHook,
 		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
 }
 
 void InitialiseSourceConsole(HMODULE baseAddress)
 {
 	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
-	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_NONE);
+	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);
 }
 
 // logging stuff

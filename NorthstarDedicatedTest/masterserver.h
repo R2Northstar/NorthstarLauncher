@@ -30,8 +30,14 @@ class RemoteServerInfo
 
   public:
 	RemoteServerInfo(
-		const char* newId, const char* newName, const char* newDescription, const char* newMap, const char* newPlaylist, int newPlayerCount,
-		int newMaxPlayers, bool newRequiresPassword);
+		const char* newId,
+		const char* newName,
+		const char* newDescription,
+		const char* newMap,
+		const char* newPlaylist,
+		int newPlayerCount,
+		int newMaxPlayers,
+		bool newRequiresPassword);
 };
 
 struct RemoteServerConnectionInfo
@@ -91,6 +97,8 @@ class MasterServerManager
 	bool m_bNewgameAfterSelfAuth = false;
 	bool m_scriptAuthenticatingWithGameServer = false;
 	bool m_successfullyAuthenticatedWithGameServer = false;
+
+	std::string s_authfail_reason {};
 
 	bool m_hasPendingConnectionInfo = false;
 	RemoteServerConnectionInfo m_pendingConnectionInfo;
