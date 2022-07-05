@@ -121,7 +121,7 @@
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
-    <ClInclude Include="scriptJson.h" />
+    <ClInclude Include="scriptjson1.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
@@ -613,7 +613,7 @@
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
-    <ClCompile Include="scriptJson.cpp" />
+    <ClCompile Include="scriptjson1.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />

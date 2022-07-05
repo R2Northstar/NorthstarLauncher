@@ -1515,7 +1515,7 @@
     <ClInclude Include="NSMem.h">
       <Filter>Header Files\Shared\ExploitFixes</Filter>
     </ClInclude>
-    <ClInclude Include="scriptJson.h">
+    <ClInclude Include="scriptjson1.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1685,7 +1685,7 @@
     <ClCompile Include="clientruihooks.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="scriptJson.cpp">
+    <ClCompile Include="scriptjson1.cpp">
       <Filter>Source Files\Shared</Filter>
     </ClCompile>
   </ItemGroup>
