@@ -22,6 +22,11 @@ void serverSq_DecodeJSON_Table(
 	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj);
 void serverSq_DecodeJSON_Array(
 	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr);
+void clientSq_DecodeJSON_Table(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj);
+void clientSq_DecodeJSON_Array(
+	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr);
+
 
 SQRESULT serverSq_DecodeJSON(void* sqvm)
 {
@@ -378,11 +383,6 @@ void sq_EncodeJSON_Array(
 		}
 	}
 }
-
-void clientSq_DecodeJSON_Table(
-	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj);
-void clientSq_DecodeJSON_Array(
-	void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr);
 
 SQRESULT clientSq_DecodeJSON(void* sqvm)
 {
