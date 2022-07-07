@@ -201,14 +201,6 @@ void AntiRCE::EmergencyReport(std::string msg)
 
 	spdlog::critical("AntiRCE EMERGENCY REPORT: " + msg);
 
-#ifndef _DEBUG // Disabled in debugging, gets annoying during testing
-
-	// Beep an out-of-tune tri-tone for 300ms so user knows something is up
-	Beep(494 * 2, 150);
-	Beep(349 * 2, 150);
-
-#endif
-
 	// clang-format off
 	MessageBoxA(NULL, (
 			"AntiRCE EMERGENCY SHUTDOWN:\n" + msg + 
