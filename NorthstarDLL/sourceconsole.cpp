@@ -39,7 +39,7 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 void SourceConsoleSink::flush_() {}
 
 HOOK(OnCommandSubmittedHook, OnCommandSubmitted, 
-void,, (CConsoleDialog* consoleDialog, const char* pCommand),
+void,, (CConsoleDialog* consoleDialog, const char* pCommand))
 {
 	consoleDialog->m_pConsolePanel->Print("] ");
 	consoleDialog->m_pConsolePanel->Print(pCommand);
@@ -48,7 +48,7 @@ void,, (CConsoleDialog* consoleDialog, const char* pCommand),
 	TryPrintCvarHelpForCommand(pCommand);
 
 	OnCommandSubmitted(consoleDialog, pCommand);
-})
+}
 
 // called from sourceinterface.cpp in client createinterface hooks, on GameClientExports001
 void InitialiseConsoleOnInterfaceCreation()

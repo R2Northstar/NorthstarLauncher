@@ -8,14 +8,14 @@
 AUTOHOOK_INIT()
 
 AUTOHOOK(Host_Init, engine.dll + 0x155EA0,
-void,, (bool bDedicated),
+void,, (bool bDedicated))
 {
 	spdlog::info("Host_Init()");
 	Host_Init(bDedicated);
 
 	// get all mod convars
 	std::vector<std::string> vModConvarNames;
-	for (auto& mod : g_pModManager->m_loadedMods)
+	for (auto& mod : g_pModManager->m_LoadedMods)
 		for (auto& cvar : mod.ConVars)
 			vModConvarNames.push_back(cvar->Name);
 
@@ -63,7 +63,7 @@ void,, (bool bDedicated),
 		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", R2::cmd_source_t::kCommandSrcCode);
 	else
 		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "exec autoexec_ns_client", R2::cmd_source_t::kCommandSrcCode);
-})
+}
 
 ON_DLL_LOAD("engine.dll", Host_Init, [](HMODULE baseAddress)
 { 

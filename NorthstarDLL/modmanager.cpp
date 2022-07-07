@@ -22,9 +22,9 @@ ModManager* g_pModManager;
 
 Mod::Mod(fs::path modDir, char* jsonBuf)
 {
-	wasReadSuccessfully = false;
+	m_bWasReadSuccessfully = false;
 
-	ModDirectory = modDir;
+	m_ModDirectory = modDir;
 
 	rapidjson_document modJson;
 	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
@@ -172,7 +172,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			ModScript script;
 
 			script.Path = scriptObj["Path"].GetString();
-			script.RsonRunOn = scriptObj["RunOn"].GetString();
+			script.RunOn = scriptObj["RunOn"].GetString();
 
 			if (scriptObj.HasMember("ServerCallback") && scriptObj["ServerCallback"].IsObject())
 			{
@@ -231,7 +231,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
-	wasReadSuccessfully = true;
+	m_bWasReadSuccessfully = true;
 }
 
 ModManager::ModManager()
@@ -248,7 +248,7 @@ ModManager::ModManager()
 
 void ModManager::LoadMods()
 {
-	if (m_hasLoadedMods)
+	if (m_bHasLoadedMods)
 		UnloadMods();
 
 	std::vector<fs::path> modDirs;
@@ -267,10 +267,10 @@ void ModManager::LoadMods()
 			enabledModsStringStream << (char)enabledModsStream.get();
 
 		enabledModsStream.close();
-		m_enabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 			enabledModsStringStream.str().c_str());
 
-		m_hasEnabledModsCfg = m_enabledModsCfg.IsObject();
+		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
 	}
 
 	// get mod directories
@@ -298,31 +298,31 @@ void ModManager::LoadMods()
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
-		if (m_hasEnabledModsCfg && m_enabledModsCfg.HasMember(mod.Name.c_str()))
-			mod.Enabled = m_enabledModsCfg[mod.Name.c_str()].IsTrue();
+		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
 		else
-			mod.Enabled = true;
+			mod.m_bEnabled = true;
 
-		if (mod.wasReadSuccessfully)
+		if (mod.m_bWasReadSuccessfully)
 		{
 			spdlog::info("Loaded mod {} successfully", mod.Name);
-			if (mod.Enabled)
+			if (mod.m_bEnabled)
 				spdlog::info("Mod {} is enabled", mod.Name);
 			else
 				spdlog::info("Mod {} is disabled", mod.Name);
 
-			m_loadedMods.push_back(mod);
+			m_LoadedMods.push_back(mod);
 		}
 		else
 			spdlog::warn("Skipping loading mod file {}", (modDir / "mod.json").string());
 	}
 
 	// sort by load prio, lowest-highest
-	std::sort(m_loadedMods.begin(), m_loadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
+	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
 
-	for (Mod& mod : m_loadedMods)
+	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.Enabled)
+		if (!mod.m_bEnabled)
 			continue;
 
 		// register convars
@@ -335,10 +335,10 @@ void ModManager::LoadMods()
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
 
 		// read vpk paths
-		if (fs::exists(mod.ModDirectory / "vpk"))
+		if (fs::exists(mod.m_ModDirectory / "vpk"))
 		{
 			// read vpk cfg
-			std::ifstream vpkJsonStream(mod.ModDirectory / "vpk/vpk.json");
+			std::ifstream vpkJsonStream(mod.m_ModDirectory / "vpk/vpk.json");
 			std::stringstream vpkJsonStringStream;
 
 			bool bUseVPKJson = false;
@@ -356,7 +356,7 @@ void ModManager::LoadMods()
 				bUseVPKJson = !dVpkJson.HasParseError() && dVpkJson.IsObject();
 			}
 
-			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "vpk"))
+			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "vpk"))
 			{
 				// a bunch of checks to make sure we're only adding dir vpks and their paths are good
 				// note: the game will literally only load vpks with the english prefix
@@ -375,17 +375,17 @@ void ModManager::LoadMods()
 														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
 					modVpk.m_sVpkPath = vpkName;
 
-					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
+					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
 						(*R2::g_pFilesystem)->m_vtable->MountVPK(*R2::g_pFilesystem, vpkName.c_str());
 				}
 			}
 		}
 
 		// read rpak paths
-		if (fs::exists(mod.ModDirectory / "paks"))
+		if (fs::exists(mod.m_ModDirectory / "paks"))
 		{
 			// read rpak cfg
-			std::ifstream rpakJsonStream(mod.ModDirectory / "paks/rpak.json");
+			std::ifstream rpakJsonStream(mod.m_ModDirectory / "paks/rpak.json");
 			std::stringstream rpakJsonStringStream;
 
 			bool bUseRpakJson = false;
@@ -417,7 +417,7 @@ void ModManager::LoadMods()
 				}
 			}
 
-			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "paks"))
+			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "paks"))
 			{
 				// ensure we're only loading rpaks
 				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
@@ -438,22 +438,22 @@ void ModManager::LoadMods()
 		}
 
 		// read keyvalues paths
-		if (fs::exists(mod.ModDirectory / "keyvalues"))
+		if (fs::exists(mod.m_ModDirectory / "keyvalues"))
 		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.ModDirectory / "keyvalues"))
+			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / "keyvalues"))
 			{
 				if (fs::is_regular_file(file))
 				{
-					std::string kvStr = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.ModDirectory / "keyvalues"));
+					std::string kvStr = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
 					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
 				}
 			}
 		}
 
 		// read pdiff
-		if (fs::exists(mod.ModDirectory / "mod.pdiff"))
+		if (fs::exists(mod.m_ModDirectory / "mod.pdiff"))
 		{
-			std::ifstream pdiffStream(mod.ModDirectory / "mod.pdiff");
+			std::ifstream pdiffStream(mod.m_ModDirectory / "mod.pdiff");
 
 			if (!pdiffStream.fail())
 			{
@@ -468,17 +468,17 @@ void ModManager::LoadMods()
 		}
 
 		// read bink video paths
-		if (fs::exists(mod.ModDirectory / "media"))
+		if (fs::exists(mod.m_ModDirectory / "media"))
 		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.ModDirectory / "media"))
+			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / "media"))
 				if (fs::is_regular_file(file) && file.path().extension() == ".bik")
 					mod.BinkVideos.push_back(file.path().filename().string());
 		}
 
 		// try to load audio
-		if (fs::exists(mod.ModDirectory / "audio"))
+		if (fs::exists(mod.m_ModDirectory / "audio"))
 		{
-			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "audio"))
+			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "audio"))
 			{
 				if (fs::is_regular_file(file) && file.path().extension().string() == ".json")
 				{
@@ -493,23 +493,23 @@ void ModManager::LoadMods()
 	}
 
 	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
-	for (int64_t i = m_loadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = m_LoadedMods.size() - 1; i > -1; i--)
 	{
-		if (!m_loadedMods[i].Enabled)
+		if (!m_LoadedMods[i].m_bEnabled)
 			continue;
 
-		if (fs::exists(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR))
+		if (fs::exists(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR))
 		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR))
+			for (fs::directory_entry file : fs::recursive_directory_iterator(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR))
 			{
 				std::string path =
-					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(m_loadedMods[i].ModDirectory / MOD_OVERRIDE_DIR));
-				if (file.is_regular_file() && m_modFiles.find(path) == m_modFiles.end())
+					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR));
+				if (file.is_regular_file() && m_ModFiles.find(path) == m_ModFiles.end())
 				{
 					ModOverrideFile modFile;
-					modFile.owningMod = &m_loadedMods[i];
-					modFile.path = path;
-					m_modFiles.insert(std::make_pair(path, modFile));
+					modFile.m_pOwningMod = &m_LoadedMods[i];
+					modFile.m_Path = path;
+					m_ModFiles.insert(std::make_pair(path, modFile));
 				}
 			}
 		}
@@ -521,9 +521,9 @@ void ModManager::LoadMods()
 	modinfoDoc.AddMember("Mods", rapidjson_document::GenericValue(rapidjson::kArrayType), modinfoDoc.GetAllocator());
 
 	int currentModIndex = 0;
-	for (Mod& mod : m_loadedMods)
+	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.Enabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
+		if (!mod.m_bEnabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
 			continue;
 
 		modinfoDoc["Mods"].PushBack(rapidjson_document::GenericValue(rapidjson::kObjectType), modinfoDoc.GetAllocator());
@@ -541,25 +541,25 @@ void ModManager::LoadMods()
 	modinfoDoc.Accept(writer);
 	g_MasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
 
-	m_hasLoadedMods = true;
+	m_bHasLoadedMods = true;
 }
 
 void ModManager::UnloadMods()
 {
 	// clean up stuff from mods before we unload
-	m_modFiles.clear();
+	m_ModFiles.clear();
 	fs::remove_all(GetCompiledAssetsPath());
 
 	g_CustomAudioManager.ClearAudioOverrides();
 
-	if (!m_hasEnabledModsCfg)
-		m_enabledModsCfg.SetObject();
+	if (!m_bHasEnabledModsCfg)
+		m_EnabledModsCfg.SetObject();
 
-	for (Mod& mod : m_loadedMods)
+	for (Mod& mod : m_LoadedMods)
 	{
 		// remove all built kvs
 		for (std::pair<size_t, std::string> kvPaths : mod.KeyValues)
-			fs::remove(GetCompiledAssetsPath() / fs::path(kvPaths.second).lexically_relative(mod.ModDirectory));
+			fs::remove(GetCompiledAssetsPath() / fs::path(kvPaths.second).lexically_relative(mod.m_ModDirectory));
 
 		mod.KeyValues.clear();
 
@@ -567,22 +567,22 @@ void ModManager::UnloadMods()
 		// should we be doing this here or should scripts be doing this manually?
 		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
 		// what we wanna do
-		if (!m_enabledModsCfg.HasMember(mod.Name.c_str()))
-			m_enabledModsCfg.AddMember(
+		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+			m_EnabledModsCfg.AddMember(
 				rapidjson_document::StringRefType(mod.Name.c_str()),
 				rapidjson_document::GenericValue(false),
-				m_enabledModsCfg.GetAllocator());
+				m_EnabledModsCfg.GetAllocator());
 
-		m_enabledModsCfg[mod.Name.c_str()].SetBool(mod.Enabled);
+		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
 	}
 
 	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 	rapidjson::Writer<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
-	m_enabledModsCfg.Accept(writer);
+	m_EnabledModsCfg.Accept(writer);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
-	m_loadedMods.clear();
+	m_LoadedMods.clear();
 }
 
 std::string ModManager::NormaliseModFilePath(const fs::path path)
@@ -608,9 +608,9 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	else
 	{
 		// check if we should build keyvalues, depending on whether any of our mods have patch kvs for this file
-		for (Mod& mod : m_loadedMods)
+		for (Mod& mod : m_LoadedMods)
 		{
-			if (!mod.Enabled)
+			if (!mod.m_bEnabled)
 				continue;
 
 			if (mod.KeyValues.find(fileHash) != mod.KeyValues.end())

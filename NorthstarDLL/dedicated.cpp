@@ -95,10 +95,10 @@ void RunServer(CDedicatedExports* dedicated)
 }
 
 AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80, 
-bool,, (), 
+bool,, ())
 {
 	return true;	
-})
+}
 
 HANDLE consoleInputThreadHandle = NULL;
 
@@ -141,19 +141,21 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 	NSMem::NOP(ea + 0x156799, 5);
 
 	// Host_Init
-	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely)
+	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely on dedi)
 	NSMem::NOP(ea + 0x1565B0, 5);
 
+	{
+		// CModAppSystemGroup::Create
+		// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
+		auto ptr = ea + 0x1C4EBD;
 
-	// CModAppSystemGroup::Create
-	// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
-	auto ptr = ea + 0x1C4EBD;
+		// cmp => mov
+		NSMem::BytePatch(ptr + 1, "C6 87");
 
-	// cmp => mov
-	NSMem::BytePatch(ptr + 1, "C6 87");
-
-	// 00 => 01
-	NSMem::BytePatch(ptr + 7, "01");
+		// 00 => 01
+		NSMem::BytePatch(ptr + 7, "01");
+	}
+	
 
 	// Some init that i'm not sure of that crashes
 	// nop the call to it
@@ -209,13 +211,10 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 	// nop clientinterface call
 	NSMem::NOP(ea + 0x155363, 16);
 
-	// note: previously had DisableDedicatedWindowCreation patches here, but removing those rn since they're all shit and unstable and bad
-	// and such check commit history if any are needed for reimplementation
-	{
-		// IVideoMode::CreateGameWindow
-		// nop call to ShowWindow
-		NSMem::NOP(ea + 0x1CD146, 5);
-	}
+	// IVideoMode::CreateGameWindow
+	// nop call to ShowWindow
+	NSMem::NOP(ea + 0x1CD146, 5);
+
 
 	CDedicatedExports* dedicatedExports = new CDedicatedExports;
 	dedicatedExports->vtable = dedicatedExports;
@@ -284,11 +283,11 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, [](HMODULE baseAddress)
 })
 
 AUTOHOOK(PrintFatalSquirrelError, server.dll + 0x794D0, 
-void, , (void* sqvm),
+void, , (void* sqvm))
 {
 	PrintFatalSquirrelError(sqvm);
 	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
-})
+}
 
 ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, [](HMODULE baseAddress)
 {

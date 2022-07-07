@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "tier0.h"
 
+AUTOHOOK_INIT()
+
 // never set this to anything below 32
 #define NEW_MAX_PLAYERS 64
 // dg note: the theoretical limit is actually 100, 76 works without entity issues, and 64 works without clientside prediction issues.
@@ -44,50 +46,20 @@ constexpr int Team_PlayerArray_AddedLength = NEW_MAX_PLAYERS - 32;
 constexpr int Team_PlayerArray_AddedSize = PAD_NUMBER(Team_PlayerArray_AddedLength * 8, 4);
 constexpr int Team_AddedSize = Team_PlayerArray_AddedSize;
 
+bool MaxPlayersIncreaseEnabled()
+{
+	static bool bMaxPlayersIncreaseEnabled = Tier0::CommandLine()->CheckParm("-experimentalmaxplayersincrease");
+	return bMaxPlayersIncreaseEnabled;
+}
+
 #include "NSMem.h"
 template <class T> void ChangeOffset(void* addr, unsigned int offset)
 {
 	NSMem::BytePatch((uintptr_t)addr, (BYTE*)&offset, sizeof(T));
 }
 
-/*
-typedef bool(*MatchRecvPropsToSendProps_R_Type)(__int64 lookup, __int64 tableNameBroken, __int64 sendTable, __int64 recvTable);
-MatchRecvPropsToSendProps_R_Type MatchRecvPropsToSendProps_R_Original;
-
-bool MatchRecvPropsToSendProps_R_Hook(__int64 lookup, __int64 tableNameBroken, __int64 sendTable, __int64 recvTable)
-{
-	const char* tableName = *(const char**)(sendTable + 0x118);
-
-	spdlog::info("MatchRecvPropsToSendProps_R table name {}", tableName);
-
-	bool orig = MatchRecvPropsToSendProps_R_Original(lookup, tableNameBroken, sendTable, recvTable);
-	return orig;
-}
-
-typedef bool(*DataTable_SetupReceiveTableFromSendTable_Type)(__int64 sendTable, bool needsDecoder);
-DataTable_SetupReceiveTableFromSendTable_Type DataTable_SetupReceiveTableFromSendTable_Original;
-
-bool DataTable_SetupReceiveTableFromSendTable_Hook(__int64 sendTable, bool needsDecoder)
-{
-	const char* tableName = *(const char**)(sendTable + 0x118);
-
-	spdlog::info("DataTable_SetupReceiveTableFromSendTable table name {}", tableName);
-	if (!strcmp(tableName, "m_bConnected")) {
-		char f[64];
-		sprintf_s(f, "%p", sendTable);
-		MessageBoxA(0, f, "DataTable_SetupReceiveTableFromSendTable", 0);
-	}
-
-	return DataTable_SetupReceiveTableFromSendTable_Original(sendTable, needsDecoder);
-}
-*/
-
-typedef void* (*StringTables_CreateStringTable_Type)(
-	__int64 thisptr, const char* name, int maxentries, int userdatafixedsize, int userdatanetworkbits, int flags);
-StringTables_CreateStringTable_Type StringTables_CreateStringTable_Original;
-
-void* StringTables_CreateStringTable_Hook(
-	__int64 thisptr, const char* name, int maxentries, int userdatafixedsize, int userdatanetworkbits, int flags)
+AUTOHOOK(StringTables_CreateStringTable, engine.dll + 0x22E220,
+void*,, (__int64 thisptr, const char* name, int maxentries, int userdatafixedsize, int userdatanetworkbits, int flags))
 {
 	// Change the amount of entries to account for a bigger player amount
 	if (!strcmp(name, "userinfo"))
@@ -99,18 +71,15 @@ void* StringTables_CreateStringTable_Hook(
 		maxentries = maxPlayersPowerOf2;
 	}
 
-	return StringTables_CreateStringTable_Original(thisptr, name, maxentries, userdatafixedsize, userdatanetworkbits, flags);
-}
-
-bool MaxPlayersIncreaseEnabled()
-{
-	return Tier0::CommandLine() && Tier0::CommandLine()->CheckParm("-experimentalmaxplayersincrease");
+	return StringTables_CreateStringTable(thisptr, name, maxentries, userdatafixedsize, userdatanetworkbits, flags);
 }
 
 ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, [](HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
+
+	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
 	// patch GetPlayerLimits to ignore the boundary limit
 	ChangeOffset<unsigned char>((char*)baseAddress + 0x116458, 0xEB); // jle => jmp
@@ -145,18 +114,6 @@ ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, [](HMODULE baseAddress)
 
 	// do not load prebaked SendTable message list
 	ChangeOffset<unsigned char>((char*)baseAddress + 0x75859, 0xEB); // jnz -> jmp
-
-	HookEnabler hook;
-
-	// ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x209000, &MatchRecvPropsToSendProps_R_Hook,
-	// reinterpret_cast<LPVOID*>(&MatchRecvPropsToSendProps_R_Original)); ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1FACD0,
-	// &DataTable_SetupReceiveTableFromSendTable_Hook, reinterpret_cast<LPVOID*>(&DataTable_SetupReceiveTableFromSendTable_Original));
-
-	ENABLER_CREATEHOOK(
-		hook,
-		(char*)baseAddress + 0x22E220,
-		&StringTables_CreateStringTable_Hook,
-		reinterpret_cast<LPVOID*>(&StringTables_CreateStringTable_Original));
 })
 
 typedef void (*RunUserCmds_Type)(bool a1, float a2);
@@ -166,7 +123,8 @@ HMODULE serverBase = 0;
 auto RandomIntZeroMax = (__int64(__fastcall*)())0;
 
 // lazy rebuild
-void RunUserCmds_Hook(bool a1, float a2)
+AUTOHOOK(RunUserCmds, server.dll + 0x483D10,
+void,, (bool a1, float a2))
 {
 	unsigned char v3; // bl
 	int v5; // er14
@@ -307,16 +265,14 @@ void RunUserCmds_Hook(bool a1, float a2)
 	}
 }
 
-typedef __int64 (*SendPropArray2_Type)(__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn, unsigned char unk1);
-SendPropArray2_Type SendPropArray2_Original;
-
-__int64 __fastcall SendPropArray2_Hook(__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn, unsigned char unk1)
+AUTOHOOK(SendPropArray2, server.dll + 0x12B130,
+__int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn, unsigned char unk1))
 {
 	// Change the amount of elements to account for a bigger player amount
 	if (!strcmp(name, "\"player_array\""))
 		elements = NEW_MAX_PLAYERS;
 
-	return SendPropArray2_Original(recvProp, elements, flags, name, proxyFn, unk1);
+	return SendPropArray2(recvProp, elements, flags, name, proxyFn, unk1);
 }
 
 ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
@@ -324,8 +280,10 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
 	if (!MaxPlayersIncreaseEnabled())
 		return;
 
+	AUTOHOOK_DISPATCH_MODULE(server.dll)
+
 	// get required data
-	serverBase = GetModuleHandleA("server.dll");
+	serverBase = baseAddress;
 	RandomIntZeroMax = (decltype(RandomIntZeroMax))(GetProcAddress(GetModuleHandleA("vstdlib.dll"), "RandomIntZeroMax"));
 
 	// patch max players amount
@@ -457,10 +415,6 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6654 + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C665B + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 
-	// GameLoop::RunUserCmds - rebuild
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x483D10, &RunUserCmds_Hook, reinterpret_cast<LPVOID*>(&RunUserCmds_Original));
-
 	*(DWORD*)((char*)baseAddress + 0x14E7390) = 0;
 	auto DT_PlayerResource_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x5C4FE0);
 	DT_PlayerResource_Construct();
@@ -475,32 +429,27 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
 	// CTeam::CTeam - increase memset length to clean newly allocated data
 	ChangeOffset<unsigned int>((char*)baseAddress + 0x2395AE + 2, 256 + CTeam_AddedSize);
 
-	// hook required to change the size of DT_Team::"player_array"
-	HookEnabler hook2;
-	ENABLER_CREATEHOOK(hook2, (char*)baseAddress + 0x12B130, &SendPropArray2_Hook, reinterpret_cast<LPVOID*>(&SendPropArray2_Original));
-	hook2.~HookEnabler(); // force hook before calling construct function
-
 	*(DWORD*)((char*)baseAddress + 0xC945A0) = 0;
 	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x238F50);
 	DT_Team_Construct();
 })
 
-typedef __int64 (*RecvPropArray2_Type)(__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn);
-RecvPropArray2_Type RecvPropArray2_Original;
-
-__int64 __fastcall RecvPropArray2_Hook(__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn)
+AUTOHOOK(RecvPropArray2, client.dll + 0x1CEDA0,
+__int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn))
 {
 	// Change the amount of elements to account for a bigger player amount
 	if (!strcmp(name, "\"player_array\""))
 		elements = NEW_MAX_PLAYERS;
 
-	return RecvPropArray2_Original(recvProp, elements, flags, name, proxyFn);
+	return RecvPropArray2(recvProp, elements, flags, name, proxyFn);
 }
 
 ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, [](HMODULE baseAddress)
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
+
+	AUTOHOOK_DISPATCH_MODULE(client.dll)
 
 	constexpr int C_PlayerResource_OriginalSize = 5768;
 	constexpr int C_PlayerResource_AddedSize = PlayerResource_TotalSize;
@@ -669,11 +618,6 @@ ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, [](HMODULE baseAddress)
 
 	// DT_Team size
 	ChangeOffset<unsigned int>((char*)baseAddress + 0xC3AA0C, C_Team_ModifiedSize);
-
-	// hook required to change the size of DT_Team::"player_array"
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1CEDA0, &RecvPropArray2_Hook, reinterpret_cast<LPVOID*>(&RecvPropArray2_Original));
-	hook.~HookEnabler(); // force hook before calling construct function
 
 	*(DWORD*)((char*)baseAddress + 0xC3AFF8) = 0;
 	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x17F950);

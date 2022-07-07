@@ -372,7 +372,7 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 // DO NOT TOUCH THIS FUNCTION
 // The actual logic of it in a separate function (forcefully not inlined) to preserve the r12 register, which holds the event pointer.
 AUTOHOOK(LoadSampleMetadata, mileswin64.dll + 0xF110, 
-bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType),
+bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType))
 {
 	uintptr_t parentEvent = (uintptr_t)Audio_GetParentEvent();
 
@@ -381,7 +381,7 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 		return LoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
 
 	return LoadSampleMetadata_Internal(parentEvent, sample, audioBuffer, audioBufferLength, audioType);
-})
+}
 
 // DO NOT INLINE THIS FUNCTION
 // See comment below.
@@ -488,10 +488,10 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 }
 
 AUTOHOOK(MilesLog, mileswin64.dll + 0x57DAD0, 
-void, __fastcall, (int level, const char* string), 
+void, __fastcall, (int level, const char* string))
 {
 	spdlog::info("[MSS] {} - {}", level, string);
-})
+}
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, [](HMODULE baseAddress)
 {

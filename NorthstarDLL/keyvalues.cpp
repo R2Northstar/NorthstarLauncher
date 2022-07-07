@@ -25,14 +25,14 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	// copy over patch kv files, and add #bases to new file, last mods' patches should be applied first
 	// note: #include should be identical but it's actually just broken, thanks respawn
-	for (int64_t i = m_loadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = m_LoadedMods.size() - 1; i > -1; i--)
 	{
-		if (!m_loadedMods[i].Enabled)
+		if (!m_LoadedMods[i].m_bEnabled)
 			continue;
 
 		size_t fileHash = STR_HASH(normalisedPath);
-		auto modKv = m_loadedMods[i].KeyValues.find(fileHash);
-		if (modKv != m_loadedMods[i].KeyValues.end())
+		auto modKv = m_LoadedMods[i].KeyValues.find(fileHash);
+		if (modKv != m_LoadedMods[i].KeyValues.end())
 		{
 			// should result in smth along the lines of #include "mod_patch_5_mp_weapon_car.txt"
 
@@ -47,7 +47,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 			fs::remove(compiledDir / patchFilePath);
 
-			fs::copy_file(m_loadedMods[i].ModDirectory / "keyvalues" / filename, compiledDir / patchFilePath);
+			fs::copy_file(m_LoadedMods[i].m_ModDirectory / "keyvalues" / filename, compiledDir / patchFilePath);
 		}
 	}
 
@@ -97,17 +97,17 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	writeStream.close();
 
 	ModOverrideFile overrideFile;
-	overrideFile.owningMod = nullptr;
-	overrideFile.path = normalisedPath;
+	overrideFile.m_pOwningMod = nullptr;
+	overrideFile.m_Path = normalisedPath;
 
-	if (m_modFiles.find(normalisedPath) == m_modFiles.end())
-		m_modFiles.insert(std::make_pair(normalisedPath, overrideFile));
+	if (m_ModFiles.find(normalisedPath) == m_ModFiles.end())
+		m_ModFiles.insert(std::make_pair(normalisedPath, overrideFile));
 	else
-		m_modFiles[normalisedPath] = overrideFile;
+		m_ModFiles[normalisedPath] = overrideFile;
 }
 
 AUTOHOOK(KeyValues__LoadFromBuffer, engine.dll + 0x426C30,
-char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7),
+char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7))
 {
 	static void* pSavedFilesystemPtr = nullptr;
 
@@ -120,7 +120,7 @@ char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSy
 		pFileSystem = pSavedFilesystemPtr;
 
 	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
-})
+}
 
 ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
 {

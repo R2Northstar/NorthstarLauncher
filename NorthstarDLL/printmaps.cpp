@@ -4,6 +4,7 @@
 #include "concommand.h"
 #include "modmanager.h"
 #include "tier0.h"
+#include "r2engine.h"
 
 #include <filesystem>
 #include <regex>
@@ -39,14 +40,14 @@ void RefreshMapList()
 
 	// get modded maps
 	// TODO: could probably check mod vpks to get mapnames from there too?
-	for (auto& modFilePair : g_pModManager->m_modFiles)
+	for (auto& modFilePair : g_pModManager->m_ModFiles)
 	{
 		ModOverrideFile file = modFilePair.second;
-		if (file.path.extension() == ".bsp" && file.path.parent_path().string() == "maps") // only allow mod maps actually in /maps atm
+		if (file.m_Path.extension() == ".bsp" && file.m_Path.parent_path().string() == "maps") // only allow mod maps actually in /maps atm
 		{
 			MapVPKInfo& map = vMapList.emplace_back();
-			map.name = file.path.stem().string();
-			map.parent = file.owningMod->Name;
+			map.name = file.m_Path.stem().string();
+			map.parent = file.m_pOwningMod->Name;
 			map.source = MapSource_t::MOD;
 		}
 	}
@@ -97,7 +98,7 @@ void RefreshMapList()
 	}
 
 	// get maps in game dir
-	for (fs::directory_entry file : fs::directory_iterator("./r2/maps"))
+	for (fs::directory_entry file : fs::directory_iterator(fmt::format("{}/maps", "r2")))
 	{
 		if (file.path().extension() == ".bsp")
 		{
@@ -110,7 +111,7 @@ void RefreshMapList()
 }
 
 AUTOHOOK(_Host_Map_f_CompletionFunc, engine.dll + 0x161AE0,
-int, __fastcall, (const char const* cmdname, const char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]),
+int, __fastcall, (const char const* cmdname, const char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]))
 {
 	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs
 	static double flLastAutocompleteRefresh = -999;
@@ -141,7 +142,7 @@ int, __fastcall, (const char const* cmdname, const char const* partial, char com
 	}
 
 	return numMaps;
-})
+}
 
 
 void ConCommand_maps(const CCommand& args) 

@@ -15,9 +15,9 @@ void ModManager::BuildScriptsRson()
 	std::string scriptsRson = R2::ReadVPKOriginalFile(VPK_SCRIPTS_RSON_PATH);
 	scriptsRson += "\n\n// START MODDED SCRIPT CONTENT\n\n"; // newline before we start custom stuff
 
-	for (Mod& mod : m_loadedMods)
+	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.Enabled)
+		if (!mod.m_bEnabled)
 			continue;
 
 		// this isn't needed at all, just nice to have imo
@@ -35,7 +35,7 @@ void ModManager::BuildScriptsRson()
 			]*/
 
 			scriptsRson += "When: \"";
-			scriptsRson += script.RsonRunOn;
+			scriptsRson += script.RunOn;
 			scriptsRson += "\"\n";
 
 			scriptsRson += "Scripts:\n[\n\t";
@@ -51,13 +51,13 @@ void ModManager::BuildScriptsRson()
 	writeStream.close();
 
 	ModOverrideFile overrideFile;
-	overrideFile.owningMod = nullptr;
-	overrideFile.path = VPK_SCRIPTS_RSON_PATH;
+	overrideFile.m_pOwningMod = nullptr;
+	overrideFile.m_Path = VPK_SCRIPTS_RSON_PATH;
 
-	if (m_modFiles.find(VPK_SCRIPTS_RSON_PATH) == m_modFiles.end())
-		m_modFiles.insert(std::make_pair(VPK_SCRIPTS_RSON_PATH, overrideFile));
+	if (m_ModFiles.find(VPK_SCRIPTS_RSON_PATH) == m_ModFiles.end())
+		m_ModFiles.insert(std::make_pair(VPK_SCRIPTS_RSON_PATH, overrideFile));
 	else
-		m_modFiles[VPK_SCRIPTS_RSON_PATH] = overrideFile;
+		m_ModFiles[VPK_SCRIPTS_RSON_PATH] = overrideFile;
 
 	// todo: for preventing dupe scripts in scripts.rson, we could actually parse when conditions with the squirrel vm, just need a way to
 	// get a result out of squirrelmanager.ExecuteCode this would probably be the best way to do this, imo

@@ -227,28 +227,31 @@ class __autohook
 };
 
 // hook a function at a given offset from a dll to be dispatched with AUTOHOOK_DISPATCH()
-#define AUTOHOOK(name, addrString, type, callingConvention, args, func) \
+#define AUTOHOOK(name, addrString, type, callingConvention, args) \
+type callingConvention CONCAT2(__autohookfunc, name) args; \
 namespace { \
 type(*callingConvention name) args; \
-type callingConvention CONCAT2(__autohookfunc, name) args func \
 __autohook CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), __STR(addrString), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
 } \
+type callingConvention CONCAT2(__autohookfunc, name) args \
 
 // hook a function at a given absolute constant address to be dispatched with AUTOHOOK_DISPATCH()
-#define AUTOHOOK_ABSOLUTEADDR(name, addr, type, callingConvention, args, func) \
+#define AUTOHOOK_ABSOLUTEADDR(name, addr, type, callingConvention, args) \
+type callingConvention CONCAT2(__autohookfunc, name) args; \
 namespace { \
 type(*callingConvention name) args; \
-type callingConvention CONCAT2(__autohookfunc, name) args func \
 __autohook CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
 } \
+type callingConvention CONCAT2(__autohookfunc, name) args \
 
 // hook a function at a given module and exported function to be dispatched with AUTOHOOK_DISPATCH()
-#define AUTOHOOK_PROCADDRESS(name, moduleName, procName, type, callingConvention, args, func) \
+#define AUTOHOOK_PROCADDRESS(name, moduleName, procName, type, callingConvention, args) \
+type callingConvention CONCAT2(__autohookfunc, name) args; \
 namespace { \
 type(*callingConvention name) args; \
-type callingConvention CONCAT2(__autohookfunc, name) args func \
 __autohook CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), __STR(moduleName), __STR(procName), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
 } \
+type callingConvention CONCAT2(__autohookfunc, name) args \
 
 class ManualHook
 {
@@ -266,15 +269,13 @@ class ManualHook
 };
 
 // hook a function to be dispatched manually later
-#define HOOK(varName, originalFunc, type, callingConvention, args, func) \
-namespace { \
-type(*callingConvention originalFunc) args; \
-type callingConvention CONCAT2(__manualhookfunc, varName) args func \
-} \
+#define HOOK(varName, originalFunc, type, callingConvention, args) \
+namespace { type(*callingConvention originalFunc) args; } \
+type callingConvention CONCAT2(__manualhookfunc, varName) args; \
 ManualHook varName = ManualHook(__STR(varName), (LPVOID*)&originalFunc, (LPVOID)CONCAT2(__manualhookfunc, varName)); \
+type callingConvention CONCAT2(__manualhookfunc, varName) args \
 
-#define HOOK_NOORIG(varName, type, callingConvention, args, func) \
-namespace { \
-type callingConvention CONCAT2(__manualhookfunc, varName) args func \
-} \
+#define HOOK_NOORIG(varName, type, callingConvention, args) \
+type callingConvention CONCAT2(__manualhookfunc, varName) args; \
 ManualHook varName = ManualHook(__STR(varName), (LPVOID)CONCAT2(__manualhookfunc, varName)); \
+type callingConvention CONCAT2(__manualhookfunc, varName) args \

@@ -41,6 +41,8 @@ namespace R2
 
 	std::string ReadVPKOriginalFile(const char* path)
 	{
+		// todo: should probably set search path to be g_pModName here also
+
 		bReadingOriginalFile = true;
 		std::string ret = ReadVPKFile(path);
 		bReadingOriginalFile = false;
@@ -50,7 +52,7 @@ namespace R2
 } // namespace R2
 
 HOOK(AddSearchPathHook, AddSearchPath,
-void,, (IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType),
+void,, (IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType))
 {
 	AddSearchPath(fileSystem, pPath, pathID, addType);
 
@@ -60,7 +62,7 @@ void,, (IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPa
 		AddSearchPath(fileSystem, sCurrentModPath.c_str(), "GAME", PATH_ADD_TO_HEAD);
 		AddSearchPath(fileSystem, GetCompiledAssetsPath().string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 	}
-})
+}
 
 void SetNewModSearchPaths(Mod* mod)
 {
@@ -68,13 +70,13 @@ void SetNewModSearchPaths(Mod* mod)
 	// in the future we could also determine whether the file we're setting paths for needs a mod dir, or compiled assets
 	if (mod != nullptr)
 	{
-		if ((fs::absolute(mod->ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
+		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
-			spdlog::info("changing mod search path from {} to {}", sCurrentModPath, mod->ModDirectory.string());
+			spdlog::info("changing mod search path from {} to {}", sCurrentModPath, mod->m_ModDirectory.string());
 
 			AddSearchPath(
-				&*(*g_pFilesystem), (fs::absolute(mod->ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
-			sCurrentModPath = (fs::absolute(mod->ModDirectory) / MOD_OVERRIDE_DIR).string();
+				&*(*g_pFilesystem), (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
 		}
 	}
 	else // push compiled to head
@@ -91,10 +93,10 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 
 	// idk how efficient the lexically normal check is
 	// can't just set all /s in path to \, since some paths aren't in writeable memory
-	auto file = g_pModManager->m_modFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
-	if (file != g_pModManager->m_modFiles.end())
+	auto file = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
+	if (file != g_pModManager->m_ModFiles.end())
 	{
-		SetNewModSearchPaths(file->second.owningMod);
+		SetNewModSearchPaths(file->second.m_pOwningMod);
 		return true;
 	}
 
@@ -103,17 +105,17 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 
 // force modded files to be read from mods, not cache
 HOOK(ReadFromCacheHook, ReadFromCache,
-bool,, (IFileSystem* filesystem, char* pPath, void* result),
+bool,, (IFileSystem* filesystem, char* pPath, void* result))
 {
 	if (TryReplaceFile(pPath, true))
 		return false;
 
 	return ReadFromCache(filesystem, pPath, result);
-})
+}
 
 // force modded files to be read from mods, not vpk
 AUTOHOOK(ReadFileFromVPK, filesystem_stdio.dll + 0x5CBA0,
-FileHandle_t,, (VPKData* vpkInfo, __int64* b, char* filename),
+FileHandle_t,, (VPKData* vpkInfo, __int64* b, char* filename))
 {
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
@@ -123,24 +125,24 @@ FileHandle_t,, (VPKData* vpkInfo, __int64* b, char* filename),
 	}
 
 	return ReadFileFromVPK(vpkInfo, b, filename);
-})
+}
 
 AUTOHOOK(CBaseFileSystem__OpenEx, filesystem_stdio.dll + 0x15F50,
-FileHandle_t,, (IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename),
+FileHandle_t,, (IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename))
 {
 	TryReplaceFile(pPath, true);
 	return CBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
-})
+}
 
 HOOK(MountVPKHook, MountVPK, 
-VPKData*,, (IFileSystem * fileSystem, const char* pVpkPath),
+VPKData*,, (IFileSystem* fileSystem, const char* pVpkPath))
 {
 	spdlog::info("MountVPK {}", pVpkPath);
 	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
-	for (Mod mod : g_pModManager->m_loadedMods)
+	for (Mod mod : g_pModManager->m_LoadedMods)
 	{
-		if (!mod.Enabled)
+		if (!mod.m_bEnabled)
 			continue;
 
 		for (ModVPKEntry& vpkEntry : mod.Vpks)
@@ -163,7 +165,7 @@ VPKData*,, (IFileSystem * fileSystem, const char* pVpkPath),
 	}
 
 	return ret;
-})
+}
 
 ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, [](HMODULE baseAddress)
 {

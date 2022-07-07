@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "convar.h"
 #include "hoststate.h"
+#include "r2engine.h"
 #include "NSMem.h"
 
 #include <fstream>
@@ -168,7 +169,7 @@ ConVar* Cvar_ns_ai_dumpAINfileFromLoad;
 
 void DumpAINInfo(CAI_Network* aiNetwork)
 {
-	fs::path writePath("r2/maps/graphs");
+	fs::path writePath(fmt::format("{}/maps/graphs", "r2"));
 	writePath /= R2::g_pHostState->m_levelName;
 	writePath += ".ain";
 
@@ -350,15 +351,15 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 }
 
 AUTOHOOK(CAI_NetworkBuilder__Build, server.dll + 0x385E20,
-void,, (void* builder, CAI_Network* aiNetwork, void* unknown), 
+void,, (void* builder, CAI_Network* aiNetwork, void* unknown))
 {
 	CAI_NetworkBuilder__Build(builder, aiNetwork, unknown);
 
 	DumpAINInfo(aiNetwork);
-})
+}
 
 AUTOHOOK(LoadAINFile, server.dll + 0x3933A0,
-void,, (void* aimanager, void* buf, const char* filename), 
+void,, (void* aimanager, void* buf, const char* filename))
 {
 	LoadAINFile(aimanager, buf, filename);
 
@@ -367,7 +368,7 @@ void,, (void* aimanager, void* buf, const char* filename),
 		spdlog::info("running DumpAINInfo for loaded file {}", filename);
 		DumpAINInfo(*(CAI_Network**)((char*)aimanager + 2536));
 	}
-})
+}
 
 ON_DLL_LOAD("server.dll", BuildAINFile, [](HMODULE baseAddress)
 {

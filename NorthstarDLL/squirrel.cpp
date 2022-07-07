@@ -5,8 +5,7 @@
 #include "r2engine.h"
 #include "NSMem.h"
 
-RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
-RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
+AUTOHOOK_INIT()
 
 // inits
 SquirrelManager<ScriptContext::CLIENT>* g_pClientSquirrel;
@@ -174,9 +173,9 @@ template <ScriptContext context> bool CallScriptInitCallbackHook(void* sqvm, con
 
 	if (shouldCallCustomCallbacks)
 	{
-		for (Mod mod : g_pModManager->m_loadedMods)
+		for (Mod mod : g_pModManager->m_LoadedMods)
 		{
-			if (!mod.Enabled)
+			if (!mod.m_bEnabled)
 				continue;
 
 			for (ModScript script : mod.Scripts)
@@ -201,9 +200,9 @@ template <ScriptContext context> bool CallScriptInitCallbackHook(void* sqvm, con
 	// run after callbacks
 	if (shouldCallCustomCallbacks)
 	{
-		for (Mod mod : g_pModManager->m_loadedMods)
+		for (Mod mod : g_pModManager->m_LoadedMods)
 		{
-			if (!mod.Enabled)
+			if (!mod.m_bEnabled)
 				continue;
 
 			for (ModScript script : mod.Scripts)
@@ -235,6 +234,8 @@ template <ScriptContext context> void ConCommand_script(const CCommand& args)
 
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, [](HMODULE baseAddress)
 {
+	AUTOHOOK_DISPATCH_MODULE(client.dll)
+
 	HookEnabler hook;
 
 	// client inits
@@ -322,6 +323,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, [](HMODULE baseAd
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, [](HMODULE baseAddress)
 {
+	AUTOHOOK_DISPATCH_MODULE(server.dll)
+
 	g_pServerSquirrel = new SquirrelManager<ScriptContext::SERVER>;
 
 	g_pServerSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x1DD10);
@@ -372,7 +375,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, [](HMODULE baseAd
 		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerCallScriptInitCallback)); // server callscriptinitcallback function
 
-	// cheat and clientcmd_can_execute allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
+	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
 	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
 		"script",

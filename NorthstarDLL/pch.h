@@ -23,7 +23,7 @@
 #include "spdlog/spdlog.h"
 #include "libcurl/include/curl/curl.h"
 #include "hooks.h"
-#include "hookutils.h"
+//#include "hookutils.h"
 
 template <typename ReturnType, typename... Args> ReturnType CallVFunc(int index, void* thisPtr, Args... args)
 {

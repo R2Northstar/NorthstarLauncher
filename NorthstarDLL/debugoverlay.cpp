@@ -86,7 +86,7 @@ static RenderBoxType RenderBox;
 static RenderBoxType RenderWireframeBox;
 
 AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
-void, __fastcall, (OverlayBase_t * pOverlay), 
+void, __fastcall, (OverlayBase_t * pOverlay))
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
 
@@ -129,18 +129,15 @@ void, __fastcall, (OverlayBase_t * pOverlay),
 	break;
 	}
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
-})
+}
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, [](HMODULE baseAddress)
 {
 	AUTOHOOK_DISPATCH()
 
 	RenderLine = reinterpret_cast<RenderLineType>((char*)baseAddress + 0x192A70);
-
 	RenderBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x192520);
-
 	RenderWireframeBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x193DA0);
-
 	sEngineModule = baseAddress;
 
 	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory

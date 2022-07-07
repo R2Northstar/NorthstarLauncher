@@ -35,7 +35,7 @@ const std::unordered_map<SpewType_t, const char*> PrintSpewTypes = {
 };
 
 AUTOHOOK(EngineSpewFunc, engine.dll + 0x11CA80,
-void,, (void* pEngineServer, SpewType_t type, const char* format, va_list args),
+void,, (void* pEngineServer, SpewType_t type, const char* format, va_list args))
 {
 	if (!Cvar_spewlog_enable->GetBool())
 		return;
@@ -106,11 +106,11 @@ void,, (void* pEngineServer, SpewType_t type, const char* format, va_list args),
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
 	spdlog::info("[SERVER {}] {}", typeStr, formatted);
-})
+}
 
 // used for printing the output of status
 AUTOHOOK(Status_ConMsg, engine.dll + 0x15ABD0,
-void,, (const char* text, ...), 
+void,, (const char* text, ...))
 {
 	char formatted[2048];
 	va_list list;
@@ -124,10 +124,10 @@ void,, (const char* text, ...),
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
 	spdlog::info(formatted);
-})
+}
 
 AUTOHOOK(CClientState_ProcessPrint, engine.dll + 0x1A1530, 
-bool,, (__int64 thisptr, __int64 msg),
+bool,, (__int64 thisptr, __int64 msg))
 {
 	char* text = *(char**)(msg + 0x20);
 
@@ -137,7 +137,7 @@ bool,, (__int64 thisptr, __int64 msg),
 
 	spdlog::info(text);
 	return true;
-})
+}
 
 ConVar* Cvar_cl_showtextmsg;
 
@@ -164,7 +164,7 @@ enum class TextMsgPrintType_t
 };
 
 AUTOHOOK(TextMsg, client.dll + 0x198710,
-void,, (BFRead* msg),
+void,, (BFRead* msg))
 {
 	TextMsgPrintType_t msg_dest = (TextMsgPrintType_t)msg->ReadByte();
 
@@ -192,14 +192,14 @@ void,, (BFRead* msg),
 		spdlog::info(text);
 		break;
 	}
-})
+}
 
 AUTOHOOK(ConCommand_echo, engine.dll + 0x123680,
-void,, (const CCommand& arg),
+void,, (const CCommand& arg))
 {
 	if (arg.ArgC() >= 2)
 		spdlog::info("[echo] {}", arg.ArgS());
-})
+}
 
 // This needs to be called after hooks are loaded so we can access the command line args
 void CreateLogFiles()
@@ -226,13 +226,18 @@ void InitialiseLogging()
 	AllocConsole();
 
 	// don't redirect conout if already open
-	FILE* pConoutFile = fopen("CONOUT$", "w");
+	/* FILE* pConoutFile = fopen("CONOUT$", "w");
 	if (pConoutFile)
 	{
 		fclose(pConoutFile);
 		freopen("CONOUT$", "w", stdout);
 		freopen("CONOUT$", "w", stderr);
-	}
+	}*/
+
+	// Bind stdin to receive console input.
+	FILE* fp;
+	freopen_s(&fp, "CONOUT$", "w", stdout);
+	freopen_s(&fp, "CONOUT$", "W", stderr);
 
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 }

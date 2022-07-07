@@ -10,13 +10,13 @@ typedef void (*PFN_winelfx_WaitAndBeginFrame)();
 PFN_winelfx_WaitAndBeginFrame m_winelfx_WaitAndBeginFrame {};
 
 AUTOHOOK(OnRenderStart, client.dll + 0x1952C0, 
-void,, (),
+void,, ())
 {
 	if (Cvar_r_latencyflex->GetInt())
 		m_winelfx_WaitAndBeginFrame();
 
 	OnRenderStart();
-})
+}
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, [](HMODULE baseAddress)
 {

@@ -124,9 +124,6 @@
     <Filter Include="Source Files\Shared\Exploit Fixes\UTF8Parser">
       <UniqueIdentifier>{b30e08b1-b962-4264-8cbb-a0a31924b93e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Server\Dedicated">
-      <UniqueIdentifier>{947835db-67d6-42c0-870d-62743f85231f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Shared\Mods\Compiled Assets">
       <UniqueIdentifier>{14fc0931-acad-46ec-a55e-94f4469d4235}</UniqueIdentifier>
     </Filter>
@@ -153,6 +150,9 @@
     </Filter>
     <Filter Include="Header Files\Shared\Filesystem">
       <UniqueIdentifier>{ee3ba13a-3061-41d7-981d-328ac2596fd2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Server\Dedicated Server">
+      <UniqueIdentifier>{947835db-67d6-42c0-870d-62743f85231f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1503,7 +1503,7 @@
       <Filter>Source Files\Shared\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="dedicated.cpp">
-      <Filter>Source Files\Server\Dedicated</Filter>
+      <Filter>Source Files\Server\Dedicated Server</Filter>
     </ClCompile>
     <ClCompile Include="sourceconsole.cpp">
       <Filter>Source Files\Client</Filter>
@@ -1545,7 +1545,7 @@
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="dedicatedmaterialsystem.cpp">
-      <Filter>Source Files\Server\Dedicated</Filter>
+      <Filter>Source Files\Server\Dedicated Server</Filter>
     </ClCompile>
     <ClCompile Include="misccommands.cpp">
       <Filter>Source Files\Shared\Convar</Filter>

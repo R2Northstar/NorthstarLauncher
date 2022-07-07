@@ -101,8 +101,11 @@ class ServerAuthenticationManager
 	bool CheckPlayerChatRatelimit(void* player);
 };
 
-typedef void (*CBaseClient__DisconnectType)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
-extern CBaseClient__DisconnectType CBaseClient__Disconnect;
+// use the R2 namespace for game funcs
+namespace R2
+{
+	extern void (*CBaseClient__Disconnect)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
+} // namespace R2
 
 extern ServerAuthenticationManager* g_ServerAuthenticationManager;
 extern ConVar* Cvar_ns_player_auth_port;

@@ -19,7 +19,7 @@ namespace R2
 ConVar* Cvar_ns_use_clc_SetPlaylistVarOverride;
 
 AUTOHOOK(clc_SetPlaylistVarOverride__Process, engine.dll + 0x222180,
-char,, (void* a1, void* a2), 
+char,, (void* a1, void* a2))
 {
 	// the private_match playlist is the only situation where there should be any legitimate sending of this netmessage
 	// todo: check map == mp_lobby here too
@@ -27,36 +27,36 @@ char,, (void* a1, void* a2),
 		return 1;
 
 	return clc_SetPlaylistVarOverride__Process(a1, a2);
-})
+}
 
 AUTOHOOK(SetCurrentPlaylist, engine.dll + 0x18EB20,
-void,, (const char* pPlaylistName),
+void,, (const char* pPlaylistName))
 {
 	SetCurrentPlaylist(pPlaylistName);
 	spdlog::info("Set playlist to {}", pPlaylistName);
-})
+}
 
 AUTOHOOK(SetPlaylistVarOverride, engine.dll + 0x18ED00,
-void,, (const char* pVarName, const char* pValue),
+void,, (const char* pVarName, const char* pValue))
 {
 	if (strlen(pValue) >= 64)
 		return;
 
 	SetPlaylistVarOverride(pVarName, pValue);
-})
+}
 
 AUTOHOOK(GetCurrentPlaylistVar, engine.dll + 0x18C680,
-const char*,, (const char* pVarName, bool bUseOverrides),
+const char*,, (const char* pVarName, bool bUseOverrides))
 {
 	if (!bUseOverrides && !strcmp(pVarName, "max_players"))
 		bUseOverrides = true;
 
 	return GetCurrentPlaylistVar(pVarName, bUseOverrides);
-})
+}
 
 
 AUTOHOOK(GetCurrentGamemodeMaxPlayers, engine.dll + 0x18C430,
-int,, (),
+int,, ())
 {
 	const char* pMaxPlayers = R2::GetCurrentPlaylistVar("max_players", 0);
 	if (!pMaxPlayers)
@@ -64,7 +64,7 @@ int,, (),
 
 	int iMaxPlayers = atoi(pMaxPlayers);
 	return iMaxPlayers;
-})
+}
 
 
 void ConCommand_playlist(const CCommand& args)

@@ -50,7 +50,7 @@ std::string GetAnyInstalledAudioLanguage()
 }
 
 AUTOHOOK(GetGameLanguage, tier0.dll + 0xF560,
-char*,, (),
+char*,, ())
 {
 	auto tier0Handle = GetModuleHandleA("tier0.dll");
 	auto Tier0_DetectDefaultLanguageType = GetProcAddress(tier0Handle, "Tier0_DetectDefaultLanguage");
@@ -108,7 +108,7 @@ char*,, (),
 	}
 
 	return lang;
-})
+}
 
 ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, [](HMODULE baseAddress)
 {

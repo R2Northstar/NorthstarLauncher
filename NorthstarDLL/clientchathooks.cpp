@@ -8,7 +8,7 @@
 AUTOHOOK_INIT()
 
 AUTOHOOK(CHudChat__AddGameLine, client.dll + 0x22E580, 
-void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead), 
+void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
 	if (self != *CHudChat::allHuds)
@@ -45,7 +45,7 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead),
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
 		}
 	}
-})
+}
 
 // void NSChatWrite( int context, string str )
 static SQRESULT SQ_ChatWrite(void* sqvm)

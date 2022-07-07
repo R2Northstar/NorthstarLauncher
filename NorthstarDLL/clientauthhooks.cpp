@@ -13,7 +13,7 @@ const int AGREED_TO_SEND_TOKEN = 1;
 const int DISAGREED_TO_SEND_TOKEN = 2;
 
 AUTOHOOK(AuthWithStryder, engine.dll + 0x1843A0,
-void,, (void* a1), 
+void,, (void* a1))
 {
 	// game will call this forever, until it gets a valid auth key
 	// so, we need to manually invalidate our key until we're authed with northstar, then we'll allow game to auth with stryder
@@ -29,7 +29,7 @@ void,, (void* a1),
 	}
 
 	AuthWithStryder(a1);
-})
+}
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, [](HMODULE baseAddress)
 {

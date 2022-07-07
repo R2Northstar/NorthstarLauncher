@@ -7,7 +7,7 @@ SQRESULT SQ_GetModNames(void* sqvm)
 {
 	g_pUISquirrel->newarray(sqvm, 0);
 
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		g_pUISquirrel->pushstring(sqvm, mod.Name.c_str());
 		g_pUISquirrel->arrayappend(sqvm, -2);
@@ -22,11 +22,11 @@ SQRESULT SQ_IsModEnabled(void* sqvm)
 	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			g_pUISquirrel->pushbool(sqvm, mod.Enabled);
+			g_pUISquirrel->pushbool(sqvm, mod.m_bEnabled);
 			return SQRESULT_NOTNULL;
 		}
 	}
@@ -41,11 +41,11 @@ SQRESULT SQ_SetModEnabled(void* sqvm)
 	const SQBool enabled = g_pUISquirrel->getbool(sqvm, 2);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
-			mod.Enabled = enabled;
+			mod.m_bEnabled = enabled;
 			return SQRESULT_NULL;
 		}
 	}
@@ -59,7 +59,7 @@ SQRESULT SQ_GetModDescription(void* sqvm)
 	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -77,7 +77,7 @@ SQRESULT SQ_GetModVersion(void* sqvm)
 	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -95,7 +95,7 @@ SQRESULT SQ_GetModDownloadLink(void* sqvm)
 	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -113,7 +113,7 @@ SQRESULT SQ_GetModLoadPriority(void* sqvm)
 	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -131,7 +131,7 @@ SQRESULT SQ_IsModRequiredOnClient(void* sqvm)
 	const SQChar* modName = g_pUISquirrel->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -150,7 +150,7 @@ SQRESULT SQ_GetModConvars(void* sqvm)
 	g_pUISquirrel->newarray(sqvm, 0);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
 		if (!mod.Name.compare(modName))
 		{

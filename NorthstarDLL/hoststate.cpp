@@ -17,7 +17,7 @@ namespace R2
 } // namespace R2
 
 AUTOHOOK(CHostState__State_NewGame, engine.dll + 0x16E7D0,
-void,, (CHostState* hostState), 
+void,, (CHostState* hostState))
 {
 	spdlog::info("HostState: NewGame");
 
@@ -56,10 +56,10 @@ void,, (CHostState* hostState),
 		Cvar_ns_server_password->GetString());
 	g_ServerAuthenticationManager->StartPlayerAuthServer();
 	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
-})
+}
 
 AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
-void,, (CHostState* hostState),
+void,, (CHostState* hostState))
 {
 	spdlog::info("HostState: ChangeLevelMP");
 
@@ -78,10 +78,10 @@ void,, (CHostState* hostState),
 	double dStartTime = Tier0::Plat_FloatTime();
 	CHostState__State_ChangeLevelMP(hostState);
 	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
-})
+}
 
 AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E520,
-void,, (CHostState* hostState),
+void,, (CHostState* hostState))
 {
 	spdlog::info("HostState: GameShutdown");
 
@@ -89,7 +89,7 @@ void,, (CHostState* hostState),
 	g_ServerAuthenticationManager->StopPlayerAuthServer();
 
 	CHostState__State_GameShutdown(hostState);
-})
+}
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, [](HMODULE baseAddress)
 {

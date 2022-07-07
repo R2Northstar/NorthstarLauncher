@@ -6,13 +6,13 @@ AUTOHOOK_INIT()
 ConVar* Cvar_rui_drawEnable;
 
 AUTOHOOK(DrawRUIFunc, engine.dll + 0xFC500,
-bool,, (void* a1, float* a2), 
+bool,, (void* a1, float* a2))
 {
 	if (!Cvar_rui_drawEnable->GetBool())
 		return 0;
 	
 	return DrawRUIFunc(a1, a2);
-})
+}
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", RUI, ConVar, [](HMODULE baseAddress)
 {

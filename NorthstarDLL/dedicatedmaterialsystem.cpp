@@ -17,7 +17,7 @@ HRESULT, __stdcall, (
 	UINT SDKVersion,
 	void** ppDevice,
 	int* pFeatureLevel,
-	void** ppImmediateContext),
+	void** ppImmediateContext))
 {
 	// note: this is super duper temp pretty much just messing around with it
 	// does run surprisingly well on dedi for a software driver tho if you ignore the +1gb ram usage at times, seems like dedi doesn't
@@ -31,7 +31,7 @@ HRESULT, __stdcall, (
 
 	return D3D11CreateDevice(
 		pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel, ppImmediateContext);
-})
+}
 
 ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, [](HMODULE baseAddress)
 {

@@ -18,9 +18,9 @@ struct PakLoadFuncs
 };
 
 PakLoadFuncs* g_pakLoadApi;
-void** pUnknownPakLoadSingleton;
 
 PakLoadManager* g_pPakLoadManager;
+void** pUnknownPakLoadSingleton;
 void PakLoadManager::LoadPakSync(const char* path)
 {
 	g_pakLoadApi->LoadPakSync(path, *pUnknownPakLoadSingleton, 0);
@@ -45,10 +45,10 @@ void PakLoadManager::UnloadPaks()
 void HandlePakAliases(char** map)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (int64_t i = g_pModManager->m_loadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > -1; i--)
 	{
-		Mod* mod = &g_pModManager->m_loadedMods[i];
-		if (!mod->Enabled)
+		Mod* mod = &g_pModManager->m_LoadedMods[i];
+		if (!mod->m_bEnabled)
 			continue;
 
 		if (mod->RpakAliases.find(*map) != mod->RpakAliases.end())
@@ -62,13 +62,13 @@ void HandlePakAliases(char** map)
 void LoadPreloadPaks()
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		if (!mod.Enabled)
+		if (!mod.m_bEnabled)
 			continue;
 
 		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.ModDirectory / "paks");
+		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 			if (pak.m_bAutoLoad)
@@ -79,16 +79,16 @@ void LoadPreloadPaks()
 void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 {
 	// whether the vanilla game has this rpak
-	bool bHasOriginalPak = fs::exists(fs::path("./r2/paks/Win64/") / *pakName);
+	bool bHasOriginalPak = fs::exists(fs::path("r2/paks/Win64/") / *pakName);
 
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_loadedMods)
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		if (!mod.Enabled)
+		if (!mod.m_bEnabled)
 			continue;
 
 		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.ModDirectory / "paks");
+		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 		{
@@ -114,7 +114,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 }
 
 HOOK(LoadPakAsyncHook, LoadPakAsync,
-int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1),
+int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1))
 {
 	HandlePakAliases(&pPath);
 
@@ -150,10 +150,10 @@ int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* ca
 		delete[] pPath;
 
 	return ret;
-})
+}
 
 HOOK(UnloadPakHook, UnloadPak,
-void*,, (int iPakHandle, void* callback),
+void*,, (int iPakHandle, void* callback))
 {
 	static bool bShouldUnloadPaks = true;
 	if (bShouldUnloadPaks)
@@ -165,13 +165,13 @@ void*,, (int iPakHandle, void* callback),
 
 	spdlog::info("UnloadPak {}", iPakHandle);
 	return UnloadPak(iPakHandle, callback);
-})
+}
 
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
 // possibly just async loading altogether?
 
 HOOK(ReadFullFileFromDiskHook, ReadFullFileFromDisk, 
-void*, , (const char* pPath, void* a2),
+void*, , (const char* pPath, void* a2))
 {
 	fs::path path(pPath);
 	char* allocatedNewPath = nullptr;
@@ -183,11 +183,11 @@ void*, , (const char* pPath, void* a2),
 
 		// resolve modded stbsp path so we can load mod stbsps
 
-		auto modFile = g_pModManager->m_modFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
-		if (modFile != g_pModManager->m_modFiles.end())
+		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
+		if (modFile != g_pModManager->m_ModFiles.end())
 		{
 			// need to allocate a new string for this
-			std::string newPath = (modFile->second.owningMod->ModDirectory / "mod" / modFile->second.path).string();
+			std::string newPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
 			allocatedNewPath = new char[newPath.size() + 1];
 			strncpy(allocatedNewPath, newPath.c_str(), newPath.size());
 			allocatedNewPath[newPath.size()] = '\0';
@@ -200,7 +200,7 @@ void*, , (const char* pPath, void* a2),
 		delete[] allocatedNewPath;
 
 	return ret;
-})
+}
 
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, [](HMODULE baseAddress)

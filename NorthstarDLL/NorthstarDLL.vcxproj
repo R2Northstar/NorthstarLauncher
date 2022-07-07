@@ -78,7 +78,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)..\..\..\"</Command>
+      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)..\..\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -111,7 +111,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)..\..\..\"</Command>
+      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)..\..\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

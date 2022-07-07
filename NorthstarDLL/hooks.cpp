@@ -141,7 +141,7 @@ void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callba
 }
 
 AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA,
-LPSTR, WINAPI, (),
+LPSTR, WINAPI, ())
 {
 	static char* cmdlineModified;
 	static char* cmdlineOrg;
@@ -202,7 +202,7 @@ LPSTR, WINAPI, (),
 	}
 
 	return cmdlineModified;
-})
+}
 
 std::vector<std::string> calledTags;
 void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
@@ -285,7 +285,7 @@ void CallAllPendingDLLLoadCallbacks()
 }
 
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, 
-HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags), 
+HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 	{
 	HMODULE moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
@@ -293,11 +293,11 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags),
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
 
 	return moduleAddress;
-})
+}
 
 
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, 
-HMODULE, WINAPI, (LPCSTR lpLibFileName), 
+HMODULE, WINAPI, (LPCSTR lpLibFileName))
 {
 	HMODULE moduleAddress = _LoadLibraryA(lpLibFileName);
 
@@ -305,10 +305,10 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName),
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
 
 	return moduleAddress;
-})
+}
 
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, 
-HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags), 
+HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 {
 	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
@@ -316,10 +316,10 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags),
 		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
 
 	return moduleAddress;
-})
+}
 
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW, 
-HMODULE, WINAPI, (LPCWSTR lpLibFileName), 
+HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 {
 	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 
@@ -327,7 +327,7 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName),
 		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
 
 	return moduleAddress;
-})
+}
 
 void InstallInitialHooks()
 {
