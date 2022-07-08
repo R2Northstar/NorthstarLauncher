@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "scriptUtility.h"
+#include "scriptutility.h"
 #include "squirrel.h"
 
 template <ScriptContext context> SQRESULT SQ_StringToAsset(void* sqvm)
