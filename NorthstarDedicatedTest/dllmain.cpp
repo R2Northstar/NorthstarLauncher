@@ -45,7 +45,7 @@
 #include <string.h>
 #include "version.h"
 #include "pch.h"
-#include "scriptUtility.h"
+#include "scriptutility.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
