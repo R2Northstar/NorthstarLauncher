@@ -8,6 +8,7 @@ struct RemoteModInfo
   public:
 	std::string Name;
 	std::string Version;
+	std::string DownloadLink;
 };
 
 class RemoteServerInfo
