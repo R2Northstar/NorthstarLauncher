@@ -1523,6 +1523,8 @@
     </ClInclude>
     <ClInclude Include="AntiRCE.h">
       <Filter>Header Files\Shared\ExploitFixes\AntiRCE</Filter>
+    <ClInclude Include="scriptutility.h">
+      <Filter>Header Files\Shared</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1693,6 +1695,8 @@
     </ClCompile>
     <ClCompile Include="AntiRCE.cpp">
       <Filter>Source Files\Shared\Exploit Fixes\AntiRCE</Filter>
+    <ClCompile Include="scriptutility.cpp">
+      <Filter>Source Files\Shared</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

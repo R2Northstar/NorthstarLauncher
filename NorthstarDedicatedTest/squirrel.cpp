@@ -6,6 +6,7 @@
 #include "concommand.h"
 #include "modmanager.h"
 #include <iostream>
+#include "gameutils.h"
 
 // hook forward declarations
 typedef SQInteger (*SQPrintType)(void* sqvm, char* fmt, ...);
@@ -34,6 +35,10 @@ CallScriptInitCallbackType ClientCallScriptInitCallback;
 CallScriptInitCallbackType ServerCallScriptInitCallback;
 template <ScriptContext context> char CallScriptInitCallbackHook(void* sqvm, const char* callback);
 
+RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
+RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
+template <ScriptContext context> int64_t RegisterSquirrelFuncHook(void* sqvm, SQFuncRegistration* funcReg, char unknown);
+
 // core sqvm funcs
 sq_compilebufferType ClientSq_compilebuffer;
 sq_compilebufferType ServerSq_compilebuffer;
@@ -43,9 +48,6 @@ sq_pushroottableType ServerSq_pushroottable;
 
 sq_callType ClientSq_call;
 sq_callType ServerSq_call;
-
-RegisterSquirrelFuncType ClientRegisterSquirrelFunc;
-RegisterSquirrelFuncType ServerRegisterSquirrelFunc;
 
 // sq stack array funcs
 sq_newarrayType ClientSq_newarray;
@@ -69,6 +71,9 @@ sq_pushboolType ServerSq_pushbool;
 
 sq_pusherrorType ClientSq_pusherror;
 sq_pusherrorType ServerSq_pusherror;
+
+sq_pushAssetType ClientSq_pushAsset;
+sq_pushAssetType ServerSq_pushAsset;
 
 // sq stack get funcs
 sq_getstringType ClientSq_getstring;
@@ -134,6 +139,7 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 	ClientSq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
 	ClientSq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
 	ClientSq_pusherror = (sq_pusherrorType)((char*)baseAddress + 0x8470);
+	ClientSq_pushAsset = (sq_pushAssetType)((char*)baseAddress + 0x3560);
 
 	ClientSq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
 	ClientSq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
@@ -162,6 +168,11 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 		(char*)baseAddress + 0x10190,
 		&CallScriptInitCallbackHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientCallScriptInitCallback)); // client callscriptinitcallback function
+	ENABLER_CREATEHOOK(
+		hook,
+		(char*)baseAddress + 0x108E0,
+		&RegisterSquirrelFuncHook<ScriptContext::CLIENT>,
+		reinterpret_cast<LPVOID*>(&ClientRegisterSquirrelFunc)); // client registersquirrelfunc function
 }
 
 void InitialiseServerSquirrel(HMODULE baseAddress)
@@ -183,6 +194,7 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 	ServerSq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
 	ServerSq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
 	ServerSq_pusherror = (sq_pusherrorType)((char*)baseAddress + 0x8440);
+	ServerSq_pushAsset = (sq_pushAssetType)((char*)baseAddress + 0x3560);
 
 	ServerSq_getstring = (sq_getstringType)((char*)baseAddress + 0x60A0);
 	ServerSq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60C0);
@@ -216,6 +228,12 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 		(char*)baseAddress + 0x1D5C0,
 		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerCallScriptInitCallback)); // server callscriptinitcallback function
+
+	ENABLER_CREATEHOOK(
+		hook,
+		(char*)baseAddress + 0x1DD10,
+		&RegisterSquirrelFuncHook<ScriptContext::SERVER>,
+		reinterpret_cast<LPVOID*>(&ServerRegisterSquirrelFunc)); // server registersquirrelfunc function
 
 	// cheat and clientcmd_can_execute allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
 	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
@@ -447,4 +465,53 @@ template <ScriptContext context> void ExecuteCodeCommand(const CCommand& args)
 		g_UISquirrelManager->ExecuteCode(args.ArgS());
 	else if (context == ScriptContext::SERVER)
 		g_ServerSquirrelManager->ExecuteCode(args.ArgS());
+}
+
+SQRESULT SQ_DevFuncStub(void* sqvm)
+{
+	spdlog::warn("Blocked execution of squirrel developer function for security reasons. To re-enable them use start parameter "
+				 "-allowSquirrelDevFunctions.");
+	return SQRESULT_NULL;
+}
+
+template <ScriptContext context> int64_t RegisterSquirrelFuncHook(void* sqvm, SQFuncRegistration* funcReg, char unknown)
+{
+	static std::set<std::string> allowedDevFunctions = {
+		"Dev_CommandLineHasParm",
+		"Dev_CommandLineParmValue",
+		"Dev_CommandLineRemoveParm",
+	};
+
+	if ((funcReg->devLevel == 1) && (!CommandLine()->CheckParm("-allowSquirrelDevFunctions")) &&
+		(!allowedDevFunctions.count(funcReg->squirrelFuncName)))
+		funcReg->funcPtr = SQ_DevFuncStub;
+
+	if (context == ScriptContext::SERVER)
+		return ServerRegisterSquirrelFunc(sqvm, funcReg, unknown);
+	else
+		return ClientRegisterSquirrelFunc(sqvm, funcReg, unknown);
+}
+
+SQReturnTypeEnum GetReturnTypeEnumFromString(const char* returnTypeString)
+{
+
+	static std::map<std::string, SQReturnTypeEnum> sqEnumStrMap = {
+		{"bool", SqReturnBoolean},
+		{"float", SqReturnFloat},
+		{"vector", SqReturnVector},
+		{"int", SqReturnInteger},
+		{"entity", SqReturnEntity},
+		{"string", SqReturnString},
+		{"array", SqReturnArrays},
+		{"asset", SqReturnAsset},
+		{"table", SqReturnTable}};
+
+	if (sqEnumStrMap.count(returnTypeString))
+	{
+		return sqEnumStrMap[returnTypeString];
+	}
+	else
+	{
+		return SqReturnDefault; // previous default value
+	}
 }

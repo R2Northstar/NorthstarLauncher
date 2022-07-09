@@ -18,6 +18,20 @@ const SQRESULT SQRESULT_NOTNULL = 1;
 
 typedef SQInteger (*SQFunction)(void* sqvm);
 
+enum SQReturnTypeEnum
+{
+	SqReturnFloat = 0x1,
+	SqReturnVector = 0x3,
+	SqReturnInteger = 0x5,
+	SqReturnBoolean = 0x6,
+	SqReturnEntity = 0xD,
+	SqReturnString = 0x21,
+	SqReturnDefault = 0x20,
+	SqReturnArrays = 0x25,
+	SqReturnAsset = 0x28,
+	SqReturnTable = 0x26,
+};
+
 struct CompileBufferState
 {
 	const SQChar* buffer;
@@ -37,27 +51,27 @@ struct SQFuncRegistration
 	const char* squirrelFuncName;
 	const char* cppFuncName;
 	const char* helpText;
-	const char* returnValueType;
+	const char* returnTypeString;
 	const char* argTypes;
-	int16_t somethingThatsZero;
-	int16_t padding1;
-	int32_t unknown1;
-	int64_t unknown2;
-	int32_t unknown3;
-	int32_t padding2;
-	int64_t unknown4;
-	int64_t unknown5;
-	int64_t unknown6;
-	int32_t unknown7;
-	int32_t padding3;
+	__int32 unknown1;
+	__int32 devLevel;
+	const char* shortNameMaybe;
+	__int32 unknown2;
+	SQReturnTypeEnum returnTypeEnum;
+	__int32* externalBufferPointer;
+	__int64 externalBufferSize;
+	__int64 unknown3;
+	__int64 unknown4;
 	void* funcPtr;
 
 	SQFuncRegistration()
 	{
 		memset(this, 0, sizeof(SQFuncRegistration));
-		this->padding2 = 32;
+		this->returnTypeEnum = SqReturnDefault;
 	}
 };
+
+SQReturnTypeEnum GetReturnTypeEnumFromString(const char* returnTypeString);
 
 // core sqvm funcs
 typedef SQRESULT (*sq_compilebufferType)(void* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, ScriptContext a2);
@@ -106,6 +120,10 @@ extern sq_pushboolType ServerSq_pushbool;
 typedef SQInteger (*sq_pusherrorType)(void* sqvm, const SQChar* error);
 extern sq_pusherrorType ClientSq_pusherror;
 extern sq_pusherrorType ServerSq_pusherror;
+
+typedef SQRESULT (*sq_pushAssetType)(void* sqvm, const SQChar* assetName, SQInteger nameLength);
+extern sq_pushAssetType ServerSq_pushAsset;
+extern sq_pushAssetType ClientSq_pushAsset;
 
 // sq stack get funcs
 typedef const SQChar* (*sq_getstringType)(void* sqvm, SQInteger stackpos);
@@ -277,8 +295,9 @@ template <ScriptContext context> class SquirrelManager
 		reg->helpText = new char[helpText.size() + 1];
 		strcpy((char*)reg->helpText, helpText.c_str());
 
-		reg->returnValueType = new char[returnType.size() + 1];
-		strcpy((char*)reg->returnValueType, returnType.c_str());
+		reg->returnTypeString = new char[returnType.size() + 1];
+		strcpy((char*)reg->returnTypeString, returnType.c_str());
+		reg->returnTypeEnum = GetReturnTypeEnumFromString(returnType.c_str());
 
 		reg->argTypes = new char[argTypes.size() + 1];
 		strcpy((char*)reg->argTypes, argTypes.c_str());

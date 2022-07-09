@@ -45,6 +45,7 @@
 #include <string.h>
 #include "version.h"
 #include "pch.h"
+#include "scriptutility.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -255,6 +256,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
+		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelUtilityFunctions);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
 	}
@@ -267,6 +269,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
 	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
+	AddDllLoadCallback("server.dll", InitialiseServerSquirrelUtilityFunctions);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
 
@@ -285,8 +288,15 @@ bool InitialiseNorthstar()
 	// mod manager after everything else
 	AddDllLoadCallback("engine.dll", InitialiseModManager);
 
-	// activate exploit fixes
-	AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback);
+	{
+		// activate multi-module exploitfixes callbacks
+		constexpr const char* EXPLOITFIXES_MULTICALLBACK_MODS[] = {"client.dll", "engine.dll", "server.dll"};
+		for (const char* mod : EXPLOITFIXES_MULTICALLBACK_MODS)
+			AddDllLoadCallback(mod, ExploitFixes::LoadCallback_MultiModule);
+
+		// activate exploit fixes later
+		AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback_Full);
+	}
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
