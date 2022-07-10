@@ -2,7 +2,7 @@
 
 #include "NSMem.h"
 
-ON_DLL_LOAD("server.dll", MiscServerFixes, [](HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", MiscServerFixes, (HMODULE baseAddress))
 {
 	uintptr_t ba = (uintptr_t)baseAddress;
 
@@ -12,4 +12,4 @@ ON_DLL_LOAD("server.dll", MiscServerFixes, [](HMODULE baseAddress)
 	// ret at the start of CServerGameClients::ClientCommandKeyValues as it has no benefit and is forwarded to client (i.e. security issue)
 	// this prevents the attack vector of client=>server=>client, however server=>client also has clientside patches
 	NSMem::BytePatch(ba + 0x153920, "C3");
-})
+}

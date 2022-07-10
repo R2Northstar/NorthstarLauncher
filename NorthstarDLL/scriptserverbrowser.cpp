@@ -328,8 +328,8 @@ SQRESULT SQ_TryAuthWithServer(void* sqvm)
 
 	// send off persistent data first, don't worry about server/client stuff, since m_additionalPlayerData should only have entries when
 	// we're a local server note: this seems like it could create a race condition, test later
-	for (auto& pair : g_ServerAuthenticationManager->m_additionalPlayerData)
-		g_ServerAuthenticationManager->WritePersistentData(pair.first);
+	for (auto& pair : g_pServerAuthenticationManager->m_additionalPlayerData)
+		g_pServerAuthenticationManager->WritePersistentData(pair.first);
 
 	// do auth
 	g_MasterServerManager->AuthenticateWithServer(
@@ -403,13 +403,13 @@ SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
 	// note: this assumes we have no authdata other than our own
 	R2::Cbuf_AddText(
 		R2::Cbuf_GetCurrentPlayer(),
-		fmt::format("serverfilter {}", g_ServerAuthenticationManager->m_authData.begin()->first).c_str(),
+		fmt::format("serverfilter {}", g_pServerAuthenticationManager->m_authData.begin()->first).c_str(),
 		R2::cmd_source_t::kCommandSrcCode);
 
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, (HMODULE baseAddress))
 {
 	g_pUISquirrel->AddFuncRegistration("bool", "NSIsMasterServerAuthenticated", "", "", SQ_IsMasterServerAuthenticated);
 	g_pUISquirrel->AddFuncRegistration("void", "NSRequestServerList", "", "", SQ_RequestServerList);
@@ -440,4 +440,4 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, [
 
 	g_pUISquirrel->AddFuncRegistration("void", "NSTryAuthWithLocalServer", "", "", SQ_TryAuthWithLocalServer);
 	g_pUISquirrel->AddFuncRegistration("void", "NSCompleteAuthWithLocalServer", "", "", SQ_CompleteAuthWithLocalServer);
-})
+}

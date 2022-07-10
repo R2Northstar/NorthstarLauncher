@@ -83,7 +83,7 @@ void RunServer(CDedicatedExports* dedicated)
 								 "{} - {} {}/{} players ({})",
 								 g_MasterServerManager->m_sUnicodeServerName,
 								 g_pHostState->m_levelName,
-								 g_ServerAuthenticationManager->m_additionalPlayerData.size(),
+								 g_pServerAuthenticationManager->m_additionalPlayerData.size(),
 								 maxPlayers,
 								 GetCurrentPlaylistName())
 								 .c_str());
@@ -128,7 +128,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 }
 
 #include "NSMem.h"
-ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
+ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, (HMODULE engineAddress))
 {
 	spdlog::info("InitialiseDedicated");
 
@@ -268,9 +268,9 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, [](HMODULE engineAddress)
 		consoleInputThreadHandle = CreateThread(0, 0, ConsoleInputThread, 0, 0, NULL);
 	else
 		spdlog::info("Console input disabled by user request");
-})
+}
 
-ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, [](HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (HMODULE baseAddress))
 {
 	// disable origin on dedicated
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
@@ -280,7 +280,7 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, [](HMODULE baseAddress)
 	{
 		0xC3 // ret
 	});
-})
+}
 
 AUTOHOOK(PrintFatalSquirrelError, server.dll + 0x794D0, 
 void, , (void* sqvm))
@@ -289,7 +289,7 @@ void, , (void* sqvm))
 	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
 }
 
-ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, [](HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE("server.dll")
-})
+}

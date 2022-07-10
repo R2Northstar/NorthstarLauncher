@@ -140,6 +140,24 @@ void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callba
 	AddDllLoadCallback(dll, callback, tag, reliesOn);
 }
 
+void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFuncName)
+{
+	char* pStrippedFuncName = (char*)pFuncName;
+	// strip & char from funcname
+	if (*pStrippedFuncName == '&')
+		pStrippedFuncName++;
+
+	if (MH_CreateHook(pTarget, pDetour, (LPVOID*)ppOriginal) == MH_OK)
+	{
+		if (MH_EnableHook(pTarget) == MH_OK)
+			spdlog::info("Enabling hook {}", pStrippedFuncName);
+		else
+			spdlog::error("MH_EnableHook failed for function {}", pStrippedFuncName);
+	}
+	else
+		spdlog::error("MH_CreateHook failed for function {}", pStrippedFuncName);
+}
+
 AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA,
 LPSTR, WINAPI, ())
 {

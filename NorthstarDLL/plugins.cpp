@@ -385,7 +385,7 @@ int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
 	return n;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", PluginCommands, ClientSquirrel, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", PluginCommands, ClientSquirrel, (HMODULE baseAddress))
 {
 	// i swear there's a way to make this not have be run in 2 contexts but i can't figure it out
 	// some funcs i need are just not available in UI or CLIENT
@@ -418,4 +418,4 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", PluginCommands, ClientSquirrel, [](HMO
 		g_pUISquirrel->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
 		g_pUISquirrel->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
 	}
-})
+}

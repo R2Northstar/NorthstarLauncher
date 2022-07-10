@@ -203,7 +203,7 @@ void*, , (const char* pPath, void* a2))
 }
 
 
-ON_DLL_LOAD("engine.dll", RpakFilesystem, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", RpakFilesystem, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH();
 
@@ -215,4 +215,4 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, [](HMODULE baseAddress)
 	LoadPakAsyncHook.Dispatch(g_pakLoadApi->LoadPakAsync);
 	UnloadPakHook.Dispatch(g_pakLoadApi->UnloadPak);
 	ReadFullFileFromDiskHook.Dispatch(g_pakLoadApi->ReadFullFileFromDisk);
-})
+}

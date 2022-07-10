@@ -2,7 +2,7 @@
 #include "logging.h"
 #include "convar.h"
 #include "concommand.h"
-#include "configurables.h"
+#include "nsprefix.h"
 #include "bitbuf.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
@@ -225,34 +225,25 @@ void InitialiseLogging()
 {
 	AllocConsole();
 
-	// don't redirect conout if already open
-	/* FILE* pConoutFile = fopen("CONOUT$", "w");
-	if (pConoutFile)
-	{
-		fclose(pConoutFile);
-		freopen("CONOUT$", "w", stdout);
-		freopen("CONOUT$", "w", stderr);
-	}*/
-
-	// Bind stdin to receive console input.
+	// Bind stdout to receive console output.
 	FILE* fp;
 	freopen_s(&fp, "CONOUT$", "w", stdout);
-	freopen_s(&fp, "CONOUT$", "W", stderr);
+	_dup2(_fileno(stdout), _fileno(stderr));
 
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConCommand, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
-})
+}
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
 	pInternalCenterPrint = (ICenterPrint*)((char*)baseAddress + 0x216E940);
-})
+}

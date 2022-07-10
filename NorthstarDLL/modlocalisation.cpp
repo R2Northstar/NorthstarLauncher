@@ -27,7 +27,7 @@ bool,, (void* pVguiLocalize, const char* path, const char* pathId, char unknown)
 	return ret;
 }
 
-ON_DLL_LOAD_CLIENT("localize.dll", Localize, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("localize.dll", Localize, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
-})
+}

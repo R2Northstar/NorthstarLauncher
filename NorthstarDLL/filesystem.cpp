@@ -167,7 +167,7 @@ VPKData*,, (IFileSystem* fileSystem, const char* pVpkPath))
 	return ret;
 }
 
-ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, [](HMODULE baseAddress)
+ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
@@ -176,4 +176,4 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, [](HMODULE baseAddress)
 	AddSearchPathHook.Dispatch((*g_pFilesystem)->m_vtable->AddSearchPath);
 	ReadFromCacheHook.Dispatch((*g_pFilesystem)->m_vtable->ReadFromCache);
 	MountVPKHook.Dispatch((*g_pFilesystem)->m_vtable->MountVPK);
-})
+}

@@ -74,7 +74,7 @@ void*,, (__int64 thisptr, const char* name, int maxentries, int userdatafixedsiz
 	return StringTables_CreateStringTable(thisptr, name, maxentries, userdatafixedsize, userdatanetworkbits, flags);
 }
 
-ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress))
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -114,7 +114,7 @@ ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, [](HMODULE baseAddress)
 
 	// do not load prebaked SendTable message list
 	ChangeOffset<unsigned char>((char*)baseAddress + 0x75859, 0xEB); // jnz -> jmp
-})
+}
 
 typedef void (*RunUserCmds_Type)(bool a1, float a2);
 RunUserCmds_Type RunUserCmds_Original;
@@ -275,7 +275,7 @@ __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* nam
 	return SendPropArray2(recvProp, elements, flags, name, proxyFn, unk1);
 }
 
-ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (HMODULE baseAddress))
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -432,7 +432,7 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, [](HMODULE baseAddress)
 	*(DWORD*)((char*)baseAddress + 0xC945A0) = 0;
 	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x238F50);
 	DT_Team_Construct();
-})
+}
 
 AUTOHOOK(RecvPropArray2, client.dll + 0x1CEDA0,
 __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn))
@@ -444,7 +444,7 @@ __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* nam
 	return RecvPropArray2(recvProp, elements, flags, name, proxyFn);
 }
 
-ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, [](HMODULE baseAddress)
+ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (HMODULE baseAddress))
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -622,4 +622,4 @@ ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, [](HMODULE baseAddress)
 	*(DWORD*)((char*)baseAddress + 0xC3AFF8) = 0;
 	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x17F950);
 	DT_Team_Construct();
-})
+}

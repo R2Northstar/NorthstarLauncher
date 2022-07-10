@@ -29,14 +29,14 @@ void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
 {
 	R2::Cbuf_AddText(
 		R2::Cbuf_GetCurrentPlayer(),
-		fmt::format("serverfilter {}", g_ServerAuthenticationManager->m_authData.begin()->first).c_str(),
+		fmt::format("serverfilter {}", g_pServerAuthenticationManager->m_authData.begin()->first).c_str(),
 		R2::cmd_source_t::kCommandSrcCode);
 	R2::Cbuf_Execute();
 
 	// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
 	if (g_pClientSquirrel->sqvm)
 	{
-		g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = true;
+		g_pServerAuthenticationManager->m_bNeedLocalAuthForNewgame = true;
 
 		// this won't set playlist correctly on remote clients, don't think they can set playlist until they've left which sorta
 		// fucks things should maybe set this in HostState_NewGame?

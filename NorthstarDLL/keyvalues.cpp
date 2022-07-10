@@ -114,6 +114,8 @@ char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSy
 	// this is just to allow playlists to get a valid pFileSystem ptr for kv building, other functions that call this particular overload of
 	// LoadFromBuffer seem to get called on network stuff exclusively not exactly sure what the address wanted here is, so just taking it
 	// from a function call that always happens before playlists is loaded
+
+	// note: would be better if we could serialize this to disk for playlists, as this method breaks saving playlists in demos
 	if (pFileSystem != nullptr)
 		pSavedFilesystemPtr = pFileSystem;
 	if (!pFileSystem && !strcmp(resourceName, "playlists"))
@@ -122,7 +124,7 @@ char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSy
 	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
 }
 
-ON_DLL_LOAD("engine.dll", KeyValues, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", KeyValues, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
-})
+}

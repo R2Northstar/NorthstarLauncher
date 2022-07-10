@@ -39,15 +39,17 @@ class __dllLoadCallback
 #define __STR(s) #s
 
 // adds a callback to be called when a given dll is loaded, for creating hooks and such
-#define __ON_DLL_LOAD(dllName, func, side, uniquestr, reliesOn) \
-namespace { __dllLoadCallback CONCAT2(__dllLoadCallbackInstance, __LINE__)(side, dllName, func, __STR(uniquestr), reliesOn); }
+#define __ON_DLL_LOAD(dllName, side, uniquestr, reliesOn, args) \
+void CONCAT2(__dllLoadCallback, uniquestr) args; \
+namespace { __dllLoadCallback CONCAT2(__dllLoadCallbackInstance, __LINE__)(side, dllName, CONCAT2(__dllLoadCallback, uniquestr), __STR(uniquestr), reliesOn); } \
+void CONCAT2(__dllLoadCallback, uniquestr) args \
 
-#define ON_DLL_LOAD(dllName, uniquestr, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::UNSIDED, uniquestr, "")
-#define ON_DLL_LOAD_RELIESON(dllName, uniquestr, reliesOn, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::UNSIDED, uniquestr, __STR(reliesOn))
-#define ON_DLL_LOAD_CLIENT(dllName, uniquestr, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::CLIENT, uniquestr, "")
-#define ON_DLL_LOAD_CLIENT_RELIESON(dllName, uniquestr, reliesOn,  func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::CLIENT, uniquestr, __STR(reliesOn))
-#define ON_DLL_LOAD_DEDI(dllName, uniquestr, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::DEDICATED_SERVER, uniquestr, "")
-#define ON_DLL_LOAD_DEDI_RELIESON(dllName, uniquestr, reliesOn, func) __ON_DLL_LOAD(dllName, func, eDllLoadCallbackSide::DEDICATED_SERVER, uniquestr, __STR(reliesOn))
+#define ON_DLL_LOAD(dllName, uniquestr, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::UNSIDED, uniquestr, "", args)
+#define ON_DLL_LOAD_RELIESON(dllName, uniquestr, reliesOn, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::UNSIDED, uniquestr, __STR(reliesOn), args)
+#define ON_DLL_LOAD_CLIENT(dllName, uniquestr, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::CLIENT, uniquestr, "", args)
+#define ON_DLL_LOAD_CLIENT_RELIESON(dllName, uniquestr, reliesOn, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::CLIENT, uniquestr, __STR(reliesOn), args)
+#define ON_DLL_LOAD_DEDI(dllName, uniquestr, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::DEDICATED_SERVER, uniquestr, "", args)
+#define ON_DLL_LOAD_DEDI_RELIESON(dllName, uniquestr, reliesOn, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::DEDICATED_SERVER, uniquestr, __STR(reliesOn), args)
 
 // new macro hook stuff
 class __autohook;
@@ -279,3 +281,6 @@ type callingConvention CONCAT2(__manualhookfunc, varName) args \
 type callingConvention CONCAT2(__manualhookfunc, varName) args; \
 ManualHook varName = ManualHook(__STR(varName), (LPVOID)CONCAT2(__manualhookfunc, varName)); \
 type callingConvention CONCAT2(__manualhookfunc, varName) args \
+
+void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFuncName = "");
+#define MAKEHOOK(pTarget, pDetour, ppOriginal) MakeHook(pTarget, pDetour, ppOriginal, __STR(pDetour))

@@ -436,7 +436,7 @@ void LocalChatWriter::InsertDefaultFade()
 	}
 }
 
-ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, (HMODULE baseAddress))
 {
 	gGameSettings = (CGameSettings**)((char*)baseAddress + 0x11BAA48);
 	gChatFadeLength = (CGameFloatVar**)((char*)baseAddress + 0x11BAB78);
@@ -444,4 +444,4 @@ ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, [](HMODULE baseAddress)
 	CHudChat::allHuds = (CHudChat**)((char*)baseAddress + 0x11BA9E8);
 
 	ConvertANSIToUnicode = (ConvertANSIToUnicodeType)((char*)baseAddress + 0x7339A0);
-})
+}

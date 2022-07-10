@@ -25,7 +25,7 @@ void,, (CHostState* hostState))
 	Cbuf_Execute();
 
 	// need to do this to ensure we don't go to private match
-	if (g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame)
+	if (g_pServerAuthenticationManager->m_bNeedLocalAuthForNewgame)
 		SetCurrentPlaylist("tdm");
 
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
@@ -54,8 +54,8 @@ void,, (CHostState* hostState))
 		GetCurrentPlaylistName(),
 		maxPlayers,
 		Cvar_ns_server_password->GetString());
-	g_ServerAuthenticationManager->StartPlayerAuthServer();
-	g_ServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
+	g_pServerAuthenticationManager->StartPlayerAuthServer();
+	g_pServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
 }
 
 AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
@@ -86,14 +86,14 @@ void,, (CHostState* hostState))
 	spdlog::info("HostState: GameShutdown");
 
 	g_MasterServerManager->RemoveSelfFromServerList();
-	g_ServerAuthenticationManager->StopPlayerAuthServer();
+	g_pServerAuthenticationManager->StopPlayerAuthServer();
 
 	CHostState__State_GameShutdown(hostState);
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
 	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
-})
+}

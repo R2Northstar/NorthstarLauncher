@@ -15,9 +15,9 @@ void,, (char* pUrl, char flags))
 	*bIsOriginOverlayEnabled = bIsOriginOverlayEnabledOriginal;
 }
 
-ON_DLL_LOAD_CLIENT("engine.dll", ScriptExternalBrowserHooks, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("engine.dll", ScriptExternalBrowserHooks, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
 	bIsOriginOverlayEnabled = (bool*)baseAddress + 0x13978255;
-})
+}

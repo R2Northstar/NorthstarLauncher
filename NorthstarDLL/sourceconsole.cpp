@@ -62,10 +62,11 @@ void InitialiseConsoleOnInterfaceCreation()
 	spdlog::default_logger()->sinks().push_back(consoleLogger);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (HMODULE baseAddress))
 {
 	g_pSourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
+
 	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "Show/hide the console.", FCVAR_DONTRECORD);
 	RegisterConCommand("showconsole", ConCommand_showconsole, "Show the console.", FCVAR_DONTRECORD);
 	RegisterConCommand("hideconsole", ConCommand_hideconsole, "Hide the console.", FCVAR_DONTRECORD);
-})
+}

@@ -24,14 +24,14 @@ SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
 	void* player = GetPlayerByIndex(playerIndex);
 
-	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
+	if (!g_pServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
 		g_pServerSquirrel->raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
 		return SQRESULT_ERROR;
 	}
 
-	g_ServerAuthenticationManager->m_additionalPlayerData[player].needPersistenceWriteOnLeave = false;
-	g_ServerAuthenticationManager->WritePersistentData(player);
+	g_pServerAuthenticationManager->m_additionalPlayerData[player].needPersistenceWriteOnLeave = false;
+	g_pServerAuthenticationManager->WritePersistentData(player);
 	return SQRESULT_NULL;
 }
 
@@ -47,7 +47,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 {
 	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
 	void* player = GetPlayerByIndex(playerIndex);
-	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
+	if (!g_pServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
 		g_pServerSquirrel->raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
 		return SQRESULT_ERROR;
@@ -57,10 +57,10 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, (HMODULE baseAddress))
 {
 	g_pServerSquirrel->AddFuncRegistration(
 		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
 	g_pServerSquirrel->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
 	g_pServerSquirrel->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
-})
+}

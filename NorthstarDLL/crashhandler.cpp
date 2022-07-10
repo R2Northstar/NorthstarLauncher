@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "crashhandler.h"
 #include "dedicated.h"
-#include "configurables.h"
+#include "nsprefix.h"
 
 #include <minidumpapiset.h>
 

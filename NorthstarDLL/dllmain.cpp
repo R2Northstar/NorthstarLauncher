@@ -3,7 +3,7 @@
 #include "logging.h"
 #include "crashhandler.h"
 #include "memalloc.h"
-#include "configurables.h"
+#include "nsprefix.h"
 #include "plugin_abi.h"
 #include "plugins.h"
 #include "version.h"
@@ -146,7 +146,7 @@ bool InitialiseNorthstar()
 
 	bInitialised = true;
 
-	parseConfigurables();
+	InitialiseNorthstarPrefix();
 	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters

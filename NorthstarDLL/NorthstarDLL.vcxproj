@@ -133,13 +133,12 @@
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="concommand.h" />
-    <ClInclude Include="configurables.h" />
+    <ClInclude Include="nsprefix.h" />
     <ClInclude Include="convar.h" />
     <ClInclude Include="cvar.h" />
     <ClInclude Include="dedicated.h" />
     <ClInclude Include="filesystem.h" />
     <ClInclude Include="hooks.h" />
-    <ClInclude Include="hookutils.h" />
     <ClInclude Include="include\crypto\aes_platform.h" />
     <ClInclude Include="include\crypto\aria.h" />
     <ClInclude Include="include\crypto\asn1.h" />
@@ -554,7 +553,6 @@
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
-    <ClInclude Include="ExploitFixes.h" />
     <ClInclude Include="ExploitFixes_UTF8Parser.h" />
     <ClInclude Include="NSMem.h" />
     <ClInclude Include="tier0.h" />
@@ -571,7 +569,7 @@
     <ClCompile Include="clientruihooks.cpp" />
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
-    <ClCompile Include="configurables.cpp" />
+    <ClCompile Include="nsprefix.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="crashhandler.cpp" />
     <ClCompile Include="cvar.cpp" />
@@ -582,7 +580,6 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="filesystem.cpp" />
     <ClCompile Include="hooks.cpp" />
-    <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="host.cpp" />
     <ClCompile Include="hoststate.cpp" />
     <ClCompile Include="keyvalues.cpp" />

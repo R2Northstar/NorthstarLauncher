@@ -26,7 +26,7 @@ void* g_pIConVar_Vtable = nullptr;
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
-ON_DLL_LOAD("engine.dll", ConVar, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", ConVar, (HMODULE baseAddress))
 {
 	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
 	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
@@ -36,7 +36,7 @@ ON_DLL_LOAD("engine.dll", ConVar, [](HMODULE baseAddress)
 
 	R2::g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	R2::g_pCVar = *R2::g_pCVarInterface;
-})
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor

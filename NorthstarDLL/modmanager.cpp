@@ -6,7 +6,7 @@
 #include "masterserver.h"
 #include "filesystem.h"
 #include "rpakfilesystem.h"
-#include "configurables.h"
+#include "nsprefix.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
@@ -636,9 +636,9 @@ fs::path GetCompiledAssetsPath()
 	return fs::path(GetNorthstarPrefix() + COMPILED_ASSETS_SUFFIX);
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", ModManager, ConCommand, (HMODULE baseAddress))
 {
 	g_pModManager = new ModManager;
 
 	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
-})
+}

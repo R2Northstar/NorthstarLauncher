@@ -125,6 +125,7 @@ class MasterServerManager
 
   public:
 	MasterServerManager();
+
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
@@ -146,7 +147,6 @@ class MasterServerManager
 	void RemoveSelfFromServerList();
 };
 std::string unescape_unicode(const std::string& str);
-void UpdateServerInfoFromUnicodeToUTF8();
 
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;

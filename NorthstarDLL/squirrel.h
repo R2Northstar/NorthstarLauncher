@@ -14,6 +14,12 @@ enum SQRESULT : SQInteger
 	SQRESULT_NOTNULL = 1,
 };
 
+const std::map<SQRESULT, const char*> PrintSQRESULT = {
+	{SQRESULT_ERROR, "SQRESULT_ERROR"},
+	{SQRESULT_NULL, "SQRESULT_NULL"},
+	{SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}
+};
+
 typedef SQRESULT (*SQFunction)(void* sqvm);
 
 struct CompileBufferState
@@ -158,12 +164,13 @@ template <ScriptContext context> class SquirrelManager
 		CompileBufferState bufferState = CompileBufferState(strCode);
 
 		SQRESULT compileResult = compilebuffer(&bufferState, "console");
-		spdlog::info("sq_compilebuffer returned {}", compileResult);
+		spdlog::info("sq_compilebuffer returned {}", PrintSQRESULT.at(compileResult));
+
 		if (compileResult != SQRESULT_ERROR)
 		{
 			pushroottable(sqvm2);
 			SQRESULT callResult = call(sqvm2, 0);
-			spdlog::info("sq_call returned {}", callResult);
+			spdlog::info("sq_call returned {}", PrintSQRESULT.at(callResult));
 		}
 	}
 

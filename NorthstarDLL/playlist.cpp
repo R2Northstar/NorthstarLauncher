@@ -84,7 +84,7 @@ void ConCommand_setplaylistvaroverride(const CCommand& args)
 		R2::SetPlaylistVarOverride(args.Arg(i), args.Arg(i + 1));
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
@@ -111,4 +111,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, [](HMODULE baseAdd
 
 	// patch to allow setplaylistvaroverride to be called before map init on dedicated and private match launched through the game
 	NSMem::NOP((uintptr_t)baseAddress + 0x18ED17, 6);
-})
+}

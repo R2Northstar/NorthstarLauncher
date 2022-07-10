@@ -4,7 +4,7 @@
 #include "serverauthentication.h"
 #include "concommand.h"
 #include "miscserverscript.h"
-#include "configurables.h"
+#include "nsprefix.h"
 
 #include <filesystem>
 
@@ -96,7 +96,7 @@ void ConCommand_clearbanlist(const CCommand& args)
 	g_ServerBanSystem->ClearBanlist();
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (HMODULE baseAddress))
 {
 	g_ServerBanSystem = new ServerBanSystem;
 	g_ServerBanSystem->OpenBanlist();
@@ -104,4 +104,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, [](HMODULE baseAddress
 	RegisterConCommand("ban", ConCommand_ban, "bans a given player by uid or name", FCVAR_GAMEDLL);
 	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_NONE);
 	RegisterConCommand("clearbanlist", ConCommand_clearbanlist, "clears all uids on the banlist", FCVAR_NONE);
-})
+}

@@ -487,16 +487,16 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 	return res;
 }
 
-AUTOHOOK(MilesLog, mileswin64.dll + 0x57DAD0, 
+AUTOHOOK(MilesLog, client.dll + 0x57DAD0, 
 void, __fastcall, (int level, const char* string))
 {
 	spdlog::info("[MSS] {} - {}", level, string);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
 	MilesStopAll = (MilesStopAll_Type)((char*)GetModuleHandleA("mileswin64.dll") + 0x580850);
-})
+}

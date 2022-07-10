@@ -77,11 +77,11 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
 	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
 	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
 	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
-})
+}

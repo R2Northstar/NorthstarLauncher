@@ -36,17 +36,17 @@ void*,, (const char* pName, const int* pReturnCode))
 	return ret;
 }
 
-ON_DLL_LOAD("client.dll", ClientInterface, [](HMODULE baseAddress)
+ON_DLL_LOAD("client.dll", ClientInterface, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
-})
+}
 
-ON_DLL_LOAD("server.dll", ServerInterface, [](HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", ServerInterface, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
-})
+}
 
-ON_DLL_LOAD("engine.dll", EngineInterface, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineInterface, (HMODULE baseAddress))
 { 
 	AUTOHOOK_DISPATCH_MODULE(engine.dll) 
-})
+}

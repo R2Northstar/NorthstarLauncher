@@ -131,7 +131,7 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
@@ -145,4 +145,4 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, [](HMODULE baseA
 	Cvar_enable_debug_overlays->SetValue(false);
 	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
 	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);
-})
+}

@@ -600,9 +600,9 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
 				}
 
-				std::lock_guard<std::mutex> guard(g_ServerAuthenticationManager->m_authDataMutex);
-				g_ServerAuthenticationManager->m_authData.clear();
-				g_ServerAuthenticationManager->m_authData.insert(std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
+				std::lock_guard<std::mutex> guard(g_pServerAuthenticationManager->m_authDataMutex);
+				g_pServerAuthenticationManager->m_authData.clear();
+				g_pServerAuthenticationManager->m_authData.insert(std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
 
 				m_bSuccessfullyAuthenticatedWithGameServer = true;
 			}
@@ -934,7 +934,7 @@ void MasterServerManager::AddSelfToServerList(
 										escapedDescNew,
 										escapedMapNew,
 										escapedPlaylistNew,
-										g_ServerAuthenticationManager->m_additionalPlayerData.size(),
+										g_pServerAuthenticationManager->m_additionalPlayerData.size(),
 										maxPlayers,
 										escapedPasswordNew)
 										.c_str());
@@ -1199,7 +1199,7 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
 
-ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddress))
 {
 	g_MasterServerManager = new MasterServerManager;
 
@@ -1222,4 +1222,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, [](HMODULE baseAddr
 	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 
 	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "Fetch all servers from the masterserver", FCVAR_CLIENTDLL);
-})
+}

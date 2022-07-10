@@ -107,5 +107,5 @@ namespace R2
 	extern void (*CBaseClient__Disconnect)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
 } // namespace R2
 
-extern ServerAuthenticationManager* g_ServerAuthenticationManager;
+extern ServerAuthenticationManager* g_pServerAuthenticationManager;
 extern ConVar* Cvar_ns_player_auth_port;

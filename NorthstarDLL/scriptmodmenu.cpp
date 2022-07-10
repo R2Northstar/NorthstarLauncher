@@ -174,7 +174,7 @@ SQRESULT SQ_ReloadMods(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptModMenu, ClientSquirrel, [](HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptModMenu, ClientSquirrel, (HMODULE baseAddress))
 {
 	g_pUISquirrel->AddFuncRegistration("array<string>", "NSGetModNames", "", "Returns the names of all loaded mods", SQ_GetModNames);
 	g_pUISquirrel->AddFuncRegistration(
@@ -199,4 +199,4 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptModMenu, ClientSquirrel, [](HMOD
 		"array<string>", "NSGetModConvarsByModName", "string modName", "Returns the names of all a given mod's cvars", SQ_GetModConvars);
 
 	g_pUISquirrel->AddFuncRegistration("void", "NSReloadMods", "", "Reloads mods", SQ_ReloadMods);
-})
+}

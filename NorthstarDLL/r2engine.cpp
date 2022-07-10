@@ -13,11 +13,11 @@ namespace R2
 	CEngine* g_pEngine;
 } // namespace R2
 
-ON_DLL_LOAD("engine.dll", R2Engine, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", R2Engine, (HMODULE baseAddress))
 {
 	Cbuf_GetCurrentPlayer = (Cbuf_GetCurrentPlayerType)((char*)baseAddress + 0x120630);
 	Cbuf_AddText = (Cbuf_AddTextType)((char*)baseAddress + 0x1203B0);
 	Cbuf_Execute = (Cbuf_ExecuteType)((char*)baseAddress + 0x1204B0);
 
 	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
-})
+}

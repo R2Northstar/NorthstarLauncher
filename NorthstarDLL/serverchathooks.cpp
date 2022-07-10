@@ -53,7 +53,7 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 	void* sender = GetPlayerByIndex(senderPlayerId - 1);
 
 	// check chat ratelimits
-	if (!g_ServerAuthenticationManager->CheckPlayerChatRatelimit(sender))
+	if (!g_pServerAuthenticationManager->CheckPlayerChatRatelimit(sender))
 		return;
 
 	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
@@ -152,12 +152,12 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD("engine.dll", EngineServerChatHooks, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (HMODULE baseAddress))
 {
 	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
-})
+}
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
@@ -183,4 +183,4 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, [](HMODULE b
 		"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",
 		"",
 		SQ_BroadcastMessage);
-})
+}

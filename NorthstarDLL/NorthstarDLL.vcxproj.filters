@@ -121,9 +121,6 @@
     <Filter Include="Source Files\Shared\Exploit Fixes">
       <UniqueIdentifier>{4a8a695a-a103-4b1f-b314-0ec19a253119}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Shared\Exploit Fixes\UTF8Parser">
-      <UniqueIdentifier>{b30e08b1-b962-4264-8cbb-a0a31924b93e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Shared\Mods\Compiled Assets">
       <UniqueIdentifier>{14fc0931-acad-46ec-a55e-94f4469d4235}</UniqueIdentifier>
     </Filter>
@@ -163,9 +160,6 @@
       <Filter>Header Files\include</Filter>
     </ClInclude>
     <ClInclude Include="hooks.h">
-      <Filter>Header Files\Shared\Hooks</Filter>
-    </ClInclude>
-    <ClInclude Include="hookutils.h">
       <Filter>Header Files\Shared\Hooks</Filter>
     </ClInclude>
     <ClInclude Include="main.h">
@@ -1410,9 +1404,6 @@
     <ClInclude Include="bitbuf.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
-    <ClInclude Include="configurables.h">
-      <Filter>Header Files\Client</Filter>
-    </ClInclude>
     <ClInclude Include="cvar.h">
       <Filter>Header Files\Shared\Convar</Filter>
     </ClInclude>
@@ -1431,14 +1422,8 @@
     <ClInclude Include="plugin_abi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExploitFixes.h">
-      <Filter>Source Files\Shared\Exploit Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="NSMem.h">
       <Filter>Source Files\Shared\Exploit Fixes</Filter>
-    </ClInclude>
-    <ClInclude Include="ExploitFixes_UTF8Parser.h">
-      <Filter>Source Files\Shared\Exploit Fixes\UTF8Parser</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
@@ -1488,18 +1473,18 @@
     <ClInclude Include="rpakfilesystem.h">
       <Filter>Header Files\Shared\Filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="nsprefix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExploitFixes_UTF8Parser.h">
+      <Filter>Source Files\Shared\Exploit Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hooks.cpp">
-      <Filter>Source Files\Shared\Hooks</Filter>
-    </ClCompile>
-    <ClCompile Include="hookutils.cpp">
       <Filter>Source Files\Shared\Hooks</Filter>
     </ClCompile>
     <ClCompile Include="dedicated.cpp">
@@ -1582,9 +1567,6 @@
     </ClCompile>
     <ClCompile Include="buildainfile.cpp">
       <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="configurables.cpp">
-      <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="cvar.cpp">
       <Filter>Source Files\Shared\Convar</Filter>
@@ -1678,6 +1660,12 @@
     </ClCompile>
     <ClCompile Include="rpakfilesystem.cpp">
       <Filter>Source Files\Shared\Filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="nsprefix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

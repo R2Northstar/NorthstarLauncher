@@ -192,7 +192,8 @@ struct KHook
 		{
 			if (hook->Setup())
 			{
-				spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
+				//spdlog::info("KHook hooked at {}", hook->targetFuncAddr);
+				spdlog::info("KHOOK {} at {}", hook->targetFunc.pattern, hook->targetFuncAddr);
 			}
 			else
 			{

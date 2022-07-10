@@ -8,7 +8,7 @@
 #include "miscserverscript.h"
 #include "concommand.h"
 #include "dedicated.h"
-#include "configurables.h"
+#include "nsprefix.h"
 #include "NSMem.h"
 #include "tier0.h"
 #include "r2engine.h"
@@ -26,7 +26,7 @@ AUTOHOOK_INIT()
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
 // global vars
-ServerAuthenticationManager* g_ServerAuthenticationManager;
+ServerAuthenticationManager* g_pServerAuthenticationManager;
 
 ConVar* Cvar_ns_player_auth_port;
 ConVar* Cvar_ns_erase_auth_info;
@@ -71,23 +71,12 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 				"/authenticate_incoming_player",
 				[this](const httplib::Request& request, httplib::Response& response)
 				{
-					// can't just do request.remote_addr == Cvar_ns_masterserver_hostname->GetString() because the cvar can be a url, gotta
-					// resolve an ip from it for comparisons
-					// unsigned long remoteAddr = inet_addr(request.remote_addr.c_str());
-					//
-					// char* addrPtr = Cvar_ns_masterserver_hostname->GetString();
-					// char* typeStart = strstr(addrPtr, "://");
-					// if (typeStart)
-					//	addrPtr = typeStart + 3;
-					// hostent* resolvedRemoteAddr = gethostbyname((const char*)addrPtr);
-
 					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= 65335 ||
 						!request.has_param("serverAuthToken") ||
 						strcmp(
 							g_MasterServerManager->m_sOwnServerAuthToken,
 							request.get_param_value("serverAuthToken")
-								.c_str())) // || !resolvedRemoteAddr || ((in_addr**)resolvedRemoteAddr->h_addr_list)[0]->S_un.S_addr !=
-										   // remoteAddr)
+								.c_str()))
 					{
 						response.set_content("{\"success\":false}", "application/json");
 						return;
@@ -324,7 +313,7 @@ AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7))
 {
 	// try changing name before all else
-	name = g_ServerAuthenticationManager->VerifyPlayerName(self, pNextPlayerToken, name);
+	name = g_pServerAuthenticationManager->VerifyPlayerName(self, pNextPlayerToken, name);
 
 	// try to auth player, dc if it fails
 	// we connect irregardless of auth, because returning bad from this function can fuck client state p bad
@@ -342,17 +331,17 @@ bool,, (void* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg,
 	if (strlen(name) >= 64) // fix for name overflow bug
 		R2::CBaseClient__Disconnect(self, 1, "Invalid name");
 	else if (
-		!g_ServerAuthenticationManager->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
+		!g_pServerAuthenticationManager->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
 		g_MasterServerManager->m_bRequireClientAuth)
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
-	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
+	if (!g_pServerAuthenticationManager->m_additionalPlayerData.count(self))
 	{
 		AdditionalPlayerData additionalData;
-		additionalData.pdataSize = g_ServerAuthenticationManager->m_authData[pNextPlayerToken].pdataSize;
+		additionalData.pdataSize = g_pServerAuthenticationManager->m_authData[pNextPlayerToken].pdataSize;
 		additionalData.usingLocalPdata = *((char*)self + 0x4a0) == (char)0x3;
 
-		g_ServerAuthenticationManager->m_additionalPlayerData.insert(std::make_pair(self, additionalData));
+		g_pServerAuthenticationManager->m_additionalPlayerData.insert(std::make_pair(self, additionalData));
 	}
 
 	return ret;
@@ -364,11 +353,11 @@ void,, (void* self))
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
 	// (since this func is called on map loads)
-	if (*((char*)self + 0x4A0) >= (char)0x3 && !g_ServerAuthenticationManager->RemovePlayerAuthData(self))
+	if (*((char*)self + 0x4A0) >= (char)0x3 && !g_pServerAuthenticationManager->RemovePlayerAuthData(self))
 	{
-		g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = false;
-		g_ServerAuthenticationManager->WritePersistentData(self);
-		g_MasterServerManager->UpdateServerPlayerCount(g_ServerAuthenticationManager->m_additionalPlayerData.size());
+		g_pServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = false;
+		g_pServerAuthenticationManager->WritePersistentData(self);
+		g_MasterServerManager->UpdateServerPlayerCount(g_pServerAuthenticationManager->m_additionalPlayerData.size());
 	}
 
 	CBaseClient__ActivatePlayer(self);
@@ -391,15 +380,15 @@ void,, (void* self, uint32_t unknownButAlways1, const char* pReason, ...))
 		spdlog::info("Player {} disconnected: \"{}\"", (char*)self + 0x16, buf);
 
 		// dcing, write persistent data
-		if (g_ServerAuthenticationManager->m_additionalPlayerData[self].needPersistenceWriteOnLeave)
-			g_ServerAuthenticationManager->WritePersistentData(self);
-		g_ServerAuthenticationManager->RemovePlayerAuthData(self); // won't do anything 99% of the time, but just in case
+		if (g_pServerAuthenticationManager->m_additionalPlayerData[self].needPersistenceWriteOnLeave)
+			g_pServerAuthenticationManager->WritePersistentData(self);
+		g_pServerAuthenticationManager->RemovePlayerAuthData(self); // won't do anything 99% of the time, but just in case
 	}
 
-	if (g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
+	if (g_pServerAuthenticationManager->m_additionalPlayerData.count(self))
 	{
-		g_ServerAuthenticationManager->m_additionalPlayerData.erase(self);
-		g_MasterServerManager->UpdateServerPlayerCount(g_ServerAuthenticationManager->m_additionalPlayerData.size());
+		g_pServerAuthenticationManager->m_additionalPlayerData.erase(self);
+		g_MasterServerManager->UpdateServerPlayerCount(g_pServerAuthenticationManager->m_additionalPlayerData.size());
 	}
 
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
@@ -415,15 +404,15 @@ char,, (void* self, uint32_t unknown, const char* pCommandString))
 	{
 		// note: this isn't super perfect, legit clients can trigger it in lobby, mostly good enough tho imo
 		// https://github.com/perilouswithadollarsign/cstrike15_src/blob/f82112a2388b841d72cb62ca48ab1846dfcc11c8/engine/sv_client.cpp#L1513
-		if (Tier0::Plat_FloatTime() - g_ServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart >= 1.0)
+		if (Tier0::Plat_FloatTime() - g_pServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart >= 1.0)
 		{
 			// reset quota
-			g_ServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart = Tier0::Plat_FloatTime();
-			g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota = 0;
+			g_pServerAuthenticationManager->m_additionalPlayerData[self].lastClientCommandQuotaStart = Tier0::Plat_FloatTime();
+			g_pServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota = 0;
 		}
 
-		g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota++;
-		if (g_ServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota >
+		g_pServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota++;
+		if (g_pServerAuthenticationManager->m_additionalPlayerData[self].numClientCommandsInQuota >
 			CVar_sv_quota_stringcmdspersecond->GetInt())
 		{
 			// too many stringcmds, dc player
@@ -482,26 +471,26 @@ char, __fastcall, (void* self, void* buf))
 
 		// if no sender, return
 		// relatively certain this is fine?
-		if (!sender || !g_ServerAuthenticationManager->m_additionalPlayerData.count(sender))
+		if (!sender || !g_pServerAuthenticationManager->m_additionalPlayerData.count(sender))
 			return ret;
 
 		// reset every second
-		if (startTime - g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart >= 1.0 ||
-			g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart == -1.0)
+		if (startTime - g_pServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart >= 1.0 ||
+			g_pServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart == -1.0)
 		{
-			g_ServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart = startTime;
-			g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime = 0.0;
+			g_pServerAuthenticationManager->m_additionalPlayerData[sender].lastNetChanProcessingLimitStart = startTime;
+			g_pServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime = 0.0;
 		}
-		g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime +=
+		g_pServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime +=
 			(Tier0::Plat_FloatTime() * 1000) - (startTime * 1000);
 
-		if (g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >=
+		if (g_pServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime >=
 			Cvar_net_chan_limit_msec_per_sec->GetInt())
 		{
 			spdlog::warn(
 				"Client {} hit netchan processing limit with {}ms of processing time this second (max is {})",
 				(char*)sender + 0x16,
-				g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime,
+				g_pServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime,
 				Cvar_net_chan_limit_msec_per_sec->GetInt());
 
 			// nonzero = kick, 0 = warn, but never kick local player
@@ -524,7 +513,7 @@ bool,, (void* a1, netpacket_t* packet))
 	{
 		// bad lookup: optimise later tm
 		UnconnectedPlayerSendData* sendData = nullptr;
-		for (UnconnectedPlayerSendData& foundSendData : g_ServerAuthenticationManager->m_unconnectedPlayerSendData)
+		for (UnconnectedPlayerSendData& foundSendData : g_pServerAuthenticationManager->m_unconnectedPlayerSendData)
 		{
 			if (!memcmp(packet->adr.ip, foundSendData.ip, 16))
 			{
@@ -535,7 +524,7 @@ bool,, (void* a1, netpacket_t* packet))
 
 		if (!sendData)
 		{
-			sendData = &g_ServerAuthenticationManager->m_unconnectedPlayerSendData.emplace_back();
+			sendData = &g_pServerAuthenticationManager->m_unconnectedPlayerSendData.emplace_back();
 			memcpy(sendData->ip, packet->adr.ip, 16);
 		}
 
@@ -575,14 +564,14 @@ void ConCommand_ns_resetpersistence(const CCommand& args)
 	}
 
 	spdlog::info("resetting persistence on next lobby load...");
-	g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = true;
+	g_pServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = true;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
-	g_ServerAuthenticationManager = new ServerAuthenticationManager;
+	g_pServerAuthenticationManager = new ServerAuthenticationManager;
 
 	Cvar_ns_erase_auth_info =
 		new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
@@ -651,4 +640,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, [](HMODULE 
 
 		NSMem::NOP(addr + 10, 5);
 	}
-})
+}

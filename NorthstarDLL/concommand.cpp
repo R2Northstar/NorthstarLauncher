@@ -144,8 +144,8 @@ void RegisterConCommand(
 	newCommand->m_pCompletionCallback = completionCallback;
 }
 
-ON_DLL_LOAD("engine.dll", ConCommand, [](HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", ConCommand, (HMODULE baseAddress))
 {
 	ConCommandConstructor = (ConCommandConstructorType)((char*)baseAddress + 0x415F60);
 	AddMiscConCommands();
-})
+}

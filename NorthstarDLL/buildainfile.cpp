@@ -370,7 +370,7 @@ void,, (void* aimanager, void* buf, const char* filename))
 	}
 }
 
-ON_DLL_LOAD("server.dll", BuildAINFile, [](HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", BuildAINFile, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 
@@ -382,4 +382,4 @@ ON_DLL_LOAD("server.dll", BuildAINFile, [](HMODULE baseAddress)
 	pUnkLinkStruct1Count = (int*)((char*)baseAddress + 0x1063AA8);
 	pppUnkStruct1s = (UnkLinkStruct1***)((char*)baseAddress + 0x1063A90);
 	pUnkServerMapversionGlobal = (char**)((char*)baseAddress + 0xBFBE08);
-});
+}
