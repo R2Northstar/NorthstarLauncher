@@ -32,7 +32,7 @@ void _RCON_CmdQuery_f(const CCommand& args)
 
 	if (args.ArgC() < 2)
 	{
-		if (g_pRConClient->IsInitialized() && !g_pRConClient->IsConnected() && strlen(CVar_rcon_password->GetString()) > 0)
+		if (g_pRConClient->IsInitialized() && !g_pRConClient->IsConnected())
 		{
 			g_pRConClient->Connect();
 		}
@@ -48,8 +48,15 @@ void _RCON_CmdQuery_f(const CCommand& args)
 		{
 			if (strcmp(args.Arg(1), "PASS") == 0) // Auth with RCON server using rcon_password ConVar value.
 			{
-				std::string svCmdQuery =
-					g_pRConClient->Serialize(CVar_rcon_password->GetString(), "", cl_rcon::request_t::SERVERDATA_REQUEST_AUTH);
+				std::string svCmdQuery;
+				if (args.ArgC() > 2)
+				{
+					svCmdQuery = g_pRConClient->Serialize(args.Arg(2), "", cl_rcon::request_t::SERVERDATA_REQUEST_AUTH);
+				}
+				else // Use 'rcon_password' ConVar as password.
+				{
+					svCmdQuery = g_pRConClient->Serialize(CVar_rcon_password->GetString(), "", cl_rcon::request_t::SERVERDATA_REQUEST_AUTH);
+				}
 				g_pRConClient->Send(svCmdQuery);
 				return;
 			}
