@@ -539,7 +539,7 @@ void ModManager::LoadMods()
 	buffer.Clear();
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	modinfoDoc.Accept(writer);
-	g_MasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
+	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
 
 	m_bHasLoadedMods = true;
 }

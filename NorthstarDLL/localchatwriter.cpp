@@ -37,12 +37,12 @@ class vgui_BaseRichText_vtable
 
 	void(__fastcall* SetVerticalScrollbar)(vgui_BaseRichText* self, bool state);
 	void(__fastcall* SetMaximumCharCount)(vgui_BaseRichText* self, int maxChars);
-	void(__fastcall* InsertColorChange)(vgui_BaseRichText* self, vgui_Color col);
+	void(__fastcall* InsertColorChange)(vgui_BaseRichText* self, Color col);
 	void(__fastcall* InsertIndentChange)(vgui_BaseRichText* self, int pixelsIndent);
 	void(__fastcall* InsertClickableTextStart)(vgui_BaseRichText* self, const char* pchClickAction);
 	void(__fastcall* InsertClickableTextEnd)(vgui_BaseRichText* self);
 	void(__fastcall* InsertPossibleURLString)(
-		vgui_BaseRichText* self, const char* text, vgui_Color URLTextColor, vgui_Color normalTextColor);
+		vgui_BaseRichText* self, const char* text, Color URLTextColor, Color normalTextColor);
 	void(__fastcall* InsertFade)(vgui_BaseRichText* self, float flSustain, float flLength);
 	void(__fastcall* ResetAllFades)(vgui_BaseRichText* self, bool bHold, bool bOnlyExpired, float flNewSustain);
 	void(__fastcall* SetToFullHeight)(vgui_BaseRichText* self);
@@ -81,25 +81,25 @@ LocalChatWriter::SwatchColor swatchColors[4] = {
 	LocalChatWriter::NetworkNameColor,
 };
 
-vgui_Color darkColors[8] = {
-	vgui_Color {0, 0, 0, 255},
-	vgui_Color {205, 49, 49, 255},
-	vgui_Color {13, 188, 121, 255},
-	vgui_Color {229, 229, 16, 255},
-	vgui_Color {36, 114, 200, 255},
-	vgui_Color {188, 63, 188, 255},
-	vgui_Color {17, 168, 205, 255},
-	vgui_Color {229, 229, 229, 255}};
+Color darkColors[8] = {
+	Color {0, 0, 0, 255},
+	Color {205, 49, 49, 255},
+	Color {13, 188, 121, 255},
+	Color {229, 229, 16, 255},
+	Color {36, 114, 200, 255},
+	Color {188, 63, 188, 255},
+	Color {17, 168, 205, 255},
+	Color {229, 229, 229, 255}};
 
-vgui_Color lightColors[8] = {
-	vgui_Color {102, 102, 102, 255},
-	vgui_Color {241, 76, 76, 255},
-	vgui_Color {35, 209, 139, 255},
-	vgui_Color {245, 245, 67, 255},
-	vgui_Color {59, 142, 234, 255},
-	vgui_Color {214, 112, 214, 255},
-	vgui_Color {41, 184, 219, 255},
-	vgui_Color {255, 255, 255, 255}};
+Color lightColors[8] = {
+	Color {102, 102, 102, 255},
+	Color {241, 76, 76, 255},
+	Color {35, 209, 139, 255},
+	Color {245, 245, 67, 255},
+	Color {59, 142, 234, 255},
+	Color {214, 112, 214, 255},
+	Color {41, 184, 219, 255},
+	Color {255, 255, 255, 255}};
 
 class AnsiEscapeParser
 {
@@ -144,7 +144,7 @@ class AnsiEscapeParser
 
 	LocalChatWriter* m_writer;
 	Next m_next = Next::ControlType;
-	vgui_Color m_expandedColor {0, 0, 0, 0};
+	Color m_expandedColor {0, 0, 0, 0};
 
 	Next HandleControlType(unsigned long val)
 	{
@@ -190,7 +190,7 @@ class AnsiEscapeParser
 		// Next values are r,g,b
 		if (val == 2)
 		{
-			m_expandedColor = {0, 0, 0, 255};
+			m_expandedColor.SetColor(0, 0, 0, 255);
 			return Next::ForegroundR;
 		}
 		// Next value is 8-bit swatch color
@@ -220,12 +220,12 @@ class AnsiEscapeParser
 			unsigned char green = ((code - blue) / 6) % 6;
 			unsigned char red = (code - blue - (green * 6)) / 36;
 			m_writer->InsertColorChange(
-				vgui_Color {(unsigned char)(red * 51), (unsigned char)(green * 51), (unsigned char)(blue * 51), 255});
+				Color {(unsigned char)(red * 51), (unsigned char)(green * 51), (unsigned char)(blue * 51), 255});
 		}
 		else if (val < UCHAR_MAX)
 		{
 			unsigned char brightness = (val - 232) * 10 + 8;
-			m_writer->InsertColorChange(vgui_Color {brightness, brightness, brightness, 255});
+			m_writer->InsertColorChange(Color {brightness, brightness, brightness, 255});
 		}
 
 		return Next::ControlType;
@@ -236,7 +236,7 @@ class AnsiEscapeParser
 		if (val >= UCHAR_MAX)
 			return Next::ControlType;
 
-		m_expandedColor.r = (unsigned char)val;
+		m_expandedColor[0] = (unsigned char)val;
 		return Next::ForegroundG;
 	}
 
@@ -245,7 +245,7 @@ class AnsiEscapeParser
 		if (val >= UCHAR_MAX)
 			return Next::ControlType;
 
-		m_expandedColor.g = (unsigned char)val;
+		m_expandedColor[1] = (unsigned char)val;
 		return Next::ForegroundB;
 	}
 
@@ -254,7 +254,7 @@ class AnsiEscapeParser
 		if (val >= UCHAR_MAX)
 			return Next::ControlType;
 
-		m_expandedColor.b = (unsigned char)val;
+		m_expandedColor[2] = (unsigned char)val;
 		m_writer->InsertColorChange(m_expandedColor);
 		return Next::ControlType;
 	}
@@ -320,6 +320,8 @@ void LocalChatWriter::InsertChar(wchar_t ch)
 
 void LocalChatWriter::InsertText(const char* str)
 {
+	spdlog::info(str);
+
 	WCHAR messageUnicode[288];
 	ConvertANSIToUnicode(str, -1, messageUnicode, 274);
 
@@ -347,7 +349,7 @@ void LocalChatWriter::InsertText(const wchar_t* str)
 	InsertDefaultFade();
 }
 
-void LocalChatWriter::InsertColorChange(vgui_Color color)
+void LocalChatWriter::InsertColorChange(Color color)
 {
 	for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
 	{
@@ -358,20 +360,25 @@ void LocalChatWriter::InsertColorChange(vgui_Color color)
 	}
 }
 
-static vgui_Color GetHudSwatchColor(CHudChat* hud, LocalChatWriter::SwatchColor swatchColor)
+static Color GetHudSwatchColor(CHudChat* hud, LocalChatWriter::SwatchColor swatchColor)
 {
 	switch (swatchColor)
 	{
 	case LocalChatWriter::MainTextColor:
 		return hud->m_mainTextColor;
+
 	case LocalChatWriter::SameTeamNameColor:
 		return hud->m_sameTeamColor;
+
 	case LocalChatWriter::EnemyTeamNameColor:
 		return hud->m_enemyTeamColor;
+
 	case LocalChatWriter::NetworkNameColor:
 		return hud->m_networkNameColor;
+
 	}
-	return vgui_Color {0, 0, 0, 0};
+
+	return Color(0, 0, 0, 0);
 }
 
 void LocalChatWriter::InsertSwatchColorChange(SwatchColor swatchColor)

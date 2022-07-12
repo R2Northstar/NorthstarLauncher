@@ -21,22 +21,22 @@ void ConCommand_force_newgame(const CCommand& arg)
 void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& arg) 
 {
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
-	g_MasterServerManager->m_bNewgameAfterSelfAuth = true;
-	g_MasterServerManager->AuthenticateWithOwnServer(R2::g_pLocalPlayerUserID, g_MasterServerManager->m_sOwnClientAuthToken);
+	g_pMasterServerManager->m_bNewgameAfterSelfAuth = true;
+	g_pMasterServerManager->AuthenticateWithOwnServer(R2::g_pLocalPlayerUserID, g_pMasterServerManager->m_sOwnClientAuthToken);
 }
 
 void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg) 
 {
 	R2::Cbuf_AddText(
 		R2::Cbuf_GetCurrentPlayer(),
-		fmt::format("serverfilter {}", g_pServerAuthenticationManager->m_authData.begin()->first).c_str(),
+		fmt::format("serverfilter {}", g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first).c_str(),
 		R2::cmd_source_t::kCommandSrcCode);
 	R2::Cbuf_Execute();
 
 	// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
 	if (g_pClientSquirrel->sqvm)
 	{
-		g_pServerAuthenticationManager->m_bNeedLocalAuthForNewgame = true;
+		g_pServerAuthentication->m_bNeedLocalAuthForNewgame = true;
 
 		// this won't set playlist correctly on remote clients, don't think they can set playlist until they've left which sorta
 		// fucks things should maybe set this in HostState_NewGame?

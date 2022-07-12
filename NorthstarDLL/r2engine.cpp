@@ -11,6 +11,8 @@ namespace R2
 	Cbuf_ExecuteType Cbuf_Execute;
 
 	CEngine* g_pEngine;
+
+	void (*CBaseClient__Disconnect)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
 } // namespace R2
 
 ON_DLL_LOAD("engine.dll", R2Engine, (HMODULE baseAddress))
@@ -20,4 +22,6 @@ ON_DLL_LOAD("engine.dll", R2Engine, (HMODULE baseAddress))
 	Cbuf_Execute = (Cbuf_ExecuteType)((char*)baseAddress + 0x1204B0);
 
 	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
+
+	CBaseClient__Disconnect = (void (*)(void*, uint32_t, const char*, ...))((char*)baseAddress + 0x1012C0);
 }

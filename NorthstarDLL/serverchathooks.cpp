@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "serverchathooks.h"
-#include "serverauthentication.h"
+#include "limits.h"
 #include "squirrel.h"
-#include "miscserverscript.h"
+#include "r2server.h"
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -11,7 +11,6 @@
 AUTOHOOK_INIT()
 
 class CServerGameDLL;
-class CBasePlayer;
 
 class CRecipientFilter
 {
@@ -23,11 +22,10 @@ CServerGameDLL* g_pServerGameDLL;
 void(__fastcall* CServerGameDLL__OnReceivedSayTextMessage)(
 	CServerGameDLL* self, unsigned int senderPlayerId, const char* text, int channelId);
 
-CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
 void(__fastcall* CRecipientFilter__Construct)(CRecipientFilter* self);
 void(__fastcall* CRecipientFilter__Destruct)(CRecipientFilter* self);
 void(__fastcall* CRecipientFilter__AddAllPlayers)(CRecipientFilter* self);
-void(__fastcall* CRecipientFilter__AddRecipient)(CRecipientFilter* self, const CBasePlayer* player);
+void(__fastcall* CRecipientFilter__AddRecipient)(CRecipientFilter* self, const R2::CBasePlayer* player);
 void(__fastcall* CRecipientFilter__MakeReliable)(CRecipientFilter* self);
 
 void(__fastcall* UserMessageBegin)(CRecipientFilter* filter, const char* messagename);
@@ -38,7 +36,7 @@ void(__fastcall* MessageWriteBool)(bool bValue);
 
 bool bShouldCallSayTextHook = false;
 
-AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessageHook, server.dll + 0x1595C0,
+AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessage, server.dll + 0x1595C0,
 void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
 {
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
@@ -46,14 +44,14 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 	if (bShouldCallSayTextHook)
 	{
 		bShouldCallSayTextHook = false;
-		_CServerGameDLL__OnReceivedSayTextMessageHook(self, senderPlayerId, text, isTeam);
+		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
 		return;
 	}
 
-	void* sender = GetPlayerByIndex(senderPlayerId - 1);
+	R2::CBasePlayer* sender = R2::UTIL_PlayerByIndex(senderPlayerId - 1);
 
 	// check chat ratelimits
-	if (!g_pServerAuthenticationManager->CheckPlayerChatRatelimit(sender))
+	if (!g_pServerLimits->CheckChatLimits(sender))
 		return;
 
 	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
@@ -64,7 +62,7 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 		g_pServerSquirrel->call(g_pServerSquirrel->sqvm2, 3);
 	}
 	else
-		_CServerGameDLL__OnReceivedSayTextMessageHook(self, senderPlayerId, text, isTeam);
+		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
 }
 
 void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam)
@@ -80,10 +78,10 @@ void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam)
 
 void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* text, bool isTeam, bool isDead, CustomMessageType messageType)
 {
-	CBasePlayer* toPlayer = NULL;
+	R2::CBasePlayer* toPlayer = NULL;
 	if (toPlayerIndex >= 0)
 	{
-		toPlayer = UTIL_PlayerByIndex(toPlayerIndex + 1);
+		toPlayer = R2::UTIL_PlayerByIndex(toPlayerIndex + 1);
 		if (toPlayer == NULL)
 			return;
 	}
@@ -162,11 +160,10 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (HMODULE bas
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
 	CServerGameDLL__OnReceivedSayTextMessage = (void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int))((char*)baseAddress + 0x1595C0);
-	UTIL_PlayerByIndex = (CBasePlayer*(__fastcall*)(int))((char*)baseAddress + 0x26AA10);
 	CRecipientFilter__Construct = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1E9440);
 	CRecipientFilter__Destruct = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1E9700);
 	CRecipientFilter__AddAllPlayers = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1E9940);
-	CRecipientFilter__AddRecipient = (void(__fastcall*)(CRecipientFilter*, const CBasePlayer*))((char*)baseAddress + 0x1E9b30);
+	CRecipientFilter__AddRecipient = (void(__fastcall*)(CRecipientFilter*, const R2::CBasePlayer*))((char*)baseAddress + 0x1E9b30);
 	CRecipientFilter__MakeReliable = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1EA4E0);
 
 	UserMessageBegin = (void(__fastcall*)(CRecipientFilter*, const char*))((char*)baseAddress + 0x15C520);

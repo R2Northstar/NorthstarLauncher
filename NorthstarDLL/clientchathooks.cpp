@@ -12,9 +12,7 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
 	if (self != *CHudChat::allHuds)
-	{
 		return;
-	}
 
 	if (g_pClientSquirrel->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
@@ -31,7 +29,7 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 			payload = message + 1;
 		}
 
-		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, (int) senderId - 1);
+		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, (int)senderId - 1);
 		g_pClientSquirrel->pushstring(g_pClientSquirrel->sqvm2, payload);
 		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isTeam);
 		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isDead);
@@ -39,42 +37,38 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 		g_pClientSquirrel->call(g_pClientSquirrel->sqvm2, 5);
 	}
 	else
-	{
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
-		{
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
-		}
-	}
 }
 
 // void NSChatWrite( int context, string str )
-static SQRESULT SQ_ChatWrite(void* sqvm)
+SQRESULT SQ_ChatWrite(void* sqvm)
 {
-	int context = g_pClientSquirrel->getinteger(g_pClientSquirrel->sqvm2, 1);
-	const char* str = g_pClientSquirrel->getstring(g_pClientSquirrel->sqvm2, 2);
+	int context = g_pClientSquirrel->getinteger(sqvm, 1);
+	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).Write(str);
-	return SQRESULT_NOTNULL;
+	return SQRESULT_NULL;
 }
 
 // void NSChatWriteRaw( int context, string str )
-static SQRESULT SQ_ChatWriteRaw(void* sqvm)
+SQRESULT SQ_ChatWriteRaw(void* sqvm)
 {
-	int context = g_pClientSquirrel->getinteger(g_pClientSquirrel->sqvm2, 1);
-	const char* str = g_pClientSquirrel->getstring(g_pClientSquirrel->sqvm2, 2);
+	int context = g_pClientSquirrel->getinteger(sqvm, 1);
+	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).InsertText(str);
-	return SQRESULT_NOTNULL;
+	return SQRESULT_NULL;
 }
 
 // void NSChatWriteLine( int context, string str )
-static SQRESULT SQ_ChatWriteLine(void* sqvm)
+SQRESULT SQ_ChatWriteLine(void* sqvm)
 {
-	int context = g_pClientSquirrel->getinteger(g_pClientSquirrel->sqvm2, 1);
-	const char* str = g_pClientSquirrel->getstring(g_pClientSquirrel->sqvm2, 2);
+	int context = g_pClientSquirrel->getinteger(sqvm, 1);
+	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).WriteLine(str);
-	return SQRESULT_NOTNULL;
+	return SQRESULT_NULL;
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (HMODULE baseAddress))

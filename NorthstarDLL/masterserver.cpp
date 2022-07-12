@@ -32,7 +32,7 @@ ConVar* Cvar_ns_curl_log_enable;
 ConVar* Cvar_hostname;
 ConVar* Cvar_hostport;
 
-MasterServerManager* g_MasterServerManager;
+MasterServerManager* g_pMasterServerManager;
 
 // Convert a hex digit char to integer.
 inline int hctod(char c)
@@ -578,7 +578,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					goto REQUEST_END_CLEANUP;
 				}
 
-				AuthData newAuthData {};
+				RemoteAuthData newAuthData {};
 				strncpy(newAuthData.uid, authInfoJson["id"].GetString(), sizeof(newAuthData.uid));
 				newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
 
@@ -600,9 +600,9 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
 				}
 
-				std::lock_guard<std::mutex> guard(g_pServerAuthenticationManager->m_authDataMutex);
-				g_pServerAuthenticationManager->m_authData.clear();
-				g_pServerAuthenticationManager->m_authData.insert(std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
+				std::lock_guard<std::mutex> guard(g_pServerAuthentication->m_AuthDataMutex);
+				g_pServerAuthentication->m_RemoteAuthenticationData.clear();
+				g_pServerAuthentication->m_RemoteAuthenticationData.insert(std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
 
 				m_bSuccessfullyAuthenticatedWithGameServer = true;
 			}
@@ -908,8 +908,8 @@ void MasterServerManager::AddSelfToServerList(
 							// send all registration info so we have all necessary info to reregister our server if masterserver goes down,
 							// without a restart this isn't threadsafe :terror:
 							{
-								char* escapedNameNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerName.c_str(), NULL);
-								char* escapedDescNew = curl_easy_escape(curl, g_MasterServerManager->m_sUnicodeServerDesc.c_str(), NULL);
+								char* escapedNameNew = curl_easy_escape(curl, g_pMasterServerManager->m_sUnicodeServerName.c_str(), NULL);
+								char* escapedDescNew = curl_easy_escape(curl, g_pMasterServerManager->m_sUnicodeServerDesc.c_str(), NULL);
 								char* escapedMapNew = curl_easy_escape(curl, R2::g_pHostState->m_levelName, NULL);
 								char* escapedPlaylistNew = curl_easy_escape(curl, R2::GetCurrentPlaylistName(), NULL);
 								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->GetString(), NULL);
@@ -929,12 +929,12 @@ void MasterServerManager::AddSelfToServerList(
 										Cvar_ns_masterserver_hostname->GetString(),
 										m_sOwnServerId,
 										Cvar_hostport->GetInt(),
-										Cvar_ns_player_auth_port->GetInt(),
+										g_pServerAuthentication->Cvar_ns_player_auth_port->GetInt(),
 										escapedNameNew,
 										escapedDescNew,
 										escapedMapNew,
 										escapedPlaylistNew,
-										g_pServerAuthenticationManager->m_additionalPlayerData.size(),
+										g_pServerAuthentication->m_PlayerAuthenticationData.size(),
 										maxPlayers,
 										escapedPasswordNew)
 										.c_str());
@@ -1194,22 +1194,22 @@ void MasterServerManager::RemoveSelfFromServerList()
 
 void ConCommand_ns_fetchservers(const CCommand& args)
 {
-	g_MasterServerManager->RequestServerList();
+	g_pMasterServerManager->RequestServerList();
 }
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
 
 ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddress))
 {
-	g_MasterServerManager = new MasterServerManager;
+	g_pMasterServerManager = new MasterServerManager;
 
 	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
 
 	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
-			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
+			g_pMasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
 		});
 	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
-			g_MasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_desc->GetString());
+			g_pMasterServerManager->m_sUnicodeServerDesc = unescape_unicode(Cvar_ns_server_desc->GetString());
 		});
 
 	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password");

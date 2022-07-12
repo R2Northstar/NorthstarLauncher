@@ -25,7 +25,7 @@ void,, (CHostState* hostState))
 	Cbuf_Execute();
 
 	// need to do this to ensure we don't go to private match
-	if (g_pServerAuthenticationManager->m_bNeedLocalAuthForNewgame)
+	if (g_pServerAuthentication->m_bNeedLocalAuthForNewgame)
 		SetCurrentPlaylist("tdm");
 
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
@@ -45,17 +45,17 @@ void,, (CHostState* hostState))
 	// Copy new server name cvar to source
 	Cvar_hostname->SetValue(Cvar_ns_server_name->GetString());
 
-	g_MasterServerManager->AddSelfToServerList(
+	g_pMasterServerManager->AddSelfToServerList(
 		Cvar_hostport->GetInt(),
-		Cvar_ns_player_auth_port->GetInt(),
+		g_pServerAuthentication->Cvar_ns_player_auth_port->GetInt(),
 		Cvar_ns_server_name->GetString(),
 		Cvar_ns_server_desc->GetString(),
 		hostState->m_levelName,
 		GetCurrentPlaylistName(),
 		maxPlayers,
 		Cvar_ns_server_password->GetString());
-	g_pServerAuthenticationManager->StartPlayerAuthServer();
-	g_pServerAuthenticationManager->m_bNeedLocalAuthForNewgame = false;
+	g_pServerAuthentication->StartPlayerAuthServer();
+	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
 AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
@@ -73,7 +73,7 @@ void,, (CHostState* hostState))
 	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
 		g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
 
-	g_MasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, GetCurrentPlaylistName(), maxPlayers);
+	g_pMasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, GetCurrentPlaylistName(), maxPlayers);
 
 	double dStartTime = Tier0::Plat_FloatTime();
 	CHostState__State_ChangeLevelMP(hostState);
@@ -85,8 +85,8 @@ void,, (CHostState* hostState))
 {
 	spdlog::info("HostState: GameShutdown");
 
-	g_MasterServerManager->RemoveSelfFromServerList();
-	g_pServerAuthenticationManager->StopPlayerAuthServer();
+	g_pMasterServerManager->RemoveSelfFromServerList();
+	g_pServerAuthentication->StopPlayerAuthServer();
 
 	CHostState__State_GameShutdown(hostState);
 }

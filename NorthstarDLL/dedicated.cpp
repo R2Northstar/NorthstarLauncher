@@ -81,9 +81,9 @@ void RunServer(CDedicatedExports* dedicated)
 
 			SetConsoleTitleA(fmt::format(
 								 "{} - {} {}/{} players ({})",
-								 g_MasterServerManager->m_sUnicodeServerName,
+								 g_pMasterServerManager->m_sUnicodeServerName,
 								 g_pHostState->m_levelName,
-								 g_pServerAuthenticationManager->m_additionalPlayerData.size(),
+								 g_pServerAuthentication->m_PlayerAuthenticationData.size(),
 								 maxPlayers,
 								 GetCurrentPlaylistName())
 								 .c_str());

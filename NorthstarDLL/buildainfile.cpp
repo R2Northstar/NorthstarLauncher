@@ -16,6 +16,7 @@ const int AINET_SCRIPT_VERSION_NUMBER = 21;
 const int PLACEHOLDER_CRC = 0;
 const int MAX_HULLS = 5;
 
+#pragma pack(push, 1)
 struct CAI_NodeLink
 {
 	short srcId;
@@ -26,6 +27,7 @@ struct CAI_NodeLink
 	char unk2[5];
 	int64_t flags;
 };
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct CAI_NodeLinkDisk
@@ -35,7 +37,9 @@ struct CAI_NodeLinkDisk
 	char unk0;
 	bool hulls[MAX_HULLS];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct CAI_Node
 {
 	int index; // not present on disk
@@ -64,6 +68,7 @@ struct CAI_Node
 	char unk9[8]; // padding until next bit
 	char unk10[8]; // should match up to unk6 on disk
 };
+#pragma pack(pop)
 
 // the way CAI_Nodes are represented in on-disk ain files
 #pragma pack(push, 1)
@@ -83,7 +88,9 @@ struct CAI_NodeDisk
 	short unk5;
 	char unk6[8];
 }; // total size of 68 bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct UnkNodeStruct0
 {
 	int index;
@@ -108,10 +115,12 @@ struct UnkNodeStruct0
 	char pad4[132];
 	char unk5;
 };
+#pragma pack(pop)
 
 int* pUnkStruct0Count;
 UnkNodeStruct0*** pppUnkNodeStruct0s;
 
+#pragma pack(push, 1)
 struct UnkLinkStruct1
 {
 	short unk0;
@@ -121,10 +130,12 @@ struct UnkLinkStruct1
 	char unk4;
 	char unk5;
 };
+#pragma pack(pop)
 
 int* pUnkLinkStruct1Count;
 UnkLinkStruct1*** pppUnkStruct1s;
 
+#pragma pack(push, 1)
 struct CAI_ScriptNode
 {
 	float x;
@@ -132,7 +143,9 @@ struct CAI_ScriptNode
 	float z;
 	uint64_t scriptdata;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct CAI_Network
 {
 	// +0
@@ -162,6 +175,7 @@ struct CAI_Network
 	// +84176
 	CAI_Node** nodes;
 };
+#pragma pack(pop)
 
 char** pUnkServerMapversionGlobal;
 

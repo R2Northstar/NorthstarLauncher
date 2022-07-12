@@ -148,6 +148,6 @@ class MasterServerManager
 };
 std::string unescape_unicode(const std::string& str);
 
-extern MasterServerManager* g_MasterServerManager;
+extern MasterServerManager* g_pMasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
 extern ConVar* Cvar_ns_server_password;

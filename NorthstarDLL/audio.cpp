@@ -315,6 +315,7 @@ void CustomAudioManager::ClearAudioOverrides()
 	{
 		// stop all miles sounds beforehand
 		// miles_stop_all
+
 		MilesStopAll();
 
 		// this is cancer but it works
@@ -498,5 +499,5 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (HMODULE baseAddre
 	AUTOHOOK_DISPATCH()
 
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
-	MilesStopAll = (MilesStopAll_Type)((char*)GetModuleHandleA("mileswin64.dll") + 0x580850);
+	MilesStopAll = (MilesStopAll_Type)((char*)baseAddress + 0x580850);
 }

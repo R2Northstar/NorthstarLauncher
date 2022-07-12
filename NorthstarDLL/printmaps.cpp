@@ -128,7 +128,7 @@ int, __fastcall, (const char const* cmdname, const char const* partial, char com
 	const int queryLength = strlen(query);
 
 	int numMaps = 0;
-	for (int i = 0; i < COMMAND_COMPLETION_MAXITEMS && i < vMapList.size(); i++)
+	for (int i = 0; i < vMapList.size() && numMaps < COMMAND_COMPLETION_MAXITEMS; i++)
 	{
 		if (!strncmp(query, vMapList[i].name.c_str(), queryLength))
 		{

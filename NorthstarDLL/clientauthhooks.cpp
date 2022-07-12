@@ -17,12 +17,12 @@ void,, (void* a1))
 {
 	// game will call this forever, until it gets a valid auth key
 	// so, we need to manually invalidate our key until we're authed with northstar, then we'll allow game to auth with stryder
-	if (!g_MasterServerManager->m_bOriginAuthWithMasterServerDone && Cvar_ns_has_agreed_to_send_token->GetInt() != DISAGREED_TO_SEND_TOKEN)
+	if (!g_pMasterServerManager->m_bOriginAuthWithMasterServerDone && Cvar_ns_has_agreed_to_send_token->GetInt() != DISAGREED_TO_SEND_TOKEN)
 	{
 		// if player has agreed to send token and we aren't already authing, try to auth
 		if (Cvar_ns_has_agreed_to_send_token->GetInt() == AGREED_TO_SEND_TOKEN &&
-			!g_MasterServerManager->m_bOriginAuthWithMasterServerInProgress)
-			g_MasterServerManager->AuthenticateOriginWithMasterServer(R2::g_pLocalPlayerUserID, R2::g_pLocalPlayerOriginToken);
+			!g_pMasterServerManager->m_bOriginAuthWithMasterServerInProgress)
+			g_pMasterServerManager->AuthenticateOriginWithMasterServer(R2::g_pLocalPlayerUserID, R2::g_pLocalPlayerOriginToken);
 
 		// invalidate key so auth will fail
 		*R2::g_pLocalPlayerOriginToken = 0;
