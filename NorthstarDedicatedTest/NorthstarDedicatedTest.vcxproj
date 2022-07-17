@@ -128,6 +128,7 @@
     <ClInclude Include="net.h" />
     <ClInclude Include="NetAdr2.h" />
     <ClInclude Include="rcon_shared.h" />
+    <ClInclude Include="scriptutility.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
@@ -636,6 +637,7 @@
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />
     <ClCompile Include="scriptsrson.cpp" />
+    <ClCompile Include="scriptutility.cpp" />
     <ClCompile Include="serverauthentication.cpp" />
     <ClCompile Include="miscserverscript.cpp" />
     <ClCompile Include="serverchathooks.cpp" />
