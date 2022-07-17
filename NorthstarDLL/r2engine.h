@@ -140,4 +140,58 @@ namespace R2
 		// struct netpacket_s* pNext;	// for internal use, should be NULL in public
 	} netpacket_t;
 	#pragma pack(pop)
+
+	const int PERSISTENCE_MAX_SIZE = 0xD000;
+
+	// note: NOT_READY and READY are the only entries we have here that are defined by the vanilla game
+	// entries after this are custom and used to determine the source of persistence, e.g. whether it is local or remote
+	enum class ePersistenceReady : char
+	{
+		NOT_READY,
+		READY = 3,
+		READY_INSECURE = 3,
+		READY_REMOTE
+	};
+
+	#pragma pack(push, 1)
+	struct CBaseClient // 0x2D728 bytes
+	{
+		char pad0[0x16];
+
+		// +0x16
+		char m_Name[64];
+		// +0x56
+
+		char pad1[0x44A];
+
+		// +0x4A0
+		ePersistenceReady m_iPersistenceReady;
+		// +0x4A1
+
+		char pad2[0x59];
+
+		// +0x4FA
+		char m_PersistenceBuffer[PERSISTENCE_MAX_SIZE];
+
+		char pad3[0x2006];
+
+		// +0xF500
+		char m_UID[32];
+		// +0xF520
+
+		char pad4[0x1E208];
+	};
+	#pragma pack(pop)
+
+	extern CBaseClient* g_pClientArray;
+
+	enum server_state_t
+	{
+		ss_dead = 0, // Dead
+		ss_loading, // Spawning
+		ss_active, // Running
+		ss_paused, // Running, but paused
+	};
+
+	extern server_state_t* g_pServerState;
 } // namespace R2

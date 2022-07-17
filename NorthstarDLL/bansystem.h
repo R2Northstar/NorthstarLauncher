@@ -15,4 +15,4 @@ class ServerBanSystem
 	bool IsUIDAllowed(uint64_t uid);
 };
 
-extern ServerBanSystem* g_pServerBanSystem;
+extern ServerBanSystem* g_pBanSystem;

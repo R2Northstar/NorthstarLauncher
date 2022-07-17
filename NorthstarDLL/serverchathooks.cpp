@@ -48,10 +48,8 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 		return;
 	}
 
-	R2::CBasePlayer* sender = R2::UTIL_PlayerByIndex(senderPlayerId - 1);
-
 	// check chat ratelimits
-	if (!g_pServerLimits->CheckChatLimits(sender))
+	if (!g_pServerLimits->CheckChatLimits(&R2::g_pClientArray[senderPlayerId - 1]))
 		return;
 
 	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
@@ -89,8 +87,7 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	// Build a new string where the first byte is the message type
 	char sendText[256];
 	sendText[0] = (char)messageType;
-	strncpy(sendText + 1, text, 255);
-	sendText[255] = 0;
+	strncpy_s(sendText + 1, 255, text, 254);
 
 	// Anonymous custom messages use playerId=0, non-anonymous ones use a player ID with the first bit set
 	unsigned int fromPlayerId = fromPlayerIndex < 0 ? 0 : ((fromPlayerIndex + 1) | CUSTOM_MESSAGE_INDEX_BIT);

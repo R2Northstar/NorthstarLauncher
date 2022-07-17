@@ -12,13 +12,13 @@ ServerLimitsManager* g_pServerLimits;
 
 ConVar* Cvar_net_datablock_enabled;
 
-void ServerLimitsManager::AddPlayer(R2::CBasePlayer* player)
+void ServerLimitsManager::AddPlayer(R2::CBaseClient* player)
 {
 	PlayerLimitData limitData;
 	m_PlayerLimitData.insert(std::make_pair(player, limitData));
 }
 
-bool ServerLimitsManager::CheckStringCommandLimits(R2::CBasePlayer* player)
+bool ServerLimitsManager::CheckStringCommandLimits(R2::CBaseClient* player)
 {
 	if (CVar_sv_quota_stringcmdspersecond->GetInt() != -1)
 	{
@@ -42,7 +42,7 @@ bool ServerLimitsManager::CheckStringCommandLimits(R2::CBasePlayer* player)
 	return true;
 }
 
-bool ServerLimitsManager::CheckChatLimits(R2::CBasePlayer* player)
+bool ServerLimitsManager::CheckChatLimits(R2::CBaseClient* player)
 {
 	if (Tier0::Plat_FloatTime() - m_PlayerLimitData[player].lastSayTextLimitStart >= 1.0)
 	{
@@ -57,7 +57,8 @@ bool ServerLimitsManager::CheckChatLimits(R2::CBasePlayer* player)
 	return true;
 }
 
-AUTOHOOK(CNetChan__ProcessMessages, engine.dll + 0x2140A0, char, __fastcall, (void* self, void* buf))
+AUTOHOOK(CNetChan__ProcessMessages, engine.dll + 0x2140A0, 
+char, __fastcall, (void* self, void* buf))
 {
 	enum eNetChanLimitMode
 	{
@@ -72,7 +73,7 @@ AUTOHOOK(CNetChan__ProcessMessages, engine.dll + 0x2140A0, char, __fastcall, (vo
 	if (R2::g_pHostState->m_iCurrentState == R2::HostState_t::HS_RUN && Tier0::ThreadInServerFrameThread())
 	{
 		// player that sent the message
-		R2::CBasePlayer* sender = *(R2::CBasePlayer**)((char*)self + 368);
+		R2::CBaseClient* sender = *(R2::CBaseClient**)((char*)self + 368);
 
 		// if no sender, return
 		// relatively certain this is fine?
@@ -111,7 +112,8 @@ AUTOHOOK(CNetChan__ProcessMessages, engine.dll + 0x2140A0, char, __fastcall, (vo
 	return ret;
 }
 
-AUTOHOOK(ProcessConnectionlessPacket, engine.dll + 0x117800, bool, , (void* a1, R2::netpacket_t* packet))
+AUTOHOOK(ProcessConnectionlessPacket, engine.dll + 0x117800, 
+bool, , (void* a1, R2::netpacket_t* packet))
 {
 	if (packet->adr.type == R2::NA_IP &&
 		(!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->GetBool()) || !Cvar_net_datablock_enabled->GetBool()))

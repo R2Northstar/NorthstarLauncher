@@ -7,6 +7,7 @@
 #include "serverauthentication.h"
 #include "masterserver.h"
 #include "printcommand.h"
+#include "NSMem.h"
 
 AUTOHOOK_INIT()
 
@@ -69,26 +70,6 @@ void RunServer(CDedicatedExports* dedicated)
 		double frameStart = Tier0::Plat_FloatTime();
 		g_pEngine->Frame();
 
-		// only update the title after at least 500ms since the last update
-		if ((frameStart - frameTitle) > 0.5)
-		{
-			frameTitle = frameStart;
-
-			// this way of getting playercount/maxplayers honestly really sucks, but not got any other methods of doing it rn
-			const char* maxPlayers = GetCurrentPlaylistVar("max_players", true);
-			if (!maxPlayers)
-				maxPlayers = "6";
-
-			SetConsoleTitleA(fmt::format(
-								 "{} - {} {}/{} players ({})",
-								 g_pMasterServerManager->m_sUnicodeServerName,
-								 g_pHostState->m_levelName,
-								 g_pServerAuthentication->m_PlayerAuthenticationData.size(),
-								 maxPlayers,
-								 GetCurrentPlaylistName())
-								 .c_str());
-		}
-
 		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(
 			Cvar_base_tickinterval_mp->GetFloat() - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
@@ -127,8 +108,21 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 	return 0;
 }
 
-#include "NSMem.h"
-ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, (HMODULE engineAddress))
+// use server presence to update window title
+class DedicatedConsoleServerPresence : public ServerPresenceReporter
+{
+	void ReportPresence(const ServerPresence* pServerPresence) override
+	{
+		SetConsoleTitleA(fmt::format("{} - {} {}/{} players ({})", 
+			pServerPresence->m_sServerName, 
+			pServerPresence->m_MapName, 
+			pServerPresence->m_iPlayerCount, 
+			pServerPresence->m_iMaxPlayers, 
+			pServerPresence->m_PlaylistName).c_str());
+	}
+};
+
+ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (HMODULE engineAddress))
 {
 	spdlog::info("InitialiseDedicated");
 
@@ -240,6 +234,10 @@ ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, (HMODULE engineAddress))
 	Tier0::CommandLine()->AppendParm("-nomessagebox", 0);
 	Tier0::CommandLine()->AppendParm("+host_preload_shaders", "0");
 	Tier0::CommandLine()->AppendParm("+net_usesocketsforloopback", "1");
+	
+	// use presence reporter for console title
+	DedicatedConsoleServerPresence* presenceReporter = new DedicatedConsoleServerPresence;
+	g_pServerPresence->AddPresenceReporter(presenceReporter);
 
 	// Disable Quick Edit mode to reduce chance of user unintentionally hanging their server by selecting something.
 	if (!Tier0::CommandLine()->CheckParm("-bringbackquickedit"))

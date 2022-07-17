@@ -228,12 +228,12 @@ void InitialiseLogging()
 	// Bind stdout to receive console output.
 	FILE* fp;
 	freopen_s(&fp, "CONOUT$", "w", stdout);
-	_dup2(_fileno(stdout), _fileno(stderr));
+	//_dup2(_fileno(stdout), _fileno(stderr));
 
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 

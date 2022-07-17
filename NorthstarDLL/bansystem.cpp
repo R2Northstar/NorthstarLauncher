@@ -11,7 +11,7 @@
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 
-ServerBanSystem* g_pServerBanSystem;
+ServerBanSystem* g_pBanSystem;
 
 void ServerBanSystem::OpenBanlist()
 {
@@ -72,11 +72,11 @@ void ConCommand_ban(const CCommand& args)
 	// assuming maxplayers 32
 	for (int i = 0; i < 32; i++)
 	{
-		R2::CBasePlayer* player = R2::UTIL_PlayerByIndex(i);
+		R2::CBaseClient* player = &R2::g_pClientArray[i];
 
 		if (!strcmp(player->m_Name, args.Arg(1)) || !strcmp(player->m_UID, args.Arg(1)))
 		{
-			g_pServerBanSystem->BanUID(strtoll((char*)player + 0xF500, nullptr, 10));
+			g_pBanSystem->BanUID(strtoll((char*)player + 0xF500, nullptr, 10));
 			R2::CBaseClient__Disconnect(player, 1, "Banned from server");
 			break;
 		}
@@ -89,20 +89,20 @@ void ConCommand_unban(const CCommand& args)
 		return;
 
 	// assumedly the player being unbanned here wasn't already connected, so don't need to iterate over players or anything
-	g_pServerBanSystem->UnbanUID(strtoll(args.Arg(1), nullptr, 10));
+	g_pBanSystem->UnbanUID(strtoll(args.Arg(1), nullptr, 10));
 }
 
 void ConCommand_clearbanlist(const CCommand& args)
 {
-	g_pServerBanSystem->ClearBanlist();
+	g_pBanSystem->ClearBanlist();
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (HMODULE baseAddress))
 {
-	g_pServerBanSystem = new ServerBanSystem;
-	g_pServerBanSystem->OpenBanlist();
+	g_pBanSystem = new ServerBanSystem;
+	g_pBanSystem->OpenBanlist();
 
 	RegisterConCommand("ban", ConCommand_ban, "bans a given player by uid or name", FCVAR_GAMEDLL);
-	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_NONE);
-	RegisterConCommand("clearbanlist", ConCommand_clearbanlist, "clears all uids on the banlist", FCVAR_NONE);
+	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_GAMEDLL);
+	RegisterConCommand("clearbanlist", ConCommand_clearbanlist, "clears all uids on the banlist", FCVAR_GAMEDLL);
 }

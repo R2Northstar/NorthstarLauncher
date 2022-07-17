@@ -1,7 +1,7 @@
 #pragma once
 #include "convar.h"
 #include "httplib.h"
-#include "r2server.h"
+#include "r2engine.h"
 #include <unordered_map>
 #include <string>
 
@@ -35,19 +35,19 @@ class ServerAuthenticationManager
 
 	std::mutex m_AuthDataMutex;
 	std::unordered_map<std::string, RemoteAuthData> m_RemoteAuthenticationData;
-	std::unordered_map<R2::CBasePlayer*, PlayerAuthenticationData> m_PlayerAuthenticationData;
+	std::unordered_map<R2::CBaseClient*, PlayerAuthenticationData> m_PlayerAuthenticationData;
 	bool m_bRunningPlayerAuthThread = false;
 	bool m_bNeedLocalAuthForNewgame = false;
-	bool m_bForceReadLocalPlayerPersistenceFromDisk = false;
+	bool m_bForceResetLocalPlayerPersistence = false;
 
   public:
 	void StartPlayerAuthServer();
 	void StopPlayerAuthServer();
-	void AddPlayerData(R2::CBasePlayer* player, const char* pToken);
-	bool AuthenticatePlayer(R2::CBasePlayer* player, uint64_t uid, char* authToken);
-	void VerifyPlayerName(R2::CBasePlayer* player, char* authToken, char* name);
-	bool RemovePlayerAuthData(R2::CBasePlayer* player);
-	void WritePersistentData(R2::CBasePlayer* player);
+	void AddPlayerData(R2::CBaseClient* player, const char* pToken);
+	bool AuthenticatePlayer(R2::CBaseClient* player, uint64_t uid, char* authToken);
+	void VerifyPlayerName(R2::CBaseClient* player, char* authToken, char* name);
+	bool RemovePlayerAuthData(R2::CBaseClient* player);
+	void WritePersistentData(R2::CBaseClient* player);
 };
 
 extern ServerAuthenticationManager* g_pServerAuthentication;

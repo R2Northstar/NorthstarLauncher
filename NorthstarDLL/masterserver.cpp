@@ -3,7 +3,6 @@
 #include "concommand.h"
 #include "playlist.h"
 #include "serverauthentication.h"
-#include "hoststate.h"
 #include "tier0.h"
 #include "r2engine.h"
 #include "modmanager.h"
@@ -18,83 +17,10 @@
 #include <cstring>
 #include <regex>
 
-ConVar* Cvar_ns_masterserver_hostname;
-ConVar* Cvar_ns_report_server_to_masterserver;
-ConVar* Cvar_ns_report_sp_server_to_masterserver;
-
-ConVar* Cvar_ns_server_name;
-ConVar* Cvar_ns_server_desc;
-ConVar* Cvar_ns_server_password;
-
-ConVar* Cvar_ns_curl_log_enable;
-
-// Source ConVar
-ConVar* Cvar_hostname;
-ConVar* Cvar_hostport;
-
 MasterServerManager* g_pMasterServerManager;
 
-// Convert a hex digit char to integer.
-inline int hctod(char c)
-{
-	if (c >= 'A' && c <= 'F')
-	{
-		return c - 'A' + 10;
-	}
-	else if (c >= 'a' && c <= 'f')
-	{
-		return c - 'a' + 10;
-	}
-	else
-	{
-		return c - '0';
-	}
-}
-
-// This function interprets all 4-hexadecimal-digit unicode codepoint characters like \u4E2D to UTF-8 encoding.
-std::string unescape_unicode(const std::string& str)
-{
-	std::string result;
-	std::regex r("\\\\u([a-f\\d]{4})", std::regex::icase);
-	auto matches_begin = std::sregex_iterator(str.begin(), str.end(), r);
-	auto matches_end = std::sregex_iterator();
-	std::smatch last_match;
-	for (std::sregex_iterator i = matches_begin; i != matches_end; ++i)
-	{
-		last_match = *i;
-		result.append(last_match.prefix());
-		unsigned int cp = 0;
-		for (int i = 2; i <= 5; ++i)
-		{
-			cp *= 16;
-			cp += hctod(last_match.str()[i]);
-		}
-		if (cp <= 0x7F)
-		{
-			result.push_back(cp);
-		}
-		else if (cp <= 0x7FF)
-		{
-			result.push_back((cp >> 6) | 0b11000000 & (~(1 << 5)));
-			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
-		}
-		else if (cp <= 0xFFFF)
-		{
-			result.push_back((cp >> 12) | 0b11100000 & (~(1 << 4)));
-			result.push_back((cp >> 6) & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
-			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
-		}
-	}
-	if (!last_match.ready())
-	{
-		return str;
-	}
-	else
-	{
-		result.append(last_match.suffix());
-	}
-	return result;
-}
+ConVar* Cvar_ns_masterserver_hostname;
+ConVar* Cvar_ns_curl_log_enable;
 
 RemoteServerInfo::RemoteServerInfo(
 	const char* newId,
@@ -109,23 +35,19 @@ RemoteServerInfo::RemoteServerInfo(
 	// passworded servers don't have public ips
 	requiresPassword = newRequiresPassword;
 
-	strncpy((char*)id, newId, sizeof(id));
-	id[sizeof(id) - 1] = 0;
-	strncpy((char*)name, newName, sizeof(name));
-	name[sizeof(name) - 1] = 0;
+	strncpy_s((char*)id, sizeof(id), newId, sizeof(id) - 1);
+	strncpy_s((char*)name, sizeof(name), newName, sizeof(name) - 1);
 
 	description = std::string(newDescription);
 
-	strncpy((char*)map, newMap, sizeof(map));
-	map[sizeof(map) - 1] = 0;
-	strncpy((char*)playlist, newPlaylist, sizeof(playlist));
-	playlist[sizeof(playlist) - 1] = 0;
+	strncpy_s((char*)map, sizeof(map) , newMap, sizeof(map) - 1);
+	strncpy_s((char*)playlist, sizeof(playlist) , newPlaylist, sizeof(playlist) - 1);
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
 }
 
-void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
+void SetCommonHttpClientOptions(CURL* curl)
 {
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, Cvar_ns_curl_log_enable->GetBool());
@@ -205,8 +127,10 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 
 				if (originAuthInfo["success"].IsTrue() && originAuthInfo.HasMember("token") && originAuthInfo["token"].IsString())
 				{
-					strncpy(m_sOwnClientAuthToken, originAuthInfo["token"].GetString(), sizeof(m_sOwnClientAuthToken));
-					m_sOwnClientAuthToken[sizeof(m_sOwnClientAuthToken) - 1] = 0;
+					strncpy_s(
+						m_sOwnClientAuthToken,
+						sizeof(m_sOwnClientAuthToken), originAuthInfo["token"].GetString(),
+						sizeof(m_sOwnClientAuthToken) - 1);
 					spdlog::info("Northstar origin authentication completed successfully!");
 				}
 				else
@@ -579,8 +503,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 				}
 
 				RemoteAuthData newAuthData {};
-				strncpy(newAuthData.uid, authInfoJson["id"].GetString(), sizeof(newAuthData.uid));
-				newAuthData.uid[sizeof(newAuthData.uid) - 1] = 0;
+				strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), authInfoJson["id"].GetString(), sizeof(newAuthData.uid) - 1);
 
 				newAuthData.pdataSize = authInfoJson["persistentData"].GetArray().Size();
 				newAuthData.pdata = new char[newAuthData.pdataSize];
@@ -729,8 +652,11 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 				m_pendingConnectionInfo.ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
 				m_pendingConnectionInfo.port = (unsigned short)connectionInfoJson["port"].GetUint();
 
-				strncpy(m_pendingConnectionInfo.authToken, connectionInfoJson["authToken"].GetString(), 31);
-				m_pendingConnectionInfo.authToken[31] = 0;
+				strncpy_s(
+					m_pendingConnectionInfo.authToken,
+					sizeof(m_pendingConnectionInfo.authToken),
+					connectionInfoJson["authToken"].GetString(),
+					sizeof(m_pendingConnectionInfo.authToken) - 1);
 
 				m_bHasPendingConnectionInfo = true;
 				m_bSuccessfullyAuthenticatedWithGameServer = true;
@@ -746,353 +672,6 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 		REQUEST_END_CLEANUP:
 			m_bAuthenticatingWithGameServer = false;
 			m_bScriptAuthenticatingWithGameServer = false;
-			curl_easy_cleanup(curl);
-		});
-
-	requestThread.detach();
-}
-
-void MasterServerManager::AddSelfToServerList(
-	int port,
-	int authPort,
-	const char* name,
-	const char* description,
-	const char* map,
-	const char* playlist,
-	int maxPlayers,
-	const char* password)
-{
-	if (!Cvar_ns_report_server_to_masterserver->GetBool())
-		return;
-
-	if (!Cvar_ns_report_sp_server_to_masterserver->GetBool() && !strncmp(map, "sp_", 3))
-	{
-		m_bRequireClientAuth = false;
-		return;
-	}
-
-	m_bRequireClientAuth = true;
-
-	std::string strName(name);
-	std::string strDescription(description);
-	std::string strMap(map);
-	std::string strPlaylist(playlist);
-	std::string strPassword(password);
-
-	std::thread requestThread(
-		[this, port, authPort, strName, strDescription, strMap, strPlaylist, maxPlayers, strPassword]
-		{
-			m_sOwnServerId[0] = 0;
-			m_sOwnServerAuthToken[0] = 0;
-
-			CURL* curl = curl_easy_init();
-			SetCommonHttpClientOptions(curl);
-
-			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_POST, 1L);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-			curl_mime* mime = curl_mime_init(curl);
-			curl_mimepart* part = curl_mime_addpart(mime);
-
-			curl_mime_data(part, m_sOwnModInfoJson.c_str(), m_sOwnModInfoJson.size());
-			curl_mime_name(part, "modinfo");
-			curl_mime_filename(part, "modinfo.json");
-			curl_mime_type(part, "application/json");
-
-			curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-
-			// format every paramter because computers hate me
-			{
-				char* nameEscaped = curl_easy_escape(curl, strName.c_str(), strName.length());
-				char* descEscaped = curl_easy_escape(curl, strDescription.c_str(), strDescription.length());
-				char* mapEscaped = curl_easy_escape(curl, strMap.c_str(), strMap.length());
-				char* playlistEscaped = curl_easy_escape(curl, strPlaylist.c_str(), strPlaylist.length());
-				char* passwordEscaped = curl_easy_escape(curl, strPassword.c_str(), strPassword.length());
-
-				curl_easy_setopt(
-					curl,
-					CURLOPT_URL,
-					fmt::format(
-						"{}/server/add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
-						Cvar_ns_masterserver_hostname->GetString(),
-						port,
-						authPort,
-						nameEscaped,
-						descEscaped,
-						mapEscaped,
-						playlistEscaped,
-						maxPlayers,
-						passwordEscaped)
-						.c_str());
-
-				curl_free(nameEscaped);
-				curl_free(descEscaped);
-				curl_free(mapEscaped);
-				curl_free(playlistEscaped);
-				curl_free(passwordEscaped);
-			}
-
-			CURLcode result = curl_easy_perform(curl);
-
-			if (result == CURLcode::CURLE_OK)
-			{
-				m_bSuccessfullyConnected = true;
-
-				rapidjson_document serverAddedJson;
-				serverAddedJson.Parse(readBuffer.c_str());
-
-				if (serverAddedJson.HasParseError())
-				{
-					spdlog::error(
-						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
-				}
-
-				if (!serverAddedJson.IsObject())
-				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
-					goto REQUEST_END_CLEANUP;
-				}
-
-				if (serverAddedJson.HasMember("error"))
-				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
-					goto REQUEST_END_CLEANUP;
-				}
-
-				if (!serverAddedJson["success"].IsTrue())
-				{
-					spdlog::error("Adding server to masterserver failed: \"success\" is not true");
-					goto REQUEST_END_CLEANUP;
-				}
-
-				if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
-					!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
-				{
-					spdlog::error("Failed reading masterserver response: malformed json object");
-					goto REQUEST_END_CLEANUP;
-				}
-
-				strncpy(m_sOwnServerId, serverAddedJson["id"].GetString(), sizeof(m_sOwnServerId));
-				m_sOwnServerId[sizeof(m_sOwnServerId) - 1] = 0;
-
-				strncpy(m_sOwnServerAuthToken, serverAddedJson["serverAuthToken"].GetString(), sizeof(m_sOwnServerAuthToken));
-				m_sOwnServerAuthToken[sizeof(m_sOwnServerAuthToken) - 1] = 0;
-
-				// heartbeat thread
-				// ideally this should actually be done in main thread, rather than on it's own thread, so it'd stop if server freezes
-				std::thread heartbeatThread(
-					[this]
-					{
-						Sleep(5000);
-
-						// defensive check, as m_ownServer could be set to null during the Sleep(5000) above
-						if (!*m_sOwnServerId)
-							return;
-
-						do
-						{
-							CURL* curl = curl_easy_init();
-							SetCommonHttpClientOptions(curl);
-
-							std::string readBuffer;
-							curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-							curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-							curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-							curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-
-							// send all registration info so we have all necessary info to reregister our server if masterserver goes down,
-							// without a restart this isn't threadsafe :terror:
-							{
-								char* escapedNameNew = curl_easy_escape(curl, g_pMasterServerManager->m_sUnicodeServerName.c_str(), NULL);
-								char* escapedDescNew = curl_easy_escape(curl, g_pMasterServerManager->m_sUnicodeServerDesc.c_str(), NULL);
-								char* escapedMapNew = curl_easy_escape(curl, R2::g_pHostState->m_levelName, NULL);
-								char* escapedPlaylistNew = curl_easy_escape(curl, R2::GetCurrentPlaylistName(), NULL);
-								char* escapedPasswordNew = curl_easy_escape(curl, Cvar_ns_server_password->GetString(), NULL);
-
-								int maxPlayers = 6;
-								const char* maxPlayersVar = R2::GetCurrentPlaylistVar("max_players", false);
-								if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-									maxPlayers = std::stoi(maxPlayersVar);
-
-								curl_easy_setopt(
-									curl,
-									CURLOPT_URL,
-									fmt::format(
-										"{}/server/"
-										"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
-										"maxPlayers={}&password={}",
-										Cvar_ns_masterserver_hostname->GetString(),
-										m_sOwnServerId,
-										Cvar_hostport->GetInt(),
-										g_pServerAuthentication->Cvar_ns_player_auth_port->GetInt(),
-										escapedNameNew,
-										escapedDescNew,
-										escapedMapNew,
-										escapedPlaylistNew,
-										g_pServerAuthentication->m_PlayerAuthenticationData.size(),
-										maxPlayers,
-										escapedPasswordNew)
-										.c_str());
-
-								curl_free(escapedNameNew);
-								curl_free(escapedDescNew);
-								curl_free(escapedMapNew);
-								curl_free(escapedPlaylistNew);
-								curl_free(escapedPasswordNew);
-							}
-
-							curl_mime* mime = curl_mime_init(curl);
-							curl_mimepart* part = curl_mime_addpart(mime);
-
-							curl_mime_data(part, m_sOwnModInfoJson.c_str(), m_sOwnModInfoJson.size());
-							curl_mime_name(part, "modinfo");
-							curl_mime_filename(part, "modinfo.json");
-							curl_mime_type(part, "application/json");
-
-							curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-
-							CURLcode result = curl_easy_perform(curl);
-
-							// defensive check, as m_ownServerId could be set to null before this request gets processed
-							if (!*m_sOwnServerId)
-								return;
-
-							if (result == CURLcode::CURLE_OK)
-							{
-								rapidjson_document serverAddedJson;
-								serverAddedJson.Parse(readBuffer.c_str());
-
-								if (!serverAddedJson.HasParseError() && serverAddedJson.IsObject())
-								{
-									if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
-									{
-										strncpy(m_sOwnServerId, serverAddedJson["id"].GetString(), sizeof(m_sOwnServerId));
-										m_sOwnServerId[sizeof(m_sOwnServerId) - 1] = 0;
-									}
-
-									if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
-									{
-										strncpy(
-											m_sOwnServerAuthToken,
-											serverAddedJson["serverAuthToken"].GetString(),
-											sizeof(m_sOwnServerAuthToken));
-										m_sOwnServerAuthToken[sizeof(m_sOwnServerAuthToken) - 1] = 0;
-									}
-								}
-							}
-							else
-								spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
-
-							curl_easy_cleanup(curl);
-							Sleep(10000);
-						} while (*m_sOwnServerId);
-					});
-
-				heartbeatThread.detach();
-			}
-			else
-			{
-				spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
-				m_bSuccessfullyConnected = false;
-			}
-
-		REQUEST_END_CLEANUP:
-			curl_easy_cleanup(curl);
-			curl_mime_free(mime);
-		});
-
-	requestThread.detach();
-}
-
-void MasterServerManager::UpdateServerMapAndPlaylist(const char* map, const char* playlist, int maxPlayers)
-{
-	// dont call this if we don't have a server id
-	if (!*m_sOwnServerId)
-		return;
-
-	std::string strMap(map);
-	std::string strPlaylist(playlist);
-
-	std::thread requestThread(
-		[this, strMap, strPlaylist, maxPlayers]
-		{
-			CURL* curl = curl_easy_init();
-			SetCommonHttpClientOptions(curl);
-
-			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-			// escape params
-			{
-				char* mapEscaped = curl_easy_escape(curl, strMap.c_str(), strMap.length());
-				char* playlistEscaped = curl_easy_escape(curl, strPlaylist.c_str(), strPlaylist.length());
-
-				curl_easy_setopt(
-					curl,
-					CURLOPT_URL,
-					fmt::format(
-						"{}/server/update_values?id={}&map={}&playlist={}&maxPlayers={}",
-						Cvar_ns_masterserver_hostname->GetString(),
-						m_sOwnServerId,
-						mapEscaped,
-						playlistEscaped,
-						maxPlayers)
-						.c_str());
-
-				curl_free(mapEscaped);
-				curl_free(playlistEscaped);
-			}
-
-			CURLcode result = curl_easy_perform(curl);
-
-			if (result == CURLcode::CURLE_OK)
-				m_bSuccessfullyConnected = true;
-			else
-				m_bSuccessfullyConnected = false;
-
-			curl_easy_cleanup(curl);
-		});
-
-	requestThread.detach();
-}
-
-void MasterServerManager::UpdateServerPlayerCount(int playerCount)
-{
-	// dont call this if we don't have a server id
-	if (!*m_sOwnServerId)
-		return;
-
-	std::thread requestThread(
-		[this, playerCount]
-		{
-			CURL* curl = curl_easy_init();
-			SetCommonHttpClientOptions(curl);
-
-			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(
-				curl,
-				CURLOPT_URL,
-				fmt::format(
-					"{}/server/update_values?id={}&playerCount={}", Cvar_ns_masterserver_hostname->GetString(), m_sOwnServerId, playerCount)
-					.c_str());
-
-			CURLcode result = curl_easy_perform(curl);
-
-			if (result == CURLcode::CURLE_OK)
-				m_bSuccessfullyConnected = true;
-			else
-				m_bSuccessfullyConnected = false;
-
 			curl_easy_cleanup(curl);
 		});
 
@@ -1157,40 +736,277 @@ void MasterServerManager::WritePlayerPersistentData(const char* playerId, const 
 	requestThread.detach();
 }
 
-void MasterServerManager::RemoveSelfFromServerList()
+class MasterServerPresenceReporter : public ServerPresenceReporter
 {
-	// dont call this if we don't have a server id
-	if (!*m_sOwnServerId || !Cvar_ns_report_server_to_masterserver->GetBool())
-		return;
+	void ReportPresence(const ServerPresence* pServerPresence) override
+	{
+		// make a copy of presence for multithreading purposes
+		ServerPresence threadedPresence(pServerPresence);
 
-	std::thread requestThread(
-		[this]
+		if (!*g_pMasterServerManager->m_sOwnServerId)
 		{
-			CURL* curl = curl_easy_init();
-			SetCommonHttpClientOptions(curl);
+			// add server
+			std::thread addServerThread(
+				[threadedPresence]
+				{
+					g_pMasterServerManager->m_sOwnServerId[0] = 0;
+					g_pMasterServerManager->m_sOwnServerAuthToken[0] = 0;
 
-			std::string readBuffer;
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(
-				curl,
-				CURLOPT_URL,
-				fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), m_sOwnServerId).c_str());
+					CURL* curl = curl_easy_init();
+					SetCommonHttpClientOptions(curl);
 
-			*m_sOwnServerId = 0;
-			CURLcode result = curl_easy_perform(curl);
+					std::string readBuffer;
+					curl_easy_setopt(curl, CURLOPT_POST, 1L);
+					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-			if (result == CURLcode::CURLE_OK)
-				m_bSuccessfullyConnected = true;
-			else
-				m_bSuccessfullyConnected = false;
+					curl_mime* mime = curl_mime_init(curl);
+					curl_mimepart* part = curl_mime_addpart(mime);
 
-			curl_easy_cleanup(curl);
-		});
+					curl_mime_data(
+						part, g_pMasterServerManager->m_sOwnModInfoJson.c_str(), g_pMasterServerManager->m_sOwnModInfoJson.size());
+					curl_mime_name(part, "modinfo");
+					curl_mime_filename(part, "modinfo.json");
+					curl_mime_type(part, "application/json");
 
-	requestThread.detach();
-}
+					curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+
+					// format every paramter because computers hate me
+					{
+						char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
+						char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
+						char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
+						char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
+						char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
+
+						curl_easy_setopt(
+							curl,
+							CURLOPT_URL,
+							fmt::format(
+								"{}/server/"
+								"add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
+								Cvar_ns_masterserver_hostname->GetString(),
+								threadedPresence.m_iPort,
+								threadedPresence.m_iAuthPort,
+								nameEscaped,
+								descEscaped,
+								mapEscaped,
+								playlistEscaped,
+								threadedPresence.m_iMaxPlayers,
+								passwordEscaped)
+								.c_str());
+
+						curl_free(nameEscaped);
+						curl_free(descEscaped);
+						curl_free(mapEscaped);
+						curl_free(playlistEscaped);
+						curl_free(passwordEscaped);
+					}
+
+					CURLcode result = curl_easy_perform(curl);
+
+					if (result == CURLcode::CURLE_OK)
+					{
+						g_pMasterServerManager->m_bSuccessfullyConnected = true;
+
+						rapidjson_document serverAddedJson;
+						serverAddedJson.Parse(readBuffer.c_str());
+
+						if (serverAddedJson.HasParseError())
+						{
+							spdlog::error(
+								"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+								rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+							goto REQUEST_END_CLEANUP;
+						}
+
+						if (!serverAddedJson.IsObject())
+						{
+							spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+							goto REQUEST_END_CLEANUP;
+						}
+
+						if (serverAddedJson.HasMember("error"))
+						{
+							spdlog::error("Failed reading masterserver response: got fastify error response");
+							spdlog::error(readBuffer);
+							goto REQUEST_END_CLEANUP;
+						}
+
+						if (!serverAddedJson["success"].IsTrue())
+						{
+							spdlog::error("Adding server to masterserver failed: \"success\" is not true");
+							goto REQUEST_END_CLEANUP;
+						}
+
+						if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
+							!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
+						{
+							spdlog::error("Failed reading masterserver response: malformed json object");
+							goto REQUEST_END_CLEANUP;
+						}
+
+						strncpy_s(
+							g_pMasterServerManager->m_sOwnServerId,
+							sizeof(g_pMasterServerManager->m_sOwnServerId),
+							serverAddedJson["id"].GetString(),
+							sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+
+						strncpy_s(
+							g_pMasterServerManager->m_sOwnServerAuthToken,
+							sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
+							serverAddedJson["serverAuthToken"].GetString(),
+							sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
+					}
+					else
+					{
+						spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
+						g_pMasterServerManager->m_bSuccessfullyConnected = false;
+					}
+
+				REQUEST_END_CLEANUP:
+					curl_easy_cleanup(curl);
+					curl_mime_free(mime);
+				});
+			addServerThread.detach();
+		}
+		else
+		{
+			// update server
+			std::thread updateServerThread(
+				[threadedPresence]
+				{
+					CURL* curl = curl_easy_init();
+					SetCommonHttpClientOptions(curl);
+
+					std::string readBuffer;
+					curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+					curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+
+					// send all registration info so we have all necessary info to reregister our server if masterserver goes down,
+					// without a restart this isn't threadsafe :terror:
+					{
+						char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
+						char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
+						char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
+						char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
+						char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
+
+						curl_easy_setopt(
+							curl,
+							CURLOPT_URL,
+							fmt::format(
+								"{}/server/"
+								"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
+								"maxPlayers={}&password={}",
+								Cvar_ns_masterserver_hostname->GetString(),
+								g_pMasterServerManager->m_sOwnServerId,
+								threadedPresence.m_iPort,
+								threadedPresence.m_iAuthPort,
+								nameEscaped,
+								descEscaped,
+								mapEscaped,
+								playlistEscaped,
+								threadedPresence.m_iPlayerCount,
+								threadedPresence.m_iMaxPlayers,
+								passwordEscaped)
+								.c_str());
+
+						curl_free(nameEscaped);
+						curl_free(descEscaped);
+						curl_free(mapEscaped);
+						curl_free(playlistEscaped);
+						curl_free(passwordEscaped);
+					}
+
+					curl_mime* mime = curl_mime_init(curl);
+					curl_mimepart* part = curl_mime_addpart(mime);
+
+					curl_mime_data(
+						part, g_pMasterServerManager->m_sOwnModInfoJson.c_str(), g_pMasterServerManager->m_sOwnModInfoJson.size());
+					curl_mime_name(part, "modinfo");
+					curl_mime_filename(part, "modinfo.json");
+					curl_mime_type(part, "application/json");
+
+					curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+
+					CURLcode result = curl_easy_perform(curl);
+
+					if (result == CURLcode::CURLE_OK)
+					{
+						rapidjson_document serverAddedJson;
+						serverAddedJson.Parse(readBuffer.c_str());
+
+						if (!serverAddedJson.HasParseError() && serverAddedJson.IsObject())
+						{
+							if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
+							{
+								strncpy_s(
+									g_pMasterServerManager->m_sOwnServerId,
+									sizeof(g_pMasterServerManager->m_sOwnServerId),
+									serverAddedJson["id"].GetString(),
+									sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+							}
+
+							if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
+							{
+
+								strncpy_s(
+									g_pMasterServerManager->m_sOwnServerAuthToken,
+									sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
+									serverAddedJson["serverAuthToken"].GetString(),
+									sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
+							}
+						}
+					}
+					else
+						spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
+
+					curl_easy_cleanup(curl);
+				});
+			updateServerThread.detach();
+		}
+	}
+
+	void DestroyPresence(const ServerPresence* pServerPresence) override
+	{
+		// dont call this if we don't have a server id
+		if (!*g_pMasterServerManager->m_sOwnServerId)
+			return;
+
+		std::thread requestThread(
+			[this]
+			{
+				CURL* curl = curl_easy_init();
+				SetCommonHttpClientOptions(curl);
+
+				std::string readBuffer;
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+				curl_easy_setopt(
+					curl,
+					CURLOPT_URL,
+					fmt::format(
+						"{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), g_pMasterServerManager->m_sOwnServerId)
+						.c_str());
+
+				*g_pMasterServerManager->m_sOwnServerId = 0;
+				CURLcode result = curl_easy_perform(curl);
+
+				if (result == CURLcode::CURLE_OK)
+					g_pMasterServerManager->m_bSuccessfullyConnected = true;
+				else
+					g_pMasterServerManager->m_bSuccessfullyConnected = false;
+
+				curl_easy_cleanup(curl);
+			});
+
+		requestThread.detach();
+	}
+};
 
 void ConCommand_ns_fetchservers(const CCommand& args)
 {
@@ -1199,27 +1015,15 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
 
-ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (HMODULE baseAddress))
 {
 	g_pMasterServerManager = new MasterServerManager;
 
 	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
-
-	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
-			g_pMasterServerManager->m_sUnicodeServerName = unescape_unicode(Cvar_ns_server_name->GetString());
-		});
-	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
-			g_pMasterServerManager->m_sUnicodeServerDesc = unescape_unicode(Cvar_ns_server_desc->GetString());
-		});
-
-	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password");
-	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver");
-	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver, when started in singleplayer");
-
 	Cvar_ns_curl_log_enable = new ConVar("ns_curl_log_enable", "0", FCVAR_NONE, "Whether curl should log to the console");
 
-	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
-	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
-
 	RegisterConCommand("ns_fetchservers", ConCommand_ns_fetchservers, "Fetch all servers from the masterserver", FCVAR_CLIENTDLL);
+
+	MasterServerPresenceReporter* presenceReporter = new MasterServerPresenceReporter;
+	g_pServerPresence->AddPresenceReporter(presenceReporter);
 }

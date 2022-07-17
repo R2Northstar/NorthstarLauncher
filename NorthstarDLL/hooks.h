@@ -5,10 +5,11 @@
 void InstallInitialHooks();
 
 typedef void (*DllLoadCallbackFuncType)(HMODULE moduleAddress);
-void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::string reliesOn = "");
+void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
 void AddDllLoadCallbackForDedicatedServer(
-	std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::string reliesOn = "");
-void AddDllLoadCallbackForClient(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::string reliesOn = "");
+	std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
+void AddDllLoadCallbackForClient(
+	std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
 
 void CallAllPendingDLLLoadCallbacks();
 

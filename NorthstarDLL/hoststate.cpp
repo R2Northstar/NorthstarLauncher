@@ -2,6 +2,7 @@
 #include "hoststate.h"
 #include "masterserver.h"
 #include "serverauthentication.h"
+#include "serverpresence.h"
 #include "playlist.h"
 #include "tier0.h"
 #include "r2engine.h"
@@ -16,8 +17,18 @@ namespace R2
 	CHostState* g_pHostState;
 } // namespace R2
 
+ConVar* Cvar_hostport;
+
+void ServerStartingOrChangingMap() 
+{
+	// net_data_block_enabled is required for sp, force it if we're on an sp map
+	// sucks for security but just how it be
+	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
+		g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
+}
+
 AUTOHOOK(CHostState__State_NewGame, engine.dll + 0x16E7D0,
-void,, (CHostState* hostState))
+void,, (CHostState* self))
 {
 	spdlog::info("HostState: NewGame");
 
@@ -28,67 +39,58 @@ void,, (CHostState* hostState))
 	if (g_pServerAuthentication->m_bNeedLocalAuthForNewgame)
 		SetCurrentPlaylist("tdm");
 
-	// net_data_block_enabled is required for sp, force it if we're on an sp map
-	// sucks for security but just how it be
-	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
-		g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
+	ServerStartingOrChangingMap();
 
 	double dStartTime = Tier0::Plat_FloatTime();
-	CHostState__State_NewGame(hostState);
+	CHostState__State_NewGame(self);
 	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
 
-	int maxPlayers = 6;
-	const char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
+	// setup server presence
+	g_pServerPresence->CreatePresence();
+	g_pServerPresence->SetMap(g_pHostState->m_levelName);
+	g_pServerPresence->SetPlaylist(GetCurrentPlaylistName());
+	g_pServerPresence->SetPort(Cvar_hostport->GetInt());
 
-	// Copy new server name cvar to source
-	Cvar_hostname->SetValue(Cvar_ns_server_name->GetString());
-
-	g_pMasterServerManager->AddSelfToServerList(
-		Cvar_hostport->GetInt(),
-		g_pServerAuthentication->Cvar_ns_player_auth_port->GetInt(),
-		Cvar_ns_server_name->GetString(),
-		Cvar_ns_server_desc->GetString(),
-		hostState->m_levelName,
-		GetCurrentPlaylistName(),
-		maxPlayers,
-		Cvar_ns_server_password->GetString());
 	g_pServerAuthentication->StartPlayerAuthServer();
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
 AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
-void,, (CHostState* hostState))
+void,, (CHostState* self))
 {
 	spdlog::info("HostState: ChangeLevelMP");
 
-	int maxPlayers = 6;
-	const char* maxPlayersVar = GetCurrentPlaylistVar("max_players", false);
-	if (maxPlayersVar) // GetCurrentPlaylistVar can return null so protect against this
-		maxPlayers = std::stoi(maxPlayersVar);
-
-	// net_data_block_enabled is required for sp, force it if we're on an sp map
-	// sucks for security but just how it be
-	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
-		g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
-
-	g_pMasterServerManager->UpdateServerMapAndPlaylist(hostState->m_levelName, GetCurrentPlaylistName(), maxPlayers);
+	ServerStartingOrChangingMap();
 
 	double dStartTime = Tier0::Plat_FloatTime();
-	CHostState__State_ChangeLevelMP(hostState);
+	CHostState__State_ChangeLevelMP(self);
 	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
+
+	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
 
 AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E520,
-void,, (CHostState* hostState))
+void,, (CHostState* self))
 {
 	spdlog::info("HostState: GameShutdown");
 
-	g_pMasterServerManager->RemoveSelfFromServerList();
+	g_pServerPresence->DestroyPresence();
 	g_pServerAuthentication->StopPlayerAuthServer();
 
-	CHostState__State_GameShutdown(hostState);
+	CHostState__State_GameShutdown(self);
+}
+
+AUTOHOOK(CHostState__FrameUpdate, engine.dll + 0x16DB00,
+void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
+{
+	CHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
+
+	if (*R2::g_pServerState == R2::server_state_t::ss_active)
+	{
+		// update server presence
+		g_pServerPresence->RunFrame(flCurrentTime);
+	}
+	
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (HMODULE baseAddress))
@@ -96,4 +98,5 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (HMODULE baseAddress))
 	AUTOHOOK_DISPATCH()
 
 	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
+	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
 }

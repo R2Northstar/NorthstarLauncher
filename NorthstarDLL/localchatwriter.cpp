@@ -280,12 +280,11 @@ void LocalChatWriter::Write(const char* str)
 		if (startOfEscape != str)
 		{
 			// There is some text before the escape sequence, just print that
-
 			size_t copyChars = startOfEscape - str;
 			if (copyChars > 255)
 				copyChars = 255;
-			strncpy(writeBuffer, str, copyChars);
-			writeBuffer[copyChars] = 0;
+
+			strncpy_s(writeBuffer, copyChars + 1, str, copyChars);
 
 			InsertText(writeBuffer);
 		}

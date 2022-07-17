@@ -1,21 +1,12 @@
 #pragma once
 #include "convar.h"
+#include "serverpresence.h"
 #include <WinSock2.h>
 #include <string>
 #include <cstring>
 
 extern ConVar* Cvar_ns_masterserver_hostname;
-extern ConVar* Cvar_ns_report_server_to_masterserver;
-extern ConVar* Cvar_ns_report_sp_server_to_masterserver;
-
-extern ConVar* Cvar_ns_server_name;
-extern ConVar* Cvar_ns_server_desc;
-extern ConVar* Cvar_ns_server_password;
-
 extern ConVar* Cvar_ns_curl_log_enable;
-
-extern ConVar* Cvar_hostname;
-extern ConVar* Cvar_hostport;
 
 struct RemoteModInfo
 {
@@ -96,8 +87,6 @@ class MasterServerManager
 	char m_sOwnClientAuthToken[33];
 
 	std::string m_sOwnModInfoJson;
-	std::string m_sUnicodeServerName; // Unicode unescaped version of Cvar_ns_auth_servername for support in cjk characters
-	std::string m_sUnicodeServerDesc; // Unicode unescaped version of Cvar_ns_auth_serverdesc for support in cjk characters
 
 	bool m_bOriginAuthWithMasterServerDone = false;
 	bool m_bOriginAuthWithMasterServerInProgress = false;
@@ -120,9 +109,6 @@ class MasterServerManager
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_sMainMenuPromoData;
 
-  private:
-	void SetCommonHttpClientOptions(CURL* curl);
-
   public:
 	MasterServerManager();
 
@@ -132,22 +118,8 @@ class MasterServerManager
 	void AuthenticateOriginWithMasterServer(const char* uid, const char* originToken);
 	void AuthenticateWithOwnServer(const char* uid, const char* playerToken);
 	void AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password);
-	void AddSelfToServerList(
-		int port,
-		int authPort,
-		const char* name,
-		const char* description,
-		const char* map,
-		const char* playlist,
-		int maxPlayers,
-		const char* password);
-	void UpdateServerMapAndPlaylist(const char* map, const char* playlist, int playerCount);
-	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
-	void RemoveSelfFromServerList();
 };
-std::string unescape_unicode(const std::string& str);
 
 extern MasterServerManager* g_pMasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
-extern ConVar* Cvar_ns_server_password;

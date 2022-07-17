@@ -11,7 +11,7 @@
 SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 {
 	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
-	R2::CBasePlayer* player = R2::UTIL_PlayerByIndex(playerIndex);
+	R2::CBaseClient* player = &R2::g_pClientArray[playerIndex];
 
 	if (!g_pServerAuthentication->m_PlayerAuthenticationData.count(player))
 	{
@@ -35,7 +35,7 @@ SQRESULT SQ_IsWritingPlayerPersistence(void* sqvm)
 SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 {
 	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
-	R2::CBasePlayer* player = R2::UTIL_PlayerByIndex(playerIndex);
+	R2::CBaseClient* player = &R2::g_pClientArray[playerIndex];
 	if (!g_pServerAuthentication->m_PlayerAuthenticationData.count(player))
 	{
 		g_pServerSquirrel->raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());

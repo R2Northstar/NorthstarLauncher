@@ -13,6 +13,10 @@ namespace R2
 	CEngine* g_pEngine;
 
 	void (*CBaseClient__Disconnect)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
+
+	CBaseClient* g_pClientArray;
+
+	server_state_t* g_pServerState;
 } // namespace R2
 
 ON_DLL_LOAD("engine.dll", R2Engine, (HMODULE baseAddress))
@@ -24,4 +28,8 @@ ON_DLL_LOAD("engine.dll", R2Engine, (HMODULE baseAddress))
 	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
 
 	CBaseClient__Disconnect = (void (*)(void*, uint32_t, const char*, ...))((char*)baseAddress + 0x1012C0);
+
+	g_pServerState = (server_state_t*)((char*)baseAddress + 0x12A53D48);
+
+	g_pClientArray = (CBaseClient*)((char*)baseAddress + 0x12A53F90);
 }

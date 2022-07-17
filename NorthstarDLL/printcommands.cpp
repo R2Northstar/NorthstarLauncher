@@ -100,8 +100,8 @@ void ConCommand_find(const CCommand& arg)
 		for (int i = 0; i < arg.ArgC() - 1; i++)
 		{
 			// make lowercase to avoid case sensitivity
-			strncpy(pTempName, map.second->m_pszName, sizeof(pTempName));
-			strncpy(pTempSearchTerm, arg.Arg(i + 1), sizeof(pTempSearchTerm));
+			strncpy_s(pTempName, sizeof(pTempName), map.second->m_pszName, sizeof(pTempName) - 1);
+			strncpy_s(pTempSearchTerm, sizeof(pTempSearchTerm), arg.Arg(i + 1), sizeof(pTempSearchTerm) - 1);
 
 			for (int i = 0; pTempName[i]; i++)
 				pTempName[i] = tolower(pTempName[i]);

@@ -3,6 +3,7 @@
 #include "plugins.h"
 #include "masterserver.h"
 #include "convar.h"
+#include "serverpresence.h"
 
 #include <chrono>
 #include <windows.h>
@@ -194,7 +195,7 @@ SQRESULT SQ_UpdateListenServer(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
 	serverInfo.id = g_pMasterServerManager->m_sOwnServerId;
-	serverInfo.password = Cvar_ns_server_password->GetString();
+	serverInfo.password = "";// g_pServerPresence->Cvar_ns_server_password->GetString(); todo this fr
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }

@@ -189,8 +189,7 @@ void*, , (const char* pPath, void* a2))
 			// need to allocate a new string for this
 			std::string newPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
 			allocatedNewPath = new char[newPath.size() + 1];
-			strncpy(allocatedNewPath, newPath.c_str(), newPath.size());
-			allocatedNewPath[newPath.size()] = '\0';
+			strncpy_s(allocatedNewPath, newPath.size() + 1, newPath.c_str(), newPath.size());
 			pPath = allocatedNewPath;
 		}
 	}

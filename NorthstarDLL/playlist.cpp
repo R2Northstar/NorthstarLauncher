@@ -5,6 +5,7 @@
 #include "convar.h"
 #include "squirrel.h"
 #include "hoststate.h"
+#include "serverpresence.h"
 
 AUTOHOOK_INIT()
 
@@ -30,10 +31,17 @@ char,, (void* a1, void* a2))
 }
 
 AUTOHOOK(SetCurrentPlaylist, engine.dll + 0x18EB20,
-void,, (const char* pPlaylistName))
+bool, __fastcall, (const char* pPlaylistName))
 {
-	SetCurrentPlaylist(pPlaylistName);
-	spdlog::info("Set playlist to {}", pPlaylistName);
+	bool bSuccess = SetCurrentPlaylist(pPlaylistName);
+	
+	if (bSuccess)
+	{
+		spdlog::info("Set playlist to {}", R2::GetCurrentPlaylistName());
+		g_pServerPresence->SetPlaylist(R2::GetCurrentPlaylistName());
+	}
+
+	return bSuccess;
 }
 
 AUTOHOOK(SetPlaylistVarOverride, engine.dll + 0x18ED00,
@@ -53,7 +61,6 @@ const char*,, (const char* pVarName, bool bUseOverrides))
 
 	return GetCurrentPlaylistVar(pVarName, bUseOverrides);
 }
-
 
 AUTOHOOK(GetCurrentGamemodeMaxPlayers, engine.dll + 0x18C430,
 int,, ())
@@ -84,7 +91,7 @@ void ConCommand_setplaylistvaroverride(const CCommand& args)
 		R2::SetPlaylistVarOverride(args.Arg(i), args.Arg(i + 1));
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (HMODULE baseAddress))
 {
 	AUTOHOOK_DISPATCH()
 

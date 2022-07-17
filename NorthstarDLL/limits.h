@@ -1,5 +1,5 @@
 #pragma once
-#include "r2server.h"
+#include "r2engine.h"
 #include "convar.h"
 #include <unordered_map>
 
@@ -32,13 +32,13 @@ class ServerLimitsManager
 	ConVar* Cvar_sv_querylimit_per_sec;
 	ConVar* Cvar_sv_max_chat_messages_per_sec;
 
-	std::unordered_map<R2::CBasePlayer*, PlayerLimitData> m_PlayerLimitData;
+	std::unordered_map<R2::CBaseClient*, PlayerLimitData> m_PlayerLimitData;
 	std::vector<UnconnectedPlayerLimitData> m_UnconnectedPlayerLimitData;
 
   public:
-	void AddPlayer(R2::CBasePlayer* player);
-	bool CheckStringCommandLimits(R2::CBasePlayer* player);
-	bool CheckChatLimits(R2::CBasePlayer* player);
+	void AddPlayer(R2::CBaseClient* player);
+	bool CheckStringCommandLimits(R2::CBaseClient* player);
+	bool CheckChatLimits(R2::CBaseClient* player);
 };
 
 extern ServerLimitsManager* g_pServerLimits;

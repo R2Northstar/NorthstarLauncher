@@ -2,6 +2,7 @@
 #include "squirrel.h"
 #include "concommand.h"
 #include "modmanager.h"
+#include "dedicated.h"
 #include "r2engine.h"
 #include "NSMem.h"
 
@@ -130,14 +131,20 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 	// ideally we'd just check if the sqvm was fully initialised here, somehow
 	if (strcmp(file, "console") && strcmp(file, "unnamedbuffer"))
 	{
-		R2::Cbuf_AddText(
-			R2::Cbuf_GetCurrentPlayer(),
-			fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
-				.c_str(),
-			R2::cmd_source_t::kCommandSrcCode);
+		// kill dedicated server if we hit this
+		if (IsDedicatedServer()) 
+			abort();
+		else
+		{
+			R2::Cbuf_AddText(
+				R2::Cbuf_GetCurrentPlayer(),
+				fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
+					.c_str(),
+				R2::cmd_source_t::kCommandSrcCode);
 
-		if (realContext == ScriptContext::UI) // likely temp: show console so user can see any errors, as error message wont display if ui is dead
-			R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode); 
+			if (realContext == ScriptContext::UI) // likely temp: show console so user can see any errors, as error message wont display if ui is dead
+				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode); 
+		}
 	}
 
 	// dont call the original function since it kills game lol
