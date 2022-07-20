@@ -1515,6 +1515,9 @@
     <ClInclude Include="NSMem.h">
       <Filter>Header Files\Shared\ExploitFixes</Filter>
     </ClInclude>
+    <ClInclude Include="scriptutility.h">
+      <Filter>Header Files\Shared</Filter>
+    </ClInclude>
     <ClInclude Include="scriptjson.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
@@ -1686,6 +1689,9 @@
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="scriptjson.cpp">
+      <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptutility.cpp">
       <Filter>Source Files\Shared</Filter>
     </ClCompile>
   </ItemGroup>
