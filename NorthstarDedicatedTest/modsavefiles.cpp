@@ -47,8 +47,9 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 			{
 				if (fileName == file)
 				{
-					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData");
-					std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / (file + ".json"));
+					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename());
+					std::ofstream fileStr(
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
 					if (fileStr.fail())
 					{
 						ClientSq_pusherror(
@@ -103,7 +104,7 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 					return SQRESULT_NOTNULL;
 				}
 			}
-			ClientSq_pusherror(sqvm, fmt::format("File with name {} was not found!", file).c_str());
+			ClientSq_pusherror(sqvm, fmt::format("File with name {} was not registered for mod {}!", file, modName).c_str());
 			return SQRESULT_ERROR;
 		}
 	ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
@@ -144,8 +145,9 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 			{
 				if (fileName == file)
 				{
-					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData");
-					std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / (file + ".json"));
+					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename());
+					std::ofstream fileStr(
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
 					if (fileStr.fail())
 					{
 						ServerSq_pusherror(
@@ -158,6 +160,8 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 					return SQRESULT_NULL;
 				}
 			}
+			ServerSq_pusherror(sqvm, fmt::format("File with name {} was not registered for mod {}!", file, modName).c_str());
+			return SQRESULT_ERROR;
 		}
 	ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", file).c_str());
 	return SQRESULT_ERROR;
