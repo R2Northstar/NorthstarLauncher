@@ -9,7 +9,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-const int CHARACTER_LIMIT = 8192;
+const int CHARACTER_LIMIT = 50000;
 
 bool ContainsNonASCIIChars(std::string str);
 std::string EncodeJSON(void* sqvm);
