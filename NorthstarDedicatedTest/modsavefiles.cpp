@@ -47,6 +47,7 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 			{
 				if (fileName == file)
 				{
+					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData");
 					std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / (file + ".json"));
 					if (fileStr.fail())
 					{
