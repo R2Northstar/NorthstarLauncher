@@ -82,7 +82,8 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 			{
 				if (fileName == file)
 				{
-					std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / (file + ".json"));
+					std::ifstream fileStr(
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
 					if (fileStr.fail())
 					{
 						ClientSq_newTable(sqvm);
@@ -183,7 +184,8 @@ SQRESULT ServerSq_LoadJSON(void* sqvm)
 			{
 				if (fileName == file)
 				{
-					std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / (file + ".json"));
+					std::ifstream fileStr(
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
 					if (fileStr.fail())
 					{
 						ServerSq_newTable(sqvm);
