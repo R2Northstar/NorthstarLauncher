@@ -221,17 +221,17 @@ std::string EncodeJSON(void* sqvm) {
 
 void InitialiseClientSaveFiles(HMODULE baseAddress) 
 {
-	g_ClientSquirrelManager->AddFuncRegistration("table", "NSLoadModFile", "string mod, string file", "", ClientSq_LoadJSON);
-	g_ClientSquirrelManager->AddFuncRegistration("void", "NSSaveModFile", "string mod, string file, table data", "", ClientSq_SaveJSON);
+	g_ClientSquirrelManager->AddFuncRegistration("table", "NSLoadFile", "string mod, string file", "", ClientSq_LoadJSON);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ClientSq_SaveJSON);
 
-	g_UISquirrelManager->AddFuncRegistration("table", "NSLoadModFile", "string mod, string file", "", ClientSq_LoadJSON);
-	g_UISquirrelManager->AddFuncRegistration("void", "NSSaveModFile", "string mod, string file, table data", "", ClientSq_SaveJSON);
+	g_UISquirrelManager->AddFuncRegistration("table", "NSLoadFile", "string mod, string file", "", ClientSq_LoadJSON);
+	g_UISquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ClientSq_SaveJSON);
 }
 
 void InitialiseServerSaveFiles(HMODULE baseAddress) 
 {
-	g_ServerSquirrelManager->AddFuncRegistration("table", "NSLoadModFile", "string mod, string file", "", ServerSq_LoadJSON);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSaveModFile", "string mod, string file, table data", "", ServerSq_SaveJSON);
+	g_ServerSquirrelManager->AddFuncRegistration("table", "NSLoadFile", "string mod, string file", "", ServerSq_LoadJSON);
+	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ServerSq_SaveJSON);
 }
 
 bool ContainsNonASCIIChars(std::string str) 
