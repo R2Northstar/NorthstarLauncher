@@ -14,7 +14,7 @@ const int CHARACTER_LIMIT = 50000;
 bool ContainsNonASCIIChars(std::string str);
 std::string EncodeJSON(void* sqvm);
 
-SQRESULT ClientSq_SaveJSON(void* sqvm) 
+SQRESULT ClientSq_SaveJSON(void* sqvm)
 {
 	std::string modName = ClientSq_getstring(sqvm, 1);
 	std::string file = ClientSq_getstring(sqvm, 2);
@@ -51,7 +51,8 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 					std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / (file + ".json"));
 					if (fileStr.fail())
 					{
-						ClientSq_pusherror(sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
+						ClientSq_pusherror(
+							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
 						return SQRESULT_ERROR;
 					}
 					fileStr.write(content.c_str(), content.length());
@@ -64,7 +65,7 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 	return SQRESULT_ERROR;
 }
 
-SQRESULT ClientSq_LoadJSON(void* sqvm) 
+SQRESULT ClientSq_LoadJSON(void* sqvm)
 {
 	std::string modName = ClientSq_getstring(sqvm, 1);
 	std::string file = ClientSq_getstring(sqvm, 2);
@@ -148,7 +149,8 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 					if (fileStr.fail())
 					{
 						ServerSq_pusherror(
-							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
+							sqvm, fmt::format(
+								"There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
 						return SQRESULT_ERROR;
 					}
 					fileStr.write(content.c_str(), content.length());
@@ -193,7 +195,6 @@ SQRESULT ServerSq_LoadJSON(void* sqvm)
 						ServerSq_newTable(sqvm);
 						return SQRESULT_NOTNULL;
 					}
-					// spdlog::warn("Passing to DecodeJSON... {}", doc["test"].GetString());
 					ServerSq_DecodeJSON_Table(
 						sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
 					return SQRESULT_NOTNULL;
@@ -206,7 +207,8 @@ SQRESULT ServerSq_LoadJSON(void* sqvm)
 	return SQRESULT_ERROR;
 }
 
-std::string EncodeJSON(void* sqvm) {
+std::string EncodeJSON(void* sqvm)
+{
 	rapidjson_document doc;
 	doc.SetObject();
 
@@ -219,7 +221,7 @@ std::string EncodeJSON(void* sqvm) {
 	return buffer.GetString();
 }
 
-void InitialiseClientSaveFiles(HMODULE baseAddress) 
+void InitialiseClientSaveFiles(HMODULE baseAddress)
 {
 	g_ClientSquirrelManager->AddFuncRegistration("table", "NSLoadFile", "string mod, string file", "", ClientSq_LoadJSON);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ClientSq_SaveJSON);
@@ -228,7 +230,7 @@ void InitialiseClientSaveFiles(HMODULE baseAddress)
 	g_UISquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ClientSq_SaveJSON);
 }
 
-void InitialiseServerSaveFiles(HMODULE baseAddress) 
+void InitialiseServerSaveFiles(HMODULE baseAddress)
 {
 	g_ServerSquirrelManager->AddFuncRegistration("table", "NSLoadFile", "string mod, string file", "", ServerSq_LoadJSON);
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ServerSq_SaveJSON);
@@ -236,7 +238,7 @@ void InitialiseServerSaveFiles(HMODULE baseAddress)
 
 bool ContainsNonASCIIChars(std::string str) 
 {
-	// we don't allow null characters either, even if they're ASCII characters because idk if people can 
+	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
 	return std::any_of(
 		str.begin(), str.end(), [](char c) { return static_cast<unsigned char>(c) > 127 || static_cast<unsigned char>(c) == '\0'; });
