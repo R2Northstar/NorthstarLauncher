@@ -265,6 +265,7 @@ void InitialiseDedicated(HMODULE engineAddress)
 	// make sure it still gets registered
 
 	// add cmdline args that are good for dedi
+	CommandLine()->AppendParm("-safe", 0);
 	CommandLine()->AppendParm("-nomenuvid", 0);
 	CommandLine()->AppendParm("-nosound", 0);
 	CommandLine()->AppendParm("-windowed", 0);
