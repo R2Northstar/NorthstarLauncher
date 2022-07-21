@@ -26,13 +26,14 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 			fmt::format(
 				"File content length over character limit ({})! Reduce the table's contents, or use multiple files!",
 				CHARACTER_LIMIT,
-			modName).c_str());
+				modName)
+				.c_str());
 		return SQRESULT_ERROR;
 	}
 	if (ContainsNonASCIIChars(content))
 	{
-		ClientSq_pusherror(sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!",
-			modName).c_str());
+		ClientSq_pusherror(
+			sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!", modName).c_str());
 		return SQRESULT_ERROR;
 	}
 	for (Mod& mod : g_ModManager->m_loadedMods)
@@ -99,7 +100,6 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 						ClientSq_newTable(sqvm);
 						return SQRESULT_NOTNULL;
 					}
-					//spdlog::warn("Passing to DecodeJSON... {}", doc["test"].GetString());
 					ClientSq_DecodeJSON_Table(
 						sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
 					return SQRESULT_NOTNULL;
@@ -152,8 +152,7 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 					if (fileStr.fail())
 					{
 						ServerSq_pusherror(
-							sqvm, fmt::format(
-								"There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
+							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
 						return SQRESULT_ERROR;
 					}
 					fileStr.write(content.c_str(), content.length());
@@ -242,7 +241,7 @@ void InitialiseServerSaveFiles(HMODULE baseAddress)
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSaveFile", "string mod, string file, table data", "", ServerSq_SaveJSON);
 }
 
-bool ContainsNonASCIIChars(std::string str) 
+bool ContainsNonASCIIChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
