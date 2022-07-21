@@ -96,6 +96,7 @@ class Mod
 	std::unordered_map<size_t, std::string> KeyValues;
 	std::vector<std::string> BinkVideos;
 	std::string Pdiff; // only need one per mod
+	std::vector<std::string> SaveFiles;
 
 	std::vector<ModRpakEntry> Rpaks;
 	std::unordered_map<std::string, std::string>

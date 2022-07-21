@@ -1521,6 +1521,9 @@
     <ClInclude Include="scriptjson.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
+    <ClInclude Include="modsavefiles.h">
+      <Filter>Header Files\Shared\Mods</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1693,6 +1696,9 @@
     </ClCompile>
     <ClCompile Include="scriptutility.cpp">
       <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="modsavefiles.cpp">
+      <Filter>Source Files\Shared\Mods</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

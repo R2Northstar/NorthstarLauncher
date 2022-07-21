@@ -16,6 +16,7 @@
 #include "filesystem.h"
 #include "rpakfilesystem.h"
 #include "configurables.h"
+#include "modsavefiles.h"
 
 ModManager* g_ModManager;
 
@@ -85,6 +86,36 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	{
 		spdlog::info("Mod file {} is missing a LoadPriority, consider adding one", (modDir / "mod.json").string());
 		LoadPriority = 0;
+	}
+
+	if (modJson.HasMember("SaveFiles"))
+	{
+		if (!modJson["SaveFiles"].IsArray())
+		{
+			spdlog::error("Save file list for {} is not an array!", Name);
+			return;
+		}
+		for (int i = 0; i < modJson["SaveFiles"].Size(); i++)
+		{
+			if (!modJson["SaveFiles"][i].IsString())
+			{
+				spdlog::error("Error reading save files for {}! One of them is not a string!", Name);
+				return;
+			}
+			std::string file = modJson["SaveFiles"][i].GetString();
+			// prevent going in/out of directories by checking if the file string has backslashes or slashes
+			if (std::find(file.begin(), file.end(), '\\') != file.end() || std::find(file.begin(), file.end(), '/') != file.end())
+			{
+				spdlog::error("Save files are not allowed to use directories!\nMod: {}\nSave file: {}", Name, file);
+				return;
+			}
+			if (ContainsNonASCIIChars(file))
+			{
+				spdlog::error("Save files are not allowed to use non-ASCII characters!\nMod: {}\nSave file: {}", Name, file);
+				return;
+			}
+			SaveFiles.push_back(modJson["SaveFiles"][i].GetString());
+		}
 	}
 
 	// mod convars

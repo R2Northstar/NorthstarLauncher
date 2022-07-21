@@ -53,6 +53,7 @@
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
 #include "scriptJson.h"
+#include "modsavefiles.h"
 
 typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
@@ -259,6 +260,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelJson);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelUtilityFunctions);
+		AddDllLoadCallbackForClient("client.dll", InitialiseClientSaveFiles);
 		// audio hooks
 		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
 	}
@@ -273,6 +275,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
 	AddDllLoadCallback("server.dll", InitialiseServerSquirrelUtilityFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerSquirrelJson);
+	AddDllLoadCallback("server.dll", InitialiseServerSaveFiles);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
 
