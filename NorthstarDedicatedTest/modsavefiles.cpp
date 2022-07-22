@@ -78,7 +78,7 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 				ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (ModSaveFile file : mod.SaveFiles)
+			for (ModSaveFile& file : mod.SaveFiles)
 			{
 				if (file.Name == fileName)
 				{
@@ -130,7 +130,7 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 				ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (ModSaveFile file : mod.SaveFiles)
+			for (ModSaveFile& file : mod.SaveFiles)
 			{
 				if (file.Name == fileName)
 				{
@@ -151,7 +151,7 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 					if (fileStr.fail())
 					{
 						ServerSq_pusherror(
-							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
+							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
 						return SQRESULT_ERROR;
 					}
 					fileStr.write(content.c_str(), content.length());
@@ -178,7 +178,7 @@ SQRESULT ServerSq_LoadJSON(void* sqvm)
 				ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (ModSaveFile file : mod.SaveFiles)
+			for (ModSaveFile& file : mod.SaveFiles)
 			{
 				if (fileName == file.Name)
 				{
