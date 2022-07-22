@@ -60,6 +60,13 @@ struct ModRpakEntry
 	std::string m_sLoadAfterPak;
 };
 
+struct ModSaveFile
+{
+  public:
+	std::string Name;
+	int CharacterLimit = 50000; // modify this to change the default character limit
+};
+
 class Mod
 {
   public:
@@ -96,6 +103,8 @@ class Mod
 	std::unordered_map<size_t, std::string> KeyValues;
 	std::vector<std::string> BinkVideos;
 	std::string Pdiff; // only need one per mod
+	std::vector<ModSaveFile> SaveFiles;
+	int TotalCharLimit = 0;
 
 	std::vector<ModRpakEntry> Rpaks;
 	std::unordered_map<std::string, std::string>
