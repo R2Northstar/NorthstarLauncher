@@ -101,7 +101,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			// hardcoded and not a startup arg because this limit is kinda ridiculous anyways.
 			// done to prevent a mod from pasting hundreds of file names to fill up the hard drive.
 			// this also means mods have to actually tell how many characters they're going to use instead of just typing in "9999999999".
-			// we check every time to prevent overflow from decieving us into thinking the character flow is low when it's actually just overflowed.
+			// we check every time to prevent overflow from decieving us into thinking the character flow is low when it's actually just
+			// overflowed.
 			if (TotalCharLimit > 2000000)
 			{
 				spdlog::error("Mod {} above maximum total character limit! Reduce the character limits of your files!", Name);
@@ -155,7 +156,9 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 					if (!modJson["SaveFiles"][i]["CharLimit"].IsInt() || modJson["SaveFiles"][i]["CharLimit"].GetInt() < 1 ||
 						modJson["SaveFiles"][i]["CharLimit"].GetInt() > 1000000)
 					{
-						spdlog::error("Save file entry for file {} in mod {} does not have a valid character limit! (Min: 1 | Max: 1,000,000)", file, Name);
+						spdlog::error(
+							"Save file entry for file {} in mod {} does not have a valid character limit! (Min: 1 | Max: 1,000,000)", 
+							file, Name);
 						return;
 					}
 					saveFile.CharacterLimit = modJson["SaveFiles"][i]["CharLimit"].GetInt();
