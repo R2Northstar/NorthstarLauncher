@@ -407,6 +407,86 @@ bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
 	return true;
 }
 
+
+typedef double(__fastcall* GetTimeConnectedType)(__int64 thisptr);
+GetTimeConnectedType GetTimeConnected;
+
+typedef char*(__fastcall* GetAddressType)(__int64 thisptr);
+GetAddressType GetAddress;
+
+const char* COM_FormatSeconds(int seconds)
+{
+	static char string[64];
+
+	int hours = 0;
+	int minutes = seconds / 60;
+
+	if (minutes > 0)
+	{
+		seconds -= (minutes * 60);
+		hours = minutes / 60;
+
+		if (hours > 0)
+		{
+			minutes -= (hours * 60);
+		}
+	}
+
+	if (hours > 0)
+	{
+		snprintf(string, sizeof(string), "%2i:%02i:%02i", hours, minutes, seconds);
+	}
+	else
+	{
+		snprintf(string, sizeof(string), "%02i:%02i", minutes, seconds);
+	}
+
+	return string;
+}
+
+void __fastcall Host_Status_PrintClient_Hook(__int64 client, char addresses, void (*print)(const char*, ...))
+{
+	__int64 playerUid = *(unsigned __int64*)(client + 185928);
+	DWORD playerSlot = *(DWORD*)(client + 16);
+	__int64 nci = *(unsigned __int64*)(client + 656);
+	int state = *(DWORD*)(client + 672);
+	const char* active;
+
+	if (state == 8)
+	{
+		active = "active";
+	}
+	else if (state < 3)
+	{
+		active = "connecting";
+		if (state < 2)
+			active = "challenging";
+	}
+	else
+	{
+		active = "spawning";
+	}
+
+	if (nci)
+	{
+		int rate = *(unsigned int*)(nci + 232);
+		int loss = ((*(float*)(6712 * 1 + nci + 500)) * 100.0);
+		int ping = ((*(float*)(6712 * 0 + nci + 508)) * 1000.0);
+		const char* connected = COM_FormatSeconds(GetTimeConnected(nci));
+		print("# %i \"%s\" %lld %s %i %i %s %d", (unsigned int)(playerSlot + 1), client + 22, playerUid, connected, ping, loss, active, rate);
+		if (addresses)
+		{
+			char* address = GetAddress(nci);
+			print(" %s", address);
+		}
+	}
+	else
+	{
+		print("#%2i \"%s\" %lld %s", (unsigned int)(playerSlot + 1), client + 22, playerUid, active);
+	}
+	print("\n");
+}
+
 void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 {
 	HookEnabler hook;
@@ -422,6 +502,11 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 		(char*)baseAddress + 0x1A1530,
 		CClientState_ProcessPrint_Hook,
 		reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
+
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x15B7F0, Host_Status_PrintClient_Hook, NULL);
+
+	GetTimeConnected = (GetTimeConnectedType)((char*)baseAddress + 0x210530);
+	GetAddress = (GetAddressType)((char*)baseAddress + 0x2101A0);
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
