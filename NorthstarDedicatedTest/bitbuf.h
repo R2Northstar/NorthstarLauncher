@@ -96,7 +96,7 @@ class BitBufferBase
 	}
 
   public:
-	INLINE bool IsOverflowed()
+	INLINE bool IsOverflowed() const
 	{
 		return m_Overflow;
 	}
@@ -105,7 +105,7 @@ class BitBufferBase
 		m_Overflow = true;
 	}
 
-	INLINE const char* GetName()
+	INLINE const char* GetName() const
 	{
 		return m_BufferName;
 	}

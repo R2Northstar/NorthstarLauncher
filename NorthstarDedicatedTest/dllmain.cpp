@@ -42,10 +42,10 @@
 #include "debugoverlay.h"
 #include "clientvideooverrides.h"
 #include "clientruihooks.h"
-#include <string.h>
 #include "version.h"
-#include "pch.h"
 #include "scriptutility.h"
+#include "server.h"
+#include "client.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -272,6 +272,8 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseServerSquirrelUtilityFunctions);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
+	AddDllLoadCallback("engine.dll", InitialiseBaseServer);
+	AddDllLoadCallback("engine.dll", InitialiseBaseClient);
 
 	AddDllLoadCallback("filesystem_stdio.dll", InitialiseFilesystem);
 	AddDllLoadCallback("engine.dll", InitialiseEngineRpakFilesystem);

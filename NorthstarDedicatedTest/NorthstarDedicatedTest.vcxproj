@@ -113,15 +113,20 @@
     <ClInclude Include="bits.h" />
     <ClInclude Include="buildainfile.h" />
     <ClInclude Include="chatcommand.h" />
+    <ClInclude Include="client.h" />
     <ClInclude Include="clientchathooks.h" />
     <ClInclude Include="debugoverlay.h" />
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="net.h" />
+    <ClInclude Include="net_chan.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
+    <ClInclude Include="protocol.h" />
     <ClInclude Include="scriptutility.h" />
+    <ClInclude Include="server.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
@@ -566,6 +571,8 @@
     <ClInclude Include="ExploitFixes.h" />
     <ClInclude Include="ExploitFixes_UTF8Parser.h" />
     <ClInclude Include="NSMem.h" />
+    <ClInclude Include="stringtable.h" />
+    <ClInclude Include="valve_utl.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
@@ -574,6 +581,7 @@
     <ClCompile Include="bits.cpp" />
     <ClCompile Include="buildainfile.cpp" />
     <ClCompile Include="chatcommand.cpp" />
+    <ClCompile Include="client.cpp" />
     <ClCompile Include="clientauthhooks.cpp" />
     <ClCompile Include="clientchathooks.cpp" />
     <ClCompile Include="clientruihooks.cpp" />
@@ -604,6 +612,8 @@
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="masterserver.cpp" />
     <ClCompile Include="modmanager.cpp" />
+    <ClCompile Include="net.cpp" />
+    <ClCompile Include="net_chan.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -618,6 +628,7 @@
     <ClCompile Include="scriptserverbrowser.cpp" />
     <ClCompile Include="scriptsrson.cpp" />
     <ClCompile Include="scriptutility.cpp" />
+    <ClCompile Include="server.cpp" />
     <ClCompile Include="serverauthentication.cpp" />
     <ClCompile Include="miscserverscript.cpp" />
     <ClCompile Include="serverchathooks.cpp" />
