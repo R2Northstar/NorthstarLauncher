@@ -9,7 +9,6 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-const int CHARACTER_LIMIT = 50000;
 
 bool ContainsNonASCIIChars(std::string str);
 std::string EncodeJSON(void* sqvm);
@@ -17,19 +16,8 @@ std::string EncodeJSON(void* sqvm);
 SQRESULT ClientSq_SaveJSON(void* sqvm)
 {
 	std::string modName = ClientSq_getstring(sqvm, 1);
-	std::string file = ClientSq_getstring(sqvm, 2);
+	std::string fileName = ClientSq_getstring(sqvm, 2);
 	std::string content = EncodeJSON(sqvm);
-	if (content.length() > CHARACTER_LIMIT)
-	{
-		ClientSq_pusherror(
-			sqvm,
-			fmt::format(
-				"File content length over character limit ({})! Reduce the table's contents, or use multiple files!",
-				CHARACTER_LIMIT,
-				modName)
-				.c_str());
-		return SQRESULT_ERROR;
-	}
 	if (ContainsNonASCIIChars(content))
 	{
 		ClientSq_pusherror(
@@ -44,17 +32,28 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 				ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (std::string fileName : mod.SaveFiles)
+			for (ModSaveFile& file : mod.SaveFiles)
 			{
-				if (fileName == file)
+				if (file.Name == fileName)
 				{
+					if (content.length() > file.CharacterLimit)
+					{
+						ClientSq_pusherror(
+							sqvm,
+							fmt::format(
+								"File content length over character limit ({})! Reduce the table's contents, or increase it!",
+								file.CharacterLimit,
+								modName)
+								.c_str());
+						return SQRESULT_ERROR;
+					}
 					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename());
 					std::ofstream fileStr(
-						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (fileName + ".json"));
 					if (fileStr.fail())
 					{
 						ClientSq_pusherror(
-							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", file).c_str());
+							sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
 						return SQRESULT_ERROR;
 					}
 					fileStr.write(content.c_str(), content.length());
@@ -63,14 +62,14 @@ SQRESULT ClientSq_SaveJSON(void* sqvm)
 				}
 			}
 		}
-	ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", file).c_str());
+	ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", fileName).c_str());
 	return SQRESULT_ERROR;
 }
 
 SQRESULT ClientSq_LoadJSON(void* sqvm)
 {
 	std::string modName = ClientSq_getstring(sqvm, 1);
-	std::string file = ClientSq_getstring(sqvm, 2);
+	std::string fileName = ClientSq_getstring(sqvm, 2);
 	for (Mod& mod : g_ModManager->m_loadedMods)
 		if (modName == mod.Name)
 		{
@@ -79,12 +78,12 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 				ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (std::string fileName : mod.SaveFiles)
+			for (ModSaveFile file : mod.SaveFiles)
 			{
-				if (fileName == file)
+				if (file.Name == fileName)
 				{
 					std::ifstream fileStr(
-						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file.Name + ".json"));
 					if (fileStr.fail())
 					{
 						ClientSq_newTable(sqvm);
@@ -105,7 +104,7 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 					return SQRESULT_NOTNULL;
 				}
 			}
-			ClientSq_pusherror(sqvm, fmt::format("File with name {} was not registered for mod {}!", file, modName).c_str());
+			ClientSq_pusherror(sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, modName).c_str());
 			return SQRESULT_ERROR;
 		}
 	ClientSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
@@ -115,19 +114,8 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 SQRESULT ServerSq_SaveJSON(void* sqvm)
 {
 	std::string modName = ServerSq_getstring(sqvm, 1);
-	std::string file = ServerSq_getstring(sqvm, 2);
+	std::string fileName = ServerSq_getstring(sqvm, 2);
 	std::string content = EncodeJSON(sqvm);
-	if (content.length() > CHARACTER_LIMIT)
-	{
-		ServerSq_pusherror(
-			sqvm,
-			fmt::format(
-				"File content length over character limit ({})! Reduce the table's contents, or use multiple files!",
-				CHARACTER_LIMIT,
-				modName)
-				.c_str());
-		return SQRESULT_ERROR;
-	}
 	if (ContainsNonASCIIChars(content))
 	{
 		ServerSq_pusherror(
@@ -142,13 +130,24 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 				ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (std::string fileName : mod.SaveFiles)
+			for (ModSaveFile file : mod.SaveFiles)
 			{
-				if (fileName == file)
+				if (file.Name == fileName)
 				{
+					if (content.length() > file.CharacterLimit)
+					{
+						ServerSq_pusherror(
+							sqvm,
+							fmt::format(
+								"File content length over character limit ({})! Reduce the table's contents, or use multiple files!",
+								file.CharacterLimit,
+								modName)
+								.c_str());
+						return SQRESULT_ERROR;
+					}
 					fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename());
 					std::ofstream fileStr(
-						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file.Name + ".json"));
 					if (fileStr.fail())
 					{
 						ServerSq_pusherror(
@@ -160,17 +159,17 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 					return SQRESULT_NULL;
 				}
 			}
-			ServerSq_pusherror(sqvm, fmt::format("File with name {} was not registered for mod {}!", file, modName).c_str());
+			ServerSq_pusherror(sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, modName).c_str());
 			return SQRESULT_ERROR;
 		}
-	ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", file).c_str());
+	ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 	return SQRESULT_ERROR;
 }
 
 SQRESULT ServerSq_LoadJSON(void* sqvm)
 {
 	std::string modName = ServerSq_getstring(sqvm, 1);
-	std::string file = ServerSq_getstring(sqvm, 2);
+	std::string fileName = ServerSq_getstring(sqvm, 2);
 	for (Mod& mod : g_ModManager->m_loadedMods)
 		if (modName == mod.Name)
 		{
@@ -179,12 +178,12 @@ SQRESULT ServerSq_LoadJSON(void* sqvm)
 				ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());
 				return SQRESULT_ERROR;
 			}
-			for (std::string fileName : mod.SaveFiles)
+			for (ModSaveFile file : mod.SaveFiles)
 			{
-				if (fileName == file)
+				if (fileName == file.Name)
 				{
 					std::ifstream fileStr(
-						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file + ".json"));
+						fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod.ModDirectory).filename() / (file.Name + ".json"));
 					if (fileStr.fail())
 					{
 						ServerSq_newTable(sqvm);
@@ -205,7 +204,7 @@ SQRESULT ServerSq_LoadJSON(void* sqvm)
 					return SQRESULT_NOTNULL;
 				}
 			}
-			ServerSq_pusherror(sqvm, fmt::format("File with name {} was not found!", file).c_str());
+			ServerSq_pusherror(sqvm, fmt::format("File with name {} was not found!", fileName).c_str());
 			return SQRESULT_ERROR;
 		}
 	ServerSq_pusherror(sqvm, fmt::format("Mod with name {} was not found!", modName).c_str());

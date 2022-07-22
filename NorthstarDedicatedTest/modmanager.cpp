@@ -97,24 +97,60 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 		for (int i = 0; i < modJson["SaveFiles"].Size(); i++)
 		{
-			if (!modJson["SaveFiles"][i].IsString())
+			if (modJson["SaveFiles"][i].IsString())
 			{
-				spdlog::error("Error reading save files for {}! One of them is not a string!", Name);
-				return;
+				std::string file = modJson["SaveFiles"][i].GetString();
+				// prevent going in/out of directories by checking if the file string has backslashes or slashes
+				if (std::find(file.begin(), file.end(), '\\') != file.end() || std::find(file.begin(), file.end(), '/') != file.end())
+				{
+					spdlog::error("Save files are not allowed to use directories!\nMod: {}\nSave file: {}", Name, file);
+					return;
+				}
+				if (ContainsNonASCIIChars(file))
+				{
+					spdlog::error("Save files are not allowed to use non-ASCII characters!\nMod: {}\nSave file: {}", Name, file);
+					return;
+				}
+				ModSaveFile saveFile;
+				saveFile.Name = file;
+				SaveFiles.push_back(saveFile);
+				continue;
 			}
-			std::string file = modJson["SaveFiles"][i].GetString();
-			// prevent going in/out of directories by checking if the file string has backslashes or slashes
-			if (std::find(file.begin(), file.end(), '\\') != file.end() || std::find(file.begin(), file.end(), '/') != file.end())
+			if (modJson["SaveFiles"][i].IsObject())
 			{
-				spdlog::error("Save files are not allowed to use directories!\nMod: {}\nSave file: {}", Name, file);
-				return;
+				if (!modJson["SaveFiles"][i].HasMember("Name"))
+				{
+					spdlog::error("Save file entry at index {} does not have a file name defined!\nMod: {}", i, Name);
+					return;
+				}
+				std::string file = modJson["SaveFiles"][i]["Name"].GetString();
+				// prevent going in/out of directories by checking if the file string has backslashes or slashes
+				if (std::find(file.begin(), file.end(), '\\') != file.end() || std::find(file.begin(), file.end(), '/') != file.end())
+				{
+					spdlog::error("Save files are not allowed to use directories!\nMod: {}\nSave file: {}", Name, file);
+					return;
+				}
+				if (ContainsNonASCIIChars(file))
+				{
+					spdlog::error("Save files are not allowed to use non-ASCII characters!\nMod: {}\nSave file: {}", Name, file);
+					return;
+				}
+				ModSaveFile saveFile;
+				saveFile.Name = file;
+				if (modJson["SaveFiles"][i].HasMember("CharLimit"))
+				{
+					if (!modJson["SaveFiles"][i]["CharLimit"].IsInt())
+					{
+						spdlog::error("Save file entry for file {} does not have a valid character limit!\nMod: {}", file, Name);
+						return;
+					}
+					saveFile.CharacterLimit = modJson["SaveFiles"][i]["CharLimit"].GetInt();
+				}
+				SaveFiles.push_back(saveFile);
+				continue;
 			}
-			if (ContainsNonASCIIChars(file))
-			{
-				spdlog::error("Save files are not allowed to use non-ASCII characters!\nMod: {}\nSave file: {}", Name, file);
-				return;
-			}
-			SaveFiles.push_back(modJson["SaveFiles"][i].GetString());
+			spdlog::error("Error reading save files for {}! One of them is neither a string or a valid object!", Name);
+			return;
 		}
 	}
 
