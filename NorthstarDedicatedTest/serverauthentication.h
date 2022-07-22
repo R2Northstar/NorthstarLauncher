@@ -1,8 +1,7 @@
 #pragma once
 #include "convar.h"
 #include "httplib.h"
-#include <unordered_map>
-#include <string>
+#include "NetAdr2.h"
 
 struct AuthData
 {
@@ -31,14 +30,6 @@ struct AdditionalPlayerData
 
 	uint64_t uid;
 };
-
-#pragma once
-typedef enum
-{
-	NA_NULL = 0,
-	NA_LOOPBACK,
-	NA_IP,
-} netadrtype_t;
 
 #pragma pack(push, 1)
 typedef struct netadr_s

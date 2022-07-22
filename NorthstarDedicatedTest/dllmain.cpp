@@ -39,14 +39,13 @@
 #include "scriptservertoclientstringcommand.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "host_state.h"
+#include "rcon_shared.h"
 #include "debugoverlay.h"
 #include "clientvideooverrides.h"
 #include "clientruihooks.h"
-#include <string.h>
 #include "version.h"
-#include "pch.h"
 #include "scriptutility.h"
-
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -273,6 +272,9 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
 	AddDllLoadCallback("server.dll", InitialiseServerSquirrelUtilityFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerSquirrelJson);
+
+	AddDllLoadCallback("engine.dll", InitializeCHostStateHooks);
+	AddDllLoadCallback("engine.dll", InitializeRconSystems);
 
 	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
 

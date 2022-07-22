@@ -10,10 +10,8 @@
 #include "miscserverscript.h"
 #include "concommand.h"
 #include "dedicated.h"
-#include <fstream>
-#include <filesystem>
-#include <thread>
 #include "configurables.h"
+#include "host_state.h"
 #include "NSMem.h"
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
@@ -595,7 +593,7 @@ void CBaseClient__SendServerInfoHook(void* self)
 
 bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 {
-	if (packet->adr.type == NA_IP &&
+	if (packet->adr.type == netadrtype_t::NA_IP &&
 		(!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->GetBool()) || !Cvar_net_datablock_enabled->GetBool()))
 	{
 		// bad lookup: optimise later tm

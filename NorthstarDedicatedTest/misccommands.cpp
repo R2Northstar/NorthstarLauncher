@@ -5,6 +5,7 @@
 #include "masterserver.h"
 #include "serverauthentication.h"
 #include "squirrel.h"
+#include "host_state.h"
 
 void AddMiscConCommands()
 {

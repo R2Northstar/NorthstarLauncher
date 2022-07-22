@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{b273a875-6618-49fe-8ca4-0b693ba264d5}</ProjectGuid>
+    <RootNamespace>libprotobuf</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <TargetName>libprotobuf_x64</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <TargetName>libprotobuf_x64</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>%(AdditionalOptions) /utf-8 /bigobj /D _CRT_SECURE_NO_WARNINGS </AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>%(AdditionalOptions) /utf-8 /bigobj /D _CRT_SECURE_NO_WARNINGS </AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ResourceCompile Include="version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="any_lite.cc" />
+    <ClCompile Include="arena.cc" />
+    <ClCompile Include="arenastring.cc" />
+    <ClCompile Include="extension_set.cc" />
+    <ClCompile Include="generated_enum_util.cc" />
+    <ClCompile Include="generated_message_table_driven_lite.cc" />
+    <ClCompile Include="generated_message_tctable_lite.cc" />
+    <ClCompile Include="generated_message_util.cc" />
+    <ClCompile Include="implicit_weak_message.cc" />
+    <ClCompile Include="inlined_string_field.cc" />
+    <ClCompile Include="io\coded_stream.cc" />
+    <ClCompile Include="io\io_win32.cc" />
+    <ClCompile Include="io\strtod.cc" />
+    <ClCompile Include="io\zero_copy_stream.cc" />
+    <ClCompile Include="io\zero_copy_stream_impl.cc" />
+    <ClCompile Include="io\zero_copy_stream_impl_lite.cc" />
+    <ClCompile Include="map.cc" />
+    <ClCompile Include="message_lite.cc" />
+    <ClCompile Include="parse_context.cc" />
+    <ClCompile Include="repeated_field.cc" />
+    <ClCompile Include="repeated_ptr_field.cc" />
+    <ClCompile Include="stubs\bytestream.cc" />
+    <ClCompile Include="stubs\common.cc" />
+    <ClCompile Include="stubs\int128.cc" />
+    <ClCompile Include="stubs\status.cc" />
+    <ClCompile Include="stubs\statusor.cc" />
+    <ClCompile Include="stubs\stringpiece.cc" />
+    <ClCompile Include="stubs\stringprintf.cc" />
+    <ClCompile Include="stubs\structurally_valid.cc" />
+    <ClCompile Include="stubs\strutil.cc" />
+    <ClCompile Include="stubs\time.cc" />
+    <ClCompile Include="wire_format_lite.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="any.h" />
+    <ClInclude Include="arena.h" />
+    <ClInclude Include="arenastring.h" />
+    <ClInclude Include="arena_impl.h" />
+    <ClInclude Include="explicitly_constructed.h" />
+    <ClInclude Include="extension_set.h" />
+    <ClInclude Include="extension_set_inl.h" />
+    <ClInclude Include="generated_enum_util.h" />
+    <ClInclude Include="generated_message_table_driven.h" />
+    <ClInclude Include="generated_message_table_driven_lite.h" />
+    <ClInclude Include="generated_message_tctable_decl.h" />
+    <ClInclude Include="generated_message_tctable_impl.h" />
+    <ClInclude Include="generated_message_util.h" />
+    <ClInclude Include="has_bits.h" />
+    <ClInclude Include="implicit_weak_message.h" />
+    <ClInclude Include="inlined_string_field.h" />
+    <ClInclude Include="io\coded_stream.h" />
+    <ClInclude Include="io\io_win32.h" />
+    <ClInclude Include="io\strtod.h" />
+    <ClInclude Include="io\zero_copy_stream.h" />
+    <ClInclude Include="io\zero_copy_stream_impl.h" />
+    <ClInclude Include="io\zero_copy_stream_impl_lite.h" />
+    <ClInclude Include="map.h" />
+    <ClInclude Include="map_entry_lite.h" />
+    <ClInclude Include="map_field_lite.h" />
+    <ClInclude Include="message_lite.h" />
+    <ClInclude Include="parse_context.h" />
+    <ClInclude Include="port.h" />
+    <ClInclude Include="repeated_field.h" />
+    <ClInclude Include="repeated_ptr_field.h" />
+    <ClInclude Include="stubs\bytestream.h" />
+    <ClInclude Include="stubs\callback.h" />
+    <ClInclude Include="stubs\casts.h" />
+    <ClInclude Include="stubs\common.h" />
+    <ClInclude Include="stubs\hash.h" />
+    <ClInclude Include="stubs\int128.h" />
+    <ClInclude Include="stubs\logging.h" />
+    <ClInclude Include="stubs\macros.h" />
+    <ClInclude Include="stubs\map_util.h" />
+    <ClInclude Include="stubs\mutex.h" />
+    <ClInclude Include="stubs\once.h" />
+    <ClInclude Include="stubs\platform_macros.h" />
+    <ClInclude Include="stubs\port.h" />
+    <ClInclude Include="stubs\status.h" />
+    <ClInclude Include="stubs\statusor.h" />
+    <ClInclude Include="stubs\stl_util.h" />
+    <ClInclude Include="stubs\stringpiece.h" />
+    <ClInclude Include="stubs\stringprintf.h" />
+    <ClInclude Include="stubs\strutil.h" />
+    <ClInclude Include="stubs\template_util.h" />
+    <ClInclude Include="stubs\time.h" />
+    <ClInclude Include="wire_format_lite.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

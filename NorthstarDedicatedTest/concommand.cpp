@@ -38,7 +38,7 @@ bool ConCommand::IsCommand(void) const
 //-----------------------------------------------------------------------------
 bool ConCommandBase::IsCommand(void) const
 {
-	return true;
+	return m_pConCommandBaseVTable != g_pConVar_Vtable;
 }
 
 //-----------------------------------------------------------------------------

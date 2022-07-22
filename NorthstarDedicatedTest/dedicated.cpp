@@ -4,6 +4,7 @@
 #include "gameutils.h"
 #include "serverauthentication.h"
 #include "masterserver.h"
+#include "host_state.h"
 
 bool IsDedicated()
 {
