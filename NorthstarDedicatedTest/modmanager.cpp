@@ -158,7 +158,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 					{
 						spdlog::error(
 							"Save file entry for file {} in mod {} does not have a valid character limit! (Min: 1 | Max: 1,000,000)", 
-							file, Name);
+							file,
+							Name);
 						return;
 					}
 					saveFile.CharacterLimit = modJson["SaveFiles"][i]["CharLimit"].GetInt();
