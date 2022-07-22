@@ -368,7 +368,7 @@ void ModManager::LoadMods()
 		// hardcoded and not a startup arg because this limit is VERY ridiculous.
 		// done to prevent a malicious actor from pasting hundreds of mods to fill up the hard drive.
 		// this also means mods have to actually tell how many characters they're going to use instead of just typing in "9999999999".
-		// Even though the bypass would require pasting 1 million mods into the mods folder when only checked once, I'm not taking any
+		// Even though the bypass would require pasting 1 million mods into the mods folder when only checked once, I'm not taking any 
 		// chances. This is only because integer overflows don't throw exceptions =-=
 		if (totalCharsUsed > 10000000 && saveFilesEnabled)
 		{
