@@ -64,7 +64,7 @@ struct ModSaveFile
 {
   public:
 	std::string Name;
-	int CharacterLimit = 50000; // modify this to change the default character limit 
+	int CharacterLimit = 50000; // modify this to change the default character limit
 };
 
 class Mod
