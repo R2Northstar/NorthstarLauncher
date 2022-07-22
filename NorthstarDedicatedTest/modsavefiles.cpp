@@ -12,9 +12,16 @@
 
 bool ContainsNonASCIIChars(std::string str);
 std::string EncodeJSON(void* sqvm);
+bool saveFilesEnabled = true;
 
 SQRESULT ClientSq_SaveJSON(void* sqvm)
 {
+	if (!saveFilesEnabled)
+	{
+		ClientSq_pusherror(
+			sqvm, fmt::format("Your mods have taken up too much space. Uninstall mods or reduce their character limits.").c_str());
+		return SQRESULT_ERROR;
+	}
 	std::string modName = ClientSq_getstring(sqvm, 1);
 	std::string fileName = ClientSq_getstring(sqvm, 2);
 	std::string content = EncodeJSON(sqvm);
@@ -113,6 +120,12 @@ SQRESULT ClientSq_LoadJSON(void* sqvm)
 
 SQRESULT ServerSq_SaveJSON(void* sqvm)
 {
+	if (!saveFilesEnabled)
+	{
+		ServerSq_pusherror(
+			sqvm, fmt::format("Your mods have taken up too much space. Uninstall mods or reduce their character limits.").c_str());
+		return SQRESULT_ERROR;
+	}
 	std::string modName = ServerSq_getstring(sqvm, 1);
 	std::string fileName = ServerSq_getstring(sqvm, 2);
 	std::string content = EncodeJSON(sqvm);
@@ -134,6 +147,9 @@ SQRESULT ServerSq_SaveJSON(void* sqvm)
 			{
 				if (file.Name == fileName)
 				{
+					// we check here and not at the end because someone could overflow the count.
+					// capping the character limit per mod AND per file means that they can't set a negative value / a value close enough so
+					// it can overflow.
 					if (content.length() > file.CharacterLimit)
 					{
 						ServerSq_pusherror(

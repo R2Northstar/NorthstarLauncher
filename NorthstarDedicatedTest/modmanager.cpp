@@ -97,6 +97,17 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 		for (int i = 0; i < modJson["SaveFiles"].Size(); i++)
 		{
+			// MAX CHARACTERS PER MOD CHECK
+			// hardcoded and not a startup arg because this limit is kinda ridiculous anyways.
+			// done to prevent a mod from pasting hundreds of file names to fill up the hard drive.
+			// this also means mods have to actually tell how many characters they're going to use instead of just typing in "9999999999".
+			// we check every time to prevent overflow from decieving us into thinking the character flow is low when it's actually just overflowed.
+			if (TotalCharLimit > 2000000)
+			{
+				spdlog::error("Mod {} above maximum total character limit! Reduce the character limits of your files!", Name);
+				return;
+			}
+
 			if (modJson["SaveFiles"][i].IsString())
 			{
 				std::string file = modJson["SaveFiles"][i].GetString();
@@ -113,6 +124,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				}
 				ModSaveFile saveFile;
 				saveFile.Name = file;
+				TotalCharLimit += 50000;
 				SaveFiles.push_back(saveFile);
 				continue;
 			}
@@ -139,13 +151,18 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				saveFile.Name = file;
 				if (modJson["SaveFiles"][i].HasMember("CharLimit"))
 				{
-					if (!modJson["SaveFiles"][i]["CharLimit"].IsInt())
+					// the range is done so you can't overflow the character count without the mod check going off.
+					if (!modJson["SaveFiles"][i]["CharLimit"].IsInt() || modJson["SaveFiles"][i]["CharLimit"].GetInt() < 1 ||
+						modJson["SaveFiles"][i]["CharLimit"].GetInt() > 1000000)
 					{
-						spdlog::error("Save file entry for file {} does not have a valid character limit!\nMod: {}", file, Name);
+						spdlog::error("Save file entry for file {} in mod {} does not have a valid character limit! (Min: 1 | Max: 1,000,000)", file, Name);
 						return;
 					}
 					saveFile.CharacterLimit = modJson["SaveFiles"][i]["CharLimit"].GetInt();
+					TotalCharLimit += saveFile.CharacterLimit;
 				}
+				else
+					TotalCharLimit += 50000;
 				SaveFiles.push_back(saveFile);
 				continue;
 			}
@@ -322,6 +339,7 @@ void ModManager::LoadMods()
 		if (fs::exists(dir.path() / "mod.json"))
 			modDirs.push_back(dir.path());
 
+	int totalCharsUsed = 0;
 	for (fs::path modDir : modDirs)
 	{
 		// read mod json file
@@ -341,6 +359,20 @@ void ModManager::LoadMods()
 		jsonStream.close();
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
+		totalCharsUsed += mod.TotalCharLimit;
+		// TOTAL MAX CHARACTERS CHECK
+		// hardcoded and not a startup arg because this limit is VERY ridiculous.
+		// done to prevent a malicious actor from pasting hundreds of mods to fill up the hard drive.
+		// this also means mods have to actually tell how many characters they're going to use instead of just typing in "9999999999".
+		// Even though the bypass would require pasting 1 million mods into the mods folder when only checked once, I'm not taking any chances.
+		// This is only because integer overflows don't throw exceptions =-=
+		if (totalCharsUsed > 10000000 && saveFilesEnabled)
+		{
+			saveFilesEnabled = false;
+			spdlog::error("Save files are taking up too much space! Contact the mod developers or uninstall some of them!");
+		}
+		else
+			saveFilesEnabled = true;
 
 		for (auto& pair : mod.DependencyConstants)
 		{

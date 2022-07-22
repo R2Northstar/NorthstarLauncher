@@ -104,6 +104,7 @@ class Mod
 	std::vector<std::string> BinkVideos;
 	std::string Pdiff; // only need one per mod
 	std::vector<ModSaveFile> SaveFiles;
+	int TotalCharLimit = 0;
 
 	std::vector<ModRpakEntry> Rpaks;
 	std::unordered_map<std::string, std::string>
