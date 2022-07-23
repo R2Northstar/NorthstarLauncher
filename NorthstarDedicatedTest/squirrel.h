@@ -720,7 +720,7 @@ template <ScriptContext context> class SquirrelManager
 		}
 	}
 
-	int setupfunc(const char* funcname)
+	int SetupFunc(const char* funcname)
 	{
 		int result = -2;
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
@@ -746,28 +746,28 @@ template <ScriptContext context> class SquirrelManager
 		return result;
 	}
 
-	void pusharg(int arg)
+	void PushArg(int arg)
 	{
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
 			ClientSq_pushinteger(sqvm2, arg);
 		else if (context == ScriptContext::SERVER)
 			ServerSq_pushinteger(sqvm2, arg);
 	}
-	void pusharg(const char* arg)
+	void PushArg(const char* arg)
 	{
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
 			ClientSq_pushstring(sqvm2, arg, -1);
 		else if (context == ScriptContext::SERVER)
 			ServerSq_pushstring(sqvm2, arg, -1);
 	}
-	void pusharg(float arg)
+	void PushArg(float arg)
 	{
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
 			ClientSq_pushfloat(sqvm2, arg);
 		else if (context == ScriptContext::SERVER)
 			ServerSq_pushfloat(sqvm2, arg);
 	}
-	void pusharg(bool arg)
+	void PushArg(bool arg)
 	{
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)
 			ClientSq_pushbool(sqvm2, arg);
@@ -775,7 +775,7 @@ template <ScriptContext context> class SquirrelManager
 			ServerSq_pushbool(sqvm2, arg);
 	}
 
-	int call(int args)
+	int Call(int args)
 	{
 		int result = -2;
 		if (context == ScriptContext::CLIENT || context == ScriptContext::UI)

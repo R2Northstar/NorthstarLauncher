@@ -93,7 +93,7 @@ class CCommandLine
 	// these seem to line up with what they should be though
 	virtual void CreateCmdLine(const char* commandline) {}
 	virtual void CreateCmdLine(int argc, char** argv) {}
-	virtual void unknown() {}
+	virtual void _Unknown() {}
 	virtual const char* GetCmdLine(void) const {}
 
 	virtual const char* CheckParm(const char* psz, const char** ppszValue = 0) const {}
@@ -173,7 +173,7 @@ enum EngineState_t
 class CEngine
 {
   public:
-	virtual void unknown() {} // unsure if this is where
+	virtual CEngine _VectorDeletingConstructor() {} // See: (engine.dll + 0x1C8300)
 	virtual bool Load(bool dedicated, const char* baseDir) {}
 	virtual void Unload() {}
 	virtual void SetNextState(EngineState_t iNextState) {}

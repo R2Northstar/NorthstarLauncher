@@ -23,7 +23,7 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 		return;
 	}
 
-	if (g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_ClientSquirrelManager->SetupFunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
 		int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
 		bool isAnonymous = senderId == 0;
@@ -38,12 +38,12 @@ static void CHudChat__AddGameLineHook(void* self, const char* message, int inbox
 			payload = message + 1;
 		}
 
-		g_ClientSquirrelManager->pusharg((int)senderId - 1);
-		g_ClientSquirrelManager->pusharg(payload);
-		g_ClientSquirrelManager->pusharg(isTeam);
-		g_ClientSquirrelManager->pusharg(isDead);
-		g_ClientSquirrelManager->pusharg(type);
-		g_ClientSquirrelManager->call(5);
+		g_ClientSquirrelManager->PushArg((int)senderId - 1);
+		g_ClientSquirrelManager->PushArg(payload);
+		g_ClientSquirrelManager->PushArg(isTeam);
+		g_ClientSquirrelManager->PushArg(isDead);
+		g_ClientSquirrelManager->PushArg(type);
+		g_ClientSquirrelManager->Call(5);
 	}
 	else
 	{

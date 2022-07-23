@@ -84,7 +84,7 @@ void WaitForDebugger(HMODULE baseAddress)
 	}
 }
 
-void freeLibrary(HMODULE hLib)
+void TryFreeLibrary(HMODULE hLib)
 {
 	if (!FreeLibrary(hLib))
 	{
@@ -115,7 +115,7 @@ bool LoadPlugins()
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path().filename());
 	}
-	initGameState();
+	InitGameState();
 	for (fs::path path : paths)
 	{
 		std::string pathstring = (pluginPath / path).string();
@@ -134,7 +134,7 @@ bool LoadPlugins()
 		if (manifestResource == NULL)
 		{
 			spdlog::info("Could not find manifest for library {}", pathstring);
-			freeLibrary(datafile);
+			TryFreeLibrary(datafile);
 			continue;
 		}
 		spdlog::info("Loading resource from library");
@@ -142,12 +142,12 @@ bool LoadPlugins()
 		if (myResourceData == NULL)
 		{
 			spdlog::error("Failed to load resource from library");
-			freeLibrary(datafile);
+			TryFreeLibrary(datafile);
 			continue;
 		}
 		int manifestSize = SizeofResource(datafile, manifestResource);
 		std::string manifest = std::string((const char*)LockResource(myResourceData), 0, manifestSize);
-		freeLibrary(datafile);
+		TryFreeLibrary(datafile);
 
 		rapidjson_document manifestJSON;
 		manifestJSON.Parse(manifest.c_str());
@@ -183,7 +183,7 @@ bool LoadPlugins()
 			continue;
 		}
 		spdlog::info("Succesfully loaded {}", pathstring);
-		initPlugin(&getPluginObject);
+		initPlugin(&GetPluginObject);
 	}
 	return true;
 }
@@ -198,7 +198,7 @@ bool InitialiseNorthstar()
 
 	initialised = true;
 
-	parseConfigurables();
+	ParseConfigurables();
 	InitialiseVersion();
 
 	// Fix some users' failure to connect to respawn datacenters
