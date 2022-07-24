@@ -121,6 +121,7 @@
     <ClInclude Include="bits.h" />
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="limits.h" />
+    <ClInclude Include="memory.h" />
     <ClInclude Include="printcommand.h" />
     <ClInclude Include="hoststate.h" />
     <ClInclude Include="localchatwriter.h" />
@@ -571,6 +572,7 @@
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="limits.cpp" />
+    <ClCompile Include="memory.cpp" />
     <ClCompile Include="nsprefix.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="crashhandler.cpp" />
@@ -591,7 +593,6 @@
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />
     <ClCompile Include="memalloc.cpp" />
-    <ClCompile Include="miscclientfixes.cpp" />
     <ClCompile Include="misccommands.cpp" />
     <ClCompile Include="miscserverfixes.cpp" />
     <ClCompile Include="modlocalisation.cpp" />

@@ -13,23 +13,21 @@ namespace R2
 	CEngine* g_pEngine;
 
 	void (*CBaseClient__Disconnect)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
-
 	CBaseClient* g_pClientArray;
 
 	server_state_t* g_pServerState;
 } // namespace R2
 
-ON_DLL_LOAD("engine.dll", R2Engine, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", R2Engine, (CModule module))
 {
-	Cbuf_GetCurrentPlayer = (Cbuf_GetCurrentPlayerType)((char*)baseAddress + 0x120630);
-	Cbuf_AddText = (Cbuf_AddTextType)((char*)baseAddress + 0x1203B0);
-	Cbuf_Execute = (Cbuf_ExecuteType)((char*)baseAddress + 0x1204B0);
+	Cbuf_GetCurrentPlayer = module.Offset(0x120630).As<Cbuf_GetCurrentPlayerType>();
+	Cbuf_AddText = module.Offset(0x1203B0).As<Cbuf_AddTextType>();
+	Cbuf_Execute = module.Offset(0x1204B0).As<Cbuf_ExecuteType>();
 
-	g_pEngine = *(CEngine**)((char*)baseAddress + 0x7D70C8);
+	g_pEngine = module.Offset(0x7D70C8).Deref().As<CEngine*>(); // new
 
-	CBaseClient__Disconnect = (void (*)(void*, uint32_t, const char*, ...))((char*)baseAddress + 0x1012C0);
+	CBaseClient__Disconnect = module.Offset(0x1012C0).As<void(*)(void*, uint32_t, const char*, ...)>();
+	g_pClientArray = module.Offset(0x12A53F90).As<CBaseClient*>();
 
-	g_pServerState = (server_state_t*)((char*)baseAddress + 0x12A53D48);
-
-	g_pClientArray = (CBaseClient*)((char*)baseAddress + 0x12A53F90);
+	g_pServerState = module.Offset(0x12A53D48).As<server_state_t*>();
 }

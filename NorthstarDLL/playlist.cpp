@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "playlist.h"
-#include "NSMem.h"
 #include "concommand.h"
 #include "convar.h"
 #include "squirrel.h"
@@ -91,14 +90,14 @@ void ConCommand_setplaylistvaroverride(const CCommand& args)
 		R2::SetPlaylistVarOverride(args.Arg(i), args.Arg(i + 1));
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
-	R2::GetCurrentPlaylistName = (const char* (*)())((char*)baseAddress + 0x18C640);
-	R2::SetCurrentPlaylist = (void (*)(const char*))((char*)baseAddress + 0x18EB20);
-	R2::SetPlaylistVarOverride = (void (*)(const char*, const char*))((char*)baseAddress + 0x18ED00);
-	R2::GetCurrentPlaylistVar = (const char* (*)(const char*, bool))((char*)baseAddress + 0x18C680);
+	R2::GetCurrentPlaylistName = module.Offset(0x18C640).As<const char*(*)()>();
+	R2::SetCurrentPlaylist = module.Offset(0x18EB20).As <void(*)(const char*)>();
+	R2::SetPlaylistVarOverride = module.Offset(0x18ED00).As<void(*)(const char*, const char*)>();
+	R2::GetCurrentPlaylistVar = module.Offset(0x18C680).As<const char*(*)(const char*, bool)>();
 
 	// playlist is the name of the command on respawn servers, but we already use setplaylist so can't get rid of it
 	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);
@@ -114,8 +113,8 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (HMODULE
 
 	// patch to prevent clc_SetPlaylistVarOverride from being able to crash servers if we reach max overrides due to a call to Error (why is
 	// this possible respawn, wtf) todo: add a warning for this
-	NSMem::BytePatch((uintptr_t)baseAddress + 0x18ED8D, "C3");
+	module.Offset(0x18ED8D).Patch("C3");
 
 	// patch to allow setplaylistvaroverride to be called before map init on dedicated and private match launched through the game
-	NSMem::NOP((uintptr_t)baseAddress + 0x18ED17, 6);
+	module.Offset(0x18ED17).NOP(6);
 }

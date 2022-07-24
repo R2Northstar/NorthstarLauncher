@@ -4,7 +4,6 @@
 #include "modmanager.h"
 #include "dedicated.h"
 #include "r2engine.h"
-#include "NSMem.h"
 
 AUTOHOOK_INIT()
 
@@ -235,65 +234,65 @@ template <ScriptContext context> void ConCommand_script(const CCommand& args)
 		g_pServerSquirrel->ExecuteCode(args.ArgS());
 }
 
-ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
 
 	g_pClientSquirrel = new SquirrelManager<ScriptContext::CLIENT>;
 	g_pUISquirrel = new SquirrelManager<ScriptContext::UI>;
 	
-	g_pClientSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
-	g_pUISquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x108E0);
+	g_pClientSquirrel->RegisterSquirrelFunc = module.Offset(0x108E0).As<RegisterSquirrelFuncType>();
+	g_pUISquirrel->RegisterSquirrelFunc = module.Offset(0x108E0).As<RegisterSquirrelFuncType>();
 
-	g_pClientSquirrel->__sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	g_pUISquirrel->__sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	g_pClientSquirrel->__sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
-	g_pUISquirrel->__sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5860);
+	g_pClientSquirrel->__sq_compilebuffer = module.Offset(0x3110).As<sq_compilebufferType>();
+	g_pUISquirrel->__sq_compilebuffer = module.Offset(0x3110).As<sq_compilebufferType>();
+	g_pClientSquirrel->__sq_pushroottable = module.Offset(0x5860).As<sq_pushroottableType>();
+	g_pUISquirrel->__sq_pushroottable = module.Offset(0x5860).As<sq_pushroottableType>();
 
-	g_pClientSquirrel->__sq_call = (sq_callType)((char*)baseAddress + 0x8650);
-	g_pUISquirrel->__sq_call = (sq_callType)((char*)baseAddress + 0x8650);
+	g_pClientSquirrel->__sq_call = module.Offset(0x8650).As<sq_callType>();
+	g_pUISquirrel->__sq_call = module.Offset(0x8650).As<sq_callType>();
 
-	g_pClientSquirrel->__sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	g_pUISquirrel->__sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	g_pClientSquirrel->__sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
-	g_pUISquirrel->__sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	g_pClientSquirrel->__sq_newarray = module.Offset(0x39F0).As<sq_newarrayType>();
+	g_pUISquirrel->__sq_newarray = module.Offset(0x39F0).As<sq_newarrayType>();
+	g_pClientSquirrel->__sq_arrayappend = module.Offset(0x3C70).As<sq_arrayappendType>();
+	g_pUISquirrel->__sq_arrayappend = module.Offset(0x3C70).As<sq_arrayappendType>();
 
-	g_pClientSquirrel->__sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	g_pUISquirrel->__sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	g_pClientSquirrel->__sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	g_pUISquirrel->__sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	g_pClientSquirrel->__sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	g_pUISquirrel->__sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	g_pClientSquirrel->__sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	g_pUISquirrel->__sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	g_pClientSquirrel->__sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8470);
-	g_pUISquirrel->__sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8470);
+	g_pClientSquirrel->__sq_pushstring = module.Offset(0x3440).As<sq_pushstringType>();
+	g_pUISquirrel->__sq_pushstring = module.Offset(0x3440).As<sq_pushstringType>();
+	g_pClientSquirrel->__sq_pushinteger = module.Offset(0x36A0).As<sq_pushintegerType>();
+	g_pUISquirrel->__sq_pushinteger = module.Offset(0x36A0).As<sq_pushintegerType>();
+	g_pClientSquirrel->__sq_pushfloat = module.Offset(0x3800).As<sq_pushfloatType>();
+	g_pUISquirrel->__sq_pushfloat = module.Offset(0x3800).As<sq_pushfloatType>();
+	g_pClientSquirrel->__sq_pushbool = module.Offset(0x3710).As<sq_pushboolType>();
+	g_pUISquirrel->__sq_pushbool = module.Offset(0x3710).As<sq_pushboolType>();
+	g_pClientSquirrel->__sq_raiseerror = module.Offset(0x8470).As<sq_raiseerrorType>();
+	g_pUISquirrel->__sq_raiseerror = module.Offset(0x8470).As<sq_raiseerrorType>();
 
-	g_pClientSquirrel->__sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
-	g_pUISquirrel->__sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60C0);
-	g_pClientSquirrel->__sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
-	g_pUISquirrel->__sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60E0);
-	g_pClientSquirrel->__sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
-	g_pUISquirrel->__sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x6100);
-	g_pClientSquirrel->__sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
-	g_pUISquirrel->__sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6130);
-	g_pClientSquirrel->__sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
-	g_pUISquirrel->__sq_get = (sq_getType)((char*)baseAddress + 0x7C30);
+	g_pClientSquirrel->__sq_getstring = module.Offset(0x60C0).As<sq_getstringType>();
+	g_pUISquirrel->__sq_getstring = module.Offset(0x60C0).As<sq_getstringType>();
+	g_pClientSquirrel->__sq_getinteger = module.Offset(0x60E0).As<sq_getintegerType>();
+	g_pUISquirrel->__sq_getinteger = module.Offset(0x60E0).As<sq_getintegerType>();
+	g_pClientSquirrel->__sq_getfloat = module.Offset(0x6100).As<sq_getfloatType>();
+	g_pUISquirrel->__sq_getfloat = module.Offset(0x6100).As<sq_getfloatType>();
+	g_pClientSquirrel->__sq_getbool = module.Offset(0x6130).As<sq_getboolType>();
+	g_pUISquirrel->__sq_getbool = module.Offset(0x6130).As<sq_getboolType>();
+	g_pClientSquirrel->__sq_get = module.Offset(0x7C30).As<sq_getType>();
+	g_pUISquirrel->__sq_get = module.Offset(0x7C30).As<sq_getType>();
 
 	// uiscript_reset concommand: don't loop forever if compilation fails
-	NSMem::NOP((uintptr_t)baseAddress + 0x3C6E4C, 6);
+	module.Offset(0x3C6E4C).NOP(6);
 
-	MAKEHOOK((char*)baseAddress + 0x12B00, &SQPrintHook<ScriptContext::CLIENT>, &ClientSQPrint); // client print function
-	MAKEHOOK((char*)baseAddress + 0x12BA0, &SQPrintHook<ScriptContext::UI>, &UISQPrint); // ui print function
+	MAKEHOOK(module.Offset(0x12B00), &SQPrintHook<ScriptContext::CLIENT>, &ClientSQPrint); // client print function
+	MAKEHOOK(module.Offset(0x12BA0), &SQPrintHook<ScriptContext::UI>, &UISQPrint); // ui print function
 
-	MAKEHOOK((char*)baseAddress + 0x26130, &CreateNewVMHook<ScriptContext::CLIENT>, &ClientCreateNewVM); // client createnewvm function
-	MAKEHOOK((char*)baseAddress + 0x26E70, &DestroyVMHook<ScriptContext::CLIENT>, &ClientDestroyVM); // client destroyvm function
+	MAKEHOOK(module.Offset(0x26130), &CreateNewVMHook<ScriptContext::CLIENT>, &ClientCreateNewVM); // client createnewvm function
+	MAKEHOOK(module.Offset(0x26E70), &DestroyVMHook<ScriptContext::CLIENT>, &ClientDestroyVM); // client destroyvm function
 	MAKEHOOK(
-		(char*)baseAddress + 0x79A50,
+		module.Offset(0x79A50),
 		&ScriptCompileErrorHook<ScriptContext::CLIENT>,
 		&ClientSQCompileError); // client compileerror function
 	MAKEHOOK(
-		(char*)baseAddress + 0x10190,
+		module.Offset(0x10190),
 		&CallScriptInitCallbackHook<ScriptContext::CLIENT>,
 		&ClientCallScriptInitCallback); // client callscriptinitcallback function
 
@@ -301,42 +300,42 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddr
 	RegisterConCommand("script_ui", ConCommand_script<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
 	g_pServerSquirrel = new SquirrelManager<ScriptContext::SERVER>;
 
-	g_pServerSquirrel->RegisterSquirrelFunc = (RegisterSquirrelFuncType)((char*)baseAddress + 0x1DD10);
+	g_pServerSquirrel->RegisterSquirrelFunc = module.Offset(0x1DD10).As<RegisterSquirrelFuncType>();
 
-	g_pServerSquirrel->__sq_compilebuffer = (sq_compilebufferType)((char*)baseAddress + 0x3110);
-	g_pServerSquirrel->__sq_pushroottable = (sq_pushroottableType)((char*)baseAddress + 0x5840);
-	g_pServerSquirrel->__sq_call = (sq_callType)((char*)baseAddress + 0x8620);
+	g_pServerSquirrel->__sq_compilebuffer = module.Offset(0x3110).As<sq_compilebufferType>();
+	g_pServerSquirrel->__sq_pushroottable = module.Offset(0x5840).As<sq_pushroottableType>();
+	g_pServerSquirrel->__sq_call = module.Offset(0x8620).As<sq_callType>();
 
-	g_pServerSquirrel->__sq_newarray = (sq_newarrayType)((char*)baseAddress + 0x39F0);
-	g_pServerSquirrel->__sq_arrayappend = (sq_arrayappendType)((char*)baseAddress + 0x3C70);
+	g_pServerSquirrel->__sq_newarray = module.Offset(0x39F0).As<sq_newarrayType>();
+	g_pServerSquirrel->__sq_arrayappend = module.Offset(0x3C70).As<sq_arrayappendType>();
 
-	g_pServerSquirrel->__sq_pushstring = (sq_pushstringType)((char*)baseAddress + 0x3440);
-	g_pServerSquirrel->__sq_pushinteger = (sq_pushintegerType)((char*)baseAddress + 0x36A0);
-	g_pServerSquirrel->__sq_pushfloat = (sq_pushfloatType)((char*)baseAddress + 0x3800);
-	g_pServerSquirrel->__sq_pushbool = (sq_pushboolType)((char*)baseAddress + 0x3710);
-	g_pServerSquirrel->__sq_raiseerror = (sq_raiseerrorType)((char*)baseAddress + 0x8440);
+	g_pServerSquirrel->__sq_pushstring = module.Offset(0x3440).As<sq_pushstringType>();
+	g_pServerSquirrel->__sq_pushinteger = module.Offset(0x36A0).As<sq_pushintegerType>();
+	g_pServerSquirrel->__sq_pushfloat = module.Offset(0x3800).As<sq_pushfloatType>();
+	g_pServerSquirrel->__sq_pushbool = module.Offset(0x3710).As<sq_pushboolType>();
+	g_pServerSquirrel->__sq_raiseerror = module.Offset(0x8440).As<sq_raiseerrorType>();
 
-	g_pServerSquirrel->__sq_getstring = (sq_getstringType)((char*)baseAddress + 0x60A0);
-	g_pServerSquirrel->__sq_getinteger = (sq_getintegerType)((char*)baseAddress + 0x60C0);
-	g_pServerSquirrel->__sq_getfloat = (sq_getfloatType)((char*)baseAddress + 0x60E0);
-	g_pServerSquirrel->__sq_getbool = (sq_getboolType)((char*)baseAddress + 0x6110);
-	g_pServerSquirrel->__sq_get = (sq_getType)((char*)baseAddress + 0x7C00);
+	g_pServerSquirrel->__sq_getstring = module.Offset(0x60A0).As<sq_getstringType>();
+	g_pServerSquirrel->__sq_getinteger = module.Offset(0x60C0).As<sq_getintegerType>();
+	g_pServerSquirrel->__sq_getfloat = module.Offset(0x60E0).As<sq_getfloatType>();
+	g_pServerSquirrel->__sq_getbool = module.Offset(0x6110).As<sq_getboolType>();
+	g_pServerSquirrel->__sq_get = module.Offset(0x7C00).As<sq_getType>();
 
-	MAKEHOOK((char*)baseAddress + 0x1FE90, &SQPrintHook<ScriptContext::SERVER>, &ServerSQPrint); // server print function
-	MAKEHOOK((char*)baseAddress + 0x260E0, &CreateNewVMHook<ScriptContext::SERVER>, &ServerCreateNewVM); // server createnewvm function
-	MAKEHOOK((char*)baseAddress + 0x26E20, &DestroyVMHook<ScriptContext::SERVER>, &ServerDestroyVM); // server destroyvm function
+	MAKEHOOK(module.Offset(0x1FE90), &SQPrintHook<ScriptContext::SERVER>, &ServerSQPrint); // server print function
+	MAKEHOOK(module.Offset(0x260E0), &CreateNewVMHook<ScriptContext::SERVER>, &ServerCreateNewVM); // server createnewvm function
+	MAKEHOOK(module.Offset(0x26E20), &DestroyVMHook<ScriptContext::SERVER>, &ServerDestroyVM); // server destroyvm function
 	MAKEHOOK(
-		(char*)baseAddress + 0x799E0,
+		module.Offset(0x799E0),
 		&ScriptCompileErrorHook<ScriptContext::SERVER>,
 		&ServerSQCompileError); // server compileerror function
 	MAKEHOOK(
-		(char*)baseAddress + 0x1D5C0,
+		module.Offset(0x1D5C0),
 		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		&ServerCallScriptInitCallback); // server callscriptinitcallback function
 

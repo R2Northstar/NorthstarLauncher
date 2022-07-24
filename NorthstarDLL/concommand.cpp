@@ -144,8 +144,8 @@ void RegisterConCommand(
 	newCommand->m_pCompletionCallback = completionCallback;
 }
 
-ON_DLL_LOAD("engine.dll", ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", ConCommand, (CModule module))
 {
-	ConCommandConstructor = (ConCommandConstructorType)((char*)baseAddress + 0x415F60);
+	ConCommandConstructor = module.Offset(0x415F60).As<ConCommandConstructorType>();
 	AddMiscConCommands();
 }

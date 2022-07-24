@@ -93,10 +93,10 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 	
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
-	g_pHostState = (CHostState*)((char*)baseAddress + 0x7CF180);
-	Cvar_hostport = (ConVar*)((char*)baseAddress + 0x13FA6070);
+	g_pHostState = module.Offset(0x7CF180).As<CHostState*>();
+	Cvar_hostport = module.Offset(0x13FA6070).As<ConVar*>();
 }

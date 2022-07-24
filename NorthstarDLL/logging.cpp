@@ -233,17 +233,17 @@ void InitialiseLogging()
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
-	pInternalCenterPrint = (ICenterPrint*)((char*)baseAddress + 0x216E940);
+	pInternalCenterPrint = module.Offset(0x216E940).As<ICenterPrint*>();
 }

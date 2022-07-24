@@ -162,7 +162,7 @@ bool, , (void* a1, R2::netpacket_t* packet))
 	return ProcessConnectionlessPacket(a1, packet);
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerLimits, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", ServerLimits, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 

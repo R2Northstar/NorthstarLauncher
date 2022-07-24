@@ -97,7 +97,7 @@ void ConCommand_clearbanlist(const CCommand& args)
 	g_pBanSystem->ClearBanlist();
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (CModule module))
 {
 	g_pBanSystem = new ServerBanSystem;
 	g_pBanSystem->OpenBanlist();

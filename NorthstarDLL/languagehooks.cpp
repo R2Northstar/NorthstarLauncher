@@ -110,7 +110,7 @@ char*,, ())
 	return lang;
 }
 
-ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 }

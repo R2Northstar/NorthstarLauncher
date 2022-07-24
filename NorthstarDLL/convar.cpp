@@ -26,13 +26,13 @@ void* g_pIConVar_Vtable = nullptr;
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
-ON_DLL_LOAD("engine.dll", ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 {
-	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
-	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
+	conVarMalloc = module.Offset(0x415C20).As<ConVarMallocType>();
+	conVarRegister = module.Offset(0x417230).As<ConVarRegisterType>();
 
-	g_pConVar_Vtable = (char*)baseAddress + 0x67FD28;
-	g_pIConVar_Vtable = (char*)baseAddress + 0x67FDC8;
+	g_pConVar_Vtable = module.Offset(0x67FD28);
+	g_pIConVar_Vtable = module.Offset(0x67FDC8);
 
 	R2::g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	R2::g_pCVar = *R2::g_pCVarInterface;

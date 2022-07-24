@@ -167,7 +167,7 @@ VPKData*,, (IFileSystem* fileSystem, const char* pVpkPath))
 	return ret;
 }
 
-ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (HMODULE baseAddress))
+ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 

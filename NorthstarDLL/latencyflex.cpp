@@ -18,7 +18,7 @@ void,, ())
 	OnRenderStart();
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, (CModule module))
 {
 	// Connect to the LatencyFleX service
 	// LatencyFleX is an open source vendor agnostic replacement for Nvidia Reflex input latency reduction technology.

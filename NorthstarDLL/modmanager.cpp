@@ -636,7 +636,7 @@ fs::path GetCompiledAssetsPath()
 	return fs::path(GetNorthstarPrefix() + COMPILED_ASSETS_SUFFIX);
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CModule module))
 {
 	g_pModManager = new ModManager;
 

@@ -251,6 +251,8 @@ LPSTR, WINAPI, ())
 std::vector<std::string> calledTags;
 void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 {
+	CModule cModule(moduleAddress);
+
 	while (true)
 	{
 		bool bDoneCalling = true;
@@ -291,6 +293,8 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 
 void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 {
+	CModule cModule(moduleAddress);
+
 	while (true)
 	{
 		bool bDoneCalling = true;

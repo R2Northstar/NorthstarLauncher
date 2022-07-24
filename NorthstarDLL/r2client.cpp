@@ -11,10 +11,10 @@ namespace R2
 	GetBaseLocalClientType GetBaseLocalClient;
 } // namespace R2
 
-ON_DLL_LOAD("engine.dll", R2EngineClient, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", R2EngineClient, (CModule module))
 {
-	g_pLocalPlayerUserID = (char*)baseAddress + 0x13F8E688;
-	g_pLocalPlayerOriginToken = (char*)baseAddress + 0x13979C80;
+	g_pLocalPlayerUserID = module.Offset(0x13F8E688).As<char*>();
+	g_pLocalPlayerOriginToken = module.Offset(0x13979C80).As<char*>();
 
-	GetBaseLocalClient = (GetBaseLocalClientType)((char*)baseAddress + 0x78200);
+	GetBaseLocalClient = module.Offset(0x78200).As<GetBaseLocalClientType>();
 }

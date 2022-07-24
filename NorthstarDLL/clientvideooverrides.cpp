@@ -30,7 +30,7 @@ void*,, (const char* path, uint32_t flags))
 		return BinkOpen(path, flags);
 }
 
-ON_DLL_LOAD_CLIENT("client.dll", BinkVideo, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT("client.dll", BinkVideo, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 }

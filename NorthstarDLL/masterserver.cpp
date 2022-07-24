@@ -1015,7 +1015,7 @@ void ConCommand_ns_fetchservers(const CCommand& args)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_sOwnServerId {""}, m_sOwnClientAuthToken {""} {}
 
-ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (CModule module))
 {
 	g_pMasterServerManager = new MasterServerManager;
 

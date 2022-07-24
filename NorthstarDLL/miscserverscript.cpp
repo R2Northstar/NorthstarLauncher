@@ -46,7 +46,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, (CModule module))
 {
 	g_pServerSquirrel->AddFuncRegistration(
 		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);

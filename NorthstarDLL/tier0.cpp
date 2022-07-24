@@ -19,19 +19,19 @@ CreateGlobalMemAllocType CreateGlobalMemAlloc;
 void TryCreateGlobalMemAlloc()
 {
 	// init memalloc stuff
-	CreateGlobalMemAlloc = reinterpret_cast<CreateGlobalMemAllocType>(GetProcAddress(GetModuleHandleA("tier0.dll"), "CreateGlobalMemAlloc"));
+	CreateGlobalMemAlloc =
+		reinterpret_cast<CreateGlobalMemAllocType>(GetProcAddress(GetModuleHandleA("tier0.dll"), "CreateGlobalMemAlloc"));
 	Tier0::g_pMemAllocSingleton = CreateGlobalMemAlloc(); // if it already exists, this returns the preexisting IMemAlloc instance
 }
 
-ON_DLL_LOAD("tier0.dll", Tier0GameFuncs, (HMODULE baseAddress))
+ON_DLL_LOAD("tier0.dll", Tier0GameFuncs, (CModule module))
 {
 	// shouldn't be necessary, but do this just in case
 	TryCreateGlobalMemAlloc();
 
 	// setup tier0 funcs
-	Tier0::Error = reinterpret_cast<Tier0::ErrorType>(GetProcAddress(baseAddress, "Error"));
-	Tier0::CommandLine = reinterpret_cast<Tier0::CommandLineType>(GetProcAddress(baseAddress, "CommandLine"));
-	Tier0::Plat_FloatTime = reinterpret_cast<Tier0::Plat_FloatTimeType>(GetProcAddress(baseAddress, "Plat_FloatTime"));
-	Tier0::ThreadInServerFrameThread =
-		reinterpret_cast<Tier0::ThreadInServerFrameThreadType>(GetProcAddress(baseAddress, "ThreadInServerFrameThread"));
+	Tier0::Error = module.GetExport("Error").As<Tier0::ErrorType>();
+	Tier0::CommandLine = module.GetExport("CommandLine").As<Tier0::CommandLineType>();
+	Tier0::Plat_FloatTime = module.GetExport("Plat_FloatTime").As<Tier0::Plat_FloatTimeType>();
+	Tier0::ThreadInServerFrameThread = module.GetExport("ThreadInServerFrameThread").As<Tier0::ThreadInServerFrameThreadType>();
 }

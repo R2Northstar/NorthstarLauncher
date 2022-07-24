@@ -1479,6 +1479,9 @@
     <ClInclude Include="serverpresence.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
+    <ClInclude Include="memory.h">
+      <Filter>Header Files\Hooks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -1515,9 +1518,6 @@
       <Filter>Source Files\Mods\Compiled Assets</Filter>
     </ClCompile>
     <ClCompile Include="clientauthhooks.cpp">
-      <Filter>Source Files\Client</Filter>
-    </ClCompile>
-    <ClCompile Include="miscclientfixes.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
     <ClCompile Include="miscserverfixes.cpp">
@@ -1675,6 +1675,9 @@
     </ClCompile>
     <ClCompile Include="runframe.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="memory.cpp">
+      <Filter>Source Files\Hooks</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

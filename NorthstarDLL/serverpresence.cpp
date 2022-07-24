@@ -199,9 +199,9 @@ void ServerPresenceManager::SetPlayerCount(const int iPlayerCount)
 	m_ServerPresence.m_iPlayerCount = iPlayerCount;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (CModule module))
 {
 	g_pServerPresence = new ServerPresenceManager;
 
-	Cvar_hostname = *(ConVar**)((char*)baseAddress + 0x1315bae8);
+	Cvar_hostname = module.Offset(0x1315BAE8).Deref().As<ConVar*>();
 }

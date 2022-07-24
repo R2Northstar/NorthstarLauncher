@@ -442,12 +442,12 @@ void LocalChatWriter::InsertDefaultFade()
 	}
 }
 
-ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, (CModule module))
 {
-	gGameSettings = (CGameSettings**)((char*)baseAddress + 0x11BAA48);
-	gChatFadeLength = (CGameFloatVar**)((char*)baseAddress + 0x11BAB78);
-	gChatFadeSustain = (CGameFloatVar**)((char*)baseAddress + 0x11BAC08);
-	CHudChat::allHuds = (CHudChat**)((char*)baseAddress + 0x11BA9E8);
+	gGameSettings = module.Offset(0x11BAA48).As<CGameSettings**>();
+	gChatFadeLength = module.Offset(0x11BAB78).As<CGameFloatVar**>();
+	gChatFadeSustain = module.Offset(0x11BAC08).As<CGameFloatVar**>();
+	CHudChat::allHuds = module.Offset(0x11BA9E8).As<CHudChat**>();
 
-	ConvertANSIToUnicode = (ConvertANSIToUnicodeType)((char*)baseAddress + 0x7339A0);
+	ConvertANSIToUnicode = module.Offset(0x7339A0).As<ConvertANSIToUnicodeType>();
 }

@@ -71,7 +71,7 @@ SQRESULT SQ_ChatWriteLine(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 

@@ -10,7 +10,6 @@
 #include "concommand.h"
 #include "dedicated.h"
 #include "nsprefix.h"
-#include "NSMem.h"
 #include "tier0.h"
 #include "r2engine.h"
 #include "r2client.h"
@@ -341,7 +340,7 @@ void ConCommand_ns_resetpersistence(const CCommand& args)
 	g_pServerAuthentication->m_bForceResetLocalPlayerPersistence = true;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
@@ -361,23 +360,12 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 	RegisterConCommand(
 		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
 	
-	uintptr_t ba = (uintptr_t)baseAddress;
-
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
-	NSMem::BytePatch(
-		ba + 0x114655,
-		"EB" // jz => jmp
-	);
+	module.Offset(0x114655).Patch("EB");
 	
 	// patch to disable fairfight marking players as cheaters and kicking them
-	NSMem::BytePatch(
-		ba + 0x101012,
-		"E9 90 00" // jz => jmp
-	);
+	module.Offset(0x101012).Patch("E9 90 00");
 	
 	// patch to allow same of multiple account
-	NSMem::BytePatch(
-		ba + 0x114510,
-		"EB" // jz => jmp
-	);
+	module.Offset(0x114510).Patch("EB");
 }

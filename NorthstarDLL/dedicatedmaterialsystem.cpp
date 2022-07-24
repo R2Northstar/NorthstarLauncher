@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "dedicated.h"
 #include "tier0.h"
-#include "NSMem.h"
 
 AUTOHOOK_INIT()
 
@@ -31,11 +30,11 @@ HRESULT, __stdcall, (
 		pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel, ppImmediateContext);
 }
 
-ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, (HMODULE baseAddress))
+ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
 	// CMaterialSystem::FindMaterial
 	// make the game always use the error material
-	NSMem::BytePatch((uintptr_t)baseAddress + 0x5F0F1, {0xE9, 0x34, 0x03, 0x00});
+	module.Offset(0x5F0F1).Patch("E9 34 03 00");
 }

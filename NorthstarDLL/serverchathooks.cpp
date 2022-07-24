@@ -147,27 +147,27 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (CModule module))
 {
-	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
+	g_pServerGameDLL = module.Offset(0x13F0AA98).As<CServerGameDLL*>();
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (HMODULE baseAddress))
+ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
-	CServerGameDLL__OnReceivedSayTextMessage = (void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int))((char*)baseAddress + 0x1595C0);
-	CRecipientFilter__Construct = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1E9440);
-	CRecipientFilter__Destruct = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1E9700);
-	CRecipientFilter__AddAllPlayers = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1E9940);
-	CRecipientFilter__AddRecipient = (void(__fastcall*)(CRecipientFilter*, const R2::CBasePlayer*))((char*)baseAddress + 0x1E9b30);
-	CRecipientFilter__MakeReliable = (void(__fastcall*)(CRecipientFilter*))((char*)baseAddress + 0x1EA4E0);
+	CServerGameDLL__OnReceivedSayTextMessage = module.Offset(0x1595C0).As<void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int)>();
+	CRecipientFilter__Construct = module.Offset(0x1E9440).As<void(__fastcall*)(CRecipientFilter*)>();
+	CRecipientFilter__Destruct = module.Offset(0x1E9700).As<void(__fastcall*)(CRecipientFilter*)>();
+	CRecipientFilter__AddAllPlayers = module.Offset(0x1E9940).As<void(__fastcall*)(CRecipientFilter*)>();
+	CRecipientFilter__AddRecipient = module.Offset(0x1E9B30).As<void(__fastcall*)(CRecipientFilter*, const R2::CBasePlayer*)>();
+	CRecipientFilter__MakeReliable = module.Offset(0x1EA4E0).As<void(__fastcall*)(CRecipientFilter*)>();
 
-	UserMessageBegin = (void(__fastcall*)(CRecipientFilter*, const char*))((char*)baseAddress + 0x15C520);
-	MessageEnd = (void(__fastcall*)())((char*)baseAddress + 0x158880);
-	MessageWriteByte = (void(__fastcall*)(int))((char*)baseAddress + 0x158A90);
-	MessageWriteString = (void(__fastcall*)(const char*))((char*)baseAddress + 0x158D00);
-	MessageWriteBool = (void(__fastcall*)(bool))((char*)baseAddress + 0x158A00);
+	UserMessageBegin = module.Offset(0x15C520).As<void(__fastcall*)(CRecipientFilter*, const char*)>();
+	MessageEnd = module.Offset(0x158880).As<void(__fastcall*)()>();
+	MessageWriteByte = module.Offset(0x158A90).As<void(__fastcall*)(int)>();
+	MessageWriteString = module.Offset(0x158D00).As<void(__fastcall*)(const char*)>();
+	MessageWriteBool = module.Offset(0x158A00).As<void(__fastcall*)(bool)>();
 
 	// Chat sending functions
 	g_pServerSquirrel->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);

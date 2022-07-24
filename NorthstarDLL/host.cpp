@@ -65,7 +65,7 @@ void,, (bool bDedicated))
 		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "exec autoexec_ns_client", R2::cmd_source_t::kCommandSrcCode);
 }
 
-ON_DLL_LOAD("engine.dll", Host_Init, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", Host_Init, (CModule module))
 { 
 	AUTOHOOK_DISPATCH()
 }

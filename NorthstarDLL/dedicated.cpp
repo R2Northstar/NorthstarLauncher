@@ -7,7 +7,6 @@
 #include "serverauthentication.h"
 #include "masterserver.h"
 #include "printcommand.h"
-#include "NSMem.h"
 
 AUTOHOOK_INIT()
 
@@ -41,8 +40,6 @@ void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
 	spdlog::info("[DEDICATED SERVER] {}", msg);
 }
 
-typedef void (*CHostState__InitType)(CHostState* self);
-
 void RunServer(CDedicatedExports* dedicated)
 {
 	spdlog::info("CDedicatedExports::RunServer(): starting");
@@ -75,14 +72,23 @@ void RunServer(CDedicatedExports* dedicated)
 	}
 }
 
-AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80, 
-bool,, ())
+// use server presence to update window title
+class DedicatedConsoleServerPresence : public ServerPresenceReporter
 {
-	return true;	
-}
+	void ReportPresence(const ServerPresence* pServerPresence) override
+	{
+		SetConsoleTitleA(fmt::format(
+							 "{} - {} {}/{} players ({})",
+							 pServerPresence->m_sServerName,
+							 pServerPresence->m_MapName,
+							 pServerPresence->m_iPlayerCount,
+							 pServerPresence->m_iMaxPlayers,
+							 pServerPresence->m_PlaylistName)
+							 .c_str());
+	}
+};
 
 HANDLE consoleInputThreadHandle = NULL;
-
 DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 {
 	while (!g_pEngine || !g_pHostState || g_pHostState->m_iCurrentState != HostState_t::HS_RUN)
@@ -101,113 +107,96 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 		{
 			input += "\n";
 			Cbuf_AddText(Cbuf_GetCurrentPlayer(), input.c_str(), cmd_source_t::kCommandSrcCode);
-			TryPrintCvarHelpForCommand(input.c_str());
+			//TryPrintCvarHelpForCommand(input.c_str()); // this needs to be done on main thread, unstable in this one
 		}
 	}
 
 	return 0;
 }
 
-// use server presence to update window title
-class DedicatedConsoleServerPresence : public ServerPresenceReporter
+AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80, bool, , ())
 {
-	void ReportPresence(const ServerPresence* pServerPresence) override
-	{
-		SetConsoleTitleA(fmt::format("{} - {} {}/{} players ({})", 
-			pServerPresence->m_sServerName, 
-			pServerPresence->m_MapName, 
-			pServerPresence->m_iPlayerCount, 
-			pServerPresence->m_iMaxPlayers, 
-			pServerPresence->m_PlaylistName).c_str());
-	}
-};
+	return true;
+}
 
-ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (HMODULE engineAddress))
+ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModule module))
 {
 	spdlog::info("InitialiseDedicated");
 
 	AUTOHOOK_DISPATCH_MODULE("engine.dll")
 
-	uintptr_t ea = (uintptr_t)engineAddress;
-
 	// Host_Init
 	// prevent a particle init that relies on client dll
-	NSMem::NOP(ea + 0x156799, 5);
+	module.Offset(0x156799).NOP(5);
 
 	// Host_Init
 	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely on dedi)
-	NSMem::NOP(ea + 0x1565B0, 5);
+	module.Offset(0x1565B0).NOP(5);
 
 	{
 		// CModAppSystemGroup::Create
 		// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
-		auto ptr = ea + 0x1C4EBD;
+		MemoryAddress base = module.Offset(0x1C4EBD);
 
 		// cmp => mov
-		NSMem::BytePatch(ptr + 1, "C6 87");
+		base.Offset(1).Patch("C6 87");
 
 		// 00 => 01
-		NSMem::BytePatch(ptr + 7, "01");
+		base.Offset(7).Patch("01");
 	}
 	
 
 	// Some init that i'm not sure of that crashes
 	// nop the call to it
-	NSMem::NOP(ea + 0x156A63, 5);
+	module.Offset(0x156A63).NOP(5);
 
 	// runframeserver
 	// nop some access violations
-	NSMem::NOP(ea + 0x159819, 17);
+	module.Offset(0x159819).NOP(17);
 
-	NSMem::NOP(ea + 0x156B4C, 7);
+	module.Offset(0x156B4C).NOP(7);
 
 	// previously patched these, took me a couple weeks to figure out they were the issue
 	// removing these will mess up register state when this function is over, so we'll write HS_RUN to the wrong address
 	// so uhh, don't do that
 	// NSMem::NOP(ea + 0x156B4C + 7, 8);
-	NSMem::NOP(ea + 0x156B4C + 15, 9);
+	module.Offset(0x156B4C).Offset(15).NOP(9);
 
 	// HostState_State_NewGame
 	// nop an access violation
-	NSMem::NOP(ea + 0xB934C, 9);
+	module.Offset(0xB934C).NOP(9);
 
 	// CEngineAPI::Connect
 	// remove call to Shader_Connect
-	NSMem::NOP(ea + 0x1C4D7D, 5);
+	module.Offset(0x1C4D7D).NOP(5);
 
 	// Host_Init
 	// remove call to ui loading stuff
-	NSMem::NOP(ea + 0x156595, 5);
+	module.Offset(0x156595).NOP(5);
 
 	// some function that gets called from RunFrameServer
 	// nop a function that makes requests to stryder, this will eventually access violation if left alone and isn't necessary anyway
-	NSMem::NOP(ea + 0x15A0BB, 5);
+	module.Offset(0x15A0BB).NOP(5);
 
 	// RunFrameServer
 	// nop a function that access violations
-	NSMem::NOP(ea + 0x159BF3, 5);
+	module.Offset(0x159BF3).NOP(5);
 
 	// func that checks if origin is inited
 	// always return 1
-	NSMem::BytePatch(
-		ea + 0x183B70,
-		{
-			0xB0,
-			0x01, // mov al,01
-			0xC3 // ret
-		});
+	module.Offset(0x183B70).Patch("B0 01 C3"); // mov al,01 ret
 
 	// HostState_State_ChangeLevel
 	// nop clientinterface call
-	NSMem::NOP(ea + 0x1552ED, 16);
+	module.Offset(0x1552ED).NOP(16);
 
 	// HostState_State_ChangeLevel
 	// nop clientinterface call
-	NSMem::NOP(ea + 0x155363, 16);
+	module.Offset(0x155363).NOP(16);
 
 	// IVideoMode::CreateGameWindow
 	// nop call to ShowWindow
-	NSMem::NOP(ea + 0x1CD146, 5);
+	module.Offset(0x1CD146).NOP(5);
 
 
 	CDedicatedExports* dedicatedExports = new CDedicatedExports;
@@ -215,8 +204,7 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (HMODUL
 	dedicatedExports->Sys_Printf = Sys_Printf;
 	dedicatedExports->RunServer = RunServer;
 
-	CDedicatedExports** exports = (CDedicatedExports**)((char*)engineAddress + 0x13F0B668);
-	*exports = dedicatedExports;
+	*module.Offset(0x13F0B668).As<CDedicatedExports**>() = dedicatedExports;
 
 	// extra potential patches:
 	// nop engine.dll+1c67d1 and +1c67d8 to skip videomode creategamewindow
@@ -268,16 +256,12 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (HMODUL
 		spdlog::info("Console input disabled by user request");
 }
 
-ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (HMODULE baseAddress))
+ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (CModule module))
 {
 	// disable origin on dedicated
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
 	// an origin id as a client for dedi it's fine though, game doesn't care if origin is disabled as long as there's only a server
-
-	NSMem::BytePatch((uintptr_t)GetProcAddress(GetModuleHandleA("tier0.dll"), "Tier0_InitOrigin"),
-	{
-		0xC3 // ret
-	});
+	module.GetExport("Tier0_InitOrigin").Patch("C3");
 }
 
 AUTOHOOK(PrintFatalSquirrelError, server.dll + 0x794D0, 
@@ -287,7 +271,7 @@ void, , (void* sqvm))
 	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
 }
 
-ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (HMODULE baseAddress))
+ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE("server.dll")
 }

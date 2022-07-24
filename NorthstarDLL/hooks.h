@@ -1,10 +1,12 @@
 #pragma once
+#include "memory.h"
+
 #include <string>
 #include <iostream>
 
 void InstallInitialHooks();
 
-typedef void (*DllLoadCallbackFuncType)(HMODULE moduleAddress);
+typedef void (*DllLoadCallbackFuncType)(CModule moduleAddress);
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
 void AddDllLoadCallbackForDedicatedServer(
 	std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});

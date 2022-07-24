@@ -1,15 +1,14 @@
 #include "pch.h"
 #include "convar.h"
-#include "NSMem.h"
 
-ON_DLL_LOAD_CLIENT("engine.dll", EngineDemoFixes, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT("engine.dll", EngineDemoFixes, (CModule module))
 {
 	// allow demo recording on loopback
-	NSMem::NOP((uintptr_t)baseAddress + 0x8E1B1, 2);
-	NSMem::NOP((uintptr_t)baseAddress + 0x56CC3, 2);
+	module.Offset(0x8E1B1).NOP(2);
+	module.Offset(0x56CC3).NOP(2);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientDemoFixes, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientDemoFixes, ConVar, (CModule module))
 {
 	// change default values of demo cvars to enable them by default, but not autorecord
 	// this is before Host_Init, the setvalue calls here will get overwritten by custom cfgs/launch options

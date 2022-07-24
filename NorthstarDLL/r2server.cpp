@@ -10,8 +10,8 @@ namespace R2
 	CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
 } // namespace R2
 
-ON_DLL_LOAD("server.dll", R2GameServer, (HMODULE baseAddress))
+ON_DLL_LOAD("server.dll", R2GameServer, (CModule module))
 {
-	Server_GetEntityByIndex = (CBaseEntity*(*)(int))((char*)baseAddress + 0xFB820);
-	UTIL_PlayerByIndex = (CBasePlayer*(__fastcall*)(int))((char*)baseAddress + 0x26AA10);
+	Server_GetEntityByIndex = module.Offset(0xFB820).As<CBaseEntity*(*)(int)>();
+	UTIL_PlayerByIndex = module.Offset(0x26AA10).As<CBasePlayer*(__fastcall*)(int)>();
 }

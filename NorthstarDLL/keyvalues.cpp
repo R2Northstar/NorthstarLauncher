@@ -124,7 +124,7 @@ char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSy
 	return KeyValues__LoadFromBuffer(self, resourceName, pBuffer, pFileSystem, a5, a6, a7);
 }
 
-ON_DLL_LOAD("engine.dll", KeyValues, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", KeyValues, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 }

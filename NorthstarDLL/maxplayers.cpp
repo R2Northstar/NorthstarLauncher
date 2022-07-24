@@ -52,10 +52,9 @@ bool MaxPlayersIncreaseEnabled()
 	return bMaxPlayersIncreaseEnabled;
 }
 
-#include "NSMem.h"
-template <class T> void ChangeOffset(void* addr, unsigned int offset)
+template <class T> void ChangeOffset(MemoryAddress addr, unsigned int offset)
 {
-	NSMem::BytePatch((uintptr_t)addr, (BYTE*)&offset, sizeof(T));
+	addr.Patch((BYTE*)&offset, sizeof(T));
 }
 
 AUTOHOOK(StringTables_CreateStringTable, engine.dll + 0x22E220,
@@ -74,7 +73,7 @@ void*,, (__int64 thisptr, const char* name, int maxentries, int userdatafixedsiz
 	return StringTables_CreateStringTable(thisptr, name, maxentries, userdatafixedsize, userdatanetworkbits, flags);
 }
 
-ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (CModule module))
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -82,22 +81,22 @@ ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress))
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
 	// patch GetPlayerLimits to ignore the boundary limit
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x116458, 0xEB); // jle => jmp
+	module.Offset(0x116458).Patch("0xEB"); // jle => jmp
 
 	// patch ED_Alloc to change nFirstIndex
-	ChangeOffset<int>((char*)baseAddress + 0x18F46C + 1, NEW_MAX_PLAYERS + 8 + 1); // original: 41 (sv.GetMaxClients() + 1)
+	ChangeOffset<int>(module.Offset(0x18F46C + 1), NEW_MAX_PLAYERS + 8 + 1); // original: 41 (sv.GetMaxClients() + 1)
 
 	// patch CGameServer::SpawnServer to change GetMaxClients inline
-	ChangeOffset<int>((char*)baseAddress + 0x119543 + 2, NEW_MAX_PLAYERS + 8 + 1); // original: 41 (sv.GetMaxClients() + 1)
+	ChangeOffset<int>(module.Offset(0x119543 + 2), NEW_MAX_PLAYERS + 8 + 1); // original: 41 (sv.GetMaxClients() + 1)
 
 	// patch CGameServer::SpawnServer to change for loop
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x11957F + 2, NEW_MAX_PLAYERS); // original: 32
+	ChangeOffset<unsigned char>(module.Offset(0x11957F + 2), NEW_MAX_PLAYERS); // original: 32
 
 	// patch CGameServer::SpawnServer to change for loop (there are two)
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x119586 + 2, NEW_MAX_PLAYERS + 1); // original: 33 (32 + 1)
+	ChangeOffset<unsigned char>(module.Offset(0x119586 + 2), NEW_MAX_PLAYERS + 1); // original: 33 (32 + 1)
 
 	// patch max players somewhere in CClientState
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x1A162C + 2, NEW_MAX_PLAYERS - 1); // original: 31 (32 - 1)
+	ChangeOffset<unsigned char>(module.Offset(0x1A162C + 2), NEW_MAX_PLAYERS - 1); // original: 31 (32 - 1)
 
 	// patch max players in userinfo stringtable creation
 	/*{
@@ -110,10 +109,10 @@ ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (HMODULE baseAddress))
 	// proper fix below
 
 	// patch max players in userinfo stringtable creation loop
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x114C48 + 2, NEW_MAX_PLAYERS); // original: 32
+	ChangeOffset<unsigned char>(module.Offset(0x114C48 + 2), NEW_MAX_PLAYERS); // original: 32
 
 	// do not load prebaked SendTable message list
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x75859, 0xEB); // jnz -> jmp
+	module.Offset(0x75859).Patch("EB"); // jnz -> jmp
 }
 
 typedef void (*RunUserCmds_Type)(bool a1, float a2);
@@ -275,7 +274,7 @@ __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* nam
 	return SendPropArray2(recvProp, elements, flags, name, proxyFn, unk1);
 }
 
-ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (HMODULE baseAddress))
+ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (CModule module))
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -283,140 +282,140 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (HMODULE baseAddress))
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
 	// get required data
-	serverBase = baseAddress;
+	serverBase = (HMODULE)module.m_nAddress;
 	RandomIntZeroMax = (decltype(RandomIntZeroMax))(GetProcAddress(GetModuleHandleA("vstdlib.dll"), "RandomIntZeroMax"));
 
 	// patch max players amount
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x9A44D + 3, NEW_MAX_PLAYERS); // 0x20 (32) => 0x80 (128)
+	ChangeOffset<unsigned char>(module.Offset(0x9A44D + 3), NEW_MAX_PLAYERS); // 0x20 (32) => 0x80 (128)
 
 	// patch SpawnGlobalNonRewinding to change forced edict index
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x2BC403 + 2, NEW_MAX_PLAYERS + 1); // original: 33 (32 + 1)
+	ChangeOffset<unsigned char>(module.Offset(0x2BC403 + 2), NEW_MAX_PLAYERS + 1); // original: 33 (32 + 1)
 
 	constexpr int CPlayerResource_OriginalSize = 4776;
 	constexpr int CPlayerResource_AddedSize = PlayerResource_TotalSize;
 	constexpr int CPlayerResource_ModifiedSize = CPlayerResource_OriginalSize + CPlayerResource_AddedSize;
 
 	// CPlayerResource class allocation function - allocate a bigger amount to fit all new max player data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C560A + 1, CPlayerResource_ModifiedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x5C560A + 1), CPlayerResource_ModifiedSize);
 
 	// DT_PlayerResource::m_iPing SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5059 + 2, CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C50A8 + 2, CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C50E2 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5059 + 2), CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C50A8 + 2), CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C50E2 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_iPing DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB94598, CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB9459C, NEW_MAX_PLAYERS + 1);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB945C0, PlayerResource_Ping_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB94598), CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB9459C), NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned short>(module.Offset(0xB945C0), PlayerResource_Ping_Size);
 
 	// DT_PlayerResource::m_iTeam SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5110 + 2, CPlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C519C + 2, CPlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C517E + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5110 + 2), CPlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C519C + 2), CPlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C517E + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_iTeam DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB94600, CPlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94604, NEW_MAX_PLAYERS + 1);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94628, PlayerResource_Team_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB94600), CPlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB94604), NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned short>(module.Offset(0xB94628), PlayerResource_Team_Size);
 
 	// DT_PlayerResource::m_iPRHealth SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C51C0 + 2, CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5204 + 2, CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C523E + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x5C51C0 + 2), CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5204 + 2), CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C523E + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_iPRHealth DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB94668, CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB9466C, NEW_MAX_PLAYERS + 1);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94690, PlayerResource_PRHealth_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB94668), CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB9466C), NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned short>(module.Offset(0xB94690), PlayerResource_PRHealth_Size);
 
 	// DT_PlayerResource::m_bConnected SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C526C + 2, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C52B4 + 2, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C52EE + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x5C526C + 2), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C52B4 + 2), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C52EE + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_bConnected DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB946D0, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB946D4, NEW_MAX_PLAYERS + 1);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB946F8, PlayerResource_Connected_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB946D0), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB946D4), NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned short>(module.Offset(0xB946F8), PlayerResource_Connected_Size);
 
 	// DT_PlayerResource::m_bAlive SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5321 + 2, CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5364 + 2, CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C539E + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5321 + 2), CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5364 + 2), CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C539E + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_bAlive DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB94738, CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB9473C, NEW_MAX_PLAYERS + 1);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94760, PlayerResource_Alive_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB94738), CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB9473C), NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned short>(module.Offset(0xB94760), PlayerResource_Alive_Size);
 
 	// DT_PlayerResource::m_boolStats SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C53CC + 2, CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5414 + 2, CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C544E + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x5C53CC + 2), CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5414 + 2), CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C544E + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_boolStats DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB947A0, CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB947A4, NEW_MAX_PLAYERS + 1);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB947C8, PlayerResource_BoolStats_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB947A0), CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB947A4), NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned short>(module.Offset(0xB947C8), PlayerResource_BoolStats_Size);
 
 	// DT_PlayerResource::m_killStats SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C547C + 2, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C54E2 + 2, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C54FE + 4, PlayerResource_KillStats_Length);
+	ChangeOffset<unsigned int>(module.Offset(0x5C547C + 2), CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C54E2 + 2), CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C54FE + 4), PlayerResource_KillStats_Length);
 
 	// DT_PlayerResource::m_killStats DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB94808, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB9480C, PlayerResource_KillStats_Length);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94830, PlayerResource_KillStats_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB94808), CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB9480C), PlayerResource_KillStats_Length);
+	ChangeOffset<unsigned short>(module.Offset(0xB94830), PlayerResource_KillStats_Size);
 
 	// DT_PlayerResource::m_scoreStats SendProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5528 + 2, CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5576 + 2, CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C5584 + 4, PlayerResource_ScoreStats_Length);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5528 + 2), CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5576 + 2), CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C5584 + 4), PlayerResource_ScoreStats_Length);
 
 	// DT_PlayerResource::m_scoreStats DataMap
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xB94870, CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94874, PlayerResource_ScoreStats_Length);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xB94898, PlayerResource_ScoreStats_Size);
+	ChangeOffset<unsigned int>(module.Offset(0xB94870), CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xB94874), PlayerResource_ScoreStats_Length);
+	ChangeOffset<unsigned short>(module.Offset(0xB94898), PlayerResource_ScoreStats_Size);
 
 	// CPlayerResource::UpdatePlayerData - m_bConnected
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C66EE + 4, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C672E + 4, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C66EE + 4), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C672E + 4), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_iPing
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6394 + 4, CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C63DB + 4, CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C6394 + 4), CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C63DB + 4), CPlayerResource_OriginalSize + PlayerResource_Ping_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_iTeam
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C63FD + 4, CPlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6442 + 4, CPlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C63FD + 4), CPlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C6442 + 4), CPlayerResource_OriginalSize + PlayerResource_Team_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_iPRHealth
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C645B + 4, CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C64A0 + 4, CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C645B + 4), CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C64A0 + 4), CPlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_bConnected
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C64AA + 4, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C64F0 + 4, CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C64AA + 4), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C64F0 + 4), CPlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_bAlive
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C650A + 4, CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C654F + 4, CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C650A + 4), CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C654F + 4), CPlayerResource_OriginalSize + PlayerResource_Alive_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_boolStats
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6557 + 4, CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C65A5 + 4, CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C6557 + 4), CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C65A5 + 4), CPlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_scoreStats
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C65C2 + 3, CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C65E3 + 4, CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C65C2 + 3), CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C65E3 + 4), CPlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
 
 	// CPlayerResource::UpdatePlayerData - m_killStats
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C6654 + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x5C665B + 3, CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C6654 + 3), CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x5C665B + 3), CPlayerResource_OriginalSize + PlayerResource_KillStats_Start);
 
-	*(DWORD*)((char*)baseAddress + 0x14E7390) = 0;
-	auto DT_PlayerResource_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x5C4FE0);
+	*module.Offset(0x14E7390).As<DWORD*>() = 0;
+	auto DT_PlayerResource_Construct = module.Offset(0x5C4FE0).As<__int64(__fastcall*)()>();
 	DT_PlayerResource_Construct();
 
 	constexpr int CTeam_OriginalSize = 3336;
@@ -424,13 +423,13 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (HMODULE baseAddress))
 	constexpr int CTeam_ModifiedSize = CTeam_OriginalSize + CTeam_AddedSize;
 
 	// CTeam class allocation function - allocate a bigger amount to fit all new team player data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x23924A + 1, CTeam_ModifiedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x23924A + 1), CTeam_ModifiedSize);
 
 	// CTeam::CTeam - increase memset length to clean newly allocated data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x2395AE + 2, 256 + CTeam_AddedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x2395AE + 2), 256 + CTeam_AddedSize);
 
-	*(DWORD*)((char*)baseAddress + 0xC945A0) = 0;
-	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x238F50);
+	*module.Offset(0xC945A0).As<DWORD*>() = 0;
+	auto DT_Team_Construct = module.Offset(0x238F50).As<__int64(__fastcall*)()>();
 	DT_Team_Construct();
 }
 
@@ -444,7 +443,7 @@ __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* nam
 	return RecvPropArray2(recvProp, elements, flags, name, proxyFn);
 }
 
-ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (HMODULE baseAddress))
+ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (CModule module))
 {
 	if (!MaxPlayersIncreaseEnabled())
 		return;
@@ -456,154 +455,154 @@ ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (HMODULE baseAddress))
 	constexpr int C_PlayerResource_ModifiedSize = C_PlayerResource_OriginalSize + C_PlayerResource_AddedSize;
 
 	// C_PlayerResource class allocation function - allocate a bigger amount to fit all new max player data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164C41 + 1, C_PlayerResource_ModifiedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x164C41 + 1), C_PlayerResource_ModifiedSize);
 
 	// C_PlayerResource::C_PlayerResource - change loop end value
-	ChangeOffset<unsigned char>((char*)baseAddress + 0x1640C4 + 2, NEW_MAX_PLAYERS - 32);
+	ChangeOffset<unsigned char>(module.Offset(0x1640C4 + 2), NEW_MAX_PLAYERS - 32);
 
 	// C_PlayerResource::C_PlayerResource - change m_szName address
 	ChangeOffset<unsigned int>(
-		(char*)baseAddress + 0x1640D0 + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
+		module.Offset(0x1640D0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
 
 	// C_PlayerResource::C_PlayerResource - change m_szName address
 	ChangeOffset<unsigned int>(
-		(char*)baseAddress + 0x1640D0 + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
+		module.Offset(0x1640D0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
 
 	// C_PlayerResource::C_PlayerResource - increase memset length to clean newly allocated data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1640D0 + 3, 2244 + C_PlayerResource_AddedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x1640D0 + 3), 2244 + C_PlayerResource_AddedSize);
 
 	// C_PlayerResource::UpdatePlayerName - change m_szName address
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x16431F + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x16431F + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName - change m_szName address 1
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1645B1 + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1645B1 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName - change m_szName address 2
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1645C0 + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1645C0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName - change m_szName address 3
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1645DD + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1645DD + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName internal func - change m_szName address 1
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164B71 + 4, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164B71 + 4), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName internal func - change m_szName address 2
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164B9B + 4, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164B9B + 4), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName2 (?) - change m_szName address 1
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164641 + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164641 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName2 (?) - change m_szName address 2
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164650 + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164650 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName2 (?) - change m_szName address 3
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x16466D + 3, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x16466D + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName internal func - change m_szName2 (?) address 1
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164BA3 + 4, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164BA3 + 4), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName internal func - change m_szName2 (?) address 2
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164BCE + 4, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164BCE + 4), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::GetPlayerName internal func - change m_szName2 (?) address 3
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164BE7 + 4, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164BE7 + 4), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
 
 	// C_PlayerResource::m_szName
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc350f8, C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc350f8 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc350f8), C_PlayerResource_OriginalSize + PlayerResource_Name_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc350f8 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource size
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163415 + 6, C_PlayerResource_ModifiedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x163415 + 6), C_PlayerResource_ModifiedSize);
 
 	// DT_PlayerResource::m_iPing RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163492 + 2, C_PlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1634D6 + 2, C_PlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163515 + 5, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x163492 + 2), C_PlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1634D6 + 2), C_PlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163515 + 5), NEW_MAX_PLAYERS + 1);
 
 	// C_PlayerResource::m_iPing
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc35170, C_PlayerResource_OriginalSize + PlayerResource_Ping_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc35170 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc35170), C_PlayerResource_OriginalSize + PlayerResource_Ping_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc35170 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_iTeam RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163549 + 2, C_PlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1635C8 + 2, C_PlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1635AD + 5, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x163549 + 2), C_PlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1635C8 + 2), C_PlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1635AD + 5), NEW_MAX_PLAYERS + 1);
 
 	// C_PlayerResource::m_iTeam
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc351e8, C_PlayerResource_OriginalSize + PlayerResource_Team_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc351e8 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc351e8), C_PlayerResource_OriginalSize + PlayerResource_Team_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc351e8 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_iPRHealth RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1635F9 + 2, C_PlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163625 + 2, C_PlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163675 + 5, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x1635F9 + 2), C_PlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163625 + 2), C_PlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163675 + 5), NEW_MAX_PLAYERS + 1);
 
 	// C_PlayerResource::m_iPRHealth
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc35260, C_PlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc35260 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc35260), C_PlayerResource_OriginalSize + PlayerResource_PRHealth_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc35260 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_bConnected RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1636A9 + 2, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1636D5 + 2, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163725 + 5, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x1636A9 + 2), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1636D5 + 2), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163725 + 5), NEW_MAX_PLAYERS + 1);
 
 	// C_PlayerResource::m_bConnected
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc352d8, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc352d8 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc352d8), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc352d8 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_bAlive RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163759 + 2, C_PlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163785 + 2, C_PlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1637D5 + 5, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x163759 + 2), C_PlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163785 + 2), C_PlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1637D5 + 5), NEW_MAX_PLAYERS + 1);
 
 	// C_PlayerResource::m_bAlive
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc35350, C_PlayerResource_OriginalSize + PlayerResource_Alive_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc35350 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc35350), C_PlayerResource_OriginalSize + PlayerResource_Alive_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc35350 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_boolStats RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163809 + 2, C_PlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163835 + 2, C_PlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163885 + 5, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0x163809 + 2), C_PlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163835 + 2), C_PlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163885 + 5), NEW_MAX_PLAYERS + 1);
 
 	// C_PlayerResource::m_boolStats
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc353c8, C_PlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc353c8 + 4, NEW_MAX_PLAYERS + 1);
+	ChangeOffset<unsigned int>(module.Offset(0xc353c8), C_PlayerResource_OriginalSize + PlayerResource_BoolStats_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc353c8 + 4), NEW_MAX_PLAYERS + 1);
 
 	// DT_PlayerResource::m_killStats RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1638B3 + 2, C_PlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1638E5 + 2, C_PlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163935 + 5, PlayerResource_KillStats_Length);
+	ChangeOffset<unsigned int>(module.Offset(0x1638B3 + 2), C_PlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1638E5 + 2), C_PlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163935 + 5), PlayerResource_KillStats_Length);
 
 	// C_PlayerResource::m_killStats
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc35440, C_PlayerResource_OriginalSize + PlayerResource_KillStats_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc35440 + 4, PlayerResource_KillStats_Length);
+	ChangeOffset<unsigned int>(module.Offset(0xc35440), C_PlayerResource_OriginalSize + PlayerResource_KillStats_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc35440 + 4), PlayerResource_KillStats_Length);
 
 	// DT_PlayerResource::m_scoreStats RecvProp
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163969 + 2, C_PlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x163995 + 2, C_PlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1639E5 + 5, PlayerResource_ScoreStats_Length);
+	ChangeOffset<unsigned int>(module.Offset(0x163969 + 2), C_PlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x163995 + 2), C_PlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x1639E5 + 5), PlayerResource_ScoreStats_Length);
 
 	// C_PlayerResource::m_scoreStats
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xc354b8, C_PlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
-	ChangeOffset<unsigned short>((char*)baseAddress + 0xc354b8 + 4, PlayerResource_ScoreStats_Length);
+	ChangeOffset<unsigned int>(module.Offset(0xc354b8), C_PlayerResource_OriginalSize + PlayerResource_ScoreStats_Start);
+	ChangeOffset<unsigned short>(module.Offset(0xc354b8 + 4), PlayerResource_ScoreStats_Length);
 
 	// C_PlayerResource::GetPlayerName - change m_bConnected address
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164599 + 3, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164599 + 3), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
 	// C_PlayerResource::GetPlayerName2 (?) - change m_bConnected address
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164629 + 3, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164629 + 3), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
 	// C_PlayerResource::GetPlayerName internal func - change m_bConnected address
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164B13 + 3, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164B13 + 3), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
 	// Some other get name func (that seems to be unused) - change m_bConnected address
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164860 + 3, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164860 + 3), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
 	// Some other get name func 2 (that seems to be unused too) - change m_bConnected address
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x164834 + 3, C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
+	ChangeOffset<unsigned int>(module.Offset(0x164834 + 3), C_PlayerResource_OriginalSize + PlayerResource_Connected_Start);
 
-	*(DWORD*)((char*)baseAddress + 0xC35068) = 0;
-	auto DT_PlayerResource_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x163400);
+	*module.Offset(0xC35068).As<DWORD*>() = 0;
+	auto DT_PlayerResource_Construct = module.Offset(0x163400).As<__int64(__fastcall*)()>();
 	DT_PlayerResource_Construct();
 
 	constexpr int C_Team_OriginalSize = 3200;
@@ -611,15 +610,15 @@ ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (HMODULE baseAddress))
 	constexpr int C_Team_ModifiedSize = C_Team_OriginalSize + C_Team_AddedSize;
 
 	// C_Team class allocation function - allocate a bigger amount to fit all new team player data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x182321 + 1, C_Team_ModifiedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x182321 + 1), C_Team_ModifiedSize);
 
 	// C_Team::C_Team - increase memset length to clean newly allocated data
-	ChangeOffset<unsigned int>((char*)baseAddress + 0x1804A2 + 2, 256 + C_Team_AddedSize);
+	ChangeOffset<unsigned int>(module.Offset(0x1804A2 + 2), 256 + C_Team_AddedSize);
 
 	// DT_Team size
-	ChangeOffset<unsigned int>((char*)baseAddress + 0xC3AA0C, C_Team_ModifiedSize);
+	ChangeOffset<unsigned int>(module.Offset(0xC3AA0C), C_Team_ModifiedSize);
 
-	*(DWORD*)((char*)baseAddress + 0xC3AFF8) = 0;
-	auto DT_Team_Construct = (__int64(__fastcall*)())((char*)baseAddress + 0x17F950);
+	*module.Offset(0xC3AFF8).As<DWORD*>() = 0;
+	auto DT_Team_Construct = module.Offset(0x17F950).As<__int64(__fastcall*)()>();
 	DT_Team_Construct();
 }

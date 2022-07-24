@@ -202,14 +202,14 @@ void*, , (const char* pPath, void* a2))
 }
 
 
-ON_DLL_LOAD("engine.dll", RpakFilesystem, (HMODULE baseAddress))
+ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 {
 	AUTOHOOK_DISPATCH();
 
 	g_pPakLoadManager = new PakLoadManager;
 
-	g_pakLoadApi = *(PakLoadFuncs**)((char*)baseAddress + 0x5BED78);
-	pUnknownPakLoadSingleton = (void**)((char*)baseAddress + 0x7C5E20);
+	g_pakLoadApi = module.Offset(0x5BED78).Deref().As<PakLoadFuncs*>();
+	pUnknownPakLoadSingleton = module.Offset(0x7C5E20).As<void**>();
 
 	LoadPakAsyncHook.Dispatch(g_pakLoadApi->LoadPakAsync);
 	UnloadPakHook.Dispatch(g_pakLoadApi->UnloadPak);

@@ -62,7 +62,7 @@ void InitialiseConsoleOnInterfaceCreation()
 	spdlog::default_logger()->sinks().push_back(consoleLogger);
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (CModule module))
 {
 	g_pSourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
 

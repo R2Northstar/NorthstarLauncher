@@ -131,17 +131,17 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (HMODULE baseAddress))
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
-	RenderLine = reinterpret_cast<RenderLineType>((char*)baseAddress + 0x192A70);
-	RenderBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x192520);
-	RenderWireframeBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x193DA0);
-	sEngineModule = baseAddress;
+	RenderLine = module.Offset(0x192A70).As<RenderLineType>();
+	RenderBox = module.Offset(0x192520).As<RenderBoxType>();
+	RenderWireframeBox = module.Offset(0x193DA0).As<RenderBoxType>();
+	sEngineModule = reinterpret_cast<HMODULE>(module.m_nAddress);
 
 	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory
-	ConVar* Cvar_enable_debug_overlays = (ConVar*)((char*)baseAddress + 0x10DB0990);
+	ConVar* Cvar_enable_debug_overlays = module.Offset(0x10DB0990).As<ConVar*>();
 	Cvar_enable_debug_overlays->SetValue(false);
 	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
 	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);
