@@ -8,6 +8,7 @@
 #include "configurables.h"
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
+const char BANLIST_COMMENT_CHAR = '#';
 
 ServerBanSystem* g_ServerBanSystem;
 
@@ -20,7 +21,29 @@ void ServerBanSystem::OpenBanlist()
 	{
 		std::string line;
 		while (std::getline(enabledModsStream, line))
+<<<<<<< Updated upstream
 			m_vBannedUids.push_back(strtoll(line.c_str(), nullptr, 10));
+=======
+		{
+			// ignore line if first char is #
+			if (line.front() == BANLIST_COMMENT_CHAR)
+				continue;
+
+			// remove tabs which shouldnt be there but maybe someone did the funny
+			line.erase(std::remove(line.begin(), line.end(), '\t'), line.end());
+			// remove spaces to allow for spaces before uids 
+			line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
+
+			// check if line is empty to allow for newlines in the file
+			if (line == "")
+				continue;
+
+			// for inline comments like: 123123123 #banned for unfunny
+			std::string uid = line.substr(0, line.find(BANLIST_COMMENT_CHAR));
+
+			m_vBannedUids.push_back(strtoull(uid.c_str(), nullptr, 10));
+		}
+>>>>>>> Stashed changes
 
 		enabledModsStream.close();
 	}
@@ -38,10 +61,20 @@ void ServerBanSystem::ClearBanlist()
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 }
 
+bool firstBanThisSession = true;
 void ServerBanSystem::BanUID(uint64_t uid)
 {
+	// if we do comments stuff etc theres a big chance that we fuck with the formatting and there wont be a newline at the end. if we then
+	// ban someone that uid will just be added directly after the last one, leading to invalid uids and confusion, so we just make a newline
+	// every time we ban someone for the first time
+	if (firstBanThisSession)
+	{
+		m_sBanlistStream << std::endl;
+		firstBanThisSession = false;
+	}
+	
 	m_vBannedUids.push_back(uid);
-	m_sBanlistStream << std::to_string(uid) << std::endl;
+	m_sBanlistStream << std::to_string(uid) << std::endl; 
 	spdlog::info("{} was banned", uid);
 }
 
