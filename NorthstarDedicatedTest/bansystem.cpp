@@ -28,7 +28,7 @@ void ServerBanSystem::OpenBanlist()
 
 			// remove tabs which shouldnt be there but maybe someone did the funny
 			line.erase(std::remove(line.begin(), line.end(), '\t'), line.end());
-			// remove spaces to allow for spaces before uids 
+			// remove spaces to allow for spaces before uids
 			line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
 
 			// check if line is empty to allow for newlines in the file
@@ -40,7 +40,7 @@ void ServerBanSystem::OpenBanlist()
 
 			m_vBannedUids.push_back(strtoull(uid.c_str(), nullptr, 10));
 		}
-		
+
 		enabledModsStream.close();
 	}
 
@@ -68,9 +68,9 @@ void ServerBanSystem::BanUID(uint64_t uid)
 		m_sBanlistStream << std::endl;
 		firstBanThisSession = false;
 	}
-	
+
 	m_vBannedUids.push_back(uid);
-	m_sBanlistStream << std::to_string(uid) << std::endl; 
+	m_sBanlistStream << std::to_string(uid) << std::endl;
 	spdlog::info("{} was banned", uid);
 }
 
