@@ -21,9 +21,6 @@ void ServerBanSystem::OpenBanlist()
 	{
 		std::string line;
 		while (std::getline(enabledModsStream, line))
-<<<<<<< Updated upstream
-			m_vBannedUids.push_back(strtoll(line.c_str(), nullptr, 10));
-=======
 		{
 			// ignore line if first char is #
 			if (line.front() == BANLIST_COMMENT_CHAR)
@@ -43,8 +40,7 @@ void ServerBanSystem::OpenBanlist()
 
 			m_vBannedUids.push_back(strtoull(uid.c_str(), nullptr, 10));
 		}
->>>>>>> Stashed changes
-
+		
 		enabledModsStream.close();
 	}
 
@@ -107,7 +103,7 @@ void BanPlayerCommand(const CCommand& args)
 
 		if (!strcmp((char*)player + 0x16, args.Arg(1)) || !strcmp((char*)player + 0xF500, args.Arg(1)))
 		{
-			g_ServerBanSystem->BanUID(strtoll((char*)player + 0xF500, nullptr, 10));
+			g_ServerBanSystem->BanUID(strtoull((char*)player + 0xF500, nullptr, 10));
 			CBaseClient__Disconnect(player, 1, "Banned from server");
 			break;
 		}
@@ -120,7 +116,7 @@ void UnbanPlayerCommand(const CCommand& args)
 		return;
 
 	// assumedly the player being unbanned here wasn't already connected, so don't need to iterate over players or anything
-	g_ServerBanSystem->UnbanUID(strtoll(args.Arg(1), nullptr, 10));
+	g_ServerBanSystem->UnbanUID(strtoull(args.Arg(1), nullptr, 10));
 }
 
 void ClearBanlistCommand(const CCommand& args)
