@@ -97,8 +97,8 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 
 				//{y}/{m}/{d} {h}:{m}
 				unbanComment << " # unban date: ";
-				unbanComment << now->tm_year + 1900 << "/"; // this lib is so fucking awful
-				unbanComment << std::setw(2) << std::setfill('0') << now->tm_mon + 1 << "/";
+				unbanComment << now->tm_year + 1900 << "-"; // this lib is so fucking awful
+				unbanComment << std::setw(2) << std::setfill('0') << now->tm_mon + 1 << "-";
 				unbanComment << std::setw(2) << std::setfill('0') << now->tm_mday << " ";
 				unbanComment << std::setw(2) << std::setfill('0') << now->tm_hour << ":";
 				unbanComment << std::setw(2) << std::setfill('0') << now->tm_min;
@@ -118,9 +118,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 
 	for (std::string updatedLine : banlistText)
-	{
 		m_sBanlistStream << updatedLine << std::endl;
-	}
 
 	spdlog::info("{} was unbanned", uid);
 }
