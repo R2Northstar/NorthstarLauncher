@@ -19,20 +19,12 @@ typedef void (*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char
 OnCommandSubmittedType onCommandSubmittedOriginal;
 void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
 {
-	// emit command can be used by everyone to spam, doesnt require sv_cheats or anythign. there's probably a better way to fix this but i dont know it.
-	// if there are more commands like this we should probably make an array of them or sumn and just loop
-	std::string _pCommand = pCommand;
-	if (!_pCommand.find("emit ")) // space after emit cause thats needed to play a sound. no space before cause it could be a semicolon. this allows "emit" to still work, which doesnt do anything						 
-	{
-		spdlog::info("Blocked command: emit cannot be called!");
-		return;
-	}
-
 	consoleDialog->m_pConsolePanel->Print("] ");
 	consoleDialog->m_pConsolePanel->Print(pCommand);
 	consoleDialog->m_pConsolePanel->Print("\n");
 
 	// todo: call the help command in the future
+
 	onCommandSubmittedOriginal(consoleDialog, pCommand);
 }
 
