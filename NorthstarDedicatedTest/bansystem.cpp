@@ -81,6 +81,9 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 
 			// for inline comments like: 123123123 #banned for unfunny
 			std::string lineUid = line.substr(0, line.find(BANLIST_COMMENT_CHAR));
+			// have to erase spaces or else inline comments will fuck up the uid finding
+			lineUid.erase(std::remove(lineUid.begin(), lineUid.end(), '\t'), lineUid.end());
+			lineUid.erase(std::remove(lineUid.begin(), lineUid.end(), ' '), lineUid.end());
 
 			// if the uid in the line is the uid we wanna unban
 			if (std::to_string(uid) == lineUid)
