@@ -1,5 +1,6 @@
 #pragma once
 #include "convar.h"
+#include "net_chan.h"
 #include "httplib.h"
 #include <unordered_map>
 #include <string>
@@ -33,28 +34,23 @@ struct AdditionalPlayerData
 };
 
 #pragma once
-typedef enum
-{
-	NA_NULL = 0,
-	NA_LOOPBACK,
-	NA_IP,
-} netadrtype_t;
 
 #pragma pack(push, 1)
-typedef struct netadr_s
+typedef struct netadr_s // !FIXME: USE NEW STRUCT IN NET_CHAN.H!
 {
-	netadrtype_t type;
+	//netadrtype_t type;
+	int type;
 	unsigned char ip[16]; // IPv6
 	// IPv4's 127.0.0.1 is [::ffff:127.0.0.1], that is:
 	// 00 00 00 00 00 00 00 00    00 00 FF FF 7F 00 00 01
 	unsigned short port;
-} netadr_t;
+} netadr_t_old;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 typedef struct netpacket_s
 {
-	netadr_t adr; // sender address
+	netadr_t_old adr; // sender address
 	// int				source;		// received source
 	char unk[10];
 	double received_time;

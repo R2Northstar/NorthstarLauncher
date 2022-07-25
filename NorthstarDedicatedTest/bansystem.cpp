@@ -68,7 +68,7 @@ void BanPlayerCommand(const CCommand& args)
 		return;
 
 	// assuming maxplayers 32
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++) // !FIXME: Use g_ServerGlobalVariables->m_nMaxClients!!
 	{
 		void* player = GetPlayerByIndex(i);
 
