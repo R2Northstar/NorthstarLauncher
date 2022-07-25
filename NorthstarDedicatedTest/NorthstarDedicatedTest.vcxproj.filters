@@ -1537,6 +1537,7 @@
       <Filter>Header Files\Server</Filter>
     </ClInclude>
     <ClInclude Include="stringtable.h">
+    <ClInclude Include="scriptjson.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1705,6 +1706,9 @@
     </ClCompile>
     <ClCompile Include="clientruihooks.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptjson.cpp">
+      <Filter>Source Files\Shared</Filter>
     </ClCompile>
     <ClCompile Include="scriptutility.cpp">
       <Filter>Source Files\Shared</Filter>
