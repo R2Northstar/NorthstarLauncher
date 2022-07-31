@@ -121,7 +121,8 @@ void LoadPostloadPaks(char** map)
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 		{
-			// we want to load the rpak if either the filename matches with m_sLoadAfterPak, or the full paths (relative to TF2 directory) match after being evaluated
+			// we want to load the rpak if either the filename matches with m_sLoadAfterPak,
+			// or the full paths (relative to TF2 directory) match after being evaluated
 			if (pak.m_sLoadAfterPak == fs::path(*map).filename() ||
 				fs::path(*map).compare("." / (std::filesystem::weakly_canonical("/" / mod.ModDirectory / "paks" / pak.m_sLoadAfterPak))))
 			{
