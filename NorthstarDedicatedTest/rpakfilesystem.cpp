@@ -116,12 +116,18 @@ void LoadPostloadPaks(char** map)
 		if (!mod.Enabled)
 			continue;
 
-		// need to get a relative path of mod to mod folder
+		// need to get a relative path of mod to mod folder to load the rpak properly
 		fs::path modPakPath("./" / mod.ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
-			if (pak.m_sLoadAfterPak == *map)
+		{
+			// we want to load the rpak if either the filename matches with m_sLoadAfterPak, or the full paths (relative to TF2 directory) match after being evaluated
+			if (pak.m_sLoadAfterPak == fs::path(*map).filename() ||
+				fs::path(*map).compare("." / (std::filesystem::weakly_canonical("/" / mod.ModDirectory / "paks" / pak.m_sLoadAfterPak))))
+			{
 				g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), false);
+			}
+		}
 	}
 }
 
