@@ -407,7 +407,6 @@ bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
 	return true;
 }
 
-
 typedef double(__fastcall* GetTimeConnectedType)(__int64 thisptr);
 GetTimeConnectedType GetTimeConnected;
 
@@ -473,7 +472,8 @@ void __fastcall Host_Status_PrintClient_Hook(__int64 client, char addresses, voi
 		int loss = ((*(float*)(6712 * 1 + nci + 500)) * 100.0);
 		int ping = ((*(float*)(6712 * 0 + nci + 508)) * 1000.0);
 		const char* connected = COM_FormatSeconds(GetTimeConnected(nci));
-		print("# %i \"%s\" %lld %s %i %i %s %d", (unsigned int)(playerSlot + 1), client + 22, playerUid, connected, ping, loss, active, rate);
+		print(
+			"# %i \"%s\" %lld %s %i %i %s %d", (unsigned int)(playerSlot + 1), client + 22, playerUid, connected, ping, loss, active, rate);
 		if (addresses)
 		{
 			char* address = GetAddress(nci);
