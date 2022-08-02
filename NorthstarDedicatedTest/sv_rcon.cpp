@@ -8,6 +8,7 @@
 #include "concommand.h"
 #include "cvar.h"
 #include "convar.h"
+#include "net.h"
 #include "NetAdr2.h"
 #include "socketcreator.h"
 #include "rcon_shared.h"
@@ -19,34 +20,39 @@
 #include "igameserverdata.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: destructor
+// Purpose:
 //-----------------------------------------------------------------------------
-CRConServer::~CRConServer()
+CRConServer::CRConServer(void) : m_bInitialized(false), m_nConnIndex(0)
 {
-	delete m_pNetAdr2;
-	delete m_pSocket;
+	m_pAdr2 = new CNetAdr2();
+	m_pSocket = new CSocketCreator();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CRConServer::~CRConServer(void)
+{
+	delete m_pAdr2;
+	delete m_pSocket;
+}
 //-----------------------------------------------------------------------------
 // Purpose: NETCON systems init
 //-----------------------------------------------------------------------------
 void CRConServer::Init(void)
 {
-	if (std::strlen(CVar_rcon_password->GetString()) < 8)
+	if (!m_bInitialized)
 	{
-		if (std::strlen(CVar_rcon_password->GetString()) > 0)
+		if (!this->SetPassword(CVar_rcon_password->GetString()))
 		{
-			spdlog::info("Remote server access requires a password of at least 8 characters");
+			return;
 		}
-		this->Shutdown();
-		return;
 	}
 
 	static ConVar* hostport = g_pCVar->FindVar("hostport");
 
-	m_pNetAdr2->SetIPAndPort(CVar_rcon_address->GetString(), hostport->GetString());
-	m_pSocket->CreateListenSocket(*m_pNetAdr2, false);
-	m_svPasswordHash = sha256(CVar_rcon_password->GetString());
+	m_pAdr2->SetIPAndPort(CVar_rcon_address->GetString(), hostport->GetString());
+	m_pSocket->CreateListenSocket(*m_pAdr2, false);
 
 	spdlog::info("Remote server access initialized");
 	m_bInitialized = true;
@@ -93,9 +99,35 @@ void CRConServer::Think(void)
 	{
 		if (!m_pSocket->IsListening())
 		{
-			m_pSocket->CreateListenSocket(*m_pNetAdr2, false);
+			m_pSocket->CreateListenSocket(*m_pAdr2, false);
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: changes the password
+// Input  : *pszPassword -
+// Output : true on success, false otherwise
+//-----------------------------------------------------------------------------
+bool CRConServer::SetPassword(const char* pszPassword)
+{
+	m_bInitialized = false;
+	m_pSocket->CloseAllAcceptedSockets();
+
+	if (std::strlen(pszPassword) < 8)
+	{
+		if (std::strlen(pszPassword) > 0)
+		{
+			spdlog::warn("Remote server access requires a password of at least 8 characters");
+		}
+		this->Shutdown();
+		return false;
+	}
+	m_svPasswordHash = sha256(pszPassword);
+	spdlog::info("Password hash ('{:s}')", m_svPasswordHash);
+
+	m_bInitialized = true;
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -112,23 +144,48 @@ void CRConServer::RunFrame(void)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: send message
+// Purpose: send message to all connected sockets
 // Input  : *svMessage -
 //-----------------------------------------------------------------------------
 void CRConServer::Send(const std::string& svMessage) const
 {
-	int nCount = m_pSocket->GetAcceptedSocketCount();
-
-	for (int i = nCount - 1; i >= 0; i--)
+	if (int nCount = m_pSocket->GetAcceptedSocketCount())
 	{
-		CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(i);
+		std::ostringstream ssSendBuf;
 
-		if (pData->m_bAuthorized)
+		ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 24);
+		ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 16);
+		ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 8);
+		ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()));
+		ssSendBuf << svMessage;
+
+		for (int i = nCount - 1; i >= 0; i--)
 		{
-			std::string svFinal = this->Serialize(svMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG);
-			::send(pData->m_hSocket, svFinal.c_str(), static_cast<int>(svFinal.size()), MSG_NOSIGNAL);
+			CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(i);
+			if (pData->m_bAuthorized)
+			{
+				::send(pData->m_hSocket, ssSendBuf.str().data(), static_cast<int>(ssSendBuf.str().size()), MSG_NOSIGNAL);
+			}
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: send message to specific connected socket
+// Input  : hSocket -
+//			*svMessage -
+//-----------------------------------------------------------------------------
+void CRConServer::Send(SocketHandle_t hSocket, const std::string& svMessage) const
+{
+	std::ostringstream ssSendBuf;
+
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 24);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 16);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 8);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()));
+	ssSendBuf << svMessage;
+
+	::send(hSocket, ssSendBuf.str().data(), static_cast<int>(ssSendBuf.str().size()), MSG_NOSIGNAL);
 }
 
 //-----------------------------------------------------------------------------
@@ -137,7 +194,7 @@ void CRConServer::Send(const std::string& svMessage) const
 void CRConServer::Recv(void)
 {
 	int nCount = m_pSocket->GetAcceptedSocketCount();
-	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN] {};
+	static char szRecvBuf[1024];
 
 	for (m_nConnIndex = nCount - 1; m_nConnIndex >= 0; m_nConnIndex--)
 	{
@@ -145,13 +202,12 @@ void CRConServer::Recv(void)
 		{ //////////////////////////////////////////////
 			if (this->CheckForBan(pData))
 			{
-				std::string svNoAuth = this->Serialize(s_pszBannedMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
-				::send(pData->m_hSocket, svNoAuth.c_str(), static_cast<int>(svNoAuth.size()), MSG_NOSIGNAL);
+				this->Send(pData->m_hSocket, this->Serialize(s_pszBannedMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH));
 				this->CloseConnection();
 				continue;
 			}
 
-			int nPendingLen = ::recv(pData->m_hSocket, szRecvBuf, sizeof(szRecvBuf), MSG_PEEK);
+			int nPendingLen = ::recv(pData->m_hSocket, szRecvBuf, sizeof(char), MSG_PEEK);
 			if (nPendingLen == SOCKET_ERROR && m_pSocket->IsSocketBlocking())
 			{
 				continue;
@@ -168,9 +224,7 @@ void CRConServer::Recv(void)
 
 		while (nReadLen > 0)
 		{
-			memset(szRecvBuf, '\0', sizeof(szRecvBuf));
 			int nRecvLen = ::recv(pData->m_hSocket, szRecvBuf, MIN(sizeof(szRecvBuf), nReadLen), MSG_NOSIGNAL);
-
 			if (nRecvLen == 0) // Socket was closed.
 			{
 				this->CloseConnection();
@@ -178,6 +232,7 @@ void CRConServer::Recv(void)
 			}
 			if (nRecvLen < 0 && !m_pSocket->IsSocketBlocking())
 			{
+				spdlog::error("RCON Cmd: recv error ({:s})", NET_ErrorString(WSAGetLastError()));
 				break;
 			}
 
@@ -219,7 +274,7 @@ std::string CRConServer::Serialize(const std::string& svRspBuf, const std::strin
 		break;
 	}
 	}
-	return sv_response.SerializeAsString().append("\r");
+	return sv_response.SerializeAsString();
 }
 
 //-----------------------------------------------------------------------------
@@ -230,7 +285,7 @@ std::string CRConServer::Serialize(const std::string& svRspBuf, const std::strin
 cl_rcon::request CRConServer::Deserialize(const std::string& svBuf) const
 {
 	cl_rcon::request cl_request;
-	cl_request.ParseFromArray(svBuf.c_str(), static_cast<int>(svBuf.size()));
+	cl_request.ParseFromArray(svBuf.data(), static_cast<int>(svBuf.size()));
 
 	return cl_request;
 }
@@ -239,9 +294,6 @@ cl_rcon::request CRConServer::Deserialize(const std::string& svBuf) const
 // Purpose: authenticate new connections
 // Input  : *cl_request -
 //			*pData -
-// Todo   : implement logic for key exchange instead so we never network our
-// password in plain text over the wire. create a cvar for this so user could
-// also opt out and use legacy authentication instead for older RCON clients
 //-----------------------------------------------------------------------------
 void CRConServer::Authenticate(const cl_rcon::request& cl_request, CConnectedNetConsoleData* pData)
 {
@@ -249,27 +301,25 @@ void CRConServer::Authenticate(const cl_rcon::request& cl_request, CConnectedNet
 	{
 		return;
 	}
-	else
+	else // Authorize.
 	{
 		if (this->Comparator(cl_request.requestbuf()))
 		{
 			pData->m_bAuthorized = true;
 			m_pSocket->CloseListenSocket();
-			this->CloseNonAuthConnection();
 
-			std::string svAuth = this->Serialize(s_pszAuthMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
-			::send(pData->m_hSocket, svAuth.c_str(), static_cast<int>(svAuth.size()), MSG_NOSIGNAL);
+			this->CloseNonAuthConnection();
+			this->Send(pData->m_hSocket, this->Serialize(s_pszAuthMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH));
 		}
 		else // Bad password.
 		{
 			CNetAdr2 netAdr2 = m_pSocket->GetAcceptedSocketAddress(m_nConnIndex);
 			if (CVar_sv_rcon_debug->GetBool())
 			{
-				spdlog::info("Bad RCON password attempt from '{}'", netAdr2.GetIPAndPort().c_str());
+				spdlog::info("Bad RCON password attempt from '{:s}'", netAdr2.GetIPAndPort());
 			}
 
-			std::string svWrongPass = this->Serialize(s_pszWrongPwMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
-			::send(pData->m_hSocket, svWrongPass.c_str(), static_cast<int>(svWrongPass.size()), MSG_NOSIGNAL);
+			this->Send(pData->m_hSocket, this->Serialize(s_pszWrongPwMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH));
 
 			pData->m_bAuthorized = false;
 			pData->m_bValidated = false;
@@ -289,8 +339,8 @@ bool CRConServer::Comparator(std::string svPassword) const
 	if (CVar_sv_rcon_debug->GetBool())
 	{
 		spdlog::info("+---------------------------------------------------------------------------+");
-		spdlog::info("] Server: '{}'[", m_svPasswordHash.c_str());
-		spdlog::info("] Client: '{}'[", svPassword.c_str());
+		spdlog::info("] Server: '{:s}'[", m_svPasswordHash);
+		spdlog::info("] Client: '{:s}'[", svPassword);
 		spdlog::info("+---------------------------------------------------------------------------+");
 	}
 	if (memcmp(svPassword.c_str(), m_svPasswordHash.c_str(), SHA256::DIGEST_SIZE) == 0)
@@ -301,38 +351,67 @@ bool CRConServer::Comparator(std::string svPassword) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: handles input command buffer
-// Input  : *pszIn -
+// Purpose: parses input response buffer using length-prefix framing
+// Input  : *pRecvBuf -
 //			nRecvLen -
 //			*pData -
 //-----------------------------------------------------------------------------
-void CRConServer::ProcessBuffer(const char* pszIn, int nRecvLen, CConnectedNetConsoleData* pData)
+void CRConServer::ProcessBuffer(const char* pRecvBuf, int nRecvLen, CConnectedNetConsoleData* pData)
 {
-	while (nRecvLen)
+	while (nRecvLen > 0)
 	{
-		switch (*pszIn)
+		if (pData->m_nPayloadLen)
 		{
-		case '\r':
-		{
-			if (pData->m_nCharsInCommandBuffer)
+			if (pData->m_nPayloadRead < pData->m_nPayloadLen)
 			{
-				cl_rcon::request cl_request = this->Deserialize(pData->m_pszInputCommandBuffer);
-				this->ProcessMessage(cl_request);
+				pData->m_RecvBuffer[pData->m_nPayloadRead++] = *pRecvBuf;
+
+				pRecvBuf++;
+				nRecvLen--;
 			}
-			pData->m_nCharsInCommandBuffer = 0;
-			break;
-		}
-		default:
-		{
-			if (pData->m_nCharsInCommandBuffer < MAX_NETCONSOLE_INPUT_LEN - 1)
+			if (pData->m_nPayloadRead == pData->m_nPayloadLen)
 			{
-				pData->m_pszInputCommandBuffer[pData->m_nCharsInCommandBuffer++] = *pszIn;
+				this->ProcessMessage(
+					this->Deserialize(std::string(reinterpret_cast<char*>(pData->m_RecvBuffer.data()), pData->m_nPayloadLen)));
+
+				pData->m_nPayloadLen = 0;
+				pData->m_nPayloadRead = 0;
 			}
-			break;
 		}
+		else if (pData->m_nPayloadRead < sizeof(int)) // Read size field.
+		{
+			pData->m_RecvBuffer[pData->m_nPayloadRead++] = *pRecvBuf;
+
+			pRecvBuf++;
+			nRecvLen--;
 		}
-		pszIn++;
-		nRecvLen--;
+		else // Build prefix.
+		{
+			pData->m_nPayloadLen = static_cast<int>(
+				pData->m_RecvBuffer[0] << 24 | pData->m_RecvBuffer[1] << 16 | pData->m_RecvBuffer[2] << 8 | pData->m_RecvBuffer[3]);
+			pData->m_nPayloadRead = 0;
+
+			if (!pData->m_bAuthorized)
+			{
+				if (pData->m_nPayloadLen > MAX_NETCONSOLE_INPUT_LEN)
+				{
+					this->CloseConnection(); // Sending large messages while not authenticated.
+					break;
+				}
+			}
+
+			if (pData->m_nPayloadLen < 0)
+			{
+				spdlog::error("RCON Cmd: sync error ({:d})", pData->m_nPayloadLen);
+				this->CloseConnection(); // Out of sync (irrecoverable).
+
+				break;
+			}
+			else
+			{
+				pData->m_RecvBuffer.resize(pData->m_nPayloadLen);
+			}
+		}
 	}
 }
 
@@ -347,8 +426,7 @@ void CRConServer::ProcessMessage(const cl_rcon::request& cl_request)
 	if (!pData->m_bAuthorized && cl_request.requesttype() != cl_rcon::request_t::SERVERDATA_REQUEST_AUTH)
 	{
 		// Notify net console that authentication is required.
-		std::string svMessage = this->Serialize(s_pszNoAuthMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH);
-		::send(pData->m_hSocket, svMessage.c_str(), static_cast<int>(svMessage.size()), MSG_NOSIGNAL);
+		this->Send(pData->m_hSocket, this->Serialize(s_pszNoAuthMessage, "", sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH));
 
 		pData->m_bValidated = false;
 		pData->m_nIgnoredMessage++;
@@ -362,12 +440,18 @@ void CRConServer::ProcessMessage(const cl_rcon::request& cl_request)
 		break;
 	}
 	case cl_rcon::request_t::SERVERDATA_REQUEST_EXECCOMMAND:
+	{
+		if (pData->m_bAuthorized) // Only execute if auth was succesfull.
+		{
+			this->Execute(cl_request, false);
+		}
+		break;
+	}
 	case cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE:
 	{
-		// Only execute if auth was succesfull.
 		if (pData->m_bAuthorized)
 		{
-			this->Execute(cl_request);
+			this->Execute(cl_request, true);
 		}
 		break;
 	}
@@ -389,15 +473,16 @@ void CRConServer::ProcessMessage(const cl_rcon::request& cl_request)
 //-----------------------------------------------------------------------------
 // Purpose: execute commands issued from net console
 // Input  : *cl_request -
+//			bConVar -
 //-----------------------------------------------------------------------------
-void CRConServer::Execute(const cl_rcon::request& cl_request) const
+void CRConServer::Execute(const cl_rcon::request& cl_request, bool bConVar) const
 {
 	ConVar* pConVar = g_pCVar->FindVar(cl_request.requestbuf().c_str());
-	if (pConVar)
+	if (pConVar) // Set value without running the callback.
 	{
 		pConVar->SetValue(cl_request.requestval().c_str());
 	}
-	else // Execute command with "<val>".
+	else if (!bConVar) // Execute command with "<val>".
 	{
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), cl_request.requestbuf().c_str(), cmd_source_t::kCommandSrcCode);
 		Cbuf_Execute();
@@ -435,7 +520,7 @@ bool CRConServer::CheckForBan(CConnectedNetConsoleData* pData)
 			return false;
 		}
 
-		spdlog::info("Banned '{}' for RCON hacking attempts", netAdr2.GetIPAndPort().c_str());
+		spdlog::info("Banned '{:s}' for RCON hacking attempts", netAdr2.GetIPAndPort());
 		m_vBannedAddress.push_back(netAdr2.GetIP(true));
 		return true;
 	}
@@ -452,7 +537,7 @@ void CRConServer::CloseConnection(void) // NETMGR
 	{
 		// Inform server owner when authenticated connection has been closed.
 		CNetAdr2 netAdr2 = m_pSocket->GetAcceptedSocketAddress(m_nConnIndex);
-		spdlog::info("Net console '{}' closed RCON connection", netAdr2.GetIPAndPort().c_str());
+		spdlog::info("Net console '{:s}' closed RCON connection", netAdr2.GetIPAndPort());
 	}
 	m_pSocket->CloseAcceptedSocket(m_nConnIndex);
 }
@@ -463,7 +548,6 @@ void CRConServer::CloseConnection(void) // NETMGR
 void CRConServer::CloseNonAuthConnection(void)
 {
 	int nCount = m_pSocket->GetAcceptedSocketCount();
-
 	for (int i = nCount - 1; i >= 0; i--)
 	{
 		CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(i);
@@ -476,3 +560,7 @@ void CRConServer::CloseNonAuthConnection(void)
 }
 ///////////////////////////////////////////////////////////////////////////////
 CRConServer* g_pRConServer = new CRConServer();
+CRConServer* RCONServer()
+{
+	return g_pRConServer;
+}

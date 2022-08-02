@@ -19,24 +19,24 @@ void CHostState__FrameUpdateHook(CHostState* thisptr)
 		{
 			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec rcon_server", cmd_source_t::kCommandSrcCode);
 			Cbuf_Execute();
-			g_pRConServer->Init();
+			RCONServer()->Init();
 		}
 		else
 		{
 			Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec rcon_client", cmd_source_t::kCommandSrcCode);
 			Cbuf_Execute();
-			g_pRConClient->Init();
+			RCONClient()->Init();
 		}
 		bInitialized = true;
 	}
 
 	if (IsDedicated())
 	{
-		g_pRConServer->RunFrame();
+		RCONServer()->RunFrame();
 	}
 	else
 	{
-		g_pRConClient->RunFrame();
+		RCONClient()->RunFrame();
 	}
 	CHostState__FrameUpdate(thisptr);
 }

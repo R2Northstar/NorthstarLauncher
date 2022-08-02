@@ -13,9 +13,19 @@
 #include "netconsole.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: destructor
+// Purpose:
 //-----------------------------------------------------------------------------
-CNetCon::~CNetCon()
+CNetCon::CNetCon(void)
+	: m_bInitialized(false), m_bNoColor(false), m_bQuitApplication(false), m_abPromptConnect(true), m_abConnEstablished(false)
+{
+	m_pNetAdr2 = new CNetAdr2("localhost", "37015");
+	m_pSocket = new CSocketCreator();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CNetCon::~CNetCon(void)
 {
 	delete m_pNetAdr2;
 	delete m_pSocket;
@@ -27,12 +37,12 @@ CNetCon::~CNetCon()
 //-----------------------------------------------------------------------------
 bool CNetCon::Init(void)
 {
-	WSAData wsaData{};
+	WSAData wsaData {};
 	int nError = ::WSAStartup(MAKEWORD(2, 2), &wsaData);
 
 	if (nError != 0)
 	{
-		spdlog::error("Failed to start Winsock via WSAStartup: ({})", NET_ErrorString(WSAGetLastError()));
+		spdlog::error("Failed to start Winsock via WSAStartup: ({:s})", NET_ErrorString(WSAGetLastError()));
 		return false;
 	}
 
@@ -56,7 +66,7 @@ bool CNetCon::Shutdown(void)
 	int nError = ::WSACleanup();
 	if (nError != 0)
 	{
-		spdlog::error("Failed to stop winsock via WSACleanup: ({})", NET_ErrorString(WSAGetLastError()));
+		spdlog::error("Failed to stop winsock via WSACleanup: ({:s})", NET_ErrorString(WSAGetLastError()));
 		return false;
 	}
 	return true;
@@ -71,7 +81,7 @@ void CNetCon::TermSetup(void)
 	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	CONSOLE_SCREEN_BUFFER_INFOEX sbInfoEx{};
+	CONSOLE_SCREEN_BUFFER_INFOEX sbInfoEx {};
 	COLORREF storedBG = sbInfoEx.ColorTable[0];
 	sbInfoEx.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 
@@ -101,22 +111,23 @@ void CNetCon::UserInput(void)
 				this->Disconnect();
 				return;
 			}
-			size_t nPos = svInput.find(" ");
-			if (!svInput.empty() && nPos > 0 && nPos < svInput.size() && nPos != svInput.size())
-			{
-				std::string svSecondArg = svInput.substr(nPos + 1);
-				std::string svFirstArg = svInput;
-				svFirstArg = svFirstArg.erase(svFirstArg.find(" "));
 
-				if (strcmp(svFirstArg.c_str(), "PASS") == 0) // Auth with RCON server.
+			std::vector<std::string> vSubStrings = StringSplit(svInput, ' ', 2);
+			if (vSubStrings.size() > 1)
+			{
+				if (strcmp(vSubStrings[0].c_str(), "PASS") == 0) // Auth with RCON server.
 				{
-					std::string svSerialized = this->Serialize(svSecondArg, "", cl_rcon::request_t::SERVERDATA_REQUEST_AUTH);
+					std::string svSerialized = this->Serialize(vSubStrings[1], "", cl_rcon::request_t::SERVERDATA_REQUEST_AUTH);
 					this->Send(svSerialized);
 				}
-				else if (strcmp(svFirstArg.c_str(), "SET") == 0) // Set value query.
+				else if (strcmp(vSubStrings[0].c_str(), "SET") == 0) // Set value query.
 				{
-					std::string svSerialized = this->Serialize(svFirstArg, svSecondArg, cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE);
-					this->Send(svSerialized);
+					if (vSubStrings.size() > 2)
+					{
+						std::string svSerialized =
+							this->Serialize(vSubStrings[1], vSubStrings[2], cl_rcon::request_t::SERVERDATA_REQUEST_SETVALUE);
+						this->Send(svSerialized);
+					}
 				}
 				else // Execute command query.
 				{
@@ -124,7 +135,7 @@ void CNetCon::UserInput(void)
 					this->Send(svSerialized);
 				}
 			}
-			else // Single arg command query.
+			else if (!svInput.empty()) // Single arg command query.
 			{
 				std::string svSerialized = this->Serialize(svInput.c_str(), "", cl_rcon::request_t::SERVERDATA_REQUEST_EXECCOMMAND);
 				this->Send(svSerialized);
@@ -132,16 +143,19 @@ void CNetCon::UserInput(void)
 		}
 		else // Setup connection from input.
 		{
-			size_t nPos = svInput.find(" ");
-			if (!svInput.empty() && nPos > 0 && nPos < svInput.size() && nPos != svInput.size())
+			if (!svInput.empty())
 			{
-				std::string svInPort = svInput.substr(nPos + 1);
-				std::string svInAdr = svInput.erase(svInput.find(" "));
-
-				if (!this->Connect(svInAdr, svInPort))
+				std::string::size_type nPos = svInput.find(' ');
+				if (nPos > 0 && nPos < svInput.size() && nPos != svInput.size())
 				{
-					m_abPromptConnect = true;
-					return;
+					std::string svInPort = svInput.substr(nPos + 1);
+					std::string svInAdr = svInput.erase(svInput.find(' '));
+
+					if (!this->Connect(svInAdr, svInPort))
+					{
+						m_abPromptConnect = true;
+						return;
+					}
 				}
 			}
 			else // Initialize as [127.0.0.1]:37015.
@@ -180,7 +194,10 @@ void CNetCon::RunFrame(void)
 // Purpose: checks if application should be terminated
 // Output : true for termination, false otherwise
 //-----------------------------------------------------------------------------
-bool CNetCon::ShouldQuit(void) const { return this->m_bQuitApplication; }
+bool CNetCon::ShouldQuit(void) const
+{
+	return this->m_bQuitApplication;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: connect to specified address and port
@@ -201,7 +218,7 @@ bool CNetCon::Connect(const std::string& svInAdr, const std::string& svInPort)
 		spdlog::warn("Failed to connect. Error: (SOCKET_ERROR). Verify IP and PORT.");
 		return false;
 	}
-	spdlog::info("Connected to: {}", m_pNetAdr2->GetIPAndPort());
+	spdlog::info("Connected to: {:s}", m_pNetAdr2->GetIPAndPort());
 
 	m_abConnEstablished = true;
 	return true;
@@ -212,7 +229,7 @@ bool CNetCon::Connect(const std::string& svInAdr, const std::string& svInPort)
 //-----------------------------------------------------------------------------
 void CNetCon::Disconnect(void)
 {
-	::closesocket(m_pSocket->GetAcceptedSocketHandle(0));
+	m_pSocket->CloseAcceptedSocket(0);
 	m_abPromptConnect = true;
 	m_abConnEstablished = false;
 }
@@ -223,7 +240,16 @@ void CNetCon::Disconnect(void)
 //-----------------------------------------------------------------------------
 void CNetCon::Send(const std::string& svMessage) const
 {
-	int nSendResult = ::send(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, svMessage.c_str(), svMessage.size(), MSG_NOSIGNAL);
+	std::ostringstream ssSendBuf;
+
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 24);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 16);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 8);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()));
+	ssSendBuf << svMessage;
+
+	int nSendResult = ::send(
+		m_pSocket->GetAcceptedSocketData(0)->m_hSocket, ssSendBuf.str().data(), static_cast<int>(ssSendBuf.str().size()), MSG_NOSIGNAL);
 	if (nSendResult == SOCKET_ERROR)
 	{
 		spdlog::warn("Failed to send message: (SOCKET_ERROR)");
@@ -235,10 +261,11 @@ void CNetCon::Send(const std::string& svMessage) const
 //-----------------------------------------------------------------------------
 void CNetCon::Recv(void)
 {
-	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN]{};
+	static char szRecvBuf[1024];
+	CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(0);
 
 	{ //////////////////////////////////////////////
-		int nPendingLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, sizeof(szRecvBuf), MSG_PEEK);
+		int nPendingLen = ::recv(pData->m_hSocket, szRecvBuf, sizeof(char), MSG_PEEK);
 		if (nPendingLen == SOCKET_ERROR && m_pSocket->IsSocketBlocking())
 		{
 			return;
@@ -252,13 +279,11 @@ void CNetCon::Recv(void)
 	} //////////////////////////////////////////////
 
 	u_long nReadLen; // Find out how much we have to read.
-	::ioctlsocket(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, FIONREAD, &nReadLen);
+	::ioctlsocket(pData->m_hSocket, FIONREAD, &nReadLen);
 
 	while (nReadLen > 0)
 	{
-		memset(szRecvBuf, '\0', sizeof(szRecvBuf));
-		int nRecvLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, MIN(sizeof(szRecvBuf), nReadLen), MSG_NOSIGNAL);
-
+		int nRecvLen = ::recv(pData->m_hSocket, szRecvBuf, MIN(sizeof(szRecvBuf), nReadLen), MSG_NOSIGNAL);
 		if (nRecvLen == 0 && m_abConnEstablished) // Socket was closed.
 		{
 			this->Disconnect();
@@ -267,50 +292,68 @@ void CNetCon::Recv(void)
 		}
 		if (nRecvLen < 0 && !m_pSocket->IsSocketBlocking())
 		{
+			spdlog::error("RCON Cmd: recv error ({:s})", NET_ErrorString(WSAGetLastError()));
 			break;
 		}
 
 		nReadLen -= nRecvLen; // Process what we've got.
-		this->ProcessBuffer(szRecvBuf, nRecvLen);
+		this->ProcessBuffer(szRecvBuf, nRecvLen, pData);
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: handles input response buffer
-// Input  : *pszIn -
+// Purpose: parses input response buffer using length-prefix framing
+// Input  : *pRecvBuf -
 //			nRecvLen -
+//			*pData -
 //-----------------------------------------------------------------------------
-void CNetCon::ProcessBuffer(const char* pszIn, int nRecvLen) const
+void CNetCon::ProcessBuffer(const char* pRecvBuf, int nRecvLen, CConnectedNetConsoleData* pData)
 {
-	int nCharsInRespondBuffer = 0;
-	char szInputRespondBuffer[MAX_NETCONSOLE_INPUT_LEN]{};
-
-	while (nRecvLen)
+	while (nRecvLen > 0)
 	{
-		switch (*pszIn)
+		if (pData->m_nPayloadLen)
 		{
-		case '\r':
-		{
-			if (nCharsInRespondBuffer)
+			if (pData->m_nPayloadRead < pData->m_nPayloadLen)
 			{
-				sv_rcon::response sv_response = this->Deserialize(szInputRespondBuffer);
-				this->ProcessMessage(sv_response);
-			}
-			nCharsInRespondBuffer = 0;
-			break;
-		}
+				pData->m_RecvBuffer[pData->m_nPayloadRead++] = *pRecvBuf;
 
-		default:
-		{
-			if (nCharsInRespondBuffer < MAX_NETCONSOLE_INPUT_LEN - 1)
-			{
-				szInputRespondBuffer[nCharsInRespondBuffer++] = *pszIn;
+				pRecvBuf++;
+				nRecvLen--;
 			}
-			break;
+			if (pData->m_nPayloadRead == pData->m_nPayloadLen)
+			{
+				this->ProcessMessage(
+					this->Deserialize(std::string(reinterpret_cast<char*>(pData->m_RecvBuffer.data()), pData->m_nPayloadLen)));
+
+				pData->m_nPayloadLen = 0;
+				pData->m_nPayloadRead = 0;
+			}
 		}
+		else if (pData->m_nPayloadRead < sizeof(int)) // Read size field.
+		{
+			pData->m_RecvBuffer[pData->m_nPayloadRead++] = *pRecvBuf;
+
+			pRecvBuf++;
+			nRecvLen--;
 		}
-		pszIn++;
-		nRecvLen--;
+		else // Build prefix.
+		{
+			pData->m_nPayloadLen = static_cast<int>(
+				pData->m_RecvBuffer[0] << 24 | pData->m_RecvBuffer[1] << 16 | pData->m_RecvBuffer[2] << 8 | pData->m_RecvBuffer[3]);
+			pData->m_nPayloadRead = 0;
+
+			if (pData->m_nPayloadLen < 0)
+			{
+				spdlog::error("RCON Cmd: sync error ({:d})", pData->m_nPayloadLen);
+				this->Disconnect(); // Out of sync (irrecoverable).
+
+				break;
+			}
+			else
+			{
+				pData->m_RecvBuffer.resize(pData->m_nPayloadLen);
+			}
+		}
 	}
 }
 
@@ -327,7 +370,7 @@ void CNetCon::ProcessMessage(const sv_rcon::response& sv_response) const
 	{
 		std::string svOut = sv_response.responsebuf();
 		svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
-		spdlog::info(svOut.c_str());
+		spdlog::info(svOut);
 		break;
 	}
 	default:
@@ -366,7 +409,7 @@ std::string CNetCon::Serialize(const std::string& svReqBuf, const std::string& s
 		break;
 	}
 	}
-	return cl_request.SerializeAsString().append("\r");
+	return cl_request.SerializeAsString();
 }
 
 //-----------------------------------------------------------------------------
@@ -377,7 +420,7 @@ std::string CNetCon::Serialize(const std::string& svReqBuf, const std::string& s
 sv_rcon::response CNetCon::Deserialize(const std::string& svBuf) const
 {
 	sv_rcon::response sv_response;
-	sv_response.ParseFromArray(svBuf.c_str(), static_cast<int>(svBuf.size()));
+	sv_response.ParseFromArray(svBuf.data(), static_cast<int>(svBuf.size()));
 
 	return sv_response;
 }
@@ -417,4 +460,32 @@ int main(int argc, char* argv[])
 	}
 
 	return ERROR_SUCCESS;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// For splitting a string into substrings by delimiter.
+std::vector<std::string>
+StringSplit(std::string svInput, char cDelim, size_t nMax) // Move this to a dedicated string util file if one ever gets created.
+{
+	std::string svSubString;
+	std::vector<std::string> vSubStrings;
+
+	svInput = svInput + cDelim;
+
+	for (size_t i = 0; i < svInput.size(); i++)
+	{
+		if (i != (svInput.size() - 1) && vSubStrings.size() >= nMax || svInput[i] != cDelim)
+		{
+			svSubString += svInput[i];
+		}
+		else
+		{
+			if (svSubString.size() != 0)
+			{
+				vSubStrings.push_back(svSubString);
+			}
+			svSubString.clear();
+		}
+	}
+	return vSubStrings;
 }

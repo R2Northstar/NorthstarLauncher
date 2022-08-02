@@ -276,7 +276,7 @@ template <ScriptContext context> SQInteger SQPrintHook(void* sqvm, char* fmt, ..
 				char sendbuf[1024] {};
 
 				snprintf(sendbuf, sizeof(sendbuf), "[%s SCRIPT] %s", GetContextName(context), buf);
-				g_pRConServer->Send(sendbuf);
+				RCONServer()->Send(RCONServer()->Serialize(sendbuf, "", sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG));
 			}
 		}
 	}
@@ -355,7 +355,7 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 	{
 		if (CVar_sv_rcon_sendlogs->GetBool())
 		{
-			g_pRConServer->Send(buffer);
+			RCONServer()->Send(RCONServer()->Serialize(buffer, "", sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG));
 		}
 	}
 

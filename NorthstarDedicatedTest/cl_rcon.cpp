@@ -12,12 +12,22 @@
 #include "sv_rcon.pb.h"
 #include "cl_rcon.pb.h"
 #include "cl_rcon.h"
+#include "net.h"
 #include "igameserverdata.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: destructor
+// Purpose:
 //-----------------------------------------------------------------------------
-CRConClient::~CRConClient()
+CRConClient::CRConClient() : m_bInitialized(false), m_bConnEstablished(false)
+{
+	m_pNetAdr2 = new CNetAdr2("localhost", "37015");
+	m_pSocket = new CSocketCreator();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CRConClient::~CRConClient(void)
 {
 	delete m_pNetAdr2;
 	delete m_pSocket;
@@ -28,6 +38,10 @@ CRConClient::~CRConClient()
 //-----------------------------------------------------------------------------
 void CRConClient::Init(void)
 {
+	if (!m_bInitialized)
+	{
+		this->SetPassword(CVar_rcon_password->GetString());
+	}
 	m_bInitialized = true;
 }
 
@@ -40,6 +54,24 @@ void CRConClient::Shutdown(void)
 	{
 		this->Disconnect();
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: changes the password
+// Input  : *pszPassword -
+// Output : true on success, false otherwise
+//-----------------------------------------------------------------------------
+bool CRConClient::SetPassword(const char* pszPassword)
+{
+	if (std::strlen(pszPassword) < 8)
+	{
+		if (std::strlen(pszPassword) > 0)
+		{
+			spdlog::info("Remote server access requires a password of at least 8 characters");
+		}
+		return false;
+	}
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -67,10 +99,10 @@ bool CRConClient::Connect(void)
 
 	if (m_pSocket->ConnectSocket(*m_pNetAdr2, true) == SOCKET_ERROR)
 	{
-		spdlog::info("Connection to RCON server '{}' failed: (SOCKET_ERROR)", m_pNetAdr2->GetIPAndPort());
+		spdlog::info("Connection to RCON server '{:s}' failed: (SOCKET_ERROR)", m_pNetAdr2->GetIPAndPort());
 		return false;
 	}
-	spdlog::info("Connected to: {}", m_pNetAdr2->GetIPAndPort().c_str());
+	spdlog::info("Connected to: {:s}", m_pNetAdr2->GetIPAndPort());
 
 	m_bConnEstablished = true;
 	return true;
@@ -92,10 +124,10 @@ bool CRConClient::Connect(const std::string& svInAdr, const std::string& svInPor
 
 	if (m_pSocket->ConnectSocket(*m_pNetAdr2, true) == SOCKET_ERROR)
 	{
-		spdlog::info("Connection to RCON server '{}' failed: (SOCKET_ERROR)", m_pNetAdr2->GetIPAndPort());
+		spdlog::info("Connection to RCON server '{:s}' failed: (SOCKET_ERROR)", m_pNetAdr2->GetIPAndPort());
 		return false;
 	}
-	spdlog::info("Connected to: {}", m_pNetAdr2->GetIPAndPort().c_str());
+	spdlog::info("Connected to: {:s}", m_pNetAdr2->GetIPAndPort());
 
 	m_bConnEstablished = true;
 	return true;
@@ -106,7 +138,7 @@ bool CRConClient::Connect(const std::string& svInAdr, const std::string& svInPor
 //-----------------------------------------------------------------------------
 void CRConClient::Disconnect(void)
 {
-	::closesocket(m_pSocket->GetAcceptedSocketHandle(0));
+	m_pSocket->CloseAcceptedSocket(0);
 	m_bConnEstablished = false;
 }
 
@@ -116,7 +148,16 @@ void CRConClient::Disconnect(void)
 //-----------------------------------------------------------------------------
 void CRConClient::Send(const std::string& svMessage) const
 {
-	int nSendResult = ::send(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, svMessage.c_str(), svMessage.size(), MSG_NOSIGNAL);
+	std::ostringstream ssSendBuf;
+
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 24);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 16);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()) >> 8);
+	ssSendBuf << static_cast<uint8_t>(static_cast<int>(svMessage.size()));
+	ssSendBuf << svMessage;
+
+	int nSendResult = ::send(
+		m_pSocket->GetAcceptedSocketData(0)->m_hSocket, ssSendBuf.str().data(), static_cast<int>(ssSendBuf.str().size()), MSG_NOSIGNAL);
 	if (nSendResult == SOCKET_ERROR)
 	{
 		spdlog::info("Failed to send RCON message: (SOCKET_ERROR)");
@@ -128,10 +169,11 @@ void CRConClient::Send(const std::string& svMessage) const
 //-----------------------------------------------------------------------------
 void CRConClient::Recv(void)
 {
-	static char szRecvBuf[MAX_NETCONSOLE_INPUT_LEN] {};
+	static char szRecvBuf[1024];
+	CConnectedNetConsoleData* pData = m_pSocket->GetAcceptedSocketData(0);
 
 	{ //////////////////////////////////////////////
-		int nPendingLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, sizeof(szRecvBuf), MSG_PEEK);
+		int nPendingLen = ::recv(pData->m_hSocket, szRecvBuf, sizeof(char), MSG_PEEK);
 		if (nPendingLen == SOCKET_ERROR && m_pSocket->IsSocketBlocking())
 		{
 			return;
@@ -145,13 +187,11 @@ void CRConClient::Recv(void)
 	} //////////////////////////////////////////////
 
 	u_long nReadLen; // Find out how much we have to read.
-	::ioctlsocket(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, FIONREAD, &nReadLen);
+	::ioctlsocket(pData->m_hSocket, FIONREAD, &nReadLen);
 
 	while (nReadLen > 0)
 	{
-		memset(szRecvBuf, '\0', sizeof(szRecvBuf));
-		int nRecvLen = ::recv(m_pSocket->GetAcceptedSocketData(0)->m_hSocket, szRecvBuf, MIN(sizeof(szRecvBuf), nReadLen), MSG_NOSIGNAL);
-
+		int nRecvLen = ::recv(pData->m_hSocket, szRecvBuf, MIN(sizeof(szRecvBuf), nReadLen), MSG_NOSIGNAL);
 		if (nRecvLen == 0 && m_bConnEstablished) // Socket was closed.
 		{
 			this->Disconnect();
@@ -160,50 +200,68 @@ void CRConClient::Recv(void)
 		}
 		if (nRecvLen < 0 && !m_pSocket->IsSocketBlocking())
 		{
+			spdlog::error("RCON Cmd: recv error ({:s})", NET_ErrorString(WSAGetLastError()));
 			break;
 		}
 
 		nReadLen -= nRecvLen; // Process what we've got.
-		this->ProcessBuffer(szRecvBuf, nRecvLen);
+		this->ProcessBuffer(szRecvBuf, nRecvLen, pData);
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: handles input response buffer
+// Purpose: parses input response buffer using length-prefix framing
 // Input  : *pszIn -
 //			nRecvLen -
+//			*pData -
 //-----------------------------------------------------------------------------
-void CRConClient::ProcessBuffer(const char* pszIn, int nRecvLen) const
+void CRConClient::ProcessBuffer(const char* pRecvBuf, int nRecvLen, CConnectedNetConsoleData* pData)
 {
-	int nCharsInRespondBuffer = 0;
-	char szInputRespondBuffer[MAX_NETCONSOLE_INPUT_LEN] {};
-
-	while (nRecvLen)
+	while (nRecvLen > 0)
 	{
-		switch (*pszIn)
+		if (pData->m_nPayloadLen)
 		{
-		case '\r':
-		{
-			if (nCharsInRespondBuffer)
+			if (pData->m_nPayloadRead < pData->m_nPayloadLen)
 			{
-				sv_rcon::response sv_response = this->Deserialize(szInputRespondBuffer);
-				this->ProcessMessage(sv_response);
-			}
-			nCharsInRespondBuffer = 0;
-			break;
-		}
+				pData->m_RecvBuffer[pData->m_nPayloadRead++] = *pRecvBuf;
 
-		default:
-		{
-			if (nCharsInRespondBuffer < MAX_NETCONSOLE_INPUT_LEN - 1)
-			{
-				szInputRespondBuffer[nCharsInRespondBuffer++] = *pszIn;
+				pRecvBuf++;
+				nRecvLen--;
 			}
-			break;
+			if (pData->m_nPayloadRead == pData->m_nPayloadLen)
+			{
+				this->ProcessMessage(
+					this->Deserialize(std::string(reinterpret_cast<char*>(pData->m_RecvBuffer.data()), pData->m_nPayloadLen)));
+
+				pData->m_nPayloadLen = 0;
+				pData->m_nPayloadRead = 0;
+			}
 		}
+		else if (pData->m_nPayloadRead < sizeof(int)) // Read size field.
+		{
+			pData->m_RecvBuffer[pData->m_nPayloadRead++] = *pRecvBuf;
+
+			pRecvBuf++;
+			nRecvLen--;
 		}
-		pszIn++;
-		nRecvLen--;
+		else // Build prefix.
+		{
+			pData->m_nPayloadLen = static_cast<int>(
+				pData->m_RecvBuffer[0] << 24 | pData->m_RecvBuffer[1] << 16 | pData->m_RecvBuffer[2] << 8 | pData->m_RecvBuffer[3]);
+			pData->m_nPayloadRead = 0;
+
+			if (pData->m_nPayloadLen < 0)
+			{
+				spdlog::error("RCON Cmd: sync error ({:d})", pData->m_nPayloadLen);
+				this->Disconnect(); // Out of sync (irrecoverable).
+
+				break;
+			}
+			else
+			{
+				pData->m_RecvBuffer.resize(pData->m_nPayloadLen);
+			}
+		}
 	}
 }
 
@@ -220,14 +278,14 @@ void CRConClient::ProcessMessage(const sv_rcon::response& sv_response) const
 	case sv_rcon::response_t::SERVERDATA_RESPONSE_AUTH:
 	{
 		svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
-		spdlog::info("{}", svOut.c_str());
+		spdlog::info("{:s}", svOut);
 		break;
 	}
 	case sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG:
 	{
 		// !TODO: Network the enum to differentiate script/engine logs.
 		svOut.erase(std::remove(svOut.begin(), svOut.end(), '\n'), svOut.end());
-		spdlog::info("{}", svOut.c_str());
+		spdlog::info("{:s}", svOut);
 		break;
 	}
 	default:
@@ -266,7 +324,7 @@ std::string CRConClient::Serialize(const std::string& svReqBuf, const std::strin
 		break;
 	}
 	}
-	return cl_request.SerializeAsString().append("\r");
+	return cl_request.SerializeAsString();
 }
 
 //-----------------------------------------------------------------------------
@@ -277,7 +335,7 @@ std::string CRConClient::Serialize(const std::string& svReqBuf, const std::strin
 sv_rcon::response CRConClient::Deserialize(const std::string& svBuf) const
 {
 	sv_rcon::response sv_response;
-	sv_response.ParseFromArray(svBuf.c_str(), static_cast<int>(svBuf.size()));
+	sv_response.ParseFromArray(svBuf.data(), static_cast<int>(svBuf.size()));
 
 	return sv_response;
 }
@@ -301,3 +359,7 @@ bool CRConClient::IsConnected(void) const
 }
 ///////////////////////////////////////////////////////////////////////////////
 CRConClient* g_pRConClient = new CRConClient();
+CRConClient* RCONClient()
+{
+	return g_pRConClient;
+}

@@ -380,7 +380,7 @@ void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format,
 		{
 			char sendbuf[2048] {};
 			snprintf(sendbuf, sizeof(sendbuf), "[SERVER %s] %s", typeStr, formatted);
-			g_pRConServer->Send(sendbuf);
+			RCONServer()->Send(RCONServer()->Serialize(sendbuf, "", sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG));
 		}
 	}
 }
@@ -407,7 +407,7 @@ void Status_ConMsg_Hook(const char* text, ...)
 	{
 		if (CVar_sv_rcon_sendlogs->GetBool())
 		{
-			g_pRConServer->Send(formatted);
+			RCONServer()->Send(RCONServer()->Serialize(formatted, "", sv_rcon::response_t::SERVERDATA_RESPONSE_CONSOLE_LOG));
 		}
 	}
 }
