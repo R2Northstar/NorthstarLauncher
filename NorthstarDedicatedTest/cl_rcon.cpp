@@ -12,7 +12,7 @@
 #include "sv_rcon.pb.h"
 #include "cl_rcon.pb.h"
 #include "cl_rcon.h"
-#include "net.h"
+// #include "net.h"
 #include "igameserverdata.h"
 
 //-----------------------------------------------------------------------------
@@ -200,7 +200,7 @@ void CRConClient::Recv(void)
 		}
 		if (nRecvLen < 0 && !m_pSocket->IsSocketBlocking())
 		{
-			spdlog::error("RCON Cmd: recv error ({:s})", NET_ErrorString(WSAGetLastError()));
+			// spdlog::error("RCON Cmd: recv error ({:s})", NET_ErrorString(WSAGetLastError()));
 			break;
 		}
 
