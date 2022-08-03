@@ -200,7 +200,7 @@ void CRConClient::Recv(void)
 		}
 		if (nRecvLen < 0 && !m_pSocket->IsSocketBlocking())
 		{
-			// spdlog::error("RCON Cmd: recv error ({:s})", NET_ErrorString(WSAGetLastError()));
+			spdlog::error("RCON Cmd: recv error");
 			break;
 		}
 
