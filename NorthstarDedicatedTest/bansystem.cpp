@@ -22,8 +22,8 @@ void ServerBanSystem::OpenBanlist()
 		std::string line;
 		while (std::getline(enabledModsStream, line))
 		{
-			// ignore line if first char is #
-			if (line.front() == BANLIST_COMMENT_CHAR)
+			// ignore line if first char is # or line is empty
+			if (line == ""  || line.front() == BANLIST_COMMENT_CHAR)
 				continue;
 
 			// remove tabs which shouldnt be there but maybe someone did the funny
