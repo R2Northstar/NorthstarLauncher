@@ -529,7 +529,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	ConCommand* command = g_pCVar->FindCommand(tempCommand.Arg(0));
 
 	// if the command doesn't exist pass it on to ExecuteStringCommand for script clientcommands and stuff
-	if (command && !command->IsFlagSet(FCVAR_PRINTABLEONLY) && !CGameClient__IsEngineClientCommand(NULL, tempCommand))
+	if (command && !command->IsFlagSet(FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS) && !CGameClient__IsEngineClientCommand(NULL, tempCommand))
 	{
 		// ensure FCVAR_GAMEDLL concommands without FCVAR_CLIENTCMD_CAN_EXECUTE can't be executed by remote clients
 		if (IsDedicated())
