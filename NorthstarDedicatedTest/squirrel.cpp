@@ -255,13 +255,13 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 		&RegisterSquirrelFuncHook<ScriptContext::SERVER>,
 		reinterpret_cast<LPVOID*>(&ServerRegisterSquirrelFunc)); // server registersquirrelfunc function
 
-	// cheat and clientcmd_can_execute allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
+	// cheat and gamedll_for_remote_clients allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
 	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
 		"script",
 		ExecuteCodeCommand<ScriptContext::SERVER>,
 		"Executes script code on the server vm",
-		FCVAR_GAMEDLL | FCVAR_CLIENTCMD_CAN_EXECUTE | FCVAR_CHEAT);
+		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 }
 
 // hooks
