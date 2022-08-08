@@ -231,6 +231,27 @@ SQRESULT SQ_GetServerRequiredModsCount(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// string function NSGetServerRegion( int serverIndex )
+SQRESULT SQ_GetServerRegion(void* sqvm)
+{
+	SQInteger serverIndex = ClientSq_getinteger(sqvm, 1);
+
+	if (serverIndex >= g_MasterServerManager->m_remoteServers.size())
+	{
+		ClientSq_pusherror(
+			sqvm,
+			fmt::format(
+				"Tried to get region of server index {} when only {} servers are available",
+				serverIndex,
+				g_MasterServerManager->m_remoteServers.size())
+				.c_str());
+		return SQRESULT_ERROR;
+	}
+
+	ClientSq_pushstring(sqvm, g_MasterServerManager->m_remoteServers[serverIndex].region, -1);
+	return SQRESULT_NOTNULL;
+}
+
 // string function NSGetServerRequiredModName( int serverIndex, int modIndex )
 SQRESULT SQ_GetServerRequiredModName(void* sqvm)
 {
@@ -436,6 +457,7 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 		"string", "NSGetServerRequiredModName", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModName);
 	g_UISquirrelManager->AddFuncRegistration(
 		"string", "NSGetServerRequiredModVersion", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModVersion);
+	g_UISquirrelManager->AddFuncRegistration("string", "NSGetServerRegion", "int serverIndex", "", SQ_GetServerRegion);
 
 	g_UISquirrelManager->AddFuncRegistration(
 		"void", "NSTryAuthWithServer", "int serverIndex, string password = \"\"", "", SQ_TryAuthWithServer);
