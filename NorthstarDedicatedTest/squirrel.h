@@ -323,7 +323,7 @@ template <ScriptContext context> class SquirrelManager
 		reg->argTypes = new char[argTypes.size() + 1];
 		strcpy((char*)reg->argTypes, argTypes.c_str());
 
-		reg->funcPtr = func;
+		reg->funcPtr = reinterpret_cast<void*>(func);
 
 		m_funcRegistrations.push_back(reg);
 	}

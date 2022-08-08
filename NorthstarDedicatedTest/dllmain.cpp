@@ -53,7 +53,7 @@
 #include "rapidjson/error/en.h"
 #include "ExploitFixes.h"
 
-typedef void (*initPluginFuncPtr)(void* getPluginObject);
+typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 
 bool initialised = false;
 
@@ -128,7 +128,7 @@ bool LoadPlugins()
 			spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 			continue;
 		}
-		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCE(101), MAKEINTRESOURCE(RT_RCDATA));
+		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
 
 		if (manifestResource == NULL)
 		{
