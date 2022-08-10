@@ -162,7 +162,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	// open write stream for banlist // without append so we clear the file
 	if (m_sBanlistStream.is_open())
 		m_sBanlistStream.close();
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 
 	for (std::string updatedLine : banlistText)
 		m_sBanlistStream << updatedLine << std::endl;
