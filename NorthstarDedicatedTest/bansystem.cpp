@@ -28,7 +28,7 @@ void ServerBanSystem::OpenBanlist()
 	}
 
 	// open write stream for banlist // dont do this to allow for all time access
-	//m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	// m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 }
 
 void ServerBanSystem::ReloadBanlist()
