@@ -81,11 +81,11 @@ void ServerBanSystem::BanUID(uint64_t uid)
 	std::string content((std::istreambuf_iterator<char>(fsBanlist)), (std::istreambuf_iterator<char>()));
 	fsBanlist.close();
 
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 	if (content.back() != '\n')
 		m_sBanlistStream << std::endl;
 
 	m_vBannedUids.push_back(uid);
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 	m_sBanlistStream << std::to_string(uid) << std::endl;
 	m_sBanlistStream.close();
 	spdlog::info("{} was banned", uid);
