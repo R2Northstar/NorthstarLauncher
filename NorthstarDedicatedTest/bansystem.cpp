@@ -57,17 +57,15 @@ void ServerBanSystem::ClearBanlist()
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 }
 
-bool firstBanThisSession = true;
 void ServerBanSystem::BanUID(uint64_t uid)
 {
-	// if we do comments stuff etc theres a big chance that we fuck with the formatting and there wont be a newline at the end. if we then
-	// ban someone that uid will just be added directly after the last one, leading to invalid uids and confusion, so we just make a newline
-	// every time we ban someone for the first time
-	if (firstBanThisSession)
-	{
+	// checking if last char is \n to make sure uids arent getting fucked
+	std::ifstream fsBanlist(GetNorthstarPrefix() + "/banlist.txt");
+	std::string content((std::istreambuf_iterator<char>(fsBanlist)), (std::istreambuf_iterator<char>()));
+	fsBanlist.close();
+
+	if (content.back() != '\n')
 		m_sBanlistStream << std::endl;
-		firstBanThisSession = false;
-	}
 
 	m_vBannedUids.push_back(uid);
 	m_sBanlistStream << std::to_string(uid) << std::endl;
