@@ -60,7 +60,7 @@ void ServerBanSystem::ClearBanlist()
 void ServerBanSystem::BanUID(uint64_t uid)
 {
 	m_vBannedUids.push_back(uid);
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 	m_sBanlistStream << std::to_string(uid) << std::endl;
 	m_sBanlistStream.close();
 	spdlog::info("{} was banned", uid);
@@ -137,7 +137,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	// open write stream for banlist // without append so we clear the file
 	if (m_sBanlistStream.is_open())
 		m_sBanlistStream.close();
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 
 	for (std::string updatedLine : banlistText)
 		m_sBanlistStream << updatedLine << std::endl;
