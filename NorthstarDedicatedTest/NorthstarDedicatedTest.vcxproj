@@ -117,6 +117,7 @@
     <ClInclude Include="debugoverlay.h" />
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
+    <ClInclude Include="offsets.h" />
     <ClInclude Include="localchatwriter.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />

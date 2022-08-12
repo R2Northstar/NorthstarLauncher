@@ -5,6 +5,7 @@
 #include "miscserverscript.h"
 #include <filesystem>
 #include "configurables.h"
+#include "offsets.h"
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 const char BANLIST_COMMENT_CHAR = '#';
@@ -98,9 +99,9 @@ void BanPlayerCommand(const CCommand& args)
 	{
 		void* player = GetPlayerByIndex(i);
 
-		if (!strcmp((char*)player + 0x16, args.Arg(1)) || !strcmp((char*)player + 0xF500, args.Arg(1)))
+		if (!strcmp((char*)player + OFFSET_PLAYER_NAME, args.Arg(1)) || !strcmp((char*)player + OFFSET_PLAYER_UID, args.Arg(1)))
 		{
-			g_ServerBanSystem->BanUID(strtoull((char*)player + 0xF500, nullptr, 10));
+			g_ServerBanSystem->BanUID(strtoull((char*)player + OFFSET_PLAYER_UID, nullptr, 10));
 			CBaseClient__Disconnect(player, 1, "Banned from server");
 			break;
 		}

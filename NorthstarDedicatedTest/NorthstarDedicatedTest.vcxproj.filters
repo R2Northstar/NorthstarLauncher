@@ -1521,6 +1521,9 @@
     <ClInclude Include="scriptjson.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
+    <ClInclude Include="offsets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

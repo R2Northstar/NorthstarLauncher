@@ -15,6 +15,7 @@
 #include <thread>
 #include "configurables.h"
 #include "NSMem.h"
+#include "offsets.h"
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
@@ -212,7 +213,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		{
 			authFail = false;
 			// uuid
-			strcpy((char*)player + 0xF500, strUid.c_str());
+			strcpy((char*)player + 0xF00, strUid.c_str());
 
 			// reset from disk if we're doing that
 			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
@@ -254,7 +255,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 
 		// insecure connections are allowed, try reading from disk
 		// uuid
-		strcpy((char*)player + 0xF500, strUid.c_str());
+		strcpy((char*)player + OFFSET_PLAYER_UID, strUid.c_str());
 
 		// try reading pdata file for player
 		std::string pdataPath = GetNorthstarPrefix() + "/playerdata_";
@@ -285,13 +286,13 @@ bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
 		return false;
 
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
-	if (m_bNeedLocalAuthForNewgame && !strcmp((char*)player + 0xF500, g_LocalPlayerUserID))
+	if (m_bNeedLocalAuthForNewgame && !strcmp((char*)player + OFFSET_PLAYER_UID, g_LocalPlayerUserID))
 		return false;
 
 	// we don't have our auth token at this point, so lookup authdata by uid
 	for (auto& auth : m_authData)
 	{
-		if (!strcmp((char*)player + 0xF500, auth.second.uid))
+		if (!strcmp((char*)player + OFFSET_PLAYER_UID, auth.second.uid))
 		{
 			// Log UID
 			spdlog::info("Erasing auth data from UID \"{}\"", auth.second.uid);
@@ -314,7 +315,7 @@ void ServerAuthenticationManager::WritePersistentData(void* player)
 	if (*((char*)player + 0x4A0) == (char)0x4)
 	{
 		g_MasterServerManager->WritePlayerPersistentData(
-			(char*)player + 0xF500, (char*)player + 0x4FA, m_additionalPlayerData[player].pdataSize);
+			(char*)player + OFFSET_PLAYER_UID, (char*)player + 0x4FA, m_additionalPlayerData[player].pdataSize);
 	}
 	else if (CVar_ns_auth_allow_insecure_write->GetBool())
 	{
@@ -421,7 +422,7 @@ void CBaseClient__ActivatePlayerHook(void* self)
 	if (g_ServerAuthenticationManager->m_additionalPlayerData.count(self))
 	{
 		std::string strUid = std::to_string(g_ServerAuthenticationManager->m_additionalPlayerData[self].uid);
-		if (!strcmp(strUid.c_str(), (char*)self + 0xF500)) // connecting client's uid is the same as auth's uid
+		if (!strcmp(strUid.c_str(), (char*)self + OFFSET_PLAYER_UID)) // connecting client's uid is the same as auth's uid
 		{
 			uidMatches = true;
 		}
@@ -442,7 +443,7 @@ void CBaseClient__ActivatePlayerHook(void* self)
 		g_MasterServerManager->UpdateServerPlayerCount(g_ServerAuthenticationManager->m_additionalPlayerData.size());
 	}
 	// Log UID
-	spdlog::info("In CBaseClient__ActivatePlayerHook, activating UID \"{}\"", (char*)self + 0xF500);
+	spdlog::info("In CBaseClient__ActivatePlayerHook, activating UID \"{}\"", (char*)self + OFFSET_PLAYER_UID);
 
 	CBaseClient__ActivatePlayer(self);
 }
@@ -460,7 +461,7 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 	// this reason is used while connecting to a local server, hacky, but just ignore it
 	if (strcmp(reason, "Connection closing"))
 	{
-		spdlog::info("Player {} disconnected: \"{}\"", (char*)self + 0x16, buf);
+		spdlog::info("Player {} disconnected: \"{}\"", (char*)self + OFFSET_PLAYER_NAME, buf);
 
 		// dcing, write persistent data
 		if (g_ServerAuthenticationManager->m_additionalPlayerData[self].needPersistenceWriteOnLeave)
@@ -486,7 +487,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 	// Only log clientcommands if the convar `ns_should_log_all_clientcommands` equals 1
 	if (Cvar_ns_should_log_all_clientcommands->GetBool())
 	{
-		spdlog::info("{} (UID: {}) executed command: \"{}\"", (char*)self + 0x16, (char*)self + 0xF500, pCommandString);
+		spdlog::info("{} (UID: {}) executed command: \"{}\"", (char*)self + OFFSET_PLAYER_NAME, (char*)self + OFFSET_PLAYER_UID, pCommandString);
 	}
 
 	if (CVar_sv_quota_stringcmdspersecond->GetInt() != -1)
@@ -527,7 +528,7 @@ char CGameClient__ExecuteStringCommandHook(void* self, uint32_t unknown, const c
 		if (IsDedicated())
 			return false;
 
-		if (strcmp((char*)self + 0xF500, g_LocalPlayerUserID))
+		if (strcmp((char*)self + OFFSET_PLAYER_UID, g_LocalPlayerUserID))
 			return false;
 	}
 
@@ -566,12 +567,12 @@ char __fastcall CNetChan___ProcessMessagesHook(void* self, void* buf)
 		{
 			spdlog::warn(
 				"Client {} hit netchan processing limit with {}ms of processing time this second (max is {})",
-				(char*)sender + 0x16,
+				(char*)sender + OFFSET_PLAYER_NAME,
 				g_ServerAuthenticationManager->m_additionalPlayerData[sender].netChanProcessingLimitTime,
 				Cvar_net_chan_limit_msec_per_sec->GetInt());
 
 			// nonzero = kick, 0 = warn, but never kick local player
-			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(g_LocalPlayerUserID, (char*)sender + 0xF500))
+			if (Cvar_net_chan_limit_mode->GetInt() && strcmp(g_LocalPlayerUserID, (char*)sender + OFFSET_PLAYER_UID))
 			{
 				CBaseClient__Disconnect(sender, 1, "Exceeded net channel processing limit");
 				return false;
