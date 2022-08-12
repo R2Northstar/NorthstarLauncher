@@ -213,7 +213,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		{
 			authFail = false;
 			// uuid
-			strcpy((char*)player + 0xF00, strUid.c_str());
+			strcpy((char*)player + OFFSET_PLAYER_UID, strUid.c_str());
 
 			// reset from disk if we're doing that
 			if (m_bForceReadLocalPlayerPersistenceFromDisk && !strcmp(authData.uid, g_LocalPlayerUserID))
