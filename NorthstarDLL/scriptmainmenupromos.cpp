@@ -24,21 +24,21 @@ enum eMainMenuPromoDataProperty
 };
 
 // void function NSRequestCustomMainMenuPromos()
-SQRESULT SQ_RequestCustomMainMenuPromos(void* sqvm)
+SQRESULT SQ_RequestCustomMainMenuPromos(HSquirrelVM* sqvm)
 {
 	g_pMasterServerManager->RequestMainMenuPromos();
 	return SQRESULT_NULL;
 }
 
 // bool function NSHasCustomMainMenuPromoData()
-SQRESULT SQ_HasCustomMainMenuPromoData(void* sqvm)
+SQRESULT SQ_HasCustomMainMenuPromoData(HSquirrelVM* sqvm)
 {
 	g_pUISquirrel->pushbool(sqvm, g_pMasterServerManager->m_bHasMainMenuPromoData);
 	return SQRESULT_NOTNULL;
 }
 
 // var function NSGetCustomMainMenuPromoData( int promoDataKey )
-SQRESULT SQ_GetCustomMainMenuPromoData(void* sqvm)
+SQRESULT SQ_GetCustomMainMenuPromoData(HSquirrelVM* sqvm)
 {
 	if (!g_pMasterServerManager->m_bHasMainMenuPromoData)
 		return SQRESULT_NULL;

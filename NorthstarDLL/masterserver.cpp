@@ -741,6 +741,7 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 	void ReportPresence(const ServerPresence* pServerPresence) override
 	{
 		// make a copy of presence for multithreading purposes
+		return;
 		ServerPresence threadedPresence(pServerPresence);
 
 		if (!*g_pMasterServerManager->m_sOwnServerId)

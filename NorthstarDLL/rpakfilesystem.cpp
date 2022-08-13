@@ -13,7 +13,9 @@ struct PakLoadFuncs
 	int (*LoadPakAsync)(const char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1);
 	void* unk1[2];
 	void* (*UnloadPak)(int iPakHandle, void* callback);
-	void* unk2[17];
+	void* unk2[6];
+	long long (*FileExsits)(const char* path);//unsure
+	void* unk3[10];
 	void* (*ReadFullFileFromDisk)(const char* pPath, void* a2);
 };
 
@@ -40,6 +42,11 @@ void PakLoadManager::UnloadPaks()
 		g_pakLoadApi->UnloadPak(pakHandle, nullptr);
 
 	m_pakHandlesToUnload.clear();
+}
+
+long long PakLoadManager::FileExists(const char* path)
+{
+	return g_pakLoadApi->FileExsits(path);
 }
 
 void HandlePakAliases(char** map)

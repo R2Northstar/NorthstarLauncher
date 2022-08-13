@@ -34,7 +34,7 @@ void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
 	R2::Cbuf_Execute();
 
 	// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
-	if (g_pClientSquirrel->sqvm)
+	if (g_pClientSquirrel->SquirrelVM)
 	{
 		g_pServerAuthentication->m_bNeedLocalAuthForNewgame = true;
 

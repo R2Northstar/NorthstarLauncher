@@ -120,6 +120,7 @@
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
     <ClInclude Include="crashhandler.h" />
+    <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="printcommand.h" />
@@ -613,6 +614,7 @@
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="runframe.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
+    <ClCompile Include="scriptdatatables.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />

@@ -111,7 +111,7 @@ void initGameState()
 }
 
 // string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading
-SQRESULT SQ_UpdateGameStateUI(void* sqvm)
+SQRESULT SQ_UpdateGameStateUI(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	gameState.map = g_pUISquirrel->getstring(sqvm, 1);
@@ -125,7 +125,7 @@ SQRESULT SQ_UpdateGameStateUI(void* sqvm)
 }
 
 // int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit
-SQRESULT SQ_UpdateGameStateClient(void* sqvm)
+SQRESULT SQ_UpdateGameStateClient(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
@@ -143,7 +143,7 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 
 // string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string
 // playlistDisplayName
-SQRESULT SQ_UpdateServerInfo(void* sqvm)
+SQRESULT SQ_UpdateServerInfo(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
@@ -162,7 +162,7 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 }
 
 // int maxPlayers
-SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
+SQRESULT SQ_UpdateServerInfoBetweenRounds(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
 	serverInfo.id = g_pClientSquirrel->getstring(sqvm, 1);
@@ -174,7 +174,7 @@ SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 }
 
 // float timeInFuture
-SQRESULT SQ_UpdateTimeInfo(void* sqvm)
+SQRESULT SQ_UpdateTimeInfo(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
 	serverInfo.endTime = ceil(g_pClientSquirrel->getfloat(sqvm, 1));
@@ -183,7 +183,7 @@ SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 }
 
 // bool loading
-SQRESULT SQ_SetConnected(void* sqvm)
+SQRESULT SQ_SetConnected(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	gameState.loading = g_pUISquirrel->getbool(sqvm, 1);
@@ -191,7 +191,7 @@ SQRESULT SQ_SetConnected(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-SQRESULT SQ_UpdateListenServer(void* sqvm)
+SQRESULT SQ_UpdateListenServer(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
 	serverInfo.id = g_pMasterServerManager->m_sOwnServerId;

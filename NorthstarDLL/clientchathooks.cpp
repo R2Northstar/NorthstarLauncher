@@ -29,12 +29,12 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 			payload = message + 1;
 		}
 
-		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, (int)senderId - 1);
-		g_pClientSquirrel->pushstring(g_pClientSquirrel->sqvm2, payload);
-		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isTeam);
-		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isDead);
-		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, type);
-		g_pClientSquirrel->call(g_pClientSquirrel->sqvm2, 5);
+		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm, (int)senderId - 1);
+		g_pClientSquirrel->pushstring(g_pClientSquirrel->sqvm, payload);
+		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm, isTeam);
+		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm, isDead);
+		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm, type);
+		g_pClientSquirrel->call(g_pClientSquirrel->sqvm, 5);
 	}
 	else
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
@@ -42,7 +42,7 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 }
 
 // void NSChatWrite( int context, string str )
-SQRESULT SQ_ChatWrite(void* sqvm)
+SQRESULT SQ_ChatWrite(HSquirrelVM* sqvm)
 {
 	int context = g_pClientSquirrel->getinteger(sqvm, 1);
 	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
@@ -52,7 +52,7 @@ SQRESULT SQ_ChatWrite(void* sqvm)
 }
 
 // void NSChatWriteRaw( int context, string str )
-SQRESULT SQ_ChatWriteRaw(void* sqvm)
+SQRESULT SQ_ChatWriteRaw(HSquirrelVM* sqvm)
 {
 	int context = g_pClientSquirrel->getinteger(sqvm, 1);
 	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
@@ -62,7 +62,7 @@ SQRESULT SQ_ChatWriteRaw(void* sqvm)
 }
 
 // void NSChatWriteLine( int context, string str )
-SQRESULT SQ_ChatWriteLine(void* sqvm)
+SQRESULT SQ_ChatWriteLine(HSquirrelVM* sqvm)
 {
 	int context = g_pClientSquirrel->getinteger(sqvm, 1);
 	const char* str = g_pClientSquirrel->getstring(sqvm, 2);

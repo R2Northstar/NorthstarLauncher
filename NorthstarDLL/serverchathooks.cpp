@@ -54,10 +54,10 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 
 	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		g_pServerSquirrel->pushinteger(g_pServerSquirrel->sqvm2, (int)senderPlayerId - 1);
-		g_pServerSquirrel->pushstring(g_pServerSquirrel->sqvm2, text);
-		g_pServerSquirrel->pushbool(g_pServerSquirrel->sqvm2, isTeam);
-		g_pServerSquirrel->call(g_pServerSquirrel->sqvm2, 3);
+		g_pServerSquirrel->pushinteger(g_pServerSquirrel->sqvm, (int)senderPlayerId - 1);
+		g_pServerSquirrel->pushstring(g_pServerSquirrel->sqvm, text);
+		g_pServerSquirrel->pushbool(g_pServerSquirrel->sqvm, isTeam);
+		g_pServerSquirrel->call(g_pServerSquirrel->sqvm, 3);
 	}
 	else
 		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
@@ -115,7 +115,7 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 }
 
 // void function NSSendMessage( int playerIndex, string text, bool isTeam )
-SQRESULT SQ_SendMessage(void* sqvm)
+SQRESULT SQ_SendMessage(HSquirrelVM* sqvm)
 {
 	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
 	const char* text = g_pServerSquirrel->getstring(sqvm, 2);
@@ -127,7 +127,7 @@ SQRESULT SQ_SendMessage(void* sqvm)
 }
 
 // void function NSBroadcastMessage( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
-SQRESULT SQ_BroadcastMessage(void* sqvm)
+SQRESULT SQ_BroadcastMessage(HSquirrelVM* sqvm)
 {
 	int fromPlayerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
 	int toPlayerIndex = g_pServerSquirrel->getinteger(sqvm, 2);
