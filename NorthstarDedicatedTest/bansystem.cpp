@@ -166,6 +166,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 
 	for (std::string updatedLine : banlistText)
 		m_sBanlistStream << updatedLine << std::endl;
+
 	m_sBanlistStream.close();
 	spdlog::info("{} was unbanned", uid);
 }
