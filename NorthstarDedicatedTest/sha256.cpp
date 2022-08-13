@@ -121,9 +121,9 @@ std::string sha256(std::string input)
 
 	char buf[2 * SHA256::DIGEST_SIZE + 1] {};
 	buf[2 * SHA256::DIGEST_SIZE] = 0;
-	for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
+	for (unsigned int i = 0; i < SHA256::DIGEST_SIZE; i++)
 	{
-		sprintf_s(buf + i * 2, sizeof(buf), "%02x", digest[i]);
+		sprintf(buf + i * 2, "%02x", digest[i]);
 	}
 	return std::string(buf);
 }

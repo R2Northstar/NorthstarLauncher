@@ -50,7 +50,7 @@ class CConnectedNetConsoleData
 		m_bValidated = false;
 		m_bAuthorized = false;
 		m_bInputOnly = false;
-		m_RecvBuffer.reserve(sizeof(int)); // Reserve enough for length-prefix.
+		m_RecvBuffer.resize(sizeof(int)); // Reserve enough for length-prefix.
 	}
 };
 
