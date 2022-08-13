@@ -8,11 +8,11 @@
 #include "convar.h"
 #include "concommand.h"
 #include "cvar.h"
+#include "net.h"
 #include "rcon_shared.h"
 #include "sv_rcon.pb.h"
 #include "cl_rcon.pb.h"
 #include "cl_rcon.h"
-#include "net.h"
 #include "igameserverdata.h"
 
 //-----------------------------------------------------------------------------
