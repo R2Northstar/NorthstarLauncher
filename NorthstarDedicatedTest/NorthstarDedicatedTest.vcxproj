@@ -59,7 +59,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)include\protobuf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -86,7 +86,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)include\protobuf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -129,6 +129,7 @@
     <ClInclude Include="NetAdr2.h" />
     <ClInclude Include="rcon_shared.h" />
     <ClInclude Include="scriptutility.h" />
+    <ClInclude Include="scriptjson.h" />
     <ClInclude Include="serverchathooks.h" />
     <ClInclude Include="clientauthhooks.h" />
     <ClInclude Include="color.h" />
@@ -633,6 +634,7 @@
     <ClCompile Include="rcon_shared.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
+    <ClCompile Include="scriptjson.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />

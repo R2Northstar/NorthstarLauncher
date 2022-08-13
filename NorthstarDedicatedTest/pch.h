@@ -23,8 +23,9 @@
 
 #include <Windows.h>
 #include <Psapi.h>
-#include "version.h"
 #include <comdef.h>
+#include <set>
+#include <map>
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -35,6 +36,7 @@
 #include <map>
 #include <set>
 
+#include "version.h"
 #include "logging.h"
 #include "include/MinHook.h"
 #include "spdlog/spdlog.h"
