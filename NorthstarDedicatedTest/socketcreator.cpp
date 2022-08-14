@@ -321,7 +321,7 @@ int CSocketCreator::GetAcceptedSocketCount(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket handle
-// Input  : nIndex - 
+// Input  : nIndex -
 // Output : SocketHandle_t
 //-----------------------------------------------------------------------------
 SocketHandle_t CSocketCreator::GetAcceptedSocketHandle(int nIndex) const
@@ -331,7 +331,7 @@ SocketHandle_t CSocketCreator::GetAcceptedSocketHandle(int nIndex) const
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket address
-// Input  : nIndex - 
+// Input  : nIndex -
 // Output : const CNetAdr2&
 //-----------------------------------------------------------------------------
 const CNetAdr2& CSocketCreator::GetAcceptedSocketAddress(int nIndex) const
@@ -341,7 +341,7 @@ const CNetAdr2& CSocketCreator::GetAcceptedSocketAddress(int nIndex) const
 
 //-----------------------------------------------------------------------------
 // Purpose: returns accepted socket data
-// Input  : nIndex - 
+// Input  : nIndex -
 // Output : CConnectedNetConsoleData*
 //-----------------------------------------------------------------------------
 CConnectedNetConsoleData* CSocketCreator::GetAcceptedSocketData(int nIndex) const
