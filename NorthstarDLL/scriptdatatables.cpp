@@ -538,7 +538,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CMod
 	g_pServerSquirrel->AddFuncOverride("GetDataTableAsset", GetDataTableAsset<ScriptContext::SERVER>);
 	g_pServerSquirrel->AddFuncOverride("GetDataTableVector", GetDataTableVector < ScriptContext::SERVER>);
 	g_pServerSquirrel->AddFuncOverride("GetDataTableRowMatchingStringValue",GetDataTableRowMatchingStringValue<ScriptContext::SERVER>);
-	g_pServerSquirrel->AddFuncOverride("GetDataTableRowMatchingAssetValue", GetDataTableRowMatchingStringValue<ScriptContext::SERVER>);
+	g_pServerSquirrel->AddFuncOverride("GetDataTableRowMatchingAssetValue", GetDataTableRowMatchingAssetValue<ScriptContext::SERVER>);
 
 	Cvar_ns_force_datatable_from_disk = new ConVar("ns_force_datatable_from_disk", "0", FCVAR_NONE, "whether datatables are only loaded from disk");
 }
