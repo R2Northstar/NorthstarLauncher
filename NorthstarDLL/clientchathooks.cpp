@@ -14,7 +14,7 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 	if (self != *CHudChat::allHuds)
 		return;
 
-	if (g_pClientSquirrel->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_pSquirrel<ScriptContext::CLIENT>->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
 		int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
 		bool isAnonymous = senderId == 0;
@@ -29,12 +29,12 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 			payload = message + 1;
 		}
 
-		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, (int)senderId - 1);
-		g_pClientSquirrel->pushstring(g_pClientSquirrel->sqvm2, payload);
-		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isTeam);
-		g_pClientSquirrel->pushbool(g_pClientSquirrel->sqvm2, isDead);
-		g_pClientSquirrel->pushinteger(g_pClientSquirrel->sqvm2, type);
-		g_pClientSquirrel->call(g_pClientSquirrel->sqvm2, 5);
+		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, (int)senderId - 1);
+		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, payload);
+		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, isTeam);
+		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, isDead);
+		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, type);
+		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, 5);
 	}
 	else
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
@@ -44,8 +44,8 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 // void NSChatWrite( int context, string str )
 SQRESULT SQ_ChatWrite(void* sqvm)
 {
-	int context = g_pClientSquirrel->getinteger(sqvm, 1);
-	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
+	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).Write(str);
 	return SQRESULT_NULL;
@@ -54,8 +54,8 @@ SQRESULT SQ_ChatWrite(void* sqvm)
 // void NSChatWriteRaw( int context, string str )
 SQRESULT SQ_ChatWriteRaw(void* sqvm)
 {
-	int context = g_pClientSquirrel->getinteger(sqvm, 1);
-	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
+	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).InsertText(str);
 	return SQRESULT_NULL;
@@ -64,8 +64,8 @@ SQRESULT SQ_ChatWriteRaw(void* sqvm)
 // void NSChatWriteLine( int context, string str )
 SQRESULT SQ_ChatWriteLine(void* sqvm)
 {
-	int context = g_pClientSquirrel->getinteger(sqvm, 1);
-	const char* str = g_pClientSquirrel->getstring(sqvm, 2);
+	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).WriteLine(str);
 	return SQRESULT_NULL;
@@ -75,7 +75,7 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (CMod
 {
 	AUTOHOOK_DISPATCH()
 
-	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
-	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
-	g_pClientSquirrel->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
+	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
+	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
+	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
 }

@@ -114,12 +114,12 @@ void initGameState()
 SQRESULT SQ_UpdateGameStateUI(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
-	gameState.map = g_pUISquirrel->getstring(sqvm, 1);
-	gameState.mapDisplayName = g_pUISquirrel->getstring(sqvm, 2);
-	gameState.playlist = g_pUISquirrel->getstring(sqvm, 3);
-	gameState.playlistDisplayName = g_pUISquirrel->getstring(sqvm, 4);
-	gameState.connected = g_pUISquirrel->getbool(sqvm, 5);
-	gameState.loading = g_pUISquirrel->getbool(sqvm, 6);
+	gameState.map = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
+	gameState.mapDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 2);
+	gameState.playlist = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 3);
+	gameState.playlistDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 4);
+	gameState.connected = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 5);
+	gameState.loading = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 6);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	return SQRESULT_NOTNULL;
 }
@@ -129,13 +129,13 @@ SQRESULT SQ_UpdateGameStateClient(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
-	gameState.players = g_pClientSquirrel->getinteger(sqvm, 1);
-	serverInfo.maxPlayers = g_pClientSquirrel->getinteger(sqvm, 2);
-	gameState.ourScore = g_pClientSquirrel->getinteger(sqvm, 3);
-	gameState.secondHighestScore = g_pClientSquirrel->getinteger(sqvm, 4);
-	gameState.highestScore = g_pClientSquirrel->getinteger(sqvm, 5);
-	serverInfo.roundBased = g_pClientSquirrel->getbool(sqvm, 6);
-	serverInfo.scoreLimit = g_pClientSquirrel->getbool(sqvm, 7);
+	gameState.players = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	serverInfo.maxPlayers = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 2);
+	gameState.ourScore = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 3);
+	gameState.secondHighestScore = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 4);
+	gameState.highestScore = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 5);
+	serverInfo.roundBased = g_pSquirrel<ScriptContext::CLIENT>->getbool(sqvm, 6);
+	serverInfo.scoreLimit = g_pSquirrel<ScriptContext::CLIENT>->getbool(sqvm, 7);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
@@ -147,15 +147,15 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
 	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = g_pUISquirrel->getstring(sqvm, 1);
-	serverInfo.name = g_pUISquirrel->getstring(sqvm, 2);
-	serverInfo.password = g_pUISquirrel->getstring(sqvm, 3);
-	gameState.players = g_pUISquirrel->getinteger(sqvm, 4);
-	serverInfo.maxPlayers = g_pUISquirrel->getinteger(sqvm, 5);
-	gameState.map = g_pUISquirrel->getstring(sqvm, 6);
-	gameState.mapDisplayName = g_pUISquirrel->getstring(sqvm, 7);
-	gameState.playlist = g_pUISquirrel->getstring(sqvm, 8);
-	gameState.playlistDisplayName = g_pUISquirrel->getstring(sqvm, 9);
+	serverInfo.id = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
+	serverInfo.name = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 2);
+	serverInfo.password = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 3);
+	gameState.players = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 4);
+	serverInfo.maxPlayers = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 5);
+	gameState.map = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 6);
+	gameState.mapDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 7);
+	gameState.playlist = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 8);
+	gameState.playlistDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 9);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
@@ -165,10 +165,10 @@ SQRESULT SQ_UpdateServerInfo(void* sqvm)
 SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = g_pClientSquirrel->getstring(sqvm, 1);
-	serverInfo.name = g_pClientSquirrel->getstring(sqvm, 2);
-	serverInfo.password = g_pClientSquirrel->getstring(sqvm, 3);
-	serverInfo.maxPlayers = g_pClientSquirrel->getinteger(sqvm, 4);
+	serverInfo.id = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 1);
+	serverInfo.name = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	serverInfo.password = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 3);
+	serverInfo.maxPlayers = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 4);
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }
@@ -177,7 +177,7 @@ SQRESULT SQ_UpdateServerInfoBetweenRounds(void* sqvm)
 SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.endTime = ceil(g_pClientSquirrel->getfloat(sqvm, 1));
+	serverInfo.endTime = ceil(g_pSquirrel<ScriptContext::CLIENT>->getfloat(sqvm, 1));
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }
@@ -186,7 +186,7 @@ SQRESULT SQ_UpdateTimeInfo(void* sqvm)
 SQRESULT SQ_SetConnected(void* sqvm)
 {
 	AcquireSRWLockExclusive(&gameStateLock);
-	gameState.loading = g_pUISquirrel->getbool(sqvm, 1);
+	gameState.loading = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 1);
 	ReleaseSRWLockExclusive(&gameStateLock);
 	return SQRESULT_NOTNULL;
 }
@@ -391,21 +391,21 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", PluginCommands, ClientSquirrel, (CModu
 	// i swear there's a way to make this not have be run in 2 contexts but i can't figure it out
 	// some funcs i need are just not available in UI or CLIENT
 
-	if (g_pUISquirrel && g_pClientSquirrel)
+	if (g_pSquirrel<ScriptContext::UI> && g_pSquirrel<ScriptContext::CLIENT>)
 	{
-		g_pUISquirrel->AddFuncRegistration(
+		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 			"void",
 			"NSUpdateGameStateUI",
 			"string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading",
 			"",
 			SQ_UpdateGameStateUI);
-		g_pClientSquirrel->AddFuncRegistration(
+		g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
 			"void",
 			"NSUpdateGameStateClient",
 			"int playerCount, int maxPlayers, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit",
 			"",
 			SQ_UpdateGameStateClient);
-		g_pUISquirrel->AddFuncRegistration(
+		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 			"void",
 			"NSUpdateServerInfo",
 			"string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, "
@@ -413,10 +413,10 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", PluginCommands, ClientSquirrel, (CModu
 			"playlistDisplayName",
 			"",
 			SQ_UpdateServerInfo);
-		g_pClientSquirrel->AddFuncRegistration(
+		g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
 			"void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
-		g_pClientSquirrel->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
-		g_pUISquirrel->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
-		g_pUISquirrel->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
+		g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
+		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
+		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
 	}
 }

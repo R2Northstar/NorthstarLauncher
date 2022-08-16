@@ -114,6 +114,7 @@ void ServerPresenceManager::CreatePresence()
 	
 	memset(m_ServerPresence.m_MapName, 0, sizeof(m_ServerPresence.m_MapName));
 	memset(m_ServerPresence.m_PlaylistName, 0, sizeof(m_ServerPresence.m_PlaylistName));
+	m_ServerPresence.m_bIsSingleplayerServer = false;
 
 	m_bHasPresence = true;
 
@@ -130,7 +131,11 @@ void ServerPresenceManager::DestroyPresence()
 
 void ServerPresenceManager::RunFrame(double flCurrentTime)
 {
-	if (!m_bHasPresence) // don't run until we actually have server presence
+	if (!m_bHasPresence && Cvar_ns_report_server_to_masterserver->GetBool()) // don't run until we actually have server presence
+		return;
+
+	// don't run if we're sp and don't want to report sp
+	if (m_ServerPresence.m_bIsSingleplayerServer && !Cvar_ns_report_sp_server_to_masterserver->GetBool())
 		return;
 
 	// run on a specified delay
@@ -173,8 +178,12 @@ void ServerPresenceManager::SetPassword(const char* pPassword)
 	strncpy_s(m_ServerPresence.m_Password, sizeof(m_ServerPresence.m_Password), pPassword, sizeof(m_ServerPresence.m_Password) - 1);
 }
 
-void ServerPresenceManager::SetMap(const char* pMapName)
+void ServerPresenceManager::SetMap(const char* pMapName, bool isInitialising = false)
 {
+	// if the server is initialising (i.e. this is first map) on sp, set the server to sp
+	if (isInitialising)
+		m_ServerPresence.m_bIsSingleplayerServer = !strncmp(pMapName, "sp_", 3);
+
 	// update map
 	strncpy_s(m_ServerPresence.m_MapName, sizeof(m_ServerPresence.m_MapName), pMapName, sizeof(m_ServerPresence.m_MapName) - 1);
 }

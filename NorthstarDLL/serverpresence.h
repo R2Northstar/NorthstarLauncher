@@ -12,6 +12,7 @@ struct ServerPresence
 
 	char m_MapName[32];
 	char m_PlaylistName[64];
+	bool m_bIsSingleplayerServer; // whether the server started in sp
 
 	int m_iPlayerCount;
 	int m_iMaxPlayers;
@@ -80,7 +81,7 @@ class ServerPresenceManager
 	void SetDescription(const std::string sServerDescUnicode);
 	void SetPassword(const char* pPassword);
 
-	void SetMap(const char* pMapName);
+	void SetMap(const char* pMapName, bool isInitialising = false);
 	void SetPlaylist(const char* pPlaylistName);
 	void SetPlayerCount(const int iPlayerCount);
 };

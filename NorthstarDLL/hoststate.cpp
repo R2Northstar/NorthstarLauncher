@@ -47,7 +47,7 @@ void,, (CHostState* self))
 
 	// setup server presence
 	g_pServerPresence->CreatePresence();
-	g_pServerPresence->SetMap(g_pHostState->m_levelName);
+	g_pServerPresence->SetMap(g_pHostState->m_levelName, true);
 	g_pServerPresence->SetPlaylist(GetCurrentPlaylistName());
 	g_pServerPresence->SetPort(Cvar_hostport->GetInt());
 

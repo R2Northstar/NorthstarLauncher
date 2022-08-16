@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "bansystem.h"
 #include "serverauthentication.h"
+#include "maxplayers.h"
 #include "concommand.h"
 #include "r2server.h"
 #include "r2engine.h"
@@ -22,7 +23,7 @@ void ServerBanSystem::OpenBanlist()
 	{
 		std::string line;
 		while (std::getline(enabledModsStream, line))
-			m_vBannedUids.push_back(strtoll(line.c_str(), nullptr, 10));
+			m_vBannedUids.push_back(strtoull(line.c_str(), nullptr, 10));
 
 		enabledModsStream.close();
 	}
@@ -69,14 +70,13 @@ void ConCommand_ban(const CCommand& args)
 	if (args.ArgC() < 2)
 		return;
 
-	// assuming maxplayers 32
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < R2::GetMaxPlayers(); i++)
 	{
 		R2::CBaseClient* player = &R2::g_pClientArray[i];
 
 		if (!strcmp(player->m_Name, args.Arg(1)) || !strcmp(player->m_UID, args.Arg(1)))
 		{
-			g_pBanSystem->BanUID(strtoll((char*)player + 0xF500, nullptr, 10));
+			g_pBanSystem->BanUID(strtoull((char*)player + 0xF500, nullptr, 10));
 			R2::CBaseClient__Disconnect(player, 1, "Banned from server");
 			break;
 		}
@@ -89,7 +89,7 @@ void ConCommand_unban(const CCommand& args)
 		return;
 
 	// assumedly the player being unbanned here wasn't already connected, so don't need to iterate over players or anything
-	g_pBanSystem->UnbanUID(strtoll(args.Arg(1), nullptr, 10));
+	g_pBanSystem->UnbanUID(strtoull(args.Arg(1), nullptr, 10));
 }
 
 void ConCommand_clearbanlist(const CCommand& args)

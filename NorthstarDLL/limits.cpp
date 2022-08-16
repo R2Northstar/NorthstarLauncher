@@ -177,7 +177,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerLimits, ConVar, (CModule module))
 		new ConVar("net_chan_limit_mode", "0", FCVAR_GAMEDLL, "The mode for netchan processing limits: 0 = warn, 1 = kick");
 	g_pServerLimits->Cvar_net_chan_limit_msec_per_sec = new ConVar(
 		"net_chan_limit_msec_per_sec",
-		"0",
+		"100",
 		FCVAR_GAMEDLL,
 		"Netchannel processing is limited to so many milliseconds, abort connection if exceeding budget");
 	g_pServerLimits->Cvar_sv_querylimit_per_sec = new ConVar("sv_querylimit_per_sec", "15", FCVAR_GAMEDLL, "");

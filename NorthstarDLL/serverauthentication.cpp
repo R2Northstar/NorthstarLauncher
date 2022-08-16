@@ -6,6 +6,7 @@
 #include "masterserver.h"
 #include "serverpresence.h"
 #include "hoststate.h"
+#include "maxplayers.h"
 #include "bansystem.h"
 #include "concommand.h"
 #include "dedicated.h"
@@ -128,22 +129,38 @@ void ServerAuthenticationManager::VerifyPlayerName(R2::CBaseClient* player, char
 	}
 }
 
+bool ServerAuthenticationManager::CheckDuplicateAccounts(R2::CBaseClient* player) 
+{
+	if (m_bAllowDuplicateAccounts)
+		return true;
+
+	bool bHasUidPlayer = false;
+	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+		if (&R2::g_pClientArray[i] != player && !strcmp(R2::g_pClientArray[i].m_UID, player->m_UID))
+			return false;
+
+	return true;
+}
+
 bool ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* player, uint64_t uid, char* authToken)
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_AuthDataMutex);
 
+	// copy uuid
+	strcpy(player->m_UID, strUid.c_str());
+
 	bool authFail = true;
 	if (!m_RemoteAuthenticationData.empty() && m_RemoteAuthenticationData.count(std::string(authToken)))
 	{
+		if (!CheckDuplicateAccounts(player))
+			return false;
+
 		// use stored auth data
 		RemoteAuthData authData = m_RemoteAuthenticationData[authToken];
 
 		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
 		{
-			// copy uuid
-			strcpy(player->m_UID, strUid.c_str());
-
 			// if we're resetting let script handle the reset
 			if (!m_bForceResetLocalPlayerPersistence || strcmp(authData.uid, R2::g_pLocalPlayerUserID))
 			{
@@ -161,11 +178,8 @@ bool ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* player, ui
 	{
 		if (CVar_ns_auth_allow_insecure->GetBool())
 		{
-			// copy uuid
-			strcpy((char*)player + 0xF500, strUid.c_str());
-
 			// set persistent data as ready
-			// note: actual persistent data is populated in script with InitPersistentData()
+			// note: actual placeholder persistent data is populated in script with InitPersistentData()
 			player->m_iPersistenceReady = R2::ePersistenceReady::READY_INSECURE;
 			return true;
 		}
@@ -366,6 +380,11 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 	// patch to disable fairfight marking players as cheaters and kicking them
 	module.Offset(0x101012).Patch("E9 90 00");
 	
-	// patch to allow same of multiple account
-	module.Offset(0x114510).Patch("EB");
+	if (Tier0::CommandLine()->CheckParm("-allowdupeaccounts"))
+	{
+		// patch to allow same of multiple account
+		module.Offset(0x114510).Patch("EB");
+
+		g_pServerAuthentication->m_bAllowDuplicateAccounts = true;
+	}
 }

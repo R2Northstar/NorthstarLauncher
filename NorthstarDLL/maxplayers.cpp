@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "tier0.h"
+#include "maxplayers.h"
 
 AUTOHOOK_INIT()
 
@@ -51,6 +52,18 @@ bool MaxPlayersIncreaseEnabled()
 	static bool bMaxPlayersIncreaseEnabled = Tier0::CommandLine()->CheckParm("-experimentalmaxplayersincrease");
 	return bMaxPlayersIncreaseEnabled;
 }
+
+// should we use R2 for this? not sure
+namespace R2 // use R2 namespace for game funcs
+{
+	int GetMaxPlayers() 
+	{
+		if (MaxPlayersIncreaseEnabled())
+			return NEW_MAX_PLAYERS;
+
+		return 32;
+	}
+} // namespace R2
 
 template <class T> void ChangeOffset(MemoryAddress addr, unsigned int offset)
 {

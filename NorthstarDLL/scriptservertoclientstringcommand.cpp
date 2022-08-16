@@ -5,11 +5,11 @@
 
 void ConCommand_ns_script_servertoclientstringcommand(const CCommand& arg)
 {
-	if (g_pClientSquirrel->sqvm &&
-		g_pClientSquirrel->setupfunc("NSClientCodeCallback_RecievedServerToClientStringCommand") != SQRESULT_ERROR)
+	if (g_pSquirrel<ScriptContext::CLIENT>->sqvm &&
+		g_pSquirrel<ScriptContext::CLIENT>->setupfunc("NSClientCodeCallback_RecievedServerToClientStringCommand") != SQRESULT_ERROR)
 	{
-		g_pClientSquirrel->pushstring(g_pClientSquirrel->sqvm2, arg.ArgS());
-		g_pClientSquirrel->call(g_pClientSquirrel->sqvm2, 1); // todo: doesn't throw or log errors from within this, probably not great behaviour
+		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, arg.ArgS());
+		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, 1); // todo: doesn't throw or log errors from within this, probably not great behaviour
 	}
 }
 
