@@ -105,7 +105,7 @@ typedef void (*sq_pushintegerType)(HSquirrelVM* sqvm, SQInteger i);
 typedef void (*sq_pushfloatType)(HSquirrelVM* sqvm, SQFloat f);
 typedef void (*sq_pushboolType)(HSquirrelVM* sqvm, SQBool b);
 typedef void (*sq_pushassetType)(HSquirrelVM* sqvm, const SQChar* str, SQInteger iLength);
-typedef void (*sq_pushvectorType)(HSquirrelVM* sqvm, float[3] pVec);
+typedef void (*sq_pushvectorType)(HSquirrelVM* sqvm, float* pVec);
 typedef SQInteger (*sq_raiseerrorType)(HSquirrelVM* sqvm, const SQChar* pError);
 
 // sq stack get funcs

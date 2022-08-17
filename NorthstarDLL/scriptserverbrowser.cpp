@@ -410,7 +410,7 @@ SQRESULT SQ_CompleteAuthWithLocalServer(HSquirrelVM* sqvm)
 }
 
 // string function NSGetAuthFailReason()
-SQRESULT SQ_GetAuthFailReason(void* sqvm)
+SQRESULT SQ_GetAuthFailReason(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sAuthFailureReason.c_str(), -1);
 	return SQRESULT_NOTNULL;

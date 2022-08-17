@@ -21,11 +21,11 @@ const char* GetContextName(ScriptContext context)
 }
 
 // hooks
-template <ScriptContext context> void* (*sq_compiler_create)(void* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
-template <ScriptContext context> void* sq_compiler_createHook(void* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
+template <ScriptContext context> void* (*sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
+template <ScriptContext context> void* sq_compiler_createHook(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
 {
 	// store whether errors generated from this compile should be fatal
-	if (context == ScriptContext::CLIENT && sqvm == g_pSquirrel<ScriptContext::UI>->sqvm2)
+	if (context == ScriptContext::CLIENT && sqvm->sharedState == g_pSquirrel<ScriptContext::UI>->sqvm->sharedState)
 		g_pSquirrel<ScriptContext::UI>->m_bCompilationErrorsFatal = bShouldThrowError;
 	else
 		g_pSquirrel<context>->m_bCompilationErrorsFatal = bShouldThrowError;
@@ -33,8 +33,8 @@ template <ScriptContext context> void* sq_compiler_createHook(void* sqvm, void* 
 	return sq_compiler_create<context>(sqvm, a2, a3, bShouldThrowError);
 }
 
-template <ScriptContext context> SQInteger (*SQPrint)(void* sqvm, const char* fmt);
-template <ScriptContext context> SQInteger SQPrintHook(void* sqvm, const char* fmt, ...)
+template <ScriptContext context> SQInteger (*SQPrint)(HSquirrelVM* sqvm, const char* fmt);
+template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const char* fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
@@ -57,7 +57,7 @@ template <ScriptContext context> SQInteger SQPrintHook(void* sqvm, const char* f
 template <ScriptContext context> CSquirrelVM* (*CreateNewVM)(void* a1, ScriptContext contextArg);
 template <ScriptContext context> CSquirrelVM* CreateNewVMHook(void* a1, ScriptContext realContext)
 {
-	void* sqvm = CreateNewVM<context>(a1, realContext);
+	CSquirrelVM* sqvm = CreateNewVM<context>(a1, realContext);
 	if (realContext == ScriptContext::UI)
 		g_pSquirrel<ScriptContext::UI>->VMCreated(sqvm);
 	else
@@ -128,21 +128,21 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 template <ScriptContext context> int64_t(*RegisterSquirrelFunction)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
 template <ScriptContext context> int64_t RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown)
 {
-	SquirrelManager<context>* manager = GetSquirrelManager<context>();
+	
 
-	if (manager->m_funcOverrides.count(funcReg->squirrelFuncName))
+	if (g_pSquirrel<context>->m_funcOverrides.count(funcReg->squirrelFuncName))
 	{
-		manager->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
-		funcReg->funcPtr = manager->m_funcOverrides[funcReg->squirrelFuncName];
+		g_pSquirrel<context>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
+		funcReg->funcPtr = g_pSquirrel<context>->m_funcOverrides[funcReg->squirrelFuncName];
 	}
 
-	return manager->RegisterSquirrelFunc(sqvm, funcReg, unknown);
+	return g_pSquirrel<context>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
 }
 
 template <ScriptContext context> bool (*CallScriptInitCallback)(void* sqvm, const char* callback);
 template <ScriptContext context> bool CallScriptInitCallbackHook(void* sqvm, const char* callback)
 {
-	CallScriptInitCallbackType callScriptInitCallback;
+
 	ScriptContext realContext = context;
 	bool bShouldCallCustomCallbacks = true;
 
@@ -298,9 +298,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 		&CallScriptInitCallbackHook<ScriptContext::CLIENT>,
 		&CallScriptInitCallback<ScriptContext::CLIENT>);
 
-	MAKEHOOK(module.Offset(0x108E0), &RegisterSquirrelFunctionHook<ScriptContext::CLIENT>, &g_pClientSquirrel->RegisterSquirrelFunc);
+	MAKEHOOK(module.Offset(0x108E0), &RegisterSquirrelFunctionHook<ScriptContext::CLIENT>, &g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc);
 
-	g_pUISquirrel->RegisterSquirrelFunc = g_pClientSquirrel->RegisterSquirrelFunc;
+	g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc = g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc;
 
 	RegisterConCommand("script_client", ConCommand_script<ScriptContext::CLIENT>, "Executes script code on the client vm", FCVAR_CLIENTDLL);
 	RegisterConCommand("script_ui", ConCommand_script<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
@@ -368,7 +368,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		&CallScriptInitCallback<ScriptContext::SERVER>);
 
-	MAKEHOOK(module.Offset(0x1DD10), &RegisterSquirrelFunctionHook<ScriptContext::SERVER>, &g_pServerSquirrel->RegisterSquirrelFunc);
+	MAKEHOOK(module.Offset(0x1DD10), &RegisterSquirrelFunctionHook<ScriptContext::SERVER>, &g_pSquirrel<ScriptContext::SERVER>->RegisterSquirrelFunc);
 
 	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats
 	// are enabled for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want

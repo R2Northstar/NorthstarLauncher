@@ -48,7 +48,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(HSquirrelVM* sqvm)
 }
 
 // bool function NSIsDedicated()
-SQRESULT SQ_IsDedicated(void* sqvm)
+SQRESULT SQ_IsDedicated(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, IsDedicatedServer());
 	return SQRESULT_NOTNULL;
