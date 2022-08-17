@@ -17,6 +17,8 @@ const char* GetContextName(ScriptContext context)
 		return "SERVER";
 	case ScriptContext::UI:
 		return "UI";
+	default:
+		return "UNKNOWN";
 	}
 }
 
@@ -129,6 +131,16 @@ template <ScriptContext context> int64_t(*RegisterSquirrelFunction)(CSquirrelVM*
 template <ScriptContext context> int64_t RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown)
 {
 	
+	if (context == ScriptContext::CLIENT && sqvm->sqvm->sharedState == g_pSquirrel<ScriptContext::UI>->sqvm->sharedState)
+	{
+		if (g_pSquirrel<ScriptContext::UI>->m_funcOverrides.count(funcReg->squirrelFuncName))
+		{
+			g_pSquirrel<ScriptContext::UI>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
+			funcReg->funcPtr = g_pSquirrel<ScriptContext::UI>->m_funcOverrides[funcReg->squirrelFuncName];
+		}
+
+		return g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
+	}
 
 	if (g_pSquirrel<context>->m_funcOverrides.count(funcReg->squirrelFuncName))
 	{
