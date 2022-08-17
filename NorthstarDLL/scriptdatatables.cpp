@@ -8,6 +8,7 @@
 #include <sstream>
 #include <map>
 #include <fstream>
+#include "tier0.h"
 
 struct ColumnInfo
 {
@@ -915,4 +916,10 @@ ON_DLL_LOAD_RELIESON("engine.dll", GeneralScriptDataTables, ConCommand, (CModule
 {
 	Cvar_ns_prefer_datatable_from_disk =
 		new ConVar("ns_prefer_datatable_from_disk", "0", FCVAR_NONE, "whether datatables from disk overwrite rpak datatables");
+	if (Tier0::CommandLine()->CheckParm("-nopakdedi"))
+	{
+		Cvar_ns_prefer_datatable_from_disk->SetValue(true);
+	}
+
+
 }
