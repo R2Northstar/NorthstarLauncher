@@ -2,6 +2,7 @@
 #include "rpakfilesystem.h"
 #include "modmanager.h"
 #include "dedicated.h"
+#include "tier0.h"
 
 AUTOHOOK_INIT()
 
@@ -16,7 +17,7 @@ struct PakLoadFuncs
 	void* unk2[6];
 	long long (*FileExsits)(const char* path);//unsure
 	void* unk3[10];
-	void* (*ReadFullFileFromDisk)(const char* pPath, void* a2);
+	void* (*ReadFileAsync)(const char* pPath, void* a2);
 };
 
 PakLoadFuncs* g_pakLoadApi;
@@ -143,7 +144,7 @@ int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* ca
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
-		if (IsDedicatedServer() )//&& strncmp(&originalPath[0], "common", 6)) // dedicated only needs common and common_mp
+		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") || strncmp(&originalPath[0], "common", 6))) // dedicated only needs common and common_mp
 		{
 			spdlog::info("Not loading pak {} for dedicated server", originalPath);
 			return -1;	
@@ -177,7 +178,7 @@ void*,, (int iPakHandle, void* callback))
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
 // possibly just async loading altogether?
 
-HOOK(ReadFullFileFromDiskHook, ReadFullFileFromDisk, 
+HOOK(ReadFileAsyncHook, ReadFileAsync, 
 void*, , (const char* pPath, void* a2))
 {
 	fs::path path(pPath);
@@ -189,7 +190,6 @@ void*, , (const char* pPath, void* a2))
 		spdlog::info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
-
 		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
 		if (modFile != g_pModManager->m_ModFiles.end())
 		{
@@ -201,7 +201,9 @@ void*, , (const char* pPath, void* a2))
 		}
 	}
 
-	void* ret = ReadFullFileFromDisk(pPath, a2);
+	// this is used for reading vpk, rpak, starpak, stbsp, and mprj also
+
+	void* ret = ReadFileAsync(pPath, a2);
 	if (allocatedNewPath)
 		delete[] allocatedNewPath;
 
@@ -220,5 +222,5 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 
 	LoadPakAsyncHook.Dispatch(g_pakLoadApi->LoadPakAsync);
 	UnloadPakHook.Dispatch(g_pakLoadApi->UnloadPak);
-	ReadFullFileFromDiskHook.Dispatch(g_pakLoadApi->ReadFullFileFromDisk);
+	ReadFileAsyncHook.Dispatch(g_pakLoadApi->ReadFileAsync);
 }

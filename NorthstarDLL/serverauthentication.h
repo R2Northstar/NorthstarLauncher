@@ -36,6 +36,7 @@ class ServerAuthenticationManager
 	std::mutex m_AuthDataMutex;
 	std::unordered_map<std::string, RemoteAuthData> m_RemoteAuthenticationData;
 	std::unordered_map<R2::CBaseClient*, PlayerAuthenticationData> m_PlayerAuthenticationData;
+	bool m_bAllowDuplicateAccounts = false;
 	bool m_bRunningPlayerAuthThread = false;
 	bool m_bNeedLocalAuthForNewgame = false;
 	bool m_bForceResetLocalPlayerPersistence = false;
@@ -44,6 +45,7 @@ class ServerAuthenticationManager
 	void StartPlayerAuthServer();
 	void StopPlayerAuthServer();
 	void AddPlayerData(R2::CBaseClient* player, const char* pToken);
+	bool CheckDuplicateAccounts(R2::CBaseClient* player);
 	bool AuthenticatePlayer(R2::CBaseClient* player, uint64_t uid, char* authToken);
 	void VerifyPlayerName(R2::CBaseClient* player, char* authToken, char* name);
 	bool RemovePlayerAuthData(R2::CBaseClient* player);

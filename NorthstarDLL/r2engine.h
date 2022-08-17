@@ -194,4 +194,6 @@ namespace R2
 	};
 
 	extern server_state_t* g_pServerState;
+
+	extern char* g_pModName;
 } // namespace R2

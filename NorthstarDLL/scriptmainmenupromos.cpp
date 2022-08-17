@@ -33,7 +33,7 @@ SQRESULT SQ_RequestCustomMainMenuPromos(HSquirrelVM* sqvm)
 // bool function NSHasCustomMainMenuPromoData()
 SQRESULT SQ_HasCustomMainMenuPromoData(HSquirrelVM* sqvm)
 {
-	g_pUISquirrel->pushbool(sqvm, g_pMasterServerManager->m_bHasMainMenuPromoData);
+	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bHasMainMenuPromoData);
 	return SQRESULT_NOTNULL;
 }
 
@@ -43,83 +43,83 @@ SQRESULT SQ_GetCustomMainMenuPromoData(HSquirrelVM* sqvm)
 	if (!g_pMasterServerManager->m_bHasMainMenuPromoData)
 		return SQRESULT_NULL;
 
-	switch (g_pUISquirrel->getinteger(sqvm, 1))
+	switch (g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1))
 	{
 	case eMainMenuPromoDataProperty::newInfoTitle1:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.newInfoTitle1.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.newInfoTitle1.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::newInfoTitle2:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.newInfoTitle2.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.newInfoTitle2.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::newInfoTitle3:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.newInfoTitle3.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.newInfoTitle3.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::largeButtonTitle:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonTitle.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonTitle.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::largeButtonText:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonText.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonText.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::largeButtonUrl:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonUrl.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonUrl.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::largeButtonImageIndex:
 	{
-		g_pUISquirrel->pushinteger(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonImageIndex);
+		g_pSquirrel<ScriptContext::UI>->pushinteger(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.largeButtonImageIndex);
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::smallButton1Title:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton1Title.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton1Title.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::smallButton1Url:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton1Url.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton1Url.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::smallButton1ImageIndex:
 	{
-		g_pUISquirrel->pushinteger(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton1ImageIndex);
+		g_pSquirrel<ScriptContext::UI>->pushinteger(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton1ImageIndex);
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::smallButton2Title:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton2Title.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton2Title.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::smallButton2Url:
 	{
-		g_pUISquirrel->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton2Url.c_str());
+		g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton2Url.c_str());
 		break;
 	}
 
 	case eMainMenuPromoDataProperty::smallButton2ImageIndex:
 	{
-		g_pUISquirrel->pushinteger(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton2ImageIndex);
+		g_pSquirrel<ScriptContext::UI>->pushinteger(sqvm, g_pMasterServerManager->m_sMainMenuPromoData.smallButton2ImageIndex);
 		break;
 	}
 	}
@@ -127,9 +127,9 @@ SQRESULT SQ_GetCustomMainMenuPromoData(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptMainMenuPrograms, ClientSquirrel, (CModule module))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptMainMenuPromos, ClientSquirrel, (CModule module))
 {
-	g_pUISquirrel->AddFuncRegistration("void", "NSRequestCustomMainMenuPromos", "", "", SQ_RequestCustomMainMenuPromos);
-	g_pUISquirrel->AddFuncRegistration("bool", "NSHasCustomMainMenuPromoData", "", "", SQ_HasCustomMainMenuPromoData);
-	g_pUISquirrel->AddFuncRegistration("var", "NSGetCustomMainMenuPromoData", "int promoDataKey", "", SQ_GetCustomMainMenuPromoData);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSRequestCustomMainMenuPromos", "", "", SQ_RequestCustomMainMenuPromos);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSHasCustomMainMenuPromoData", "", "", SQ_HasCustomMainMenuPromoData);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("var", "NSGetCustomMainMenuPromoData", "int promoDataKey", "", SQ_GetCustomMainMenuPromoData);
 }

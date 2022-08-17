@@ -52,12 +52,12 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 	if (!g_pServerLimits->CheckChatLimits(&R2::g_pClientArray[senderPlayerId - 1]))
 		return;
 
-	if (g_pServerSquirrel->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_pSquirrel<ScriptContext::SERVER>->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
-		g_pServerSquirrel->pushinteger(g_pServerSquirrel->sqvm, (int)senderPlayerId - 1);
-		g_pServerSquirrel->pushstring(g_pServerSquirrel->sqvm, text);
-		g_pServerSquirrel->pushbool(g_pServerSquirrel->sqvm, isTeam);
-		g_pServerSquirrel->call(g_pServerSquirrel->sqvm, 3);
+		g_pSquirrel<ScriptContext::SERVER>->pushinteger(g_pSquirrel<ScriptContext::SERVER>->sqvm, (int)senderPlayerId - 1);
+		g_pSquirrel<ScriptContext::SERVER>->pushstring(g_pSquirrel<ScriptContext::SERVER>->sqvm, text);
+		g_pSquirrel<ScriptContext::SERVER>->pushbool(g_pSquirrel<ScriptContext::SERVER>->sqvm, isTeam);
+		g_pSquirrel<ScriptContext::SERVER>->call(g_pSquirrel<ScriptContext::SERVER>->sqvm, 3);
 	}
 	else
 		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
@@ -117,9 +117,9 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 // void function NSSendMessage( int playerIndex, string text, bool isTeam )
 SQRESULT SQ_SendMessage(HSquirrelVM* sqvm)
 {
-	int playerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
-	const char* text = g_pServerSquirrel->getstring(sqvm, 2);
-	bool isTeam = g_pServerSquirrel->getbool(sqvm, 3);
+	int playerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
+	const char* text = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 2);
+	bool isTeam = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 3);
 
 	ChatSendMessage(playerIndex, text, isTeam);
 
@@ -129,16 +129,16 @@ SQRESULT SQ_SendMessage(HSquirrelVM* sqvm)
 // void function NSBroadcastMessage( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
 SQRESULT SQ_BroadcastMessage(HSquirrelVM* sqvm)
 {
-	int fromPlayerIndex = g_pServerSquirrel->getinteger(sqvm, 1);
-	int toPlayerIndex = g_pServerSquirrel->getinteger(sqvm, 2);
-	const char* text = g_pServerSquirrel->getstring(sqvm, 3);
-	bool isTeam = g_pServerSquirrel->getbool(sqvm, 4);
-	bool isDead = g_pServerSquirrel->getbool(sqvm, 5);
-	int messageType = g_pServerSquirrel->getinteger(sqvm, 6);
+	int fromPlayerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
+	int toPlayerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 2);
+	const char* text = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 3);
+	bool isTeam = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 4);
+	bool isDead = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 5);
+	int messageType = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 6);
 
 	if (messageType < 1)
 	{
-		g_pServerSquirrel->raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -170,8 +170,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule mod
 	MessageWriteBool = module.Offset(0x158A00).As<void(__fastcall*)(bool)>();
 
 	// Chat sending functions
-	g_pServerSquirrel->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
-	g_pServerSquirrel->AddFuncRegistration(
+	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
+	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
 		"void",
 		"NSBroadcastMessage",
 		"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",

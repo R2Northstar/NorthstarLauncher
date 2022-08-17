@@ -1485,6 +1485,9 @@
     <ClInclude Include="squirreldatatypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="maxplayers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -1681,6 +1684,9 @@
     </ClCompile>
     <ClCompile Include="memory.cpp">
       <Filter>Source Files\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="exploitfixes_lzss.cpp">
+      <Filter>Source Files\Exploit Fixes</Filter>
     </ClCompile>
     <ClCompile Include="scriptdatatables.cpp">
       <Filter>Source Files</Filter>

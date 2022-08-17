@@ -16,6 +16,8 @@ namespace R2
 	CBaseClient* g_pClientArray;
 
 	server_state_t* g_pServerState;
+
+	char* g_pModName = nullptr; // we cant set this up here atm since we dont have an offset to it in engine, instead we store it in IsRespawnMod
 } // namespace R2
 
 ON_DLL_LOAD("engine.dll", R2Engine, (CModule module))

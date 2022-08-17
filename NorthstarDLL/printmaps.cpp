@@ -98,7 +98,7 @@ void RefreshMapList()
 	}
 
 	// get maps in game dir
-	for (fs::directory_entry file : fs::directory_iterator(fmt::format("{}/maps", "r2")))
+	for (fs::directory_entry file : fs::directory_iterator(fmt::format("{}/maps", R2::g_pModName)))
 	{
 		if (file.path().extension() == ".bsp")
 		{

@@ -122,6 +122,7 @@
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
+    <ClInclude Include="maxplayers.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="printcommand.h" />
     <ClInclude Include="hoststate.h" />
@@ -572,6 +573,7 @@
     <ClCompile Include="clientruihooks.cpp" />
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
+    <ClCompile Include="exploitfixes_lzss.cpp" />
     <ClCompile Include="limits.cpp" />
     <ClCompile Include="memory.cpp" />
     <ClCompile Include="nsprefix.cpp" />

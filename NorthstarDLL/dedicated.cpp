@@ -107,7 +107,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 		{
 			input += "\n";
 			Cbuf_AddText(Cbuf_GetCurrentPlayer(), input.c_str(), cmd_source_t::kCommandSrcCode);
-			//TryPrintCvarHelpForCommand(input.c_str()); // this needs to be done on main thread, unstable in this one
+			TryPrintCvarHelpForCommand(input.c_str()); // this needs to be done on main thread, unstable in this one
 		}
 	}
 
@@ -264,14 +264,27 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (CModule module))
 	module.GetExport("Tier0_InitOrigin").Patch("C3");
 }
 
-AUTOHOOK(PrintFatalSquirrelError, server.dll + 0x794D0, 
+AUTOHOOK(PrintSquirrelError, server.dll + 0x794D0, 
 void, , (void* sqvm))
 {
-	PrintFatalSquirrelError(sqvm);
-	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
+	PrintSquirrelError(sqvm);
+
+	// close dedicated server if a fatal error is hit
+	static ConVar* Cvar_fatal_script_errors = g_pCVar->FindVar("fatal_script_errors");
+	if (Cvar_fatal_script_errors->GetBool())
+		abort();
 }
 
 ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
 {
-	AUTOHOOK_DISPATCH_MODULE("server.dll")
+	AUTOHOOK_DISPATCH_MODULE(server.dll)
+
+	if (Tier0::CommandLine()->CheckParm("-nopakdedi"))
+	{
+		module.Offset(0x6BA350).Patch("C3"); // dont load skins.rson from rpak if we don't have rpaks, as loading it will cause a crash
+		module.Offset(0x6BA300).Patch(
+			"B8 C8 00 00 00 C3"); // return 200 as the number of skins from server.dll + 6BA300, this is the normal value read from
+								  // skins.rson and should be updated when we need it more modular
+
+	}
 }
