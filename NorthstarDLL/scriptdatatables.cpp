@@ -25,7 +25,7 @@ struct DataTable
 	int rowInfo;
 };
 
-ConVar* Cvar_ns_prefere_datatable_from_disk;
+ConVar* Cvar_ns_prefer_datatable_from_disk;
 void datatableReleaseHook(void*, int size);
 const long long customDatatableTypeId = 0xFFFCFFFC12345678;
 const long long vanillaDatatableTypeId = 0xFFF7FFF700000004;
@@ -80,7 +80,7 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 	{
 		spdlog::error("Asset \"{}\" doesn't start with \"datatable/\"", assetName);
 	}
-	else if ((!Cvar_ns_prefere_datatable_from_disk->GetBool()) && g_pPakLoadManager->LoadFile(assetName) )
+	else if ((!Cvar_ns_prefer_datatable_from_disk->GetBool()) && g_pPakLoadManager->LoadFile(assetName) )
 	{
 		//spdlog::info("Load Datatable {} from rpak", assetName);
 		result = g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
@@ -221,7 +221,7 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 
 			result = SQRESULT_NOTNULL;
 		}
-		else if (Cvar_ns_prefere_datatable_from_disk->GetBool()&&g_pPakLoadManager->LoadFile(assetName))
+		else if (Cvar_ns_prefer_datatable_from_disk->GetBool()&&g_pPakLoadManager->LoadFile(assetName))
 		{
 			result = g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
 		}
@@ -899,8 +899,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CMod
 	RegisterDataTableFunctions<ScriptContext::CLIENT>();
 	RegisterDataTableFunctions<ScriptContext::UI>();
 
-	Cvar_ns_prefere_datatable_from_disk =
-		new ConVar("ns_prefere_datatable_from_disk", "0", FCVAR_NONE, "whether datatables are only loaded from disk");
+	Cvar_ns_prefer_datatable_from_disk =
+		new ConVar("ns_prefer_datatable_from_disk", "0", FCVAR_NONE, "whether datatables from disk overwrite rpak datatables");
 
 	getDataTableStructure = module.Offset(0x1250f0).As<void* (*)(HSquirrelVM*)>();
 }
