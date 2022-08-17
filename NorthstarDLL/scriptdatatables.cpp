@@ -221,6 +221,10 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 
 			result = SQRESULT_NOTNULL;
 		}
+		else if (Cvar_ns_prefere_datatable_from_disk->GetBool()&&g_pPakLoadManager->LoadFile(assetName))
+		{
+			result = g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
+		}
 		else
 		{
 			spdlog::error("Datatable {} not found", assetPath);
