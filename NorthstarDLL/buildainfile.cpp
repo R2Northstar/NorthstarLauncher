@@ -182,7 +182,7 @@ ConVar* Cvar_ns_ai_dumpAINfileFromLoad;
 
 void DumpAINInfo(CAI_Network* aiNetwork)
 {
-	fs::path writePath(fmt::format("{}/maps/graphs", "r2"));
+	fs::path writePath(fmt::format("{}/maps/graphs", R2::g_pModName));
 	writePath /= R2::g_pHostState->m_levelName;
 	writePath += ".ain";
 

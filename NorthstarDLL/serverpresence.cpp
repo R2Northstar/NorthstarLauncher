@@ -117,6 +117,7 @@ void ServerPresenceManager::CreatePresence()
 	m_ServerPresence.m_bIsSingleplayerServer = false;
 
 	m_bHasPresence = true;
+	m_bFirstPresenceUpdate = true;
 
 	// code that's calling this should set up the reset fields at this point
 }
@@ -141,6 +142,16 @@ void ServerPresenceManager::RunFrame(double flCurrentTime)
 	// run on a specified delay
 	if ((flCurrentTime - m_flLastPresenceUpdate) * 1000 < Cvar_ns_server_presence_update_rate->GetFloat())
 		return;
+
+	// is this the first frame we're updating this presence?
+	if (m_bFirstPresenceUpdate)
+	{
+		// let reporters setup/clear any state
+		for (ServerPresenceReporter* reporter : m_vPresenceReporters)
+			reporter->CreatePresence(&m_ServerPresence);
+
+		m_bFirstPresenceUpdate = false;
+	}
 
 	m_flLastPresenceUpdate = flCurrentTime;
 
@@ -178,7 +189,7 @@ void ServerPresenceManager::SetPassword(const char* pPassword)
 	strncpy_s(m_ServerPresence.m_Password, sizeof(m_ServerPresence.m_Password), pPassword, sizeof(m_ServerPresence.m_Password) - 1);
 }
 
-void ServerPresenceManager::SetMap(const char* pMapName, bool isInitialising = false)
+void ServerPresenceManager::SetMap(const char* pMapName, bool isInitialising)
 {
 	// if the server is initialising (i.e. this is first map) on sp, set the server to sp
 	if (isInitialising)

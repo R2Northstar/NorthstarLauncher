@@ -42,6 +42,7 @@ struct ServerPresence
 class ServerPresenceReporter
 {
   public:
+	virtual void CreatePresence(const ServerPresence* pServerPresence) {}
 	virtual void ReportPresence(const ServerPresence* pServerPresence) {}
 	virtual void DestroyPresence(const ServerPresence* pServerPresence) {}
 };
@@ -52,6 +53,7 @@ class ServerPresenceManager
 	ServerPresence m_ServerPresence;
 
 	bool m_bHasPresence = false;
+	bool m_bFirstPresenceUpdate = false;
 
 	std::vector<ServerPresenceReporter*> m_vPresenceReporters;
 

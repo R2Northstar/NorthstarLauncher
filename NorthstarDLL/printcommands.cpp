@@ -145,7 +145,7 @@ void ConCommand_findflags(const CCommand& arg)
 	{
 		if (!strcmp(flagPair.second, upperFlag))
 		{
-			resolvedFlag = flagPair.first;
+			resolvedFlag |= flagPair.first;
 			break;	
 		}
 	}

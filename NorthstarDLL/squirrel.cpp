@@ -25,7 +25,7 @@ template <ScriptContext context> void* (*sq_compiler_create)(void* sqvm, void* a
 template <ScriptContext context> void* sq_compiler_createHook(void* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
 {
 	// store whether errors generated from this compile should be fatal
-	if (sqvm == g_pSquirrel<ScriptContext::UI>->sqvm2)
+	if (context == ScriptContext::CLIENT && sqvm == g_pSquirrel<ScriptContext::UI>->sqvm2)
 		g_pSquirrel<ScriptContext::UI>->m_bCompilationErrorsFatal = bShouldThrowError;
 	else
 		g_pSquirrel<context>->m_bCompilationErrorsFatal = bShouldThrowError;
@@ -71,7 +71,7 @@ template <ScriptContext context> void (*DestroyVM)(void* a1, void* sqvm);
 template <ScriptContext context> void DestroyVMHook(void* a1, void* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
-	if (sqvm == g_pSquirrel<ScriptContext::UI>->sqvm)
+	if (context == ScriptContext::CLIENT && sqvm == g_pSquirrel<ScriptContext::UI>->sqvm)
 	{
 		realContext = ScriptContext::UI;
 		g_pSquirrel<ScriptContext::UI>->VMDestroyed();
@@ -87,7 +87,7 @@ template <ScriptContext context> void ScriptCompileErrorHook(void* sqvm, const c
 {
 	bool bIsFatalError = g_pSquirrel<context>->m_bCompilationErrorsFatal;
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
-	if (sqvm == g_pSquirrel<ScriptContext::UI>->sqvm2)
+	if (context == ScriptContext::CLIENT && sqvm == g_pSquirrel<ScriptContext::UI>->sqvm2)
 	{
 		realContext = ScriptContext::UI;
 		bIsFatalError = g_pSquirrel<ScriptContext::UI>->m_bCompilationErrorsFatal;

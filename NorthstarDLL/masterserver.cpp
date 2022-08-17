@@ -485,6 +485,12 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+
+					if (authInfoJson["error"].HasMember("enum"))
+						m_sAuthFailureReason = authInfoJson["error"]["enum"].GetString();
+					else
+						m_sAuthFailureReason = "No error message provided";
+
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -631,6 +637,12 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+
+					if (connectionInfoJson["error"].HasMember("enum"))
+						m_sAuthFailureReason = connectionInfoJson["error"]["enum"].GetString();
+					else
+						m_sAuthFailureReason = "No error message provided";
+
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -738,16 +750,27 @@ void MasterServerManager::WritePlayerPersistentData(const char* playerId, const 
 
 class MasterServerPresenceReporter : public ServerPresenceReporter
 {
+	const int MAX_REGISTRATION_ATTEMPTS = 5;
+
+	double m_bShouldTryRegisterServer;
+	int m_nNumRegistrationAttempts;
+
+	void CreatePresence(const ServerPresence* pServerPresence) override 
+	{
+		m_bShouldTryRegisterServer = true;
+		m_nNumRegistrationAttempts = 0;
+	}
+
 	void ReportPresence(const ServerPresence* pServerPresence) override
 	{
 		// make a copy of presence for multithreading purposes
 		ServerPresence threadedPresence(pServerPresence);
 
-		if (!*g_pMasterServerManager->m_sOwnServerId)
+		if (!*g_pMasterServerManager->m_sOwnServerId || m_bShouldTryRegisterServer)
 		{
 			// add server
 			std::thread addServerThread(
-				[threadedPresence]
+				[this, threadedPresence]
 				{
 					g_pMasterServerManager->m_sOwnServerId[0] = 0;
 					g_pMasterServerManager->m_sOwnServerAuthToken[0] = 0;
@@ -830,7 +853,14 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 						{
 							spdlog::error("Failed reading masterserver response: got fastify error response");
 							spdlog::error(readBuffer);
-							goto REQUEST_END_CLEANUP;
+
+							if (serverAddedJson["error"].HasMember("enum") && !strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER"))
+							{
+								if (++m_nNumRegistrationAttempts == MAX_REGISTRATION_ATTEMPTS)
+									m_bShouldTryRegisterServer = false;
+							}
+
+							goto REQUEST_END_CLEANUP_RETRY;
 						}
 
 						if (!serverAddedJson["success"].IsTrue())
@@ -865,6 +895,9 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 					}
 
 				REQUEST_END_CLEANUP:
+					m_bShouldTryRegisterServer = false;
+
+				REQUEST_END_CLEANUP_RETRY:
 					curl_easy_cleanup(curl);
 					curl_mime_free(mime);
 				});

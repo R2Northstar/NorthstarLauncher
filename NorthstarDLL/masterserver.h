@@ -100,6 +100,7 @@ class MasterServerManager
 	bool m_bNewgameAfterSelfAuth = false;
 	bool m_bScriptAuthenticatingWithGameServer = false;
 	bool m_bSuccessfullyAuthenticatedWithGameServer = false;
+	std::string m_sAuthFailureReason {};
 
 	bool m_bHasPendingConnectionInfo = false;
 	RemoteServerConnectionInfo m_pendingConnectionInfo;
