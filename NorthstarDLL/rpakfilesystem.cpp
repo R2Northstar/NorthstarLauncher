@@ -143,7 +143,7 @@ int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* ca
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
-		if (IsDedicatedServer() && strncmp(&originalPath[0], "common", 6)) // dedicated only needs common and common_mp
+		if (IsDedicatedServer() )//&& strncmp(&originalPath[0], "common", 6)) // dedicated only needs common and common_mp
 		{
 			spdlog::info("Not loading pak {} for dedicated server", originalPath);
 			return -1;	

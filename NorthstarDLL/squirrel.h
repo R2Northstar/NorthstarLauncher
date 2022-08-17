@@ -16,10 +16,7 @@ enum SQRESULT : SQInteger
 };
 
 const std::map<SQRESULT, const char*> PrintSQRESULT = {
-	{SQRESULT_ERROR, "SQRESULT_ERROR"},
-	{SQRESULT_NULL, "SQRESULT_NULL"},
-	{SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}
-};
+	{SQRESULT_ERROR, "SQRESULT_ERROR"}, {SQRESULT_NULL, "SQRESULT_NULL"}, {SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}};
 
 enum SQReturnTypeEnum
 {
@@ -33,8 +30,7 @@ enum SQReturnTypeEnum
 	SqReturnArrays = 0x25,
 	SqReturnAsset = 0x28,
 	SqReturnTable = 0x26,
-}; 
- 
+};
 
 typedef SQRESULT (*SQFunction)(HSquirrelVM* sqvm);
 
@@ -75,7 +71,7 @@ struct SQFuncRegistration
 		memset(this, 0, sizeof(SQFuncRegistration));
 		this->returnTypeEnum = SqReturnDefault;
 	}
-}; 
+};
 
 enum class ScriptContext : int
 {
@@ -86,7 +82,7 @@ enum class ScriptContext : int
 };
 
 const char* GetContextName(ScriptContext context);
-SQReturnTypeEnum GetReturnTypeEnumFromString(const char* returnTypeString); 
+SQReturnTypeEnum GetReturnTypeEnumFromString(const char* returnTypeString);
 const char* sq_getTypeName(int type);
 
 // core sqvm funcs
@@ -117,6 +113,7 @@ typedef SQBool (*sq_getboolType)(HSquirrelVM*, SQInteger stackpos);
 typedef SQRESULT (*sq_getType)(HSquirrelVM* sqvm, SQInteger stackpos);
 typedef SQRESULT (*sq_getassetType)(HSquirrelVM* sqvm, SQInteger stackpos, const char** result);
 typedef SQRESULT (*sq_getuserdataType)(HSquirrelVM* sqvm, SQInteger stackpos, void** data, long long* typeId);
+typedef SQFloat* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger stackpos);
 
 // sq stack userpointer funcs
 typedef void* (*sq_createuserdataType)(HSquirrelVM* sqvm, SQInteger size);
@@ -126,7 +123,6 @@ template <ScriptContext context> class SquirrelManager
 {
   private:
 	std::vector<SQFuncRegistration*> m_funcRegistrations;
-	
 
   public:
 	CSquirrelVM* SquirrelVM;
@@ -134,7 +130,7 @@ template <ScriptContext context> class SquirrelManager
 	std::map<std::string, SQFunction> m_funcOverrides;
 	std::map<std::string, SQFunction> m_funcOriginals;
 
-	#pragma region SQVM funcs
+#pragma region SQVM funcs
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
 
 	sq_compilebufferType __sq_compilebuffer;
@@ -159,18 +155,19 @@ template <ScriptContext context> class SquirrelManager
 	sq_getType __sq_get;
 	sq_getassetType __sq_getasset;
 	sq_getuserdataType __sq_getuserdata;
-	
+	sq_getvectorType __sq_getvector;
+
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
-	#pragma endregion
+#pragma endregion
 
   public:
 	SquirrelManager() : SquirrelVM(nullptr) {}
 
 	void VMCreated(CSquirrelVM* newSqvm)
 	{
-		SquirrelVM = newSqvm;	//SquirrelManager in vanilla
-		sqvm = newSqvm->sqvm; //actual SquirrelVM
+		SquirrelVM = newSqvm; // SquirrelManager in vanilla
+		sqvm = newSqvm->sqvm; // actual SquirrelVM
 
 		for (SQFuncRegistration* funcReg : m_funcRegistrations)
 		{
@@ -232,7 +229,7 @@ template <ScriptContext context> class SquirrelManager
 		m_funcRegistrations.push_back(reg);
 	}
 
-	void AddFuncOverride(std::string name, SQFunction func) 
+	void AddFuncOverride(std::string name, SQFunction func)
 	{
 		m_funcOverrides[name] = func;
 	}
@@ -249,7 +246,7 @@ template <ScriptContext context> class SquirrelManager
 		return result;
 	}
 
-	#pragma region SQVM func wrappers
+#pragma region SQVM func wrappers
 	SQRESULT compilebuffer(CompileBufferState* bufferState, const SQChar* bufferName = "unnamedbuffer")
 	{
 		return __sq_compilebuffer(sqvm, bufferState, bufferName, -1, context);
@@ -265,12 +262,12 @@ template <ScriptContext context> class SquirrelManager
 		return __sq_raiseerror(sqvm, sError);
 	}
 
-	void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0) 
+	void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0)
 	{
 		__sq_newarray(sqvm, stackpos);
 	}
 
-	SQRESULT arrayappend(HSquirrelVM* sqvm, const SQInteger stackpos) 
+	SQRESULT arrayappend(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_arrayappend(sqvm, stackpos);
 	}
@@ -300,12 +297,12 @@ template <ScriptContext context> class SquirrelManager
 		__sq_pushbool(sqvm, bVal);
 	}
 
-	void pushasset(HSquirrelVM* sqvm, const SQChar* aVal, int length = -1) 
+	void pushasset(HSquirrelVM* sqvm, const SQChar* aVal, int length = -1)
 	{
 		__sq_pushasset(sqvm, aVal, length);
 	}
 
-	void pushvector(HSquirrelVM* sqvm, SQFloat* vVal) 
+	void pushvector(HSquirrelVM* sqvm, SQFloat* vVal)
 	{
 		__sq_pushvector(sqvm, vVal);
 	}
@@ -335,28 +332,33 @@ template <ScriptContext context> class SquirrelManager
 		return __sq_get(sqvm, stackpos);
 	}
 
-	SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result) 
+	SQFloat* getvector(HSquirrelVM* sqvm, const SQInteger stackpos)
+	{
+		return __sq_getvector(sqvm, stackpos);
+	}
+
+	SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result)
 	{
 		return __sq_getasset(sqvm, stackpos, result);
 	}
 
-	SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, void** data, long long* typeId) 
+	SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, void** data, long long* typeId)
 	{
-		return __sq_getuserdata(sqvm, stackpos, data, typeId); //this sometimes crashes idk
+		return __sq_getuserdata(sqvm, stackpos, data, typeId); // this sometimes crashes idk
 	}
 
-	void* createuserdata(HSquirrelVM* sqvm, SQInteger size) 
+	void* createuserdata(HSquirrelVM* sqvm, SQInteger size)
 	{
-		void* ret = __sq_createuserdata(sqvm, size); 
+		void* ret = __sq_createuserdata(sqvm, size);
 		memset(ret, 0, size);
 		return ret;
 	}
 
-	SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, long long typeId) 
+	SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, long long typeId)
 	{
 		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
 	}
-	#pragma endregion
+#pragma endregion
 };
 
 extern SquirrelManager<ScriptContext::CLIENT>* g_pClientSquirrel;

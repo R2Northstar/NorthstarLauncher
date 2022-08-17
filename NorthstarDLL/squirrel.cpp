@@ -12,16 +12,16 @@ SquirrelManager<ScriptContext::CLIENT>* g_pClientSquirrel;
 SquirrelManager<ScriptContext::SERVER>* g_pServerSquirrel;
 SquirrelManager<ScriptContext::UI>* g_pUISquirrel;
 
-template <ScriptContext context> SquirrelManager<context>* GetSquirrelManager() 
+template <ScriptContext context> SquirrelManager<context>* GetSquirrelManager()
 {
 	switch (context)
 	{
 	case ScriptContext::CLIENT:
-		return (SquirrelManager<context>*) g_pClientSquirrel;
+		return (SquirrelManager<context>*)g_pClientSquirrel;
 	case ScriptContext::SERVER:
-		return (SquirrelManager<context>*) g_pServerSquirrel;
+		return (SquirrelManager<context>*)g_pServerSquirrel;
 	case ScriptContext::UI:
-		return (SquirrelManager<context>*) g_pUISquirrel;
+		return (SquirrelManager<context>*)g_pUISquirrel;
 	}
 }
 
@@ -83,7 +83,7 @@ template <ScriptContext context> CSquirrelVM* CreateNewVMHook(void* a1, ScriptCo
 		g_pServerSquirrel->VMCreated(sqvm);
 	}
 
-	spdlog::info("CreateNewVM {} {}", GetContextName(realContext),(void*) sqvm);
+	spdlog::info("CreateNewVM {} {}", GetContextName(realContext), (void*)sqvm);
 	return sqvm;
 }
 
@@ -111,7 +111,7 @@ template <ScriptContext context> void DestroyVMHook(void* a1, void* sqvm)
 		ServerDestroyVM(a1, sqvm);
 	}
 
-	spdlog::info("DestroyVM {} {}", GetContextName(realContext),(void*) sqvm);
+	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
 
 void (*ClientSQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
@@ -125,13 +125,14 @@ template <ScriptContext context> void ScriptCompileErrorHook(HSquirrelVM* sqvm, 
 	spdlog::error("{} SCRIPT COMPILE ERROR {}", GetContextName(realContext), error);
 	spdlog::error("{} line [{}] column [{}]", file, line, column);
 
-	// use disconnect to display an error message for the compile error, but only if we aren't compiling from console, or from compilestring()
+	// use disconnect to display an error message for the compile error, but only if we aren't compiling from console, or from
+	// compilestring()
 	// TODO: compilestring can actually define a custom buffer name as the second arg, we don't currently have a way of checking this
 	// ideally we'd just check if the sqvm was fully initialised here, somehow
 	if (strcmp(file, "console") && strcmp(file, "unnamedbuffer"))
 	{
 		// kill dedicated server if we hit this
-		if (IsDedicatedServer()) 
+		if (IsDedicatedServer())
 			abort();
 		else
 		{
@@ -141,8 +142,9 @@ template <ScriptContext context> void ScriptCompileErrorHook(HSquirrelVM* sqvm, 
 					.c_str(),
 				R2::cmd_source_t::kCommandSrcCode);
 
-			if (realContext == ScriptContext::UI) // likely temp: show console so user can see any errors, as error message wont display if ui is dead
-				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode); 
+			if (realContext ==
+				ScriptContext::UI) // likely temp: show console so user can see any errors, as error message wont display if ui is dead
+				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode);
 		}
 	}
 
@@ -263,9 +265,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pClientSquirrel = new SquirrelManager<ScriptContext::CLIENT>;
 	g_pUISquirrel = new SquirrelManager<ScriptContext::UI>;
-	
-	//g_pClientSquirrel->RegisterSquirrelFunc = module.Offset(0x108E0).As<RegisterSquirrelFuncType>();
-	//g_pUISquirrel->RegisterSquirrelFunc = module.Offset(0x108E0).As<RegisterSquirrelFuncType>();
+
+	// g_pClientSquirrel->RegisterSquirrelFunc = module.Offset(0x108E0).As<RegisterSquirrelFuncType>();
+	// g_pUISquirrel->RegisterSquirrelFunc = module.Offset(0x108E0).As<RegisterSquirrelFuncType>();
 
 	g_pClientSquirrel->__sq_compilebuffer = module.Offset(0x3110).As<sq_compilebufferType>();
 	g_pUISquirrel->__sq_compilebuffer = module.Offset(0x3110).As<sq_compilebufferType>();
@@ -309,12 +311,13 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pUISquirrel->__sq_getasset = module.Offset(0x6010).As<sq_getassetType>();
 	g_pClientSquirrel->__sq_getuserdata = module.Offset(0x63D0).As<sq_getuserdataType>();
 	g_pUISquirrel->__sq_getuserdata = module.Offset(0x63D0).As<sq_getuserdataType>();
+	g_pClientSquirrel->__sq_getvector = module.Offset(0x6140).As<sq_getvectorType>();
+	g_pUISquirrel->__sq_getvector = module.Offset(0x6140).As<sq_getvectorType>();
 
 	g_pClientSquirrel->__sq_createuserdata = module.Offset(0x38D0).As<sq_createuserdataType>();
 	g_pUISquirrel->__sq_createuserdata = module.Offset(0x38D0).As<sq_createuserdataType>();
 	g_pClientSquirrel->__sq_setuserdatatypeid = module.Offset(0x6490).As<sq_setuserdatatypeidType>();
 	g_pUISquirrel->__sq_setuserdatatypeid = module.Offset(0x6490).As<sq_setuserdatatypeidType>();
-
 
 	// uiscript_reset concommand: don't loop forever if compilation fails
 	module.Offset(0x3C6E4C).NOP(6);
@@ -324,10 +327,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	MAKEHOOK(module.Offset(0x26130), &CreateNewVMHook<ScriptContext::CLIENT>, &ClientCreateNewVM); // client createnewvm function
 	MAKEHOOK(module.Offset(0x26E70), &DestroyVMHook<ScriptContext::CLIENT>, &ClientDestroyVM); // client destroyvm function
-	MAKEHOOK(
-		module.Offset(0x79A50),
-		&ScriptCompileErrorHook<ScriptContext::CLIENT>,
-		&ClientSQCompileError); // client compileerror function
+	MAKEHOOK(module.Offset(0x79A50), &ScriptCompileErrorHook<ScriptContext::CLIENT>,
+			 &ClientSQCompileError); // client compileerror function
 	MAKEHOOK(
 		module.Offset(0x10190),
 		&CallScriptInitCallbackHook<ScriptContext::CLIENT>,
@@ -360,7 +361,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pServerSquirrel = new SquirrelManager<ScriptContext::SERVER>;
 
-	//g_pServerSquirrel->RegisterSquirrelFunc = module.Offset(0x1DD10).As<RegisterSquirrelFuncType>();
+	// g_pServerSquirrel->RegisterSquirrelFunc = module.Offset(0x1DD10).As<RegisterSquirrelFuncType>();
 
 	g_pServerSquirrel->__sq_compilebuffer = module.Offset(0x3110).As<sq_compilebufferType>();
 	g_pServerSquirrel->__sq_pushroottable = module.Offset(0x5840).As<sq_pushroottableType>();
@@ -384,6 +385,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	g_pServerSquirrel->__sq_get = module.Offset(0x7C00).As<sq_getType>();
 	g_pServerSquirrel->__sq_getasset = module.Offset(0x5FF0).As<sq_getassetType>();
 	g_pServerSquirrel->__sq_getuserdata = module.Offset(0x63B0).As<sq_getuserdataType>();
+	g_pServerSquirrel->__sq_getvector = module.Offset(0x6120).As<sq_getvectorType>();
 
 	g_pServerSquirrel->__sq_createuserdata = module.Offset(0x38D0).As<sq_createuserdataType>();
 	g_pServerSquirrel->__sq_setuserdatatypeid = module.Offset(0x6470).As<sq_setuserdatatypeidType>();
@@ -391,26 +393,23 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	MAKEHOOK(module.Offset(0x1FE90), &SQPrintHook<ScriptContext::SERVER>, &ServerSQPrint); // server print function
 	MAKEHOOK(module.Offset(0x260E0), &CreateNewVMHook<ScriptContext::SERVER>, &ServerCreateNewVM); // server createnewvm function
 	MAKEHOOK(module.Offset(0x26E20), &DestroyVMHook<ScriptContext::SERVER>, &ServerDestroyVM); // server destroyvm function
-	MAKEHOOK(
-		module.Offset(0x799E0),
-		&ScriptCompileErrorHook<ScriptContext::SERVER>,
-		&ServerSQCompileError); // server compileerror function
+	MAKEHOOK(module.Offset(0x799E0), &ScriptCompileErrorHook<ScriptContext::SERVER>,
+			 &ServerSQCompileError); // server compileerror function
 	MAKEHOOK(
 		module.Offset(0x1D5C0),
 		&CallScriptInitCallbackHook<ScriptContext::SERVER>,
 		&ServerCallScriptInitCallback); // server callscriptinitcallback function
 	MAKEHOOK(module.Offset(0x1DD10), &RegisterSquirrelFunctionHook<ScriptContext::SERVER>, &g_pServerSquirrel->RegisterSquirrelFunc);
 
-
-	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats are enabled
-	// for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
+	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats
+	// are enabled for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
 		"script",
 		ConCommand_script<ScriptContext::SERVER>,
 		"Executes script code on the server vm",
 		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 
-	g_pServerSquirrel->AddFuncOverride("DevTextBufferWrite",SQ_Stub);
+	g_pServerSquirrel->AddFuncOverride("DevTextBufferWrite", SQ_Stub);
 	g_pServerSquirrel->AddFuncOverride("DevTextBufferClear", SQ_Stub);
 	g_pServerSquirrel->AddFuncOverride("DevTextBufferDumpToFile", SQ_Stub);
 	g_pServerSquirrel->AddFuncOverride("Dev_CommandLineAddParam", SQ_Stub);
@@ -418,7 +417,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	g_pServerSquirrel->AddFuncOverride("DevP4Add", SQ_Stub);
 }
 
-SQReturnTypeEnum GetReturnTypeEnumFromString(const char* returnTypeString) 
+SQReturnTypeEnum GetReturnTypeEnumFromString(const char* returnTypeString)
 {
 	static std::map<std::string, SQReturnTypeEnum> sqEnumStrMap = {
 		{"bool", SqReturnBoolean},
