@@ -130,8 +130,8 @@ template <ScriptContext context> class SquirrelManager
   public:
 	CSquirrelVM* SquirrelVM;
 	HSquirrelVM* sqvm;
-	std::map<std::string, SQFunction> m_funcOverrides;
-	std::map<std::string, SQFunction> m_funcOriginals;
+	std::map<std::string, SQFunction> m_funcOverrides = {};
+	std::map<std::string, SQFunction> m_funcOriginals = {};
 
 	bool m_bCompilationErrorsFatal = false;
 

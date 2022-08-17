@@ -887,20 +887,32 @@ template <ScriptContext context> void RegisterDataTableFunctions()
 	g_pSquirrel<context>->AddFuncOverride(
 		"GetDataTableRowGreaterThanOrEqualToFloatValue", GetDataTableRowGreaterThanOrEqualToIntValue<ScriptContext::SERVER>);
 
-	g_pSquirrel<context>->AddFuncRegistration(
-		"void", "DumpDataTable", "var", "Dumps rpak datatable contents to console", DumpDataTable<ScriptContext::SERVER>);
-	// g_pSquirrel<context>->AddFuncRegistration( "void", "DumpDataTableToFile", "var,string", "Dumps datatable contents to console",
-	// DumpDataTableToFile<ScriptContext::SERVER>);
+
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CModule module))
 {
 	RegisterDataTableFunctions<ScriptContext::SERVER>();
-	RegisterDataTableFunctions<ScriptContext::CLIENT>();
-	RegisterDataTableFunctions<ScriptContext::UI>();
+	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
+		"void", "DumpDataTable", "var", "Dumps rpak datatable contents to console", DumpDataTable<ScriptContext::SERVER>);
+	// g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration( "void", "DumpDataTableToFile", "var,string", "Dumps datatable contents to console",
+	// DumpDataTableToFile<ScriptContext::SERVER>);
 
-	Cvar_ns_prefer_datatable_from_disk =
-		new ConVar("ns_prefer_datatable_from_disk", "0", FCVAR_NONE, "whether datatables from disk overwrite rpak datatables");
+
 
 	getDataTableStructure = module.Offset(0x1250f0).As<void* (*)(HSquirrelVM*)>();
+}
+
+
+ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrrel, (CModule module)) 
+{
+
+	RegisterDataTableFunctions<ScriptContext::CLIENT>();
+	RegisterDataTableFunctions<ScriptContext::UI>();
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", GeneralScriptDataTables, ConCommand, (CModule module)) 
+{
+	Cvar_ns_prefer_datatable_from_disk =
+		new ConVar("ns_prefer_datatable_from_disk", "0", FCVAR_NONE, "whether datatables from disk overwrite rpak datatables");
 }
