@@ -557,7 +557,6 @@
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="exploitfixes_utf8parser.cpp" />
-    <ClInclude Include="NSMem.h" />
     <ClInclude Include="tier0.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>

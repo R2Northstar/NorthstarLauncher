@@ -9,8 +9,7 @@ AUTOHOOK_INIT()
 // there are more i'm just too lazy to add
 struct PakLoadFuncs
 {
-	void* unk0[2];
-	void* (*LoadPakSync)(const char* pPath, void* unknownSingleton, int flags);
+	void* unk0[3];
 	int (*LoadPakAsync)(const char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1);
 	void* unk1[2];
 	void* (*UnloadPak)(int iPakHandle, void* callback);
@@ -22,25 +21,61 @@ PakLoadFuncs* g_pakLoadApi;
 
 PakLoadManager* g_pPakLoadManager;
 void** pUnknownPakLoadSingleton;
-void PakLoadManager::LoadPakSync(const char* path)
+
+int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
 {
-	g_pakLoadApi->LoadPakSync(path, *pUnknownPakLoadSingleton, 0);
+	int nHandle = g_pakLoadApi->LoadPakAsync(pPath, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
+
+	// set the load source of the pak we just loaded
+	GetPakInfo(nHandle)->m_nLoadSource = nLoadSource;
+	return nHandle;
 }
 
-void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload)
+void PakLoadManager::UnloadPak(const int nPakHandle)
 {
-	int handle = g_pakLoadApi->LoadPakAsync(path, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
-
-	if (bMarkForUnload)
-		m_pakHandlesToUnload.push_back(handle);
+	g_pakLoadApi->UnloadPak(nPakHandle, nullptr);
 }
 
-void PakLoadManager::UnloadPaks()
+void PakLoadManager::UnloadMapPaks()
 {
-	for (int pakHandle : m_pakHandlesToUnload)
-		g_pakLoadApi->UnloadPak(pakHandle, nullptr);
+	for (auto& pair : m_vLoadedPaks)
+		if (pair.second.m_nLoadSource == ePakLoadSource::MAP)
+			UnloadPak(pair.first);
+}
 
-	m_pakHandlesToUnload.clear();
+LoadedPak* PakLoadManager::TrackLoadedPak(ePakLoadSource nLoadSource, int nPakHandle, size_t nPakNameHash)
+{
+	LoadedPak pak;
+	pak.m_nLoadSource = nLoadSource;
+	pak.m_nPakHandle = nPakHandle;
+	pak.m_nPakNameHash = nPakNameHash;
+
+	m_vLoadedPaks.insert(std::make_pair(nPakHandle, pak));
+	return &m_vLoadedPaks.at(nPakHandle);
+}
+
+void PakLoadManager::RemoveLoadedPak(int nPakHandle)
+{
+	m_vLoadedPaks.erase(nPakHandle);
+}
+
+LoadedPak* PakLoadManager::GetPakInfo(const int nPakHandle)
+{
+	return &m_vLoadedPaks.at(nPakHandle);
+}
+
+int PakLoadManager::GetPakHandle(const size_t nPakNameHash)
+{
+	for (auto& pair : m_vLoadedPaks)
+		if (pair.second.m_nPakNameHash == nPakNameHash)
+			return pair.first;
+
+	return -1;
+}
+
+int PakLoadManager::GetPakHandle(const char* pPath)
+{
+	return GetPakHandle(STR_HASH(pPath));
 }
 
 void HandlePakAliases(char** map)
@@ -73,7 +108,7 @@ void LoadPreloadPaks()
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 			if (pak.m_bAutoLoad)
-				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), false);
+				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::CONSTANT);
 	}
 }
 
@@ -108,16 +143,21 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 						true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
 				}
 				else
-					g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), true);
+					g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::MAP);
 			}
 		}
 	}
 }
 
 HOOK(LoadPakAsyncHook, LoadPakAsync,
-int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1))
+int,, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
 {
 	HandlePakAliases(&pPath);
+
+	// dont load the pak if it's currently loaded already
+	size_t nPathHash = STR_HASH(pPath);
+	if (g_pPakLoadManager->GetPakHandle(nPathHash) != -1)
+		return -1;
 
 	bool bNeedToFreePakName = false;
 
@@ -139,40 +179,47 @@ int,, (char* pPath, void* unknownSingleton, int flags, void* callback0, void* ca
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
 		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") || strncmp(&originalPath[0], "common", 6))) // dedicated only needs common and common_mp
 		{
+			if (bNeedToFreePakName)
+				delete[] pPath;
+
 			spdlog::info("Not loading pak {} for dedicated server", originalPath);
 			return -1;	
 		}
 	}
 
-	int ret = LoadPakAsync(pPath, unknownSingleton, flags, callback0, callback1);
-	spdlog::info("LoadPakAsync {} {}", pPath, ret);
+	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
+	spdlog::info("LoadPakAsync {} {}", pPath, iPakHandle);
+
+	// trak the pak
+	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
 
 	if (bNeedToFreePakName)
 		delete[] pPath;
 
-	return ret;
+	return iPakHandle;
 }
 
 HOOK(UnloadPakHook, UnloadPak,
-void*,, (int iPakHandle, void* callback))
+void*,, (int nPakHandle, void* pCallback))
 {
+	// stop tracking the pak
+	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);
+
 	static bool bShouldUnloadPaks = true;
 	if (bShouldUnloadPaks)
 	{
 		bShouldUnloadPaks = false;
-		g_pPakLoadManager->UnloadPaks();
+		g_pPakLoadManager->UnloadMapPaks();
 		bShouldUnloadPaks = true;
 	}
 
-	spdlog::info("UnloadPak {}", iPakHandle);
-	return UnloadPak(iPakHandle, callback);
+	spdlog::info("UnloadPak {}", nPakHandle);
+	return UnloadPak(nPakHandle, pCallback);
 }
 
-// we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
-// possibly just async loading altogether?
-
+// we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
 HOOK(ReadFileAsyncHook, ReadFileAsync, 
-void*, , (const char* pPath, void* a2))
+void*, , (const char* pPath, void* pCallback))
 {
 	fs::path path(pPath);
 	char* allocatedNewPath = nullptr;
@@ -194,9 +241,7 @@ void*, , (const char* pPath, void* a2))
 		}
 	}
 
-	// this is used for reading vpk, rpak, starpak, stbsp, and mprj also
-
-	void* ret = ReadFileAsync(pPath, a2);
+	void* ret = ReadFileAsync(pPath, pCallback);
 	if (allocatedNewPath)
 		delete[] allocatedNewPath;
 
