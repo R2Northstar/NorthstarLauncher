@@ -148,6 +148,15 @@
     <Filter Include="Header Files\Dedicated Server">
       <UniqueIdentifier>{0f1ba4c4-78ee-4b05-afa5-6f598063f5c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Squirrel">
+      <UniqueIdentifier>{ca669b16-b8bb-4654-993f-fffa44c914f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Squirrel">
+      <UniqueIdentifier>{26365f16-ff52-4e80-a01b-2ca020376c93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripted">
+      <UniqueIdentifier>{7263403a-7550-4aa2-a724-f622ab200eed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1404,9 +1413,6 @@
     <ClInclude Include="sourceinterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="squirrel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="bits.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
@@ -1479,11 +1485,14 @@
     <ClInclude Include="memory.h">
       <Filter>Header Files\Hooks</Filter>
     </ClInclude>
-    <ClInclude Include="squirreldatatypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="maxplayers.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="squirrel.h">
+      <Filter>Header Files\Squirrel</Filter>
+    </ClInclude>
+    <ClInclude Include="squirreldatatypes.h">
+      <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1592,9 +1601,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="squirrel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="crashhandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1685,8 +1691,11 @@
     <ClCompile Include="exploitfixes_lzss.cpp">
       <Filter>Source Files\Exploit Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="squirrel.cpp">
+      <Filter>Source Files\Squirrel</Filter>
+    </ClCompile>
     <ClCompile Include="scriptdatatables.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Scripted</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
