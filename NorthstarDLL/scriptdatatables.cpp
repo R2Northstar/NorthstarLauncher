@@ -865,28 +865,27 @@ void datatableReleaseHook(void* d, int size)
 
 template <ScriptContext context> void RegisterDataTableFunctions() 
 {
-	g_pSquirrel<context>->AddFuncOverride("GetDataTable", GetDatatable<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableColumnByName", GetDatatabeColumnByName<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDatatableRowCount", GetDatatabeRowCount<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableString", GetDataTableString<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableInt", GetDataTableInt<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableFloat", GetDataTableFloat<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableBool", GetDataTableBool<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableAsset", GetDataTableAsset<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableVector", GetDataTableVector<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingStringValue", GetDataTableRowMatchingStringValue<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingAssetValue", GetDataTableRowMatchingAssetValue<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingFloatValue", GetDataTableRowMatchingFloatValue<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingIntValue", GetDataTableRowMatchingIntValue<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingVectorValue", GetDataTableRowMatchingVectorValue<ScriptContext::SERVER>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTable", GetDatatable<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableColumnByName", GetDatatabeColumnByName<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDatatableRowCount", GetDatatabeRowCount<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableString", GetDataTableString<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableInt", GetDataTableInt<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableFloat", GetDataTableFloat<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableBool", GetDataTableBool<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableAsset", GetDataTableAsset<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableVector", GetDataTableVector<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingStringValue", GetDataTableRowMatchingStringValue<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingAssetValue", GetDataTableRowMatchingAssetValue<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingFloatValue", GetDataTableRowMatchingFloatValue<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingIntValue", GetDataTableRowMatchingIntValue < context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingVectorValue", GetDataTableRowMatchingVectorValue<context>);
 	g_pSquirrel<context>->AddFuncOverride(
-		"GetDataTableRowLessThanOrEqualToFloatValue", GetDataTableRowLessThanOrEqualToFloatValue<ScriptContext::SERVER>);
+		"GetDataTableRowLessThanOrEqualToFloatValue", GetDataTableRowLessThanOrEqualToFloatValue<context>);
 	g_pSquirrel<context>->AddFuncOverride(
-		"GetDataTableRowGreaterThanOrEqualToFloatValue", GetDataTableRowGreaterThanOrEqualToFloatValue<ScriptContext::SERVER>);
+		"GetDataTableRowGreaterThanOrEqualToFloatValue", GetDataTableRowGreaterThanOrEqualToFloatValue<context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowLessThanOrEqualToIntValue", GetDataTableRowLessThanOrEqualToIntValue<context>);
 	g_pSquirrel<context>->AddFuncOverride(
-		"GetDataTableRowLessThanOrEqualToIntValue", GetDataTableRowLessThanOrEqualToIntValue<ScriptContext::SERVER>);
-	g_pSquirrel<context>->AddFuncOverride(
-		"GetDataTableRowGreaterThanOrEqualToFloatValue", GetDataTableRowGreaterThanOrEqualToIntValue<ScriptContext::SERVER>);
+		"GetDataTableRowGreaterThanOrEqualToFloatValue", GetDataTableRowGreaterThanOrEqualToIntValue<context>);
 
 
 }
@@ -905,7 +904,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CMod
 }
 
 
-ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrrel, (CModule module)) 
+ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CModule module))
 {
 
 	RegisterDataTableFunctions<ScriptContext::CLIENT>();

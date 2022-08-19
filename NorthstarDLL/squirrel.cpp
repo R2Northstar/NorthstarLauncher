@@ -27,7 +27,7 @@ template <ScriptContext context> void* (*sq_compiler_create)(HSquirrelVM* sqvm, 
 template <ScriptContext context> void* sq_compiler_createHook(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
 {
 	// store whether errors generated from this compile should be fatal
-	if (context == ScriptContext::CLIENT && sqvm->sharedState == g_pSquirrel<ScriptContext::UI>->sqvm->sharedState)
+	if (context == ScriptContext::CLIENT && sqvm == g_pSquirrel<ScriptContext::UI>->sqvm)
 		g_pSquirrel<ScriptContext::UI>->m_bCompilationErrorsFatal = bShouldThrowError;
 	else
 		g_pSquirrel<context>->m_bCompilationErrorsFatal = bShouldThrowError;
@@ -131,12 +131,13 @@ template <ScriptContext context> int64_t(*RegisterSquirrelFunction)(CSquirrelVM*
 template <ScriptContext context> int64_t RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown)
 {
 	
-	if (context == ScriptContext::CLIENT && sqvm->sqvm->sharedState == g_pSquirrel<ScriptContext::UI>->sqvm->sharedState)
+	if (context == ScriptContext::CLIENT && sqvm == g_pSquirrel<ScriptContext::UI>->SquirrelVM)
 	{
 		if (g_pSquirrel<ScriptContext::UI>->m_funcOverrides.count(funcReg->squirrelFuncName))
 		{
 			g_pSquirrel<ScriptContext::UI>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
 			funcReg->funcPtr = g_pSquirrel<ScriptContext::UI>->m_funcOverrides[funcReg->squirrelFuncName];
+			spdlog::info("Replacing {} in UI", std::string(funcReg->squirrelFuncName));
 		}
 
 		return g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
@@ -146,6 +147,7 @@ template <ScriptContext context> int64_t RegisterSquirrelFunctionHook(CSquirrelV
 	{
 		g_pSquirrel<context>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
 		funcReg->funcPtr = g_pSquirrel<context>->m_funcOverrides[funcReg->squirrelFuncName];
+		spdlog::info("Replacing {} in Client", std::string(funcReg->squirrelFuncName));
 	}
 
 	return g_pSquirrel<context>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
@@ -363,6 +365,9 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getuserdata = module.Offset(0x63B0).As<sq_getuserdataType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getvector = module.Offset(0x6120).As<sq_getvectorType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_get = module.Offset(0x7C00).As<sq_getType>();
+
+	g_pSquirrel<ScriptContext::SERVER>->__sq_createuserdata = module.Offset(0x38D0).As<sq_createuserdataType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_setuserdatatypeid = module.Offset(0x6470).As<sq_setuserdatatypeidType>();
 
 	MAKEHOOK(module.Offset(0x8AA0),
 		&sq_compiler_createHook<ScriptContext::SERVER>,
