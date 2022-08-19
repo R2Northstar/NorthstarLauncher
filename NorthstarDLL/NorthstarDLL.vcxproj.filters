@@ -1473,9 +1473,6 @@
     <ClInclude Include="color.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="NSMem.h">
-      <Filter>Header Files\Hooks</Filter>
-    </ClInclude>
     <ClInclude Include="serverpresence.h">
       <Filter>Header Files\Server</Filter>
     </ClInclude>
