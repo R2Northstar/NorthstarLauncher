@@ -18,7 +18,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-typedef void (*initPluginFuncPtr)(void* getPluginObject);
+ typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -79,7 +79,7 @@ bool LoadPlugins()
 			spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 			continue;
 		}
-		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCE(101), MAKEINTRESOURCE(RT_RCDATA));
+		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
 
 		if (manifestResource == NULL)
 		{

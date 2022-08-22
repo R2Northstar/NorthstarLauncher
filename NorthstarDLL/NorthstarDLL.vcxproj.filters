@@ -1691,6 +1691,12 @@
     <ClCompile Include="exploitfixes_lzss.cpp">
       <Filter>Source Files\Exploit Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="scriptutility.cpp">
+      <Filter>Source Files\Scripted</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptjson.cpp">
+      <Filter>Source Files\Scripted</Filter>
+    </ClCompile>
     <ClCompile Include="squirrel.cpp">
       <Filter>Source Files\Squirrel</Filter>
     </ClCompile>

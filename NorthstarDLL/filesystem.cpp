@@ -115,7 +115,7 @@ bool,, (IFileSystem* filesystem, char* pPath, void* result))
 
 // force modded files to be read from mods, not vpk
 AUTOHOOK(ReadFileFromVPK, filesystem_stdio.dll + 0x5CBA0,
-FileHandle_t,, (VPKData* vpkInfo, __int64* b, char* filename))
+FileHandle_t,, (VPKData* vpkInfo, uint64_t* b, char* filename))
 {
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))

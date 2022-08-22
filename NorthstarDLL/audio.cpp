@@ -196,7 +196,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 			std::string pathString = file.path().string();
 
 			// Open the file.
-			std::basic_ifstream<uint8_t> wavStream(pathString, std::ios::binary);
+			std::ifstream wavStream(pathString, std::ios::binary);
 
 			if (wavStream.fail())
 			{
@@ -221,7 +221,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 				[pathString, fileSize, data]
 				{
 					std::shared_lock lock(g_CustomAudioManager.m_loadingMutex);
-					std::basic_ifstream<uint8_t> wavStream(pathString, std::ios::binary);
+					std::ifstream wavStream(pathString, std::ios::binary);
 
 					// would be weird if this got hit, since it would've worked previously
 					if (wavStream.fail())
@@ -232,7 +232,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 
 					// read from after the header first to preserve the empty header, then read the header last
 					wavStream.seekg(0, std::ios::beg);
-					wavStream.read(data, fileSize);
+					wavStream.read(reinterpret_cast<char*>(data), fileSize);
 					wavStream.close();
 
 					spdlog::info("Finished async read of audio sample {}", pathString);

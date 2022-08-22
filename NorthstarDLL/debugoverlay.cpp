@@ -41,7 +41,7 @@ struct OverlayBase_t
 	int m_nServerCount; // Latch server count, too
 	float m_flEndTime; // When does this box go away
 	OverlayBase_t* m_pNextOverlay;
-	__int64 m_pUnk;
+	void* m_pUnk;
 };
 
 struct OverlayLine_t : public OverlayBase_t

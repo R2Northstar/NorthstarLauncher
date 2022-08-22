@@ -265,7 +265,7 @@ void*,, (
 }
 
 AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
-bool,, (R2::CBaseClient* self, char* name, __int64 netchan_ptr_arg, char b_fake_player_arg, __int64 a5, char* Buffer, void* a7))
+bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_player_arg, void* a5, char* Buffer, void* a7))
 {
 	// try changing name before all else
 	g_pServerAuthentication->VerifyPlayerName(self, pNextPlayerToken, name);
@@ -284,9 +284,8 @@ bool,, (R2::CBaseClient* self, char* name, __int64 netchan_ptr_arg, char b_fake_
 
 	if (strlen(name) >= 64) // fix for name overflow bug
 		R2::CBaseClient__Disconnect(self, 1, "Invalid name");
-	else if (
-		!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
-		g_pMasterServerManager->m_bRequireClientAuth)
+	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) && 
+		g_pServerAuthentication->m_bRequireClientAuth)
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
 	g_pServerAuthentication->AddPlayerData(self, pNextPlayerToken);
