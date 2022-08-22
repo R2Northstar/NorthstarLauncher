@@ -53,6 +53,7 @@ struct CompileBufferState
 	}
 };
 
+
 struct SQFuncRegistration
 {
 	const char* squirrelFuncName;

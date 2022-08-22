@@ -127,7 +127,7 @@ struct __declspec(align(8)) SQTable
 	void* pointer_20;
 	void* _sharedState;
 	long long field_30;
-	tableNode* nodes;
+	tableNode* _nodes;
 	int _numOfNodes;
 	int size;
 	int field_48;
