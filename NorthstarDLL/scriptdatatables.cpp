@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "scriptdatatables.h"
 #include "squirrel.h"
 #include "rpakfilesystem.h"
 #include "convar.h"
