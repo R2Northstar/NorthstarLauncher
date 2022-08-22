@@ -71,7 +71,7 @@ template <class T> void ChangeOffset(MemoryAddress addr, unsigned int offset)
 }
 
 AUTOHOOK(StringTables_CreateStringTable, engine.dll + 0x22E220,
-void*,, (__int64 thisptr, const char* name, int maxentries, int userdatafixedsize, int userdatanetworkbits, int flags))
+void*,, (void* thisptr, const char* name, int maxentries, int userdatafixedsize, int userdatanetworkbits, int flags))
 {
 	// Change the amount of entries to account for a bigger player amount
 	if (!strcmp(name, "userinfo"))
@@ -181,7 +181,7 @@ void,, (bool a1, float a2))
 
 	v3 = *(unsigned char*)(g_pGlobals + 73);
 	if (*(DWORD*)(qword_1814D9648 + 92) &&
-		((*(unsigned __int8(__fastcall**)(__int64))(*(__int64*)g_pEngineServer + 32i64))(g_pEngineServer) ||
+		((*(unsigned __int8(__fastcall**)(__int64))(*(__int64*)g_pEngineServer + 32))(g_pEngineServer) ||
 		 !*(DWORD*)(qword_1814DA408 + 92)) &&
 		v3)
 	{
@@ -251,7 +251,7 @@ void,, (bool a1, float a2))
 						if (v23)
 							v19 = 1;
 						else
-							*v21 = 0i64;
+							*v21 = 0;
 					}
 					++v20;
 					++v21;

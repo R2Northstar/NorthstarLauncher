@@ -57,6 +57,7 @@ struct ModRpakEntry
   public:
 	bool m_bAutoLoad;
 	std::string m_sPakName;
+	std::string m_sLoadAfterPak;
 };
 
 class Mod
@@ -102,6 +103,8 @@ class Mod
 	std::unordered_map<std::string, std::string>
 		RpakAliases; // paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
 
+	 std::unordered_map<std::string, std::string> DependencyConstants;
+
   public:
 	Mod(fs::path modPath, char* jsonBuf);
 };
@@ -127,6 +130,7 @@ class ModManager
   public:
 	std::vector<Mod> m_LoadedMods;
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
+	std::unordered_map<std::string, std::string> m_DependencyConstants;
 
   public:
 	ModManager();

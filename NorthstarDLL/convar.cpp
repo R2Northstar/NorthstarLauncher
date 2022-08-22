@@ -4,6 +4,8 @@
 #include "convar.h"
 #include "sourceinterface.h"
 
+#include <float.h>
+
 typedef void (*ConVarRegisterType)(
 	ConVar* pConVar,
 	const char* pszName,

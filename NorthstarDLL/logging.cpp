@@ -8,7 +8,6 @@
 
 #include <iomanip>
 #include <sstream>
-#include <Psapi.h>
 
 AUTOHOOK_INIT()
 
@@ -127,7 +126,7 @@ void,, (const char* text, ...))
 }
 
 AUTOHOOK(CClientState_ProcessPrint, engine.dll + 0x1A1530, 
-bool,, (__int64 thisptr, __int64 msg))
+bool,, (void* thisptr, uintptr_t msg))
 {
 	char* text = *(char**)(msg + 0x20);
 

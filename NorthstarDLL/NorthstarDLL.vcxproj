@@ -91,7 +91,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -614,10 +614,12 @@
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="runframe.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />
+    <ClCompile Include="scriptjson.cpp" />
     <ClCompile Include="scriptmainmenupromos.cpp" />
     <ClCompile Include="scriptmodmenu.cpp" />
     <ClCompile Include="scriptserverbrowser.cpp" />
     <ClCompile Include="scriptsrson.cpp" />
+    <ClCompile Include="scriptutility.cpp" />
     <ClCompile Include="serverauthentication.cpp" />
     <ClCompile Include="miscserverscript.cpp" />
     <ClCompile Include="serverchathooks.cpp" />

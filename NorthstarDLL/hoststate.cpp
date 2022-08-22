@@ -39,6 +39,9 @@ void,, (CHostState* self))
 	if (g_pServerAuthentication->m_bNeedLocalAuthForNewgame)
 		SetCurrentPlaylist("tdm");
 
+	// don't require authentication on singleplayer startup
+	g_pServerAuthentication->m_bRequireClientAuth = strncmp(g_pHostState->m_levelName, "sp_", 3);
+
 	ServerStartingOrChangingMap();
 
 	double dStartTime = Tier0::Plat_FloatTime();
@@ -90,7 +93,6 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 		// update server presence
 		g_pServerPresence->RunFrame(flCurrentTime);
 	}
-	
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))

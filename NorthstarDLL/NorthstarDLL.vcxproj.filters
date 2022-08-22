@@ -148,6 +148,9 @@
     <Filter Include="Header Files\Dedicated Server">
       <UniqueIdentifier>{0f1ba4c4-78ee-4b05-afa5-6f598063f5c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Scripted">
+      <UniqueIdentifier>{a3afb0d7-6129-40e5-87a5-2f6758f7e4f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1681,6 +1684,12 @@
     </ClCompile>
     <ClCompile Include="exploitfixes_lzss.cpp">
       <Filter>Source Files\Exploit Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptutility.cpp">
+      <Filter>Source Files\Scripted</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptjson.cpp">
+      <Filter>Source Files\Scripted</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
