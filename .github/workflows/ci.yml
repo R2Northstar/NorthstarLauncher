@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: DoozyX/clang-format-lint-action@v0.13
       with:
-        source: 'NorthstarDLL LauncherInjector'
+        source: 'NorthstarDLL NorthstarLauncher'
         exclude: 'NorthstarDLL/include loader_launcher_proxy loader_wsock32_proxy'
         extensions: 'h,cpp'
         clangFormatVersion: 13
