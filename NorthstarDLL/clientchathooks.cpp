@@ -29,12 +29,12 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 			payload = message + 1;
 		}
 
-		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, (int)senderId - 1);
-		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, payload);
-		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, isTeam);
-		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, isDead);
-		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, type);
-		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->sqvm2, 5);
+		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm, (int)senderId - 1);
+		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->sqvm, payload);
+		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm, isTeam);
+		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm, isDead);
+		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm, type);
+		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->sqvm, 5);
 	}
 	else
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
@@ -42,7 +42,7 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 }
 
 // void NSChatWrite( int context, string str )
-SQRESULT SQ_ChatWrite(void* sqvm)
+SQRESULT SQ_ChatWrite(HSquirrelVM* sqvm)
 {
 	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
@@ -52,7 +52,7 @@ SQRESULT SQ_ChatWrite(void* sqvm)
 }
 
 // void NSChatWriteRaw( int context, string str )
-SQRESULT SQ_ChatWriteRaw(void* sqvm)
+SQRESULT SQ_ChatWriteRaw(HSquirrelVM* sqvm)
 {
 	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
@@ -62,7 +62,7 @@ SQRESULT SQ_ChatWriteRaw(void* sqvm)
 }
 
 // void NSChatWriteLine( int context, string str )
-SQRESULT SQ_ChatWriteLine(void* sqvm)
+SQRESULT SQ_ChatWriteLine(HSquirrelVM* sqvm)
 {
 	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);

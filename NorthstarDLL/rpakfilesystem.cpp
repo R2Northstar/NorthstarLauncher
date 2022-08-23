@@ -13,7 +13,9 @@ struct PakLoadFuncs
 	int (*LoadPakAsync)(const char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1);
 	void* unk1[2];
 	void* (*UnloadPak)(int iPakHandle, void* callback);
-	void* unk2[17];
+	void* unk2[6];
+	void* (*LoadFile)(const char* path);//unsure
+	void* unk3[10];
 	void* (*ReadFileAsync)(const char* pPath, void* a2);
 };
 
@@ -76,6 +78,11 @@ int PakLoadManager::GetPakHandle(const size_t nPakNameHash)
 int PakLoadManager::GetPakHandle(const char* pPath)
 {
 	return GetPakHandle(STR_HASH(pPath));
+}
+
+void* PakLoadManager::LoadFile(const char* path)
+{
+	return g_pakLoadApi->LoadFile(path);
 }
 
 void HandlePakAliases(char** map)

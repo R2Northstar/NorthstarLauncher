@@ -9,7 +9,7 @@
 #include <filesystem>
 
 // void function NSEarlyWritePlayerIndexPersistenceForLeave( int playerIndex )
-SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
+SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(HSquirrelVM* sqvm)
 {
 	int playerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
 	R2::CBaseClient* player = &R2::g_pClientArray[playerIndex];
@@ -26,14 +26,14 @@ SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
 }
 
 // bool function NSIsWritingPlayerPersistence()
-SQRESULT SQ_IsWritingPlayerPersistence(void* sqvm)
+SQRESULT SQ_IsWritingPlayerPersistence(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, g_pMasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSIsPlayerIndexLocalPlayer( int playerIndex )
-SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
+SQRESULT SQ_IsPlayerIndexLocalPlayer(HSquirrelVM* sqvm)
 {
 	int playerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
 	R2::CBaseClient* player = &R2::g_pClientArray[playerIndex];
@@ -48,7 +48,7 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 }
 
 // bool function NSIsDedicated()
-SQRESULT SQ_IsDedicated(void* sqvm)
+SQRESULT SQ_IsDedicated(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, IsDedicatedServer());
 	return SQRESULT_NOTNULL;

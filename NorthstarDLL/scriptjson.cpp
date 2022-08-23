@@ -10,8 +10,8 @@
 #undef GetObject // fuck microsoft developers
 #endif
 
-template <ScriptContext context>
-void DecodeJsonArray(void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
+template <ScriptContext context> void
+DecodeJsonArray(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
@@ -47,8 +47,8 @@ void DecodeJsonArray(void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, 
 	}
 }
 
-template <ScriptContext context>
-void DecodeJsonTable(void* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
+template <ScriptContext context> void
+DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
 {
 	g_pSquirrel<context>->newtable(sqvm);
 
@@ -208,7 +208,7 @@ template <ScriptContext context> void EncodeJSONArray(
 
 
 // table function DecodeJSON( string json, bool fatalParseErrors = false )
-template <ScriptContext context> SQRESULT SQ_DecodeJSON(void* sqvm)
+template <ScriptContext context> SQRESULT SQ_DecodeJSON(HSquirrelVM* sqvm)
 {
 	const char* pJson = g_pSquirrel<context>->getstring(sqvm, 1);
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
@@ -237,7 +237,7 @@ template <ScriptContext context> SQRESULT SQ_DecodeJSON(void* sqvm)
 
 
 // string function EncodeJSON( table data )
-template <ScriptContext context> SQRESULT SQ_EncodeJSON(void* sqvm) 
+template <ScriptContext context> SQRESULT SQ_EncodeJSON(HSquirrelVM* sqvm)
 {
 	rapidjson_document doc;
 	doc.SetObject();

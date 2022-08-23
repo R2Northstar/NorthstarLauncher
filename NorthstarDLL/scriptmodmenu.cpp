@@ -3,7 +3,7 @@
 #include "squirrel.h"
 
 // array<string> function NSGetModNames()
-SQRESULT SQ_GetModNames(void* sqvm)
+SQRESULT SQ_GetModNames(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->newarray(sqvm, 0);
 
@@ -17,7 +17,7 @@ SQRESULT SQ_GetModNames(void* sqvm)
 }
 
 // bool function NSIsModEnabled(string modName)
-SQRESULT SQ_IsModEnabled(void* sqvm)
+SQRESULT SQ_IsModEnabled(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 
@@ -35,7 +35,7 @@ SQRESULT SQ_IsModEnabled(void* sqvm)
 }
 
 // void function NSSetModEnabled(string modName, bool enabled)
-SQRESULT SQ_SetModEnabled(void* sqvm)
+SQRESULT SQ_SetModEnabled(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 	const SQBool enabled = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 2);
@@ -54,7 +54,7 @@ SQRESULT SQ_SetModEnabled(void* sqvm)
 }
 
 // string function NSGetModDescriptionByModName(string modName)
-SQRESULT SQ_GetModDescription(void* sqvm)
+SQRESULT SQ_GetModDescription(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 
@@ -72,7 +72,7 @@ SQRESULT SQ_GetModDescription(void* sqvm)
 }
 
 // string function NSGetModVersionByModName(string modName)
-SQRESULT SQ_GetModVersion(void* sqvm)
+SQRESULT SQ_GetModVersion(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 
@@ -90,7 +90,7 @@ SQRESULT SQ_GetModVersion(void* sqvm)
 }
 
 // string function NSGetModDownloadLinkByModName(string modName)
-SQRESULT SQ_GetModDownloadLink(void* sqvm)
+SQRESULT SQ_GetModDownloadLink(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 
@@ -108,7 +108,7 @@ SQRESULT SQ_GetModDownloadLink(void* sqvm)
 }
 
 // int function NSGetModLoadPriority(string modName)
-SQRESULT SQ_GetModLoadPriority(void* sqvm)
+SQRESULT SQ_GetModLoadPriority(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 
@@ -126,7 +126,7 @@ SQRESULT SQ_GetModLoadPriority(void* sqvm)
 }
 
 // bool function NSIsModRequiredOnClient(string modName)
-SQRESULT SQ_IsModRequiredOnClient(void* sqvm)
+SQRESULT SQ_IsModRequiredOnClient(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 
@@ -144,7 +144,7 @@ SQRESULT SQ_IsModRequiredOnClient(void* sqvm)
 }
 
 // array<string> function NSGetModConvarsByModName(string modName)
-SQRESULT SQ_GetModConvars(void* sqvm)
+SQRESULT SQ_GetModConvars(HSquirrelVM* sqvm)
 {
 	const SQChar* modName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
 	g_pSquirrel<ScriptContext::UI>->newarray(sqvm, 0);
@@ -168,7 +168,7 @@ SQRESULT SQ_GetModConvars(void* sqvm)
 }
 
 // void function NSReloadMods()
-SQRESULT SQ_ReloadMods(void* sqvm)
+SQRESULT SQ_ReloadMods(HSquirrelVM* sqvm)
 {
 	g_pModManager->LoadMods();
 	return SQRESULT_NULL;

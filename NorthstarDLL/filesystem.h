@@ -59,7 +59,8 @@ class IFileSystem
 		FileHandle_t (*Open)(
 			IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pOptions, const char* pathID, int64_t unknown);
 		void (*Close)(IFileSystem* fileSystem, FileHandle_t file);
-		void* unknown2[6];
+		long long (*Seek)(IFileSystem::VTable2** fileSystem, FileHandle_t file, long long offset, long long whence);
+		void* unknown2[5];
 		bool (*FileExists)(IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pPathID);
 	};
 

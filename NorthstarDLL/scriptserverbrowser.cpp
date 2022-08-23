@@ -8,42 +8,42 @@
 // functions for viewing server browser
 
 // bool function NSIsMasterServerAuthenticated()
-SQRESULT SQ_IsMasterServerAuthenticated(void* sqvm)
+SQRESULT SQ_IsMasterServerAuthenticated(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bOriginAuthWithMasterServerDone);
 	return SQRESULT_NOTNULL;
 }
 
 // void function NSRequestServerList()
-SQRESULT SQ_RequestServerList(void* sqvm)
+SQRESULT SQ_RequestServerList(HSquirrelVM* sqvm)
 {
 	g_pMasterServerManager->RequestServerList();
 	return SQRESULT_NULL;
 }
 
 // bool function NSIsRequestingServerList()
-SQRESULT SQ_IsRequestingServerList(void* sqvm)
+SQRESULT SQ_IsRequestingServerList(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bScriptRequestingServerList);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSMasterServerConnectionSuccessful()
-SQRESULT SQ_MasterServerConnectionSuccessful(void* sqvm)
+SQRESULT SQ_MasterServerConnectionSuccessful(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyConnected);
 	return SQRESULT_NOTNULL;
 }
 
 // int function NSGetServerCount()
-SQRESULT SQ_GetServerCount(void* sqvm)
+SQRESULT SQ_GetServerCount(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushinteger(sqvm, g_pMasterServerManager->m_vRemoteServers.size());
 	return SQRESULT_NOTNULL;
 }
 
 // string function NSGetServerName( int serverIndex )
-SQRESULT SQ_GetServerName(void* sqvm)
+SQRESULT SQ_GetServerName(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -64,7 +64,7 @@ SQRESULT SQ_GetServerName(void* sqvm)
 }
 
 // string function NSGetServerDescription( int serverIndex )
-SQRESULT SQ_GetServerDescription(void* sqvm)
+SQRESULT SQ_GetServerDescription(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -85,7 +85,7 @@ SQRESULT SQ_GetServerDescription(void* sqvm)
 }
 
 // string function NSGetServerMap( int serverIndex )
-SQRESULT SQ_GetServerMap(void* sqvm)
+SQRESULT SQ_GetServerMap(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -106,7 +106,7 @@ SQRESULT SQ_GetServerMap(void* sqvm)
 }
 
 // string function NSGetServerPlaylist( int serverIndex )
-SQRESULT SQ_GetServerPlaylist(void* sqvm)
+SQRESULT SQ_GetServerPlaylist(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -127,7 +127,7 @@ SQRESULT SQ_GetServerPlaylist(void* sqvm)
 }
 
 // int function NSGetServerPlayerCount( int serverIndex )
-SQRESULT SQ_GetServerPlayerCount(void* sqvm)
+SQRESULT SQ_GetServerPlayerCount(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -148,7 +148,7 @@ SQRESULT SQ_GetServerPlayerCount(void* sqvm)
 }
 
 // int function NSGetServerMaxPlayerCount( int serverIndex )
-SQRESULT SQ_GetServerMaxPlayerCount(void* sqvm)
+SQRESULT SQ_GetServerMaxPlayerCount(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -169,7 +169,7 @@ SQRESULT SQ_GetServerMaxPlayerCount(void* sqvm)
 }
 
 // string function NSGetServerID( int serverIndex )
-SQRESULT SQ_GetServerID(void* sqvm)
+SQRESULT SQ_GetServerID(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -190,7 +190,7 @@ SQRESULT SQ_GetServerID(void* sqvm)
 }
 
 // bool function NSServerRequiresPassword( int serverIndex )
-SQRESULT SQ_ServerRequiresPassword(void* sqvm)
+SQRESULT SQ_ServerRequiresPassword(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -211,7 +211,7 @@ SQRESULT SQ_ServerRequiresPassword(void* sqvm)
 }
 
 // int function NSGetServerRequiredModsCount( int serverIndex )
-SQRESULT SQ_GetServerRequiredModsCount(void* sqvm)
+SQRESULT SQ_GetServerRequiredModsCount(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 
@@ -232,7 +232,7 @@ SQRESULT SQ_GetServerRequiredModsCount(void* sqvm)
 }
 
 // string function NSGetServerRequiredModName( int serverIndex, int modIndex )
-SQRESULT SQ_GetServerRequiredModName(void* sqvm)
+SQRESULT SQ_GetServerRequiredModName(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 	SQInteger modIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 2);
@@ -266,7 +266,7 @@ SQRESULT SQ_GetServerRequiredModName(void* sqvm)
 }
 
 // string function NSGetServerRequiredModVersion( int serverIndex, int modIndex )
-SQRESULT SQ_GetServerRequiredModVersion(void* sqvm)
+SQRESULT SQ_GetServerRequiredModVersion(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 	SQInteger modIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 2);
@@ -300,7 +300,7 @@ SQRESULT SQ_GetServerRequiredModVersion(void* sqvm)
 }
 
 // void function NSClearRecievedServerList()
-SQRESULT SQ_ClearRecievedServerList(void* sqvm)
+SQRESULT SQ_ClearRecievedServerList(HSquirrelVM* sqvm)
 {
 	g_pMasterServerManager->ClearServerList();
 	return SQRESULT_NULL;
@@ -309,7 +309,7 @@ SQRESULT SQ_ClearRecievedServerList(void* sqvm)
 // functions for authenticating with servers
 
 // void function NSTryAuthWithServer( int serverIndex, string password = "" )
-SQRESULT SQ_TryAuthWithServer(void* sqvm)
+SQRESULT SQ_TryAuthWithServer(HSquirrelVM* sqvm)
 {
 	SQInteger serverIndex = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 1);
 	const SQChar* password = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 2);
@@ -342,21 +342,21 @@ SQRESULT SQ_TryAuthWithServer(void* sqvm)
 }
 
 // bool function NSIsAuthenticatingWithServer()
-SQRESULT SQ_IsAuthComplete(void* sqvm)
+SQRESULT SQ_IsAuthComplete(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bScriptAuthenticatingWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSWasAuthSuccessful()
-SQRESULT SQ_WasAuthSuccessful(void* sqvm)
+SQRESULT SQ_WasAuthSuccessful(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyAuthenticatedWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
 // void function NSConnectToAuthedServer()
-SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
+SQRESULT SQ_ConnectToAuthedServer(HSquirrelVM* sqvm)
 {
 	if (!g_pMasterServerManager->m_bHasPendingConnectionInfo)
 	{
@@ -388,7 +388,7 @@ SQRESULT SQ_ConnectToAuthedServer(void* sqvm)
 }
 
 // void function NSTryAuthWithLocalServer()
-SQRESULT SQ_TryAuthWithLocalServer(void* sqvm)
+SQRESULT SQ_TryAuthWithLocalServer(HSquirrelVM* sqvm)
 {
 	// do auth request
 	g_pMasterServerManager->AuthenticateWithOwnServer(R2::g_pLocalPlayerUserID, g_pMasterServerManager->m_sOwnClientAuthToken);
@@ -397,7 +397,7 @@ SQRESULT SQ_TryAuthWithLocalServer(void* sqvm)
 }
 
 // void function NSCompleteAuthWithLocalServer()
-SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
+SQRESULT SQ_CompleteAuthWithLocalServer(HSquirrelVM* sqvm)
 {
 	// literally just set serverfilter
 	// note: this assumes we have no authdata other than our own
@@ -410,7 +410,7 @@ SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
 }
 
 // string function NSGetAuthFailReason()
-SQRESULT SQ_GetAuthFailReason(void* sqvm)
+SQRESULT SQ_GetAuthFailReason(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_sAuthFailureReason.c_str(), -1);
 	return SQRESULT_NOTNULL;

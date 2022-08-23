@@ -2,7 +2,7 @@
 #include "squirrel.h"
 
 // asset function StringToAsset( string assetName )
-template <ScriptContext context> SQRESULT SQ_StringToAsset(void* sqvm)
+template <ScriptContext context> SQRESULT SQ_StringToAsset(HSquirrelVM* sqvm)
 {
 	g_pSquirrel<context>->pushasset(sqvm, g_pSquirrel<context>->getstring(sqvm, 1), -1);
 	return SQRESULT_NOTNULL;
