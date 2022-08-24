@@ -1,0 +1,8 @@
+# For more info on `.editorconfig` file see https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Newline ending every file
+[*]
+insert_final_newline = true
