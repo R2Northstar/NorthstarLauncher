@@ -186,6 +186,11 @@ void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 	}
+	if (strstr(GetCommandLineA(), "-nosslrevocation"))
+	{
+		curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
+		spdlog::info("Using switch -nosslrevocation to disable revocation checks in libcurl for Schannel.");
+	}
 }
 
 void MasterServerManager::ClearServerList()
