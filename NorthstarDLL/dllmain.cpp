@@ -46,6 +46,7 @@
 #include "version.h"
 #include "pch.h"
 #include "scriptutility.h"
+#include "verifiedmods.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
