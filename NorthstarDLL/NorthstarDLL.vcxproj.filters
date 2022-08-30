@@ -1538,9 +1538,6 @@
     <ClCompile Include="dedicated.cpp">
       <Filter>Source Files\Dedicated</Filter>
     </ClCompile>
-    <ClCompile Include="sourceconsole.cpp">
-      <Filter>Source Files\Client</Filter>
-    </ClCompile>
     <ClCompile Include="squirrel.cpp">
       <Filter>Source Files\Shared</Filter>
     </ClCompile>
@@ -1693,6 +1690,12 @@
     </ClCompile>
     <ClCompile Include="scriptutility.cpp">
       <Filter>Source Files\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="sourceconsole.cpp">
+      <Filter>Source Files\Dedicated</Filter>
+    </ClCompile>
+    <ClCompile Include="verifiedmods.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
