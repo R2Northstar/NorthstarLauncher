@@ -3,6 +3,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "squirrel.h"
 
 using namespace rapidjson;
 
@@ -71,4 +72,21 @@ void DownloadMod(char* dependencyString) {
 	// TODO check if mod is verified (throw if not)
 	// TODO download zip in temporary folder
 	// TODO move mod to mods/ folder
+}
+
+
+/**
+ * Squirrel-exposed wrapper methods
+ **/ 
+
+SQRESULT SQ_GetVerifiedModsList(void* sqvm)
+{
+	std::string mods = GetVerifiedModsList();
+	const SQChar* buffer = mods.c_str();
+	ClientSq_pushstring(sqvm, buffer, -1);
+	return SQRESULT_NOTNULL;
+}
+
+void InitialiseVerifiedModsScripts(HMODULE baseAddress) {
+	g_UISquirrelManager->AddFuncRegistration("string", "GetVerifiedModsList", "", "", SQ_GetVerifiedModsList);
 }
