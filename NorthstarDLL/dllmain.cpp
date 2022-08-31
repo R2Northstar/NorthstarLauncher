@@ -291,6 +291,7 @@ bool InitialiseNorthstar()
 
 	// mod manager after everything else
 	AddDllLoadCallback("engine.dll", InitialiseModManager);
+	AddDllLoadCallback("engine.dll", InitialiseVerifiedModsScripts);
 
 	{
 		// activate multi-module exploitfixes callbacks
