@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "masterserver.cpp"
 
+rapidjson_document verifiedModsJson;
+
 void _FetchVerifiedModsList() {
 	CURL* curl = curl_easy_init();
 
@@ -14,7 +16,6 @@ void _FetchVerifiedModsList() {
 
 	if (result == CURLcode::CURLE_OK)
 	{
-		rapidjson_document verifiedModsJson;
 		verifiedModsJson.Parse(readBuffer.c_str());
 
 		if (verifiedModsJson.HasParseError())
@@ -44,8 +45,6 @@ void _FetchVerifiedModsList() {
 	{
 		spdlog::error("Failed requesting verified mods list: error {}", curl_easy_strerror(result));
 	}
-
-	// TODO store mods in a global variable
 
 	REQUEST_END_CLEANUP:
 		curl_easy_cleanup(curl);
