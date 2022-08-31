@@ -1,7 +1,12 @@
 #include "pch.h"
 #include "masterserver.cpp"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
-rapidjson_document verifiedModsJson;
+using namespace rapidjson;
+
+Document verifiedModsJson;
 
 void _FetchVerifiedModsList() {
 	CURL* curl = curl_easy_init();
@@ -50,9 +55,15 @@ void _FetchVerifiedModsList() {
 		curl_easy_cleanup(curl);
 }
 
-char* GetVerifiedModsList() {
-	// TODO return list if it already has been parsed
-	// TODO else fetch list and return it
+std::string GetVerifiedModsList() {
+	if (verifiedModsJson.IsNull())
+	{
+		_FetchVerifiedModsList();
+	}
+	StringBuffer buffer;
+	Writer<StringBuffer> writer(buffer);
+	verifiedModsJson.Accept(writer);
+	return buffer.GetString();
 }
 
 void DownloadMod(char* dependencyString) {
