@@ -101,7 +101,7 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_PlayerAuthServer.stop();
 }
 
-void ServerAuthenticationManager::AddPlayerData(R2::CBaseClient* player, const char* pToken) 
+void ServerAuthenticationManager::AddPlayerData(R2::CBaseClient* player, const char* pToken)
 {
 	PlayerAuthenticationData additionalData;
 	additionalData.pdataSize = m_RemoteAuthenticationData[pToken].pdataSize;
@@ -129,7 +129,7 @@ void ServerAuthenticationManager::VerifyPlayerName(R2::CBaseClient* player, char
 	}
 }
 
-bool ServerAuthenticationManager::CheckDuplicateAccounts(R2::CBaseClient* player) 
+bool ServerAuthenticationManager::CheckDuplicateAccounts(R2::CBaseClient* player)
 {
 	if (m_bAllowDuplicateAccounts)
 		return true;
@@ -284,7 +284,7 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 
 	if (strlen(name) >= 64) // fix for name overflow bug
 		R2::CBaseClient__Disconnect(self, 1, "Invalid name");
-	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) && 
+	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
 		g_pServerAuthentication->m_bRequireClientAuth)
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
@@ -368,17 +368,17 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 		"ns_auth_allow_insecure_write",
 		"0",
 		FCVAR_GAMEDLL,
-		"Whether the pdata of unauthenticated clients will be written to disk when changed");	
+		"Whether the pdata of unauthenticated clients will be written to disk when changed");
 
 	RegisterConCommand(
 		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
-	
+
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
 	module.Offset(0x114655).Patch("EB");
-	
+
 	// patch to disable fairfight marking players as cheaters and kicking them
 	module.Offset(0x101012).Patch("E9 90 00");
-	
+
 	if (Tier0::CommandLine()->CheckParm("-allowdupeaccounts"))
 	{
 		// patch to allow same of multiple account

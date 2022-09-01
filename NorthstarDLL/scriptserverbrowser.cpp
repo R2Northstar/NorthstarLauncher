@@ -50,7 +50,7 @@ SQRESULT SQ_GetServerName(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get name of server index {} when only {} servers are available",
 				serverIndex,
@@ -71,7 +71,7 @@ SQRESULT SQ_GetServerDescription(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get description of server index {} when only {} servers are available",
 				serverIndex,
@@ -92,7 +92,7 @@ SQRESULT SQ_GetServerMap(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get map of server index {} when only {} servers are available",
 				serverIndex,
@@ -113,7 +113,7 @@ SQRESULT SQ_GetServerPlaylist(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get playlist of server index {} when only {} servers are available",
 				serverIndex,
@@ -134,7 +134,7 @@ SQRESULT SQ_GetServerPlayerCount(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get playercount of server index {} when only {} servers are available",
 				serverIndex,
@@ -155,7 +155,7 @@ SQRESULT SQ_GetServerMaxPlayerCount(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get max playercount of server index {} when only {} servers are available",
 				serverIndex,
@@ -176,7 +176,7 @@ SQRESULT SQ_GetServerID(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get id of server index {} when only {} servers are available",
 				serverIndex,
@@ -197,7 +197,7 @@ SQRESULT SQ_ServerRequiresPassword(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get hasPassword of server index {} when only {} servers are available",
 				serverIndex,
@@ -218,7 +218,7 @@ SQRESULT SQ_GetServerRequiredModsCount(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get required mods count of server index {} when only {} servers are available",
 				serverIndex,
@@ -240,7 +240,7 @@ SQRESULT SQ_GetServerRequiredModName(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get hasPassword of server index {} when only {} servers are available",
 				serverIndex,
@@ -252,7 +252,7 @@ SQRESULT SQ_GetServerRequiredModName(HSquirrelVM* sqvm)
 	if (modIndex >= g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get required mod name of mod index {} when only {} mod are available",
 				modIndex,
@@ -274,7 +274,7 @@ SQRESULT SQ_GetServerRequiredModVersion(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get required mod version of server index {} when only {} servers are available",
 				serverIndex,
@@ -286,7 +286,7 @@ SQRESULT SQ_GetServerRequiredModVersion(HSquirrelVM* sqvm)
 	if (modIndex >= g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to get required mod version of mod index {} when only {} mod are available",
 				modIndex,
@@ -317,7 +317,7 @@ SQRESULT SQ_TryAuthWithServer(HSquirrelVM* sqvm)
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<ScriptContext::UI>->raiseerror(
-			sqvm, 
+			sqvm,
 			fmt::format(
 				"Tried to auth with server index {} when only {} servers are available",
 				serverIndex,

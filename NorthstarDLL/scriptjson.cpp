@@ -206,7 +206,6 @@ template <ScriptContext context> void EncodeJSONArray(
 	}
 }
 
-
 // table function DecodeJSON( string json, bool fatalParseErrors = false )
 template <ScriptContext context> SQRESULT SQ_DecodeJSON(HSquirrelVM* sqvm)
 {
@@ -234,7 +233,6 @@ template <ScriptContext context> SQRESULT SQ_DecodeJSON(HSquirrelVM* sqvm)
 
 	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
 }
-
 
 // string function EncodeJSON( table data )
 template <ScriptContext context> SQRESULT SQ_EncodeJSON(HSquirrelVM* sqvm)
