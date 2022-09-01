@@ -259,7 +259,7 @@ template <ScriptContext context> class SquirrelManager
 	{
 		__sq_pushasset(sqvm, sVal, length);
 	}
-	inline void pushvector(HSquirrelVM* sqvm, const SQFloat* pVal) 
+	inline void pushvector(HSquirrelVM* sqvm, const SQFloat* pVal)
 	{
 		__sq_pushvector(sqvm, pVal);
 	}

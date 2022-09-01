@@ -195,7 +195,7 @@ SQRESULT SQ_UpdateListenServer(HSquirrelVM* sqvm)
 {
 	AcquireSRWLockExclusive(&serverInfoLock);
 	serverInfo.id = g_pMasterServerManager->m_sOwnServerId;
-	serverInfo.password = "";// g_pServerPresence->Cvar_ns_server_password->GetString(); todo this fr
+	serverInfo.password = ""; // g_pServerPresence->Cvar_ns_server_password->GetString(); todo this fr
 	ReleaseSRWLockExclusive(&serverInfoLock);
 	return SQRESULT_NOTNULL;
 }

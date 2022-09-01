@@ -100,7 +100,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 		return;
 
 	m_vBannedUids.erase(findResult);
-	
+
 	std::vector<std::string> banlistText;
 	std::ifstream fs_readBanlist(GetNorthstarPrefix() + "/banlist.txt");
 

@@ -41,8 +41,7 @@ class vgui_BaseRichText_vtable
 	void(__fastcall* InsertIndentChange)(vgui_BaseRichText* self, int pixelsIndent);
 	void(__fastcall* InsertClickableTextStart)(vgui_BaseRichText* self, const char* pchClickAction);
 	void(__fastcall* InsertClickableTextEnd)(vgui_BaseRichText* self);
-	void(__fastcall* InsertPossibleURLString)(
-		vgui_BaseRichText* self, const char* text, Color URLTextColor, Color normalTextColor);
+	void(__fastcall* InsertPossibleURLString)(vgui_BaseRichText* self, const char* text, Color URLTextColor, Color normalTextColor);
 	void(__fastcall* InsertFade)(vgui_BaseRichText* self, float flSustain, float flLength);
 	void(__fastcall* ResetAllFades)(vgui_BaseRichText* self, bool bHold, bool bOnlyExpired, float flNewSustain);
 	void(__fastcall* SetToFullHeight)(vgui_BaseRichText* self);
@@ -374,7 +373,6 @@ static Color GetHudSwatchColor(CHudChat* hud, LocalChatWriter::SwatchColor swatc
 
 	case LocalChatWriter::NetworkNameColor:
 		return hud->m_networkNameColor;
-
 	}
 
 	return Color(0, 0, 0, 0);

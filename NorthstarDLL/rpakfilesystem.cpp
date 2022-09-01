@@ -14,7 +14,7 @@ struct PakLoadFuncs
 	void* unk1[2];
 	void* (*UnloadPak)(int iPakHandle, void* callback);
 	void* unk2[6];
-	void* (*LoadFile)(const char* path);//unsure
+	void* (*LoadFile)(const char* path); // unsure
 	void* unk3[10];
 	void* (*ReadFileAsync)(const char* pPath, void* a2);
 };
@@ -173,8 +173,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-HOOK(LoadPakAsyncHook, LoadPakAsync,
-int,, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
+HOOK(LoadPakAsyncHook, LoadPakAsync, int, , (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
 {
 	HandlePakAliases(&pPath);
 
@@ -207,7 +206,7 @@ int,, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* p
 				delete[] pPath;
 
 			spdlog::info("Not loading pak {} for dedicated server", originalPath);
-			return -1;	
+			return -1;
 		}
 	}
 
@@ -272,7 +271,6 @@ void*, , (const char* pPath, void* pCallback))
 
 	return ret;
 }
-
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 {

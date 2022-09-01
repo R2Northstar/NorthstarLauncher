@@ -56,7 +56,7 @@ bool MaxPlayersIncreaseEnabled()
 // should we use R2 for this? not sure
 namespace R2 // use R2 namespace for game funcs
 {
-	int GetMaxPlayers() 
+	int GetMaxPlayers()
 	{
 		if (MaxPlayersIncreaseEnabled())
 			return NEW_MAX_PLAYERS;

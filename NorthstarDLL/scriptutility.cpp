@@ -16,7 +16,7 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientSharedScriptUtility, ClientSquir
 		"asset", "StringToAsset", "string assetName", "converts a given string to an asset", SQ_StringToAsset<ScriptContext::UI>);
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerSharedScriptUtility, ServerSquirrel, (CModule module)) 
+ON_DLL_LOAD_RELIESON("server.dll", ServerSharedScriptUtility, ServerSquirrel, (CModule module))
 {
 	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
 		"asset", "StringToAsset", "string assetName", "converts a given string to an asset", SQ_StringToAsset<ScriptContext::SERVER>);

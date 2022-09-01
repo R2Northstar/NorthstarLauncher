@@ -276,7 +276,6 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 					}
 				}
 
-
 				if (bShouldContinue)
 					continue;
 

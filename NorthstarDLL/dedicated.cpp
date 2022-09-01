@@ -144,7 +144,6 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 		// 00 => 01
 		base.Offset(7).Patch("01");
 	}
-	
 
 	// Some init that i'm not sure of that crashes
 	// nop the call to it
@@ -198,7 +197,6 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	// nop call to ShowWindow
 	module.Offset(0x1CD146).NOP(5);
 
-
 	CDedicatedExports* dedicatedExports = new CDedicatedExports;
 	dedicatedExports->vtable = dedicatedExports;
 	dedicatedExports->Sys_Printf = Sys_Printf;
@@ -222,7 +220,7 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	Tier0::CommandLine()->AppendParm("-nomessagebox", 0);
 	Tier0::CommandLine()->AppendParm("+host_preload_shaders", "0");
 	Tier0::CommandLine()->AppendParm("+net_usesocketsforloopback", "1");
-	
+
 	// use presence reporter for console title
 	DedicatedConsoleServerPresence* presenceReporter = new DedicatedConsoleServerPresence;
 	g_pServerPresence->AddPresenceReporter(presenceReporter);
@@ -285,6 +283,5 @@ ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
 		module.Offset(0x6BA300).Patch(
 			"B8 C8 00 00 00 C3"); // return 200 as the number of skins from server.dll + 6BA300, this is the normal value read from
 								  // skins.rson and should be updated when we need it more modular
-
 	}
 }

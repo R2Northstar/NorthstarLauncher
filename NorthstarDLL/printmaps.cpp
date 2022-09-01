@@ -19,9 +19,9 @@ enum class MapSource_t
 };
 
 const std::unordered_map<MapSource_t, const char*> PrintMapSource = {
-	{MapSource_t::VPK, "VPK"}, 
+	{MapSource_t::VPK, "VPK"},
 	{MapSource_t::MOD, "MOD"},
-	{MapSource_t::GAMEDIR, "R2"} 
+	{MapSource_t::GAMEDIR, "R2"}
 };
 
 struct MapVPKInfo
@@ -34,7 +34,7 @@ struct MapVPKInfo
 // our current list of maps in the game
 std::vector<MapVPKInfo> vMapList;
 
-void RefreshMapList() 
+void RefreshMapList()
 {
 	vMapList.clear();
 
@@ -144,8 +144,7 @@ int, __fastcall, (const char const* cmdname, const char const* partial, char com
 	return numMaps;
 }
 
-
-void ConCommand_maps(const CCommand& args) 
+void ConCommand_maps(const CCommand& args)
 {
 	if (args.ArgC() < 2)
 	{

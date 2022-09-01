@@ -9,7 +9,7 @@
 #include "serverauthentication.h"
 #include "squirrel.h"
 
-void ConCommand_force_newgame(const CCommand& arg) 
+void ConCommand_force_newgame(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
 		return;
@@ -18,14 +18,14 @@ void ConCommand_force_newgame(const CCommand& arg)
 	strncpy(R2::g_pHostState->m_levelName, arg.Arg(1), sizeof(R2::g_pHostState->m_levelName));
 }
 
-void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& arg) 
+void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& arg)
 {
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
 	g_pMasterServerManager->m_bNewgameAfterSelfAuth = true;
 	g_pMasterServerManager->AuthenticateWithOwnServer(R2::g_pLocalPlayerUserID, g_pMasterServerManager->m_sOwnClientAuthToken);
 }
 
-void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg) 
+void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
 {
 	R2::Cbuf_AddText(
 		R2::Cbuf_GetCurrentPlayer(),

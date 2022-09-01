@@ -40,8 +40,8 @@ RemoteServerInfo::RemoteServerInfo(
 
 	description = std::string(newDescription);
 
-	strncpy_s((char*)map, sizeof(map) , newMap, sizeof(map) - 1);
-	strncpy_s((char*)playlist, sizeof(playlist) , newPlaylist, sizeof(playlist) - 1);
+	strncpy_s((char*)map, sizeof(map), newMap, sizeof(map) - 1);
+	strncpy_s((char*)playlist, sizeof(playlist), newPlaylist, sizeof(playlist) - 1);
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
@@ -755,7 +755,7 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 	double m_bShouldTryRegisterServer;
 	int m_nNumRegistrationAttempts;
 
-	void CreatePresence(const ServerPresence* pServerPresence) override 
+	void CreatePresence(const ServerPresence* pServerPresence) override
 	{
 		m_bShouldTryRegisterServer = true;
 		m_nNumRegistrationAttempts = 0;
@@ -764,7 +764,7 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 	void ReportPresence(const ServerPresence* pServerPresence) override
 	{
 		// make a copy of presence for multithreading purposes
-		
+
 		ServerPresence threadedPresence(pServerPresence);
 
 		if (!*g_pMasterServerManager->m_sOwnServerId || m_bShouldTryRegisterServer)

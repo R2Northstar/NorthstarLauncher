@@ -80,9 +80,9 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 	{
 		spdlog::error("Asset \"{}\" doesn't start with \"datatable/\"", assetName);
 	}
-	else if ((!Cvar_ns_prefer_datatable_from_disk->GetBool()) && g_pPakLoadManager->LoadFile(assetName) )
+	else if ((!Cvar_ns_prefer_datatable_from_disk->GetBool()) && g_pPakLoadManager->LoadFile(assetName))
 	{
-		//spdlog::info("Load Datatable {} from rpak", assetName);
+		// spdlog::info("Load Datatable {} from rpak", assetName);
 		result = g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
 	}
 	else
@@ -91,7 +91,7 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 		snprintf(assetPath, 250, "scripts/%s", assetName);
 		if (cacheMap.count(assetName))
 		{
-			//spdlog::info("Loaded custom Datatable {} from cache", assetName);
+			// spdlog::info("Loaded custom Datatable {} from cache", assetName);
 			csvData** dataPointer = (csvData**)g_pSquirrel<context>->createuserdata(sqvm, sizeof(csvData*));
 			*dataPointer = cacheMap[assetName];
 			g_pSquirrel<context>->setuserdatatypeid(sqvm, -1, customDatatableTypeId);
@@ -217,11 +217,11 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 			*dataPointer = data;
 			// vm->_stack[vm->_top -1]._VAL.asUserdata->releaseHook = datatableReleaseHook;
 			cacheMap[assetName] = data;
-			//spdlog::info("Loaded custom Datatable from file at {} with pointer {}", assetPath, (void*)data);
+			// spdlog::info("Loaded custom Datatable from file at {} with pointer {}", assetPath, (void*)data);
 
 			result = SQRESULT_NOTNULL;
 		}
-		else if (Cvar_ns_prefer_datatable_from_disk->GetBool()&&g_pPakLoadManager->LoadFile(assetName))
+		else if (Cvar_ns_prefer_datatable_from_disk->GetBool() && g_pPakLoadManager->LoadFile(assetName))
 		{
 			result = g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
 		}
@@ -235,7 +235,7 @@ template <ScriptContext context> SQRESULT GetDatatable(HSquirrelVM* sqvm)
 
 template <ScriptContext context> SQRESULT GetDatatabeColumnByName(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableColumnByName");
+	// spdlog::info("start getDatatableColumnByName");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -249,7 +249,7 @@ template <ScriptContext context> SQRESULT GetDatatabeColumnByName(HSquirrelVM* s
 	{
 		return SQRESULT_ERROR;
 	}
-	//spdlog::info("GetColumnByName form datatable with pointer {}",(void*)data);
+	// spdlog::info("GetColumnByName form datatable with pointer {}",(void*)data);
 	const char* searchName = g_pSquirrel<context>->getstring(sqvm, 2);
 	int col = 0;
 	for (auto colName : data->columnNames)
@@ -261,14 +261,14 @@ template <ScriptContext context> SQRESULT GetDatatabeColumnByName(HSquirrelVM* s
 	}
 	if (col == data->columnNames.size())
 		col = -1;
-	//spdlog::info("Datatable CoulumnName {} in column {}", std::string(searchName), col);
+	// spdlog::info("Datatable CoulumnName {} in column {}", std::string(searchName), col);
 	g_pSquirrel<context>->pushinteger(sqvm, col);
 	return SQRESULT_NOTNULL;
 }
 
 template <ScriptContext context> SQRESULT GetDatatabeRowCount(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableRowCount");
+	// spdlog::info("start getDatatableRowCount");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -289,7 +289,7 @@ template <ScriptContext context> SQRESULT GetDatatabeRowCount(HSquirrelVM* sqvm)
 
 template <ScriptContext context> SQRESULT GetDataTableString(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableString");
+	// spdlog::info("start getDatatableString");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -307,7 +307,7 @@ template <ScriptContext context> SQRESULT GetDataTableString(HSquirrelVM* sqvm)
 	int col = g_pSquirrel<context>->getinteger(sqvm, 3);
 	if (row >= data->dataPointers.size() || col >= data->dataPointers[row].size())
 	{
-		spdlog::info( "row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
+		spdlog::info("row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
 		return SQRESULT_ERROR;
 	}
 
@@ -317,7 +317,7 @@ template <ScriptContext context> SQRESULT GetDataTableString(HSquirrelVM* sqvm)
 
 template <ScriptContext context> SQRESULT GetDataTableAsset(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableAsset");
+	// spdlog::info("start getDatatableAsset");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -335,7 +335,7 @@ template <ScriptContext context> SQRESULT GetDataTableAsset(HSquirrelVM* sqvm)
 	int col = g_pSquirrel<context>->getinteger(sqvm, 3);
 	if (row >= data->dataPointers.size() || col >= data->dataPointers[row].size())
 	{
-		spdlog::info( "row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
+		spdlog::info("row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
 		return SQRESULT_ERROR;
 	}
 	char* asset = data->dataPointers[row][col];
@@ -362,7 +362,7 @@ template <ScriptContext context> SQRESULT GetDataTableInt(HSquirrelVM* sqvm)
 	int col = g_pSquirrel<context>->getinteger(sqvm, 3);
 	if (row >= data->dataPointers.size() || col >= data->dataPointers[row].size())
 	{
-		spdlog::info( "row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
+		spdlog::info("row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
 		return SQRESULT_ERROR;
 	}
 	g_pSquirrel<context>->pushinteger(sqvm, std::stoi(data->dataPointers[row][col]));
@@ -371,7 +371,7 @@ template <ScriptContext context> SQRESULT GetDataTableInt(HSquirrelVM* sqvm)
 
 template <ScriptContext context> SQRESULT GetDataTableFloat(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableFloat");
+	// spdlog::info("start getDatatableFloat");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -389,7 +389,7 @@ template <ScriptContext context> SQRESULT GetDataTableFloat(HSquirrelVM* sqvm)
 	int col = g_pSquirrel<context>->getinteger(sqvm, 3);
 	if (row >= data->dataPointers.size() || col >= data->dataPointers[row].size())
 	{
-		spdlog::info( "row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
+		spdlog::info("row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
 		return SQRESULT_ERROR;
 	}
 	g_pSquirrel<context>->pushfloat(sqvm, std::stof(data->dataPointers[row][col]));
@@ -398,7 +398,7 @@ template <ScriptContext context> SQRESULT GetDataTableFloat(HSquirrelVM* sqvm)
 
 template <ScriptContext context> SQRESULT GetDataTableBool(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableBool");
+	// spdlog::info("start getDatatableBool");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -416,7 +416,7 @@ template <ScriptContext context> SQRESULT GetDataTableBool(HSquirrelVM* sqvm)
 	int col = g_pSquirrel<context>->getinteger(sqvm, 3);
 	if (row >= data->dataPointers.size() || col >= data->dataPointers[row].size())
 	{
-		spdlog::info( "row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
+		spdlog::info("row {} and col {} are outside of range row {} and col {}", row, col, data->dataPointers.size(), data->columnNames.size());
 		return SQRESULT_ERROR;
 	}
 	g_pSquirrel<context>->pushbool(sqvm, std::stoi(data->dataPointers[row][col]));
@@ -425,7 +425,7 @@ template <ScriptContext context> SQRESULT GetDataTableBool(HSquirrelVM* sqvm)
 
 template <ScriptContext context> SQRESULT GetDataTableVector(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableVector");
+	// spdlog::info("start getDatatableVector");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -489,7 +489,7 @@ template <ScriptContext context> SQRESULT GetDataTableRowMatchingStringValue(HSq
 
 template <ScriptContext context> SQRESULT GetDataTableRowMatchingAssetValue(HSquirrelVM* sqvm)
 {
-	//spdlog::info("start getDatatableRowMatchingAsset");
+	// spdlog::info("start getDatatableRowMatchingAsset");
 	csvData** dataPointer;
 	long long typeId;
 	g_pSquirrel<context>->getuserdata(sqvm, 2, (void**)&dataPointer, &typeId);
@@ -733,8 +733,8 @@ template <ScriptContext context> SQRESULT GetDataTableRowMatchingVectorValue(HSq
 
 	for (int i = 0; i < data->dataPointers.size(); i++)
 	{
-		float dataTableVector[3]; 
-		StringToVector(data->dataPointers[i][col],dataTableVector);
+		float dataTableVector[3];
+		StringToVector(data->dataPointers[i][col], dataTableVector);
 		if ((dataTableVector[0] == compareValue[0]) && (dataTableVector[1] == compareValue[1]) && (dataTableVector[2] == compareValue[2]))
 		{
 			g_pSquirrel<context>->pushinteger(sqvm, i);
@@ -755,8 +755,8 @@ template <ScriptContext context> SQRESULT DumpDataTable(HSquirrelVM* sqvm)
 		g_pSquirrel<context>->pushinteger(sqvm, 1);
 		return SQRESULT_NOTNULL;
 	}
-	//spdlog::info("Datatable size row = {} col = {}", datatable->rowAmount, datatable->columnAmount);
-	// std::string header = std::string(datatable->columnInfo[0].name);
+	// spdlog::info("Datatable size row = {} col = {}", datatable->rowAmount, datatable->columnAmount);
+	//  std::string header = std::string(datatable->columnInfo[0].name);
 
 	spdlog::info(DataTableToString(datatable));
 
@@ -772,7 +772,7 @@ template <ScriptContext context> SQRESULT DumpDataTableToFile(HSquirrelVM* sqvm)
 		g_pSquirrel<context>->pushinteger(sqvm, 1);
 		return SQRESULT_NOTNULL;
 	}
-	//spdlog::info("Datatable size row = {} col = {}", datatable->rowAmount, datatable->columnAmount);
+	// spdlog::info("Datatable size row = {} col = {}", datatable->rowAmount, datatable->columnAmount);
 	// std::string header = std::string(datatable->columnInfo[0].name);
 	const char* pathName = g_pSquirrel<context>->getstring(sqvm, 2);
 	std::ofstream ofs(pathName);
@@ -861,8 +861,7 @@ void datatableReleaseHook(void* d, int size)
 	delete data;
 }
 
-
-template <ScriptContext context> void RegisterDataTableFunctions() 
+template <ScriptContext context> void RegisterDataTableFunctions()
 {
 	g_pSquirrel<context>->AddFuncOverride("GetDataTable", GetDatatable<context>);
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableColumnByName", GetDatatabeColumnByName<context>);
@@ -876,7 +875,7 @@ template <ScriptContext context> void RegisterDataTableFunctions()
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingStringValue", GetDataTableRowMatchingStringValue<context>);
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingAssetValue", GetDataTableRowMatchingAssetValue<context>);
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingFloatValue", GetDataTableRowMatchingFloatValue<context>);
-	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingIntValue", GetDataTableRowMatchingIntValue < context>);
+	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingIntValue", GetDataTableRowMatchingIntValue<context>);
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowMatchingVectorValue", GetDataTableRowMatchingVectorValue<context>);
 	g_pSquirrel<context>->AddFuncOverride(
 		"GetDataTableRowLessThanOrEqualToFloatValue", GetDataTableRowLessThanOrEqualToFloatValue<context>);
@@ -885,8 +884,6 @@ template <ScriptContext context> void RegisterDataTableFunctions()
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableRowLessThanOrEqualToIntValue", GetDataTableRowLessThanOrEqualToIntValue<context>);
 	g_pSquirrel<context>->AddFuncOverride(
 		"GetDataTableRowGreaterThanOrEqualToFloatValue", GetDataTableRowGreaterThanOrEqualToIntValue<context>);
-
-
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CModule module))
@@ -894,14 +891,11 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CMod
 	RegisterDataTableFunctions<ScriptContext::SERVER>();
 	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
 		"void", "DumpDataTable", "var", "Dumps rpak datatable contents to console", DumpDataTable<ScriptContext::SERVER>);
-	// g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration( "void", "DumpDataTableToFile", "var,string", "Dumps datatable contents to console",
-	// DumpDataTableToFile<ScriptContext::SERVER>);
-
-
+	// g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration( "void", "DumpDataTableToFile", "var,string", "Dumps datatable contents to
+	// console", DumpDataTableToFile<ScriptContext::SERVER>);
 
 	getDataTableStructure = module.Offset(0x1250f0).As<void* (*)(HSquirrelVM*)>();
 }
-
 
 ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CModule module))
 {
@@ -910,7 +904,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CMod
 	RegisterDataTableFunctions<ScriptContext::UI>();
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", GeneralScriptDataTables, ConCommand, (CModule module)) 
+ON_DLL_LOAD_RELIESON("engine.dll", GeneralScriptDataTables, ConCommand, (CModule module))
 {
 	Cvar_ns_prefer_datatable_from_disk =
 		new ConVar("ns_prefer_datatable_from_disk", "0", FCVAR_NONE, "whether datatables from disk overwrite rpak datatables");
@@ -918,6 +912,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", GeneralScriptDataTables, ConCommand, (CModule
 	{
 		Cvar_ns_prefer_datatable_from_disk->SetValue(true);
 	}
-
-
 }

@@ -19,7 +19,7 @@ namespace R2
 
 ConVar* Cvar_hostport;
 
-void ServerStartingOrChangingMap() 
+void ServerStartingOrChangingMap()
 {
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
 	// sucks for security but just how it be

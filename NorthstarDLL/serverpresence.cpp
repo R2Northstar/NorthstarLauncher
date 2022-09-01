@@ -68,7 +68,7 @@ std::string UnescapeUnicode(const std::string& str)
 		return str;
 	else
 		result.append(last_match.suffix());
-	
+
 	return result;
 }
 
@@ -79,7 +79,7 @@ ServerPresenceManager::ServerPresenceManager()
 		"ns_server_presence_update_rate", "5000", FCVAR_GAMEDLL, "How often we update our server's presence on server lists in ms");
 
 	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
-			g_pServerPresence->SetName(UnescapeUnicode(g_pServerPresence->Cvar_ns_server_name->GetString()));		
+			g_pServerPresence->SetName(UnescapeUnicode(g_pServerPresence->Cvar_ns_server_name->GetString()));
 
 			// update engine hostname cvar
 			Cvar_hostname->SetValue(g_pServerPresence->Cvar_ns_server_name->GetString());
@@ -111,7 +111,7 @@ void ServerPresenceManager::CreatePresence()
 
 	m_ServerPresence.m_iPlayerCount = 0; // this should actually be 0 at this point, so shouldn't need updating later
 	m_ServerPresence.m_iMaxPlayers = 0;
-	
+
 	memset(m_ServerPresence.m_MapName, 0, sizeof(m_ServerPresence.m_MapName));
 	memset(m_ServerPresence.m_PlaylistName, 0, sizeof(m_ServerPresence.m_PlaylistName));
 	m_ServerPresence.m_bIsSingleplayerServer = false;
@@ -171,7 +171,7 @@ void ServerPresenceManager::SetAuthPort(const int iAuthPort)
 	m_ServerPresence.m_iAuthPort = iAuthPort;
 }
 
-void ServerPresenceManager::SetName(const std::string sServerNameUnicode) 
+void ServerPresenceManager::SetName(const std::string sServerNameUnicode)
 {
 	// update name
 	m_ServerPresence.m_sServerName = sServerNameUnicode;

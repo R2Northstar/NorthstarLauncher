@@ -2,7 +2,7 @@
 #include "squirrel.h"
 #include "masterserver.h"
 #include "serverauthentication.h"
-#include "dedicated.h"	
+#include "dedicated.h"
 #include "r2client.h"
 #include "r2server.h"
 
