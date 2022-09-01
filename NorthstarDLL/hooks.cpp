@@ -10,8 +10,6 @@
 #include <filesystem>
 #include <Psapi.h>
 
-namespace fs = std::filesystem;
-
 AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros

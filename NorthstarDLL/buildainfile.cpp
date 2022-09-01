@@ -8,8 +8,6 @@
 
 AUTOHOOK_INIT()
 
-namespace fs = std::filesystem;
-
 const int AINET_VERSION_NUMBER = 57;
 const int AINET_SCRIPT_VERSION_NUMBER = 21;
 const int PLACEHOLDER_CRC = 0;

@@ -859,9 +859,11 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 							{
 								if (++m_nNumRegistrationAttempts == MAX_REGISTRATION_ATTEMPTS)
 									m_bShouldTryRegisterServer = false;
+
+								goto REQUEST_END_CLEANUP_RETRY;
 							}
 
-							goto REQUEST_END_CLEANUP_RETRY;
+							goto REQUEST_END_CLEANUP;
 						}
 
 						if (!serverAddedJson["success"].IsTrue())

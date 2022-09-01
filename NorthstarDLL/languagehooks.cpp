@@ -6,8 +6,6 @@
 
 AUTOHOOK_INIT()
 
-namespace fs = std::filesystem;
-
 typedef LANGID (*Tier0_DetectDefaultLanguageType)();
 
 bool CheckLangAudioExists(char* lang)

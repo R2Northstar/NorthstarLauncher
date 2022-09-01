@@ -1,18 +1,9 @@
 #include "pch.h"
 #include "dedicated.h"
 #include "cvar.h"
+#include "vector.h"
 
 AUTOHOOK_INIT()
-
-struct Vector3
-{
-	float x, y, z;
-};
-
-struct QAngle
-{
-	float x, y, z, w;
-};
 
 enum OverlayType_t
 {

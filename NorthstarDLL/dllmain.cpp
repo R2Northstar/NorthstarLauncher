@@ -16,7 +16,6 @@
 
 #include <string.h>
 #include <filesystem>
-namespace fs = std::filesystem;
 
 typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 

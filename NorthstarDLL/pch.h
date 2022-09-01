@@ -18,6 +18,8 @@
 #include <filesystem>
 #include <sstream>
 
+namespace fs = std::filesystem;
+
 #include "logging.h"
 #include "MinHook.h"
 #include "spdlog/spdlog.h"

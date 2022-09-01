@@ -29,12 +29,12 @@ void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
 			payload = message + 1;
 		}
 
-		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm, (int)senderId - 1);
-		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->sqvm, payload);
-		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm, isTeam);
-		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->sqvm, isDead);
-		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->sqvm, type);
-		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->sqvm, 5);
+		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, (int)senderId - 1);
+		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, payload);
+		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, isTeam);
+		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, isDead);
+		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, type);
+		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, 5);
 	}
 	else
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)

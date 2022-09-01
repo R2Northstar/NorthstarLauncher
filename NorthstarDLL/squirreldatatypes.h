@@ -103,7 +103,7 @@ struct SQObject
 };
 
 /* 138 */
-struct __declspec(align(8)) SQString
+struct alignas(8) SQString
 {
 	void* vftable;
 	int uiRef;
@@ -117,7 +117,7 @@ struct __declspec(align(8)) SQString
 };
 
 /* 137 */
-struct __declspec(align(8)) SQTable
+struct alignas(8) SQTable
 {
 	void* vftable;
 	unsigned char gap_08[4];
@@ -138,7 +138,7 @@ struct __declspec(align(8)) SQTable
 };
 
 /* 140 */
-struct __declspec(align(8)) SQClosure
+struct alignas(8) SQClosure
 {
 	void* vftable;
 	unsigned char gap_08[4];
@@ -157,7 +157,7 @@ struct __declspec(align(8)) SQClosure
 };
 
 /* 139 */
-struct __declspec(align(8)) SQFunctionProto
+struct alignas(8) SQFunctionProto
 {
 	void* vftable;
 	unsigned char gap_08[4];
@@ -198,7 +198,7 @@ struct SQStructDef
 };
 
 /* 157 */
-struct __declspec(align(8)) SQNativeClosure
+struct alignas(8) SQNativeClosure
 {
 	void* vftable;
 	int uiRef;
@@ -233,7 +233,7 @@ struct SQArray
 };
 
 /* 129 */
-struct __declspec(align(8)) HSquirrelVM
+struct alignas(8) HSquirrelVM
 {
 	void* vftable;
 	int uiRef;
@@ -398,7 +398,7 @@ struct tableNode
 };
 
 /* 136 */
-struct __declspec(align(8)) CallInfo
+struct alignas(8) CallInfo
 {
 	long long ip;
 	SQObject* _literals;
@@ -420,7 +420,7 @@ struct StringTable
 };
 
 /* 141 */
-struct __declspec(align(8)) SQStackInfos
+struct alignas(8) SQStackInfos
 {
 	char* _name;
 	char* _sourceName;
@@ -428,7 +428,7 @@ struct __declspec(align(8)) SQStackInfos
 };
 
 /* 151 */
-struct __declspec(align(4)) SQInstruction
+struct alignas(4) SQInstruction
 {
 	int op;
 	int arg1;
