@@ -18,7 +18,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
- typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
+typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {

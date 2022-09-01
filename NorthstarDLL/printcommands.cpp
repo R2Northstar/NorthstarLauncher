@@ -24,14 +24,15 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 		{
 			if (command->GetFlags() & flagPair.first)
 			{
-				// special case, slightly hacky: PRINTABLEONLY is for commands, GAMEDLL_FOR_REMOTE_CLIENTS is for concommands, both have the same value
+				// special case, slightly hacky: PRINTABLEONLY is for commands, GAMEDLL_FOR_REMOTE_CLIENTS is for concommands, both have the
+				// same value
 				if (flagPair.first == FCVAR_PRINTABLEONLY)
 				{
 					if (cvar && !strcmp(flagPair.second, "GAMEDLL_FOR_REMOTE_CLIENTS"))
 						continue;
 
 					if (!cvar && !strcmp(flagPair.second, "PRINTABLEONLY"))
-						continue;			
+						continue;
 				}
 
 				flagString += flagPair.second;
@@ -121,7 +122,7 @@ void ConCommand_find(const CCommand& arg)
 	}
 }
 
-void ConCommand_findflags(const CCommand& arg) 
+void ConCommand_findflags(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
 	{
@@ -146,7 +147,7 @@ void ConCommand_findflags(const CCommand& arg)
 		if (!strcmp(flagPair.second, upperFlag))
 		{
 			resolvedFlag |= flagPair.first;
-			break;	
+			break;
 		}
 	}
 
@@ -160,7 +161,7 @@ void ConCommand_findflags(const CCommand& arg)
 	delete[] upperFlag;
 }
 
-void InitialiseCommandPrint() 
+void InitialiseCommandPrint()
 {
 	RegisterConCommand("find", ConCommand_find, "Find concommands with the specified string in their name/help text.", FCVAR_NONE);
 	RegisterConCommand("findflags", ConCommand_findflags, "Find concommands by flags.", FCVAR_NONE);

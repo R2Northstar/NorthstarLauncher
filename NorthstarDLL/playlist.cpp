@@ -33,7 +33,7 @@ AUTOHOOK(SetCurrentPlaylist, engine.dll + 0x18EB20,
 bool, __fastcall, (const char* pPlaylistName))
 {
 	bool bSuccess = SetCurrentPlaylist(pPlaylistName);
-	
+
 	if (bSuccess)
 	{
 		spdlog::info("Set playlist to {}", R2::GetCurrentPlaylistName());
@@ -72,7 +72,6 @@ int,, ())
 	return iMaxPlayers;
 }
 
-
 void ConCommand_playlist(const CCommand& args)
 {
 	if (args.ArgC() < 2)
@@ -94,10 +93,10 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (CModule
 {
 	AUTOHOOK_DISPATCH()
 
-	R2::GetCurrentPlaylistName = module.Offset(0x18C640).As<const char*(*)()>();
-	R2::SetCurrentPlaylist = module.Offset(0x18EB20).As <void(*)(const char*)>();
-	R2::SetPlaylistVarOverride = module.Offset(0x18ED00).As<void(*)(const char*, const char*)>();
-	R2::GetCurrentPlaylistVar = module.Offset(0x18C680).As<const char*(*)(const char*, bool)>();
+	R2::GetCurrentPlaylistName = module.Offset(0x18C640).As<const char* (*)()>();
+	R2::SetCurrentPlaylist = module.Offset(0x18EB20).As<void (*)(const char*)>();
+	R2::SetPlaylistVarOverride = module.Offset(0x18ED00).As<void (*)(const char*, const char*)>();
+	R2::GetCurrentPlaylistVar = module.Offset(0x18C680).As<const char* (*)(const char*, bool)>();
 
 	// playlist is the name of the command on respawn servers, but we already use setplaylist so can't get rid of it
 	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);

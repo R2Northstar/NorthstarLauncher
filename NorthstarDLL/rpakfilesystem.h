@@ -25,7 +25,7 @@ class PakLoadManager
 	int LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource);
 	void UnloadPak(const int nPakHandle);
 	void UnloadMapPaks();
-	void* LoadFile(const char* path); //this is a guess
+	void* LoadFile(const char* path); // this is a guess
 
 	LoadedPak* TrackLoadedPak(ePakLoadSource nLoadSource, int nPakHandle, size_t nPakNameHash);
 	void RemoveLoadedPak(int nPakHandle);

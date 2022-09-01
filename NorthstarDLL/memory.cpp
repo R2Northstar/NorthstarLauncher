@@ -11,7 +11,7 @@ MemoryAddress::operator uintptr_t() const
 	return m_nAddress;
 }
 
-MemoryAddress::operator void* () const
+MemoryAddress::operator void*() const
 {
 	return reinterpret_cast<void*>(m_nAddress);
 }
@@ -41,12 +41,12 @@ bool MemoryAddress::operator!=(const uintptr_t& addr) const
 	return m_nAddress != addr;
 }
 
-MemoryAddress MemoryAddress::operator+(const MemoryAddress& other) const 
+MemoryAddress MemoryAddress::operator+(const MemoryAddress& other) const
 {
 	return Offset(other.m_nAddress);
 }
 
-MemoryAddress MemoryAddress::operator-(const MemoryAddress& other) const 
+MemoryAddress MemoryAddress::operator-(const MemoryAddress& other) const
 {
 	return MemoryAddress(m_nAddress - other.m_nAddress);
 }
@@ -110,7 +110,7 @@ inline std::vector<uint8_t> HexBytesToString(const char* pHexString)
 		// If this is a space character, ignore it
 		if (isspace(pHexString[i]))
 			continue;
-			
+
 		if (i < size - 1)
 		{
 			BYTE result = 0;
@@ -159,7 +159,7 @@ void MemoryAddress::NOP(const size_t nSize)
 
 	memset(pBytes, 0x90, nSize);
 	Patch(pBytes, nSize);
-	
+
 	delete[] pBytes;
 }
 
@@ -176,9 +176,7 @@ bool MemoryAddress::IsMemoryReadable(const size_t nSize)
 	return memInfo.RegionSize >= nSize && memInfo.State & MEM_COMMIT && !(memInfo.Protect & PAGE_NOACCESS);
 }
 
-
-
-CModule::CModule(const HMODULE pModule) 
+CModule::CModule(const HMODULE pModule)
 {
 	MODULEINFO mInfo {0};
 
@@ -343,7 +341,7 @@ inline std::pair<std::vector<uint8_t>, std::string> MaskedBytesFromPattern(const
 	return std::make_pair(vRet, sMask);
 }
 
-MemoryAddress CModule::FindPattern(const char* pPattern) 
+MemoryAddress CModule::FindPattern(const char* pPattern)
 {
 	const auto pattern = MaskedBytesFromPattern(pPattern);
 	return FindPattern(pattern.first.data(), pattern.second.c_str());

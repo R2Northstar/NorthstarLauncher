@@ -320,7 +320,6 @@ void ModManager::LoadMods()
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
-		
 		for (auto& pair : mod.DependencyConstants)
 		{
 			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
@@ -366,7 +365,7 @@ void ModManager::LoadMods()
 		// causes us to leak memory on reload, but not much, potentially find a way to not do this at some point
 		for (ModConVar* convar : mod.ConVars)
 			if (!R2::g_pCVar->FindVar(convar->Name.c_str())) // make sure convar isn't registered yet, unsure if necessary but idk what
-														 // behaviour is for defining same convar multiple times
+															 // behaviour is for defining same convar multiple times
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
 
 		// read vpk paths

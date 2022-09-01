@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <sstream>
 #include <fstream>
- #include <shlwapi.h>
+#include <shlwapi.h>
 #include <iostream>
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -147,7 +147,7 @@ void AwaitOriginStartup()
 
 		std::cout << "LSX: connect()" << std::endl;
 		connect(sock, (struct sockaddr*)&lsxAddr, sizeof(lsxAddr));
-		
+
 		char buf[4096];
 		memset(buf, 0, sizeof(buf));
 
@@ -298,7 +298,7 @@ bool LoadNorthstar()
 		LoadPlugins = GetProcAddress(hHookModule, "LoadPlugins");
 		if (!hHookModule || LoadPlugins == nullptr)
 		{
-			std::cout << "Failed to get function pointer to LoadPlugins of Northstar.dll"  << std::endl;
+			std::cout << "Failed to get function pointer to LoadPlugins of Northstar.dll" << std::endl;
 			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
 			return false;
 		}
@@ -365,8 +365,9 @@ int main(int argc, char* argv[])
 			{
 				if ((!gssao || FreeLibrary(gssao)) && (!gtxaa || FreeLibrary(gtxaa)) && (!d3d11 || FreeLibrary(d3d11)))
 				{
-					std::cout <<"[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
-						   "The stubs have been unloaded and the original libraries will be used instead" << std::endl;
+					std::cout << "[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
+								 "The stubs have been unloaded and the original libraries will be used instead"
+							  << std::endl;
 				}
 				else
 				{
@@ -385,7 +386,8 @@ int main(int argc, char* argv[])
 		{
 			// this should never happen
 			std::cout << "[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
-				   "(did Northstar initialize too late?)." << std::endl;
+						 "(did Northstar initialize too late?)."
+					  << std::endl;
 		}
 	}
 

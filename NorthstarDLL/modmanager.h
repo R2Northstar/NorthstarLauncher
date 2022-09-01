@@ -103,7 +103,7 @@ class Mod
 	std::unordered_map<std::string, std::string>
 		RpakAliases; // paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
 
-	 std::unordered_map<std::string, std::string> DependencyConstants;
+	std::unordered_map<std::string, std::string> DependencyConstants;
 
   public:
 	Mod(fs::path modPath, char* jsonBuf);

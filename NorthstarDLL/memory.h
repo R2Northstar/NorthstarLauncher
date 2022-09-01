@@ -1,4 +1,4 @@
-#pragma	once
+#pragma once
 
 class MemoryAddress
 {
@@ -10,7 +10,7 @@ class MemoryAddress
 	MemoryAddress(const uintptr_t nAddress);
 	MemoryAddress(const void* pAddress);
 
-	//operators 
+	// operators
 	operator uintptr_t() const;
 	operator void*() const;
 	operator bool() const;
@@ -26,7 +26,10 @@ class MemoryAddress
 	MemoryAddress operator-(const uintptr_t& other) const;
 	MemoryAddress operator*() const;
 
-	template <typename T> T As() { return reinterpret_cast<T>(m_nAddress); }
+	template <typename T> T As()
+	{
+		return reinterpret_cast<T>(m_nAddress);
+	}
 
 	// traversal
 	MemoryAddress Offset(const uintptr_t nOffset) const;

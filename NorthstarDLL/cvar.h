@@ -36,7 +36,7 @@ class CCvar
 };
 
 // use the R2 namespace for game funcs
-namespace R2 
+namespace R2
 {
 	extern SourceInterface<CCvar>* g_pCVarInterface;
 	extern CCvar* g_pCVar;

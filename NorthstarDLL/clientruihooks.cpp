@@ -10,7 +10,7 @@ bool,, (void* a1, float* a2))
 {
 	if (!Cvar_rui_drawEnable->GetBool())
 		return 0;
-	
+
 	return DrawRUIFunc(a1, a2);
 }
 

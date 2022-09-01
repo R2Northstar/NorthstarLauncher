@@ -28,7 +28,7 @@ ON_DLL_LOAD("engine.dll", R2Engine, (CModule module))
 
 	g_pEngine = module.Offset(0x7D70C8).Deref().As<CEngine*>(); // new
 
-	CBaseClient__Disconnect = module.Offset(0x1012C0).As<void(*)(void*, uint32_t, const char*, ...)>();
+	CBaseClient__Disconnect = module.Offset(0x1012C0).As<void (*)(void*, uint32_t, const char*, ...)>();
 	g_pClientArray = module.Offset(0x12A53F90).As<CBaseClient*>();
 
 	g_pServerState = module.Offset(0x12A53D48).As<server_state_t*>();

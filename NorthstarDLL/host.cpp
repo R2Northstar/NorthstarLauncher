@@ -66,6 +66,6 @@ void,, (bool bDedicated))
 }
 
 ON_DLL_LOAD("engine.dll", Host_Init, (CModule module))
-{ 
+{
 	AUTOHOOK_DISPATCH()
 }
