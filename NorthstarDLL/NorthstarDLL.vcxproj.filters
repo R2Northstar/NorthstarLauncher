@@ -1652,9 +1652,6 @@
     <ClCompile Include="hooks.cpp">
       <Filter>Source Files\Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="sigscanning.cpp">
-      <Filter>Source Files\Hooks</Filter>
-    </ClCompile>
     <ClCompile Include="bits.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>

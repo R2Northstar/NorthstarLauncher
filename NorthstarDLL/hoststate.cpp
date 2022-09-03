@@ -72,7 +72,7 @@ void,, (CHostState* self))
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
 
-AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E520,
+AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E640,
 void,, (CHostState* self))
 {
 	spdlog::info("HostState: GameShutdown");
