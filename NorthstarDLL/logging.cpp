@@ -4,6 +4,7 @@
 #include "concommand.h"
 #include "nsprefix.h"
 #include "bitbuf.h"
+#include "tier0.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
 #include <iomanip>
@@ -225,11 +226,12 @@ void InitialiseLogging()
 	AllocConsole();
 
 	// Bind stdout to receive console output.
-	FILE* fp;
-	freopen_s(&fp, "CONOUT$", "w", stdout);
-	//_dup2(_fileno(stdout), _fileno(stderr));
-
-	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
+	// these two lines are responsible for stuff to not show up in the console sometimes, from talking about it on discord
+	// apparently they were meant to make logging work when using -northstar, however from testing it seems that it doesnt
+	// work regardless of these two lines
+	// freopen("CONOUT$", "w", stdout);
+	// freopen("CONOUT$", "w", stderr);
+	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))

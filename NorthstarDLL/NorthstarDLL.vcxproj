@@ -628,7 +628,6 @@
     <ClCompile Include="serverchathooks.cpp" />
     <ClCompile Include="scriptservertoclientstringcommand.cpp" />
     <ClCompile Include="serverpresence.cpp" />
-    <ClCompile Include="sigscanning.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />

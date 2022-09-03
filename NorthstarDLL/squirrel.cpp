@@ -135,7 +135,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 
 template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(const char* pCode)
 {
-	if (!m_pSQVM)
+	if (!m_pSQVM || !m_pSQVM->sqvm)
 	{
 		spdlog::error("Cannot execute code, {} squirrel vm is not initialised", GetContextName(context));
 		return;

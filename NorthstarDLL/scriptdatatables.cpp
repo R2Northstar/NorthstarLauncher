@@ -46,7 +46,6 @@ struct Datatable
 ConVar* Cvar_ns_prefer_datatable_from_disk;
 
 template <ScriptContext context> Datatable* (*SQ_GetDatatableInternal)(HSquirrelVM* sqvm);
-std::string DataTableToString(Datatable* datatable);
 
 struct CSVData
 {
@@ -97,6 +96,7 @@ Vector3 StringToVector(char* pString)
 	return vRet;
 }
 
+// var function GetDataTable( asset path )
 template <ScriptContext context> SQRESULT SQ_GetDatatable(HSquirrelVM* sqvm)
 {
 	const char* pAssetName;
@@ -271,6 +271,7 @@ template <ScriptContext context> SQRESULT SQ_GetDatatable(HSquirrelVM* sqvm)
 	}
 }
 
+// int function GetDataTableRowCount( var datatable, string columnName )
 template <ScriptContext context> SQRESULT SQ_GetDataTableColumnByName(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -297,6 +298,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableColumnByName(HSquirrelV
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowCount( var datatable )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowCount(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -307,12 +309,11 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowCount(HSquirrelVM* s
 		return g_pSquirrel<context>->m_funcOriginals["GetDatatableRowCount"](sqvm);
 
 	CSVData* csv = *pData;
-	const char* pColumnName = g_pSquirrel<context>->getstring(sqvm, 2);
-
 	g_pSquirrel<context>->pushinteger(sqvm, csv->dataPointers.size());
 	return SQRESULT_NOTNULL;
 }
 
+// string function GetDataTableString( var datatable, int row, int col )
 template <ScriptContext context> SQRESULT SQ_GetDataTableString(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -339,6 +340,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableString(HSquirrelVM* sqv
 	return SQRESULT_NOTNULL;
 }
 
+// asset function GetDataTableAsset( var datatable, int row, int col )
 template <ScriptContext context> SQRESULT SQ_GetDataTableAsset(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -365,6 +367,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableAsset(HSquirrelVM* sqvm
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableInt( var datatable, int row, int col )
 template <ScriptContext context> SQRESULT SQ_GetDataTableInt(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -391,6 +394,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableInt(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// float function GetDataTableFloat( var datatable, int row, int col )
 template <ScriptContext context> SQRESULT SQ_GetDataTableFloat(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -417,6 +421,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableFloat(HSquirrelVM* sqvm
 	return SQRESULT_NOTNULL;
 }
 
+// bool function GetDataTableBool( var datatable, int row, int col )
 template <ScriptContext context> SQRESULT SQ_GetDataTableBool(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -443,6 +448,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableBool(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// vector function GetDataTableVector( var datatable, int row, int col )
 template <ScriptContext context> SQRESULT SQ_GetDataTableVector(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -466,6 +472,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableVector(HSquirrelVM* sqv
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowMatchingStringValue( var datatable, int col, string value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingStringValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -491,6 +498,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingStringValue(
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowMatchingAssetValue( var datatable, int col, asset value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingAssetValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -517,6 +525,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingAssetValue(H
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowMatchingFloatValue( var datatable, int col, float value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingFloatValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -542,6 +551,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingFloatValue(H
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowMatchingIntValue( var datatable, int col, int value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingIntValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -567,6 +577,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingIntValue(HSq
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowMatchingVectorValue( var datatable, int col, vector value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingVectorValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -593,6 +604,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowMatchingVectorValue(
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowGreaterThanOrEqualToIntValue( var datatable, int col, int value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowGreaterThanOrEqualToIntValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -619,6 +631,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowGreaterThanOrEqualTo
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowLessThanOrEqualToIntValue( var datatable, int col, int value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowLessThanOrEqualToIntValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -644,6 +657,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowLessThanOrEqualToInt
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowGreaterThanOrEqualToFloatValue( var datatable, int col, float value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowGreaterThanOrEqualToFloatValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
@@ -669,6 +683,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowGreaterThanOrEqualTo
 	return SQRESULT_NOTNULL;
 }
 
+// int function GetDataTableRowLessThanOrEqualToFloatValue( var datatable, int col, float value )
 template <ScriptContext context> SQRESULT SQ_GetDataTableRowLessThanOrEqualToFloatValue(HSquirrelVM* sqvm)
 {
 	CSVData** pData;
