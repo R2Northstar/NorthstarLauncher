@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "clientauthhooks.h"
 #include "hookutils.h"
 #include "gameutils.h"
@@ -33,7 +34,7 @@ void AuthWithStryderHook(void* a1)
 	AuthWithStryder(a1);
 }
 
-void InitialiseClientAuthHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (HMODULE baseAddress)
 {
 	// this cvar will save to cfg once initially agreed with
 	Cvar_ns_has_agreed_to_send_token = new ConVar(
@@ -44,4 +45,4 @@ void InitialiseClientAuthHooks(HMODULE baseAddress)
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1843A0, &AuthWithStryderHook, reinterpret_cast<LPVOID*>(&AuthWithStryder));
-}
+})

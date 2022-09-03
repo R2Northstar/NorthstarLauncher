@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "miscclientfixes.h"
 #include "hookutils.h"
 #include "dedicated.h"
@@ -25,7 +26,7 @@ void* CrashingWeaponActivityFunc1Hook(void* a1)
 	return CrashingWeaponActivityFunc1(a1);
 }
 
-void InitialiseMiscClientFixes(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", MiscClientFixes, ConVar, (HMODULE baseAddress)
 {
 	if (IsDedicatedServer())
 		return;
@@ -46,4 +47,4 @@ void InitialiseMiscClientFixes(HMODULE baseAddress)
 		void* ptr = (char*)baseAddress + 0x275F9D9;
 		*((char*)ptr) = (char)0;
 	}
-}
+})

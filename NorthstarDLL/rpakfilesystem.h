@@ -1,7 +1,5 @@
 #pragma once
 
-void InitialiseEngineRpakFilesystem(HMODULE baseAddress);
-
 class PakLoadManager
 {
   public:

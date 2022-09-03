@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "dedicated.h"
 #include "hookutils.h"
 #include "gameutils.h"
@@ -128,7 +129,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 }
 
 #include "nsmem.h"
-void InitialiseDedicated(HMODULE engineAddress)
+ON_DLL_LOAD_DEDI("engine.dll", DedicatedServer, (HMODULE engineAddress)
 {
 	spdlog::info("InitialiseDedicated");
 
@@ -299,9 +300,9 @@ void InitialiseDedicated(HMODULE engineAddress)
 		consoleInputThreadHandle = CreateThread(0, 0, ConsoleInputThread, 0, 0, NULL);
 	else
 		spdlog::info("Console input disabled by user request");
-}
+})
 
-void InitialiseDedicatedOrigin(HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (HMODULE baseAddress)
 {
 	// disable origin on dedicated
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
@@ -312,7 +313,7 @@ void InitialiseDedicatedOrigin(HMODULE baseAddress)
 		{
 			0xC3 // ret
 		});
-}
+})
 
 typedef void (*PrintFatalSquirrelErrorType)(void* sqvm);
 PrintFatalSquirrelErrorType PrintFatalSquirrelError;
@@ -322,8 +323,8 @@ void PrintFatalSquirrelErrorHook(void* sqvm)
 	g_pEngine->m_nQuitting = EngineQuitState::QUIT_TODESKTOP;
 }
 
-void InitialiseDedicatedServerGameDLL(HMODULE baseAddress)
+ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, baseAddress + 0x794D0, &PrintFatalSquirrelErrorHook, reinterpret_cast<LPVOID*>(&PrintFatalSquirrelError));
-}
+})

@@ -1,9 +1,6 @@
 #include <../modmanager.h>
 #pragma once
 
-void InitialiseClientSquirrel(HMODULE baseAddress);
-void InitialiseServerSquirrel(HMODULE baseAddress);
-
 // stolen from ttf2sdk: sqvm types
 typedef float SQFloat;
 typedef long SQInteger;

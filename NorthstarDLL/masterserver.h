@@ -128,7 +128,6 @@ class MasterServerManager
 };
 std::string unescape_unicode(const std::string& str);
 void UpdateServerInfoFromUnicodeToUTF8();
-void InitialiseSharedMasterServer(HMODULE baseAddress);
 
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;

@@ -70,5 +70,4 @@ class IFileSystem
 std::string ReadVPKFile(const char* path);
 std::string ReadVPKOriginalFile(const char* path);
 
-void InitialiseFilesystem(HMODULE baseAddress);
 extern SourceInterface<IFileSystem>* g_Filesystem;

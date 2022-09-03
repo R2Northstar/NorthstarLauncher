@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "convar.h"
 #include "sourceconsole.h"
 #include "sourceinterface.h"
@@ -47,11 +48,11 @@ void InitialiseConsoleOnInterfaceCreation()
 		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
 }
 
-void InitialiseSourceConsole(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (HMODULE baseAddress)
 {
 	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
 	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);
-}
+})
 
 // logging stuff
 

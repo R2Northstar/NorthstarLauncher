@@ -34,7 +34,7 @@ bool readingOriginalFile;
 std::string currentModPath;
 SourceInterface<IFileSystem>* g_Filesystem;
 
-void InitialiseFilesystem(HMODULE baseAddress)
+ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (HMODULE baseAddress)
 {
 	g_Filesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
@@ -54,7 +54,7 @@ void InitialiseFilesystem(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x15F20, &ReadFileFromFilesystemHook, reinterpret_cast<LPVOID*>(&readFileFromFilesystem));
 	ENABLER_CREATEHOOK(
 		hook, reinterpret_cast<void*>((*g_Filesystem)->m_vtable->MountVPK), &MountVPKHook, reinterpret_cast<LPVOID*>(&mountVPK));
-}
+})
 
 std::string ReadVPKFile(const char* path)
 {

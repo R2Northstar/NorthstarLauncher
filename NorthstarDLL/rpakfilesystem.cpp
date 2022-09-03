@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "rpakfilesystem.h"
+#include "hooks.h"
 #include "hookutils.h"
 #include "modmanager.h"
 #include "dedicated.h"
@@ -291,7 +292,7 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 	return ret;
 }
 
-void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", RpakFilesystem, (HMODULE baseAddress)
 {
 	g_PakLoadManager = new PakLoadManager;
 
@@ -310,4 +311,4 @@ void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
 		reinterpret_cast<void*>(g_pakLoadApi->ReadFullFileFromDisk),
 		&ReadFullFileFromDiskHook,
 		reinterpret_cast<LPVOID*>(&ReadFullFileFromDiskOriginal));
-}
+})

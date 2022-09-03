@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "scriptmainmenupromos.h"
 #include "squirrel.h"
 #include "masterserver.h"
@@ -128,9 +129,9 @@ SQRESULT SQ_GetCustomMainMenuPromoData(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void InitialiseScriptMainMenuPromos(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptMainMenuPrograms, ClientSquirrel, (HMODULE baseAddress)
 {
 	g_UISquirrelManager->AddFuncRegistration("void", "NSRequestCustomMainMenuPromos", "", "", SQ_RequestCustomMainMenuPromos);
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSHasCustomMainMenuPromoData", "", "", SQ_HasCustomMainMenuPromoData);
 	g_UISquirrelManager->AddFuncRegistration("var", "NSGetCustomMainMenuPromoData", "int promoDataKey", "", SQ_GetCustomMainMenuPromoData);
-}
+})

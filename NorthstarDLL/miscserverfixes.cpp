@@ -1,10 +1,11 @@
 #include "pch.h"
+#include "hooks.h"
 #include "miscserverfixes.h"
 #include "hookutils.h"
 
 #include "nsmem.h"
 
-void InitialiseMiscServerFixes(HMODULE baseAddress)
+ON_DLL_LOAD("server.dll", MiscServerFixes, (HMODULE baseAddress)
 {
 	uintptr_t ba = (uintptr_t)baseAddress;
 
@@ -23,4 +24,4 @@ void InitialiseMiscServerFixes(HMODULE baseAddress)
 	{
 		NSMem::BytePatch(ba + 0x153920, "C3");
 	}
-}
+})

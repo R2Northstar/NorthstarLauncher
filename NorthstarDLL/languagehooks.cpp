@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "languagehooks.h"
 #include "gameutils.h"
 #include <filesystem>
@@ -112,8 +113,8 @@ char* GetGameLanguageHook()
 	return lang;
 }
 
-void InitialiseTier0LanguageHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("tier0.dll", LanguageHooks, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xF560, &GetGameLanguageHook, reinterpret_cast<LPVOID*>(&GetGameLanguageOriginal));
-}
+})

@@ -102,5 +102,4 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 	void flush_() override;
 };
 
-void InitialiseSourceConsole(HMODULE baseAddress);
 void InitialiseConsoleOnInterfaceCreation();

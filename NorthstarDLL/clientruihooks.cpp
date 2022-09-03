@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "clientruihooks.h"
 #include "convar.h"
 
@@ -15,10 +16,10 @@ char DrawRUIFuncHook(void* a1, float* a2)
 	return DrawRUIFunc(a1, a2);
 }
 
-void InitialiseEngineClientRUIHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", RUI, ConVar, (HMODULE baseAddress)
 {
 	Cvar_rui_drawEnable = new ConVar("rui_drawEnable", "1", FCVAR_CLIENTDLL, "Controls whether RUI should be drawn");
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xFC500, &DrawRUIFuncHook, reinterpret_cast<LPVOID*>(&DrawRUIFunc));
-}
+})

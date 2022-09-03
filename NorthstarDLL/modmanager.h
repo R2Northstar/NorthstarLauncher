@@ -149,7 +149,6 @@ class ModManager
 	void BuildPdef();
 };
 
-void InitialiseModManager(HMODULE baseAddress);
 fs::path GetModFolderPath();
 fs::path GetCompiledAssetsPath();
 

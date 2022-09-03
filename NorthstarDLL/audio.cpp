@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "audio.h"
 #include "dedicated.h"
 
@@ -493,7 +494,7 @@ void __fastcall MilesLog_Hook(int level, const char* string)
 	spdlog::info("[MSS] {} - {}", level, string);
 }
 
-void InitialiseMilesAudioHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (HMODULE baseAddress)
 {
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
 
@@ -512,4 +513,4 @@ void InitialiseMilesAudioHooks(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x57DAD0, &MilesLog_Hook, reinterpret_cast<LPVOID*>(&MilesLog_Original));
 
 	MilesStopAll = (MilesStopAll_Type)((char*)baseAddress + 0x580850);
-}
+})

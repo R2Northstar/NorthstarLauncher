@@ -112,7 +112,7 @@ SQInteger NSTestFunc(void* sqvm)
 	return 1;
 }
 
-void InitialiseClientSquirrel(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 
@@ -188,9 +188,9 @@ void InitialiseClientSquirrel(HMODULE baseAddress)
 		(char*)baseAddress + 0x108E0,
 		&RegisterSquirrelFuncHook<ScriptContext::CLIENT>,
 		reinterpret_cast<LPVOID*>(&ClientRegisterSquirrelFunc)); // client registersquirrelfunc function
-}
+})
 
-void InitialiseServerSquirrel(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (HMODULE baseAddress)
 {
 	g_ServerSquirrelManager = new SquirrelManager<ScriptContext::SERVER>();
 
@@ -262,7 +262,7 @@ void InitialiseServerSquirrel(HMODULE baseAddress)
 		ExecuteCodeCommand<ScriptContext::SERVER>,
 		"Executes script code on the server vm",
 		FCVAR_GAMEDLL | FCVAR_CLIENTCMD_CAN_EXECUTE | FCVAR_CHEAT);
-}
+})
 
 // hooks
 template <ScriptContext context> SQInteger SQPrintHook(void* sqvm, char* fmt, ...)

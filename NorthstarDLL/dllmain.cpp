@@ -1,60 +1,28 @@
 #include "pch.h"
 #include "hooks.h"
 #include "main.h"
-#include "squirrel.h"
-#include "dedicated.h"
-#include "dedicatedmaterialsystem.h"
-#include "sourceconsole.h"
 #include "logging.h"
-#include "concommand.h"
-#include "modmanager.h"
-#include "filesystem.h"
-#include "serverauthentication.h"
-#include "scriptmodmenu.h"
-#include "scriptserverbrowser.h"
 #include "keyvalues.h"
 #include "masterserver.h"
 #include "gameutils.h"
-#include "chatcommand.h"
-#include "modlocalisation.h"
-#include "playlist.h"
-#include "miscserverscript.h"
-#include "clientauthhooks.h"
-#include "latencyflex.h"
-#include "scriptbrowserhooks.h"
-#include "scriptmainmenupromos.h"
-#include "miscclientfixes.h"
-#include "miscserverfixes.h"
-#include "rpakfilesystem.h"
-#include "bansystem.h"
 #include "memalloc.h"
 #include "maxplayers.h"
-#include "languagehooks.h"
-#include "audio.h"
-#include "buildainfile.h"
 #include "nsprefix.h"
-#include "serverchathooks.h"
-#include "clientchathooks.h"
-#include "localchatwriter.h"
-#include "scriptservertoclientstringcommand.h"
 #include "plugin_abi.h"
 #include "plugins.h"
-#include "debugoverlay.h"
-#include "clientvideooverrides.h"
-#include "clientruihooks.h"
-#include <string.h>
 #include "version.h"
 #include "pch.h"
-#include "scriptutility.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
-#include "exploitfixes.h"
-#include "scriptjson.h"
 
-typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
+#include <string.h>
+#include <filesystem>
+namespace fs = std::filesystem;
+
+typedef void (*initPluginFuncPtr)(void* getPluginObject);
 
 bool initialised = false;
 
@@ -220,86 +188,16 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
-	// dedi patches
-	{
-		AddDllLoadCallbackForDedicatedServer("tier0.dll", InitialiseDedicatedOrigin);
-		AddDllLoadCallbackForDedicatedServer("engine.dll", InitialiseDedicated);
-		AddDllLoadCallbackForDedicatedServer("server.dll", InitialiseDedicatedServerGameDLL);
-		AddDllLoadCallbackForDedicatedServer("materialsystem_dx11.dll", InitialiseDedicatedMaterialSystem);
-		// this fucking sucks, but seemingly we somehow load after rtech_game???? unsure how, but because of this we have to apply patches
-		// here, not on rtech_game load
-		AddDllLoadCallbackForDedicatedServer("engine.dll", InitialiseDedicatedRtechGame);
-	}
-
-	AddDllLoadCallback("engine.dll", InitialiseConVars);
-	AddDllLoadCallback("engine.dll", InitialiseConCommands);
-
 	// client-exclusive patches
 	{
 
-		AddDllLoadCallbackForClient("tier0.dll", InitialiseTier0LanguageHooks);
-		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrel);
-		AddDllLoadCallbackForClient("client.dll", InitialiseSourceConsole);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseChatCommands);
-		AddDllLoadCallbackForClient("client.dll", InitialiseScriptModMenu);
-		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerBrowser);
-		AddDllLoadCallbackForClient("localize.dll", InitialiseModLocalisation);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseClientAuthHooks);
-		AddDllLoadCallbackForClient("client.dll", InitialiseLatencyFleX);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseScriptExternalBrowserHooks);
-		AddDllLoadCallbackForClient("client.dll", InitialiseScriptMainMenuPromos);
-		AddDllLoadCallbackForClient("client.dll", InitialiseMiscClientFixes);
-		AddDllLoadCallbackForClient("client.dll", InitialiseClientPrintHooks);
 		AddDllLoadCallbackForClient("client.dll", InitialisePluginCommands);
-		AddDllLoadCallbackForClient("client.dll", InitialiseClientChatHooks);
-		AddDllLoadCallbackForClient("client.dll", InitialiseLocalChatWriter);
-		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerToClientStringCommands);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientVideoOverrides);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
-		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelJson);
-		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelUtilityFunctions);
-		// audio hooks
-		AddDllLoadCallbackForClient("client.dll", InitialiseMilesAudioHooks);
 	}
-
-	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
-	AddDllLoadCallback("server.dll", InitialiseServerSquirrel);
-	AddDllLoadCallback("engine.dll", InitialiseBanSystem);
-	AddDllLoadCallback("engine.dll", InitialiseServerAuthentication);
-	AddDllLoadCallback("engine.dll", InitialiseSharedMasterServer);
-	AddDllLoadCallback("server.dll", InitialiseMiscServerScriptCommand);
-	AddDllLoadCallback("server.dll", InitialiseMiscServerFixes);
-	AddDllLoadCallback("server.dll", InitialiseBuildAINFileHooks);
-	AddDllLoadCallback("server.dll", InitialiseServerSquirrelUtilityFunctions);
-	AddDllLoadCallback("server.dll", InitialiseServerSquirrelJson);
-
-	AddDllLoadCallback("engine.dll", InitialisePlaylistHooks);
-
-	AddDllLoadCallback("filesystem_stdio.dll", InitialiseFilesystem);
-	AddDllLoadCallback("engine.dll", InitialiseEngineRpakFilesystem);
-	AddDllLoadCallback("engine.dll", InitialiseKeyValues);
-
-	AddDllLoadCallback("engine.dll", InitialiseServerChatHooks_Engine);
-	AddDllLoadCallback("server.dll", InitialiseServerChatHooks_Server);
 
 	// maxplayers increase
 	AddDllLoadCallback("engine.dll", InitialiseMaxPlayersOverride_Engine);
 	AddDllLoadCallback("client.dll", InitialiseMaxPlayersOverride_Client);
 	AddDllLoadCallback("server.dll", InitialiseMaxPlayersOverride_Server);
-
-	// mod manager after everything else
-	AddDllLoadCallback("engine.dll", InitialiseModManager);
-
-	{
-		// activate multi-module exploitfixes callbacks
-		constexpr const char* EXPLOITFIXES_MULTICALLBACK_MODS[] = {"client.dll", "engine.dll", "server.dll"};
-		for (const char* mod : EXPLOITFIXES_MULTICALLBACK_MODS)
-			AddDllLoadCallback(mod, ExploitFixes::LoadCallback_MultiModule);
-
-		// activate exploit fixes later
-		AddDllLoadCallback("server.dll", ExploitFixes::LoadCallback_Full);
-	}
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();

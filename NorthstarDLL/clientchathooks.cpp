@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "clientchathooks.h"
 #include <rapidjson/document.h>
 #include "squirrel.h"
@@ -84,7 +85,7 @@ static SQRESULT SQ_ChatWriteLine(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-void InitialiseClientChatHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x22E580, &CHudChat__AddGameLineHook, reinterpret_cast<LPVOID*>(&CHudChat__AddGameLine));
@@ -92,4 +93,4 @@ void InitialiseClientChatHooks(HMODULE baseAddress)
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
 	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
-}
+})

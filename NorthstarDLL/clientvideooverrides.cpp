@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "clientvideooverrides.h"
 #include "modmanager.h"
 #include "nsmem.h"
@@ -32,7 +33,7 @@ void* BinkOpenHook(const char* path, uint32_t flags)
 		return BinkOpen(path, flags);
 }
 
-void InitialiseEngineClientVideoOverrides(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("client.dll", BinkVideo, (HMODULE baseAddress)
 {
 	// remove engine check for whether the bik we're trying to load exists in r2/media, as this will fail for biks in mods
 	// note: the check in engine is actually unnecessary, so it's just useless in practice and we lose nothing by removing it
@@ -44,4 +45,4 @@ void InitialiseEngineClientVideoOverrides(HMODULE baseAddress)
 		reinterpret_cast<void*>(GetProcAddress(GetModuleHandleA("bink2w64.dll"), "BinkOpen")),
 		&BinkOpenHook,
 		reinterpret_cast<LPVOID*>(&BinkOpen));
-}
+})

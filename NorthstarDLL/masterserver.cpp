@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "masterserver.h"
+#include "hooks.h"
 #include "concommand.h"
 #include "gameutils.h"
 #include "hookutils.h"
@@ -1367,7 +1368,7 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo {}, m_ownServerId {""}, m_ownClientAuthToken {""} {}
 
-void InitialiseSharedMasterServer(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, ConCommand, (HMODULE baseAddress)
 {
 	Cvar_ns_masterserver_hostname = new ConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
 	// unfortunately lib doesn't let us specify a port and still have https work
@@ -1405,4 +1406,4 @@ void InitialiseSharedMasterServer(HMODULE baseAddress)
 		(char*)baseAddress + 0x16E640,
 		CHostState__State_GameShutdownHook,
 		reinterpret_cast<LPVOID*>(&CHostState__State_GameShutdown));
-}
+})

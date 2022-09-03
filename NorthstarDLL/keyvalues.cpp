@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "keyvalues.h"
 #include "modmanager.h"
+#include "hooks.h"
 #include "filesystem.h"
 #include "hookutils.h"
 
@@ -13,12 +14,12 @@ KeyValues__LoadFromBufferType KeyValues__LoadFromBuffer;
 char KeyValues__LoadFromBufferHook(
 	void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7);
 
-void InitialiseKeyValues(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", KeyValues, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x426C30, &KeyValues__LoadFromBufferHook, reinterpret_cast<LPVOID*>(&KeyValues__LoadFromBuffer));
-}
+})
 
 void* savedFilesystemPtr;
 

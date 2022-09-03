@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "logging.h"
+#include "hooks.h"
 #include "sourceconsole.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "hookutils.h"
@@ -409,7 +410,7 @@ bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
 	return true;
 }
 
-void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 
@@ -426,7 +427,7 @@ void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
 		reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
-}
+})
 
 #include "bitbuf.h"
 
@@ -476,7 +477,7 @@ void TextMsgHook(BFRead* msg)
 	}
 }
 
-void InitialiseClientPrintHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (HMODULE baseAddress)
 {
 	HookEnabler hook;
 
@@ -486,4 +487,4 @@ void InitialiseClientPrintHooks(HMODULE baseAddress)
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x198710, TextMsgHook, reinterpret_cast<LPVOID*>(&TextMsg_Original));
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
-}
+})

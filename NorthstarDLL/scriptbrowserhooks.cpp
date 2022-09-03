@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "scriptbrowserhooks.h"
 #include "hookutils.h"
 
@@ -17,11 +18,11 @@ void OpenExternalWebBrowserHook(char* url, char flags)
 	*bIsOriginOverlayEnabled = bIsOriginOverlayEnabledOriginal;
 }
 
-void InitialiseScriptExternalBrowserHooks(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT("engine.dll", ScriptExternalBrowserHooks, (HMODULE baseAddress)
 {
 	bIsOriginOverlayEnabled = (bool*)baseAddress + 0x13978255;
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(
 		hook, (char*)baseAddress + 0x184E40, &OpenExternalWebBrowserHook, reinterpret_cast<LPVOID*>(&OpenExternalWebBrowser));
-}
+})

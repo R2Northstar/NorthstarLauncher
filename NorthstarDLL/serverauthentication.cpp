@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "serverauthentication.h"
+#include "hooks.h"
 #include "cvar.h"
 #include "convar.h"
 #include "hookutils.h"
@@ -654,7 +655,7 @@ void ResetPdataCommand(const CCommand& args)
 	g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = true;
 }
 
-void InitialiseServerAuthentication(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, ConCommand, (HMODULE baseAddress)
 {
 	g_ServerAuthenticationManager = new ServerAuthenticationManager;
 
@@ -752,4 +753,4 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 
 		NSMem::NOP(addr + 10, 5);
 	}
-}
+})

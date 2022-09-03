@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "serverchathooks.h"
+#include "hooks.h"
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -170,12 +171,12 @@ SQRESULT SQ_BroadcastMessage(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-void InitialiseServerChatHooks_Engine(HMODULE baseAddress)
+ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (HMODULE baseAddress)
 {
 	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
-}
+})
 
-void InitialiseServerChatHooks_Server(HMODULE baseAddress)
+ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (HMODULE baseAddress)
 {
 	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)((char*)baseAddress + 0x1595C0);
 	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)((char*)baseAddress + 0x26AA10);
@@ -206,4 +207,4 @@ void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 		"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",
 		"",
 		SQ_BroadcastMessage);
-}
+})

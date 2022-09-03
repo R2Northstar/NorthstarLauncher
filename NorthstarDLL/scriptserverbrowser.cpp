@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "hooks.h"
 #include "scriptserverbrowser.h"
 #include "squirrel.h"
 #include "masterserver.h"
@@ -414,7 +415,7 @@ SQRESULT SQ_CompleteAuthWithLocalServer(void* sqvm)
 	return SQRESULT_NULL;
 }
 
-void InitialiseScriptServerBrowser(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, (HMODULE baseAddress)
 {
 	g_UISquirrelManager->AddFuncRegistration("bool", "NSIsMasterServerAuthenticated", "", "", SQ_IsMasterServerAuthenticated);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSRequestServerList", "", "", SQ_RequestServerList);
@@ -445,6 +446,4 @@ void InitialiseScriptServerBrowser(HMODULE baseAddress)
 
 	g_UISquirrelManager->AddFuncRegistration("void", "NSTryAuthWithLocalServer", "", "", SQ_TryAuthWithLocalServer);
 	g_UISquirrelManager->AddFuncRegistration("void", "NSCompleteAuthWithLocalServer", "", "", SQ_CompleteAuthWithLocalServer);
-
-	g_UISquirrelManager->AddFuncRegistration("string", "NSGetAuthFailReason", "", "", SQ_GetAuthFailReason);
-}
+})
