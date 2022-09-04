@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "rapidjson/document.h"
 #include "memalloc.h"
+#include "squirrel.h"
 
 namespace fs = std::filesystem;
 
@@ -24,9 +25,6 @@ struct ModConVar
 struct ModScriptCallback
 {
   public:
-	// would've liked to make it possible to hook arbitrary codecallbacks, but couldn't find a function that calls some ui ones
-	// std::string HookedCodeCallback;
-
 	ScriptContext Context;
 
 	// called before the codecallback is executed

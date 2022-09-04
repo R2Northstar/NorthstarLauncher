@@ -128,7 +128,6 @@
     <ClInclude Include="color.h" />
     <ClInclude Include="concommand.h" />
     <ClInclude Include="nsprefix.h" />
-    <ClInclude Include="context.h" />
     <ClInclude Include="convar.h" />
     <ClInclude Include="cvar.h" />
     <ClInclude Include="dedicated.h" />
@@ -581,7 +580,6 @@
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="nsprefix.cpp" />
-    <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />
     <ClCompile Include="cvar.cpp" />
     <ClCompile Include="debugoverlay.cpp" />

@@ -544,6 +544,16 @@ struct SQArray
 		}                                                                                                                                  \
 	}
 
+enum class ScriptContext : int
+{
+	SERVER,
+	CLIENT,
+	UI,
+	NONE
+};
+
+const char* GetContextName(ScriptContext context);
+
 // core sqvm funcs
 typedef SQRESULT (*sq_compilebufferType)(void* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, ScriptContext a2);
 extern sq_compilebufferType ClientSq_compilebuffer;
@@ -811,3 +821,4 @@ template <ScriptContext context> class SquirrelManager
 extern SquirrelManager<ScriptContext::CLIENT>* g_ClientSquirrelManager;
 extern SquirrelManager<ScriptContext::SERVER>* g_ServerSquirrelManager;
 extern SquirrelManager<ScriptContext::UI>* g_UISquirrelManager;
+template <ScriptContext context> SquirrelManager<context>* GetSquirrelManager();
