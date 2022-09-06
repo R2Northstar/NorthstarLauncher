@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "masterserver.cpp"
+#include "masterserver.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -15,7 +15,6 @@ void _FetchVerifiedModsList() {
 	std::string readBuffer;
 	curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/verifiedmods", Cvar_ns_masterserver_hostname->GetString()).c_str());
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 	CURLcode result = curl_easy_perform(curl);
@@ -26,9 +25,7 @@ void _FetchVerifiedModsList() {
 
 		if (verifiedModsJson.HasParseError())
 		{
-			spdlog::error(
-				"Failed reading masterserver verified mods response: encountered parse error \"{}\"",
-				rapidjson::GetParseError_En(verifiedModsJson.GetParseError()));
+			spdlog::error( "Failed reading masterserver verified mods response: encountered parse error." );
 			goto REQUEST_END_CLEANUP;
 		}
 		if (!verifiedModsJson.IsObject())
