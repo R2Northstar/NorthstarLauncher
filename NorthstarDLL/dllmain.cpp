@@ -244,6 +244,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("engine.dll", InitialiseChatCommands);
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptModMenu);
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerBrowser);
+		AddDllLoadCallbackForClient("client.dll", InitialiseVerifiedModsScripts);
 		AddDllLoadCallbackForClient("localize.dll", InitialiseModLocalisation);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseClientAuthHooks);
 		AddDllLoadCallbackForClient("client.dll", InitialiseLatencyFleX);
@@ -291,7 +292,6 @@ bool InitialiseNorthstar()
 
 	// mod manager after everything else
 	AddDllLoadCallback("engine.dll", InitialiseModManager);
-	AddDllLoadCallback("engine.dll", InitialiseVerifiedModsScripts);
 
 	{
 		// activate multi-module exploitfixes callbacks
