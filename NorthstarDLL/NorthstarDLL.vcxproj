@@ -567,6 +567,7 @@
     <ClInclude Include="exploitfixes.h" />
     <ClInclude Include="exploitfixes_utf8parser.h" />
     <ClInclude Include="nsmem.h" />
+    <ClInclude Include="verifiedmods.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
