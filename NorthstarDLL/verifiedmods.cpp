@@ -4,6 +4,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "squirrel.h"
+#include "verifiedmods.h"
 
 using namespace rapidjson;
 
