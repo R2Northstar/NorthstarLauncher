@@ -7,8 +7,10 @@ ConVar* Cvar_r_latencyflex;
 
 void (*m_winelfx_WaitAndBeginFrame)();
 
+// clang-format off
 AUTOHOOK(OnRenderStart, client.dll + 0x1952C0, 
 void,, ())
+// clang-format on
 {
 	if (Cvar_r_latencyflex->GetBool() && m_winelfx_WaitAndBeginFrame)
 		m_winelfx_WaitAndBeginFrame();

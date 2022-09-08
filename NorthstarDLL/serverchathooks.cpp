@@ -36,8 +36,10 @@ void(__fastcall* MessageWriteBool)(bool bValue);
 
 bool bShouldCallSayTextHook = false;
 
+// clang-format off
 AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessage, server.dll + 0x1595C0,
 void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
+// clang-format on
 {
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
 	// To allow bypassing the hook, isSkippingHook can be set.

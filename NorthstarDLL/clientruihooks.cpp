@@ -5,8 +5,10 @@ AUTOHOOK_INIT()
 
 ConVar* Cvar_rui_drawEnable;
 
+// clang-format off
 AUTOHOOK(DrawRUIFunc, engine.dll + 0xFC500,
 bool,, (void* a1, float* a2))
+// clang-format on
 {
 	if (!Cvar_rui_drawEnable->GetBool())
 		return 0;

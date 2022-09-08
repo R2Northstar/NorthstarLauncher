@@ -70,8 +70,10 @@ template <class T> void ChangeOffset(MemoryAddress addr, unsigned int offset)
 	addr.Patch((BYTE*)&offset, sizeof(T));
 }
 
+// clang-format off
 AUTOHOOK(StringTables_CreateStringTable, engine.dll + 0x22E220,
 void*,, (void* thisptr, const char* name, int maxentries, int userdatafixedsize, int userdatanetworkbits, int flags))
+// clang-format on
 {
 	// Change the amount of entries to account for a bigger player amount
 	if (!strcmp(name, "userinfo"))
@@ -135,8 +137,10 @@ HMODULE serverBase = 0;
 auto RandomIntZeroMax = (__int64(__fastcall*)())0;
 
 // lazy rebuild
+// clang-format off
 AUTOHOOK(RunUserCmds, server.dll + 0x483D10,
 void,, (bool a1, float a2))
+// clang-format on
 {
 	unsigned char v3; // bl
 	int v5; // er14
@@ -277,8 +281,10 @@ void,, (bool a1, float a2))
 	}
 }
 
+// clang-format off
 AUTOHOOK(SendPropArray2, server.dll + 0x12B130,
 __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn, unsigned char unk1))
+// clang-format on
 {
 	// Change the amount of elements to account for a bigger player amount
 	if (!strcmp(name, "\"player_array\""))
@@ -446,8 +452,10 @@ ON_DLL_LOAD("server.dll", MaxPlayersOverride_Server, (CModule module))
 	DT_Team_Construct();
 }
 
+// clang-format off
 AUTOHOOK(RecvPropArray2, client.dll + 0x1CEDA0,
 __int64, __fastcall, (__int64 recvProp, int elements, int flags, const char* name, __int64 proxyFn))
+// clang-format on
 {
 	// Change the amount of elements to account for a bigger player amount
 	if (!strcmp(name, "\"player_array\""))

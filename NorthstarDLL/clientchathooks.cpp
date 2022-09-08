@@ -7,8 +7,10 @@
 
 AUTOHOOK_INIT()
 
+// clang-format off
 AUTOHOOK(CHudChat__AddGameLine, client.dll + 0x22E580, 
 void,, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
+// clang-format on
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
 	if (self != *CHudChat::allHuds)

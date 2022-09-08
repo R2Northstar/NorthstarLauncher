@@ -27,8 +27,10 @@ void ServerStartingOrChangingMap()
 		g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
 }
 
+// clang-format off
 AUTOHOOK(CHostState__State_NewGame, engine.dll + 0x16E7D0,
 void,, (CHostState* self))
+// clang-format on
 {
 	spdlog::info("HostState: NewGame");
 
@@ -58,8 +60,10 @@ void,, (CHostState* self))
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
+// clang-format off
 AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
 void,, (CHostState* self))
+// clang-format on
 {
 	spdlog::info("HostState: ChangeLevelMP");
 
@@ -72,8 +76,10 @@ void,, (CHostState* self))
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
 
+// clang-format off
 AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E640,
 void,, (CHostState* self))
+// clang-format on
 {
 	spdlog::info("HostState: GameShutdown");
 
@@ -83,8 +89,10 @@ void,, (CHostState* self))
 	CHostState__State_GameShutdown(self);
 }
 
+// clang-format off
 AUTOHOOK(CHostState__FrameUpdate, engine.dll + 0x16DB00,
 void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
+// clang-format on
 {
 	CHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
 

@@ -7,8 +7,10 @@
 
 AUTOHOOK_INIT()
 
+// clang-format off
 AUTOHOOK(Host_Init, engine.dll + 0x155EA0,
 void,, (bool bDedicated))
+// clang-format on
 {
 	spdlog::info("Host_Init()");
 	Host_Init(bDedicated);

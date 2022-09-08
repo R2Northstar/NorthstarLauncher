@@ -182,8 +182,10 @@ void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFun
 		spdlog::error("MH_CreateHook failed for function {}", pStrippedFuncName);
 }
 
+// clang-format off
 AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA,
 LPSTR, WINAPI, ())
+// clang-format on
 {
 	static char* cmdlineModified;
 	static char* cmdlineOrg;
@@ -352,8 +354,10 @@ void CallAllPendingDLLLoadCallbacks()
 	}
 }
 
+// clang-format off
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, 
 HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+// clang-format on
 	{
 	HMODULE moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
@@ -364,8 +368,10 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 }
 
 
+// clang-format off
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, 
 HMODULE, WINAPI, (LPCSTR lpLibFileName))
+// clang-format on
 {
 	HMODULE moduleAddress = _LoadLibraryA(lpLibFileName);
 
@@ -375,8 +381,10 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName))
 	return moduleAddress;
 }
 
+// clang-format off
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, 
 HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+// clang-format on
 {
 	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
@@ -386,8 +394,10 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 	return moduleAddress;
 }
 
+// clang-format off
 AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW, 
 HMODULE, WINAPI, (LPCWSTR lpLibFileName))
+// clang-format on
 {
 	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 

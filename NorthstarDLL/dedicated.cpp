@@ -114,7 +114,10 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 	return 0;
 }
 
-AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80, bool, , ())
+// clang-format off
+AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80,
+bool, , ())
+// clang-format on
 {
 	return true;
 }
@@ -262,8 +265,10 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (CModule module))
 	module.GetExport("Tier0_InitOrigin").Patch("C3");
 }
 
+// clang-format off
 AUTOHOOK(PrintSquirrelError, server.dll + 0x794D0, 
 void, , (void* sqvm))
+// clang-format on
 {
 	PrintSquirrelError(sqvm);
 

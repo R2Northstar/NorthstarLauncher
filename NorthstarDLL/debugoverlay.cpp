@@ -76,8 +76,10 @@ typedef void (*RenderBoxType)(Vector3 vOrigin, QAngle angles, Vector3 vMins, Vec
 static RenderBoxType RenderBox;
 static RenderBoxType RenderWireframeBox;
 
+// clang-format off
 AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
 void, __fastcall, (OverlayBase_t * pOverlay))
+// clang-format on
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
 

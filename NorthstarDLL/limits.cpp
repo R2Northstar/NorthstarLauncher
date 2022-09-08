@@ -57,8 +57,10 @@ bool ServerLimitsManager::CheckChatLimits(R2::CBaseClient* player)
 	return true;
 }
 
+// clang-format off
 AUTOHOOK(CNetChan__ProcessMessages, engine.dll + 0x2140A0, 
 char, __fastcall, (void* self, void* buf))
+// clang-format on
 {
 	enum eNetChanLimitMode
 	{
@@ -112,8 +114,10 @@ char, __fastcall, (void* self, void* buf))
 	return ret;
 }
 
+// clang-format off
 AUTOHOOK(ProcessConnectionlessPacket, engine.dll + 0x117800, 
 bool, , (void* a1, R2::netpacket_t* packet))
+// clang-format on
 {
 	if (packet->adr.type == R2::NA_IP &&
 		(!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->GetBool()) || !Cvar_net_datablock_enabled->GetBool()))

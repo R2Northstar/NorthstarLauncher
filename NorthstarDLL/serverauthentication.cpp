@@ -237,8 +237,10 @@ void ServerAuthenticationManager::WritePersistentData(R2::CBaseClient* player)
 char* pNextPlayerToken;
 uint64_t iNextPlayerUid;
 
+// clang-format off
 AUTOHOOK(CBaseServer__ConnectClient, engine.dll + 0x114430,
 void*,, (
+// clang-format on
 	void* server,
 	void* a2,
 	void* a3,
@@ -264,8 +266,10 @@ void*,, (
 	return CBaseServer__ConnectClient(server, a2, a3, a4, a5, a6, a7, a8, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
+// clang-format off
 AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_player_arg, void* a5, char* Buffer, void* a7))
+// clang-format on
 {
 	// try changing name before all else
 	g_pServerAuthentication->VerifyPlayerName(self, pNextPlayerToken, name);
@@ -294,8 +298,10 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 	return ret;
 }
 
+// clang-format off
 AUTOHOOK(CBaseClient__ActivatePlayer, engine.dll + 0x100F80,
 void,, (R2::CBaseClient* self))
+// clang-format on
 {
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
@@ -310,8 +316,10 @@ void,, (R2::CBaseClient* self))
 	CBaseClient__ActivatePlayer(self);
 }
 
+// clang-format off
 AUTOHOOK(_CBaseClient__Disconnect, engine.dll + 0x1012C0,
 void,, (R2::CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...))
+// clang-format on
 {
 	// have to manually format message because can't pass varargs to original func
 	char buf[1024];

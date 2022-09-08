@@ -114,8 +114,10 @@ bool,, (IFileSystem* filesystem, char* pPath, void* result))
 }
 
 // force modded files to be read from mods, not vpk
+// clang-format off
 AUTOHOOK(ReadFileFromVPK, filesystem_stdio.dll + 0x5CBA0,
 FileHandle_t,, (VPKData* vpkInfo, uint64_t* b, char* filename))
+// clang-format on
 {
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
@@ -127,8 +129,10 @@ FileHandle_t,, (VPKData* vpkInfo, uint64_t* b, char* filename))
 	return ReadFileFromVPK(vpkInfo, b, filename);
 }
 
+// clang-format off
 AUTOHOOK(CBaseFileSystem__OpenEx, filesystem_stdio.dll + 0x15F50,
 FileHandle_t,, (IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename))
+// clang-format on
 {
 	TryReplaceFile(pPath, true);
 	return CBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);

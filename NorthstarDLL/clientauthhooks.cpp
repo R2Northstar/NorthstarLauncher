@@ -12,8 +12,10 @@ const int NOT_DECIDED_TO_SEND_TOKEN = 0;
 const int AGREED_TO_SEND_TOKEN = 1;
 const int DISAGREED_TO_SEND_TOKEN = 2;
 
+// clang-format off
 AUTOHOOK(AuthWithStryder, engine.dll + 0x1843A0,
 void,, (void* a1))
+// clang-format on
 {
 	// game will call this forever, until it gets a valid auth key
 	// so, we need to manually invalidate our key until we're authed with northstar, then we'll allow game to auth with stryder

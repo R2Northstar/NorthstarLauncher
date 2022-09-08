@@ -4,8 +4,10 @@ AUTOHOOK_INIT()
 
 bool* bIsOriginOverlayEnabled;
 
+// clang-format off
 AUTOHOOK(OpenExternalWebBrowser, engine.dll + 0x184E40, 
 void,, (char* pUrl, char flags))
+// clang-format on
 {
 	bool bIsOriginOverlayEnabledOriginal = *bIsOriginOverlayEnabled;
 		if (flags & 2 && !strncmp(pUrl, "http", 4)) // custom force external browser flag

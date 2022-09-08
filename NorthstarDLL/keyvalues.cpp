@@ -106,8 +106,10 @@ void ModManager::TryBuildKeyValues(const char* filename)
 		m_ModFiles[normalisedPath] = overrideFile;
 }
 
+// clang-format off
 AUTOHOOK(KeyValues__LoadFromBuffer, engine.dll + 0x426C30,
 char,, (void* self, const char* resourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7))
+// clang-format on
 {
 	static void* pSavedFilesystemPtr = nullptr;
 

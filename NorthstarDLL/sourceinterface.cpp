@@ -6,8 +6,10 @@ AUTOHOOK_INIT()
 
 // really wanted to do a modular callback system here but honestly couldn't be bothered so hardcoding stuff for now: todo later
 
+// clang-format off
 AUTOHOOK_PROCADDRESS(ClientCreateInterface, client.dll, CreateInterface, 
 void*,, (const char* pName, const int* pReturnCode))
+// clang-format on
 {
 	void* ret = ClientCreateInterface(pName, pReturnCode);
 	spdlog::info("CreateInterface CLIENT {}", pName);
@@ -18,8 +20,10 @@ void*,, (const char* pName, const int* pReturnCode))
 	return ret;
 }
 
+// clang-format off
 AUTOHOOK_PROCADDRESS(ServerCreateInterface, server.dll, CreateInterface, 
 void*,, (const char* pName, const int* pReturnCode))
+// clang-format on
 {
 	void* ret = ServerCreateInterface(pName, pReturnCode);
 		spdlog::info("CreateInterface SERVER {}", pName);
@@ -27,8 +31,10 @@ void*,, (const char* pName, const int* pReturnCode))
 	return ret;
 }
 
+// clang-format off
 AUTOHOOK_PROCADDRESS(EngineCreateInterface, engine.dll, CreateInterface, 
 void*,, (const char* pName, const int* pReturnCode))
+// clang-format on
 {
 	void* ret = EngineCreateInterface(pName, pReturnCode);
 		spdlog::info("CreateInterface ENGINE {}", pName);

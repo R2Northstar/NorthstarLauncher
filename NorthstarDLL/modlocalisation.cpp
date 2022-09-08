@@ -3,8 +3,10 @@
 
 AUTOHOOK_INIT()
 
+// clang-format off
 AUTOHOOK(AddLocalisationFile, localize.dll + 0x6D80,
 bool,, (void* pVguiLocalize, const char* path, const char* pathId, char unknown))
+// clang-format on
 {
 	static bool bLoadModLocalisationFiles = true;
 	bool ret = AddLocalisationFile(pVguiLocalize, path, pathId, unknown);

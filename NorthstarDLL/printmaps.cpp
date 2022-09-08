@@ -110,8 +110,10 @@ void RefreshMapList()
 	}
 }
 
+// clang-format off
 AUTOHOOK(_Host_Map_f_CompletionFunc, engine.dll + 0x161AE0,
 int, __fastcall, (const char const* cmdname, const char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]))
+// clang-format on
 {
 	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs
 	static double flLastAutocompleteRefresh = -999;

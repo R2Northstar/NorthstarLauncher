@@ -34,8 +34,10 @@ const std::unordered_map<SpewType_t, const char*> PrintSpewTypes = {
 	{SpewType_t::SPEW_LOG, "SPEW_LOG"}
 };
 
+// clang-format off
 AUTOHOOK(EngineSpewFunc, engine.dll + 0x11CA80,
 void,, (void* pEngineServer, SpewType_t type, const char* format, va_list args))
+// clang-format on
 {
 	if (!Cvar_spewlog_enable->GetBool())
 		return;
@@ -109,8 +111,10 @@ void,, (void* pEngineServer, SpewType_t type, const char* format, va_list args))
 }
 
 // used for printing the output of status
+// clang-format off
 AUTOHOOK(Status_ConMsg, engine.dll + 0x15ABD0,
 void,, (const char* text, ...))
+// clang-format on
 {
 	char formatted[2048];
 	va_list list;
@@ -126,8 +130,10 @@ void,, (const char* text, ...))
 	spdlog::info(formatted);
 }
 
+// clang-format off
 AUTOHOOK(CClientState_ProcessPrint, engine.dll + 0x1A1530, 
 bool,, (void* thisptr, uintptr_t msg))
+// clang-format on
 {
 	char* text = *(char**)(msg + 0x20);
 
@@ -163,8 +169,10 @@ enum class TextMsgPrintType_t
 	HUD_PRINTCENTER
 };
 
+// clang-format off
 AUTOHOOK(TextMsg, client.dll + 0x198710,
 void,, (BFRead* msg))
+// clang-format on
 {
 	TextMsgPrintType_t msg_dest = (TextMsgPrintType_t)msg->ReadByte();
 
@@ -194,8 +202,10 @@ void,, (BFRead* msg))
 	}
 }
 
+// clang-format off
 AUTOHOOK(ConCommand_echo, engine.dll + 0x123680,
 void,, (const CCommand& arg))
+// clang-format on
 {
 	if (arg.ArgC() >= 2)
 		spdlog::info("[echo] {}", arg.ArgS());
