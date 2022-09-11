@@ -64,11 +64,21 @@ void RunServer(CDedicatedExports* dedicated)
 
 	// main loop
 	double frameTitle = 0;
+	float lastOverloadWarning = 0.f;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
 	{
 		double frameStart = Plat_FloatTime();
 		g_pEngine->Frame();
+		float nextTickTime = Plat_FloatTime();
 
+		if (((nextTickTime - frameStart) > Cvar_base_tickinterval_mp->GetFloat()) && ((nextTickTime - lastOverloadWarning) >= 15.f))
+		{
+			spdlog::info(
+				"Can't keep up! Is the server overloaded? Running {}ms or {} ticks behind",
+				(int)((nextTickTime - frameStart) * 1000.f),
+				(int)((nextTickTime - frameStart) / Cvar_base_tickinterval_mp->GetFloat()));
+			lastOverloadWarning = nextTickTime;
+		}
 		// only update the title after at least 500ms since the last update
 		if ((frameStart - frameTitle) > 0.5)
 		{
