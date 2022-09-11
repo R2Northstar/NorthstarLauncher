@@ -209,6 +209,7 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 	}
 
 	logged = true;
+	reinterpret_cast<void (*)(char*)>((char*)GetModuleHandleA("engine.dll") + 0x118F00)((char*)GetModuleHandleA("engine.dll") + 0x12A53D40); // shut down server on crash.
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
