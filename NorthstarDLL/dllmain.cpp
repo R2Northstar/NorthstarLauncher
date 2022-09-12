@@ -253,7 +253,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallbackForClient("client.dll", InitialiseLocalChatWriter);
 		AddDllLoadCallbackForClient("client.dll", InitialiseScriptServerToClientStringCommands);
-		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientVideoOverrides);
+		AddDllLoadCallbackForClient("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseEngineClientRUIHooks);
 		AddDllLoadCallbackForClient("engine.dll", InitialiseDebugOverlay);
 		AddDllLoadCallbackForClient("client.dll", InitialiseClientSquirrelUtilityFunctions);

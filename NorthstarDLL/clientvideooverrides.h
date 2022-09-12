@@ -1,2 +1,2 @@
 #pragma once
-void InitialiseEngineClientVideoOverrides(HMODULE baseAddress);
+void InitialiseClientVideoOverrides(HMODULE baseAddress);
