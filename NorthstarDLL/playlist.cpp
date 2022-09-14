@@ -19,18 +19,23 @@ namespace R2
 
 ConVar* Cvar_ns_use_clc_SetPlaylistVarOverride;
 
+// clang-format off
 AUTOHOOK(clc_SetPlaylistVarOverride__Process, engine.dll + 0x222180,
-char,, (void* a1, void* a2))
+char, __fastcall, (void* a1, void* a2))
+// clang-format on
 {
 	// the private_match playlist on mp_lobby is the only situation where there should be any legitimate sending of this netmessage
-	if (!Cvar_ns_use_clc_SetPlaylistVarOverride->GetBool() || strcmp(R2::GetCurrentPlaylistName(), "private_match") || strcmp(R2::g_pHostState->m_levelName, "mp_lobby"))
+	if (!Cvar_ns_use_clc_SetPlaylistVarOverride->GetBool() || strcmp(R2::GetCurrentPlaylistName(), "private_match") ||
+		strcmp(R2::g_pHostState->m_levelName, "mp_lobby"))
 		return 1;
 
 	return clc_SetPlaylistVarOverride__Process(a1, a2);
 }
 
+// clang-format off
 AUTOHOOK(SetCurrentPlaylist, engine.dll + 0x18EB20,
 bool, __fastcall, (const char* pPlaylistName))
+// clang-format on
 {
 	bool bSuccess = SetCurrentPlaylist(pPlaylistName);
 
@@ -43,8 +48,10 @@ bool, __fastcall, (const char* pPlaylistName))
 	return bSuccess;
 }
 
+// clang-format off
 AUTOHOOK(SetPlaylistVarOverride, engine.dll + 0x18ED00,
-void,, (const char* pVarName, const char* pValue))
+void, __fastcall, (const char* pVarName, const char* pValue))
+// clang-format on
 {
 	if (strlen(pValue) >= 64)
 		return;
@@ -52,8 +59,10 @@ void,, (const char* pVarName, const char* pValue))
 	SetPlaylistVarOverride(pVarName, pValue);
 }
 
+// clang-format off
 AUTOHOOK(GetCurrentPlaylistVar, engine.dll + 0x18C680,
-const char*,, (const char* pVarName, bool bUseOverrides))
+const char*, __fastcall, (const char* pVarName, bool bUseOverrides))
+// clang-format on
 {
 	if (!bUseOverrides && !strcmp(pVarName, "max_players"))
 		bUseOverrides = true;
@@ -61,8 +70,10 @@ const char*,, (const char* pVarName, bool bUseOverrides))
 	return GetCurrentPlaylistVar(pVarName, bUseOverrides);
 }
 
+// clang-format off
 AUTOHOOK(GetCurrentGamemodeMaxPlayers, engine.dll + 0x18C430,
-int,, ())
+int, __fastcall, ())
+// clang-format on
 {
 	const char* pMaxPlayers = R2::GetCurrentPlaylistVar("max_players", 0);
 	if (!pMaxPlayers)

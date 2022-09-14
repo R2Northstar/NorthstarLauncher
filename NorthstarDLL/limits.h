@@ -13,6 +13,8 @@ struct PlayerLimitData
 
 	double lastSayTextLimitStart = -1.0;
 	int sayTextLimitCount = 0;
+
+	float flFrameUserCmdBudget = 0.0;
 };
 
 struct UnconnectedPlayerLimitData
@@ -31,12 +33,17 @@ class ServerLimitsManager
 	ConVar* Cvar_net_chan_limit_msec_per_sec;
 	ConVar* Cvar_sv_querylimit_per_sec;
 	ConVar* Cvar_sv_max_chat_messages_per_sec;
+	ConVar* Cvar_sv_antispeedhack_enable;
+	ConVar* Cvar_sv_antispeedhack_maxtickbudget;
+	ConVar* Cvar_sv_antispeedhack_budgetincreasemultiplier;
 
 	std::unordered_map<R2::CBaseClient*, PlayerLimitData> m_PlayerLimitData;
 	std::vector<UnconnectedPlayerLimitData> m_UnconnectedPlayerLimitData;
 
   public:
+	void RunFrame(double flCurrentTime, float flFrameTime);
 	void AddPlayer(R2::CBaseClient* player);
+	void RemovePlayer(R2::CBaseClient* player);
 	bool CheckStringCommandLimits(R2::CBaseClient* player);
 	bool CheckChatLimits(R2::CBaseClient* player);
 };

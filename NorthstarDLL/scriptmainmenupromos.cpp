@@ -131,5 +131,6 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptMainMenuPromos, ClientSquirrel, 
 {
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSRequestCustomMainMenuPromos", "", "", SQ_RequestCustomMainMenuPromos);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSHasCustomMainMenuPromoData", "", "", SQ_HasCustomMainMenuPromoData);
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("var", "NSGetCustomMainMenuPromoData", "int promoDataKey", "", SQ_GetCustomMainMenuPromoData);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
+		"var", "NSGetCustomMainMenuPromoData", "int promoDataKey", "", SQ_GetCustomMainMenuPromoData);
 }

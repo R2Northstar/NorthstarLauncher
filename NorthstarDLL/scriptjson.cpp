@@ -97,8 +97,10 @@ DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>
 	}
 }
 
-template <ScriptContext context>
-void EncodeJSONTable(SQTable* table, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj, rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
+template <ScriptContext context> void EncodeJSONTable(
+	SQTable* table,
+	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
 {
 	for (int i = 0; i < table->_numOfNodes; i++)
 	{
@@ -257,7 +259,11 @@ template <ScriptContext context> SQRESULT SQ_EncodeJSON(HSquirrelVM* sqvm)
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientScriptJSON, ClientSquirrel, (CModule module))
 {
 	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
-		"table", "DecodeJSON", "string json, bool fatalParseErrors = false", "converts a json string to a squirrel table", SQ_DecodeJSON<ScriptContext::CLIENT>);
+		"table",
+		"DecodeJSON",
+		"string json, bool fatalParseErrors = false",
+		"converts a json string to a squirrel table",
+		SQ_DecodeJSON<ScriptContext::CLIENT>);
 	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
 		"string", "EncodeJSON", "table data", "converts a squirrel table to a json string", SQ_EncodeJSON<ScriptContext::CLIENT>);
 

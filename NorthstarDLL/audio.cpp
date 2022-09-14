@@ -372,8 +372,10 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 
 // DO NOT TOUCH THIS FUNCTION
 // The actual logic of it in a separate function (forcefully not inlined) to preserve the r12 register, which holds the event pointer.
+// clang-format off
 AUTOHOOK(LoadSampleMetadata, mileswin64.dll + 0xF110, 
 bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType))
+// clang-format on
 {
 	uintptr_t parentEvent = (uintptr_t)Audio_GetParentEvent();
 
@@ -488,8 +490,10 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 	return res;
 }
 
+// clang-format off
 AUTOHOOK(MilesLog, client.dll + 0x57DAD0, 
 void, __fastcall, (int level, const char* string))
+// clang-format on
 {
 	spdlog::info("[MSS] {} - {}", level, string);
 }

@@ -114,7 +114,10 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 	return 0;
 }
 
-AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80, bool, , ())
+// clang-format off
+AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80,
+bool,, ())
+// clang-format on
 {
 	return true;
 }
@@ -130,7 +133,8 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	module.Offset(0x156799).NOP(5);
 
 	// Host_Init
-	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely on dedi)
+	// don't call Key_Init to avoid loading some extra rsons from rpak (will be necessary to boot if we ever wanna disable rpaks entirely on
+	// dedi)
 	module.Offset(0x1565B0).NOP(5);
 
 	{
@@ -262,8 +266,10 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (CModule module))
 	module.GetExport("Tier0_InitOrigin").Patch("C3");
 }
 
+// clang-format off
 AUTOHOOK(PrintSquirrelError, server.dll + 0x794D0, 
-void, , (void* sqvm))
+void, __fastcall, (void* sqvm))
+// clang-format on
 {
 	PrintSquirrelError(sqvm);
 

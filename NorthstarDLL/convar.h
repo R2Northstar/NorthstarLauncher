@@ -59,9 +59,9 @@
 #define FCVAR_SERVER_CANNOT_QUERY                                                                                                          \
 	(1 << 29) // If this is set, then the server is not allowed to query this cvar's value (via IServerPluginHelpers::StartQueryCvarValue).
 
-// !!!NOTE!!! : this is likely incorrect, there are multiple concommands that the vanilla game registers with this flag that 100% should not be remotely executable
-// i.e. multiple commands that only exist on client (screenshot, joystick_initialize)
-// we now use FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS in all places this flag was previously used
+// !!!NOTE!!! : this is likely incorrect, there are multiple concommands that the vanilla game registers with this flag that 100% should not
+// be remotely executable i.e. multiple commands that only exist on client (screenshot, joystick_initialize) we now use
+// FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS in all places this flag was previously used
 #define FCVAR_CLIENTCMD_CAN_EXECUTE                                                                                                        \
 	(1 << 30) // IVEngineClient::ClientCmd is allowed to execute this command.
 			  // Note: IVEngineClient::ClientCmd_Unrestricted can run any client command.
@@ -108,8 +108,7 @@ const std::multimap<int, const char*> g_PrintCommandFlags = {
 	{FCVAR_SERVER_CAN_EXECUTE, "SERVER_CAN_EXECUTE"},
 	{FCVAR_SERVER_CANNOT_QUERY, "SERVER_CANNOT_QUERY"},
 	{FCVAR_CLIENTCMD_CAN_EXECUTE, "UNKNOWN"},
-	{FCVAR_ACCESSIBLE_FROM_THREADS, "ACCESSIBLE_FROM_THREADS"}
-};
+	{FCVAR_ACCESSIBLE_FROM_THREADS, "ACCESSIBLE_FROM_THREADS"}};
 
 //-----------------------------------------------------------------------------
 // Forward declarations

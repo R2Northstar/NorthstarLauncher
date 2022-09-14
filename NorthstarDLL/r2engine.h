@@ -102,7 +102,7 @@ namespace R2
 
 	extern void (*CBaseClient__Disconnect)(void* self, uint32_t unknownButAlways1, const char* reason, ...);
 
-	#pragma once
+#pragma once
 	typedef enum
 	{
 		NA_NULL = 0,
@@ -110,7 +110,7 @@ namespace R2
 		NA_IP,
 	} netadrtype_t;
 
-	#pragma pack(push, 1)
+#pragma pack(push, 1)
 	typedef struct netadr_s
 	{
 		netadrtype_t type;
@@ -119,9 +119,9 @@ namespace R2
 		// 00 00 00 00 00 00 00 00    00 00 FF FF 7F 00 00 01
 		unsigned short port;
 	} netadr_t;
-	#pragma pack(pop)
+#pragma pack(pop)
 
-	#pragma pack(push, 1)
+#pragma pack(push, 1)
 	typedef struct netpacket_s
 	{
 		netadr_t adr; // sender address
@@ -139,7 +139,7 @@ namespace R2
 		// bool			stream;		// was send as stream
 		// struct netpacket_s* pNext;	// for internal use, should be NULL in public
 	} netpacket_t;
-	#pragma pack(pop)
+#pragma pack(pop)
 
 	const int PERSISTENCE_MAX_SIZE = 0xD000;
 
@@ -153,7 +153,7 @@ namespace R2
 		READY_REMOTE
 	};
 
-	#pragma pack(push, 1)
+#pragma pack(push, 1)
 	struct CBaseClient // 0x2D728 bytes
 	{
 		char pad0[0x16];
@@ -181,7 +181,7 @@ namespace R2
 
 		char pad4[0x1E208];
 	};
-	#pragma pack(pop)
+#pragma pack(pop)
 
 	extern CBaseClient* g_pClientArray;
 

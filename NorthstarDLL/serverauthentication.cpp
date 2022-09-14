@@ -57,10 +57,7 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 				{
 					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= R2::PERSISTENCE_MAX_SIZE ||
 						!request.has_param("serverAuthToken") ||
-						strcmp(
-							g_pMasterServerManager->m_sOwnServerAuthToken,
-							request.get_param_value("serverAuthToken")
-								.c_str()))
+						strcmp(g_pMasterServerManager->m_sOwnServerAuthToken, request.get_param_value("serverAuthToken").c_str()))
 					{
 						response.set_content("{\"success\":false}", "application/json");
 						return;
@@ -70,7 +67,8 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), request.get_param_value("id").c_str(), sizeof(newAuthData.uid) - 1);
 					strncpy_s(
 						newAuthData.username,
-						sizeof(newAuthData.username), request.get_param_value("username").c_str(),
+						sizeof(newAuthData.username),
+						request.get_param_value("username").c_str(),
 						sizeof(newAuthData.username) - 1);
 
 					newAuthData.pdataSize = request.body.size();
@@ -101,13 +99,19 @@ void ServerAuthenticationManager::StopPlayerAuthServer()
 	m_PlayerAuthServer.stop();
 }
 
-void ServerAuthenticationManager::AddPlayerData(R2::CBaseClient* player, const char* pToken)
+void ServerAuthenticationManager::AddPlayer(R2::CBaseClient* player, const char* pToken)
 {
 	PlayerAuthenticationData additionalData;
 	additionalData.pdataSize = m_RemoteAuthenticationData[pToken].pdataSize;
 	additionalData.usingLocalPdata = player->m_iPersistenceReady == R2::ePersistenceReady::READY_INSECURE;
 
 	m_PlayerAuthenticationData.insert(std::make_pair(player, additionalData));
+}
+
+void ServerAuthenticationManager::RemovePlayer(R2::CBaseClient* player)
+{
+	if (m_PlayerAuthenticationData.count(player))
+		m_PlayerAuthenticationData.erase(player);
 }
 
 void ServerAuthenticationManager::VerifyPlayerName(R2::CBaseClient* player, char* authToken, char* name)
@@ -237,6 +241,7 @@ void ServerAuthenticationManager::WritePersistentData(R2::CBaseClient* player)
 char* pNextPlayerToken;
 uint64_t iNextPlayerUid;
 
+// clang-format off
 AUTOHOOK(CBaseServer__ConnectClient, engine.dll + 0x114430,
 void*,, (
 	void* server,
@@ -256,6 +261,7 @@ void*,, (
 	int64_t uid,
 	uint32_t a16,
 	uint32_t a17))
+// clang-format on
 {
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	pNextPlayerToken = serverFilter;
@@ -264,8 +270,10 @@ void*,, (
 	return CBaseServer__ConnectClient(server, a2, a3, a4, a5, a6, a7, a8, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
+// clang-format off
 AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_player_arg, void* a5, char* Buffer, void* a7))
+// clang-format on
 {
 	// try changing name before all else
 	g_pServerAuthentication->VerifyPlayerName(self, pNextPlayerToken, name);
@@ -284,18 +292,21 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 
 	if (strlen(name) >= 64) // fix for name overflow bug
 		R2::CBaseClient__Disconnect(self, 1, "Invalid name");
-	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
+	else if (
+		!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
 		g_pServerAuthentication->m_bRequireClientAuth)
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed");
 
-	g_pServerAuthentication->AddPlayerData(self, pNextPlayerToken);
+	g_pServerAuthentication->AddPlayer(self, pNextPlayerToken);
 	g_pServerLimits->AddPlayer(self);
 
 	return ret;
 }
 
+// clang-format off
 AUTOHOOK(CBaseClient__ActivatePlayer, engine.dll + 0x100F80,
 void,, (R2::CBaseClient* self))
+// clang-format on
 {
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
@@ -310,8 +321,10 @@ void,, (R2::CBaseClient* self))
 	CBaseClient__ActivatePlayer(self);
 }
 
+// clang-format off
 AUTOHOOK(_CBaseClient__Disconnect, engine.dll + 0x1012C0,
 void,, (R2::CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...))
+// clang-format on
 {
 	// have to manually format message because can't pass varargs to original func
 	char buf[1024];
@@ -332,11 +345,10 @@ void,, (R2::CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, 
 		g_pServerAuthentication->RemovePlayerAuthData(self); // won't do anything 99% of the time, but just in case
 	}
 
-	if (g_pServerAuthentication->m_PlayerAuthenticationData.count(self))
-	{
-		g_pServerAuthentication->m_PlayerAuthenticationData.erase(self);
-		g_pServerPresence->SetPlayerCount(g_pServerAuthentication->m_PlayerAuthenticationData.size());
-	}
+	g_pServerAuthentication->RemovePlayer(self);
+	g_pServerLimits->RemovePlayer(self);
+
+	g_pServerPresence->SetPlayerCount(g_pServerAuthentication->m_PlayerAuthenticationData.size());
 
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
 }

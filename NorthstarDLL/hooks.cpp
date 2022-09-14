@@ -44,23 +44,23 @@ __dllLoadCallback::__dllLoadCallback(
 
 	switch (side)
 	{
-		case eDllLoadCallbackSide::UNSIDED:
-		{
-			AddDllLoadCallback(dllName, callback, uniqueStr, reliesOnArray);
-			break;
-		}
+	case eDllLoadCallbackSide::UNSIDED:
+	{
+		AddDllLoadCallback(dllName, callback, uniqueStr, reliesOnArray);
+		break;
+	}
 
-		case eDllLoadCallbackSide::CLIENT:
-		{
-			AddDllLoadCallbackForClient(dllName, callback, uniqueStr, reliesOnArray);
-			break;
-		}
+	case eDllLoadCallbackSide::CLIENT:
+	{
+		AddDllLoadCallbackForClient(dllName, callback, uniqueStr, reliesOnArray);
+		break;
+	}
 
-		case eDllLoadCallbackSide::DEDICATED_SERVER:
-		{
-			AddDllLoadCallbackForDedicatedServer(dllName, callback, uniqueStr, reliesOnArray);
-			break;
-		}
+	case eDllLoadCallbackSide::DEDICATED_SERVER:
+	{
+		AddDllLoadCallbackForDedicatedServer(dllName, callback, uniqueStr, reliesOnArray);
+		break;
+	}
 	}
 }
 
@@ -80,16 +80,14 @@ void __fileAutohook::DispatchForModule(const char* pModuleName)
 			hook->Dispatch();
 }
 
-ManualHook::ManualHook(const char* funcName, LPVOID func)
-	: pHookFunc(func), ppOrigFunc(nullptr)
+ManualHook::ManualHook(const char* funcName, LPVOID func) : pHookFunc(func), ppOrigFunc(nullptr)
 {
 	const int iFuncNameStrlen = strlen(funcName);
 	pFuncName = new char[iFuncNameStrlen];
 	memcpy(pFuncName, funcName, iFuncNameStrlen);
 }
 
-ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) 
-	: pHookFunc(func), ppOrigFunc(orig)
+ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) : pHookFunc(func), ppOrigFunc(orig)
 {
 	const int iFuncNameStrlen = strlen(funcName);
 	pFuncName = new char[iFuncNameStrlen];
@@ -182,8 +180,7 @@ void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFun
 		spdlog::error("MH_CreateHook failed for function {}", pStrippedFuncName);
 }
 
-AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA,
-LPSTR, WINAPI, ())
+AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA, LPSTR, WINAPI, ())
 {
 	static char* cmdlineModified;
 	static char* cmdlineOrg;
@@ -352,9 +349,8 @@ void CallAllPendingDLLLoadCallbacks()
 	}
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, 
-HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
-	{
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+{
 	HMODULE moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
 	if (moduleAddress)
@@ -363,9 +359,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 	return moduleAddress;
 }
 
-
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, 
-HMODULE, WINAPI, (LPCSTR lpLibFileName))
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, HMODULE, WINAPI, (LPCSTR lpLibFileName))
 {
 	HMODULE moduleAddress = _LoadLibraryA(lpLibFileName);
 
@@ -375,8 +369,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName))
 	return moduleAddress;
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, 
-HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 {
 	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
@@ -386,8 +379,7 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 	return moduleAddress;
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW, 
-HMODULE, WINAPI, (LPCWSTR lpLibFileName))
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW, HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 {
 	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 

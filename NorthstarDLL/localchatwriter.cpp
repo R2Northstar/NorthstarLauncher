@@ -218,8 +218,7 @@ class AnsiEscapeParser
 			unsigned char blue = code % 6;
 			unsigned char green = ((code - blue) / 6) % 6;
 			unsigned char red = (code - blue - (green * 6)) / 36;
-			m_writer->InsertColorChange(
-				Color {(unsigned char)(red * 51), (unsigned char)(green * 51), (unsigned char)(blue * 51), 255});
+			m_writer->InsertColorChange(Color {(unsigned char)(red * 51), (unsigned char)(green * 51), (unsigned char)(blue * 51), 255});
 		}
 		else if (val < UCHAR_MAX)
 		{

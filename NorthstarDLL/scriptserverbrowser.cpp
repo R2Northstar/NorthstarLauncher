@@ -261,7 +261,8 @@ SQRESULT SQ_GetServerRequiredModName(HSquirrelVM* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Name.c_str());
+	g_pSquirrel<ScriptContext::UI>->pushstring(
+		sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Name.c_str());
 	return SQRESULT_NOTNULL;
 }
 
@@ -295,7 +296,8 @@ SQRESULT SQ_GetServerRequiredModVersion(HSquirrelVM* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<ScriptContext::UI>->pushstring(sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Version.c_str());
+	g_pSquirrel<ScriptContext::UI>->pushstring(
+		sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Version.c_str());
 	return SQRESULT_NOTNULL;
 }
 
@@ -421,7 +423,8 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, (
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSIsMasterServerAuthenticated", "", "", SQ_IsMasterServerAuthenticated);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSRequestServerList", "", "", SQ_RequestServerList);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSIsRequestingServerList", "", "", SQ_IsRequestingServerList);
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSMasterServerConnectionSuccessful", "", "", SQ_MasterServerConnectionSuccessful);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
+		"bool", "NSMasterServerConnectionSuccessful", "", "", SQ_MasterServerConnectionSuccessful);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("int", "NSGetServerCount", "", "", SQ_GetServerCount);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSClearRecievedServerList", "", "", SQ_ClearRecievedServerList);
 
@@ -430,10 +433,13 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, (
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("string", "NSGetServerMap", "int serverIndex", "", SQ_GetServerMap);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("string", "NSGetServerPlaylist", "int serverIndex", "", SQ_GetServerPlaylist);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("int", "NSGetServerPlayerCount", "int serverIndex", "", SQ_GetServerPlayerCount);
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("int", "NSGetServerMaxPlayerCount", "int serverIndex", "", SQ_GetServerMaxPlayerCount);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
+		"int", "NSGetServerMaxPlayerCount", "int serverIndex", "", SQ_GetServerMaxPlayerCount);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("string", "NSGetServerID", "int serverIndex", "", SQ_GetServerID);
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSServerRequiresPassword", "int serverIndex", "", SQ_ServerRequiresPassword);
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("int", "NSGetServerRequiredModsCount", "int serverIndex", "", SQ_GetServerRequiredModsCount);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
+		"bool", "NSServerRequiresPassword", "int serverIndex", "", SQ_ServerRequiresPassword);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
+		"int", "NSGetServerRequiredModsCount", "int serverIndex", "", SQ_GetServerRequiredModsCount);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 		"string", "NSGetServerRequiredModName", "int serverIndex, int modIndex", "", SQ_GetServerRequiredModName);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(

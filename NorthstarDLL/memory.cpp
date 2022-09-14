@@ -279,7 +279,7 @@ MemoryAddress CModule::FindPattern(const uint8_t* pPattern, const char* pMask)
 			}
 		}
 
-		CONTINUE:;
+	CONTINUE:;
 	}
 
 	return MemoryAddress();

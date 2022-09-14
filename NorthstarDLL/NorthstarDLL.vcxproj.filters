@@ -1470,9 +1470,6 @@
     <ClInclude Include="tier0.h">
       <Filter>Header Files\Game Functions</Filter>
     </ClInclude>
-    <ClInclude Include="sigscanning.h">
-      <Filter>Header Files\Hooks</Filter>
-    </ClInclude>
     <ClInclude Include="rpakfilesystem.h">
       <Filter>Header Files\Filesystem</Filter>
     </ClInclude>

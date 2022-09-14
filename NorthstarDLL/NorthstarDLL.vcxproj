@@ -553,7 +553,6 @@
     <ClInclude Include="scriptsrson.h" />
     <ClInclude Include="serverauthentication.h" />
     <ClInclude Include="serverpresence.h" />
-    <ClInclude Include="sigscanning.h" />
     <ClInclude Include="sourceconsole.h" />
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />

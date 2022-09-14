@@ -35,9 +35,10 @@ void(__fastcall* MessageWriteString)(const char* sz);
 void(__fastcall* MessageWriteBool)(bool bValue);
 
 bool bShouldCallSayTextHook = false;
-
+// clang-format off
 AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessage, server.dll + 0x1595C0,
-void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
+void, __fastcall, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
+// clang-format on
 {
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
 	// To allow bypassing the hook, isSkippingHook can be set.
@@ -63,7 +64,7 @@ void,, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, boo
 		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
 }
 
-void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam)
+void ChatSendMessage(unsigned int playerIndex, const char* text, bool isTeam)
 {
 	bShouldCallSayTextHook = true;
 	CServerGameDLL__OnReceivedSayTextMessage(
@@ -71,7 +72,7 @@ void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam)
 		// Ensure the first bit isn't set, since this indicates a custom message
 		(playerIndex + 1) & CUSTOM_MESSAGE_INDEX_MASK,
 		text,
-		isteam);
+		isTeam);
 }
 
 void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* text, bool isTeam, bool isDead, CustomMessageType messageType)
@@ -156,7 +157,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule mod
 {
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
-	CServerGameDLL__OnReceivedSayTextMessage = module.Offset(0x1595C0).As<void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int)>();
+	CServerGameDLL__OnReceivedSayTextMessage =
+		module.Offset(0x1595C0).As<void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int)>();
 	CRecipientFilter__Construct = module.Offset(0x1E9440).As<void(__fastcall*)(CRecipientFilter*)>();
 	CRecipientFilter__Destruct = module.Offset(0x1E9700).As<void(__fastcall*)(CRecipientFilter*)>();
 	CRecipientFilter__AddAllPlayers = module.Offset(0x1E9940).As<void(__fastcall*)(CRecipientFilter*)>();
@@ -170,7 +172,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule mod
 	MessageWriteBool = module.Offset(0x158A00).As<void(__fastcall*)(bool)>();
 
 	// Chat sending functions
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
+	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
+		"void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
 	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
 		"void",
 		"NSBroadcastMessage",

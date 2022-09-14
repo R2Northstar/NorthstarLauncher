@@ -19,7 +19,7 @@ const uint64_t USERDATA_TYPE_DATATABLE_CUSTOM = 0xFFFCFFFC12345678;
 enum class DatatableType : int
 {
 	BOOL = 0,
-	INT, 
+	INT,
 	FLOAT,
 	VECTOR,
 	STRING,
@@ -123,7 +123,7 @@ template <ScriptContext context> SQRESULT SQ_GetDatatable(HSquirrelVM* sqvm)
 
 			return SQRESULT_NOTNULL;
 		}
-		
+
 		// check files on disk
 		// we don't use .rpak as the extension for on-disk datatables, so we need to replace .rpak with .csv in the filename we're reading
 		fs::path diskAssetPath("scripts");
@@ -154,9 +154,9 @@ template <ScriptContext context> SQRESULT SQ_GetDatatable(HSquirrelVM* sqvm)
 			memcpy(csv.m_pDataBuf, &sTableCSV[0], csv.m_nDataBufSize);
 
 			// parse the csv
-			// csvs are essentially comma and newline-deliniated sets of strings for parsing, only thing we need to worry about is quoted entries
-			// when we parse an element of the csv, rather than allocating an entry for it, we just convert that element to a null-terminated string
-			// i.e., store the ptr to the first char of it, then make the comma that delinates it a nullchar
+			// csvs are essentially comma and newline-deliniated sets of strings for parsing, only thing we need to worry about is quoted
+			// entries when we parse an element of the csv, rather than allocating an entry for it, we just convert that element to a
+			// null-terminated string i.e., store the ptr to the first char of it, then make the comma that delinates it a nullchar
 
 			bool bHasColumns = false;
 			bool bInQuotes = false;
@@ -172,7 +172,7 @@ template <ScriptContext context> SQRESULT SQ_GetDatatable(HSquirrelVM* sqvm)
 					if (!pElemEnd)
 						pElemEnd = csv.m_pDataBuf + i;
 
-					continue; // next iteration can handle the \n	
+					continue; // next iteration can handle the \n
 				}
 
 				// newline, end of a row
@@ -184,7 +184,7 @@ template <ScriptContext context> SQRESULT SQ_GetDatatable(HSquirrelVM* sqvm)
 						g_pSquirrel<context>->raiseerror(sqvm, "Unexpected \\n in string");
 						return SQRESULT_ERROR;
 					}
-					
+
 					// push last entry to current row
 					if (pElemEnd)
 						*pElemEnd = '\0';
@@ -283,7 +283,7 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableColumnByName(HSquirrelV
 
 	CSVData* csv = *pData;
 	const char* pColumnName = g_pSquirrel<context>->getstring(sqvm, 2);
-	
+
 	for (int i = 0; i < csv->columns.size(); i++)
 	{
 		if (!strcmp(csv->columns[i], pColumnName))
@@ -464,7 +464,10 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableVector(HSquirrelVM* sqv
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size()).c_str());
+			sqvm,
+			fmt::format(
+				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+				.c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -621,10 +624,10 @@ template <ScriptContext context> SQRESULT SQ_GetDataTableRowGreaterThanOrEqualTo
 	{
 		if (nIntVal >= std::stoi(csv->dataPointers[i][nCol]))
 		{
-		spdlog::info("datatable not loaded");
-		g_pSquirrel<context>->pushinteger(sqvm, 1);
-		return SQRESULT_NOTNULL;
-	}
+			spdlog::info("datatable not loaded");
+			g_pSquirrel<context>->pushinteger(sqvm, 1);
+			return SQRESULT_NOTNULL;
+		}
 	}
 
 	g_pSquirrel<context>->pushinteger(sqvm, -1);
@@ -883,7 +886,7 @@ void ConCommand_dump_datatables(const CCommand& args)
 		DumpDatatable(datatable);
 }
 
-template <ScriptContext context> void RegisterDataTableFunctions() 
+template <ScriptContext context> void RegisterDataTableFunctions()
 {
 	g_pSquirrel<context>->AddFuncOverride("GetDataTable", SQ_GetDatatable<context>);
 	g_pSquirrel<context>->AddFuncOverride("GetDataTableColumnByName", SQ_GetDataTableColumnByName<context>);
@@ -920,11 +923,11 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CMod
 	RegisterDataTableFunctions<ScriptContext::CLIENT>();
 	RegisterDataTableFunctions<ScriptContext::UI>();
 
-	SQ_GetDatatableInternal<ScriptContext::CLIENT> = module.Offset(0x1C9070).As<Datatable*(*)(HSquirrelVM*)>();
+	SQ_GetDatatableInternal<ScriptContext::CLIENT> = module.Offset(0x1C9070).As<Datatable* (*)(HSquirrelVM*)>();
 	SQ_GetDatatableInternal<ScriptContext::UI> = SQ_GetDatatableInternal<ScriptContext::CLIENT>;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", SharedScriptDataTables, ConVar, (CModule module)) 
+ON_DLL_LOAD_RELIESON("engine.dll", SharedScriptDataTables, ConVar, (CModule module))
 {
 	Cvar_ns_prefer_datatable_from_disk = new ConVar(
 		"ns_prefer_datatable_from_disk",

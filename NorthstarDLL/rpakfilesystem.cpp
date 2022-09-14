@@ -29,7 +29,9 @@ int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSo
 	int nHandle = g_pakLoadApi->LoadPakAsync(pPath, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
 
 	// set the load source of the pak we just loaded
-	GetPakInfo(nHandle)->m_nLoadSource = nLoadSource;
+	if (nHandle != -1)
+		GetPakInfo(nHandle)->m_nLoadSource = nLoadSource;
+
 	return nHandle;
 }
 
@@ -173,7 +175,10 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-HOOK(LoadPakAsyncHook, LoadPakAsync, int, , (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
+// clang-format off
+HOOK(LoadPakAsyncHook, LoadPakAsync,
+int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
+// clang-format on
 {
 	HandlePakAliases(&pPath);
 
@@ -187,7 +192,8 @@ HOOK(LoadPakAsyncHook, LoadPakAsync, int, , (char* pPath, void* unknownSingleton
 	static bool bShouldLoadPaks = true;
 	if (bShouldLoadPaks)
 	{
-		// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by LoadCustomMapPaks
+		// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by
+		// LoadCustomMapPaks
 		std::string originalPath(pPath);
 
 		// disable preloading while we're doing this
@@ -200,7 +206,8 @@ HOOK(LoadPakAsyncHook, LoadPakAsync, int, , (char* pPath, void* unknownSingleton
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
-		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") || strncmp(&originalPath[0], "common", 6))) // dedicated only needs common and common_mp
+		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") ||
+									strncmp(&originalPath[0], "common", 6))) // dedicated only needs common and common_mp
 		{
 			if (bNeedToFreePakName)
 				delete[] pPath;
@@ -223,8 +230,10 @@ HOOK(LoadPakAsyncHook, LoadPakAsync, int, , (char* pPath, void* unknownSingleton
 	return iPakHandle;
 }
 
+// clang-format off
 HOOK(UnloadPakHook, UnloadPak,
-void*,, (int nPakHandle, void* pCallback))
+void*, __fastcall, (int nPakHandle, void* pCallback))
+// clang-format on
 {
 	// stop tracking the pak
 	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);
@@ -242,8 +251,11 @@ void*,, (int nPakHandle, void* pCallback))
 }
 
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
+// tbh this actually might be for memory mapped files or something, would make sense i think
+// clang-format off
 HOOK(ReadFileAsyncHook, ReadFileAsync, 
-void*, , (const char* pPath, void* pCallback))
+void*, __fastcall, (const char* pPath, void* pCallback))
+// clang-format on
 {
 	fs::path path(pPath);
 	char* allocatedNewPath = nullptr;

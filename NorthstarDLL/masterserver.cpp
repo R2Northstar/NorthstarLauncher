@@ -129,7 +129,8 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 				{
 					strncpy_s(
 						m_sOwnClientAuthToken,
-						sizeof(m_sOwnClientAuthToken), originAuthInfo["token"].GetString(),
+						sizeof(m_sOwnClientAuthToken),
+						originAuthInfo["token"].GetString(),
 						sizeof(m_sOwnClientAuthToken) - 1);
 					spdlog::info("Northstar origin authentication completed successfully!");
 				}
@@ -531,7 +532,8 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 
 				std::lock_guard<std::mutex> guard(g_pServerAuthentication->m_AuthDataMutex);
 				g_pServerAuthentication->m_RemoteAuthenticationData.clear();
-				g_pServerAuthentication->m_RemoteAuthenticationData.insert(std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
+				g_pServerAuthentication->m_RemoteAuthenticationData.insert(
+					std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
 
 				m_bSuccessfullyAuthenticatedWithGameServer = true;
 			}
@@ -752,159 +754,168 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 {
 	const int MAX_REGISTRATION_ATTEMPTS = 5;
 
-	double m_bShouldTryRegisterServer;
+	bool m_bShouldTryRegisterServer;
+	bool m_bHasAddServerRequest;
 	int m_nNumRegistrationAttempts;
 
 	void CreatePresence(const ServerPresence* pServerPresence) override
 	{
 		m_bShouldTryRegisterServer = true;
+		m_bHasAddServerRequest = false;
 		m_nNumRegistrationAttempts = 0;
 	}
 
 	void ReportPresence(const ServerPresence* pServerPresence) override
 	{
 		// make a copy of presence for multithreading purposes
-
 		ServerPresence threadedPresence(pServerPresence);
 
-		if (!*g_pMasterServerManager->m_sOwnServerId || m_bShouldTryRegisterServer)
+		if (!*g_pMasterServerManager->m_sOwnServerId)
 		{
-			// add server
-			std::thread addServerThread(
-				[this, threadedPresence]
-				{
-					g_pMasterServerManager->m_sOwnServerId[0] = 0;
-					g_pMasterServerManager->m_sOwnServerAuthToken[0] = 0;
-
-					CURL* curl = curl_easy_init();
-					SetCommonHttpClientOptions(curl);
-
-					std::string readBuffer;
-					curl_easy_setopt(curl, CURLOPT_POST, 1L);
-					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-					curl_mime* mime = curl_mime_init(curl);
-					curl_mimepart* part = curl_mime_addpart(mime);
-
-					curl_mime_data(
-						part, g_pMasterServerManager->m_sOwnModInfoJson.c_str(), g_pMasterServerManager->m_sOwnModInfoJson.size());
-					curl_mime_name(part, "modinfo");
-					curl_mime_filename(part, "modinfo.json");
-					curl_mime_type(part, "application/json");
-
-					curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-
-					// format every paramter because computers hate me
+			if (m_bShouldTryRegisterServer && !m_bHasAddServerRequest)
+			{
+				// add server
+				std::thread addServerThread(
+					[this, threadedPresence]
 					{
-						char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
-						char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
-						char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
-						char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
-						char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
+						g_pMasterServerManager->m_sOwnServerId[0] = 0;
+						g_pMasterServerManager->m_sOwnServerAuthToken[0] = 0;
 
-						curl_easy_setopt(
-							curl,
-							CURLOPT_URL,
-							fmt::format(
-								"{}/server/"
-								"add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
-								Cvar_ns_masterserver_hostname->GetString(),
-								threadedPresence.m_iPort,
-								threadedPresence.m_iAuthPort,
-								nameEscaped,
-								descEscaped,
-								mapEscaped,
-								playlistEscaped,
-								threadedPresence.m_iMaxPlayers,
-								passwordEscaped)
-								.c_str());
+						CURL* curl = curl_easy_init();
+						SetCommonHttpClientOptions(curl);
 
-						curl_free(nameEscaped);
-						curl_free(descEscaped);
-						curl_free(mapEscaped);
-						curl_free(playlistEscaped);
-						curl_free(passwordEscaped);
-					}
+						std::string readBuffer;
+						curl_easy_setopt(curl, CURLOPT_POST, 1L);
+						curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+						curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-					CURLcode result = curl_easy_perform(curl);
+						curl_mime* mime = curl_mime_init(curl);
+						curl_mimepart* part = curl_mime_addpart(mime);
 
-					if (result == CURLcode::CURLE_OK)
-					{
-						g_pMasterServerManager->m_bSuccessfullyConnected = true;
+						curl_mime_data(
+							part, g_pMasterServerManager->m_sOwnModInfoJson.c_str(), g_pMasterServerManager->m_sOwnModInfoJson.size());
+						curl_mime_name(part, "modinfo");
+						curl_mime_filename(part, "modinfo.json");
+						curl_mime_type(part, "application/json");
 
-						rapidjson_document serverAddedJson;
-						serverAddedJson.Parse(readBuffer.c_str());
+						curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 
-						if (serverAddedJson.HasParseError())
+						// format every paramter because computers hate me
 						{
-							spdlog::error(
-								"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-								rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
-							goto REQUEST_END_CLEANUP;
+							char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
+							char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
+							char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
+							char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
+							char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
+
+							curl_easy_setopt(
+								curl,
+								CURLOPT_URL,
+								fmt::format(
+									"{}/server/"
+									"add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
+									Cvar_ns_masterserver_hostname->GetString(),
+									threadedPresence.m_iPort,
+									threadedPresence.m_iAuthPort,
+									nameEscaped,
+									descEscaped,
+									mapEscaped,
+									playlistEscaped,
+									threadedPresence.m_iMaxPlayers,
+									passwordEscaped)
+									.c_str());
+
+							curl_free(nameEscaped);
+							curl_free(descEscaped);
+							curl_free(mapEscaped);
+							curl_free(playlistEscaped);
+							curl_free(passwordEscaped);
 						}
 
-						if (!serverAddedJson.IsObject())
-						{
-							spdlog::error("Failed reading masterserver authentication response: root object is not an object");
-							goto REQUEST_END_CLEANUP;
-						}
+						CURLcode result = curl_easy_perform(curl);
 
-						if (serverAddedJson.HasMember("error"))
+						if (result == CURLcode::CURLE_OK)
 						{
-							spdlog::error("Failed reading masterserver response: got fastify error response");
-							spdlog::error(readBuffer);
+							g_pMasterServerManager->m_bSuccessfullyConnected = true;
 
-							if (serverAddedJson["error"].HasMember("enum") && !strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER"))
+							rapidjson_document serverAddedJson;
+							serverAddedJson.Parse(readBuffer.c_str());
+
+							if (serverAddedJson.HasParseError())
 							{
-								if (++m_nNumRegistrationAttempts == MAX_REGISTRATION_ATTEMPTS)
-									m_bShouldTryRegisterServer = false;
-
-								goto REQUEST_END_CLEANUP_RETRY;
+								spdlog::error(
+									"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+									rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+								goto REQUEST_END_CLEANUP;
 							}
 
-							goto REQUEST_END_CLEANUP;
-						}
+							if (!serverAddedJson.IsObject())
+							{
+								spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+								goto REQUEST_END_CLEANUP;
+							}
 
-						if (!serverAddedJson["success"].IsTrue())
+							if (serverAddedJson.HasMember("error"))
+							{
+								spdlog::error("Failed reading masterserver response: got fastify error response");
+								spdlog::error(readBuffer);
+
+								if (serverAddedJson["error"].HasMember("enum") &&
+									!strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER"))
+								{
+									if (++m_nNumRegistrationAttempts == MAX_REGISTRATION_ATTEMPTS)
+										m_bShouldTryRegisterServer = false;
+
+									goto REQUEST_END_CLEANUP_RETRY;
+								}
+
+								goto REQUEST_END_CLEANUP;
+							}
+
+							if (!serverAddedJson["success"].IsTrue())
+							{
+								spdlog::error("Adding server to masterserver failed: \"success\" is not true");
+								goto REQUEST_END_CLEANUP;
+							}
+
+							if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
+								!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
+							{
+								spdlog::error("Failed reading masterserver response: malformed json object");
+								goto REQUEST_END_CLEANUP;
+							}
+
+							strncpy_s(
+								g_pMasterServerManager->m_sOwnServerId,
+								sizeof(g_pMasterServerManager->m_sOwnServerId),
+								serverAddedJson["id"].GetString(),
+								sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+
+							strncpy_s(
+								g_pMasterServerManager->m_sOwnServerAuthToken,
+								sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
+								serverAddedJson["serverAuthToken"].GetString(),
+								sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
+						}
+						else
 						{
-							spdlog::error("Adding server to masterserver failed: \"success\" is not true");
-							goto REQUEST_END_CLEANUP;
+							spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
+							g_pMasterServerManager->m_bSuccessfullyConnected = false;
 						}
 
-						if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
-							!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
-						{
-							spdlog::error("Failed reading masterserver response: malformed json object");
-							goto REQUEST_END_CLEANUP;
-						}
+					REQUEST_END_CLEANUP:
+						m_bShouldTryRegisterServer = false;
 
-						strncpy_s(
-							g_pMasterServerManager->m_sOwnServerId,
-							sizeof(g_pMasterServerManager->m_sOwnServerId),
-							serverAddedJson["id"].GetString(),
-							sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+					REQUEST_END_CLEANUP_RETRY:
+						m_bHasAddServerRequest = false;
 
-						strncpy_s(
-							g_pMasterServerManager->m_sOwnServerAuthToken,
-							sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
-							serverAddedJson["serverAuthToken"].GetString(),
-							sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
-					}
-					else
-					{
-						spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
-						g_pMasterServerManager->m_bSuccessfullyConnected = false;
-					}
+						curl_easy_cleanup(curl);
+						curl_mime_free(mime);
+					});
 
-				REQUEST_END_CLEANUP:
-					m_bShouldTryRegisterServer = false;
-
-				REQUEST_END_CLEANUP_RETRY:
-					curl_easy_cleanup(curl);
-					curl_mime_free(mime);
-				});
-			addServerThread.detach();
+				m_bHasAddServerRequest = true;
+				addServerThread.detach();
+			}
 		}
 		else
 		{

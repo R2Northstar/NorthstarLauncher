@@ -34,10 +34,7 @@ enum class eSQReturnType
 };
 
 const std::map<SQRESULT, const char*> PrintSQRESULT = {
-	{SQRESULT_ERROR, "SQRESULT_ERROR"},
-	{SQRESULT_NULL, "SQRESULT_NULL"},
-	{SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}
-};
+	{SQRESULT_ERROR, "SQRESULT_ERROR"}, {SQRESULT_NULL, "SQRESULT_NULL"}, {SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}};
 
 struct CompileBufferState
 {
@@ -52,7 +49,6 @@ struct CompileBufferState
 		bufferAgain = code.c_str();
 	}
 };
-
 
 struct SQFuncRegistration
 {
@@ -94,7 +90,8 @@ const char* SQTypeNameFromID(const int iTypeId);
 typedef int64_t (*RegisterSquirrelFuncType)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
 typedef void (*sq_defconstType)(CSquirrelVM* sqvm, const SQChar* name, int value);
 
-typedef SQRESULT (*sq_compilebufferType)(HSquirrelVM* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, SQBool bShouldThrowError);
+typedef SQRESULT (*sq_compilebufferType)(
+	HSquirrelVM* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, SQBool bShouldThrowError);
 typedef SQRESULT (*sq_callType)(HSquirrelVM* sqvm, SQInteger iArgs, SQBool bShouldReturn, SQBool bThrowError);
 typedef SQInteger (*sq_raiseerrorType)(HSquirrelVM* sqvm, const SQChar* pError);
 
@@ -114,7 +111,6 @@ typedef void (*sq_pushfloatType)(HSquirrelVM* sqvm, SQFloat f);
 typedef void (*sq_pushboolType)(HSquirrelVM* sqvm, SQBool b);
 typedef void (*sq_pushassetType)(HSquirrelVM* sqvm, const SQChar* str, SQInteger iLength);
 typedef void (*sq_pushvectorType)(HSquirrelVM* sqvm, const SQFloat* pVec);
-
 
 // sq stack get funcs
 typedef const SQChar* (*sq_getstringType)(HSquirrelVM* sqvm, SQInteger iStackpos);
@@ -142,7 +138,7 @@ template <ScriptContext context> class SquirrelManager
 
 	bool m_bFatalCompilationErrors = false;
 
-	#pragma region SQVM funcs
+#pragma region SQVM funcs
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
 	sq_defconstType __sq_defconst;
 
@@ -187,7 +183,7 @@ template <ScriptContext context> class SquirrelManager
 	SQRESULT setupfunc(const SQChar* funcname);
 	void AddFuncOverride(std::string name, SQFunction func);
 
-	#pragma region SQVM func wrappers
+#pragma region SQVM func wrappers
 	inline void defconst(CSquirrelVM* sqvm, const SQChar* pName, int nValue)
 	{
 		__sq_defconst(sqvm, pName, nValue);
@@ -259,7 +255,7 @@ template <ScriptContext context> class SquirrelManager
 		__sq_pushasset(sqvm, sVal, length);
 	}
 
-	inline void pushvector(HSquirrelVM* sqvm, const Vector3 pVal) 
+	inline void pushvector(HSquirrelVM* sqvm, const Vector3 pVal)
 	{
 		__sq_pushvector(sqvm, *(float**)&pVal);
 	}

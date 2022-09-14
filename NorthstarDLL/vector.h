@@ -26,7 +26,7 @@ union Vector3
 	}
 
 	// todo: more operators maybe
-	bool operator==(const Vector3& other) 
+	bool operator==(const Vector3& other)
 	{
 		return x == other.x && y == other.y && z == other.z;
 	}

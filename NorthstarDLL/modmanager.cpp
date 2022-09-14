@@ -401,13 +401,12 @@ void ModManager::LoadMods()
 					std::string formattedPath = file.path().filename().string();
 
 					// this really fucking sucks but it'll work
-					std::string vpkName =
-						(file.path().parent_path() / formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3)).string();
+					std::string vpkName = formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3);
 
 					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
 					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
 														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
-					modVpk.m_sVpkPath = vpkName;
+					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
 
 					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
 						(*R2::g_pFilesystem)->m_vtable->MountVPK(*R2::g_pFilesystem, vpkName.c_str());
@@ -484,7 +483,8 @@ void ModManager::LoadMods()
 			{
 				if (fs::is_regular_file(file))
 				{
-					std::string kvStr = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
+					std::string kvStr =
+						g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
 					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
 				}
 			}

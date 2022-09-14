@@ -7,6 +7,13 @@ namespace R2
 	class CBaseEntity;
 	extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
 
-	class CBasePlayer;
+#pragma pack(push, 1)
+	struct CBasePlayer
+	{
+		char pad[88];
+		int m_nPlayerIndex;
+	};
+#pragma pack(pop)
+
 	extern CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
 } // namespace R2

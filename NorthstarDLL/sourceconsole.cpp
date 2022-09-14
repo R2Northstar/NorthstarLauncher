@@ -32,14 +32,15 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 	spdlog::memory_buf_t formatted;
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-	(*g_pSourceGameConsole)
-		->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[msg.level], fmt::to_string(formatted).c_str());
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[msg.level], fmt::to_string(formatted).c_str());
 }
 
 void SourceConsoleSink::flush_() {}
 
+// clang-format off
 HOOK(OnCommandSubmittedHook, OnCommandSubmitted, 
-void,, (CConsoleDialog* consoleDialog, const char* pCommand))
+void, __fastcall, (CConsoleDialog* consoleDialog, const char* pCommand))
+// clang-format on
 {
 	consoleDialog->m_pConsolePanel->Print("] ");
 	consoleDialog->m_pConsolePanel->Print(pCommand);

@@ -74,6 +74,7 @@ std::string UnescapeUnicode(const std::string& str)
 
 ServerPresenceManager::ServerPresenceManager()
 {
+	// clang-format off
 	// register convars
 	Cvar_ns_server_presence_update_rate = new ConVar(
 		"ns_server_presence_update_rate", "5000", FCVAR_GAMEDLL, "How often we update our server's presence on server lists in ms");
@@ -95,6 +96,7 @@ ServerPresenceManager::ServerPresenceManager()
 
 	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver");
 	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver, when started in singleplayer");
+	// clang-format on
 }
 
 void ServerPresenceManager::AddPresenceReporter(ServerPresenceReporter* reporter)
@@ -132,7 +134,7 @@ void ServerPresenceManager::DestroyPresence()
 
 void ServerPresenceManager::RunFrame(double flCurrentTime)
 {
-	if (!m_bHasPresence && Cvar_ns_report_server_to_masterserver->GetBool()) // don't run until we actually have server presence
+	if (!m_bHasPresence || !Cvar_ns_report_server_to_masterserver->GetBool()) // don't run until we actually have server presence
 		return;
 
 	// don't run if we're sp and don't want to report sp
@@ -202,7 +204,11 @@ void ServerPresenceManager::SetMap(const char* pMapName, bool isInitialising)
 void ServerPresenceManager::SetPlaylist(const char* pPlaylistName)
 {
 	// update playlist
-	strncpy_s(m_ServerPresence.m_PlaylistName, sizeof(m_ServerPresence.m_PlaylistName), pPlaylistName, sizeof(m_ServerPresence.m_PlaylistName) - 1);
+	strncpy_s(
+		m_ServerPresence.m_PlaylistName,
+		sizeof(m_ServerPresence.m_PlaylistName),
+		pPlaylistName,
+		sizeof(m_ServerPresence.m_PlaylistName) - 1);
 
 	// update maxplayers
 	const char* pMaxPlayers = R2::GetCurrentPlaylistVar("max_players", true);
