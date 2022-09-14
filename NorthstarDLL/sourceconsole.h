@@ -99,8 +99,7 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{spdlog::level::warn, SourceColor(255, 255, 0, 255)},
 		{spdlog::level::err, SourceColor(255, 0, 0, 255)},
 		{spdlog::level::critical, SourceColor(255, 0, 0, 255)},
-		{spdlog::level::off, SourceColor(0, 0, 0, 0)}
-	};
+		{spdlog::level::off, SourceColor(0, 0, 0, 0)}};
 
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;
