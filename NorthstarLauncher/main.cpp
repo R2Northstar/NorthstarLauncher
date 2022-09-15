@@ -334,6 +334,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	SetCurrentDirectoryW(exePath);
+
 	bool noOriginStartup = false;
 	bool dedicated = false;
 	bool nostubs = false;
@@ -352,6 +354,11 @@ int main(int argc, char* argv[])
 	{
 		EnsureOriginStarted();
 	}
+
+	// ensure no LSX error
+	GetEnvironmentVariableA("EAConnectionId", nullptr, 0);
+	if (GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+		(void)_putenv("EAConnectionId=Origin.OFR.50.0001452");
 
 	if (dedicated && !nostubs)
 	{
