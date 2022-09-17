@@ -11,54 +11,76 @@ using namespace rapidjson;
 Document verifiedModsJson;
 
 void _FetchVerifiedModsList() {
-	CURL* curl = curl_easy_init();
+	spdlog::info("Requesting verified mods list from {}", Cvar_ns_masterserver_hostname->GetString());
 
-	std::string readBuffer;
-	curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/verifiedmods", Cvar_ns_masterserver_hostname->GetString()).c_str());
-	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+	std::thread requestThread([]() {
+		CURL* curl = curl_easy_init();
 
-	CURLcode result = curl_easy_perform(curl);
+		std::string readBuffer;
+		curl_easy_setopt(curl, CURLOPT_URL, fmt::format("{}/client/verifiedmods", Cvar_ns_masterserver_hostname->GetString()).c_str());
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-	if (result == CURLcode::CURLE_OK)
-	{
-		verifiedModsJson.Parse(readBuffer.c_str());
+		verifiedModsJson.Parse("{\"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, \"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}}");
+		return;
 
-		if (verifiedModsJson.HasParseError())
+		// TODO fetch list from masterserver
+
+		CURLcode result = curl_easy_perform(curl);
+		spdlog::info(result);
+
+		if (result == CURLcode::CURLE_OK)
 		{
-			spdlog::error( "Failed reading masterserver verified mods response: encountered parse error." );
-			goto REQUEST_END_CLEANUP;
-		}
-		if (!verifiedModsJson.IsObject())
-		{
-			spdlog::error("Failed reading masterserver verified mods response: root object is not an object");
-			goto REQUEST_END_CLEANUP;
-		}
-		if (verifiedModsJson.HasMember("error"))
-		{
-			spdlog::error("Failed reading masterserver response: got fastify error response");
-			spdlog::error(readBuffer);
-			if (verifiedModsJson["error"].HasMember("enum"))
-				spdlog::error( std::string(verifiedModsJson["error"]["enum"].GetString()) );
-			else
-				spdlog::error(std::string("No error message provided"));
-			goto REQUEST_END_CLEANUP;
-		}
-	}
-	else
-	{
-		spdlog::error("Failed requesting verified mods list: error {}", curl_easy_strerror(result));
-	}
+			spdlog::info("curl succeeded");
 
-	REQUEST_END_CLEANUP:
-		curl_easy_cleanup(curl);
+			verifiedModsJson.Parse(readBuffer.c_str());
+
+			if (verifiedModsJson.HasParseError())
+			{
+				spdlog::error("Failed reading masterserver verified mods response: encountered parse error.");
+				goto REQUEST_END_CLEANUP;
+			}
+			if (!verifiedModsJson.IsObject())
+			{
+				spdlog::error("Failed reading masterserver verified mods response: root object is not an object");
+				goto REQUEST_END_CLEANUP;
+			}
+			if (verifiedModsJson.HasMember("error"))
+			{
+				spdlog::error("Failed reading masterserver response: got fastify error response");
+				spdlog::error(readBuffer);
+				if (verifiedModsJson["error"].HasMember("enum"))
+					spdlog::error(std::string(verifiedModsJson["error"]["enum"].GetString()));
+				else
+					spdlog::error(std::string("No error message provided"));
+				goto REQUEST_END_CLEANUP;
+			}
+		}
+		else
+		{
+			spdlog::error("Failed requesting verified mods list: error {}", curl_easy_strerror(result));
+		}
+
+		REQUEST_END_CLEANUP:
+			curl_easy_cleanup(curl);
+	});
+	requestThread.detach();
 }
 
 std::string GetVerifiedModsList() {
 	if (verifiedModsJson.IsNull())
 	{
 		_FetchVerifiedModsList();
+
+		while (verifiedModsJson.IsNull())
+		{
+			spdlog::info("Wait for verified mods list to arrive...");
+			Sleep(2000); // TODO do this asynchronously to avoid blocking the thread
+		}
+
+		spdlog::info("Verified mods list arrived.");
 	}
+
 	StringBuffer buffer;
 	Writer<StringBuffer> writer(buffer);
 	verifiedModsJson.Accept(writer);
