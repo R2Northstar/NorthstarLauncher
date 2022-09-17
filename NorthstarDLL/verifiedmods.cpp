@@ -87,12 +87,25 @@ std::string GetVerifiedModsList() {
 	return buffer.GetString();
 }
 
-void DownloadMod(char* dependencyString) {
+bool IsModVerified(char* modName, char* modVersion)
+{
+	// TODO log warning if not supported
+	// TODO log if name is supported, but not version
+
+	spdlog::info("Mod {} (version {}) is not verified, and thus couldn't be downloaded.", modName, modVersion);
+	return false;
+}
+
+void DownloadMod(char* modName, char* modVersion) {
+	if (!IsModVerified(modName, modVersion))
+		return;
+
 	// TODO check if mod is already present
 	// TODO check if mod is verified (throw if not)
 	// TODO download zip in temporary folder
 	// TODO move mod to mods/ folder
 }
+
 
 
 /**
@@ -107,6 +120,18 @@ SQRESULT SQ_GetVerifiedModsList(void* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+SQRESULT SQ_IsModVerified(void* sqvm)
+{
+	const SQChar* modName = ClientSq_getstring(sqvm, 1);
+	const SQChar* modVersion = ClientSq_getstring(sqvm, 2);
+
+	bool result = IsModVerified((char*)modName, (char*)modVersion);
+
+	ClientSq_pushbool(sqvm, result);
+	return SQRESULT_NOTNULL;
+}
+
 void InitialiseVerifiedModsScripts(HMODULE baseAddress) {
 	g_UISquirrelManager->AddFuncRegistration("string", "GetVerifiedModsList", "", "", SQ_GetVerifiedModsList);
+	g_UISquirrelManager->AddFuncRegistration("bool", "IsModVerified", "string modName, string modVersion", "", SQ_IsModVerified);
 }
