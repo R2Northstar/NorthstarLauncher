@@ -21,7 +21,7 @@ void _FetchVerifiedModsList() {
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-		verifiedModsJson.Parse("{\"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, \"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}}");
+		verifiedModsJson.Parse("{\"Dinorush's LTS Rebalance\" : {\"DependencyPrefix\" : \"Dinorush-LTSRebalance\", \"Versions\" : []}, \"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, \"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}}");
 		return;
 
 		// TODO fetch list from masterserver
@@ -87,12 +87,34 @@ std::string GetVerifiedModsList() {
 	return buffer.GetString();
 }
 
+/**
+* Checks if a mod is verified by controlling if its name matches a key in the verified mods JSON
+* document, and if its version is included in the JSON versions list.
+*/
 bool IsModVerified(char* modName, char* modVersion)
 {
-	// TODO log warning if not supported
-	// TODO log if name is supported, but not version
+	// 1. Mod is not verified if its name isn't a `verifiedModsJson` key.
+	if (!verifiedModsJson.HasMember(modName))
+	{
+		spdlog::info("Mod \"{}\" is not verified, and thus couldn't be downloaded.", modName);
+		return false;
+	}
 
-	spdlog::info("Mod {} (version {}) is not verified, and thus couldn't be downloaded.", modName, modVersion);
+	// 2. Check if mod version has been validated.
+	const Value& entry = verifiedModsJson[modName];
+	GenericArray versions = entry["Versions"].GetArray();
+
+	// Check versions in reverse order, since clients are more likely to ask for latest version.
+	for (rapidjson::Value::ConstValueIterator iterator = versions.End(); iterator != versions.Begin(); iterator--)
+	{
+		const rapidjson::Value& version = *iterator;
+		if (version.GetString() == modVersion)
+		{
+			return true;
+		}
+	}
+
+	spdlog::info("Required version {} for mod \"{}\" is not verified, and thus couldn't be downloaded.", modVersion, modName);
 	return false;
 }
 
