@@ -586,7 +586,7 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 			curl_mime* mime = curl_mime_init(curl);
 			curl_mimepart* part = curl_mime_addpart(mime);
 
-			curl_mime_data(part, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
+			curl_mime_data(part, m_sOwnModInfoJson.c_str(), m_sOwnModInfoJson.size());
 			curl_mime_name(part, "modinfo");
 			curl_mime_filename(part, "modinfo.json");
 			curl_mime_type(part, "application/json");
@@ -1247,7 +1247,7 @@ void MasterServerManager::WritePlayerPersistentData(char* playerId, char* pdata,
 
 			curl_mimepart* part2 = curl_mime_addpart(mime);
 
-			curl_mime_data(part2, m_ownModInfoJson.c_str(), m_ownModInfoJson.size());
+			curl_mime_data(part2, m_sOwnModInfoJson.c_str(), m_sOwnModInfoJson.size());
 			curl_mime_name(part2, "modinfo");
 			curl_mime_filename(part2, "modinfo.json");
 			curl_mime_type(part2, "application/json");
