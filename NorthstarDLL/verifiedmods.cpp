@@ -10,6 +10,14 @@ using namespace rapidjson;
 
 Document verifiedModsJson;
 
+// Test string used to test branch without masterserver
+const char* modsTestString =
+	"{"
+	"\"Dinorush's LTS Rebalance\" : {\"DependencyPrefix\" : \"Dinorush-LTSRebalance\", \"Versions\" : []}, "
+	"\"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, "
+	"\"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}"
+	"}";
+
 void _FetchVerifiedModsList() {
 	spdlog::info("Requesting verified mods list from {}", Cvar_ns_masterserver_hostname->GetString());
 
@@ -21,10 +29,9 @@ void _FetchVerifiedModsList() {
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-		verifiedModsJson.Parse("{\"Dinorush's LTS Rebalance\" : {\"DependencyPrefix\" : \"Dinorush-LTSRebalance\", \"Versions\" : []}, \"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, \"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}}");
-		return;
-
 		// TODO fetch list from masterserver
+		verifiedModsJson.Parse( modsTestString );
+		return;
 
 		CURLcode result = curl_easy_perform(curl);
 		spdlog::info(result);
