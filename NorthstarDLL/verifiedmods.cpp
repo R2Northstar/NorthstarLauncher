@@ -14,6 +14,7 @@ Document verifiedModsJson;
 const char* modsTestString =
 	"{"
 	"\"Dinorush's LTS Rebalance\" : {\"DependencyPrefix\" : \"Dinorush-LTSRebalance\", \"Versions\" : []}, "
+	"\"Dinorush.Brute4\" : {\"DependencyPrefix\" : \"Dinorush-Brute4\", \"Versions\" : [  \"1.5\", \"1.6\" ]}, "
 	"\"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, "
 	"\"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}"
 	"}";
@@ -111,11 +112,10 @@ bool IsModVerified(char* modName, char* modVersion)
 	const Value& entry = verifiedModsJson[modName];
 	GenericArray versions = entry["Versions"].GetArray();
 
-	// Check versions in reverse order, since clients are more likely to ask for latest version.
-	for (rapidjson::Value::ConstValueIterator iterator = versions.End(); iterator != versions.Begin(); iterator--)
+	for (rapidjson::Value::ConstValueIterator iterator = versions.Begin(); iterator != versions.End(); iterator++)
 	{
 		const rapidjson::Value& version = *iterator;
-		if (version.GetString() == modVersion)
+		if (strcmp(version.GetString(), modVersion))
 		{
 			return true;
 		}
