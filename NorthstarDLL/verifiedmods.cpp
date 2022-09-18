@@ -112,11 +112,14 @@ bool IsModVerified(char* modName, char* modVersion)
 	const Value& entry = verifiedModsJson[modName];
 	GenericArray versions = entry["Versions"].GetArray();
 
+	spdlog::info("There's an entry for mod \"{}\", now checking version...", modName);
+
 	for (rapidjson::Value::ConstValueIterator iterator = versions.Begin(); iterator != versions.End(); iterator++)
 	{
 		const rapidjson::Value& version = *iterator;
-		if (strcmp(version.GetString(), modVersion))
+		if (strcmp(version.GetString(), modVersion) == 0)
 		{
+			spdlog::info("Mod \"{}\" (version {}) is verified.", modName, modVersion);
 			return true;
 		}
 	}
