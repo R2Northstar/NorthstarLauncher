@@ -89,7 +89,7 @@
       <StackReserveSize>8000000</StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)..\..\"</Command>
+      <Command>IF EXIST "$(SolutionDir)..\..\Titanfall2.exe" del "$(SolutionDir)..\..\NorthstarLauncher.exe" &amp;&amp; copy /Y "$(TargetPath)" "$(SolutionDir)..\..\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
