@@ -213,7 +213,10 @@ HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 	if (!strncmp(lpLibFileName, "XInput1_3.dll", 14))
 	{
 		HMODULE moduleAddress = LoadLibraryExAOriginal("XInput9_1_0.dll", hFile, dwFlags);
-		if (moduleAddress) { CallLoadLibraryACallbacks(lpLibFileName, moduleAddress); }
+		if (moduleAddress)
+		{
+			CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
+		}
 		else
 		{
 			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
@@ -224,10 +227,12 @@ HMODULE LoadLibraryExAHook(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 	else
 	{
 		HMODULE moduleAddress = LoadLibraryExAOriginal(lpLibFileName, hFile, dwFlags);
-		if (moduleAddress) { CallLoadLibraryACallbacks(lpLibFileName, moduleAddress); }
+		if (moduleAddress)
+		{
+			CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
+		}
 		return moduleAddress;
 	}
-	
 }
 
 HMODULE LoadLibraryAHook(LPCSTR lpLibFileName)
