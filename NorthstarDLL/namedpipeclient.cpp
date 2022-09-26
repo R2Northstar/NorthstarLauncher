@@ -27,7 +27,7 @@ HANDLE GetNewPipeInstance()
 	HANDLE thisMatchPipe = INVALID_HANDLE_VALUE;
 	if (isGeneralConnected)
 	{
-		TCHAR chBuf[BUFF_SIZE]; // TODO: Length of general pipe ids + terminating zero
+		TCHAR chBuf[BUFF_SIZE]; // Server message should either be BUFF_SIZE or Length of general pipe ids + terminating zero
 		DWORD cbRead;
 		if (ReadFile(
 				generalPipe, // pipe handle
