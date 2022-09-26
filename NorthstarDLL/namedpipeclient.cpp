@@ -60,7 +60,7 @@ SQRESULT SQ_SendToNamedPipe(void* sqvm)
 {
 	try
 	{
-		if(Cvar_ns_enable_named_pipe->GetInt() && isConnected)
+		if (Cvar_ns_enable_named_pipe->GetInt() && isConnected)
 		{
 			SendMessageToPipe(ServerSq_getstring(sqvm, 1));
 		}
@@ -80,15 +80,16 @@ SQRESULT SQ_OpenNamedPipe(void* sqvm)
 	{
 		if (Cvar_ns_enable_named_pipe->GetInt())
 		{
-			if (!isConnected || hPipe == INVALID_HANDLE_VALUE) 
+			if (!isConnected || hPipe == INVALID_HANDLE_VALUE)
 			{
 				isConnected = false;
 				hPipe = GetNewPipeInstance();
-			} else
+			}
+			else
 			{
 				SendMessageToPipe(ServerSq_getstring(sqvm, 2));
 			}
-			
+
 			isConnected = hPipe != INVALID_HANDLE_VALUE;
 
 			if (isConnected)
@@ -118,7 +119,7 @@ SQRESULT SQ_ClosePipe(void* sqvm)
 		if (Cvar_ns_enable_named_pipe->GetInt() && isConnected)
 		{
 			SendMessageToPipe(ServerSq_getstring(sqvm, 1));
-			
+
 			CloseHandle(hPipe);
 			isConnected = false;
 		}
@@ -137,6 +138,7 @@ void InitialiseNamedPipeClient(HMODULE baseAddress)
 	Cvar_ns_enable_named_pipe =
 		new ConVar("ns_enable_named_pipe", "0", FCVAR_GAMEDLL, "Whether to start up a named pipe server on request from squirrel");
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendToNamedPipe", "string textToSend", "", SQ_SendToNamedPipe);
-	g_ServerSquirrelManager->AddFuncRegistration("void", "NSOpenNamedPipe", "string openingMessage, string closingMessageIfOpen", "", SQ_OpenNamedPipe);
+	g_ServerSquirrelManager->AddFuncRegistration(
+		"void", "NSOpenNamedPipe", "string openingMessage, string closingMessageIfOpen", "", SQ_OpenNamedPipe);
 	g_ServerSquirrelManager->AddFuncRegistration("void", "NSCloseNamedPipe", "string closingMessage", "", SQ_ClosePipe);
 }

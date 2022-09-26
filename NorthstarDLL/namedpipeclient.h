@@ -4,6 +4,6 @@
 
 extern ConVar* Cvar_ns_server_name;
 
-//bool shouldUseNamedPipe = true;
+// bool shouldUseNamedPipe = true;
 void InitialiseNamedPipeClient(HMODULE baseAddress);
-//void InitialiseNamedPipeClient();
+// void InitialiseNamedPipeClient();

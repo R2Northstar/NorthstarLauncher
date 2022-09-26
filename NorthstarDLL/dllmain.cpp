@@ -289,7 +289,7 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("client.dll", InitialiseMaxPlayersOverride_Client);
 	AddDllLoadCallback("server.dll", InitialiseMaxPlayersOverride_Server);
 
-	//Initialise Named Pipe
+	// Initialise Named Pipe
 	AddDllLoadCallback("server.dll", InitialiseNamedPipeClient);
 
 	// mod manager after everything else
