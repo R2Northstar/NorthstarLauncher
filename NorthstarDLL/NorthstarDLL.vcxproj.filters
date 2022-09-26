@@ -1521,6 +1521,9 @@
     <ClInclude Include="scriptjson.h">
       <Filter>Header Files\Shared</Filter>
     </ClInclude>
+    <ClInclude Include="namedpipeclient.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

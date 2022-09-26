@@ -118,6 +118,7 @@
     <ClInclude Include="clientruihooks.h" />
     <ClInclude Include="clientvideooverrides.h" />
     <ClInclude Include="localchatwriter.h" />
+    <ClInclude Include="namedpipeclient.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="plugin_abi.h" />
@@ -580,6 +581,7 @@
     <ClCompile Include="clientruihooks.cpp" />
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
+    <ClCompile Include="namedpipeclient.cpp" />
     <ClCompile Include="nsprefix.cpp" />
     <ClCompile Include="context.cpp" />
     <ClCompile Include="convar.cpp" />

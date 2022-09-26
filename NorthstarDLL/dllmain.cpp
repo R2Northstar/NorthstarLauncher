@@ -35,6 +35,7 @@
 #include "nsprefix.h"
 #include "serverchathooks.h"
 #include "clientchathooks.h"
+#include "namedpipeclient.h"
 #include "localchatwriter.h"
 #include "scriptservertoclientstringcommand.h"
 #include "plugin_abi.h"
@@ -287,6 +288,9 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseMaxPlayersOverride_Engine);
 	AddDllLoadCallback("client.dll", InitialiseMaxPlayersOverride_Client);
 	AddDllLoadCallback("server.dll", InitialiseMaxPlayersOverride_Server);
+
+	//Initialise Named Pipe
+	AddDllLoadCallback("server.dll", InitialiseNamedPipeClient);
 
 	// mod manager after everything else
 	AddDllLoadCallback("engine.dll", InitialiseModManager);
