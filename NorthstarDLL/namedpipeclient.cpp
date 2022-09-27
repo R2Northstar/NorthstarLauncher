@@ -48,12 +48,12 @@ HANDLE GetNewPipeInstance()
 
 void SendMessageToPipe(string message)
 {
-	bool success = false;
+	//bool success = false;
 	DWORD read;
-	do
-	{
-		success = WriteFile(hPipe, message.c_str(), message.length(), &read, nullptr);
-	} while (!success);
+	/*do
+	{*/
+		/*success = */WriteFile(hPipe, message.c_str(), message.length(), &read, nullptr);
+	/*} while (!success);*/
 }
 
 SQRESULT SQ_SendToNamedPipe(void* sqvm)
