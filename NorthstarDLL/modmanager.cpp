@@ -406,18 +406,6 @@ void ModManager::LoadMods()
 				}
 			}
 
-			// read starpak entries
-			if (bUseRpakJson && dRpakJson.HasMember("Starpaks") && dRpakJson["Starpaks"].IsArray())
-			{
-				for (rapidjson::Value::ConstValueIterator iterator = dRpakJson["Starpaks"].GetArray().Begin();
-					 iterator != dRpakJson["Starpaks"].GetArray().End();
-					 ++iterator)
-				{
-					mod.StarpakPaths.push_back(STR_HASH(iterator->GetString()));
-					spdlog::info("Mod {} registered starpak '{}'", mod.Name, iterator->GetString());
-				}
-			}
-
 			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "paks"))
 			{
 				// ensure we're only loading rpaks
@@ -437,6 +425,42 @@ void ModManager::LoadMods()
 					}
 
 					modPak.m_sPakName = pakName;
+
+					// read header of file and get the starpak paths
+
+					std::ifstream rpakStream(file.path(), std::ios::binary);
+
+					// seek to the point in the header where the starpak reference size is
+					rpakStream.seekg(0x38, std::ios::beg);
+					uint16_t starpaksSize;
+					rpakStream.read((char*)&starpaksSize, 2);
+
+					// seek to just after the header
+					rpakStream.seekg(0x58, std::ios::beg);
+					// read the starpak reference(s)
+					std::vector<char> buf(starpaksSize);
+					rpakStream.read(buf.data(), starpaksSize);
+
+					rpakStream.close();
+
+					// split the starpak reference(s) into strings to hash
+					std::string str = "";
+					for (uint16_t i = 0; i < starpaksSize; i++)
+					{
+						if (buf[i] != 0x00)
+						{
+							str += buf[i];
+						}
+						else
+						{
+							if (str != "")
+							{
+								mod.StarpakPaths.push_back(STR_HASH(str));
+								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
+								str = "";
+							}
+						}
+					}
 
 					// not using atm because we need to resolve path to rpak
 					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
