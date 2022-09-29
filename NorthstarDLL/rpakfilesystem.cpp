@@ -289,7 +289,7 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 
 		spdlog::info("LoadStreamPak: {}", filename.string());
 		// game adds r2\ to every path, so assume that a starpak path that begins with r2\paks\ is a vanilla one
-		// modded starpaks will be in the mod's paks folder 
+		// modded starpaks will be in the mod's paks folder
 		if (path.string().find("r2\\paks\\") != 0 && path.string().find("r2/paks/") != 0)
 		{
 			// remove the r2\ from the start used for path lookups

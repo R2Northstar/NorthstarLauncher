@@ -100,7 +100,9 @@ class Mod
 	std::vector<ModRpakEntry> Rpaks;
 	std::unordered_map<std::string, std::string>
 		RpakAliases; // paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
-	std::vector<size_t> StarpakPaths; // starpaks that this mod contains, as there seems to be no nice way to get the rpak that is causing the load of a starpak? hashed with STR_HASH
+	std::vector<size_t> StarpakPaths; // starpaks that this mod contains
+	// there seems to be no nice way to get the rpak that is causing the load of a starpak?
+	// hashed with STR_HASH
 
 	// iterated over to create squirrel VM constants depending if a mod exists or not.
 	// this only exists because we cannot access g_ModManager whilst mods are being loaded for the first time for some reason.
