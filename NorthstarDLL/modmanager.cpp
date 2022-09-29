@@ -406,6 +406,18 @@ void ModManager::LoadMods()
 				}
 			}
 
+			// read starpak entries
+			if (bUseRpakJson && dRpakJson.HasMember("Starpaks") && dRpakJson["Starpaks"].IsArray())
+			{
+				for (rapidjson::Value::ConstValueIterator iterator = dRpakJson["Starpaks"].GetArray().Begin();
+					 iterator != dRpakJson["Starpaks"].GetArray().End();
+					 ++iterator)
+				{
+					mod.StarpakPaths.push_back(STR_HASH(iterator->GetString()));
+					spdlog::info("Mod {} registered starpak '{}'", mod.Name, iterator->GetString());
+				}
+			}
+
 			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "paks"))
 			{
 				// ensure we're only loading rpaks

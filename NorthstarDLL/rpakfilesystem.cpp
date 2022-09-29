@@ -265,10 +265,10 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 {
 	fs::path path(requestedPath);
 	char* allocatedNewPath = nullptr;
+	fs::path filename = path.filename();
 
 	if (path.extension() == ".stbsp")
 	{
-		fs::path filename = path.filename();
 		spdlog::info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
@@ -281,6 +281,47 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 			strncpy(allocatedNewPath, newPath.c_str(), newPath.size());
 			allocatedNewPath[newPath.size()] = '\0';
 			requestedPath = allocatedNewPath;
+		}
+	}
+	else if (path.extension() == ".starpak")
+	{
+		// code for this is mostly stolen from above
+
+		spdlog::info("LoadStreamPak: {}", filename.string());
+		// game adds r2\ to every path, so assume that a starpak path that begins with r2\paks\ is a vanilla one
+		// modded starpaks will be in the mod's paks folder 
+		if (path.string().find("r2\\paks\\") != 0 && path.string().find("r2/paks/") != 0)
+		{
+			// remove the r2\ from the start used for path lookups
+			std::string starpakPath = path.string().substr(3);
+			size_t hashed = STR_HASH(starpakPath);
+
+			for (Mod& mod : g_ModManager->m_loadedMods)
+			{
+				if (!mod.Enabled)
+					continue;
+
+				bool found = false;
+
+				for (size_t hash : mod.StarpakPaths)
+				{
+					if (hash == hashed)
+					{
+						starpakPath = mod.ModDirectory.string() + "\\paks\\" + starpakPath;
+						allocatedNewPath = new char[starpakPath.size() + 1];
+						strncpy(allocatedNewPath, starpakPath.c_str(), starpakPath.size());
+						allocatedNewPath[starpakPath.size()] = '\0';
+						requestedPath = allocatedNewPath;
+						found = true;
+						break;
+					}
+				}
+
+				if (found)
+				{
+					break;
+				}
+			}
 		}
 	}
 
