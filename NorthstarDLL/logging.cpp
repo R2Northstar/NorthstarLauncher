@@ -19,14 +19,23 @@ void CreateLogFiles()
 	}
 	else
 	{
-		// todo: might be good to delete logs that are too old
-		time_t time = std::time(nullptr);
-		tm currentTime = *std::localtime(&time);
-		std::stringstream stream;
+		try
+		{
+			// todo: might be good to delete logs that are too old
+			time_t time = std::time(nullptr);
+			tm currentTime = *std::localtime(&time);
+			std::stringstream stream;
 
-		stream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nslog%Y-%m-%d %H-%M-%S.txt").c_str());
-		spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
-		spdlog::flush_on(spdlog::level::info);
+			stream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nslog%Y-%m-%d %H-%M-%S.txt").c_str());
+			spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
+			spdlog::flush_on(spdlog::level::info);
+		}
+		catch (...)
+		{
+			spdlog::error("Failed creating log file");
+			MessageBoxA(
+				0, "Failed creating log file! Make sure the profile directory is writable.", "Northstar Warning", MB_ICONWARNING | MB_OK);
+		}
 	}
 }
 
@@ -234,12 +243,9 @@ void InitialiseLogging()
 	hExceptionFilter = AddVectoredExceptionHandler(TRUE, ExceptionFilter);
 
 	AllocConsole();
-	// these two lines are responsible for stuff to not show up in the console sometimes, from talking about it on discord
-	// apparently they were meant to make logging work when using -northstar, however from testing it seems that it doesnt
-	// work regardless of these two lines
-	// freopen("CONOUT$", "w", stdout);
-	// freopen("CONOUT$", "w", stderr);
-	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
 
 	SetConsoleCtrlHandler(ConsoleHandlerRoutine, true);
 }

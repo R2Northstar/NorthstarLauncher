@@ -123,7 +123,7 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= 65335 ||
 						!request.has_param("serverAuthToken") ||
 						strcmp(
-							g_MasterServerManager->m_ownServerAuthToken,
+							g_MasterServerManager->m_sOwnServerAuthToken,
 							request.get_param_value("serverAuthToken")
 								.c_str())) // || !resolvedRemoteAddr || ((in_addr**)resolvedRemoteAddr->h_addr_list)[0]->S_un.S_addr !=
 										   // remoteAddr)
@@ -642,7 +642,7 @@ bool ProcessConnectionlessPacketHook(void* a1, netpacket_t* packet)
 	return ProcessConnectionlessPacket(a1, packet);
 }
 
-void ResetPdataCommand(const CCommand& args)
+void ConCommand_ns_resetpersistence(const CCommand& args)
 {
 	if (*sv_m_State == server_state_t::ss_active)
 	{
@@ -689,7 +689,8 @@ void InitialiseServerAuthentication(HMODULE baseAddress)
 
 	Cvar_net_datablock_enabled = g_pCVar->FindVar("net_datablock_enabled");
 
-	RegisterConCommand("ns_resetpersistence", ResetPdataCommand, "resets your pdata when you next enter the lobby", FCVAR_NONE);
+	RegisterConCommand(
+		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
 
 	HookEnabler hook;
 	ENABLER_CREATEHOOK(

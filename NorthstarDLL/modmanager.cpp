@@ -535,7 +535,7 @@ void ModManager::LoadMods()
 	buffer.Clear();
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	modinfoDoc.Accept(writer);
-	g_MasterServerManager->m_ownModInfoJson = std::string(buffer.GetString());
+	g_MasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
 
 	m_hasLoadedMods = true;
 }
@@ -606,7 +606,7 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ReloadModsCommand(const CCommand& args)
+void ConCommand_reload_mods(const CCommand& args)
 {
 	g_ModManager->LoadMods();
 }
@@ -615,7 +615,7 @@ void InitialiseModManager(HMODULE baseAddress)
 {
 	g_ModManager = new ModManager;
 
-	RegisterConCommand("reload_mods", ReloadModsCommand, "idk", FCVAR_NONE);
+	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
 }
 
 fs::path GetModFolderPath()
