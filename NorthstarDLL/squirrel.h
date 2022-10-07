@@ -139,10 +139,14 @@ class SquirrelMessage
 
 class SquirrelMessageBuffer
 {
-  public:
-	std::vector<SquirrelMessage> messages;
 
+  private:
+	std::vector<SquirrelMessage> messages = {};
+
+  public:
+	std::mutex mutex;
 	std::optional<SquirrelMessage> pop() {
+		std::lock_guard<std::mutex> guard(mutex);
 		if (!messages.empty())
 		{
 			auto message = messages.back();
@@ -154,8 +158,12 @@ class SquirrelMessageBuffer
 			return std::nullopt;
 		}
 	}
-};
 
+	void push(SquirrelMessage message) {
+		std::lock_guard<std::mutex> guard(mutex);
+		messages.push_back(message);
+	}
+};
 
 template <ScriptContext context> class SquirrelManager
 {
@@ -222,21 +230,13 @@ template <ScriptContext context> class SquirrelManager
 	{
 		std::cout << "type " << typeid(arg).name() << std::endl;
 		if constexpr (std::is_same_v<T, bool>)
-		{
-			v.push_back([arg]() { std::cout << "bool " << arg << std::endl; });
-		}
+			v.push_back([arg]() { g_pSquirrel<context>->pushbool(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
 		else if constexpr (std::is_same_v<T, int>)
-		{
-			v.push_back([arg]() { std::cout << "int " << arg << std::endl; });
-		}
+			v.push_back([arg]() { g_pSquirrel<context>->pushinteger(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
 		else if constexpr (std::is_same_v<T, double>)
-		{
-			v.push_back([arg]() { std::cout << "double " << arg << std::endl; });
-		}
+			v.push_back([arg]() { g_pSquirrel<context>->pushfloat(g_pSquirrel<context>->m_pSQVM->sqvm, (float)arg); });
 		else if constexpr (std::is_same_v<T, float>)
-		{
-			v.push_back([arg]() { std::cout << "float " << arg << std::endl; });
-		}
+			v.push_back([arg]() { g_pSquirrel<context>->pushfloat(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
 		else
 		{
 			constexpr bool test = std::is_constructible<std::string, T>::value;
@@ -244,7 +244,9 @@ template <ScriptContext context> class SquirrelManager
 			{
 				auto converted = std::string(arg);
 				std::cout << "converted " << typeid(arg).name() << std::endl;
-				v.push_back([converted]() { std::cout << "str " << converted << std::endl; });
+				v.push_back(
+					[converted]()
+					{ g_pSquirrel<context>->pushstring(g_pSquirrel<context>->m_pSQVM->sqvm, converted.c_str(), converted.length()); });
 			}
 			else
 			{
@@ -268,7 +270,7 @@ template <ScriptContext context> class SquirrelManager
 			return std::nullopt;
 		}
 		SquirrelMessage message = {context, funcname, function_vector};
-		messageBuffer->messages.push_back(message);
+		messageBuffer->push(message);
 		return message;
 	}
 
