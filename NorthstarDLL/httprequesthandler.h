@@ -3,6 +3,8 @@
 #include <string>
 #include <unordered_map>
 
+enum class ScriptContext;
+
 // These definitions below should match on the Squirrel side so we can easily pass them along through a function.
 
 /**
@@ -49,9 +51,15 @@ class HttpRequestHandler
 	void StopHttpRequestHandler();
 	bool IsRunning() const { return m_bIsHttpRequestHandlerRunning; }
 
-	int MakeHttpRequest(const HttpRequest& requestParameters);
+	int MakeHttpRequest(ScriptContext context, const HttpRequest& requestParameters);
+	template <ScriptContext context> void RegisterSQFuncs();
 
   private:
+
+	size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp);
+
 	int m_iLastRequestHandle = 0;
 	std::atomic_bool m_bIsHttpRequestHandlerRunning = false;
 };
+
+extern HttpRequestHandler* g_httpRequestHandler;

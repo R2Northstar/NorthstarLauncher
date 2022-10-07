@@ -1,6 +1,11 @@
 #include "pch.h"
 #include "httprequesthandler.h"
 #include "version.h"
+#include "squirrel.h"
+#include "tier0.h"
+
+
+HttpRequestHandler* g_httpRequestHandler;
 
 void HttpRequestHandler::StartHttpRequestHandler()
 {
@@ -11,6 +16,7 @@ void HttpRequestHandler::StartHttpRequestHandler()
 	}
 
 	m_bIsHttpRequestHandlerRunning = true;
+	spdlog::info("HttpRequestHandler started.");
 }
 
 void HttpRequestHandler::StopHttpRequestHandler()
@@ -23,15 +29,16 @@ void HttpRequestHandler::StopHttpRequestHandler()
 
 
 	m_bIsHttpRequestHandlerRunning = false;
+	spdlog::info("HttpRequestHandler stopped.");
 }
 
-size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp)
+size_t HttpRequestHandler::CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
 
-int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
+int HttpRequestHandler::MakeHttpRequest(ScriptContext context, const HttpRequest& requestParameters)
 {
 	if (!IsRunning())
 	{
@@ -40,13 +47,21 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 	}
 
 	// TODO: Check for localhost requests, block unless on server with -allowlocalhttp
-
+	if (context != ScriptContext::SERVER || !Tier0::CommandLine()->FindParm("-allowlocalhttp"))
+	{
+		if (false)
+		{
+			spdlog::warn("HttpRequestHandler::MakeHttpRequest attempted to make a request to localhost. This is only allowed on servers "
+						 "running with -allowlocalhttp.");
+			return -1;
+		}
+	}
 
 	// This handle will be returned to Squirrel so it can wait for the response and assign a callback for it.
 	int handle = ++m_iLastRequestHandle;
 
 	std::thread requestThread(
-		[this, handle, requestParameters]()
+		[this, handle, requestParameters, context]()
 		{
 			CURL* curl = curl_easy_init();
 			if (!curl)
@@ -105,11 +120,11 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 
 			if (requestParameters.method == HttpRequestMethod::GET)
 			{
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &HttpRequestHandler::CurlWriteToStringBufferCallback);
 				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bodyBuffer);
 			}
 
-			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, CurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &HttpRequestHandler::CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
 
 			// Add all the headers for the request.
@@ -120,27 +135,112 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				curl_slist_append(headers, fmt::format("{}: {}", kv.first, kv.second).c_str());
 			}
 
+			curl_easy_setopt(curl, CURLOPT_HEADER, headers);
 			// Enforce the Northstar user agent.
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
 			CURLcode result = curl_easy_perform(curl);
-			if (result == CURLE_OK)
+			if (IsRunning())
 			{
-				// While the curl request is OK, it could return a non success code.
-				// Squirrel side will handle firing the correct callback.
-				// TODO: Send response over to Squirrel, yay.
-			}
-			else
-			{
-				// TODO: Send http request failed message.
-				// Pass CURL result code & error.
-				spdlog::error("curl_easy_perform() failed with code {}, error: ", result, curl_easy_strerror(result));
+				if (result == CURLE_OK)
+				{
+					// While the curl request is OK, it could return a non success code.
+					// Squirrel side will handle firing the correct callback.
+					// TODO: Send response over to Squirrel, yay.
+				}
+				else
+				{
+					// TODO: Send http request failed message.
+					// Pass CURL result code & error.
+					spdlog::error("curl_easy_perform() failed with code {}, error: ", result, curl_easy_strerror(result));
+				}
 			}
 
 			curl_free(sanitizedUrl);
 			curl_easy_cleanup(curl);
 		});
 
-
+	requestThread.detach();
 	return handle;
+}
+
+template <ScriptContext context>
+void HttpRequestHandler::RegisterSQFuncs()
+{
+	g_pSquirrel<context>->AddFuncRegistration
+	(
+		"int",
+		"NS_InternalMakeHttpRequest",
+		"int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body",
+		"[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
+		SQ_InternalMakeHttpRequest<context>
+	);
+}
+
+// int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body)
+template<ScriptContext context>
+SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
+{
+	if (!g_httpRequestHandler || !g_httpRequestHandler->IsRunning())
+	{
+		spdlog::warn("NS_InternalMakeHttpRequest called while the http request handler isn't running.");
+		g_pSquirrel<context>->pushinteger(sqvm, -1);
+		return SQRESULT_NOTNULL;
+	}
+
+	HttpRequest request;
+	request.method = static_cast<HttpRequestMethod>(g_pSquirrel<context>->getinteger(sqvm, 1));
+	request.baseUrl = g_pSquirrel<context>->getstring(sqvm, 2);
+
+	SQTable* headerTable = sqvm->_stackOfCurrentFunction[3]._VAL.asTable;
+	for (int idx = 0; idx < headerTable->_numOfNodes; ++idx)
+	{
+		tableNode* node = &headerTable->_nodes[idx];
+
+		if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
+		{
+			g_pSquirrel<context>->raiseerror(
+				sqvm, fmt::format("Invalid header type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type), SQTypeNameFromID(node->val._Type)).c_str());
+			return SQRESULT_ERROR;
+		}
+
+		request.headers[node->key._VAL.asString->_val] = node->val._VAL.asString->_val;
+	}
+
+	SQTable* queryTable = sqvm->_stackOfCurrentFunction[4]._VAL.asTable;
+	for (int idx = 0; idx < queryTable->_numOfNodes; ++idx)
+	{
+		tableNode* node = &queryTable->_nodes[idx];
+		if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
+		{
+			g_pSquirrel<context>->raiseerror(
+				sqvm, fmt::format("Invalid query parameter type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type), SQTypeNameFromID(node->val._Type)).c_str());
+			return SQRESULT_ERROR;
+		}
+
+		request.queryParameters[node->key._VAL.asString->_val] = node->val._VAL.asString->_val;
+	}
+
+	request.contentType = g_pSquirrel<context>->getstring(sqvm, 5);
+	request.body = g_pSquirrel<context>->getstring(sqvm, 6);
+
+	int handle = g_httpRequestHandler->MakeHttpRequest(context, request);
+	g_pSquirrel<context>->pushinteger(sqvm, handle);
+	return SQRESULT_NOTNULL;
+}
+
+ON_DLL_LOAD_RELIESON("client.dll", HttpRequestHandler_ClientInit, ClientSquirrel, (CModule module))
+{
+	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::CLIENT>();
+}
+
+ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel, (CModule module))
+{
+	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::SERVER>();
+}
+
+ON_DLL_LOAD("engine.dll", HttpRequestHandler_Init, (CModule module))
+{
+	g_httpRequestHandler = new HttpRequestHandler;
+	g_httpRequestHandler->StartHttpRequestHandler();
 }
