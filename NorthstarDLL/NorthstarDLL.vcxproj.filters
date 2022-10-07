@@ -157,6 +157,12 @@
     <Filter Include="Source Files\Scripted">
       <UniqueIdentifier>{7263403a-7550-4aa2-a724-f622ab200eed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Http">
+      <UniqueIdentifier>{3da2bbb0-6ce8-41e8-bebc-4d35096e43a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Http">
+      <UniqueIdentifier>{86c47c65-fc08-4838-932b-8443c6be14d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1494,6 +1500,9 @@
     <ClInclude Include="vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="httprequesthandler.h">
+      <Filter>Header Files\Http</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -1699,6 +1708,9 @@
     </ClCompile>
     <ClCompile Include="scriptdatatables.cpp">
       <Filter>Source Files\Scripted</Filter>
+    </ClCompile>
+    <ClCompile Include="httprequesthandler.cpp">
+      <Filter>Source Files\Http</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
