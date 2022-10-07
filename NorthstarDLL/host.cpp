@@ -4,6 +4,7 @@
 #include "printcommand.h"
 #include "printmaps.h"
 #include "r2engine.h"
+#include "tier0.h"
 
 AUTOHOOK_INIT()
 
@@ -15,14 +16,14 @@ void, __fastcall, (bool bDedicated))
 	spdlog::info("Host_Init()");
 	Host_Init(bDedicated);
 
-	// get all mod convars
-	std::vector<std::string> vModConvarNames;
-	for (auto& mod : g_pModManager->m_LoadedMods)
-		for (auto& cvar : mod.ConVars)
-			vModConvarNames.push_back(cvar->Name);
-
     if (Tier0::CommandLine()->CheckParm("-allowdevcvars"))
-    {   
+    {
+		// get all mod convars
+		std::vector<std::string> vModConvarNames;
+		for (auto& mod : g_pModManager->m_LoadedMods)
+			for (auto& cvar : mod.ConVars)
+				vModConvarNames.push_back(cvar->Name);
+
 	    // strip hidden and devonly cvar flags
 	    int iNumCvarsAltered = 0;
 	    for (auto& pair : R2::g_pCVar->DumpToMap())
@@ -47,12 +48,14 @@ void, __fastcall, (bool bDedicated))
 
 	    	pair.second->m_nFlags = flags;
 	    }
-    }
 
-	spdlog::info("Removed {} hidden/devonly cvar flags", iNumCvarsAltered);
+		spdlog::info("Removed {} hidden/devonly cvar flags", iNumCvarsAltered);
+    }
 
 	// make servers able to run disconnect on clients
 	R2::g_pCVar->FindCommand("disconnect")->m_nFlags |= FCVAR_SERVER_CAN_EXECUTE;
+
+	R2::g_pCVar->FindCommand("migrateme")->m_nFlags &= ~FCVAR_SERVER_CAN_EXECUTE;
 
 	// make clients able to run status and ping
 	R2::g_pCVar->FindCommand("status")->m_nFlags |= FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS;
