@@ -264,7 +264,7 @@ ReadFullFileFromDiskType ReadFullFileFromDiskOriginal;
 void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 {
 	fs::path path(requestedPath);
-	char* allocatedNewPath = nullptr;
+	std::string allocatedNewPath = "";
 	fs::path filename = path.filename();
 
 	if (path.extension() == ".stbsp")
@@ -275,12 +275,8 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 		auto modFile = g_ModManager->m_modFiles.find(fs::path("maps" / filename).lexically_normal().string());
 		if (modFile != g_ModManager->m_modFiles.end())
 		{
-			// need to allocate a new string for this
-			std::string newPath = (modFile->second.owningMod->ModDirectory / "mod" / modFile->second.path).string();
-			allocatedNewPath = new char[newPath.size() + 1];
-			strncpy(allocatedNewPath, newPath.c_str(), newPath.size());
-			allocatedNewPath[newPath.size()] = '\0';
-			requestedPath = allocatedNewPath;
+			allocatedNewPath = (modFile->second.owningMod->ModDirectory / "mod" / modFile->second.path).string();
+			requestedPath = allocatedNewPath.c_str();
 		}
 	}
 	else if (path.extension() == ".starpak")
@@ -306,11 +302,8 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 				{
 					if (hash == hashed)
 					{
-						starpakPath = mod.ModDirectory.string() + "\\paks\\" + starpakPath;
-						allocatedNewPath = new char[starpakPath.size() + 1];
-						strncpy(allocatedNewPath, starpakPath.c_str(), starpakPath.size());
-						allocatedNewPath[starpakPath.size()] = '\0';
-						requestedPath = allocatedNewPath;
+						allocatedNewPath = mod.ModDirectory.string() + "\\paks\\" + starpakPath;
+						requestedPath = allocatedNewPath.c_str();
 						found = true;
 						break;
 					}
@@ -327,8 +320,6 @@ void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 	}
 
 	void* ret = ReadFullFileFromDiskOriginal(requestedPath, a2);
-	if (allocatedNewPath)
-		delete[] allocatedNewPath;
 
 	return ret;
 }
