@@ -564,8 +564,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	RegisterConCommand("script_client", ConCommand_script<ScriptContext::CLIENT>, "Executes script code on the client vm", FCVAR_CLIENTDLL);
 	RegisterConCommand("script_ui", ConCommand_script<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
 
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "test", "", "", SQ_message<ScriptContext::UI>);
-
 	StubUnsafeSQFuncs<ScriptContext::CLIENT>();
 	StubUnsafeSQFuncs<ScriptContext::UI>();
 
@@ -574,12 +572,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 		"void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::UI>);
 
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "test", "", "", SQ_message<ScriptContext::CLIENT>);
-
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
-
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "getfunc", "string test", "", SQ_GetFunc<ScriptContext::CLIENT>);
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
@@ -650,7 +644,6 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
 		"void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::SERVER>);
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("void", "test", "", "", SQ_message<ScriptContext::SERVER>);
 
 	//g_pSquirrel<ScriptContext::SERVER>->createMessage("MessageTestFunc");
 }
