@@ -453,7 +453,7 @@ void ModManager::LoadMods()
 						}
 						else
 						{
-							if (str != "")
+							if (!str.empty())
 							{
 								mod.StarpakPaths.push_back(STR_HASH(str));
 								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
