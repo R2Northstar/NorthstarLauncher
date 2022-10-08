@@ -13,8 +13,6 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 
 	// temp because command->IsCommand does not currently work
 	ConVar* cvar = R2::g_pCVar->FindVar(command->m_pszName);
-	if (cvar)
-		return;
 
 	// build string for flags if not FCVAR_NONE
 	std::string flagString;
