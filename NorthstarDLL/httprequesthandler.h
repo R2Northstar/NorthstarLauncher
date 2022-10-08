@@ -50,6 +50,7 @@ class HttpRequestHandler
 	void StartHttpRequestHandler();
 	void StopHttpRequestHandler();
 	bool IsRunning() const { return m_bIsHttpRequestHandlerRunning; }
+	bool IsDestinationHostAllowed(const std::string& host, std::string& outResolvedHost, std::string& outHostHeader);
 
 	template <ScriptContext context>
 	int MakeHttpRequest(const HttpRequest& requestParameters);
