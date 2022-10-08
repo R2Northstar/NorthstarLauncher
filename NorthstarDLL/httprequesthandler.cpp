@@ -131,8 +131,8 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bodyBuffer);
 			}
 
-			//curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &HttpRequestHandler::CurlWriteToStringBufferCallback);
-			//curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
+			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpCurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
 
 			// Add all the headers for the request.
 			struct curl_slist* headers = nullptr;
