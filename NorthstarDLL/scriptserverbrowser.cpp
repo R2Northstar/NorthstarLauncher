@@ -367,7 +367,7 @@ SQRESULT SQ_ConnectToAuthedServer(HSquirrelVM* sqvm)
 		return SQRESULT_ERROR;
 	}
 
-	RemoteServerConnectionInfo info = g_pMasterServerManager->m_pendingConnectionInfo;
+	RemoteServerConnectionInfo& info = g_pMasterServerManager->m_pendingConnectionInfo;
 
 	// set auth token, then try to connect
 	// i'm honestly not entirely sure how silentconnect works regarding ports and encryption so using connect for now

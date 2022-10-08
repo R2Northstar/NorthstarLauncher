@@ -10,8 +10,12 @@ namespace R2
 #pragma pack(push, 1)
 	struct CBasePlayer
 	{
-		char pad[88];
-		int m_nPlayerIndex;
+		char pad[0x58];
+		uint32_t m_nPlayerIndex;
+
+		// +0x5C
+		char pad1[0x1C75];
+		char m_communityClanTag[16];
 	};
 #pragma pack(pop)
 
