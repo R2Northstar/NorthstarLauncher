@@ -32,6 +32,135 @@ void HttpRequestHandler::StopHttpRequestHandler()
 	spdlog::info("HttpRequestHandler stopped.");
 }
 
+bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::string& outResolvedHost, std::string& outHostHeader)
+{
+	bool bAllowed = false;
+
+	CURLU* url = curl_url();
+	if (!url)
+	{
+		spdlog::error("Failed to call curl_url() for http request.");
+		return false;
+	}
+
+	if (curl_url_set(url, CURLUPART_URL, host.c_str(), 0) != CURLUE_OK)
+	{
+		spdlog::error("Failed to parse destination URL for http request.");
+
+		curl_url_cleanup(url);
+		return false;
+	}
+
+	char* urlHostname = nullptr;
+	if (curl_url_get(url, CURLUPART_HOST, &urlHostname, 0) != CURLUE_OK)
+	{
+		spdlog::error("Failed to parse hostname from destination URL for http request.");
+
+		curl_url_cleanup(url);
+		return false;
+	}
+
+	char* urlScheme = nullptr;
+	if (curl_url_get(url, CURLUPART_SCHEME, &urlHostname, CURLU_DEFAULT_SCHEME))
+	{
+		spdlog::error("Failed to parse scheme from destination URL for http request.");
+
+		curl_url_cleanup(url);
+		curl_free(urlHostname);
+		return false;
+	}
+
+	// Resolve the hostname into an address.
+	addrinfo* result;
+	if (getaddrinfo(urlHostname, urlScheme, nullptr, &result) != 0)
+	{
+		spdlog::error("Failed to resolve http request destination {} using getaddrinfo().", urlHostname);
+
+		curl_url_cleanup(url);
+		curl_free(urlHostname);
+		curl_free(urlScheme);
+		return false;
+	}
+
+	bool bFoundIPv6;
+	sockaddr_in* sockaddr_ipv4 = nullptr;
+	for (addrinfo* info = result; info; info = info->ai_next)
+	{
+		if (info->ai_family == AF_INET)
+		{
+			sockaddr_ipv4 = (sockaddr_in*)info->ai_addr;
+			break;
+		}
+
+		bFoundIPv6 &= info->ai_family == AF_INET6;
+	}
+
+	if (sockaddr_ipv4 == nullptr)
+	{
+		if (bFoundIPv6)
+		{
+			spdlog::error("Only IPv4 destinations are supported for HTTP requests. To allow IPv6, launch the game using -allowlocalhttp.");
+		}
+		else
+		{
+			spdlog::error("Failed to resolve http request destination {} into a valid IPv4 address.", urlHostname);
+		}
+		
+		goto CLEANUP;
+	}
+
+	// Fast checks for private ranges of IPv4.
+	{
+		auto addrBytes = sockaddr_ipv4->sin_addr.S_un.S_un_b;
+
+		if (addrBytes.s_b1 == 10															// 10.0.0.0			- 10.255.255.255		(Class A Private)
+			|| addrBytes.s_b1 == 172 && addrBytes.s_b2 >= 16 && addrBytes.s_b2 <= 31		// 172.16.0.0		- 172.31.255.255		(Class B Private)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 168								// 192.168.0.0		- 192.168.255.255		(Class C Private)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 0			// 192.0.0.0		- 192.0.0.255			(IETF Assignment)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 2			// 192.0.2.0		- 192.0.2.255			(TEST-NET-1)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 88 && addrBytes.s_b3 == 99		// 192.88.99.0		- 192.88.99.255			(IPv4-IPv6 Relay)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 >= 18 && addrBytes.s_b2 <= 19		// 192.18.0.0		- 192.19.255.255		(Internet Benchmark)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 51 && addrBytes.s_b3 == 100		// 192.51.100.0		- 192.51.100.255		(TEST-NET-2)
+			|| addrBytes.s_b1 == 203 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 113		// 203.0.113.0		- 203.0.113.255			(TEST-NET-3)
+			|| addrBytes.s_b1 == 169 && addrBytes.s_b2 == 254								// 169.254.00		- 169.254.255.255		(Link-local/APIPA) 
+			|| addrBytes.s_b1 == 127														// 127.0.0.0		- 127.255.255.255		(Loopback)
+			|| addrBytes.s_b1 == 0															// 0.0.0.0			- 0.255.255.255			(Current network)
+			|| addrBytes.s_b1 == 100 && addrBytes.s_b2 >= 64 && addrBytes.s_b2 <= 127		// 100.64.0.0		- 100.127.255.255		(Shared address space)
+			|| sockaddr_ipv4->sin_addr.S_un.S_addr == 0xFFFFFFFF							// 255.255.255.255							(Broadcast)
+			|| addrBytes.s_b1 >= 224 && addrBytes.s_b2 <= 239								// 224.0.0.0		- 239.255.255.255		(Multicast)
+			|| addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0		// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
+			|| addrBytes.s_b1 > 240 && addrBytes.s_b4 <= 254)								// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
+		{
+			goto CLEANUP;
+		}
+	}
+
+	bAllowed = true;
+	char resolvedStr[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &sockaddr_ipv4->sin_addr, resolvedStr, INET_ADDRSTRLEN);
+
+	// Use CURL to change the host of the url while keeping anything like path.
+	curl_url_set(url, CURLUPART_HOST, resolvedStr, 0);
+
+	// Keep the request host name to be used as a Host: header.
+	outHostHeader = urlHostname;
+
+	curl_free(urlHostname);
+	curl_url_get(url, CURLUPART_URL, &urlHostname, CURLU_DEFAULT_SCHEME);
+
+	// Use the resolved address as the new request host.
+	outResolvedHost = urlHostname;
+	
+	freeaddrinfo(result);
+
+CLEANUP:
+
+	curl_free(urlHostname);
+	curl_free(urlScheme);
+	curl_url_cleanup(url);
+	return bAllowed;
+}
+
 size_t HttpCurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
@@ -47,10 +176,12 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 		return -1;
 	}
 
-	// TODO: Check for localhost requests, block unless on server with -allowlocalhttp
-	if (context != ScriptContext::SERVER || !Tier0::CommandLine()->FindParm("-allowlocalhttp"))
+	bool bAllowLocalHttp = Tier0::CommandLine()->FindParm("-allowlocalhttp");
+	std::string resolvedHostName, hostHeaderOverride;
+
+	if (!bAllowLocalHttp)
 	{
-		if (false)
+		if (!IsDestinationHostAllowed(requestParameters.baseUrl, resolvedHostName, hostHeaderOverride))
 		{
 			spdlog::warn("HttpRequestHandler::MakeHttpRequest attempted to make a request to localhost. This is only allowed on servers "
 						 "running with -allowlocalhttp.");
@@ -62,12 +193,11 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 	int handle = ++m_iLastRequestHandle;
 
 	std::thread requestThread(
-		[this, handle, requestParameters]()
+		[this, handle, requestParameters, bAllowLocalHttp, resolvedHostName, hostHeaderOverride]()
 		{
 			CURL* curl = curl_easy_init();
 			if (!curl)
 			{
-				// TODO: Send http error message back to Squirrel.
 				spdlog::error("HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.");
 				g_pSquirrel<context>->createMessage(
 					"NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));				
@@ -85,16 +215,23 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				break;
 			}
 
+			std::string queryUrl = requestParameters.baseUrl;
+
+			// Only resolve to IPv4 if we don't allow private network requests.
+			// TODO: Also use resolved host ip as destination, and set hostname using Host: header.
+			if (!bAllowLocalHttp)
+			{
+				curl_easy_setopt(curl, CURLOPT_RESOLVE, CURL_IPRESOLVE_V4);
+				queryUrl = resolvedHostName;
+			}
+
 			// Ensure we only allow HTTP or HTTPS.
 			curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 			curl_easy_setopt(curl, curlMethod, 1L);
 
 			// Allow redirects
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			// TODO: Maybe reduce this a little, that seems a bit too much.
-			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 10L);
-
-			std::string queryUrl = requestParameters.baseUrl;
+			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
 
 			// GET requests, or POST requests with an empty body, can have query parameters.
 			// Append them to the base url.
@@ -142,7 +279,15 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				curl_slist_append(headers, fmt::format("{}: {}", kv.first, kv.second).c_str());
 			}
 
-			curl_easy_setopt(curl, CURLOPT_HEADER, headers);
+			// Append the Host header if we private network requests are forbidden.
+			if (!bAllowLocalHttp)
+			{
+				curl_slist_append(headers, fmt::format("Host: {}", hostHeaderOverride).c_str());
+			}
+
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
+
 			// Enforce the Northstar user agent.
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
 
@@ -167,6 +312,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 			}
 
 			curl_easy_cleanup(curl);
+			curl_slist_free_all(headers);
 		});
 
 	requestThread.detach();
@@ -236,7 +382,6 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 		if (node->key._Type == OT_STRING && node->val._Type == OT_STRING)
 		{
 			request.queryParameters[node->key._VAL.asString->_val] = node->val._VAL.asString->_val;
-
 		}
 	}
 
