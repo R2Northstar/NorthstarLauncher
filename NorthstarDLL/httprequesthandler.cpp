@@ -183,8 +183,8 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 	{
 		if (!IsDestinationHostAllowed(requestParameters.baseUrl, resolvedHostName, hostHeaderOverride))
 		{
-			spdlog::warn("HttpRequestHandler::MakeHttpRequest attempted to make a request to localhost. This is only allowed on servers "
-						 "running with -allowlocalhttp.");
+			spdlog::warn("HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed on when "
+						 "running the game -allowlocalhttp.");
 			return -1;
 		}
 	}
