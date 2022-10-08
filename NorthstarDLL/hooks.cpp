@@ -349,9 +349,28 @@ void CallAllPendingDLLLoadCallbacks()
 	}
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+// clang-format off
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA,
+HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+// clang-format on
 {
-	HMODULE moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
+	HMODULE moduleAddress;
+
+	// replace xinput dll with one that has ASLR
+	if (!strncmp(lpLibFileName, "XInput1_3.dll", 14))
+	{
+		moduleAddress = _LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
+
+		if (!moduleAddress)
+		{
+			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
+			exit(-1);
+
+			return nullptr;
+		}
+	}
+	else
+		moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
 	if (moduleAddress)
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
@@ -359,7 +378,10 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA, HMODULE, WINAPI, (LPCSTR 
 	return moduleAddress;
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, HMODULE, WINAPI, (LPCSTR lpLibFileName))
+// clang-format off
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA,
+HMODULE, WINAPI, (LPCSTR lpLibFileName))
+// clang-format on
 {
 	HMODULE moduleAddress = _LoadLibraryA(lpLibFileName);
 
@@ -369,7 +391,10 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA, HMODULE, WINAPI, (LPCSTR lpLi
 	return moduleAddress;
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+// clang-format off
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW,
+HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
+// clang-format on
 {
 	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
@@ -379,7 +404,10 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW, HMODULE, WINAPI, (LPCWSTR
 	return moduleAddress;
 }
 
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW, HMODULE, WINAPI, (LPCWSTR lpLibFileName))
+// clang-format off
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW,
+HMODULE, WINAPI, (LPCWSTR lpLibFileName))
+// clang-format on
 {
 	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 
