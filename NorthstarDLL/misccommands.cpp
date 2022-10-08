@@ -29,11 +29,8 @@ void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& arg)
 
 void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
 {
-	R2::Cbuf_AddText(
-		R2::Cbuf_GetCurrentPlayer(),
-		fmt::format("serverfilter {}", g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first).c_str(),
-		R2::cmd_source_t::kCommandSrcCode);
-	R2::Cbuf_Execute();
+	if (g_pServerAuthentication->m_RemoteAuthenticationData.size())
+		R2::g_pCVar->FindVar("serverfilter")->SetValue(g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first.c_str());
 
 	// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
 	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM)
@@ -108,6 +105,7 @@ void FixupCvarFlags()
 			pCommand->m_nFlags |= FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS;
 	} while (ppEngineClientCommands[++i]);
 
+	// array of cvars and the flags we want to add to them
 	const std::vector<std::tuple<const char*, uint32_t>> CVAR_FIXUP_ADD_FLAGS = {
 		// system commands (i.e. necessary for proper functionality)
 		// servers need to be able to disconnect
@@ -138,10 +136,13 @@ void FixupCvarFlags()
 		{"test_setteam", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS},
 		{"melee_lunge_ent", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS}};
 
+	// array of cvars and the flags we want to remove from them
 	const std::vector<std::tuple<const char*, uint32_t>> CVAR_FIXUP_REMOVE_FLAGS = {
 		// unsure how this command works, not even sure it's used on retail servers, deffo shouldn't be used on northstar
 		{"migrateme", FCVAR_SERVER_CAN_EXECUTE | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS},
 		{"recheck", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS}, // we don't need this on northstar servers, it's for communities
+
+		// unsure how these work exactly (rpt system likely somewhat stripped?), removing anyway since they won't be used
 		{"rpt_client_enable", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS},
 		{"rpt_password", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS}};
 

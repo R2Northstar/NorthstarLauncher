@@ -371,8 +371,7 @@ SQRESULT SQ_ConnectToAuthedServer(HSquirrelVM* sqvm)
 
 	// set auth token, then try to connect
 	// i'm honestly not entirely sure how silentconnect works regarding ports and encryption so using connect for now
-	R2::Cbuf_AddText(
-		R2::Cbuf_GetCurrentPlayer(), fmt::format("serverfilter {}", info.authToken).c_str(), R2::cmd_source_t::kCommandSrcCode);
+	R2::g_pCVar->FindVar("serverfilter")->SetValue(info.authToken);
 	R2::Cbuf_AddText(
 		R2::Cbuf_GetCurrentPlayer(),
 		fmt::format(
@@ -403,10 +402,8 @@ SQRESULT SQ_CompleteAuthWithLocalServer(HSquirrelVM* sqvm)
 {
 	// literally just set serverfilter
 	// note: this assumes we have no authdata other than our own
-	R2::Cbuf_AddText(
-		R2::Cbuf_GetCurrentPlayer(),
-		fmt::format("serverfilter {}", g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first).c_str(),
-		R2::cmd_source_t::kCommandSrcCode);
+	if (g_pServerAuthentication->m_RemoteAuthenticationData.size())
+		R2::g_pCVar->FindVar("serverfilter")->SetValue(g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first.c_str());
 
 	return SQRESULT_NULL;
 }
