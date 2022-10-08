@@ -123,7 +123,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 
 			// If we're using a GET method, setup the write function so it can write into the body.
 			std::string bodyBuffer;
-			std::string headerBuffer = "[header data not in yet]";
+			std::string headerBuffer;
 
 			if (requestParameters.method == HttpRequestMethod::GET)
 			{
