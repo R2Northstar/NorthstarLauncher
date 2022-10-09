@@ -8,20 +8,63 @@ enum class ScriptContext;
 // These definitions below should match on the Squirrel side so we can easily pass them along through a function.
 
 /**
- * Method for an HttpRequest. For now, we'll only support GET & POST.
- * If the need arises, we can add others.
+ * Allowed methods for an HttpRequest.
  */
-enum class HttpRequestMethod : int
+namespace HttpRequestMethod
 {
-	GET = 0,
-	POST = 1
+	enum Type
+	{
+		HRM_GET = 0,
+		HRM_POST = 1,
+		HRM_HEAD = 2,
+		HRM_PUT = 3,
+		HRM_DELETE = 4,
+		HRM_PATCH = 5,
+	};
+
+	/** Returns the HTTP string representation of the given method. */
+	inline std::string ToString(HttpRequestMethod::Type method)
+	{
+		switch (method)
+		{
+		case HttpRequestMethod::HRM_GET:
+			return "GET";
+		case HttpRequestMethod::HRM_POST:
+			return "POST";
+		case HttpRequestMethod::HRM_HEAD:
+			return "HEAD";
+		case HttpRequestMethod::HRM_PUT:
+			return "PUT";
+		case HttpRequestMethod::HRM_DELETE:
+			return "DELETE";
+		case HttpRequestMethod::HRM_PATCH:
+			return "PATCH";
+		default:
+			return "INVALID";
+		}
+	}
+
+	/** Whether or not the given method should be treated like a POST for curlopts. */
+	bool UsesCurlPostOptions(HttpRequestMethod::Type method)
+	{
+		switch (method)
+		{
+		case HttpRequestMethod::HRM_POST:
+		case HttpRequestMethod::HRM_PUT:
+		case HttpRequestMethod::HRM_DELETE:
+		case HttpRequestMethod::HRM_PATCH:
+			return true;
+		default:
+			return false;
+		}
+	}
 };
 
 /** Contains data about an http request that has been queued. */
 struct HttpRequest
 {
 	/** Method used for this http request. */
-	HttpRequestMethod method;
+	HttpRequestMethod::Type method;
 
 	/** Base URL of this http request. */
 	std::string baseUrl;
@@ -38,6 +81,12 @@ struct HttpRequest
 
 	/** The body of this http request. If set, will override queryParameters.*/
 	std::string body;
+
+	/** The timeout for the http request, in seconds. Must be between 1 and 60. */
+	int timeout;
+
+	/** If set, the override to use for the User-Agent header. */
+	std::string userAgent;
 };
 
 /**
@@ -50,7 +99,6 @@ class HttpRequestHandler
 	void StartHttpRequestHandler();
 	void StopHttpRequestHandler();
 	bool IsRunning() const { return m_bIsHttpRequestHandlerRunning; }
-	bool IsDestinationHostAllowed(const std::string& host, std::string& outResolvedHost, std::string& outHostHeader);
 
 	template <ScriptContext context>
 	int MakeHttpRequest(const HttpRequest& requestParameters);
