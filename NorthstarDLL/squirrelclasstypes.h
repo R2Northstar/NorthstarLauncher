@@ -76,6 +76,7 @@ enum class ScriptContext : int
 };
 
 typedef std::vector<std::function<void()>> FunctionVector;
+typedef std::function<void()> VoidFunction;
 
 // clang-format off
 template <typename T>
