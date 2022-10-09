@@ -307,6 +307,12 @@ inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 		{ g_pSquirrel<context>->pushstring(g_pSquirrel<context>->m_pSQVM->sqvm, converted.c_str(), converted.length()); });
 }
 
+template <ScriptContext context>
+inline void SQMessageBufferPushArg(FunctionVector& v, SquirrelAsset& arg) {
+	v.push_back([arg]()
+		{ g_pSquirrel<context>->pushasset(g_pSquirrel<context>->m_pSQVM->sqvm, arg.path.c_str(), arg.path.length()); });
+}
+
 template <ScriptContext context, typename T>
 requires is_iterable<T>
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {

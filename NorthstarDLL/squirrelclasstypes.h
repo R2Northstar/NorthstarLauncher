@@ -146,3 +146,10 @@ class SquirrelMessageBuffer
 		messages.push_back(message);
 	}
 };
+
+class SquirrelAsset
+{
+  public:
+	std::string path;
+	SquirrelAsset(std::string path) : path(path) {};
+};

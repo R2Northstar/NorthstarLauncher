@@ -471,12 +471,8 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 template <ScriptContext context> SQRESULT SQ_CreateMessage(HSquirrelVM* sqvm)
 {
 	const char* string = g_pSquirrel<context>->getstring(sqvm, 1);
-	std::vector<std::string> test = {};
 
-	test.push_back("abc");
-	test.push_back("123");
-
-	g_pSquirrel<context>->createMessage("testarray", test);
+	g_pSquirrel<context>->createMessage("testarray", SquirrelAsset("test"));
 
 	return SQRESULT_NOTNULL;
 }
