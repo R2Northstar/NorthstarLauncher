@@ -121,6 +121,7 @@
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
     <ClInclude Include="crashhandler.h" />
+    <ClInclude Include="squirrelclasstypes.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
     <ClInclude Include="maxplayers.h" />

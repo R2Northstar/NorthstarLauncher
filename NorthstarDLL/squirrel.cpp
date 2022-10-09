@@ -468,6 +468,25 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 	
 }
 
+template <ScriptContext context> SQRESULT SQ_CreateMessage(HSquirrelVM* sqvm)
+{
+	const char* string = g_pSquirrel<context>->getstring(sqvm, 1);
+	std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> test = {};
+	std::map<std::string, std::map<std::string, std::string>> inner = {};
+	std::map<std::string, std::string> inner2 = {};
+
+	inner2["test2"] = "test2";
+	inner2["hello2"] = "world2";
+
+	inner["inner_map"] = inner2;
+
+	test["first"] = inner;
+
+	g_pSquirrel<context>->createMessage("testtable", test);
+
+	return SQRESULT_NOTNULL;
+}
+
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
@@ -569,6 +588,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
 		"void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::CLIENT>);
+
+	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "test", "string test", "", SQ_CreateMessage<ScriptContext::CLIENT>);
+
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 		"void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::UI>);
 

@@ -22,6 +22,13 @@ struct SQUserData;
 
 typedef void (*releasehookType)(void* val, int size);
 
+// stolen from ttf2sdk: sqvm types
+typedef float SQFloat;
+typedef long SQInteger;
+typedef unsigned long SQUnsignedInteger;
+typedef char SQChar;
+typedef SQUnsignedInteger SQBool;
+
 /* 127 */
 enum SQObjectType : int
 {
