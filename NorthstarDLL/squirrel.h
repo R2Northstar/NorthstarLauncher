@@ -292,6 +292,11 @@ inline void SQMessageBufferPushArg(FunctionVector& v, Vector3& arg) {
 	v.push_back([arg]() { g_pSquirrel<context>->pushvector(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
 }
 
+template <ScriptContext context>
+inline void SQMessageBufferPushArg(FunctionVector& v, SQObject* arg) {
+	v.push_back([arg]() { g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
+}
+
 template <ScriptContext context, typename T>
 requires std::convertible_to<T, int> && (!std::is_floating_point_v<T>)
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
