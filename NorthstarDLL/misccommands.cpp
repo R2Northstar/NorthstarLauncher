@@ -147,8 +147,16 @@ void FixupCvarFlags()
 		{"rpt_password", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS}};
 
 	for (auto& fixup : CVAR_FIXUP_ADD_FLAGS)
-		R2::g_pCVar->FindCommandBase(std::get<0>(fixup))->m_nFlags |= std::get<1>(fixup);
+	{
+		ConCommandBase* command = R2::g_pCVar->FindCommandBase(std::get<0>(fixup));
+		if (command)
+			command->m_nFlags |= std::get<1>(fixup);
+	}
 
 	for (auto& fixup : CVAR_FIXUP_REMOVE_FLAGS)
-		R2::g_pCVar->FindCommandBase(std::get<0>(fixup))->m_nFlags &= ~std::get<1>(fixup);
+	{
+		ConCommandBase* command = R2::g_pCVar->FindCommandBase(std::get<0>(fixup));
+		if (command)
+			command->m_nFlags &= ~std::get<1>(fixup);
+	}
 }

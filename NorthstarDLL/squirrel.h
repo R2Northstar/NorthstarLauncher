@@ -121,6 +121,8 @@ typedef SQRESULT (*sq_getType)(HSquirrelVM* sqvm, SQInteger iStackpos);
 typedef SQRESULT (*sq_getassetType)(HSquirrelVM* sqvm, SQInteger iStackpos, const char** pResult);
 typedef SQRESULT (*sq_getuserdataType)(HSquirrelVM* sqvm, SQInteger iStackpos, void** pData, uint64_t* pTypeId);
 typedef SQFloat* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+typedef SQBool (*sq_getthisentityType)(HSquirrelVM*, void** ppEntity);
+typedef void* (*sq_getentityType)(HSquirrelVM*, SQInteger iStackPos);
 
 // sq stack userpointer funcs
 typedef void* (*sq_createuserdataType)(HSquirrelVM* sqvm, SQInteger iSize);
@@ -168,6 +170,8 @@ template <ScriptContext context> class SquirrelManager
 	sq_getassetType __sq_getasset;
 	sq_getuserdataType __sq_getuserdata;
 	sq_getvectorType __sq_getvector;
+	sq_getthisentityType __sq_getthisentity;
+	sq_getentityType __sq_getentity;
 
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
@@ -311,6 +315,16 @@ template <ScriptContext context> class SquirrelManager
 	inline SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, uint64_t typeId)
 	{
 		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
+	}
+
+	template <typename T> inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
+	{
+		return __sq_getentity(sqvm, (void**)ppEntity);
+	}
+
+	template <typename T> inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
+	{
+		return (T*)__sq_getentity(sqvm, iStackPos);
 	}
 #pragma endregion
 };
