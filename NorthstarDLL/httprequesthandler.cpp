@@ -4,7 +4,6 @@
 #include "squirrel.h"
 #include "tier0.h"
 
-
 HttpRequestHandler* g_httpRequestHandler;
 
 void HttpRequestHandler::StartHttpRequestHandler()
@@ -204,7 +203,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 						"HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed when "
 						"running the game with -allowlocalhttp.");
 
-					g_pSquirrel<context>->createMessage("NSHandleFailedHttpRequest", handle, 0, "Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more information.");			
+					g_pSquirrel<context>->schedule_call("NSHandleFailedHttpRequest", handle, (int)0, "Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more information.");			
 					return;
 				}
 			}
@@ -213,7 +212,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 			if (!curl)
 			{
 				spdlog::error("HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.");
-				g_pSquirrel<context>->createMessage(
+				g_pSquirrel<context>->schedule_call(
 					"NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));				
 				return;
 			}
@@ -246,8 +245,8 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 
 			// GET requests, or POST-like requests with an empty body, can have query parameters.
 			// Append them to the base url.
-			if (requestParameters.method == HttpRequestMethod::HRM_GET
-				|| HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) && requestParameters.body.empty())
+			if (HttpRequestMethod::CanHaveQueryParameters(requestParameters.method)
+				&& !HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) || requestParameters.body.empty())
 			{
 				int idx = 0;
 				for (const auto& kv : requestParameters.queryParameters)
@@ -269,6 +268,8 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				}
 			}
 
+			// If this method uses POST-like curl options, set those and set the body.
+			// The body won't be sent if it's empty anyway, meaning the query parameters above, if any, would be.
 			if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method))
 			{
 				// Grab the body and set it as a POST field
@@ -278,6 +279,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, requestParameters.body.c_str());
 			}
 
+			// Set the full URL for this http request.
 			curl_easy_setopt(curl, CURLOPT_URL, queryUrl.c_str());
 
 			std::string bodyBuffer;
@@ -316,7 +318,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				curl_easy_setopt(curl, CURLOPT_USERAGENT, requestParameters.userAgent.c_str());
 			}
 
-			// Set the timeout for this request.
+			// Set the timeout for this request. Max 60 seconds so mods can't just spin up native threads all the time.
 			curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::clamp<long>(requestParameters.timeout, 1, 60));
 
 			CURLcode result = curl_easy_perform(curl);
@@ -328,13 +330,13 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 					// Squirrel side will handle firing the correct callback.
 					long httpCode = 0;
 					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-					g_pSquirrel<context>->createMessage("NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);				
+					g_pSquirrel<context>->schedule_call("NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);				
 				}
 				else
 				{
 					// Pass CURL result code & error.
 					spdlog::error("curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
-					g_pSquirrel<context>->createMessage("NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));			
+					g_pSquirrel<context>->schedule_call("NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));			
 				}
 			}
 

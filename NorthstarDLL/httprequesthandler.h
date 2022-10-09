@@ -20,6 +20,7 @@ namespace HttpRequestMethod
 		HRM_PUT = 3,
 		HRM_DELETE = 4,
 		HRM_PATCH = 5,
+		HRM_OPTIONS = 6,
 	};
 
 	/** Returns the HTTP string representation of the given method. */
@@ -39,6 +40,8 @@ namespace HttpRequestMethod
 			return "DELETE";
 		case HttpRequestMethod::HRM_PATCH:
 			return "PATCH";
+		case HttpRequestMethod::HRM_OPTIONS:
+			return "OPTIONS";
 		default:
 			return "INVALID";
 		}
@@ -57,6 +60,12 @@ namespace HttpRequestMethod
 		default:
 			return false;
 		}
+	}
+
+	/** Whether or not the given http request method can have query parameters in the URL. */
+	bool CanHaveQueryParameters(HttpRequestMethod::Type method)
+	{
+		return method == HttpRequestMethod::HRM_GET || UsesCurlPostOptions(method);
 	}
 };
 
@@ -96,12 +105,22 @@ class HttpRequestHandler
 {
   public:
 
+	// Start/Stop the HTTP request handler. Right now this doesn't do much. 
 	void StartHttpRequestHandler();
 	void StopHttpRequestHandler();
+
+	// Whether or not this http request handler is currently running.
 	bool IsRunning() const { return m_bIsHttpRequestHandlerRunning; }
 
+	/**
+	 * Creates a new thread to execute an HTTP request.
+	 * @param requestParameters The parameters to use for this http request.
+	 * @returns The handle for the http request being sent, or -1 if the request failed.
+	 */
 	template <ScriptContext context>
 	int MakeHttpRequest(const HttpRequest& requestParameters);
+
+	/** Registers the HTTP request Squirrel functions for the given script context. */
 	template <ScriptContext context> void RegisterSQFuncs();
 
   private:
