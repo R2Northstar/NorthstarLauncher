@@ -472,7 +472,7 @@ template <ScriptContext context> SQRESULT SQ_CreateMessage(HSquirrelVM* sqvm)
 {
 	const char* string = g_pSquirrel<context>->getstring(sqvm, 1);
 
-	g_pSquirrel<context>->schedule_call("testarray", SquirrelAsset("test"));
+	g_pSquirrel<context>->schedule_call("testarray", SquirrelAsset("test"), "test", 1);
 
 	return SQRESULT_NOTNULL;
 }

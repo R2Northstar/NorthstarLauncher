@@ -384,17 +384,18 @@ inline VoidFunction SQMessageBufferPushArg(T& map) {
 
 	return [localv]{ for (auto& func : localv) { func(); } };
 }
+
+template <ScriptContext context, typename T>
+inline void SqRecurseArgs(FunctionVector& v, T& arg) {
+	v.push_back(SQMessageBufferPushArg<context>(arg));
+}
+
 // This function is separated from the PushArg function so as to not generate too many template instances
 // This is the main function responsible for unrolling the argument pack
 template <ScriptContext context, typename T, typename... Args>
 inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args) {
 	v.push_back(SQMessageBufferPushArg<context>(arg));
-	SqRecurseArgs(v, args...);
-}
-
-template <ScriptContext context, typename T>
-inline void SqRecurseArgs(FunctionVector& v, T& arg) {
-	v.push_back(SQMessageBufferPushArg<context>(arg));
+	SqRecurseArgs<context>(v, args...);
 }
 
 // clang-format on
