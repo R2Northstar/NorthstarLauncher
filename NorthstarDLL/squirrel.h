@@ -7,6 +7,8 @@ const char* GetContextName(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
 
+#pragma region TypeDefs
+
 // core sqvm funcs
 typedef int64_t (*RegisterSquirrelFuncType)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
 typedef void (*sq_defconstType)(CSquirrelVM* sqvm, const SQChar* name, int value);
@@ -49,6 +51,8 @@ typedef void* (*sq_createuserdataType)(HSquirrelVM* sqvm, SQInteger iSize);
 typedef SQRESULT (*sq_setuserdatatypeidType)(HSquirrelVM* sqvm, SQInteger iStackpos, uint64_t iTypeId);
 
 typedef int (*sq_getSquirrelFunctionType)(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature);
+
+#pragma endregion
 
 template <ScriptContext context> class SquirrelManager
 {
@@ -105,8 +109,7 @@ template <ScriptContext context> class SquirrelManager
 
 	template <typename... Args> SquirrelMessage createMessage(const char* funcname, Args... args)
 	{
-		int args_processed = 0;
-		std::vector<std::function<void()>> function_vector;
+		FunctionVector function_vector;
 		SqRecurseArgs<context>(function_vector, args...);
 		SquirrelMessage message = {funcname, function_vector};
 		messageBuffer->push(message);
@@ -269,60 +272,65 @@ template <ScriptContext context> class SquirrelManager
 
 template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;
 
+/*
+	Beware all ye who enter below.
+	This place is not a place of honor... no highly esteemed deed is commemorated here... nothing valued is here.
+	What is here was dangerous and repulsive to us. This message is a warning about danger.
+*/
+
 #pragma region MessageBuffer templates
 
-
+// Clang-formatting makes this whole thing unreadable
 // clang-format off
-// Base case for recursion
+
 #ifndef MessageBufferFuncs
 #define MessageBufferFuncs
+// Base case
 inline void SQMessageBufferPushArg(ScriptContext context, FunctionVector& v)
 {
 	return;
 }
-
+// Bools
 template <ScriptContext context, typename T>
 requires std::convertible_to<T, bool> && (!std::is_floating_point_v<T>) && (!std::convertible_to<T, std::string>) && (!std::convertible_to<T, int>)
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 	v.push_back([arg]() { g_pSquirrel<context>->pushbool(g_pSquirrel<context>->m_pSQVM->sqvm, static_cast<bool>(arg)); });
 }
-
+// Vectors
 template <ScriptContext context>
 inline void SQMessageBufferPushArg(FunctionVector& v, Vector3& arg) {
 	v.push_back([arg]() { g_pSquirrel<context>->pushvector(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
 }
-
+// Vectors
 template <ScriptContext context>
 inline void SQMessageBufferPushArg(FunctionVector& v, SQObject* arg) {
 	v.push_back([arg]() { g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, arg); });
 }
-
+// Ints
 template <ScriptContext context, typename T>
 requires std::convertible_to<T, int> && (!std::is_floating_point_v<T>)
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 	v.push_back([arg]() { g_pSquirrel<context>->pushinteger(g_pSquirrel<context>->m_pSQVM->sqvm, static_cast<int>(arg)); });
 }
-
+// Floats
 template <ScriptContext context, typename T>
 requires std::convertible_to<T, float> && (std::is_floating_point_v<T>)
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 	v.push_back([arg]() { g_pSquirrel<context>->pushfloat(g_pSquirrel<context>->m_pSQVM->sqvm, static_cast<float>(arg)); });
 }
-
+// Strings
 template <ScriptContext context, typename T>
 requires (std::convertible_to<T, std::string> || std::is_constructible_v<std::string, T>)
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 	auto converted = std::string(arg);
-	v.push_back([converted]()
-		{ g_pSquirrel<context>->pushstring(g_pSquirrel<context>->m_pSQVM->sqvm, converted.c_str(), converted.length()); });
+	v.push_back([converted]() { g_pSquirrel<context>->pushstring(g_pSquirrel<context>->m_pSQVM->sqvm, converted.c_str(), converted.length()); });
 }
-
+// Assets
 template <ScriptContext context>
 inline void SQMessageBufferPushArg(FunctionVector& v, SquirrelAsset& arg) {
-	v.push_back([arg]()
-		{ g_pSquirrel<context>->pushasset(g_pSquirrel<context>->m_pSQVM->sqvm, arg.path.c_str(), arg.path.length()); });
+	v.push_back([arg]() { g_pSquirrel<context>->pushasset(g_pSquirrel<context>->m_pSQVM->sqvm, arg.path.c_str(), arg.path.length()); });
 }
-
+// Maps
 template <ScriptContext context, typename T>
 requires is_iterable<T>
 inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
@@ -334,13 +342,9 @@ inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 		localv.push_back([]{g_pSquirrel<context>->arrayappend(g_pSquirrel<context>->m_pSQVM->sqvm, -2);});
 	}
 
-	v.push_back([localv] {
-		for (auto& func : localv) {
-			func();
-		}
-	});
+	v.push_back([localv] { for (auto& func : localv) { func(); } });
 }
-
+// Vectors
 template <ScriptContext context, typename T>
 requires is_map<T>
 inline  void SQMessageBufferPushArg(FunctionVector& v, T& map) {
@@ -353,13 +357,10 @@ inline  void SQMessageBufferPushArg(FunctionVector& v, T& map) {
 		localv.push_back([]{g_pSquirrel<context>->newslot(g_pSquirrel<context>->m_pSQVM->sqvm, -3, false);});
 	}
 
-	v.push_back([localv] {
-		for (auto& func : localv) {
-			func();
-		}
-	});
+	v.push_back([localv] { for (auto& func : localv) { func(); } });
 }
-
+// This function is separated from the PushArg function so as to not generate too many template instances
+// This is the main function responsible for unrolling the argument pack
 template <ScriptContext context, typename T, typename... Args>
 inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args) {
 	SQMessageBufferPushArg<context>(v, arg);
