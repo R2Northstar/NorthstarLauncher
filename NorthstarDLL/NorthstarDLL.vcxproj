@@ -121,6 +121,8 @@
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
     <ClInclude Include="crashhandler.h" />
+    <ClInclude Include="include\base64.h" />
+    <ClInclude Include="invites.h" />
     <ClInclude Include="squirrelclasstypes.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
@@ -560,6 +562,7 @@
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="exploitfixes_utf8parser.cpp" />
     <ClInclude Include="tier0.h" />
+    <ClInclude Include="urihandler.h" />
     <ClInclude Include="vector.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
@@ -575,6 +578,8 @@
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="exploitfixes_lzss.cpp" />
+    <ClCompile Include="include\base64.cpp" />
+    <ClCompile Include="invites.cpp" />
     <ClCompile Include="limits.cpp" />
     <ClCompile Include="memory.cpp" />
     <ClCompile Include="nsprefix.cpp" />
@@ -634,6 +639,7 @@
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="exploitfixes.cpp" />
     <ClCompile Include="tier0.cpp" />
+    <ClCompile Include="urihandler.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>

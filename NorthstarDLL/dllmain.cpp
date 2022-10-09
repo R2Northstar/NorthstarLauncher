@@ -8,6 +8,7 @@
 #include "plugins.h"
 #include "version.h"
 #include "pch.h"
+#include "urihandler.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -17,7 +18,75 @@
 #include <string.h>
 #include <filesystem>
 
+#include "invites.h"
+
 typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
+
+// https://forums.codeguru.com/showthread.php?270538-How-to-check-for-open-ports-on-host-machine-(winsock-)
+bool is_port_open(int port)
+{
+	// udp uses SOCK_DGRAM, tcp uses SOCK_STREAM
+	SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
+	if (s != INVALID_SOCKET)
+	{
+		SOCKADDR_IN sd;
+		sd.sin_family = AF_INET;
+		sd.sin_port = htons(port);
+		sd.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+		if (bind(s, (PSOCKADDR)&sd, sizeof(SOCKADDR_IN)) == SOCKET_ERROR)
+			return false;
+	}
+	else
+		return false;
+
+	return true;
+}
+
+bool CheckURI()
+{
+	bool hasURIString = strstr(GetCommandLineA(), "northstar://");
+	if (!hasURIString)
+	{
+		return false;
+	}
+
+	std::string cla = GetCommandLineA();
+	int uriOffset = cla.find(URIProtocolName) + URIProtocolName.length();
+	std::string message = cla.substr(uriOffset, cla.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
+	auto maybe_invite = parseURI(message);
+	if (!maybe_invite)
+	{
+		return false;
+	}
+	auto invite = maybe_invite.value();
+
+	if (!is_port_open(42069))
+	{
+		spdlog::info("PORT IS CLOSED");
+			
+		std::string url = invite.as_url();
+		CURL* curl = curl_easy_init();
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 100L);
+		CURLcode result = curl_easy_perform(curl);
+		if (result == CURLE_URL_MALFORMAT) // For some reason this is used when it cant find the resource
+		{
+			invite.store();
+			return true;
+		}
+		else
+		{
+			exit(0);
+		}
+	}
+	else {
+		spdlog::info("PORT IS OPEN");
+		invite.store();
+		return true;
+	}
+}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -137,6 +206,7 @@ bool LoadPlugins()
 	return true;
 }
 
+
 bool InitialiseNorthstar()
 {
 	static bool bInitialised = false;
@@ -144,6 +214,14 @@ bool InitialiseNorthstar()
 		return false;
 
 	bInitialised = true;
+
+	InitialiseLogging();
+	CreateLogFiles();
+
+	g_pURIHandler = new URIHandler();
+	storedInvite = new Invite();
+	CheckURI();
+	g_pURIHandler->StartServer();
 
 	InitialiseNorthstarPrefix();
 	InitialiseVersion();
@@ -154,9 +232,7 @@ bool InitialiseNorthstar()
 	curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
 
 	InitialiseCrashHandler();
-	InitialiseLogging();
 	InstallInitialHooks();
-	CreateLogFiles();
 
 	// Write launcher version to log
 	spdlog::info("NorthstarLauncher version: {}", version);
