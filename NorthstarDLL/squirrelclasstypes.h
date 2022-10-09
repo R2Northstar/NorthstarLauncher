@@ -99,7 +99,14 @@ concept is_map =
 		std::map<typename T::key_type, typename T::mapped_type, typename T::key_compare, typename T::allocator_type>,
 		std::unordered_map<typename T::key_type, typename T::mapped_type, typename T::key_compare, typename T::allocator_type>
 	>
-	;
+;
+
+template<typename T>
+concept is_iterable = requires(std::ranges::range_value_t<T> x)
+{
+    x.begin();          // must have `x.begin()`
+    x.end();            // and `x.end()`
+};
 
 // clang-format on
 

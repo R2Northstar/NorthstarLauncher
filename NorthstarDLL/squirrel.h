@@ -308,6 +308,24 @@ inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
 }
 
 template <ScriptContext context, typename T>
+requires is_iterable<T>
+inline void SQMessageBufferPushArg(FunctionVector& v, T& arg) {
+	FunctionVector localv = {};
+	localv.push_back([]{g_pSquirrel<context>->newarray(g_pSquirrel<context>->m_pSQVM->sqvm, 0);});
+	
+	for (const auto& item : arg) {
+		SQMessageBufferPushArg<context>(localv, item);
+		localv.push_back([]{g_pSquirrel<context>->arrayappend(g_pSquirrel<context>->m_pSQVM->sqvm, -2);});
+	}
+
+	v.push_back([localv] {
+		for (auto& func : localv) {
+			func();
+		}
+	});
+}
+
+template <ScriptContext context, typename T>
 requires is_map<T>
 inline  void SQMessageBufferPushArg(FunctionVector& v, T& map) {
 	FunctionVector localv = {};

@@ -471,18 +471,12 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 template <ScriptContext context> SQRESULT SQ_CreateMessage(HSquirrelVM* sqvm)
 {
 	const char* string = g_pSquirrel<context>->getstring(sqvm, 1);
-	std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> test = {};
-	std::map<std::string, std::map<std::string, std::string>> inner = {};
-	std::map<std::string, std::string> inner2 = {};
+	std::vector<std::string> test = {};
 
-	inner2["test2"] = "test2";
-	inner2["hello2"] = "world2";
+	test.push_back("abc");
+	test.push_back("123");
 
-	inner["inner_map"] = inner2;
-
-	test["first"] = inner;
-
-	g_pSquirrel<context>->createMessage("testtable", test);
+	g_pSquirrel<context>->createMessage("testarray", test);
 
 	return SQRESULT_NOTNULL;
 }
