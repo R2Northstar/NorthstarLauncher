@@ -185,6 +185,13 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 		return -1;
 	}
 
+	if (Tier0::CommandLine()->FindParm("-disablehttprequests"))
+	{
+		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
+					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
+		return -1;
+	}
+
 	bool bAllowLocalHttp = Tier0::CommandLine()->FindParm("-allowlocalhttp");
 
 	// This handle will be returned to Squirrel so it can wait for the response and assign a callback for it.
@@ -222,7 +229,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 			{
 				curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 			}
-
+				
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HttpRequestMethod::ToString(requestParameters.method).c_str());
 
 			// Only resolve to IPv4 if we don't allow private network requests.
@@ -241,7 +248,34 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
 
+			// Check if the url already contains a query.
+			// If so, we'll know to append with & instead of start with ?
 			std::string queryUrl = requestParameters.baseUrl;
+			bool bUrlContainsQuery = false;
+
+			// If this fails, just ignore the parsing and trust what the user wants to query.
+			// Probably will fail but handling it here would be annoying.
+			CURLU* curlUrl = curl_url();
+			if (curlUrl)
+			{
+				if (curl_url_set(curlUrl, CURLUPART_URL, queryUrl.c_str(), CURLU_DEFAULT_SCHEME) == CURLUE_OK)
+				{
+					char* currentQuery;
+					if (curl_url_get(curlUrl, CURLUPART_QUERY, &currentQuery, 0) == CURLUE_OK)
+					{
+						if (currentQuery && std::strlen(currentQuery) != 0)
+						{
+							bUrlContainsQuery = true;
+						}
+					}
+
+					curl_free(currentQuery);
+				}
+
+				curl_url_cleanup(curlUrl);
+			}
+
+			curlUrl = nullptr;
 
 			// GET requests, or POST-like requests with an empty body, can have query parameters.
 			// Append them to the base url.
@@ -254,7 +288,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 					char* key = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
 					char* value = curl_easy_escape(curl, kv.second.c_str(), kv.second.length());
 
-					if (idx == 0)
+					if (idx == 0 && !bUrlContainsQuery)
 					{
 						queryUrl.append(fmt::format("?{}={}", key, value));
 					}
@@ -349,6 +383,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 	return handle;
 }
 
+
 template <ScriptContext context>
 void HttpRequestHandler::RegisterSQFuncs()
 {
@@ -360,6 +395,15 @@ void HttpRequestHandler::RegisterSQFuncs()
 		"[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
 		SQ_InternalMakeHttpRequest<context>
 	);
+
+	g_pSquirrel<context>->AddFuncRegistration
+	(
+		"bool",
+		"NSIsHttpEnabled",
+		"",
+		"Whether or not HTTP requests are enabled. You can opt-out by starting the game with -disablehttprequests.",
+		SQ_IsHttpEnabled<context>
+	);
 }
 
 // int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams,
@@ -370,6 +414,14 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 	if (!g_httpRequestHandler || !g_httpRequestHandler->IsRunning())
 	{
 		spdlog::warn("NS_InternalMakeHttpRequest called while the http request handler isn't running.");
+		g_pSquirrel<context>->pushinteger(sqvm, -1);
+		return SQRESULT_NOTNULL;
+	}
+
+	if (Tier0::CommandLine()->FindParm("-disablehttprequests"))
+	{
+		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
+					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
 		g_pSquirrel<context>->pushinteger(sqvm, -1);
 		return SQRESULT_NOTNULL;
 	}
@@ -426,9 +478,18 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// bool NSIsHttpEnabled()
+template<ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSquirrelVM* sqvm)
+{
+	const bool bIsDisabled = Tier0::CommandLine()->FindParm("-disablehttprequests");
+	g_pSquirrel<context>->pushbool(sqvm, !bIsDisabled);
+	return SQRESULT_NOTNULL;
+}
+
 ON_DLL_LOAD_RELIESON("client.dll", HttpRequestHandler_ClientInit, ClientSquirrel, (CModule module))
 {
 	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::CLIENT>();
+	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::UI>();
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel, (CModule module))
