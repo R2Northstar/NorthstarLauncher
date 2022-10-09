@@ -32,7 +32,7 @@ void HttpRequestHandler::StopHttpRequestHandler()
 	spdlog::info("HttpRequestHandler stopped.");
 }
 
-bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::string& outResolvedHost, std::string& outHostHeader)
+bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostname, std::string& outAddress, std::string& outPort)
 {
 	bool bAllowed = false;
 
@@ -43,7 +43,7 @@ bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::
 		return false;
 	}
 
-	if (curl_url_set(url, CURLUPART_URL, host.c_str(), 0) != CURLUE_OK)
+	if (curl_url_set(url, CURLUPART_URL, host.c_str(), CURLU_DEFAULT_SCHEME) != CURLUE_OK)
 	{
 		spdlog::error("Failed to parse destination URL for http request.");
 
@@ -61,7 +61,7 @@ bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::
 	}
 
 	char* urlScheme = nullptr;
-	if (curl_url_get(url, CURLUPART_SCHEME, &urlHostname, CURLU_DEFAULT_SCHEME))
+	if (curl_url_get(url, CURLUPART_SCHEME, &urlScheme, CURLU_DEFAULT_SCHEME) != CURLUE_OK)
 	{
 		spdlog::error("Failed to parse scheme from destination URL for http request.");
 
@@ -70,11 +70,10 @@ bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::
 		return false;
 	}
 
-	// Resolve the hostname into an address.
-	addrinfo* result;
-	if (getaddrinfo(urlHostname, urlScheme, nullptr, &result) != 0)
+	char* urlPort = nullptr;
+	if (curl_url_get(url, CURLUPART_PORT, &urlPort, CURLU_DEFAULT_PORT) != CURLUE_OK)
 	{
-		spdlog::error("Failed to resolve http request destination {} using getaddrinfo().", urlHostname);
+		spdlog::error("Failed to parse port from destination URL for http request.");
 
 		curl_url_cleanup(url);
 		curl_free(urlHostname);
@@ -82,7 +81,24 @@ bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::
 		return false;
 	}
 
-	bool bFoundIPv6;
+	// Resolve the hostname into an address.
+	addrinfo* result;
+	addrinfo hints;
+	std::memset(&hints, 0, sizeof(addrinfo));
+	hints.ai_family = AF_UNSPEC;
+
+	if (getaddrinfo(urlHostname, urlScheme, &hints, &result) != 0)
+	{
+		spdlog::error("Failed to resolve http request destination {} using getaddrinfo().", urlHostname);
+
+		curl_url_cleanup(url);
+		curl_free(urlHostname);
+		curl_free(urlScheme);
+		curl_free(urlPort);
+		return false;
+	}
+
+	bool bFoundIPv6 = false;
 	sockaddr_in* sockaddr_ipv4 = nullptr;
 	for (addrinfo* info = result; info; info = info->ai_next)
 	{
@@ -92,7 +108,7 @@ bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::
 			break;
 		}
 
-		bFoundIPv6 &= info->ai_family == AF_INET6;
+		bFoundIPv6 = bFoundIPv6 || info->ai_family == AF_INET6;
 	}
 
 	if (sockaddr_ipv4 == nullptr)
@@ -138,18 +154,11 @@ bool HttpRequestHandler::IsDestinationHostAllowed(const std::string& host, std::
 	bAllowed = true;
 	char resolvedStr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &sockaddr_ipv4->sin_addr, resolvedStr, INET_ADDRSTRLEN);
-
-	// Use CURL to change the host of the url while keeping anything like path.
-	curl_url_set(url, CURLUPART_HOST, resolvedStr, 0);
-
-	// Keep the request host name to be used as a Host: header.
-	outHostHeader = urlHostname;
-
-	curl_free(urlHostname);
-	curl_url_get(url, CURLUPART_URL, &urlHostname, CURLU_DEFAULT_SCHEME);
-
+	
 	// Use the resolved address as the new request host.
-	outResolvedHost = urlHostname;
+	outHostname = urlHostname;
+	outAddress = resolvedStr;
+	outPort = urlPort;
 	
 	freeaddrinfo(result);
 
@@ -157,6 +166,7 @@ CLEANUP:
 
 	curl_free(urlHostname);
 	curl_free(urlScheme);
+	curl_free(urlPort);
 	curl_url_cleanup(url);
 	return bAllowed;
 }
@@ -177,24 +187,28 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 	}
 
 	bool bAllowLocalHttp = Tier0::CommandLine()->FindParm("-allowlocalhttp");
-	std::string resolvedHostName, hostHeaderOverride;
-
-	if (!bAllowLocalHttp)
-	{
-		if (!IsDestinationHostAllowed(requestParameters.baseUrl, resolvedHostName, hostHeaderOverride))
-		{
-			spdlog::warn("HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed on when "
-						 "running the game -allowlocalhttp.");
-			return -1;
-		}
-	}
 
 	// This handle will be returned to Squirrel so it can wait for the response and assign a callback for it.
 	int handle = ++m_iLastRequestHandle;
 
 	std::thread requestThread(
-		[this, handle, requestParameters, bAllowLocalHttp, resolvedHostName, hostHeaderOverride]()
+		[this, handle, requestParameters, bAllowLocalHttp]()
 		{
+			std::string hostname, resolvedAddress, resolvedPort;
+
+			if (!bAllowLocalHttp)
+			{
+				if (!IsHttpDestinationHostAllowed(requestParameters.baseUrl, hostname, resolvedAddress, resolvedPort))
+				{
+					spdlog::warn(
+						"HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed when "
+						"running the game with -allowlocalhttp.");
+
+					g_pSquirrel<context>->createMessage("NSHandleFailedHttpRequest", handle, 0, "Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more information.");			
+					return;
+				}
+			}
+
 			CURL* curl = curl_easy_init();
 			if (!curl)
 			{
@@ -204,92 +218,106 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				return;
 			}
 
-			CURLoption curlMethod = CURLOPT_HTTPGET;
-			switch (requestParameters.method)
+			// HEAD has no body.
+			if (requestParameters.method == HttpRequestMethod::HRM_HEAD)
 			{
-			case HttpRequestMethod::GET:
-				curlMethod = CURLOPT_HTTPGET;
-				break;
-			case HttpRequestMethod::POST:
-				curlMethod = CURLOPT_HTTPPOST;
-				break;
+				curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 			}
 
-			std::string queryUrl = requestParameters.baseUrl;
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HttpRequestMethod::ToString(requestParameters.method).c_str());
 
 			// Only resolve to IPv4 if we don't allow private network requests.
-			// TODO: Also use resolved host ip as destination, and set hostname using Host: header.
+			curl_slist* host = nullptr;
 			if (!bAllowLocalHttp)
 			{
-				curl_easy_setopt(curl, CURLOPT_RESOLVE, CURL_IPRESOLVE_V4);
-				queryUrl = resolvedHostName;
+				curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+				host = curl_slist_append(host, fmt::format("{}:{}:{}", hostname, resolvedPort, resolvedAddress).c_str());
+				curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
 			}
 
 			// Ensure we only allow HTTP or HTTPS.
 			curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-			curl_easy_setopt(curl, curlMethod, 1L);
 
 			// Allow redirects
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
 
-			// GET requests, or POST requests with an empty body, can have query parameters.
+			std::string queryUrl = requestParameters.baseUrl;
+
+			// GET requests, or POST-like requests with an empty body, can have query parameters.
 			// Append them to the base url.
-			if (requestParameters.method == HttpRequestMethod::GET || requestParameters.body.empty())
+			if (requestParameters.method == HttpRequestMethod::HRM_GET
+				|| HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) && requestParameters.body.empty())
 			{
 				int idx = 0;
 				for (const auto& kv : requestParameters.queryParameters)
 				{
+					char* key = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
+					char* value = curl_easy_escape(curl, kv.second.c_str(), kv.second.length());
+
 					if (idx == 0)
 					{
-						queryUrl.append(fmt::format("?{}={}", kv.first, kv.second));
+						queryUrl.append(fmt::format("?{}={}", key, value));
 					}
 					else
 					{
-						queryUrl.append(fmt::format("&{}={}", kv.first, kv.second));
+						queryUrl.append(fmt::format("&{}={}", key, value));
 					}
+
+					curl_free(key);
+					curl_free(value);
 				}
 			}
-			else
+
+			if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method))
 			{
 				// Grab the body and set it as a POST field
-				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestParameters.body);
+				curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, requestParameters.body.length());
+				curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, requestParameters.body.c_str());
 			}
 
 			curl_easy_setopt(curl, CURLOPT_URL, queryUrl.c_str());
 
-			// If we're using a GET method, setup the write function so it can write into the body.
 			std::string bodyBuffer;
 			std::string headerBuffer;
 
-			if (requestParameters.method == HttpRequestMethod::GET)
-			{
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpCurlWriteToStringBufferCallback);
-				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bodyBuffer);
-			}
-
+			// Set up buffers to write the response headers and body.
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpCurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bodyBuffer);
 			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpCurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
 
 			// Add all the headers for the request.
-			struct curl_slist* headers = nullptr;
-			curl_slist_append(headers, fmt::format("Content-Type: {}", requestParameters.contentType).c_str());
-			for (const auto& kv : requestParameters.headers)
+			curl_slist* headers = nullptr;
+
+			// Content-Type header for POST-like requests.
+			if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) && !requestParameters.body.empty())
 			{
-				curl_slist_append(headers, fmt::format("{}: {}", kv.first, kv.second).c_str());
+				headers = curl_slist_append(headers, fmt::format("Content-Type: {}", requestParameters.contentType).c_str());
 			}
 
-			// Append the Host header if we private network requests are forbidden.
-			if (!bAllowLocalHttp)
+			for (const auto& kv : requestParameters.headers)
 			{
-				curl_slist_append(headers, fmt::format("Host: {}", hostHeaderOverride).c_str());
+				headers = curl_slist_append(headers, fmt::format("{}: {}", kv.first, kv.second).c_str());
 			}
 
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 			curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
 
-			// Enforce the Northstar user agent.
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
+			// Enforce the Northstar user agent, unless an override was specified.
+			if (requestParameters.userAgent.empty())
+			{
+				curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
+			}
+			else
+			{
+				curl_easy_setopt(curl, CURLOPT_USERAGENT, requestParameters.userAgent.c_str());
+			}
+
+			// Set the timeout for this request.
+			curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::clamp<long>(requestParameters.timeout, 1, 60));
 
 			CURLcode result = curl_easy_perform(curl);
 			if (IsRunning())
@@ -300,7 +328,6 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 					// Squirrel side will handle firing the correct callback.
 					long httpCode = 0;
 					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-					// TODO: Send response over to Squirrel, yay.
 					g_pSquirrel<context>->createMessage("NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);				
 				}
 				else
@@ -313,6 +340,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 
 			curl_easy_cleanup(curl);
 			curl_slist_free_all(headers);
+			curl_slist_free_all(host);
 		});
 
 	requestThread.detach();
@@ -326,13 +354,14 @@ void HttpRequestHandler::RegisterSQFuncs()
 	(
 		"int",
 		"NS_InternalMakeHttpRequest",
-		"int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body",
+		"int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body, int timeout, string userAgent",
 		"[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
 		SQ_InternalMakeHttpRequest<context>
 	);
 }
 
-// int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body)
+// int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams,
+//	string contentType, string body, int timeout, string userAgent)
 template<ScriptContext context>
 SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 {
@@ -344,7 +373,7 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 	}
 
 	HttpRequest request;
-	request.method = static_cast<HttpRequestMethod>(g_pSquirrel<context>->getinteger(sqvm, 1));
+	request.method = static_cast<HttpRequestMethod::Type>(g_pSquirrel<context>->getinteger(sqvm, 1));
 	request.baseUrl = g_pSquirrel<context>->getstring(sqvm, 2);
 
 	SQTable* headerTable = sqvm->_stackOfCurrentFunction[3]._VAL.asTable;
@@ -387,6 +416,8 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 
 	request.contentType = g_pSquirrel<context>->getstring(sqvm, 5);
 	request.body = g_pSquirrel<context>->getstring(sqvm, 6);
+	request.timeout = g_pSquirrel<context>->getinteger(sqvm, 7);
+	request.userAgent = g_pSquirrel<context>->getstring(sqvm, 8);
 
 	int handle = g_httpRequestHandler->MakeHttpRequest<context>(request);
 	g_pSquirrel<context>->pushinteger(sqvm, handle);
