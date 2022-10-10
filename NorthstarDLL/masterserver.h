@@ -104,6 +104,8 @@ class MasterServerManager
 
 	bool m_bHasPendingConnectionInfo = false;
 	RemoteServerConnectionInfo m_pendingConnectionInfo;
+	std::optional<RemoteServerInfo> m_currentServer;
+	std::string m_sCurrentServerPassword;
 
 	std::vector<RemoteServerInfo> m_vRemoteServers;
 
@@ -118,7 +120,7 @@ class MasterServerManager
 	void RequestMainMenuPromos();
 	void AuthenticateOriginWithMasterServer(const char* uid, const char* originToken);
 	void AuthenticateWithOwnServer(const char* uid, const char* playerToken);
-	void AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password);
+	void AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password);
 	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
 };
 

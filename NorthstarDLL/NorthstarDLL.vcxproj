@@ -565,6 +565,7 @@
     <ClInclude Include="urihandler.h" />
     <ClInclude Include="vector.h" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="wininfo.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="audio.cpp" />
@@ -641,6 +642,7 @@
     <ClCompile Include="tier0.cpp" />
     <ClCompile Include="urihandler.cpp" />
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="wininfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\crypto\bn_conf.h.in" />

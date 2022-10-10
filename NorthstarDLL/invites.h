@@ -4,6 +4,7 @@
 
 #include <regex>
 #include "base64.h"
+#include "convar.h"
 
 static std::string URIProtocolName = "northstar://";
 
@@ -25,6 +26,18 @@ inline std::optional<InviteType> invitetype_from_string(std::string input) {
 	return std::nullopt;
 }
 
+inline std::string string_from_invitetype(InviteType type) {
+	switch (type)
+	{
+		case InviteType::SERVER:
+			return "server";
+		case InviteType::PARTY:
+			return "party";
+		default:
+			return "";
+	}
+}
+
 class Invite
 {
   public:
@@ -32,44 +45,12 @@ class Invite
 	bool active = false;
 	std::string id = "";
 	std::string password = "";
-	std::string as_url();
+	std::string as_local_request();
+	std::string as_uri();
 	void store();
 };
 
-inline std::optional<Invite> parseURI(std::string uriString)
-{
-	Invite invite = {};
-
-	int uriOffset = uriString.find(URIProtocolName);
-	if (uriOffset != std::string::npos)
-	{
-		uriString = uriString.substr(uriOffset + URIProtocolName.length(), uriString.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
-	}
-	if (uriString[uriString.length() - 1] == '/')
-	{
-		uriString = uriString.substr(0, uriString.length() - 1);
-	}
-	
-	std::regex r("(\\w*)@(\\w*):?(.*)");
-
-	std::smatch matches;
-
-	auto found = std::regex_match(uriString, matches, r);
-	if (matches.size() < 4)
-	{
-		return std::nullopt;
-	}
-	auto maybe_type = invitetype_from_string(matches[1]);
-	if (!maybe_type)
-	{
-		spdlog::warn("Tried parsing invite with invalid type '{}'", matches[1].str());
-		return std::nullopt;
-	}
-	invite.type = maybe_type.value();
-	invite.id = matches[2].str();
-	invite.password = matches[3].str() == "" ? "" : base64_decode(matches[3].str());
-
-	return invite;
-}
+std::optional<Invite> parseURI(std::string uriString);
 
 extern Invite* storedInvite;
+extern ConVar* Cvar_ns_dont_ask_install_urihandler;

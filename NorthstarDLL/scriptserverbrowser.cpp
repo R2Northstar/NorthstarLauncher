@@ -337,27 +337,7 @@ SQRESULT SQ_TryAuthWithServer(HSquirrelVM* sqvm)
 	g_pMasterServerManager->AuthenticateWithServer(
 		R2::g_pLocalPlayerUserID,
 		g_pMasterServerManager->m_sOwnClientAuthToken,
-		g_pMasterServerManager->m_vRemoteServers[serverIndex].id,
-		(char*)password);
-
-	return SQRESULT_NULL;
-}
-
-// void function NSTryAuthWithServerId( string serverID, string password = "" )
-SQRESULT SQ_TryAuthWithServerId(HSquirrelVM* sqvm)
-{
-	const SQChar* serverID = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
-	const SQChar* password = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 2);
-
-	// send off persistent data first, don't worry about server/client stuff, since m_additionalPlayerData should only have entries when
-	// we're a local server note: this seems like it could create a race condition, test later
-	for (auto& pair : g_pServerAuthentication->m_PlayerAuthenticationData)
-		g_pServerAuthentication->WritePersistentData(pair.first);
-
-	// do auth
-	g_pMasterServerManager->AuthenticateWithServer(
-		R2::g_pLocalPlayerUserID,
-		g_pMasterServerManager->m_sOwnClientAuthToken, serverID,
+		g_pMasterServerManager->m_vRemoteServers[serverIndex],
 		(char*)password);
 
 	return SQRESULT_NULL;
@@ -467,8 +447,6 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerBrowser, ClientSquirrel, (
 
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 		"void", "NSTryAuthWithServer", "int serverIndex, string password = \"\"", "", SQ_TryAuthWithServer);
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
-		"void", "NSTryAuthWithServerId", "string serverID, string password = \"\"", "", SQ_TryAuthWithServerId);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSIsAuthenticatingWithServer", "", "", SQ_IsAuthComplete);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("bool", "NSWasAuthSuccessful", "", "", SQ_WasAuthSuccessful);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSConnectToAuthedServer", "", "", SQ_ConnectToAuthedServer);

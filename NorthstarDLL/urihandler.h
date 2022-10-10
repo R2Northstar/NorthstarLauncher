@@ -10,6 +10,7 @@ class URIHandler
 
   public:
 	void StartServer();
+	bool CheckInstall();
 	/* bool HandleAcceptedInvite();
 	void InitialiseURIStuff(HMODULE baseAddress);
 

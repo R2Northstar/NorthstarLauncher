@@ -1506,6 +1506,9 @@
     <ClInclude Include="include\base64.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="wininfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -1720,6 +1723,9 @@
     </ClCompile>
     <ClCompile Include="invites.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="wininfo.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

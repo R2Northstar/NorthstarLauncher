@@ -3,18 +3,70 @@
 #include "squirrel.h"
 #include "urihandler.h"
 #include "masterserver.h"
+#include "wininfo.h"
 
 AUTOHOOK_INIT()
 
 Invite* storedInvite;
+ConVar* Cvar_ns_dont_ask_install_urihandler;
 
-std::string Invite::as_url()
+
+std::optional<Invite> parseURI(std::string uriString)
+{
+	Invite invite = {};
+
+	int uriOffset = uriString.find(URIProtocolName);
+	if (uriOffset != std::string::npos)
+	{
+		uriString =
+			uriString.substr(uriOffset + URIProtocolName.length(), uriString.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
+	}
+	if (uriString[uriString.length() - 1] == '/')
+	{
+		uriString = uriString.substr(0, uriString.length() - 1);
+	}
+
+	std::regex r("(\\w*)@(\\w*):?(.*)");
+
+	std::smatch matches;
+
+	auto found = std::regex_match(uriString, matches, r);
+	if (matches.size() < 4)
+	{
+		return std::nullopt;
+	}
+	auto maybe_type = invitetype_from_string(matches[1]);
+	if (!maybe_type)
+	{
+		spdlog::warn("Tried parsing invite with invalid type '{}'", matches[1].str());
+		return std::nullopt;
+	}
+	invite.type = maybe_type.value();
+	invite.id = matches[2].str();
+	invite.password = matches[3].str() == "" ? "" : base64_decode(matches[3].str());
+
+	return invite;
+}
+
+
+std::string Invite::as_local_request()
 {
 	std::string url = "http://localhost:42069/invite?id={}&type={}";
 	url = fmt::format(url, id, type);
 	if (password != "")
 	{
 		url.append(fmt::format("&password=", password));
+	}
+	return url;
+}
+
+std::string Invite::as_uri()
+{
+	std::string url = "{}{}@{}";
+	url = fmt::format(url, URIProtocolName, id, string_from_invitetype(type));
+	if (password != "")
+	{
+		url.append(fmt::format(":{}", base64_encode(password)));
 	}
 	return url;
 }
@@ -72,7 +124,6 @@ template <ScriptContext context> SQRESULT SQ_DeclineInvite(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-
 template <ScriptContext context> SQRESULT SQ_ParseInvite(HSquirrelVM* sqvm)
 {
 	std::string invite_str = g_pSquirrel<context>->getstring(sqvm, 1);
@@ -85,6 +136,57 @@ template <ScriptContext context> SQRESULT SQ_ParseInvite(HSquirrelVM* sqvm)
 	Invite invite = maybe_invite.value();
 	invite.store();
 	return SQRESULT_NOTNULL;
+}
+
+template <ScriptContext context> SQRESULT SQ_GenerateServerInvite(HSquirrelVM* sqvm)
+{
+	Invite invite = {};
+	if (g_pServerPresence->m_bHasPresence)
+	{
+		invite.id = g_pServerPresence->m_ServerPresence.m_sServerId;
+		invite.password = g_pServerPresence->m_ServerPresence.m_Password;
+		if (invite.id == "")
+		{
+			spdlog::warn("SQ_GenerateServerInvite tried to generate an invite while local server id was null");
+			g_pSquirrel<context>->raiseerror(sqvm, "SQ_GenerateServerInvite tried to generate an invite while local server id was null");
+			return SQRESULT_ERROR;
+		}
+	}
+	else
+	{
+		if (!g_pMasterServerManager->m_currentServer)
+		{
+			spdlog::warn("SQ_GenerateServerInvite was called while no RemoteServerInfo was stored");
+			g_pSquirrel<context>->raiseerror(sqvm, "SQ_GenerateServerInvite was called while no RemoteServerInfo was stored");
+			return SQRESULT_ERROR;
+		}
+		invite.id = g_pMasterServerManager->m_currentServer.value().id;
+		invite.password = g_pMasterServerManager->m_sCurrentServerPassword;
+	}
+	auto inviteString = invite.as_uri();
+
+	// Copying into clipboard
+
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, inviteString.length());
+	if (hMem != NULL)
+	{
+		LPVOID locked = GlobalLock(hMem);
+		if (locked != NULL)
+		{
+			memcpy(locked, inviteString.c_str(), inviteString.length());
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_TEXT, hMem);
+			CloseClipboard();
+			g_pSquirrel<context>->pushstring(sqvm, inviteString.c_str(), inviteString.length());
+			return SQRESULT_NOTNULL;
+		}
+	}
+
+	spdlog::warn("SQ_GenerateServerInvite was called but was not able to copy invite to clipboard");
+	g_pSquirrel<context>->raiseerror(sqvm, "SQ_GenerateServerInvite was called but was not able to copy invite to clipboard");
+	return SQRESULT_ERROR;
 }
 
 template <ScriptContext context> SQRESULT SQ_PullInviteFromNative(HSquirrelVM* sqvm)
@@ -143,10 +245,25 @@ template <ScriptContext context> SQRESULT SQ_PullInviteFromNative(HSquirrelVM* s
 
 	storedInvite->active = false;
 
+	// This is all needed to focus and foreground the window
+	// Yes, really
+	SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
+	HWND hCurWnd = GetForegroundWindow();
+	DWORD dwMyID = GetCurrentThreadId();
+	DWORD dwCurID = GetWindowThreadProcessId(hCurWnd, NULL);
+	AttachThreadInput(dwCurID, dwMyID, TRUE);
+	SetWindowPos(*g_gameHWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+	SetWindowPos(*g_gameHWND, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+	SetForegroundWindow(*g_gameHWND);
+	SetFocus(*g_gameHWND);
+	SetActiveWindow(*g_gameHWND);
+	AttachThreadInput(dwCurID, dwMyID, FALSE);
+	ShowWindow(*g_gameHWND, SW_RESTORE);
+
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientSquirrelInvites, ClientSquirrel, (CModule module))
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientSquirrelInvites, (ConCommand, ClientSquirrel), (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
@@ -156,5 +273,9 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientSquirrelInvites, ClientSquirrel,
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "inv", "string id", "", SQ_GenInviteTest<ScriptContext::UI>);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSParseInvite", "string invite", "", SQ_ParseInvite<ScriptContext::UI>);
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
+		"string", "NSGenerateServerInvite", "", "", SQ_GenerateServerInvite<ScriptContext::UI>);
+	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
 		"table", "NSPullInviteFromNative", "", "", SQ_PullInviteFromNative<ScriptContext::UI>);
+
+	Cvar_ns_dont_ask_install_urihandler = new ConVar("ns_dont_ask_install_urihandler", "0", FCVAR_ARCHIVE | FCVAR_DONTRECORD , "");
 }

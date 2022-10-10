@@ -6,6 +6,8 @@ struct ServerPresence
 	int m_iPort;
 	int m_iAuthPort;
 
+	std::string m_sServerId;
+
 	std::string m_sServerName;
 	std::string m_sServerDesc;
 	char m_Password[256]; // probably bigger than will ever be used in practice, lol
@@ -26,6 +28,8 @@ struct ServerPresence
 	{
 		m_iPort = obj->m_iPort;
 		m_iAuthPort = obj->m_iAuthPort;
+
+		m_sServerId = obj->m_sServerId;
 
 		m_sServerName = obj->m_sServerName;
 		m_sServerDesc = obj->m_sServerDesc;
@@ -50,9 +54,6 @@ class ServerPresenceReporter
 class ServerPresenceManager
 {
   private:
-	ServerPresence m_ServerPresence;
-
-	bool m_bHasPresence = false;
 	bool m_bFirstPresenceUpdate = false;
 
 	std::vector<ServerPresenceReporter*> m_vPresenceReporters;
@@ -68,6 +69,10 @@ class ServerPresenceManager
 	ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
   public:
+	ServerPresence m_ServerPresence;
+	bool m_bHasPresence = false;
+
+  public:
 	ServerPresenceManager();
 
 	void AddPresenceReporter(ServerPresenceReporter* reporter);
@@ -78,6 +83,8 @@ class ServerPresenceManager
 
 	void SetPort(const int iPort);
 	void SetAuthPort(const int iPort);
+
+	void SetId(const std::string sServerId);
 
 	void SetName(const std::string sServerNameUnicode);
 	void SetDescription(const std::string sServerDescUnicode);

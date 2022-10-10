@@ -11,6 +11,9 @@
 
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#include <regex>
+
+static std::string URIProtocolName = "northstar://";
 
 namespace fs = std::filesystem;
 
@@ -321,8 +324,59 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
+void installURIHandler()
+{
+	::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+
+	wchar_t buffer[_MAX_PATH];
+	GetModuleFileNameW(NULL, buffer, _MAX_PATH); // Get full executable path
+	std::wstring w = std::wstring(buffer);
+	std::string path = std::string(w.begin(), w.end()); // Convert from wstring to string
+
+	HKEY runKey;
+	if (RegCreateKeyExW(HKEY_CLASSES_ROOT, L"northstar\\shell\\open\\command", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &runKey, NULL) !=
+		ERROR_SUCCESS)
+	{
+		exit(-1);
+	}
+	std::string command = path + " %1";
+	std::wstring wide_string = std::wstring(command.begin(), command.end());
+	LPCTSTR data = wide_string.c_str();
+	LPCTSTR flag = L"";
+	LPCTSTR name = L"Northstar Launcher";
+	RegSetKeyValueW(HKEY_CLASSES_ROOT, L"northstar\\shell\\open\\command", L"", REG_SZ, (LPBYTE)data, wcslen(data) * sizeof(TCHAR));
+	RegSetKeyValueW(HKEY_CLASSES_ROOT, L"northstar", L"URL Protocol", REG_SZ, (LPBYTE)flag, wcslen(flag) * sizeof(TCHAR));
+	RegSetKeyValueW(HKEY_CLASSES_ROOT, L"northstar", L"", REG_SZ, (LPBYTE)name, wcslen(name) * sizeof(TCHAR));
+	exit(0);
+}
+
 int main(int argc, char* argv[])
 {
+
+	std::string uriString = GetCommandLineA();
+	auto offset = uriString.find(URIProtocolName);
+	if (offset != std::string::npos)
+	{
+
+		uriString =
+			uriString.substr(offset + URIProtocolName.length(), uriString.length() - offset - 1); // -1 to remove a trailing slash -_-
+		std::regex r(".*(-|\\+).*");
+
+		std::smatch matches;
+
+		auto found = std::regex_match(uriString, matches, r);
+		if (matches.size() > 0)
+		{
+			MessageBoxA(
+				GetForegroundWindow(),
+				"Northstar was started in URI handler mode, but additional command line arguments were detected. This is most likely an "
+				"attempt at malicious execution. Shutting down",
+				"Northstar Launcher Error",
+				0);
+			exit(-1);
+		}
+	}
+
 	if (strstr(GetCommandLineA(), "-waitfordebugger"))
 	{
 		while (!IsDebuggerPresent())
@@ -330,7 +384,6 @@ int main(int argc, char* argv[])
 			Sleep(100);
 		}
 	}
-
 
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
@@ -357,6 +410,8 @@ int main(int argc, char* argv[])
 			nostubs = true;
 		else if (!strcmp(argv[i], "-noplugins"))
 			noLoadPlugins = true;
+		else if (!strcmp(argv[i], "-addurihandler"))
+			installURIHandler();
 
 	if (!noOriginStartup && !dedicated)
 	{

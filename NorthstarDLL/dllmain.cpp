@@ -19,6 +19,7 @@
 #include <filesystem>
 
 #include "invites.h"
+#include "squirrel.h"
 
 typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 
@@ -60,31 +61,21 @@ bool CheckURI()
 		return false;
 	}
 	auto invite = maybe_invite.value();
-
-	if (!is_port_open(42069))
+				
+	std::string url = invite.as_local_request();
+	CURL* curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 1000L);
+	CURLcode result = curl_easy_perform(curl);
+	if (result == CURLE_OPERATION_TIMEDOUT) // For some reason this is used when it cant find the resource
 	{
-		spdlog::info("PORT IS CLOSED");
-			
-		std::string url = invite.as_url();
-		CURL* curl = curl_easy_init();
-		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 100L);
-		CURLcode result = curl_easy_perform(curl);
-		if (result == CURLE_URL_MALFORMAT) // For some reason this is used when it cant find the resource
-		{
-			invite.store();
-			return true;
-		}
-		else
-		{
-			exit(0);
-		}
-	}
-	else {
-		spdlog::info("PORT IS OPEN");
 		invite.store();
 		return true;
+	}
+	else
+	{
+		exit(0);
 	}
 }
 
