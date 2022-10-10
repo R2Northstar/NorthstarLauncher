@@ -2,13 +2,28 @@
 
 #include "pch.h"
 
+#include <regex>
+#include "base64.h"
+
 static std::string URIProtocolName = "northstar://";
 
 enum InviteType
 {
 	SERVER = 0,
-	PARTY = 1
+	PARTY = 1,
 };
+
+inline std::optional<InviteType> invitetype_from_string(std::string input) {
+	if (input == "server")
+	{
+		return InviteType::SERVER;
+	}
+	if (input == "party")
+	{
+		return InviteType::PARTY;
+	}
+	return std::nullopt;
+}
 
 class Invite
 {
@@ -25,61 +40,34 @@ inline std::optional<Invite> parseURI(std::string uriString)
 {
 	Invite invite = {};
 
-	std::string password;
-	std::string inviteType;
-	int atLocation;
-	int uriOffset = URIProtocolName.length();
-	if (uriString.find(URIProtocolName) != std::string::npos)
+	int uriOffset = uriString.find(URIProtocolName);
+	if (uriOffset != std::string::npos)
 	{
-		if (strncmp(uriString.c_str() + (uriString.length() - 1), "/", 1))
-		{
-			uriString = uriString.substr(uriOffset, uriString.length() - uriOffset);
-		}
+		uriString = uriString.substr(uriOffset + URIProtocolName.length(), uriString.length() - uriOffset - 1); // -1 to remove a trailing slash -_-
 	}
-	int inviteOffset = uriString.find("/invite/");
-	if (uriString.find("/invite/") != std::string::npos)
+	if (uriString[uriString.length() - 1] == '/')
 	{
-		uriString = uriString.substr(inviteOffset + 8, uriString.length() - inviteOffset);
-		atLocation = uriString.find("/");
+		uriString = uriString.substr(0, uriString.length() - 1);
 	}
-	else
-	{
-		atLocation = uriString.find("@");
-	}
+	
+	std::regex r("(\\w*)@(\\w*):?(.*)");
 
-	spdlog::info("Parsing URI: {}", uriString.c_str());
+	std::smatch matches;
 
-	if (atLocation == std::string::npos)
+	auto found = std::regex_match(uriString, matches, r);
+	if (matches.size() < 4)
 	{
-		// spdlog::info("Invalid or malformed URI. Returning early.");
 		return std::nullopt;
 	}
-	std::string invitetype = uriString.substr(0, atLocation);
-	if (invitetype == "server")
+	auto maybe_type = invitetype_from_string(matches[1]);
+	if (!maybe_type)
 	{
-		invite.type = InviteType::SERVER;
-	}
-	else if (invitetype == "party")
-	{
-		invite.type = InviteType::PARTY;
-	}
-	else
-	{
-		//spdlog::info("Invalid or unknown invite type \"{}\". Returning early.", invitetype);
+		spdlog::warn("Tried parsing invite with invalid type '{}'", matches[1].str());
 		return std::nullopt;
 	}
-	uriString = uriString.substr(atLocation + 1);
-	int sep = uriString.find(":");
-	if (sep != std::string::npos)
-	{
-		invite.id = uriString.substr(0, sep);
-		invite.password = uriString.substr(sep + 1); // This crashes when the input b64 is invalid, whatever
-	}
-	else
-	{
-		invite.id = uriString;
-		invite.password = "";
-	}
+	invite.type = maybe_type.value();
+	invite.id = matches[2].str();
+	invite.password = matches[3].str() == "" ? "" : base64_decode(matches[3].str());
 
 	return invite;
 }

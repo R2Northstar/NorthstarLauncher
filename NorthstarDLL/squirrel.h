@@ -118,6 +118,16 @@ template <ScriptContext context> class SquirrelManager
 		return message;
 	}
 
+	SquirrelMessage schedule_call(const char* funcname)
+	{
+		// This function schedules a call to be executed on the next frame
+		// This is useful for things like threads and plugins, which do not run on the main thread
+		FunctionVector function_vector = {};
+		SquirrelMessage message = {funcname, function_vector};
+		messageBuffer->push(message);
+		return message;
+	}
+
 	template <typename... Args> SQRESULT call(const char* funcname, Args... args)
 	{
 		// Warning!
