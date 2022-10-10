@@ -144,7 +144,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 			|| sockaddr_ipv4->sin_addr.S_un.S_addr == 0xFFFFFFFF							// 255.255.255.255							(Broadcast)
 			|| addrBytes.s_b1 >= 224 && addrBytes.s_b2 <= 239								// 224.0.0.0		- 239.255.255.255		(Multicast)
 			|| addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0		// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
-			|| addrBytes.s_b1 > 240 && addrBytes.s_b4 <= 254)								// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
+			|| addrBytes.s_b1 >= 240 && addrBytes.s_b4 <= 254)								// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
 		{
 			goto CLEANUP;
 		}
