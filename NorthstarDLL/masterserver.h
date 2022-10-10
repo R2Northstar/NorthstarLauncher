@@ -1,9 +1,11 @@
 #pragma once
+
 #include "convar.h"
 #include "serverpresence.h"
 #include <winsock2.h>
 #include <string>
 #include <cstring>
+#include <future>
 
 extern ConVar* Cvar_ns_masterserver_hostname;
 extern ConVar* Cvar_ns_curl_log_enable;
@@ -124,3 +126,61 @@ class MasterServerManager
 
 extern MasterServerManager* g_pMasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+
+
+/** Result returned in the std::future of a MasterServerPresenceReporter::ReportPresence() call. */
+enum class MasterServerReportPresenceResult
+{
+	// Adding this server to the MS was successful.
+	Success,
+	// We failed to add this server to the MS and should retry.
+	Failed,
+	// We failed to add this server to the MS and shouldn't retry.
+	FailedNoRetry,
+	// We failed to even reach the MS.
+	FailedNoConnect,
+};
+
+class MasterServerPresenceReporter : public ServerPresenceReporter
+{
+public:
+
+	/** Full data returned in the std::future of a MasterServerPresenceReporter::ReportPresence() call. */
+	struct ReportPresenceResultData
+	{
+		MasterServerReportPresenceResult result;
+
+		std::optional<std::string> id;
+		std::optional<std::string> serverAuthToken;
+	};
+
+	const int MAX_REGISTRATION_ATTEMPTS = 5;
+
+	// Called to initialise the master server presence reporter's state.
+	void CreatePresence(const ServerPresence* pServerPresence) override;
+
+	// Run on an internal to either add the server to the MS or update it.
+	void ReportPresence(const ServerPresence* pServerPresence) override;
+
+	// Called when we need to remove the server from the master server.
+	void DestroyPresence(const ServerPresence* pServerPresence) override;
+
+	// Called every frame. 
+	void RunFrame(double flCurrentTime, const ServerPresence* pServerPresence) override;
+
+protected:
+
+	// Contains the async logic to add the server to the MS.
+	void InternalAddServer(const ServerPresence* pServerPresence);
+
+	// Contains the async logic to update the server on the MS.
+	void InternalUpdateServer(const ServerPresence* pServerPresence);
+
+	// The future used for InternalAddServer() calls.
+	std::future<ReportPresenceResultData> addServerFuture;
+
+	// The future used for InternalAddServer() calls.
+	std::future<ReportPresenceResultData> updateServerFuture;
+
+	int m_nNumRegistrationAttempts;
+};

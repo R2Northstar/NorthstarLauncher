@@ -17,6 +17,8 @@
 #include <cstring>
 #include <regex>
 
+using namespace std::chrono_literals;
+
 MasterServerManager* g_pMasterServerManager;
 
 ConVar* Cvar_ns_masterserver_hostname;
@@ -750,311 +752,6 @@ void MasterServerManager::WritePlayerPersistentData(const char* playerId, const 
 	requestThread.detach();
 }
 
-class MasterServerPresenceReporter : public ServerPresenceReporter
-{
-	const int MAX_REGISTRATION_ATTEMPTS = 5;
-
-	bool m_bShouldTryRegisterServer;
-	bool m_bHasAddServerRequest;
-	int m_nNumRegistrationAttempts;
-
-	void CreatePresence(const ServerPresence* pServerPresence) override
-	{
-		m_bShouldTryRegisterServer = true;
-		m_bHasAddServerRequest = false;
-		m_nNumRegistrationAttempts = 0;
-	}
-
-	void ReportPresence(const ServerPresence* pServerPresence) override
-	{
-		// make a copy of presence for multithreading purposes
-		ServerPresence threadedPresence(pServerPresence);
-
-		if (!*g_pMasterServerManager->m_sOwnServerId)
-		{
-			if (m_bShouldTryRegisterServer && !m_bHasAddServerRequest)
-			{
-				// add server
-				std::thread addServerThread(
-					[this, threadedPresence]
-					{
-						g_pMasterServerManager->m_sOwnServerId[0] = 0;
-						g_pMasterServerManager->m_sOwnServerAuthToken[0] = 0;
-
-						CURL* curl = curl_easy_init();
-						SetCommonHttpClientOptions(curl);
-
-						std::string readBuffer;
-						curl_easy_setopt(curl, CURLOPT_POST, 1L);
-						curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-						curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-						curl_mime* mime = curl_mime_init(curl);
-						curl_mimepart* part = curl_mime_addpart(mime);
-
-						curl_mime_data(
-							part, g_pMasterServerManager->m_sOwnModInfoJson.c_str(), g_pMasterServerManager->m_sOwnModInfoJson.size());
-						curl_mime_name(part, "modinfo");
-						curl_mime_filename(part, "modinfo.json");
-						curl_mime_type(part, "application/json");
-
-						curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-
-						// format every paramter because computers hate me
-						{
-							char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
-							char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
-							char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
-							char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
-							char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
-
-							curl_easy_setopt(
-								curl,
-								CURLOPT_URL,
-								fmt::format(
-									"{}/server/"
-									"add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
-									Cvar_ns_masterserver_hostname->GetString(),
-									threadedPresence.m_iPort,
-									threadedPresence.m_iAuthPort,
-									nameEscaped,
-									descEscaped,
-									mapEscaped,
-									playlistEscaped,
-									threadedPresence.m_iMaxPlayers,
-									passwordEscaped)
-									.c_str());
-
-							curl_free(nameEscaped);
-							curl_free(descEscaped);
-							curl_free(mapEscaped);
-							curl_free(playlistEscaped);
-							curl_free(passwordEscaped);
-						}
-
-						CURLcode result = curl_easy_perform(curl);
-
-						if (result == CURLcode::CURLE_OK)
-						{
-							g_pMasterServerManager->m_bSuccessfullyConnected = true;
-
-							rapidjson_document serverAddedJson;
-							serverAddedJson.Parse(readBuffer.c_str());
-
-							if (serverAddedJson.HasParseError())
-							{
-								spdlog::error(
-									"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-									rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
-								goto REQUEST_END_CLEANUP;
-							}
-
-							if (!serverAddedJson.IsObject())
-							{
-								spdlog::error("Failed reading masterserver authentication response: root object is not an object");
-								goto REQUEST_END_CLEANUP;
-							}
-
-							if (serverAddedJson.HasMember("error"))
-							{
-								spdlog::error("Failed reading masterserver response: got fastify error response");
-								spdlog::error(readBuffer);
-
-								if (serverAddedJson["error"].HasMember("enum") &&
-									!strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER"))
-								{
-									if (++m_nNumRegistrationAttempts == MAX_REGISTRATION_ATTEMPTS)
-										m_bShouldTryRegisterServer = false;
-
-									goto REQUEST_END_CLEANUP_RETRY;
-								}
-
-								goto REQUEST_END_CLEANUP;
-							}
-
-							if (!serverAddedJson["success"].IsTrue())
-							{
-								spdlog::error("Adding server to masterserver failed: \"success\" is not true");
-								goto REQUEST_END_CLEANUP;
-							}
-
-							if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
-								!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
-							{
-								spdlog::error("Failed reading masterserver response: malformed json object");
-								goto REQUEST_END_CLEANUP;
-							}
-
-							strncpy_s(
-								g_pMasterServerManager->m_sOwnServerId,
-								sizeof(g_pMasterServerManager->m_sOwnServerId),
-								serverAddedJson["id"].GetString(),
-								sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
-
-							strncpy_s(
-								g_pMasterServerManager->m_sOwnServerAuthToken,
-								sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
-								serverAddedJson["serverAuthToken"].GetString(),
-								sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
-						}
-						else
-						{
-							spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
-							g_pMasterServerManager->m_bSuccessfullyConnected = false;
-						}
-
-					REQUEST_END_CLEANUP:
-						m_bShouldTryRegisterServer = false;
-
-					REQUEST_END_CLEANUP_RETRY:
-						m_bHasAddServerRequest = false;
-
-						curl_easy_cleanup(curl);
-						curl_mime_free(mime);
-					});
-
-				m_bHasAddServerRequest = true;
-				addServerThread.detach();
-			}
-		}
-		else
-		{
-			// update server
-			std::thread updateServerThread(
-				[threadedPresence]
-				{
-					CURL* curl = curl_easy_init();
-					SetCommonHttpClientOptions(curl);
-
-					std::string readBuffer;
-					curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-					curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-
-					// send all registration info so we have all necessary info to reregister our server if masterserver goes down,
-					// without a restart this isn't threadsafe :terror:
-					{
-						char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
-						char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
-						char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
-						char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
-						char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
-
-						curl_easy_setopt(
-							curl,
-							CURLOPT_URL,
-							fmt::format(
-								"{}/server/"
-								"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
-								"maxPlayers={}&password={}",
-								Cvar_ns_masterserver_hostname->GetString(),
-								g_pMasterServerManager->m_sOwnServerId,
-								threadedPresence.m_iPort,
-								threadedPresence.m_iAuthPort,
-								nameEscaped,
-								descEscaped,
-								mapEscaped,
-								playlistEscaped,
-								threadedPresence.m_iPlayerCount,
-								threadedPresence.m_iMaxPlayers,
-								passwordEscaped)
-								.c_str());
-
-						curl_free(nameEscaped);
-						curl_free(descEscaped);
-						curl_free(mapEscaped);
-						curl_free(playlistEscaped);
-						curl_free(passwordEscaped);
-					}
-
-					curl_mime* mime = curl_mime_init(curl);
-					curl_mimepart* part = curl_mime_addpart(mime);
-
-					curl_mime_data(
-						part, g_pMasterServerManager->m_sOwnModInfoJson.c_str(), g_pMasterServerManager->m_sOwnModInfoJson.size());
-					curl_mime_name(part, "modinfo");
-					curl_mime_filename(part, "modinfo.json");
-					curl_mime_type(part, "application/json");
-
-					curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-
-					CURLcode result = curl_easy_perform(curl);
-
-					if (result == CURLcode::CURLE_OK)
-					{
-						rapidjson_document serverAddedJson;
-						serverAddedJson.Parse(readBuffer.c_str());
-
-						if (!serverAddedJson.HasParseError() && serverAddedJson.IsObject())
-						{
-							if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
-							{
-								strncpy_s(
-									g_pMasterServerManager->m_sOwnServerId,
-									sizeof(g_pMasterServerManager->m_sOwnServerId),
-									serverAddedJson["id"].GetString(),
-									sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
-							}
-
-							if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
-							{
-
-								strncpy_s(
-									g_pMasterServerManager->m_sOwnServerAuthToken,
-									sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
-									serverAddedJson["serverAuthToken"].GetString(),
-									sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
-							}
-						}
-					}
-					else
-						spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
-
-					curl_easy_cleanup(curl);
-				});
-			updateServerThread.detach();
-		}
-	}
-
-	void DestroyPresence(const ServerPresence* pServerPresence) override
-	{
-		// dont call this if we don't have a server id
-		if (!*g_pMasterServerManager->m_sOwnServerId)
-			return;
-
-		std::thread requestThread(
-			[this]
-			{
-				CURL* curl = curl_easy_init();
-				SetCommonHttpClientOptions(curl);
-
-				std::string readBuffer;
-				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
-				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-				curl_easy_setopt(
-					curl,
-					CURLOPT_URL,
-					fmt::format(
-						"{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), g_pMasterServerManager->m_sOwnServerId)
-						.c_str());
-
-				*g_pMasterServerManager->m_sOwnServerId = 0;
-				CURLcode result = curl_easy_perform(curl);
-
-				if (result == CURLcode::CURLE_OK)
-					g_pMasterServerManager->m_bSuccessfullyConnected = true;
-				else
-					g_pMasterServerManager->m_bSuccessfullyConnected = false;
-
-				curl_easy_cleanup(curl);
-			});
-
-		requestThread.detach();
-	}
-};
-
 void ConCommand_ns_fetchservers(const CCommand& args)
 {
 	g_pMasterServerManager->RequestServerList();
@@ -1073,4 +770,408 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (
 
 	MasterServerPresenceReporter* presenceReporter = new MasterServerPresenceReporter;
 	g_pServerPresence->AddPresenceReporter(presenceReporter);
+}
+
+void MasterServerPresenceReporter::CreatePresence(const ServerPresence* pServerPresence)
+{
+	m_nNumRegistrationAttempts = 0;
+}
+
+void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerPresence)
+{
+	// make a copy of presence for multithreading purposes
+	ServerPresence threadedPresence(pServerPresence);
+
+	if (!*g_pMasterServerManager->m_sOwnServerId)
+	{
+		// Don't try if we've reached the max registration attempts.
+		// In the future, we should probably allow servers to re-authenticate after a while if the MS was down.
+		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)
+		{
+			return;
+		}
+
+		// If we're not running any InternalAddServer() attempt in the background.
+		if (!addServerFuture.valid())
+		{
+			// Launch an attempt to add the local server to the master server.
+			InternalAddServer(pServerPresence);
+		}
+	}
+	else
+	{
+		// If we're not running any InternalUpdateServer() attempt in the background.
+		if (!updateServerFuture.valid())
+		{
+			// Launch an attempt to update the local server on the master server.
+			InternalUpdateServer(pServerPresence);
+		}
+	}
+}
+
+void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServerPresence)
+{
+	// Don't call this if we don't have a server id.
+	if (!*g_pMasterServerManager->m_sOwnServerId)
+	{
+		return;
+	}
+
+	// Not bothering with better thread safety in this case since DestroyPresence() is called when the game is shutting down.
+	*g_pMasterServerManager->m_sOwnServerId = 0;
+
+	std::thread requestThread(
+		[this]
+		{
+			CURL* curl = curl_easy_init();
+			SetCommonHttpClientOptions(curl);
+
+			std::string readBuffer;
+			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(
+				curl,
+				CURLOPT_URL,
+				fmt::format(
+					"{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), g_pMasterServerManager->m_sOwnServerId)
+					.c_str());
+
+			
+			CURLcode result = curl_easy_perform(curl);
+			curl_easy_cleanup(curl);
+		});
+
+	requestThread.detach();
+}
+
+void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPresence* pServerPresence)
+{
+	// Check if we're already running an InternalAddServer() call in the background.
+	// If so, grab the result if it's ready.
+	if (addServerFuture.valid())
+	{
+		std::future_status status = addServerFuture.wait_for(0ms);
+		if (status != std::future_status::ready)
+		{
+			// Still running, no need to do anything.
+			return;
+		}
+
+		// Check the result.
+		auto resultData = addServerFuture.get();
+
+		g_pMasterServerManager->m_bSuccessfullyConnected = resultData.result != MasterServerReportPresenceResult::FailedNoConnect;
+
+		switch (resultData.result)
+		{
+		case MasterServerReportPresenceResult::Success:
+			// Copy over the server id and auth token granted by the MS.
+			strncpy_s(
+				g_pMasterServerManager->m_sOwnServerId,
+				sizeof(g_pMasterServerManager->m_sOwnServerId),
+				resultData.id.value().c_str(),
+				sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+			strncpy_s(
+				g_pMasterServerManager->m_sOwnServerAuthToken,
+				sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
+				resultData.serverAuthToken.value().c_str(),
+				sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
+			break;
+		case MasterServerReportPresenceResult::FailedNoRetry:
+		case MasterServerReportPresenceResult::FailedNoConnect:
+			// If we failed to connect to the master server, or failed with no retry, stop trying.
+			m_nNumRegistrationAttempts = MAX_REGISTRATION_ATTEMPTS;
+			break;
+		case MasterServerReportPresenceResult::Failed:
+			++m_nNumRegistrationAttempts;
+			break;
+		}
+
+		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)
+		{
+			spdlog::error("Reached max ms server registration attempts.");
+		}
+	}
+	else if (updateServerFuture.valid())
+	{
+		// Check if the InternalUpdateServer() call completed.
+		std::future_status status = updateServerFuture.wait_for(0ms);
+		if (status != std::future_status::ready)
+		{
+			// Still running, no need to do anything.
+			return;
+		}
+
+		auto resultData = updateServerFuture.get();
+		if (resultData.result == MasterServerReportPresenceResult::Success)
+		{
+			if (resultData.id)
+			{
+				strncpy_s(
+					g_pMasterServerManager->m_sOwnServerId,
+					sizeof(g_pMasterServerManager->m_sOwnServerId),
+					resultData.id.value().c_str(),
+					sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+			}
+
+			if (resultData.serverAuthToken)
+			{
+				strncpy_s(
+					g_pMasterServerManager->m_sOwnServerAuthToken,
+					sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
+					resultData.serverAuthToken.value().c_str(),
+					sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
+			}
+		}
+	}
+}
+
+void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServerPresence)
+{
+	const ServerPresence threadedPresence(pServerPresence);
+	// Never call this with an ongoing InternalAddServer() call.
+	assert(!addServerFuture.valid());
+
+	g_pMasterServerManager->m_sOwnServerId[0] = 0;
+	g_pMasterServerManager->m_sOwnServerAuthToken[0] = 0;
+
+	std::string modInfo = g_pMasterServerManager->m_sOwnModInfoJson;
+	std::string hostname = Cvar_ns_masterserver_hostname->GetString();
+	
+	addServerFuture = std::async(std::launch::async, [threadedPresence, modInfo, hostname]
+	{
+		CURL* curl = curl_easy_init();
+		SetCommonHttpClientOptions(curl);
+
+		std::string readBuffer;
+		curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+		curl_mime* mime = curl_mime_init(curl);
+		curl_mimepart* part = curl_mime_addpart(mime);
+
+		// Lambda to quickly cleanup resources and return a value.
+		auto ReturnCleanup = [curl, mime](MasterServerReportPresenceResult result, const char* id = "", const char* serverAuthToken = "")
+		{
+			curl_easy_cleanup(curl);
+			curl_mime_free(mime);
+
+			MasterServerPresenceReporter::ReportPresenceResultData data;
+			data.result = result;
+			data.id = id;
+			data.serverAuthToken = serverAuthToken;
+
+			return data;
+		};
+
+		curl_mime_data(part, modInfo.c_str(), modInfo.size());
+		curl_mime_name(part, "modinfo");
+		curl_mime_filename(part, "modinfo.json");
+		curl_mime_type(part, "application/json");
+
+		curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+
+		// format every paramter because computers hate me
+		{
+			char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
+			char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
+			char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
+			char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
+			char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
+
+			curl_easy_setopt(
+				curl,
+				CURLOPT_URL,
+				fmt::format(
+					"{}/server/"
+					"add_server?port={}&authPort={}&name={}&description={}&map={}&playlist={}&maxPlayers={}&password={}",
+					hostname.c_str(),
+					threadedPresence.m_iPort,
+					threadedPresence.m_iAuthPort,
+					nameEscaped,
+					descEscaped,
+					mapEscaped,
+					playlistEscaped,
+					threadedPresence.m_iMaxPlayers,
+					passwordEscaped)
+					.c_str());
+
+			curl_free(nameEscaped);
+			curl_free(descEscaped);
+			curl_free(mapEscaped);
+			curl_free(playlistEscaped);
+			curl_free(passwordEscaped);
+		}
+
+		CURLcode result = curl_easy_perform(curl);
+
+		if (result == CURLcode::CURLE_OK)
+		{
+			rapidjson_document serverAddedJson;
+			serverAddedJson.Parse(readBuffer.c_str());
+
+			// If we could not parse the JSON or it isn't an object, assume the MS is either wrong or we're completely out of date.
+			// No retry.
+			if (serverAddedJson.HasParseError())
+			{
+				spdlog::error(
+					"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+					rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
+			}
+
+			if (!serverAddedJson.IsObject())
+			{
+				spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
+			}
+
+			if (serverAddedJson.HasMember("error"))
+			{
+				spdlog::error("Failed reading masterserver response: got fastify error response");
+				spdlog::error(readBuffer);
+
+				// Retry until we reach max retries.
+				return ReturnCleanup(MasterServerReportPresenceResult::Failed);
+			}
+
+			if (!serverAddedJson["success"].IsTrue())
+			{
+				spdlog::error("Adding server to masterserver failed: \"success\" is not true");
+				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
+			}
+
+			if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() || !serverAddedJson.HasMember("serverAuthToken") ||
+				!serverAddedJson["serverAuthToken"].IsString())
+			{
+				spdlog::error("Failed reading masterserver response: malformed json object");
+				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
+			}
+
+			spdlog::info("Successfully registered the local server to the master server.");
+			return ReturnCleanup(MasterServerReportPresenceResult::Success,
+				serverAddedJson["id"].GetString(), serverAddedJson["serverAuthToken"].GetString());
+		}
+		else
+		{
+			spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
+			return ReturnCleanup(MasterServerReportPresenceResult::FailedNoConnect);
+		}
+	});
+}
+
+void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pServerPresence)
+{
+	const ServerPresence threadedPresence(pServerPresence);
+
+	// Never call this with an ongoing InternalUpdateServer() call.
+	assert(!updateServerFuture.valid());
+
+	const std::string serverId = g_pMasterServerManager->m_sOwnServerId;
+	const std::string hostname = Cvar_ns_masterserver_hostname->GetString();
+	const std::string modinfo = g_pMasterServerManager->m_sOwnModInfoJson;
+
+	updateServerFuture = std::async(std::launch::async, [threadedPresence, serverId, hostname, modinfo]
+	{
+		CURL* curl = curl_easy_init();
+		SetCommonHttpClientOptions(curl);
+
+		// Lambda to quickly cleanup resources and return a value.
+		auto ReturnCleanup = [curl](MasterServerReportPresenceResult result, const char* id = "", const char* serverAuthToken = "")
+		{
+			curl_easy_cleanup(curl);
+
+			MasterServerPresenceReporter::ReportPresenceResultData data;
+			data.result = result;
+			data.id = id;
+			data.serverAuthToken = serverAuthToken;
+
+			return data;
+		};
+
+		std::string readBuffer;
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+
+		// send all registration info so we have all necessary info to reregister our server if masterserver goes down,
+		// without a restart this isn't threadsafe :terror:
+		{
+			char* nameEscaped = curl_easy_escape(curl, threadedPresence.m_sServerName.c_str(), NULL);
+			char* descEscaped = curl_easy_escape(curl, threadedPresence.m_sServerDesc.c_str(), NULL);
+			char* mapEscaped = curl_easy_escape(curl, threadedPresence.m_MapName, NULL);
+			char* playlistEscaped = curl_easy_escape(curl, threadedPresence.m_PlaylistName, NULL);
+			char* passwordEscaped = curl_easy_escape(curl, threadedPresence.m_Password, NULL);
+
+			curl_easy_setopt(
+				curl,
+				CURLOPT_URL,
+				fmt::format(
+					"{}/server/"
+					"update_values?id={}&port={}&authPort={}&name={}&description={}&map={}&playlist={}&playerCount={}&"
+					"maxPlayers={}&password={}",
+					hostname.c_str(),
+					serverId.c_str(),
+					threadedPresence.m_iPort,
+					threadedPresence.m_iAuthPort,
+					nameEscaped,
+					descEscaped,
+					mapEscaped,
+					playlistEscaped,
+					threadedPresence.m_iPlayerCount,
+					threadedPresence.m_iMaxPlayers,
+					passwordEscaped)
+					.c_str());
+
+			curl_free(nameEscaped);
+			curl_free(descEscaped);
+			curl_free(mapEscaped);
+			curl_free(playlistEscaped);
+			curl_free(passwordEscaped);
+		}
+
+		curl_mime* mime = curl_mime_init(curl);
+		curl_mimepart* part = curl_mime_addpart(mime);
+
+		curl_mime_data(part, modinfo.c_str(), modinfo.size());
+		curl_mime_name(part, "modinfo");
+		curl_mime_filename(part, "modinfo.json");
+		curl_mime_type(part, "application/json");
+
+		curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+
+		CURLcode result = curl_easy_perform(curl);
+
+		if (result == CURLcode::CURLE_OK)
+		{
+			rapidjson_document serverAddedJson;
+			serverAddedJson.Parse(readBuffer.c_str());
+
+			const char* updatedId = nullptr;
+			const char* updatedAuthToken = nullptr;
+
+			if (!serverAddedJson.HasParseError() && serverAddedJson.IsObject())
+			{
+				if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
+				{
+					updatedId = serverAddedJson["id"].GetString();
+				}
+
+				if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
+				{
+					updatedAuthToken = serverAddedJson["serverAuthToken"].GetString();
+				}
+			}
+
+			return ReturnCleanup(MasterServerReportPresenceResult::Success, updatedId, updatedAuthToken);
+		}
+		else
+		{
+			spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
+			return ReturnCleanup(MasterServerReportPresenceResult::Failed);
+		}
+	});
 }

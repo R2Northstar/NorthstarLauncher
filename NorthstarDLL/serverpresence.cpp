@@ -141,6 +141,10 @@ void ServerPresenceManager::RunFrame(double flCurrentTime)
 	if (m_ServerPresence.m_bIsSingleplayerServer && !Cvar_ns_report_sp_server_to_masterserver->GetBool())
 		return;
 
+	// Call RunFrame() so that reporters can, for example, handle std::future results as soon as they arrive.
+	for (ServerPresenceReporter* reporter : m_vPresenceReporters)
+		reporter->RunFrame(flCurrentTime, &m_ServerPresence);
+
 	// run on a specified delay
 	if ((flCurrentTime - m_flLastPresenceUpdate) * 1000 < Cvar_ns_server_presence_update_rate->GetFloat())
 		return;
