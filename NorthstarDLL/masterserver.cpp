@@ -794,6 +794,12 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 			return;
 		}
 
+		// Make sure to wait til the cooldown is over for DUPLICATE_SERVER failures.
+		if (Tier0::Plat_FloatTime() < m_fNextAddServerAttemptTime)
+		{
+			return;
+		}
+
 		// If we're not running any InternalAddServer() attempt in the background.
 		if (!addServerFuture.valid())
 		{
@@ -887,6 +893,11 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 			break;
 		case MasterServerReportPresenceResult::Failed:
 			++m_nNumRegistrationAttempts;
+			break;
+		case MasterServerReportPresenceResult::FailedDuplicateServer:
+			++m_nNumRegistrationAttempts;
+			// Wait at least twenty seconds until we re-attempt to add the server.
+			m_fNextAddServerAttemptTime = Tier0::Plat_FloatTime() + 20.0f;
 			break;
 		}
 
@@ -1039,6 +1050,17 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+
+					// If this is DUPLICATE_SERVER, we'll retry adding the server every 20 seconds.
+					// The master server will only update its internal server list and clean up dead servers on certain events.
+					// And then again, only if a player requests the server list after the cooldown (1 second by default), or a server is
+					// added/updated/removed. In any case this needs to be fixed in the master server rewrite.
+					if (serverAddedJson["error"].HasMember("enum") &&
+						strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER") == 0)
+					{
+						spdlog::error("Cooling down while the master server cleans the dead server entry, if any.");
+						return ReturnCleanup(MasterServerReportPresenceResult::FailedDuplicateServer);
+					}
 
 					// Retry until we reach max retries.
 					return ReturnCleanup(MasterServerReportPresenceResult::Failed);

@@ -138,6 +138,8 @@ enum class MasterServerReportPresenceResult
 	FailedNoRetry,
 	// We failed to even reach the MS.
 	FailedNoConnect,
+	// We failed to add the server because an existing server with the same ip:port exists.
+	FailedDuplicateServer,
 };
 
 class MasterServerPresenceReporter : public ServerPresenceReporter
@@ -180,4 +182,6 @@ class MasterServerPresenceReporter : public ServerPresenceReporter
 	std::future<ReportPresenceResultData> updateServerFuture;
 
 	int m_nNumRegistrationAttempts;
+
+	double m_fNextAddServerAttemptTime;
 };
