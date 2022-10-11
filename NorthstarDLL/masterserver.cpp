@@ -54,6 +54,8 @@ void SetCommonHttpClientOptions(CURL* curl)
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, Cvar_ns_curl_log_enable->GetBool());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
+	// Timeout since the MS has fucky async functions without await, making curl hang due to a successful connection but no response for ~90 seconds.
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
 	if (Tier0::CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
@@ -938,6 +940,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 	std::string modInfo = g_pMasterServerManager->m_sOwnModInfoJson;
 	std::string hostname = Cvar_ns_masterserver_hostname->GetString();
+
+	spdlog::info("Attempting to register the local server to the master server.");
 	
 	addServerFuture = std::async(std::launch::async, [threadedPresence, modInfo, hostname]
 	{
@@ -1085,9 +1089,17 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 
 			MasterServerPresenceReporter::ReportPresenceResultData data;
 			data.result = result;
-			data.id = id;
-			data.serverAuthToken = serverAuthToken;
 
+			if (id != nullptr)
+			{
+				data.id = id;
+			}
+
+			if (serverAuthToken != nullptr)
+			{
+				data.serverAuthToken = serverAuthToken;
+			}
+			
 			return data;
 		};
 
