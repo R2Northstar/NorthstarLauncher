@@ -127,7 +127,6 @@ class MasterServerManager
 extern MasterServerManager* g_pMasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
 
-
 /** Result returned in the std::future of a MasterServerPresenceReporter::ReportPresence() call. */
 enum class MasterServerReportPresenceResult
 {
@@ -143,8 +142,7 @@ enum class MasterServerReportPresenceResult
 
 class MasterServerPresenceReporter : public ServerPresenceReporter
 {
-public:
-
+  public:
 	/** Full data returned in the std::future of a MasterServerPresenceReporter::ReportPresence() call. */
 	struct ReportPresenceResultData
 	{
@@ -165,11 +163,10 @@ public:
 	// Called when we need to remove the server from the master server.
 	void DestroyPresence(const ServerPresence* pServerPresence) override;
 
-	// Called every frame. 
+	// Called every frame.
 	void RunFrame(double flCurrentTime, const ServerPresence* pServerPresence) override;
 
-protected:
-
+  protected:
 	// Contains the async logic to add the server to the MS.
 	void InternalAddServer(const ServerPresence* pServerPresence);
 
