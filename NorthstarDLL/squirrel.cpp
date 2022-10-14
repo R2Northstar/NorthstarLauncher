@@ -5,6 +5,9 @@
 #include "dedicated.h"
 #include "r2engine.h"
 #include "tier0.h"
+#include "plugins.h"
+
+#include <any>
 
 AUTOHOOK_INIT()
 
@@ -94,6 +97,56 @@ const char* SQTypeNameFromID(int type)
 	return "";
 }
 
+template <ScriptContext context>
+void SquirrelManager<context>::GenerateSquirrelFunctionsStruct(SquirrelFunctions* s) {
+	s->RegisterSquirrelFunc = RegisterSquirrelFunc;
+	s->__sq_defconst = __sq_defconst;
+	s->__sq_compilebuffer = __sq_compilebuffer;
+	s->__sq_call = __sq_call;
+	s->__sq_raiseerror = __sq_raiseerror;
+	s->__sq_newarray = __sq_newarray;
+	s->__sq_arrayappend = __sq_arrayappend;
+	s->__sq_newtable = __sq_newtable;
+	s->__sq_newslot = __sq_newslot;
+	s->__sq_pushroottable = __sq_pushroottable;
+	s->__sq_pushstring = __sq_pushstring;
+	s->__sq_pushinteger = __sq_pushinteger;
+	s->__sq_pushfloat = __sq_pushfloat;
+	s->__sq_pushbool = __sq_pushbool;
+	s->__sq_pushasset = __sq_pushasset;
+	s->__sq_pushvector = __sq_pushvector;
+	s->__sq_pushSQObject = __sq_pushSQObject;
+	s->__sq_getstring = __sq_getstring;
+	s->__sq_getinteger = __sq_getinteger;
+	s->__sq_getfloat = __sq_getfloat;
+	s->__sq_getbool = __sq_getbool;
+	s->__sq_get = __sq_get;
+	s->__sq_getasset = __sq_getasset;
+	s->__sq_getuserdata = __sq_getuserdata;
+	s->__sq_getvector = __sq_getvector;
+	s->__sq_createuserdata = __sq_createuserdata;
+	s->__sq_setuserdatatypeid = __sq_setuserdatatypeid;
+	s->__sq_getSquirrelFunction = __sq_getSquirrelFunction;
+	s->__sq_schedule_call_external = schedule_call_external;
+}
+
+void schedule_call_external(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function)
+{
+	SquirrelMessage message {};
+	message.function_name = func_name;
+	message.is_external = true;
+	message.external_func = function;
+	switch (context)
+	{
+	case ScriptContext::CLIENT:
+		g_pSquirrel<ScriptContext::CLIENT>->messageBuffer->push(message);
+	case ScriptContext::SERVER:
+		g_pSquirrel<ScriptContext::SERVER>->messageBuffer->push(message);
+	case ScriptContext::UI:
+		g_pSquirrel<ScriptContext::UI>->messageBuffer->push(message);
+	}
+}
+
 // needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
 template class SquirrelManager<ScriptContext::SERVER>;
 template class SquirrelManager<ScriptContext::CLIENT>;
@@ -127,6 +180,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
+	g_pPluginManager->InformSQVMCreated(context, newSqvm);
 }
 
 template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
@@ -446,22 +500,32 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 		return SQRESULT_NULL;
 	}
 
-	auto message = maybe_message.value();
+	SquirrelMessage message = maybe_message.value();
 
 	SQObject* functionobj = new SQObject();
-	int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, message.function_name, functionobj, 0);
+	int result =
+		g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, message.function_name.c_str(), functionobj, 0);
 	if (result != 0) // This func returns 0 on success for some reason
 	{
+		spdlog::error("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name);
+		g_pSquirrel<context>->raiseerror(sqvm, fmt::format("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name).c_str() );
 		return SQRESULT_ERROR;
 	}
 	g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, functionobj); // Push the function object 
 	g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm);
-	for (auto& v : message.args)
+	if (message.is_external)
 	{
-		// Execute lambda to push arg to stack
-		v();
+		message.external_func(sqvm);
 	}
-
+	else
+	{
+		for (auto& v : message.args)
+		{
+			// Execute lambda to push arg to stack
+			v();
+		}
+	}
+	
 	g_pSquirrel<context>->call(g_pSquirrel<context>->m_pSQVM->sqvm, message.args.size());
 
 	return SQRESULT_NOTNULL;
@@ -544,7 +608,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->__sq_createuserdata = g_pSquirrel<ScriptContext::CLIENT>->__sq_createuserdata;
 	g_pSquirrel<ScriptContext::UI>->__sq_setuserdatatypeid = g_pSquirrel<ScriptContext::CLIENT>->__sq_setuserdatatypeid;
 
-
 	// Message buffer stuff
 	g_pSquirrel<ScriptContext::UI>->messageBuffer = g_pSquirrel<ScriptContext::CLIENT>->messageBuffer;
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction = module.Offset(0x572FB0).As<sq_getSquirrelFunctionType>();
@@ -586,6 +649,11 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
+
+	SquirrelFunctions s = {};
+	g_pSquirrel<ScriptContext::CLIENT>->GenerateSquirrelFunctionsStruct(&s);
+	g_pPluginManager->InformSQVMLoad(ScriptContext::CLIENT, &s);
+
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))

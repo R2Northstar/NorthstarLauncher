@@ -2,57 +2,13 @@
 
 #include "squirrelclasstypes.h"
 #include "vector.h"
+#include "plugin_abi.h"
 
 const char* GetContextName(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
 
-#pragma region TypeDefs
-
-// core sqvm funcs
-typedef int64_t (*RegisterSquirrelFuncType)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
-typedef void (*sq_defconstType)(CSquirrelVM* sqvm, const SQChar* name, int value);
-
-typedef SQRESULT (*sq_compilebufferType)(
-	HSquirrelVM* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, SQBool bShouldThrowError);
-typedef SQRESULT (*sq_callType)(HSquirrelVM* sqvm, SQInteger iArgs, SQBool bShouldReturn, SQBool bThrowError);
-typedef SQInteger (*sq_raiseerrorType)(HSquirrelVM* sqvm, const SQChar* pError);
-
-// sq stack array funcs
-typedef void (*sq_newarrayType)(HSquirrelVM* sqvm, SQInteger iStackpos);
-typedef SQRESULT (*sq_arrayappendType)(HSquirrelVM* sqvm, SQInteger iStackpos);
-
-// sq table funcs
-typedef SQRESULT (*sq_newtableType)(HSquirrelVM* sqvm);
-typedef SQRESULT (*sq_newslotType)(HSquirrelVM* sqvm, SQInteger idx, SQBool bStatic);
-
-// sq stack push funcs
-typedef void (*sq_pushroottableType)(HSquirrelVM* sqvm);
-typedef void (*sq_pushstringType)(HSquirrelVM* sqvm, const SQChar* pStr, SQInteger iLength);
-typedef void (*sq_pushintegerType)(HSquirrelVM* sqvm, SQInteger i);
-typedef void (*sq_pushfloatType)(HSquirrelVM* sqvm, SQFloat f);
-typedef void (*sq_pushboolType)(HSquirrelVM* sqvm, SQBool b);
-typedef void (*sq_pushassetType)(HSquirrelVM* sqvm, const SQChar* str, SQInteger iLength);
-typedef void (*sq_pushvectorType)(HSquirrelVM* sqvm, const SQFloat* pVec);
-typedef void (*sq_pushSQObjectType)(HSquirrelVM* sqvm, SQObject* pVec);
-
-// sq stack get funcs
-typedef const SQChar* (*sq_getstringType)(HSquirrelVM* sqvm, SQInteger iStackpos);
-typedef SQInteger (*sq_getintegerType)(HSquirrelVM* sqvm, SQInteger iStackpos);
-typedef SQFloat (*sq_getfloatType)(HSquirrelVM*, SQInteger iStackpos);
-typedef SQBool (*sq_getboolType)(HSquirrelVM*, SQInteger iStackpos);
-typedef SQRESULT (*sq_getType)(HSquirrelVM* sqvm, SQInteger iStackpos);
-typedef SQRESULT (*sq_getassetType)(HSquirrelVM* sqvm, SQInteger iStackpos, const char** pResult);
-typedef SQRESULT (*sq_getuserdataType)(HSquirrelVM* sqvm, SQInteger iStackpos, void** pData, uint64_t* pTypeId);
-typedef SQFloat* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger iStackpos);
-
-// sq stack userpointer funcs
-typedef void* (*sq_createuserdataType)(HSquirrelVM* sqvm, SQInteger iSize);
-typedef SQRESULT (*sq_setuserdatatypeidType)(HSquirrelVM* sqvm, SQInteger iStackpos, uint64_t iTypeId);
-
-typedef int (*sq_getSquirrelFunctionType)(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature);
-
-#pragma endregion
+void schedule_call_external(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function);
 
 template <ScriptContext context> class SquirrelManager
 {
@@ -100,14 +56,14 @@ template <ScriptContext context> class SquirrelManager
 
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
+	sq_getSquirrelFunctionType __sq_getSquirrelFunction;
 
 #pragma endregion
 
 #pragma region MessageBuffer
 	SquirrelMessageBuffer* messageBuffer;
-	sq_getSquirrelFunctionType __sq_getSquirrelFunction;
 
-	template <typename... Args> SquirrelMessage schedule_call(const char* funcname, Args... args)
+	template <typename... Args> SquirrelMessage schedule_call(std::string funcname, Args... args)
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
@@ -118,7 +74,7 @@ template <ScriptContext context> class SquirrelManager
 		return message;
 	}
 
-	SquirrelMessage schedule_call(const char* funcname)
+	SquirrelMessage schedule_call(std::string funcname)
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
@@ -167,6 +123,7 @@ template <ScriptContext context> class SquirrelManager
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func);
 	SQRESULT setupfunc(const SQChar* funcname);
 	void AddFuncOverride(std::string name, SQFunction func);
+	void GenerateSquirrelFunctionsStruct(SquirrelFunctions* s);
 
 #pragma region SQVM func wrappers
 	inline void defconst(CSquirrelVM* sqvm, const SQChar* pName, int nValue)

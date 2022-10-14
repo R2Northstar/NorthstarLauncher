@@ -1,5 +1,6 @@
 #pragma once
 #include "squirreldatatypes.h"
+#include <map>
 
 enum SQRESULT : SQInteger
 {
@@ -113,11 +114,16 @@ concept is_iterable = requires(std::ranges::range_value_t<T> x)
 
 // clang-format on
 
+typedef void (*SquirrelMessage_External_Pop)(HSquirrelVM* sqvm);
+typedef void (*sq_schedule_call_externalType)(ScriptContext context, const char* funcname, SquirrelMessage_External_Pop function);
+
 class SquirrelMessage
 {
   public:
-	const char* function_name;
+	std::string function_name;
 	FunctionVector args;
+	bool is_external = false;
+	SquirrelMessage_External_Pop external_func = NULL;
 };
 
 class SquirrelMessageBuffer
@@ -143,6 +149,22 @@ class SquirrelMessageBuffer
 		}
 	}
 
+	void unwind()
+	{
+		auto maybe_message = this->pop();
+		if (!maybe_message)
+		{ 
+			spdlog::error("Plugin tried consuming SquirrelMessage while buffer was empty");
+			return;
+		}
+		auto message = maybe_message.value();
+		for (auto& v : message.args)
+		{
+			// Execute lambda to push arg to stack
+			v();
+		}
+	}
+
 	void push(SquirrelMessage message)
 	{
 		std::lock_guard<std::mutex> guard(mutex);
@@ -156,3 +178,54 @@ class SquirrelAsset
 	std::string path;
 	SquirrelAsset(std::string path) : path(path) {};
 };
+
+
+#pragma region TypeDefs
+
+// core sqvm funcs
+typedef int64_t (*RegisterSquirrelFuncType)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
+typedef void (*sq_defconstType)(CSquirrelVM* sqvm, const SQChar* name, int value);
+
+typedef SQRESULT (*sq_compilebufferType)(
+	HSquirrelVM* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, SQBool bShouldThrowError);
+typedef SQRESULT (*sq_callType)(HSquirrelVM* sqvm, SQInteger iArgs, SQBool bShouldReturn, SQBool bThrowError);
+typedef SQInteger (*sq_raiseerrorType)(HSquirrelVM* sqvm, const SQChar* pError);
+
+// sq stack array funcs
+typedef void (*sq_newarrayType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+typedef SQRESULT (*sq_arrayappendType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+
+// sq table funcs
+typedef SQRESULT (*sq_newtableType)(HSquirrelVM* sqvm);
+typedef SQRESULT (*sq_newslotType)(HSquirrelVM* sqvm, SQInteger idx, SQBool bStatic);
+
+// sq stack push funcs
+typedef void (*sq_pushroottableType)(HSquirrelVM* sqvm);
+typedef void (*sq_pushstringType)(HSquirrelVM* sqvm, const SQChar* pStr, SQInteger iLength);
+typedef void (*sq_pushintegerType)(HSquirrelVM* sqvm, SQInteger i);
+typedef void (*sq_pushfloatType)(HSquirrelVM* sqvm, SQFloat f);
+typedef void (*sq_pushboolType)(HSquirrelVM* sqvm, SQBool b);
+typedef void (*sq_pushassetType)(HSquirrelVM* sqvm, const SQChar* str, SQInteger iLength);
+typedef void (*sq_pushvectorType)(HSquirrelVM* sqvm, const SQFloat* pVec);
+typedef void (*sq_pushSQObjectType)(HSquirrelVM* sqvm, SQObject* pVec);
+
+// sq stack get funcs
+typedef const SQChar* (*sq_getstringType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+typedef SQInteger (*sq_getintegerType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+typedef SQFloat (*sq_getfloatType)(HSquirrelVM*, SQInteger iStackpos);
+typedef SQBool (*sq_getboolType)(HSquirrelVM*, SQInteger iStackpos);
+typedef SQRESULT (*sq_getType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+typedef SQRESULT (*sq_getassetType)(HSquirrelVM* sqvm, SQInteger iStackpos, const char** pResult);
+typedef SQRESULT (*sq_getuserdataType)(HSquirrelVM* sqvm, SQInteger iStackpos, void** pData, uint64_t* pTypeId);
+typedef SQFloat* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+
+// sq stack userpointer funcs
+typedef void* (*sq_createuserdataType)(HSquirrelVM* sqvm, SQInteger iSize);
+typedef SQRESULT (*sq_setuserdatatypeidType)(HSquirrelVM* sqvm, SQInteger iStackpos, uint64_t iTypeId);
+
+typedef int (*sq_getSquirrelFunctionType)(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature);
+
+#pragma endregion
+
+// These "external" versions of the types are for plugins
+typedef int64_t (*RegisterSquirrelFuncType_External)(ScriptContext context, SQFuncRegistration* funcReg, char unknown);

@@ -1,17 +1,43 @@
 #pragma once
 #include "plugin_abi.h"
 
-int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var);
-int getServerInfoInt(int* out_ptr, ServerInfoType var);
-int getServerInfoBool(bool* out_ptr, ServerInfoType var);
+class Plugin
+{
+  public:
+	std::string name;
+	std::string displayName;
+	std::string description;
 
-int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var);
-int getGameStateInt(int* out_ptr, GameStateInfoType var);
-int getGameStateBool(bool* out_ptr, GameStateInfoType var);
+	std::string api_version;
+	std::string version;
 
-int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var);
-int getPlayerInfoInt(int* out_ptr, PlayerInfoType var);
-int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var);
+	bool run_on_client = false;
+	bool run_on_server = false;
+
+  public:
+	PLUGIN_INIT_TYPE init;
+	PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
+	PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
+	PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
+};
+
+class PluginManager
+{
+  public:
+	std::vector<Plugin> m_vLoadedPlugins;
+
+  public:
+	bool LoadPlugins();
+	std::optional<Plugin> LoadPlugin(fs::path path);
+
+	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
+	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
+
+  private:
+	std::string pluginPath;
+};
+
+extern PluginManager* g_pPluginManager;
 
 void initGameState();
 void* getPluginObject(PluginObject var);

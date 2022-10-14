@@ -294,21 +294,6 @@ bool LoadNorthstar()
 		}
 	}
 	((bool (*)())Hook_Init)();
-
-	FARPROC LoadPlugins = nullptr;
-	if (!noLoadPlugins)
-	{
-		LoadPlugins = GetProcAddress(hHookModule, "LoadPlugins");
-		if (!hHookModule || LoadPlugins == nullptr)
-		{
-			std::cout << "Failed to get function pointer to LoadPlugins of Northstar.dll" << std::endl;
-			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
-			return false;
-		}
-		((bool (*)())LoadPlugins)();
-	}
-
-	return true;
 }
 
 HMODULE LoadDediStub(const char* name)
@@ -408,8 +393,6 @@ int main(int argc, char* argv[])
 			dedicated = true;
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
-		else if (!strcmp(argv[i], "-noplugins"))
-			noLoadPlugins = true;
 		else if (!strcmp(argv[i], "-addurihandler"))
 			installURIHandler();
 
