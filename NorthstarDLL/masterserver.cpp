@@ -491,6 +491,10 @@ void MasterServerManager::RequestMainMenuPromos()
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+					if (!mainMenuPromoJson["error"].IsObject()) {
+						spdlog::error("Masterserver sent invalid error response: error is not an object");
+						goto REQUEST_END_CLEANUP;
+					}
 					if (mainMenuPromoJson["error"].HasMember("enum"))
 						s_authfail_reason = std::string(mainMenuPromoJson["error"]["enum"].GetString());
 					else
