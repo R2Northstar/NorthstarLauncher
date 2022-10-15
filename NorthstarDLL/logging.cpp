@@ -243,16 +243,18 @@ void InitialiseLogging()
 {
 	hExceptionFilter = AddVectoredExceptionHandler(TRUE, ExceptionFilter);
 
+	// should be fine to call this before the check
+	// issues may arise if we change the pattern elsewhere and then call this function again?
+	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
+
 	if (AllocConsole() == FALSE)
 	{
-		std::cout << "[*] Failed to create a console window!" << std::endl;
+		std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
 		return;
 	}
 
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
-
-	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
 
 	SetConsoleCtrlHandler(ConsoleHandlerRoutine, true);
 }
