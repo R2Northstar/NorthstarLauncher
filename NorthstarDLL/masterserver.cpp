@@ -491,7 +491,7 @@ void MasterServerManager::RequestMainMenuPromos()
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
-					if (!mainMenuPromoJson["error"].IsObject()) 
+					if (!mainMenuPromoJson["error"].IsObject())
 					{
 						spdlog::error("Failed reading masterserver error response: member error is not an object");
 						goto REQUEST_END_CLEANUP;
