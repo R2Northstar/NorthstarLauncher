@@ -258,7 +258,7 @@ void InitialiseConsole()
 void InitialiseLogging()
 {
 	// this function is pretty empty for now
-	// it will be populated more when i get around to improving logging 
+	// it will be populated more when i get around to improving logging
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
 }
 
