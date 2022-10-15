@@ -198,7 +198,9 @@ bool InitialiseNorthstar()
 
 	initialised = true;
 
-	// initialise logging first so that we don't log various things before initialising it
+	// initialise the console if needed (-northstar needs this)
+	InitialiseConsole();
+	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
 	InitialiseLogging();
 
 	parseConfigurables();

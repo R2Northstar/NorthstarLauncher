@@ -239,13 +239,9 @@ BOOL WINAPI ConsoleHandlerRoutine(DWORD eventCode)
 	return TRUE;
 }
 
-void InitialiseLogging()
+void InitialiseConsole()
 {
 	hExceptionFilter = AddVectoredExceptionHandler(TRUE, ExceptionFilter);
-
-	// should be fine to call this before the check
-	// issues may arise if we change the pattern elsewhere and then call this function again?
-	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
 
 	if (AllocConsole() == FALSE)
 	{
@@ -257,6 +253,13 @@ void InitialiseLogging()
 	freopen("CONOUT$", "w", stderr);
 
 	SetConsoleCtrlHandler(ConsoleHandlerRoutine, true);
+}
+
+void InitialiseLogging()
+{
+	// this function is pretty empty for now
+	// it will be populated more when i get around to improving logging 
+	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
 }
 
 ConVar* Cvar_spewlog_enable;
