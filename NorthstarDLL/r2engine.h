@@ -140,8 +140,11 @@ namespace R2
 		// struct netpacket_s* pNext;	// for internal use, should be NULL in public
 	} netpacket_t;
 #pragma pack(pop)
-
-	const int PERSISTENCE_MAX_SIZE = 0xD000;
+	
+	// #56396 $DC4C PData size
+	// #512   $200	Trailing data
+	// #100	  $64	Safety buffer
+	const int PERSISTENCE_MAX_SIZE = 0xDEB0;
 
 	// note: NOT_READY and READY are the only entries we have here that are defined by the vanilla game
 	// entries after this are custom and used to determine the source of persistence, e.g. whether it is local or remote
