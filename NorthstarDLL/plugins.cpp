@@ -14,7 +14,16 @@ void freeLibrary(HMODULE hLib)
 	}
 }
 
-std::optional<Plugin> PluginManager::LoadPlugin(fs::path path)
+void PluginLog(LogMsg* msg)
+{
+	spdlog::source_loc src {};
+	src.filename = msg->source.file;
+	src.funcname = msg->source.func;
+	src.line = msg->source.line;
+	spdlog::log(src, (spdlog::level::level_enum)msg->level, msg->msg);
+}
+
+std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs)
 {
 
 	Plugin plugin {};
@@ -126,7 +135,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path)
 	plugin.init_sqvm_server = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_SERVER");
 	plugin.inform_sqvm_created = (PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
 
-	plugin.init();
+	plugin.init(funcs);
 
 	return plugin;
 }
@@ -136,6 +145,9 @@ bool PluginManager::LoadPlugins()
 	std::vector<fs::path> paths;
 
 	pluginPath = GetNorthstarPrefix() + "/plugins";
+
+	PluginInitFuncs funcs {};
+	funcs.logger = PluginLog;
 
 	if (!fs::exists(pluginPath))
 	{
@@ -156,7 +168,7 @@ bool PluginManager::LoadPlugins()
 	}
 	for (fs::path path : paths)
 	{
-		auto maybe_plugin = LoadPlugin(path);
+		auto maybe_plugin = LoadPlugin(path, &funcs);
 		if (maybe_plugin.has_value())
 		{
 			m_vLoadedPlugins.push_back(maybe_plugin.value());

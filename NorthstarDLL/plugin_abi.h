@@ -57,6 +57,28 @@ struct SquirrelFunctions
 	sq_schedule_call_externalType __sq_schedule_call_external;
 };
 
-typedef void (*PLUGIN_INIT_TYPE)();
+struct MessageSource {
+	const char* file;
+	const char* func;
+	int line;
+};
+
+// This is a stripped down version of spdlog::details::log_msg
+// This is so that we can make it cross DLL boundaries
+struct LogMsg {
+	int level;
+	uint64_t timestamp;
+	const char* msg;
+	MessageSource source;
+};
+
+typedef void (*loggerfunc_t)(LogMsg* msg);
+
+struct PluginInitFuncs
+{
+	loggerfunc_t logger;
+};
+
+typedef void (*PLUGIN_INIT_TYPE)(PluginInitFuncs* funcs);
 typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);

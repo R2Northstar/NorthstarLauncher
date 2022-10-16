@@ -28,7 +28,7 @@ class PluginManager
 
   public:
 	bool LoadPlugins();
-	std::optional<Plugin> LoadPlugin(fs::path path);
+	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs);
 
 	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
 	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
