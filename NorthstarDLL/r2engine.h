@@ -140,7 +140,7 @@ namespace R2
 		// struct netpacket_s* pNext;	// for internal use, should be NULL in public
 	} netpacket_t;
 #pragma pack(pop)
-	
+
 	// #56396 $DC4C PData size
 	// #512   $200	Trailing data
 	// #100	  $64	Safety buffer
