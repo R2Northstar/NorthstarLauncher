@@ -620,6 +620,11 @@ void MasterServerManager::AuthenticateWithOwnServer(char* uid, char* playerToken
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+					if (!authInfoJson["error"].IsObject())
+					{
+						spdlog::error("Failed reading masterserver error response: member error is not an object");
+						goto REQUEST_END_CLEANUP;
+					}
 					if (authInfoJson["error"].HasMember("enum"))
 						s_authfail_reason = std::string(authInfoJson["error"]["enum"].GetString());
 					else
@@ -771,6 +776,11 @@ void MasterServerManager::AuthenticateWithServer(char* uid, char* playerToken, c
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
+					if (!connectionInfoJson["error"].IsObject())
+					{
+						spdlog::error("Failed reading masterserver error response: member error is not an object");
+						goto REQUEST_END_CLEANUP;
+					}
 					if (connectionInfoJson["error"].HasMember("enum"))
 						s_authfail_reason = std::string(connectionInfoJson["error"]["enum"].GetString());
 					else
@@ -925,7 +935,11 @@ void MasterServerManager::AddSelfToServerList(
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
-
+					if (!serverAddedJson["error"].IsObject())
+					{
+						spdlog::error("Failed reading masterserver error response: member error is not an object");
+						goto REQUEST_END_CLEANUP;
+					}
 					// Check for enum member in JSON
 					if (serverAddedJson["error"].HasMember("enum"))
 					{
