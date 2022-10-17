@@ -141,7 +141,7 @@ namespace R2
 	} netpacket_t;
 #pragma pack(pop)
 
-	const int PERSISTENCE_MAX_SIZE = 0xD000;
+	const int PERSISTENCE_MAX_SIZE = 0xF000;
 
 	// note: NOT_READY and READY are the only entries we have here that are defined by the vanilla game
 	// entries after this are custom and used to determine the source of persistence, e.g. whether it is local or remote

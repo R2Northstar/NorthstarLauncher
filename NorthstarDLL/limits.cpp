@@ -9,6 +9,21 @@
 #include "vector.h"
 #include "serverauthentication.h"
 
+
+#include "stdio.h"
+#include <cstdint>
+#include <array>
+#include <intrin.h>
+#include <psapi.h>
+#include <wininet.h>
+#include <iostream>
+#include <ntstatus.h>
+#include "bitbuf.h"
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <fstream>
+
 AUTOHOOK_INIT()
 
 ServerLimitsManager* g_pServerLimits;
@@ -148,49 +163,40 @@ AUTOHOOK(ProcessConnectionlessPacket, engine.dll + 0x117800,
 bool, , (void* a1, R2::netpacket_t* packet))
 // clang-format on
 {
-	if (packet->adr.type == R2::NA_IP &&
-		(!(packet->data[4] == 'N' && Cvar_net_datablock_enabled->GetBool()) || !Cvar_net_datablock_enabled->GetBool()))
+	BFRead buf = BFRead((uintptr_t)packet->data, packet->size);
+
+	if (packet->data[4] == 'A')
 	{
-		// bad lookup: optimise later tm
-		UnconnectedPlayerLimitData* sendData = nullptr;
-		for (UnconnectedPlayerLimitData& foundSendData : g_pServerLimits->m_UnconnectedPlayerLimitData)
-		{
-			if (!memcmp(packet->adr.ip, foundSendData.ip, 16))
-			{
-				sendData = &foundSendData;
-				break;
-			}
-		}
-
-		if (!sendData)
-		{
-			sendData = &g_pServerLimits->m_UnconnectedPlayerLimitData.emplace_back();
-			memcpy(sendData->ip, packet->adr.ip, 16);
-		}
-
-		if (Tier0::Plat_FloatTime() < sendData->timeoutEnd)
+		BFRead buf = BFRead((uintptr_t)packet->data, packet->size);
+		buf.ReadSBitLong(32);
+		buf.ReadUBitLong(8);
+		buf.ReadLong();
+		buf.ReadLong();
+		buf.ReadLong();
+		buf.ReadLong();
+		auto oid = buf.ReadLongLong();
+		if (buf.IsOverflowed())
+			return false;
+		char name[128] {0};
+		if (!buf.ReadString(name, sizeof(name)))
+			return false;
+		char filter[128] {0};
+		if (!buf.ReadString(filter, sizeof(filter)))
 			return false;
 
-		if (Tier0::Plat_FloatTime() - sendData->lastQuotaStart >= 1.0)
-		{
-			sendData->lastQuotaStart = Tier0::Plat_FloatTime();
-			sendData->packetCount = 0;
-		}
+		buf.SeekRelative(194);
 
-		sendData->packetCount++;
+		char token[1500] {0};
+		if (buf.ReadOneBit())
+			buf.ReadString(token, sizeof(token));
 
-		if (sendData->packetCount >= g_pServerLimits->Cvar_sv_querylimit_per_sec->GetInt())
-		{
-			spdlog::warn(
-				"Client went over connectionless ratelimit of {} per sec with packet of type {}",
-				g_pServerLimits->Cvar_sv_querylimit_per_sec->GetInt(),
-				packet->data[4]);
+		spdlog::info("Token: {}", token);
 
-			// timeout for a minute
-			sendData->timeoutEnd = Tier0::Plat_FloatTime() + 60.0;
-			return false;
-		}
 	}
+
+	auto ret = ProcessConnectionlessPacket(a1, packet);
+
+	return ret;
 
 	return ProcessConnectionlessPacket(a1, packet);
 }

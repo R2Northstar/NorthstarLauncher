@@ -726,4 +726,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 		"void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::SERVER>);
 
 	//g_pSquirrel<ScriptContext::SERVER>->createMessage("MessageTestFunc");
+
+	SquirrelFunctions s = {};
+	g_pSquirrel<ScriptContext::SERVER>->GenerateSquirrelFunctionsStruct(&s);
+	g_pPluginManager->InformSQVMLoad(ScriptContext::SERVER, &s);
 }

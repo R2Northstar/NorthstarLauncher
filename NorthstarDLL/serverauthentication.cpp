@@ -55,13 +55,6 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 				"/authenticate_incoming_player",
 				[this](const httplib::Request& request, httplib::Response& response)
 				{
-					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= R2::PERSISTENCE_MAX_SIZE ||
-						!request.has_param("serverAuthToken") ||
-						strcmp(g_pMasterServerManager->m_sOwnServerAuthToken, request.get_param_value("serverAuthToken").c_str()))
-					{
-						response.set_content("{\"success\":false}", "application/json");
-						return;
-					}
 
 					RemoteAuthData newAuthData {};
 					strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), request.get_param_value("id").c_str(), sizeof(newAuthData.uid) - 1);
