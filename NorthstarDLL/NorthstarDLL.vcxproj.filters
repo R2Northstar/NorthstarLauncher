@@ -1700,6 +1700,9 @@
     <ClCompile Include="scriptdatatables.cpp">
       <Filter>Source Files\Scripted</Filter>
     </ClCompile>
+    <ClCompile Include="scriptuserinfo.cpp">
+      <Filter>Source Files\Server\Scripted</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">
