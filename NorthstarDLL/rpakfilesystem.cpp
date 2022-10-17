@@ -257,7 +257,7 @@ HOOK(ReadFileAsyncHook, ReadFileAsync,
 void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
-	fs::path path(requestedPath);
+	fs::path path(pPath);
 	std::string allocatedNewPath = "";
 	fs::path filename = path.filename();
 
@@ -269,8 +269,8 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
 		if (modFile != g_pModManager->m_ModFiles.end())
 		{
-			allocatedNewPath = (modFile->second.owningMod->ModDirectory / "mod" / modFile->second.path).string();
-			requestedPath = allocatedNewPath.c_str();
+			allocatedNewPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
+			pPath = allocatedNewPath.c_str();
 		}
 	}
 	else if (path.extension() == ".starpak")
@@ -285,9 +285,9 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 			std::string starpakPath = path.string().substr(3);
 			size_t hashed = STR_HASH(starpakPath);
 
-			for (Mod& mod : g_ModManager->m_loadedMods)
+			for (Mod& mod : g_pModManager->m_LoadedMods)
 			{
-				if (!mod.Enabled)
+				if (!mod.m_bEnabled)
 					continue;
 
 				bool found = false;
@@ -296,8 +296,8 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 				{
 					if (hash == hashed)
 					{
-						allocatedNewPath = mod.ModDirectory.string() + "\\paks\\" + starpakPath;
-						requestedPath = allocatedNewPath.c_str();
+						allocatedNewPath = mod.m_ModDirectory.string() + "\\paks\\" + starpakPath;
+						pPath = allocatedNewPath.c_str();
 						found = true;
 						break;
 					}
@@ -313,7 +313,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		spdlog::info("LoadStreamPak: {}", filename.string());
 	}
 
-	void* ret = ReadFullFileFromDiskOriginal(requestedPath, a2);
+	void* ret = ReadFileAsync(pPath, pCallback);
 
 	return ret;
 }
