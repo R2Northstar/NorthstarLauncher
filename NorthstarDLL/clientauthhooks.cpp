@@ -36,7 +36,7 @@ void, __fastcall, (void* a1))
 char* p3PToken;
 
 // clang-format off
-AUTOHOOK(Auth3PToken, engine.dll + 183760,
+AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
 char*, __fastcall, ())
 // clang-format on
 {
