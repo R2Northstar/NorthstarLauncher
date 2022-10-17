@@ -150,7 +150,6 @@ bool InitialiseNorthstar()
 	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
 	InitialiseLogging();
 
-	parseConfigurables();
 	InitialiseNorthstarPrefix();
 	InitialiseVersion();
 
