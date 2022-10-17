@@ -1,10 +1,12 @@
+#include <float.h>
+
 #include "pch.h"
 #include "bits.h"
 #include "cvar.h"
 #include "convar.h"
+#include "hookutils.h"
+#include "gameutils.h"
 #include "sourceinterface.h"
-
-#include <float.h>
 
 typedef void (*ConVarRegisterType)(
 	ConVar* pConVar,
@@ -25,19 +27,25 @@ ConVarMallocType conVarMalloc;
 void* g_pConVar_Vtable = nullptr;
 void* g_pIConVar_Vtable = nullptr;
 
+typedef bool (*CvarIsFlagSetType)(ConVar* self, int flags);
+CvarIsFlagSetType CvarIsFlagSet;
+
 //-----------------------------------------------------------------------------
 // Purpose: ConVar interface initialization
 //-----------------------------------------------------------------------------
-ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
+void InitialiseConVars(HMODULE baseAddress)
 {
-	conVarMalloc = module.Offset(0x415C20).As<ConVarMallocType>();
-	conVarRegister = module.Offset(0x417230).As<ConVarRegisterType>();
+	conVarMalloc = (ConVarMallocType)((char*)baseAddress + 0x415C20);
+	conVarRegister = (ConVarRegisterType)((char*)baseAddress + 0x417230);
 
-	g_pConVar_Vtable = module.Offset(0x67FD28);
-	g_pIConVar_Vtable = module.Offset(0x67FDC8);
+	g_pConVar_Vtable = (char*)baseAddress + 0x67FD28;
+	g_pIConVar_Vtable = (char*)baseAddress + 0x67FDC8;
 
-	R2::g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
-	R2::g_pCVar = *R2::g_pCVarInterface;
+	g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
+	g_pCVar = *g_pCVarInterface;
+
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x417FA0, &ConVar::IsFlagSet, reinterpret_cast<LPVOID*>(&CvarIsFlagSet));
 }
 
 //-----------------------------------------------------------------------------
@@ -66,7 +74,7 @@ ConVar::ConVar(
 	float fMin,
 	bool bMax,
 	float fMax,
-	FnChangeCallback_t pCallback)
+	void* pCallback)
 {
 	spdlog::info("Registering Convar {}", pszName);
 
@@ -468,12 +476,16 @@ bool ConVar::IsCommand(void) const
 
 //-----------------------------------------------------------------------------
 // Purpose: Test each ConVar query before setting the value.
-// Input  : nFlags
+// Input  : *pConVar - nFlags
 // Output : False if change is permitted, true if not.
 //-----------------------------------------------------------------------------
-bool ConVar::IsFlagSet(int nFlags) const
+bool ConVar::IsFlagSet(ConVar* pConVar, int nFlags)
 {
-	return m_ConCommandBase.m_nFlags & nFlags;
+	// unrestrict FCVAR_DEVELOPMENTONLY and FCVAR_HIDDEN
+	if (pConVar && (nFlags == FCVAR_DEVELOPMENTONLY || nFlags == FCVAR_HIDDEN))
+		return false;
+
+	return CvarIsFlagSet(pConVar, nFlags);
 }
 
 //-----------------------------------------------------------------------------

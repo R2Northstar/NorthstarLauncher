@@ -29,3 +29,6 @@ template <typename T> class SourceInterface
 		return m_interface;
 	}
 };
+
+// functions for interface creation callbacks
+void InitialiseInterfaceCreationHooks();

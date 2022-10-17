@@ -59,8 +59,7 @@ class IFileSystem
 		FileHandle_t (*Open)(
 			IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pOptions, const char* pathID, int64_t unknown);
 		void (*Close)(IFileSystem* fileSystem, FileHandle_t file);
-		long long (*Seek)(IFileSystem::VTable2** fileSystem, FileHandle_t file, long long offset, long long whence);
-		void* unknown2[5];
+		void* unknown2[6];
 		bool (*FileExists)(IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pPathID);
 	};
 
@@ -68,11 +67,8 @@ class IFileSystem
 	VTable2* m_vtable2;
 };
 
-// use the R2 namespace for game funcs
-namespace R2
-{
-	extern SourceInterface<IFileSystem>* g_pFilesystem;
+std::string ReadVPKFile(const char* path);
+std::string ReadVPKOriginalFile(const char* path);
 
-	std::string ReadVPKFile(const char* path);
-	std::string ReadVPKOriginalFile(const char* path);
-} // namespace R2
+void InitialiseFilesystem(HMODULE baseAddress);
+extern SourceInterface<IFileSystem>* g_Filesystem;

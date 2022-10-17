@@ -1,22 +1,29 @@
 #include "pch.h"
+#include "clientchathooks.h"
+#include <rapidjson/document.h>
 #include "squirrel.h"
 #include "serverchathooks.h"
 #include "localchatwriter.h"
 
-#include <rapidjson/document.h>
+typedef void(__fastcall* CHudChat__AddGameLineType)(void* self, const char* message, int fromPlayerId, bool isteam, bool isdead);
+CHudChat__AddGameLineType CHudChat__AddGameLine;
 
-AUTOHOOK_INIT()
+struct ChatTags
+{
+	bool whisper;
+	bool team;
+	bool dead;
+};
 
-// clang-format off
-AUTOHOOK(CHudChat__AddGameLine, client.dll + 0x22E580,
-void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bool isDead))
-// clang-format on
+static void CHudChat__AddGameLineHook(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
 {
 	// This hook is called for each HUD, but we only want our logic to run once.
 	if (self != *CHudChat::allHuds)
+	{
 		return;
+	}
 
-	if (g_pSquirrel<ScriptContext::CLIENT>->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (g_ClientSquirrelManager->setupfunc("CHudChat_ProcessMessageStartThread") != SQRESULT_ERROR)
 	{
 		int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
 		bool isAnonymous = senderId == 0;
@@ -31,53 +38,58 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 			payload = message + 1;
 		}
 
-		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, (int)senderId - 1);
-		g_pSquirrel<ScriptContext::CLIENT>->pushstring(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, payload);
-		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, isTeam);
-		g_pSquirrel<ScriptContext::CLIENT>->pushbool(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, isDead);
-		g_pSquirrel<ScriptContext::CLIENT>->pushinteger(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, type);
-		g_pSquirrel<ScriptContext::CLIENT>->call(g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm, 5);
+		g_ClientSquirrelManager->pusharg((int)senderId - 1);
+		g_ClientSquirrelManager->pusharg(payload);
+		g_ClientSquirrelManager->pusharg(isTeam);
+		g_ClientSquirrelManager->pusharg(isDead);
+		g_ClientSquirrelManager->pusharg(type);
+		g_ClientSquirrelManager->call(5);
 	}
 	else
+	{
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
+		{
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
+		}
+	}
 }
 
 // void NSChatWrite( int context, string str )
-SQRESULT SQ_ChatWrite(HSquirrelVM* sqvm)
+static SQRESULT SQ_ChatWrite(void* sqvm)
 {
-	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	int context = ClientSq_getinteger(sqvm, 1);
+	const char* str = ClientSq_getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).Write(str);
-	return SQRESULT_NULL;
+	return SQRESULT_NOTNULL;
 }
 
 // void NSChatWriteRaw( int context, string str )
-SQRESULT SQ_ChatWriteRaw(HSquirrelVM* sqvm)
+static SQRESULT SQ_ChatWriteRaw(void* sqvm)
 {
-	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	int context = ClientSq_getinteger(sqvm, 1);
+	const char* str = ClientSq_getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).InsertText(str);
-	return SQRESULT_NULL;
+	return SQRESULT_NOTNULL;
 }
 
 // void NSChatWriteLine( int context, string str )
-SQRESULT SQ_ChatWriteLine(HSquirrelVM* sqvm)
+static SQRESULT SQ_ChatWriteLine(void* sqvm)
 {
-	int context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	int context = ClientSq_getinteger(sqvm, 1);
+	const char* str = ClientSq_getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)context).WriteLine(str);
-	return SQRESULT_NULL;
+	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientChatHooks, ClientSquirrel, (CModule module))
+void InitialiseClientChatHooks(HMODULE baseAddress)
 {
-	AUTOHOOK_DISPATCH()
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x22E580, &CHudChat__AddGameLineHook, reinterpret_cast<LPVOID*>(&CHudChat__AddGameLine));
 
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWrite", "int context, string text", "", SQ_ChatWrite);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWriteRaw", "int context, string text", "", SQ_ChatWriteRaw);
+	g_ClientSquirrelManager->AddFuncRegistration("void", "NSChatWriteLine", "int context, string text", "", SQ_ChatWriteLine);
 }

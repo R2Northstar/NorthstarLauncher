@@ -8,6 +8,8 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // temp because i'm very lazy and want to use inet_addr, remove later
 #define RAPIDJSON_HAS_STDSTRING 1
 
+// httplib ssl
+
 // add headers that you want to pre-compile here
 #include "memalloc.h"
 
@@ -18,14 +20,11 @@
 #include <filesystem>
 #include <sstream>
 
-namespace fs = std::filesystem;
-
 #include "logging.h"
-#include "MinHook.h"
+#include "include/MinHook.h"
 #include "spdlog/spdlog.h"
 #include "libcurl/include/curl/curl.h"
-#include "hooks.h"
-#include "memory.h"
+#include "hookutils.h"
 
 template <typename ReturnType, typename... Args> ReturnType CallVFunc(int index, void* thisPtr, Args... args)
 {

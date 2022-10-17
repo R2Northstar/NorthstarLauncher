@@ -1,16 +1,14 @@
 #include "pch.h"
 #include "serverchathooks.h"
-#include "limits.h"
-#include "squirrel.h"
-#include "r2server.h"
-
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
-
-AUTOHOOK_INIT()
+#include "serverauthentication.h"
+#include "squirrel.h"
+#include "miscserverscript.h"
 
 class CServerGameDLL;
+class CBasePlayer;
 
 class CRecipientFilter
 {
@@ -19,68 +17,93 @@ class CRecipientFilter
 
 CServerGameDLL* g_pServerGameDLL;
 
-void(__fastcall* CServerGameDLL__OnReceivedSayTextMessage)(
+typedef void(__fastcall* CServerGameDLL__OnReceivedSayTextMessageType)(
 	CServerGameDLL* self, unsigned int senderPlayerId, const char* text, int channelId);
+CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessage;
+CServerGameDLL__OnReceivedSayTextMessageType CServerGameDLL__OnReceivedSayTextMessageHookBase;
 
-void(__fastcall* CRecipientFilter__Construct)(CRecipientFilter* self);
-void(__fastcall* CRecipientFilter__Destruct)(CRecipientFilter* self);
-void(__fastcall* CRecipientFilter__AddAllPlayers)(CRecipientFilter* self);
-void(__fastcall* CRecipientFilter__AddRecipient)(CRecipientFilter* self, const R2::CBasePlayer* player);
-void(__fastcall* CRecipientFilter__MakeReliable)(CRecipientFilter* self);
+typedef CBasePlayer*(__fastcall* UTIL_PlayerByIndexType)(int playerIndex);
+UTIL_PlayerByIndexType UTIL_PlayerByIndex;
 
-void(__fastcall* UserMessageBegin)(CRecipientFilter* filter, const char* messagename);
-void(__fastcall* MessageEnd)();
-void(__fastcall* MessageWriteByte)(int iValue);
-void(__fastcall* MessageWriteString)(const char* sz);
-void(__fastcall* MessageWriteBool)(bool bValue);
+typedef void(__fastcall* CRecipientFilter__ConstructType)(CRecipientFilter* self);
+CRecipientFilter__ConstructType CRecipientFilter__Construct;
 
-bool bShouldCallSayTextHook = false;
-// clang-format off
-AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessage, server.dll + 0x1595C0,
-void, __fastcall, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
-// clang-format on
+typedef void(__fastcall* CRecipientFilter__DestructType)(CRecipientFilter* self);
+CRecipientFilter__DestructType CRecipientFilter__Destruct;
+
+typedef void(__fastcall* CRecipientFilter__AddAllPlayersType)(CRecipientFilter* self);
+CRecipientFilter__AddAllPlayersType CRecipientFilter__AddAllPlayers;
+
+typedef void(__fastcall* CRecipientFilter__AddRecipientType)(CRecipientFilter* self, const CBasePlayer* player);
+CRecipientFilter__AddRecipientType CRecipientFilter__AddRecipient;
+
+typedef void(__fastcall* CRecipientFilter__MakeReliableType)(CRecipientFilter* self);
+CRecipientFilter__MakeReliableType CRecipientFilter__MakeReliable;
+
+typedef void(__fastcall* UserMessageBeginType)(CRecipientFilter* filter, const char* messagename);
+UserMessageBeginType UserMessageBegin;
+
+typedef void(__fastcall* MessageEndType)();
+MessageEndType MessageEnd;
+
+typedef void(__fastcall* MessageWriteByteType)(int iValue);
+MessageWriteByteType MessageWriteByte;
+
+typedef void(__fastcall* MessageWriteStringType)(const char* sz);
+MessageWriteStringType MessageWriteString;
+
+typedef void(__fastcall* MessageWriteBoolType)(bool bValue);
+MessageWriteBoolType MessageWriteBool;
+
+bool isSkippingHook = false;
+
+static void CServerGameDLL__OnReceivedSayTextMessageHook(CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam)
 {
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
 	// To allow bypassing the hook, isSkippingHook can be set.
-	if (bShouldCallSayTextHook)
+	if (isSkippingHook)
 	{
-		bShouldCallSayTextHook = false;
-		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
+		isSkippingHook = false;
+		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerId, text, isTeam);
 		return;
 	}
+
+	void* sender = GetPlayerByIndex(senderPlayerId - 1);
 
 	// check chat ratelimits
-	if (!g_pServerLimits->CheckChatLimits(&R2::g_pClientArray[senderPlayerId - 1]))
-		return;
-
-	if (g_pSquirrel<ScriptContext::SERVER>->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
+	if (!g_ServerAuthenticationManager->CheckPlayerChatRatelimit(sender))
 	{
-		g_pSquirrel<ScriptContext::SERVER>->pushinteger(g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm, (int)senderPlayerId - 1);
-		g_pSquirrel<ScriptContext::SERVER>->pushstring(g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm, text);
-		g_pSquirrel<ScriptContext::SERVER>->pushbool(g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm, isTeam);
-		g_pSquirrel<ScriptContext::SERVER>->call(g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm, 3);
+		return;
+	}
+
+	if (g_ServerSquirrelManager->setupfunc("CServerGameDLL_ProcessMessageStartThread") != SQRESULT_ERROR)
+	{
+		g_ServerSquirrelManager->pusharg((int)senderPlayerId - 1);
+		g_ServerSquirrelManager->pusharg(text);
+		g_ServerSquirrelManager->pusharg(isTeam);
+		g_ServerSquirrelManager->call(3);
 	}
 	else
-		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
+		CServerGameDLL__OnReceivedSayTextMessageHookBase(self, senderPlayerId, text, isTeam);
 }
 
-void ChatSendMessage(unsigned int playerIndex, const char* text, bool isTeam)
+void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam)
 {
-	bShouldCallSayTextHook = true;
+	isSkippingHook = true;
 	CServerGameDLL__OnReceivedSayTextMessage(
 		g_pServerGameDLL,
 		// Ensure the first bit isn't set, since this indicates a custom message
 		(playerIndex + 1) & CUSTOM_MESSAGE_INDEX_MASK,
 		text,
-		isTeam);
+		isteam);
 }
 
 void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* text, bool isTeam, bool isDead, CustomMessageType messageType)
 {
-	R2::CBasePlayer* toPlayer = NULL;
+	CBasePlayer* toPlayer = NULL;
 	if (toPlayerIndex >= 0)
 	{
-		toPlayer = R2::UTIL_PlayerByIndex(toPlayerIndex + 1);
+		toPlayer = UTIL_PlayerByIndex(toPlayerIndex + 1);
 		if (toPlayer == NULL)
 			return;
 	}
@@ -88,7 +111,8 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	// Build a new string where the first byte is the message type
 	char sendText[256];
 	sendText[0] = (char)messageType;
-	strncpy_s(sendText + 1, 255, text, 254);
+	strncpy(sendText + 1, text, 255);
+	sendText[255] = 0;
 
 	// Anonymous custom messages use playerId=0, non-anonymous ones use a player ID with the first bit set
 	unsigned int fromPlayerId = fromPlayerIndex < 0 ? 0 : ((fromPlayerIndex + 1) | CUSTOM_MESSAGE_INDEX_BIT);
@@ -115,31 +139,29 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	CRecipientFilter__Destruct(&filter);
 }
 
-// void function NSSendMessage( int playerIndex, string text, bool isTeam )
-SQRESULT SQ_SendMessage(HSquirrelVM* sqvm)
+SQRESULT SQ_SendMessage(void* sqvm)
 {
-	int playerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
-	const char* text = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 2);
-	bool isTeam = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 3);
+	int playerIndex = ServerSq_getinteger(sqvm, 1);
+	const char* text = ServerSq_getstring(sqvm, 2);
+	bool isTeam = ServerSq_getbool(sqvm, 3);
 
 	ChatSendMessage(playerIndex, text, isTeam);
 
 	return SQRESULT_NULL;
 }
 
-// void function NSBroadcastMessage( int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType )
-SQRESULT SQ_BroadcastMessage(HSquirrelVM* sqvm)
+SQRESULT SQ_BroadcastMessage(void* sqvm)
 {
-	int fromPlayerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
-	int toPlayerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 2);
-	const char* text = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 3);
-	bool isTeam = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 4);
-	bool isDead = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 5);
-	int messageType = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 6);
+	int fromPlayerIndex = ServerSq_getinteger(sqvm, 1);
+	int toPlayerIndex = ServerSq_getinteger(sqvm, 2);
+	const char* text = ServerSq_getstring(sqvm, 3);
+	bool isTeam = ServerSq_getbool(sqvm, 4);
+	bool isDead = ServerSq_getbool(sqvm, 5);
+	int messageType = ServerSq_getinteger(sqvm, 6);
 
 	if (messageType < 1)
 	{
-		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
+		ServerSq_pusherror(sqvm, fmt::format("Invalid message type {}", messageType).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -148,33 +170,37 @@ SQRESULT SQ_BroadcastMessage(HSquirrelVM* sqvm)
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (CModule module))
+void InitialiseServerChatHooks_Engine(HMODULE baseAddress)
 {
-	g_pServerGameDLL = module.Offset(0x13F0AA98).As<CServerGameDLL*>();
+	g_pServerGameDLL = (CServerGameDLL*)((char*)baseAddress + 0x13F0AA98);
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule module))
+void InitialiseServerChatHooks_Server(HMODULE baseAddress)
 {
-	AUTOHOOK_DISPATCH_MODULE(server.dll)
+	CServerGameDLL__OnReceivedSayTextMessage = (CServerGameDLL__OnReceivedSayTextMessageType)((char*)baseAddress + 0x1595C0);
+	UTIL_PlayerByIndex = (UTIL_PlayerByIndexType)((char*)baseAddress + 0x26AA10);
+	CRecipientFilter__Construct = (CRecipientFilter__ConstructType)((char*)baseAddress + 0x1E9440);
+	CRecipientFilter__Destruct = (CRecipientFilter__DestructType)((char*)baseAddress + 0x1E9700);
+	CRecipientFilter__AddAllPlayers = (CRecipientFilter__AddAllPlayersType)((char*)baseAddress + 0x1E9940);
+	CRecipientFilter__AddRecipient = (CRecipientFilter__AddRecipientType)((char*)baseAddress + 0x1E9b30);
+	CRecipientFilter__MakeReliable = (CRecipientFilter__MakeReliableType)((char*)baseAddress + 0x1EA4E0);
 
-	CServerGameDLL__OnReceivedSayTextMessage =
-		module.Offset(0x1595C0).As<void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int)>();
-	CRecipientFilter__Construct = module.Offset(0x1E9440).As<void(__fastcall*)(CRecipientFilter*)>();
-	CRecipientFilter__Destruct = module.Offset(0x1E9700).As<void(__fastcall*)(CRecipientFilter*)>();
-	CRecipientFilter__AddAllPlayers = module.Offset(0x1E9940).As<void(__fastcall*)(CRecipientFilter*)>();
-	CRecipientFilter__AddRecipient = module.Offset(0x1E9B30).As<void(__fastcall*)(CRecipientFilter*, const R2::CBasePlayer*)>();
-	CRecipientFilter__MakeReliable = module.Offset(0x1EA4E0).As<void(__fastcall*)(CRecipientFilter*)>();
+	UserMessageBegin = (UserMessageBeginType)((char*)baseAddress + 0x15C520);
+	MessageEnd = (MessageEndType)((char*)baseAddress + 0x158880);
+	MessageWriteByte = (MessageWriteByteType)((char*)baseAddress + 0x158A90);
+	MessageWriteString = (MessageWriteStringType)((char*)baseAddress + 0x158D00);
+	MessageWriteBool = (MessageWriteBoolType)((char*)baseAddress + 0x158A00);
 
-	UserMessageBegin = module.Offset(0x15C520).As<void(__fastcall*)(CRecipientFilter*, const char*)>();
-	MessageEnd = module.Offset(0x158880).As<void(__fastcall*)()>();
-	MessageWriteByte = module.Offset(0x158A90).As<void(__fastcall*)(int)>();
-	MessageWriteString = module.Offset(0x158D00).As<void(__fastcall*)(const char*)>();
-	MessageWriteBool = module.Offset(0x158A00).As<void(__fastcall*)(bool)>();
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook,
+		reinterpret_cast<void*>(CServerGameDLL__OnReceivedSayTextMessage),
+		&CServerGameDLL__OnReceivedSayTextMessageHook,
+		reinterpret_cast<LPVOID*>(&CServerGameDLL__OnReceivedSayTextMessageHookBase));
 
 	// Chat sending functions
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
-		"void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
+	g_ServerSquirrelManager->AddFuncRegistration("void", "NSSendMessage", "int playerIndex, string text, bool isTeam", "", SQ_SendMessage);
+	g_ServerSquirrelManager->AddFuncRegistration(
 		"void",
 		"NSBroadcastMessage",
 		"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",

@@ -1,99 +1,86 @@
 #include "pch.h"
 #include "rpakfilesystem.h"
+#include "hookutils.h"
 #include "modmanager.h"
 #include "dedicated.h"
-#include "tier0.h"
 
-AUTOHOOK_INIT()
+typedef void* (*LoadCommonPaksForMapType)(char* map);
+LoadCommonPaksForMapType LoadCommonPaksForMap;
+
+typedef void* (*LoadPakSyncType)(const char* path, void* unknownSingleton, int flags);
+typedef int (*LoadPakAsyncType)(const char* path, void* unknownSingleton, int flags, void* callback0, void* callback1);
+typedef void* (*UnloadPakType)(int pakHandle, void* callback);
+typedef void* (*ReadFullFileFromDiskType)(const char* requestedPath, void* a2);
 
 // there are more i'm just too lazy to add
 struct PakLoadFuncs
 {
-	void* unk0[3];
-	int (*LoadPakAsync)(const char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1);
+	void* unk0[2];
+	LoadPakSyncType LoadPakSync;
+	LoadPakAsyncType LoadPakAsync;
 	void* unk1[2];
-	void* (*UnloadPak)(int iPakHandle, void* callback);
-	void* unk2[6];
-	void* (*LoadFile)(const char* path); // unsure
-	void* unk3[10];
-	void* (*ReadFileAsync)(const char* pPath, void* a2);
+	UnloadPakType UnloadPak;
+	void* unk2[17];
+	ReadFullFileFromDiskType ReadFullFileFromDisk;
 };
 
 PakLoadFuncs* g_pakLoadApi;
-
-PakLoadManager* g_pPakLoadManager;
 void** pUnknownPakLoadSingleton;
 
-int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
+PakLoadManager* g_PakLoadManager;
+void PakLoadManager::LoadPakSync(const char* path)
 {
-	int nHandle = g_pakLoadApi->LoadPakAsync(pPath, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
+	g_pakLoadApi->LoadPakSync(path, *pUnknownPakLoadSingleton, 0);
+}
+void PakLoadManager::LoadPakAsync(const char* path, bool bMarkForUnload)
+{
+	int handle = g_pakLoadApi->LoadPakAsync(path, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
 
-	// set the load source of the pak we just loaded
-	if (nHandle != -1)
-		GetPakInfo(nHandle)->m_nLoadSource = nLoadSource;
-
-	return nHandle;
+	if (bMarkForUnload)
+		m_pakHandlesToUnload.push_back(handle);
 }
 
-void PakLoadManager::UnloadPak(const int nPakHandle)
+void PakLoadManager::UnloadPaks()
 {
-	g_pakLoadApi->UnloadPak(nPakHandle, nullptr);
+	for (int pakHandle : m_pakHandlesToUnload)
+	{
+		g_pakLoadApi->UnloadPak(pakHandle, nullptr);
+		// remove pak from loadedPaks and loadedPaksInv
+		RemoveLoadedPak(pakHandle);
+	}
+
+	m_pakHandlesToUnload.clear();
 }
 
-void PakLoadManager::UnloadMapPaks()
+bool PakLoadManager::IsPakLoaded(int32_t pakHandle)
 {
-	for (auto& pair : m_vLoadedPaks)
-		if (pair.second.m_nLoadSource == ePakLoadSource::MAP)
-			UnloadPak(pair.first);
+	return loadedPaks.find(pakHandle) != loadedPaks.end();
 }
 
-LoadedPak* PakLoadManager::TrackLoadedPak(ePakLoadSource nLoadSource, int nPakHandle, size_t nPakNameHash)
+bool PakLoadManager::IsPakLoaded(size_t hash)
 {
-	LoadedPak pak;
-	pak.m_nLoadSource = nLoadSource;
-	pak.m_nPakHandle = nPakHandle;
-	pak.m_nPakNameHash = nPakNameHash;
-
-	m_vLoadedPaks.insert(std::make_pair(nPakHandle, pak));
-	return &m_vLoadedPaks.at(nPakHandle);
+	return loadedPaksInv.find(hash) != loadedPaksInv.end();
 }
 
-void PakLoadManager::RemoveLoadedPak(int nPakHandle)
+void PakLoadManager::AddLoadedPak(int32_t pakHandle, size_t hash)
 {
-	m_vLoadedPaks.erase(nPakHandle);
+	loadedPaks[pakHandle] = hash;
+	loadedPaksInv[hash] = pakHandle;
 }
 
-LoadedPak* PakLoadManager::GetPakInfo(const int nPakHandle)
+void PakLoadManager::RemoveLoadedPak(int32_t pakHandle)
 {
-	return &m_vLoadedPaks.at(nPakHandle);
-}
-
-int PakLoadManager::GetPakHandle(const size_t nPakNameHash)
-{
-	for (auto& pair : m_vLoadedPaks)
-		if (pair.second.m_nPakNameHash == nPakNameHash)
-			return pair.first;
-
-	return -1;
-}
-
-int PakLoadManager::GetPakHandle(const char* pPath)
-{
-	return GetPakHandle(STR_HASH(pPath));
-}
-
-void* PakLoadManager::LoadFile(const char* path)
-{
-	return g_pakLoadApi->LoadFile(path);
+	loadedPaksInv.erase(loadedPaks[pakHandle]);
+	loadedPaks.erase(pakHandle);
 }
 
 void HandlePakAliases(char** map)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = g_ModManager->m_loadedMods.size() - 1; i > -1; i--)
 	{
-		Mod* mod = &g_pModManager->m_LoadedMods[i];
-		if (!mod->m_bEnabled)
+		Mod* mod = &g_ModManager->m_loadedMods[i];
+		if (!mod->Enabled)
 			continue;
 
 		if (mod->RpakAliases.find(*map) != mod->RpakAliases.end())
@@ -107,50 +94,50 @@ void HandlePakAliases(char** map)
 void LoadPreloadPaks()
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_ModManager->m_loadedMods)
 	{
-		if (!mod.m_bEnabled)
+		if (!mod.Enabled)
 			continue;
 
 		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
+		fs::path modPakPath("./" / mod.ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 			if (pak.m_bAutoLoad)
-				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::CONSTANT);
+				g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), false);
 	}
 }
 
-void LoadPostloadPaks(const char* pPath)
+void LoadPostloadPaks(char** map)
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_ModManager->m_loadedMods)
 	{
-		if (!mod.m_bEnabled)
+		if (!mod.Enabled)
 			continue;
 
 		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
+		fs::path modPakPath("./" / mod.ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
-			if (pak.m_sLoadAfterPak == pPath)
-				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::CONSTANT);
+			if (pak.m_sLoadAfterPak == *map)
+				g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), false);
 	}
 }
 
 void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 {
 	// whether the vanilla game has this rpak
-	bool bHasOriginalPak = fs::exists(fs::path("r2/paks/Win64/") / *pakName);
+	bool bHasOriginalPak = fs::exists(fs::path("./r2/paks/Win64/") / *pakName);
 
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_ModManager->m_loadedMods)
 	{
-		if (!mod.m_bEnabled)
+		if (!mod.Enabled)
 			continue;
 
 		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
+		fs::path modPakPath("./" / mod.ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 		{
@@ -169,95 +156,114 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 						true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
 				}
 				else
-					g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::MAP);
+					g_PakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), true);
 			}
 		}
 	}
 }
 
-// clang-format off
-HOOK(LoadPakAsyncHook, LoadPakAsync,
-int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
-// clang-format on
+LoadPakSyncType LoadPakSyncOriginal;
+void* LoadPakSyncHook(char* path, void* unknownSingleton, int flags)
 {
-	HandlePakAliases(&pPath);
+	HandlePakAliases(&path);
 
-	// dont load the pak if it's currently loaded already
-	size_t nPathHash = STR_HASH(pPath);
-	if (g_pPakLoadManager->GetPakHandle(nPathHash) != -1)
+	bool bNeedToFreePakName = false;
+
+	// note: we don't handle loading any preloaded custom paks synchronously since LoadPakSync is never actually called in retail, just load
+	// them async instead
+	static bool bShouldLoadPaks = true;
+	if (bShouldLoadPaks)
+	{
+		// disable preloading while we're doing this
+		bShouldLoadPaks = false;
+
+		LoadPreloadPaks();
+		LoadCustomMapPaks(&path, &bNeedToFreePakName);
+
+		bShouldLoadPaks = true;
+	}
+
+	spdlog::info("LoadPakSync {}", path);
+	void* ret = LoadPakSyncOriginal(path, unknownSingleton, flags);
+
+	if (bNeedToFreePakName)
+		delete[] path;
+
+	return ret;
+}
+
+LoadPakAsyncType LoadPakAsyncOriginal;
+int LoadPakAsyncHook(char* path, void* unknownSingleton, int flags, void* callback0, void* callback1)
+{
+	size_t hash = STR_HASH(path);
+	// if the hash is already in the map, dont load the pak, it has already been loaded
+	if (g_PakLoadManager->IsPakLoaded(hash))
+	{
 		return -1;
+	}
+
+	HandlePakAliases(&path);
 
 	bool bNeedToFreePakName = false;
 
 	static bool bShouldLoadPaks = true;
 	if (bShouldLoadPaks)
 	{
-		// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by
-		// LoadCustomMapPaks
-		std::string originalPath(pPath);
-
 		// disable preloading while we're doing this
 		bShouldLoadPaks = false;
 
 		LoadPreloadPaks();
-		LoadCustomMapPaks(&pPath, &bNeedToFreePakName);
+		LoadCustomMapPaks(&path, &bNeedToFreePakName);
 
 		bShouldLoadPaks = true;
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
-		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") ||
-									strncmp(&originalPath[0], "common", 6))) // dedicated only needs common and common_mp
-		{
-			if (bNeedToFreePakName)
-				delete[] pPath;
-
-			spdlog::info("Not loading pak {} for dedicated server", originalPath);
+		if (IsDedicatedServer() && strncmp(path, "common", 6)) // dedicated only needs common and common_mp
 			return -1;
-		}
 	}
 
-	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
-	spdlog::info("LoadPakAsync {} {}", pPath, iPakHandle);
+	int ret = LoadPakAsyncOriginal(path, unknownSingleton, flags, callback0, callback1);
+	spdlog::info("LoadPakAsync {} {}", path, ret);
 
-	// trak the pak
-	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
-	LoadPostloadPaks(pPath);
+	// add the hash to the map
+	g_PakLoadManager->AddLoadedPak(ret, hash);
+
+	LoadPostloadPaks(&path);
 
 	if (bNeedToFreePakName)
-		delete[] pPath;
+		delete[] path;
 
-	return iPakHandle;
+	return ret;
 }
 
-// clang-format off
-HOOK(UnloadPakHook, UnloadPak,
-void*, __fastcall, (int nPakHandle, void* pCallback))
-// clang-format on
+UnloadPakType UnloadPakOriginal;
+void* UnloadPakHook(int pakHandle, void* callback)
 {
-	// stop tracking the pak
-	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);
+	if (g_PakLoadManager->IsPakLoaded(pakHandle))
+	{
+		// remove the entry
+		g_PakLoadManager->RemoveLoadedPak(pakHandle);
+	}
 
 	static bool bShouldUnloadPaks = true;
 	if (bShouldUnloadPaks)
 	{
 		bShouldUnloadPaks = false;
-		g_pPakLoadManager->UnloadMapPaks();
+		g_PakLoadManager->UnloadPaks();
 		bShouldUnloadPaks = true;
 	}
 
-	spdlog::info("UnloadPak {}", nPakHandle);
-	return UnloadPak(nPakHandle, pCallback);
+	spdlog::info("UnloadPak {}", pakHandle);
+	return UnloadPakOriginal(pakHandle, callback);
 }
 
-// we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
-// tbh this actually might be for memory mapped files or something, would make sense i think
-// clang-format off
-HOOK(ReadFileAsyncHook, ReadFileAsync, 
-void*, __fastcall, (const char* pPath, void* pCallback))
-// clang-format on
+// we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk and rpak loads
+// possibly just async loading all together?
+ReadFullFileFromDiskType ReadFullFileFromDiskOriginal;
+void* ReadFullFileFromDiskHook(const char* requestedPath, void* a2)
 {
-	fs::path path(pPath);
+	fs::path path(requestedPath);
 	char* allocatedNewPath = nullptr;
 
 	if (path.extension() == ".stbsp")
@@ -266,34 +272,42 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		spdlog::info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
-		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
-		if (modFile != g_pModManager->m_ModFiles.end())
+		auto modFile = g_ModManager->m_modFiles.find(fs::path("maps" / filename).lexically_normal().string());
+		if (modFile != g_ModManager->m_modFiles.end())
 		{
 			// need to allocate a new string for this
-			std::string newPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
+			std::string newPath = (modFile->second.owningMod->ModDirectory / "mod" / modFile->second.path).string();
 			allocatedNewPath = new char[newPath.size() + 1];
-			strncpy_s(allocatedNewPath, newPath.size() + 1, newPath.c_str(), newPath.size());
-			pPath = allocatedNewPath;
+			strncpy(allocatedNewPath, newPath.c_str(), newPath.size());
+			allocatedNewPath[newPath.size()] = '\0';
+			requestedPath = allocatedNewPath;
 		}
 	}
 
-	void* ret = ReadFileAsync(pPath, pCallback);
+	void* ret = ReadFullFileFromDiskOriginal(requestedPath, a2);
 	if (allocatedNewPath)
 		delete[] allocatedNewPath;
 
 	return ret;
 }
 
-ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
+void InitialiseEngineRpakFilesystem(HMODULE baseAddress)
 {
-	AUTOHOOK_DISPATCH();
+	g_PakLoadManager = new PakLoadManager;
 
-	g_pPakLoadManager = new PakLoadManager;
+	g_pakLoadApi = *(PakLoadFuncs**)((char*)baseAddress + 0x5BED78);
+	pUnknownPakLoadSingleton = (void**)((char*)baseAddress + 0x7C5E20);
 
-	g_pakLoadApi = module.Offset(0x5BED78).Deref().As<PakLoadFuncs*>();
-	pUnknownPakLoadSingleton = module.Offset(0x7C5E20).As<void**>();
-
-	LoadPakAsyncHook.Dispatch(g_pakLoadApi->LoadPakAsync);
-	UnloadPakHook.Dispatch(g_pakLoadApi->UnloadPak);
-	ReadFileAsyncHook.Dispatch(g_pakLoadApi->ReadFileAsync);
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook, reinterpret_cast<void*>(g_pakLoadApi->LoadPakSync), &LoadPakSyncHook, reinterpret_cast<LPVOID*>(&LoadPakSyncOriginal));
+	ENABLER_CREATEHOOK(
+		hook, reinterpret_cast<void*>(g_pakLoadApi->LoadPakAsync), &LoadPakAsyncHook, reinterpret_cast<LPVOID*>(&LoadPakAsyncOriginal));
+	ENABLER_CREATEHOOK(
+		hook, reinterpret_cast<void*>(g_pakLoadApi->UnloadPak), &UnloadPakHook, reinterpret_cast<LPVOID*>(&UnloadPakOriginal));
+	ENABLER_CREATEHOOK(
+		hook,
+		reinterpret_cast<void*>(g_pakLoadApi->ReadFullFileFromDisk),
+		&ReadFullFileFromDiskHook,
+		reinterpret_cast<LPVOID*>(&ReadFullFileFromDiskOriginal));
 }

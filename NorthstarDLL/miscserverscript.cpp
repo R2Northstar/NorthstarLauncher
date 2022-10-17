@@ -1,73 +1,76 @@
 #include "pch.h"
+#include "miscserverscript.h"
 #include "squirrel.h"
 #include "masterserver.h"
 #include "serverauthentication.h"
+#include "gameutils.h"
 #include "dedicated.h"
-#include "r2client.h"
-#include "r2server.h"
 
-#include <filesystem>
-
-// void function NSEarlyWritePlayerPersistenceForLeave( entity player )
-SQRESULT SQ_EarlyWritePlayerPersistenceForLeave(HSquirrelVM* sqvm)
+// annoying helper function because i can't figure out getting players or entities from sqvm rn
+// wish i didn't have to do it like this, but here we are
+void* GetPlayerByIndex(int playerIndex)
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
-	if (!pPlayer)
-	{
-		spdlog::warn("NSEarlyWritePlayerPersistenceForLeave got null player");
+	const int PLAYER_ARRAY_OFFSET = 0x12A53F90;
+	const int PLAYER_SIZE = 0x2D728;
 
-		g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, false);
-		return SQRESULT_NOTNULL;
+	void* playerArrayBase = (char*)GetModuleHandleA("engine.dll") + PLAYER_ARRAY_OFFSET;
+	void* player = (char*)playerArrayBase + (playerIndex * PLAYER_SIZE);
+
+	return player;
+}
+
+// void function NSEarlyWritePlayerIndexPersistenceForLeave( int playerIndex )
+SQRESULT SQ_EarlyWritePlayerIndexPersistenceForLeave(void* sqvm)
+{
+	int playerIndex = ServerSq_getinteger(sqvm, 1);
+	void* player = GetPlayerByIndex(playerIndex);
+
+	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
+	{
+		ServerSq_pusherror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
+		return SQRESULT_ERROR;
 	}
 
-	R2::CBaseClient* pClient = &R2::g_pClientArray[pPlayer->m_nPlayerIndex];
-	if (g_pServerAuthentication->m_PlayerAuthenticationData.find(pClient) == g_pServerAuthentication->m_PlayerAuthenticationData.end())
-	{
-		g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, false);
-		return SQRESULT_NOTNULL;
-	}
-
-	g_pServerAuthentication->m_PlayerAuthenticationData[pClient].needPersistenceWriteOnLeave = false;
-	g_pServerAuthentication->WritePersistentData(pClient);
+	g_ServerAuthenticationManager->m_additionalPlayerData[player].needPersistenceWriteOnLeave = false;
+	g_ServerAuthenticationManager->WritePersistentData(player);
 	return SQRESULT_NULL;
 }
 
 // bool function NSIsWritingPlayerPersistence()
-SQRESULT SQ_IsWritingPlayerPersistence(HSquirrelVM* sqvm)
+SQRESULT SQ_IsWritingPlayerPersistence(void* sqvm)
 {
-	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, g_pMasterServerManager->m_bSavingPersistentData);
+	ServerSq_pushbool(sqvm, g_MasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
-// bool function NSIsPlayerLocalPlayer( entity player )
-SQRESULT SQ_IsPlayerLocalPlayer(HSquirrelVM* sqvm)
+// bool function NSIsPlayerIndexLocalPlayer( int playerIndex )
+SQRESULT SQ_IsPlayerIndexLocalPlayer(void* sqvm)
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
-	if (!pPlayer)
+	int playerIndex = ServerSq_getinteger(sqvm, 1);
+	void* player = GetPlayerByIndex(playerIndex);
+	if (!g_ServerAuthenticationManager->m_additionalPlayerData.count(player))
 	{
-		spdlog::warn("NSIsPlayerLocalPlayer got null player");
-
-		g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, false);
-		return SQRESULT_NOTNULL;
+		ServerSq_pusherror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
+		return SQRESULT_ERROR;
 	}
 
-	R2::CBaseClient* pClient = &R2::g_pClientArray[pPlayer->m_nPlayerIndex];
-	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, !strcmp(R2::g_pLocalPlayerUserID, pClient->m_UID));
+	ServerSq_pushbool(sqvm, !strcmp(g_LocalPlayerUserID, (char*)player + 0xF500));
 	return SQRESULT_NOTNULL;
 }
 
 // bool function NSIsDedicated()
-SQRESULT SQ_IsDedicated(HSquirrelVM* sqvm)
+
+SQRESULT SQ_IsDedicated(void* sqvm)
 {
-	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, IsDedicatedServer());
+	ServerSq_pushbool(sqvm, IsDedicatedServer());
 	return SQRESULT_NOTNULL;
 }
 
-ON_DLL_LOAD_RELIESON("server.dll", MiscServerScriptCommands, ServerSquirrel, (CModule module))
+void InitialiseMiscServerScriptCommand(HMODULE baseAddress)
 {
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
-		"void", "NSEarlyWritePlayerPersistenceForLeave", "entity player", "", SQ_EarlyWritePlayerPersistenceForLeave);
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("bool", "NSIsPlayerLocalPlayer", "entity player", "", SQ_IsPlayerLocalPlayer);
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("bool", "NSIsDedicated", "", "", SQ_IsDedicated);
+	g_ServerSquirrelManager->AddFuncRegistration(
+		"void", "NSEarlyWritePlayerIndexPersistenceForLeave", "int playerIndex", "", SQ_EarlyWritePlayerIndexPersistenceForLeave);
+	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsWritingPlayerPersistence", "", "", SQ_IsWritingPlayerPersistence);
+	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsPlayerIndexLocalPlayer", "int playerIndex", "", SQ_IsPlayerIndexLocalPlayer);
+	g_ServerSquirrelManager->AddFuncRegistration("bool", "NSIsDedicated", "", "", SQ_IsDedicated);
 }

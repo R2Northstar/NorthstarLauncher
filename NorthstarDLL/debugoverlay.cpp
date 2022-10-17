@@ -1,9 +1,17 @@
 #include "pch.h"
+#include "debugoverlay.h"
 #include "dedicated.h"
 #include "cvar.h"
-#include "vector.h"
 
-AUTOHOOK_INIT()
+struct Vector3
+{
+	float x, y, z;
+};
+
+struct QAngle
+{
+	float x, y, z, w;
+};
 
 enum OverlayType_t
 {
@@ -32,7 +40,7 @@ struct OverlayBase_t
 	int m_nServerCount; // Latch server count, too
 	float m_flEndTime; // When does this box go away
 	OverlayBase_t* m_pNextOverlay;
-	void* m_pUnk;
+	__int64 m_pUnk;
 };
 
 struct OverlayLine_t : public OverlayBase_t
@@ -68,18 +76,37 @@ struct OverlayBox_t : public OverlayBase_t
 	int a;
 };
 
+// this is in cvar.h, don't need it here
+/*class Color
+{
+  public:
+	Color(int r, int g, int b, int a)
+	{
+		_color[0] = (unsigned char)r;
+		_color[1] = (unsigned char)g;
+		_color[2] = (unsigned char)b;
+		_color[3] = (unsigned char)a;
+	}
+
+  private:
+	unsigned char _color[4];
+};*/
+
 static HMODULE sEngineModule;
+
+typedef void (*DrawOverlayType)(OverlayBase_t* a1);
+DrawOverlayType DrawOverlay;
 
 typedef void (*RenderLineType)(Vector3 v1, Vector3 v2, Color c, bool bZBuffer);
 static RenderLineType RenderLine;
+
 typedef void (*RenderBoxType)(Vector3 vOrigin, QAngle angles, Vector3 vMins, Vector3 vMaxs, Color c, bool bZBuffer, bool bInsideOut);
 static RenderBoxType RenderBox;
+
 static RenderBoxType RenderWireframeBox;
 
-// clang-format off
-AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
-void, __fastcall, (OverlayBase_t * pOverlay))
-// clang-format on
+// engine.dll+0xABCB0
+void __fastcall DrawOverlayHook(OverlayBase_t* pOverlay)
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
 
@@ -124,17 +151,24 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
+void InitialiseDebugOverlay(HMODULE baseAddress)
 {
-	AUTOHOOK_DISPATCH()
+	if (IsDedicatedServer())
+		return;
 
-	RenderLine = module.Offset(0x192A70).As<RenderLineType>();
-	RenderBox = module.Offset(0x192520).As<RenderBoxType>();
-	RenderWireframeBox = module.Offset(0x193DA0).As<RenderBoxType>();
-	sEngineModule = reinterpret_cast<HMODULE>(module.m_nAddress);
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0xABCB0, &DrawOverlayHook, reinterpret_cast<LPVOID*>(&DrawOverlay));
+
+	RenderLine = reinterpret_cast<RenderLineType>((char*)baseAddress + 0x192A70);
+
+	RenderBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x192520);
+
+	RenderWireframeBox = reinterpret_cast<RenderBoxType>((char*)baseAddress + 0x193DA0);
+
+	sEngineModule = baseAddress;
 
 	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory
-	ConVar* Cvar_enable_debug_overlays = module.Offset(0x10DB0990).As<ConVar*>();
+	ConVar* Cvar_enable_debug_overlays = (ConVar*)((char*)baseAddress + 0x10DB0990);
 	Cvar_enable_debug_overlays->SetValue(false);
 	Cvar_enable_debug_overlays->m_pszDefaultValue = (char*)"0";
 	Cvar_enable_debug_overlays->AddFlags(FCVAR_CHEAT);

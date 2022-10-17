@@ -15,3 +15,5 @@ int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var);
 
 void initGameState();
 void* getPluginObject(PluginObject var);
+
+void InitialisePluginCommands(HMODULE baseAddress);

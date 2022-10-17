@@ -1,25 +1,27 @@
 #include "pch.h"
+#include "scriptbrowserhooks.h"
+#include "hookutils.h"
 
-AUTOHOOK_INIT()
+typedef void (*OpenExternalWebBrowserType)(char* url, char flags);
+OpenExternalWebBrowserType OpenExternalWebBrowser;
 
 bool* bIsOriginOverlayEnabled;
 
-// clang-format off
-AUTOHOOK(OpenExternalWebBrowser, engine.dll + 0x184E40, 
-void, __fastcall, (char* pUrl, char flags))
-// clang-format on
+void OpenExternalWebBrowserHook(char* url, char flags)
 {
 	bool bIsOriginOverlayEnabledOriginal = *bIsOriginOverlayEnabled;
-	if (flags & 2 && !strncmp(pUrl, "http", 4)) // custom force external browser flag
+	if (flags & 2 && !strncmp(url, "http", 4)) // custom force external browser flag
 		*bIsOriginOverlayEnabled = false; // if this bool is false, game will use an external browser rather than the origin overlay one
 
-	OpenExternalWebBrowser(pUrl, flags);
+	OpenExternalWebBrowser(url, flags);
 	*bIsOriginOverlayEnabled = bIsOriginOverlayEnabledOriginal;
 }
 
-ON_DLL_LOAD_CLIENT("engine.dll", ScriptExternalBrowserHooks, (CModule module))
+void InitialiseScriptExternalBrowserHooks(HMODULE baseAddress)
 {
-	AUTOHOOK_DISPATCH()
+	bIsOriginOverlayEnabled = (bool*)baseAddress + 0x13978255;
 
-	bIsOriginOverlayEnabled = module.Offset(0x13978255).As<bool*>();
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x184E40, &OpenExternalWebBrowserHook, reinterpret_cast<LPVOID*>(&OpenExternalWebBrowser));
 }

@@ -16,4 +16,6 @@ class ServerBanSystem
 	bool IsUIDAllowed(uint64_t uid);
 };
 
-extern ServerBanSystem* g_pBanSystem;
+extern ServerBanSystem* g_ServerBanSystem;
+
+void InitialiseBanSystem(HMODULE baseAddress);

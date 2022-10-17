@@ -1,49 +1,82 @@
 #include "pch.h"
 #include "sourceinterface.h"
-#include "sourceconsole.h"
+#include "hooks.h"
+#include "hookutils.h"
 
-AUTOHOOK_INIT()
+#include "sourceconsole.h"
+#include "context.h"
+#include "convar.h"
+#include <iostream>
 
 // really wanted to do a modular callback system here but honestly couldn't be bothered so hardcoding stuff for now: todo later
 
-// clang-format off
-AUTOHOOK_PROCADDRESS(ClientCreateInterface, client.dll, CreateInterface, 
-void*, __fastcall, (const char* pName, const int* pReturnCode))
-// clang-format on
+CreateInterfaceFn clientCreateInterfaceOriginal;
+void* ClientCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
-	void* ret = ClientCreateInterface(pName, pReturnCode);
-	spdlog::info("CreateInterface CLIENT {}", pName);
+	void* ret = clientCreateInterfaceOriginal(pName, pReturnCode);
 
+	spdlog::info("CreateInterface CLIENT {}", pName);
 	if (!strcmp(pName, "GameClientExports001"))
 		InitialiseConsoleOnInterfaceCreation();
 
 	return ret;
 }
 
-// clang-format off
-AUTOHOOK_PROCADDRESS(ServerCreateInterface, server.dll, CreateInterface, 
-void*, __fastcall, (const char* pName, const int* pReturnCode))
-// clang-format on
+CreateInterfaceFn serverCreateInterfaceOriginal;
+void* ServerCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
-	void* ret = ServerCreateInterface(pName, pReturnCode);
-	spdlog::info("CreateInterface SERVER {}", pName);
+	void* ret = serverCreateInterfaceOriginal(pName, pReturnCode);
+
+	std::cout << "CreateInterface SERVER " << pName << std::endl;
 
 	return ret;
 }
 
-// clang-format off
-AUTOHOOK_PROCADDRESS(EngineCreateInterface, engine.dll, CreateInterface, 
-void*, __fastcall, (const char* pName, const int* pReturnCode))
-// clang-format on
+CreateInterfaceFn engineCreateInterfaceOriginal;
+void* EngineCreateInterfaceHook(const char* pName, int* pReturnCode)
 {
-	void* ret = EngineCreateInterface(pName, pReturnCode);
-	spdlog::info("CreateInterface ENGINE {}", pName);
+	void* ret = engineCreateInterfaceOriginal(pName, pReturnCode);
+
+	std::cout << "CreateInterface ENGINE " << pName << std::endl;
 
 	return ret;
 }
 
-// clang-format off
-ON_DLL_LOAD("client.dll", ClientInterface, (CModule module)) {AUTOHOOK_DISPATCH_MODULE(client.dll)}
-ON_DLL_LOAD("server.dll", ServerInterface, (CModule module)) {AUTOHOOK_DISPATCH_MODULE(server.dll)}
-ON_DLL_LOAD("engine.dll", EngineInterface, (CModule module)) {AUTOHOOK_DISPATCH_MODULE(engine.dll)}
-// clang-format on
+void HookClientCreateInterface(HMODULE baseAddress)
+{
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook,
+		reinterpret_cast<void*>(GetProcAddress(baseAddress, "CreateInterface")),
+		&ClientCreateInterfaceHook,
+		reinterpret_cast<LPVOID*>(&clientCreateInterfaceOriginal));
+}
+
+void HookServerCreateInterface(HMODULE baseAddress)
+{
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook,
+		reinterpret_cast<void*>(GetProcAddress(baseAddress, "CreateInterface")),
+		&ServerCreateInterfaceHook,
+		reinterpret_cast<LPVOID*>(&serverCreateInterfaceOriginal));
+}
+
+void HookEngineCreateInterface(HMODULE baseAddress)
+{
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(
+		hook,
+		reinterpret_cast<void*>(GetProcAddress(baseAddress, "CreateInterface")),
+		&EngineCreateInterfaceHook,
+		reinterpret_cast<LPVOID*>(&engineCreateInterfaceOriginal));
+}
+
+void InitialiseInterfaceCreationHooks()
+{
+	AddDllLoadCallback("client.dll", HookClientCreateInterface);
+
+	// not used atm
+	// AddDllLoadCallback("server.dll", HookServerCreateInterface);
+	// AddDllLoadCallback("engine.dll", HookEngineCreateInterface);
+}

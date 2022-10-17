@@ -1,35 +1,37 @@
 #include "pch.h"
+#include "modlocalisation.h"
+#include "hookutils.h"
 #include "modmanager.h"
 
-AUTOHOOK_INIT()
+typedef bool (*AddLocalisationFileType)(void* g_pVguiLocalize, const char* path, const char* pathId, char unknown);
+AddLocalisationFileType AddLocalisationFile;
 
-// clang-format off
-AUTOHOOK(AddLocalisationFile, localize.dll + 0x6D80,
-bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, char unknown))
-// clang-format on
+bool loadModLocalisationFiles = true;
+
+bool AddLocalisationFileHook(void* g_pVguiLocalize, const char* path, const char* pathId, char unknown)
 {
-	static bool bLoadModLocalisationFiles = true;
-	bool ret = AddLocalisationFile(pVguiLocalize, path, pathId, unknown);
+	bool ret = AddLocalisationFile(g_pVguiLocalize, path, pathId, unknown);
 
 	if (ret)
 		spdlog::info("Loaded localisation file {} successfully", path);
 
-	if (!bLoadModLocalisationFiles)
+	if (!loadModLocalisationFiles)
 		return ret;
 
-	bLoadModLocalisationFiles = false;
+	loadModLocalisationFiles = false;
 
-	for (Mod mod : g_pModManager->m_LoadedMods)
-		if (mod.m_bEnabled)
+	for (Mod mod : g_ModManager->m_loadedMods)
+		if (mod.Enabled)
 			for (std::string& localisationFile : mod.LocalisationFiles)
-				AddLocalisationFile(pVguiLocalize, localisationFile.c_str(), pathId, unknown);
+				AddLocalisationFile(g_pVguiLocalize, localisationFile.c_str(), pathId, unknown);
 
-	bLoadModLocalisationFiles = true;
+	loadModLocalisationFiles = true;
 
 	return ret;
 }
 
-ON_DLL_LOAD_CLIENT("localize.dll", Localize, (CModule module))
+void InitialiseModLocalisation(HMODULE baseAddress)
 {
-	AUTOHOOK_DISPATCH()
+	HookEnabler hook;
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x6D80, AddLocalisationFileHook, reinterpret_cast<LPVOID*>(&AddLocalisationFile));
 }

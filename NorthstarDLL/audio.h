@@ -5,6 +5,8 @@
 #include <regex>
 #include <shared_mutex>
 
+namespace fs = std::filesystem;
+
 enum class AudioSelectionStrategy
 {
 	INVALID = -1,
@@ -44,3 +46,5 @@ class CustomAudioManager
 };
 
 extern CustomAudioManager g_CustomAudioManager;
+
+void InitialiseMilesAudioHooks(HMODULE baseAddress);

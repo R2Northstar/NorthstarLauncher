@@ -1,7 +1,12 @@
 #include "pch.h"
 #include "logging.h"
+#include "sourceconsole.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "hookutils.h"
+#include "dedicated.h"
 #include "convar.h"
-#include "concommand.h"
+#include <iomanip>
+#include <sstream>
 #include "nsprefix.h"
 #include <dbghelp.h>
 #include <iostream>
@@ -247,7 +252,8 @@ void InitialiseConsole()
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
 
-AUTOHOOK_INIT()
+	SetConsoleCtrlHandler(ConsoleHandlerRoutine, true);
+}
 
 void InitialiseLogging()
 {
@@ -258,7 +264,7 @@ void InitialiseLogging()
 
 ConVar* Cvar_spewlog_enable;
 
-enum class SpewType_t
+enum SpewType_t
 {
 	SPEW_MESSAGE = 0,
 
@@ -270,24 +276,56 @@ enum class SpewType_t
 	SPEW_TYPE_COUNT
 };
 
-const std::unordered_map<SpewType_t, const char*> PrintSpewTypes = {
-	{SpewType_t::SPEW_MESSAGE, "SPEW_MESSAGE"},
-	{SpewType_t::SPEW_WARNING, "SPEW_WARNING"},
-	{SpewType_t::SPEW_ASSERT, "SPEW_ASSERT"},
-	{SpewType_t::SPEW_ERROR, "SPEW_ERROR"},
-	{SpewType_t::SPEW_LOG, "SPEW_LOG"}};
+typedef void (*EngineSpewFuncType)();
+EngineSpewFuncType EngineSpewFunc;
 
-// clang-format off
-AUTOHOOK(EngineSpewFunc, engine.dll + 0x11CA80,
-void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_list args))
-// clang-format on
+void EngineSpewFuncHook(void* engineServer, SpewType_t type, const char* format, va_list args)
 {
 	if (!Cvar_spewlog_enable->GetBool())
 		return;
 
-	const char* typeStr = PrintSpewTypes.at(type);
+	const char* typeStr;
+	switch (type)
+	{
+	case SPEW_MESSAGE:
+	{
+		typeStr = "SPEW_MESSAGE";
+		break;
+	}
+
+	case SPEW_WARNING:
+	{
+		typeStr = "SPEW_WARNING";
+		break;
+	}
+
+	case SPEW_ASSERT:
+	{
+		typeStr = "SPEW_ASSERT";
+		break;
+	}
+
+	case SPEW_ERROR:
+	{
+		typeStr = "SPEW_ERROR";
+		break;
+	}
+
+	case SPEW_LOG:
+	{
+		typeStr = "SPEW_LOG";
+		break;
+	}
+
+	default:
+	{
+		typeStr = "SPEW_UNKNOWN";
+		break;
+	}
+	}
+
 	char formatted[2048] = {0};
-	bool bShouldFormat = true;
+	bool shouldFormat = true;
 
 	// because titanfall 2 is quite possibly the worst thing to yet exist, it sometimes gives invalid specifiers which will crash
 	// ttf2sdk had a way to prevent them from crashing but it doesnt work in debug builds
@@ -334,17 +372,19 @@ void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_
 
 			default:
 			{
-				bShouldFormat = false;
+				shouldFormat = false;
 				break;
 			}
 			}
 		}
 	}
 
-	if (bShouldFormat)
+	if (shouldFormat)
 		vsnprintf(formatted, sizeof(formatted), format, args);
 	else
+	{
 		spdlog::warn("Failed to format {} \"{}\"", typeStr, format);
+	}
 
 	auto endpos = strlen(formatted);
 	if (formatted[endpos - 1] == '\n')
@@ -353,11 +393,10 @@ void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_
 	spdlog::info("[SERVER {}] {}", typeStr, formatted);
 }
 
-// used for printing the output of status
-// clang-format off
-AUTOHOOK(Status_ConMsg, engine.dll + 0x15ABD0,
-void,, (const char* text, ...))
-// clang-format on
+typedef void (*Status_ConMsg_Type)(const char* text, ...);
+Status_ConMsg_Type Status_ConMsg_Original;
+
+void Status_ConMsg_Hook(const char* text, ...)
 {
 	char formatted[2048];
 	va_list list;
@@ -373,10 +412,10 @@ void,, (const char* text, ...))
 	spdlog::info(formatted);
 }
 
-// clang-format off
-AUTOHOOK(CClientState_ProcessPrint, engine.dll + 0x1A1530, 
-bool,, (void* thisptr, uintptr_t msg))
-// clang-format on
+typedef bool (*CClientState_ProcessPrint_Type)(__int64 thisptr, __int64 msg);
+CClientState_ProcessPrint_Type CClientState_ProcessPrint_Original;
+
+bool CClientState_ProcessPrint_Hook(__int64 thisptr, __int64 msg)
 {
 	char* text = *(char**)(msg + 0x20);
 
@@ -388,7 +427,31 @@ bool,, (void* thisptr, uintptr_t msg))
 	return true;
 }
 
+void InitialiseEngineSpewFuncHooks(HMODULE baseAddress)
+{
+	HookEnabler hook;
+
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x11CA80, EngineSpewFuncHook, reinterpret_cast<LPVOID*>(&EngineSpewFunc));
+
+	// Hook print function that status concmd uses to actually print data
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x15ABD0, Status_ConMsg_Hook, reinterpret_cast<LPVOID*>(&Status_ConMsg_Original));
+
+	// Hook CClientState::ProcessPrint
+	ENABLER_CREATEHOOK(
+		hook,
+		(char*)baseAddress + 0x1A1530,
+		CClientState_ProcessPrint_Hook,
+		reinterpret_cast<LPVOID*>(&CClientState_ProcessPrint_Original));
+
+	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
+}
+
+#include "bitbuf.h"
+
 ConVar* Cvar_cl_showtextmsg;
+
+typedef void (*TextMsg_Type)(__int64);
+TextMsg_Type TextMsg_Original;
 
 class ICenterPrint
 {
@@ -402,22 +465,11 @@ class ICenterPrint
 	virtual void SetTextColor(int r, int g, int b, int a) = 0;
 };
 
-ICenterPrint* pInternalCenterPrint = NULL;
+ICenterPrint* internalCenterPrint = NULL;
 
-enum class TextMsgPrintType_t
+void TextMsgHook(BFRead* msg)
 {
-	HUD_PRINTNOTIFY = 1,
-	HUD_PRINTCONSOLE,
-	HUD_PRINTTALK,
-	HUD_PRINTCENTER
-};
-
-// clang-format off
-AUTOHOOK(TextMsg, client.dll + 0x198710,
-void,, (BFRead* msg))
-// clang-format on
-{
-	TextMsgPrintType_t msg_dest = (TextMsgPrintType_t)msg->ReadByte();
+	int msg_dest = msg->ReadByte();
 
 	char text[256];
 	msg->ReadString(text, sizeof(text));
@@ -427,86 +479,29 @@ void,, (BFRead* msg))
 
 	switch (msg_dest)
 	{
-	case TextMsgPrintType_t::HUD_PRINTCENTER:
-		pInternalCenterPrint->Print(text);
+	case 4: // HUD_PRINTCENTER
+		internalCenterPrint->Print(text);
 		break;
-
 	default:
 		spdlog::warn("Unimplemented TextMsg type {}! printing to console", msg_dest);
 		[[fallthrough]];
-
-	case TextMsgPrintType_t::HUD_PRINTCONSOLE:
+	case 2: // HUD_PRINTCONSOLE
 		auto endpos = strlen(text);
 		if (text[endpos - 1] == '\n')
 			text[endpos - 1] = '\0'; // cut off repeated newline
-
 		spdlog::info(text);
 		break;
 	}
 }
 
-// clang-format off
-AUTOHOOK(ConCommand_echo, engine.dll + 0x123680,
-void,, (const CCommand& arg))
-// clang-format on
+void InitialiseClientPrintHooks(HMODULE baseAddress)
 {
-	if (arg.ArgC() >= 2)
-		spdlog::info("[echo] {}", arg.ArgS());
-}
+	HookEnabler hook;
 
-// This needs to be called after hooks are loaded so we can access the command line args
-void CreateLogFiles()
-{
-	if (strstr(GetCommandLineA(), "-disablelogs"))
-	{
-		spdlog::default_logger()->set_level(spdlog::level::off);
-	}
-	else
-	{
-		try
-		{
-			// todo: might be good to delete logs that are too old
-			time_t time = std::time(nullptr);
-			tm currentTime = *std::localtime(&time);
-			std::stringstream stream;
+	internalCenterPrint = (ICenterPrint*)((char*)baseAddress + 0x216E940);
 
-			stream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nslog%Y-%m-%d %H-%M-%S.txt").c_str());
-			spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
-			spdlog::flush_on(spdlog::level::info);
-		}
-		catch (...)
-		{
-			spdlog::error("Failed creating log file!");
-			MessageBoxA(
-				0, "Failed creating log file! Make sure the profile directory is writable.", "Northstar Warning", MB_ICONWARNING | MB_OK);
-		}
-	}
-}
-
-void InitialiseLogging()
-{
-	AllocConsole();
-
-	// Bind stdout to receive console output.
-	// these two lines are responsible for stuff to not show up in the console sometimes, from talking about it on discord
-	// apparently they were meant to make logging work when using -northstar, however from testing it seems that it doesnt
-	// work regardless of these two lines
-	// freopen("CONOUT$", "w", stdout);
-	// freopen("CONOUT$", "w", stderr);
-	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
-}
-
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))
-{
-	AUTOHOOK_DISPATCH_MODULE(engine.dll)
-
-	Cvar_spewlog_enable = new ConVar("spewlog_enable", "1", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
-}
-
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (CModule module))
-{
-	AUTOHOOK_DISPATCH_MODULE(client.dll)
+	// "TextMsg" usermessage
+	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x198710, TextMsgHook, reinterpret_cast<LPVOID*>(&TextMsg_Original));
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
-	pInternalCenterPrint = module.Offset(0x216E940).As<ICenterPrint*>();
 }

@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "memalloc.h"
-#include "tier0.h"
-
-using namespace Tier0;
+#include "gameutils.h"
 
 // TODO: rename to malloc and free after removing statically compiled .libs
 
@@ -10,8 +8,9 @@ extern "C" void* _malloc_base(size_t n)
 {
 	// allocate into static buffer if g_pMemAllocSingleton isn't initialised
 	if (!g_pMemAllocSingleton)
-		TryCreateGlobalMemAlloc();
-
+	{
+		InitialiseTier0GameUtilFunctions(GetModuleHandleA("tier0.dll"));
+	}
 	return g_pMemAllocSingleton->m_vtable->Alloc(g_pMemAllocSingleton, n);
 }
 
@@ -23,16 +22,19 @@ extern "C" void* _malloc_base(size_t n)
 extern "C" void _free_base(void* p)
 {
 	if (!g_pMemAllocSingleton)
-		TryCreateGlobalMemAlloc();
-
+	{
+		spdlog::warn("Trying to free something before g_pMemAllocSingleton was ready, this should never happen");
+		InitialiseTier0GameUtilFunctions(GetModuleHandleA("tier0.dll"));
+	}
 	g_pMemAllocSingleton->m_vtable->Free(g_pMemAllocSingleton, p);
 }
 
 extern "C" void* _realloc_base(void* oldPtr, size_t size)
 {
 	if (!g_pMemAllocSingleton)
-		TryCreateGlobalMemAlloc();
-
+	{
+		InitialiseTier0GameUtilFunctions(GetModuleHandleA("tier0.dll"));
+	}
 	return g_pMemAllocSingleton->m_vtable->Realloc(g_pMemAllocSingleton, oldPtr, size);
 }
 
