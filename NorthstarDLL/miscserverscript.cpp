@@ -39,8 +39,9 @@ SQRESULT SQ_IsPlayerIndexLocalPlayer(HSquirrelVM* sqvm)
 	R2::CBaseClient* player = &R2::g_pClientArray[playerIndex];
 	if (!g_pServerAuthentication->m_PlayerAuthenticationData.count(player))
 	{
-		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, fmt::format("Invalid playerindex {}", playerIndex).c_str());
-		return SQRESULT_ERROR;
+		spdlog::warn("Invalid playerindex {}", playerIndex);
+		g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, false);
+		return SQRESULT_NOTNULL;
 	}
 
 	g_pSquirrel<ScriptContext::SERVER>->pushbool(sqvm, !strcmp(R2::g_pLocalPlayerUserID, player->m_UID));
