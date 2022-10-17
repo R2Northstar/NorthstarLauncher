@@ -12,7 +12,7 @@ size_t __fastcall ShouldAllowAlltalk(const char* pMapName, const char* pDesiredM
 	return strcmp(pMapName, pDesiredMapName);
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerAllTalk, ConVar, (CModule module)) 
+ON_DLL_LOAD_RELIESON("engine.dll", ServerAllTalk, ConVar, (CModule module))
 {
 	// replace strcmp function called in CClient::ProcessVoiceData with ShouldAllowAlltalk()
 	MemoryAddress base = module.Offset(0x108608);
