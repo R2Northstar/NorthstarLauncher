@@ -562,6 +562,7 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="alltalk.cpp" />
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
     <ClCompile Include="bits.cpp" />
