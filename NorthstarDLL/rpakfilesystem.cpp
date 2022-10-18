@@ -277,6 +277,9 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 	{
 		// code for this is mostly stolen from above
 
+		// unfortunately I can't find a way to get the rpak that is causing this function call, so I have to
+		// store them on mod init and then compare the current path with the stored paths
+
 		// game adds r2\ to every path, so assume that a starpak path that begins with r2\paks\ is a vanilla one
 		// modded starpaks will be in the mod's paks folder
 		if (path.string().find("r2\\paks\\") != 0 && path.string().find("r2/paks/") != 0)
@@ -296,7 +299,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 				{
 					if (hash == hashed)
 					{
-						allocatedNewPath = mod.m_ModDirectory.string() + "\\paks\\" + starpakPath;
+						allocatedNewPath = (mod.m_ModDirectory / "paks" / starpakPath).string();
 						pPath = allocatedNewPath.c_str();
 						found = true;
 						break;
