@@ -477,7 +477,7 @@ void ModManager::LoadMods()
 
 					// seek to the point in the header where the starpak reference size is
 					rpakStream.seekg(0x38, std::ios::beg);
-					int starpaksSize;
+					int starpaksSize = 0;
 					rpakStream.read((char*)&starpaksSize, 2);
 
 					// seek to just after the header
@@ -492,12 +492,14 @@ void ModManager::LoadMods()
 					std::string str = "";
 					for (int i = 0; i < starpaksSize; i++)
 					{
+						// if the current char is null, that signals the end of the current starpak path
 						if (buf[i] != 0x00)
 						{
 							str += buf[i];
 						}
 						else
 						{
+							// only add the string we are making if it isnt empty
 							if (!str.empty())
 							{
 								mod.StarpakPaths.push_back(STR_HASH(str));
