@@ -19,7 +19,7 @@ SQRESULT SQ_GetUserInfoKVString_Internal(HSquirrelVM* sqvm)
 	const char* pKey = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 2);
 	const char* pDefaultValue = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 3);
 
-	const char* pResult = KeyValues__GetString(R2::g_pClientArray[pPlayer->m_nPlayerIndex].m_ConVars, pKey, pDefaultValue);
+	const char* pResult = KeyValues__GetString(R2::g_pClientArray[pPlayer->m_nPlayerIndex - 1].m_ConVars, pKey, pDefaultValue);
 	g_pSquirrel<ScriptContext::SERVER>->pushstring(sqvm, pResult);
 	return SQRESULT_NOTNULL;
 }
@@ -36,7 +36,7 @@ SQRESULT SQ_GetUserInfoKVStringOrNull_Internal(HSquirrelVM* sqvm)
 
 	const char* pKey = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 2);
 
-	const char* pResult = KeyValues__GetString(R2::g_pClientArray[pPlayer->m_nPlayerIndex].m_ConVars, pKey, nullptr);
+	const char* pResult = KeyValues__GetString(R2::g_pClientArray[pPlayer->m_nPlayerIndex - 1].m_ConVars, pKey, nullptr);
 	if (!pResult)
 		return SQRESULT_NULL;
 
