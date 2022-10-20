@@ -286,33 +286,30 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		{
 			// remove the r2\ from the start used for path lookups
 			std::string starpakPath = path.string().substr(3);
+			// hash the starpakPath to compare with stored entries
 			size_t hashed = STR_HASH(starpakPath);
 
+			// loop through all loaded mods
 			for (Mod& mod : g_pModManager->m_LoadedMods)
 			{
+				// ignore non-loaded mods
 				if (!mod.m_bEnabled)
 					continue;
-
-				bool found = false;
-
+				// loop through the stored starpak paths
 				for (size_t hash : mod.StarpakPaths)
 				{
 					if (hash == hashed)
 					{
+						// construct new path
 						allocatedNewPath = (mod.m_ModDirectory / "paks" / starpakPath).string();
+						// set path to the new path
 						pPath = allocatedNewPath.c_str();
-						found = true;
-						break;
+						goto LOG_STARPAK;
 					}
-				}
-
-				if (found)
-				{
-					break;
 				}
 			}
 		}
-
+	LOG_STARPAK:
 		spdlog::info("LoadStreamPak: {}", filename.string());
 	}
 
