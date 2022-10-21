@@ -258,7 +258,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
 	fs::path path(pPath);
-	std::string allocatedNewPath = "";
+	std::string newPath = "";
 	fs::path filename = path.filename();
 
 	if (path.extension() == ".stbsp")
@@ -269,8 +269,8 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
 		if (modFile != g_pModManager->m_ModFiles.end())
 		{
-			allocatedNewPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
-			pPath = allocatedNewPath.c_str();
+			newPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
+			pPath = newPath.c_str();
 		}
 	}
 	else if (path.extension() == ".starpak")
@@ -282,7 +282,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 
 		// game adds r2\ to every path, so assume that a starpak path that begins with r2\paks\ is a vanilla one
 		// modded starpaks will be in the mod's paks folder
-		if (path.string().find("r2\\paks\\") != 0 && path.string().find("r2/paks/") != 0)
+		if (*++path.begin() != "paks")
 		{
 			// remove the r2\ from the start used for path lookups
 			std::string starpakPath = path.string().substr(3);
@@ -295,27 +295,27 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 				// ignore non-loaded mods
 				if (!mod.m_bEnabled)
 					continue;
+
 				// loop through the stored starpak paths
 				for (size_t hash : mod.StarpakPaths)
 				{
 					if (hash == hashed)
 					{
 						// construct new path
-						allocatedNewPath = (mod.m_ModDirectory / "paks" / starpakPath).string();
+						newPath = (mod.m_ModDirectory / "paks" / starpakPath).string();
 						// set path to the new path
-						pPath = allocatedNewPath.c_str();
+						pPath = newPath.c_str();
 						goto LOG_STARPAK;
 					}
 				}
 			}
 		}
+
 	LOG_STARPAK:
 		spdlog::info("LoadStreamPak: {}", filename.string());
 	}
 
-	void* ret = ReadFileAsync(pPath, pCallback);
-
-	return ret;
+	return ReadFileAsync(pPath, pCallback);
 }
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
