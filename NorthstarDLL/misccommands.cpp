@@ -197,7 +197,7 @@ void FixupCvarFlags()
 		{"rodeo_enable", FCVAR_DEVELOPMENTONLY},
 		{"sv_forceRodeoToFail", FCVAR_DEVELOPMENTONLY},
 		{"player_find_rodeo_target_per_cmd", FCVAR_DEVELOPMENTONLY}, // todo test before merge
-		{"hud_takesshots",FCVAR_DEVELOPMENTONLY}, // very likely does not work but would be cool if it did
+		{"hud_takesshots", FCVAR_DEVELOPMENTONLY}, // very likely does not work but would be cool if it did
 
 		{"cam_collision", FCVAR_DEVELOPMENTONLY},
 		{"cam_idealdelta", FCVAR_DEVELOPMENTONLY},
@@ -212,7 +212,7 @@ void FixupCvarFlags()
 		{"r_hbaoDistanceLerp", FCVAR_DEVELOPMENTONLY},
 		{"r_hbaoBlurRadius", FCVAR_DEVELOPMENTONLY},
 		{"r_hbaoExponent", FCVAR_DEVELOPMENTONLY},
-		{"r_hbaoDepthFadePctDefault",FCVAR_DEVELOPMENTONLY},
+		{"r_hbaoDepthFadePctDefault", FCVAR_DEVELOPMENTONLY},
 		{"r_drawscreenspaceparticles", FCVAR_DEVELOPMENTONLY},
 		{"ui_loadingscreen_fadeout_time", FCVAR_DEVELOPMENTONLY},
 		{"ui_loadingscreen_fadein_time", FCVAR_DEVELOPMENTONLY},
@@ -266,16 +266,16 @@ void FixupCvarFlags()
 		{"ai_ainRebuildOnMapStart", FCVAR_DEVELOPMENTONLY},
 
 		// cheat commands
-		{"switchclass",FCVAR_DEVELOPMENTONLY},
+		{"switchclass", FCVAR_DEVELOPMENTONLY},
 		{"set", FCVAR_DEVELOPMENTONLY},
 		{"_setClassVarServer", FCVAR_DEVELOPMENTONLY},
 
 		// reparse commands
 		{"aisettings_reparse", FCVAR_DEVELOPMENTONLY},
 		{"aisettings_reparse_client", FCVAR_DEVELOPMENTONLY},
-		{"damagedefs_reparse",FCVAR_DEVELOPMENTONLY},
+		{"damagedefs_reparse", FCVAR_DEVELOPMENTONLY},
 		{"damagedefs_reparse_client", FCVAR_DEVELOPMENTONLY},
-		{"playerSettings_reparse",FCVAR_DEVELOPMENTONLY},
+		{"playerSettings_reparse", FCVAR_DEVELOPMENTONLY},
 		{"_playerSettings_reparse_Server", FCVAR_DEVELOPMENTONLY},
 	};
 
