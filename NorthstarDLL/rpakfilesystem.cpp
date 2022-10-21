@@ -281,7 +281,12 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		// store them on mod init and then compare the current path with the stored paths
 
 		// game adds r2\ to every path, so assume that a starpak path that begins with r2\paks\ is a vanilla one
-		// modded starpaks will be in the mod's paks folder
+		// modded starpaks will be in the mod's paks folder (but can be in folders within the paks folder)
+
+		// this might look a bit confusing, but its just an iterator over the various directories in a path.
+		// path.begin() being the first directory, r2 in this case, which is guaranteed anyway,
+		// so increment the iterator with ++ to get the first actual directory, * just gets the actual value
+		// then we compare to "paks" to determine if it's a vanilla rpak or not
 		if (*++path.begin() != "paks")
 		{
 			// remove the r2\ from the start used for path lookups
