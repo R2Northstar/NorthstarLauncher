@@ -104,8 +104,6 @@ class Mod
 	// there seems to be no nice way to get the rpak that is causing the load of a starpak?
 	// hashed with STR_HASH
 
-	// iterated over to create squirrel VM constants depending if a mod exists or not.
-	// this only exists because we cannot access g_ModManager whilst mods are being loaded for the first time for some reason.
 	std::unordered_map<std::string, std::string> DependencyConstants;
 
   public:
