@@ -302,7 +302,6 @@ void ConVar::SetValue(const char* pszValue)
 	{
 		return;
 	}
-	this->m_Value.m_pszString = pszValue;
 
 	char szTempValue[32] {};
 	const char* pszNewValue {};
