@@ -20,6 +20,7 @@
 
 #include "invites.h"
 #include "squirrel.h"
+#include "wininfo.h"
 
 // https://forums.codeguru.com/showthread.php?270538-How-to-check-for-open-ports-on-host-machine-(winsock-)
 bool is_port_open(int port)
@@ -79,6 +80,7 @@ bool CheckURI()
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
+	g_NorthstarModule = hModule;
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:

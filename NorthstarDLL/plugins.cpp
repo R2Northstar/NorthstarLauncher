@@ -4,6 +4,10 @@
 
 #include <optional>
 
+#include "version.h"
+#include "plugincommunication.h"
+#include "wininfo.h"
+
 PluginManager* g_pPluginManager;
 
 void freeLibrary(HMODULE hLib)
@@ -23,7 +27,7 @@ void PluginLog(LogMsg* msg)
 	spdlog::log(src, (spdlog::level::level_enum)msg->level, msg->msg);
 }
 
-std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs)
+std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
 {
 
 	Plugin plugin {};
@@ -131,11 +135,25 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	plugin.run_on_client = manifestJSON["run_on_client"].GetBool();
 	plugin.run_on_server = manifestJSON["run_on_server"].GetBool();
 
+	if (manifestJSON.HasMember("dependencyName"))
+	{
+		plugin.dependencyName = manifestJSON["dependencyName"].GetString();
+	}
+	else
+	{
+		plugin.dependencyName = plugin.name;
+	}
+
 	plugin.init_sqvm_client = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_CLIENT");
 	plugin.init_sqvm_server = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_SERVER");
 	plugin.inform_sqvm_created = (PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
+	plugin.inform_sqvm_destroyed = (PLUGIN_INFORM_SQVM_DESTROYED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_DESTROYED");
 
-	plugin.init(funcs);
+	plugin.respond_server_data = (PLUGIN_RESPOND_SERVER_DATA_TYPE)GetProcAddress(pluginLib, "PLUGIN_RESPONSE_SERVER_DATA");
+	plugin.respond_gamestate_data = (PLUGIN_RESPOND_GAMESTATE_DATA_TYPE)GetProcAddress(pluginLib, "PLUGIN_RESPONSE_GAMESTATE_DATA");
+	plugin.respond_rpc_data = (PLUGIN_RESPOND_RPC_DATA_TYPE)GetProcAddress(pluginLib, "PLUGIN_RESPONSE_RPC_DATA");
+
+	plugin.init(funcs, data);
 
 	return plugin;
 }
@@ -148,6 +166,14 @@ bool PluginManager::LoadPlugins()
 
 	PluginInitFuncs funcs {};
 	funcs.logger = PluginLog;
+
+	PluginNorthstarData data {};
+	std::string ns_version {version};
+
+	init_plugincommunicationhandler();
+
+	data.version = ns_version.c_str();
+	data.northstarModule = g_NorthstarModule;
 
 	if (!fs::exists(pluginPath))
 	{
@@ -168,7 +194,7 @@ bool PluginManager::LoadPlugins()
 	}
 	for (fs::path path : paths)
 	{
-		auto maybe_plugin = LoadPlugin(path, &funcs);
+		auto maybe_plugin = LoadPlugin(path, &funcs, &data);
 		if (maybe_plugin.has_value())
 		{
 			m_vLoadedPlugins.push_back(maybe_plugin.value());
@@ -198,6 +224,17 @@ void PluginManager::InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm) 
 		if (plugin.inform_sqvm_created != NULL)
 		{
 			plugin.inform_sqvm_created(context, sqvm);
+		}
+	}
+}
+
+void PluginManager::InformSQVMDestroyed(ScriptContext context)
+{
+	for (auto plugin : m_vLoadedPlugins)
+	{
+		if (plugin.inform_sqvm_destroyed != NULL)
+		{
+			plugin.inform_sqvm_destroyed(context);
 		}
 	}
 }

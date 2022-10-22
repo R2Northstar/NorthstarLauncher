@@ -165,6 +165,16 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	for (auto& pair : g_pModManager->m_DependencyConstants)
 	{
 		bool bWasFound = false;
+
+		for (Plugin& dependency : g_pPluginManager->m_vLoadedPlugins)
+		{
+			if (dependency.dependencyName == pair.second)
+			{
+				bWasFound = true;
+				break;
+			}
+		}
+
 		for (Mod& dependency : g_pModManager->m_LoadedMods)
 		{
 			if (!dependency.m_bEnabled)
@@ -207,7 +217,7 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 	if (compileResult != SQRESULT_ERROR)
 	{
 		pushroottable(m_pSQVM->sqvm);
-		SQRESULT callResult = call(m_pSQVM->sqvm, 0);
+		SQRESULT callResult = _call(m_pSQVM->sqvm, 0);
 		spdlog::info("sq_call returned {}", PrintSQRESULT.at(callResult));
 	}
 }
@@ -526,7 +536,7 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 		}
 	}
 	
-	g_pSquirrel<context>->call(g_pSquirrel<context>->m_pSQVM->sqvm, message.args.size());
+	g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, message.args.size());
 
 	return SQRESULT_NOTNULL;
 	

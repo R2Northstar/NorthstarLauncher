@@ -84,13 +84,30 @@ template <ScriptContext context> class SquirrelManager
 		return message;
 	}
 
+	
+	SQRESULT call(const char* funcname)
+	{
+		// Warning!
+		// This function assumes the squirrel VM is stopped/blocked at the moment of call
+		// Calling this function while the VM is running is likely to result in a crash due to stack destruction
+		// If you want to call into squirrel asynchronously, use `schedule_call` instead
+		SQObject* functionobj = new SQObject();
+		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, functionobj, 0);
+		if (result != 0) // This func returns 0 on success for some reason
+		{
+			return SQRESULT_ERROR;
+		}
+		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, functionobj); // Push the function object
+		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
+		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, 0);
+	}
+
 	template <typename... Args> SQRESULT call(const char* funcname, Args... args)
 	{
 		// Warning!
 		// This function assumes the squirrel VM is stopped/blocked at the moment of call
 		// Calling this function while the VM is running is likely to result in a crash due to stack destruction
 		// If you want to call into squirrel asynchronously, use `schedule_call` instead
-
 		SQObject* functionobj = new SQObject();
 		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
@@ -109,7 +126,7 @@ template <ScriptContext context> class SquirrelManager
 			v();
 		}
 
-		return g_pSquirrel<context>->call(g_pSquirrel<context>->m_pSQVM->sqvm, function_vector.size());
+		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, function_vector.size());
 	}
 
 #pragma endregion
@@ -137,7 +154,7 @@ template <ScriptContext context> class SquirrelManager
 		return __sq_compilebuffer(m_pSQVM->sqvm, bufferState, bufferName, -1, bShouldThrowError);
 	}
 
-	inline SQRESULT call(HSquirrelVM* sqvm, const SQInteger args)
+	inline SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args)
 	{
 		return __sq_call(sqvm, args + 1, false, false);
 	}

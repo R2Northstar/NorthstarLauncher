@@ -157,6 +157,12 @@
     <Filter Include="Source Files\Scripted">
       <UniqueIdentifier>{7263403a-7550-4aa2-a724-f622ab200eed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Plugins">
+      <UniqueIdentifier>{35034a78-6711-434b-8a5f-e4cb2f715307}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Plugins">
+      <UniqueIdentifier>{f8a0f74f-240e-4fdd-94c4-03cbd772480d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -1371,12 +1377,6 @@
     <ClInclude Include="localchatwriter.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
-    <ClInclude Include="plugins.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_abi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1509,6 +1509,15 @@
     <ClInclude Include="wininfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="plugins.h">
+      <Filter>Header Files\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin_abi.h">
+      <Filter>Header Files\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="plugincommunication.h">
+      <Filter>Header Files\Plugins</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -1567,9 +1576,6 @@
     </ClCompile>
     <ClCompile Include="localchatwriter.cpp">
       <Filter>Source Files\Client</Filter>
-    </ClCompile>
-    <ClCompile Include="plugins.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="debugoverlay.cpp">
       <Filter>Source Files\Client</Filter>
@@ -1726,6 +1732,12 @@
     </ClCompile>
     <ClCompile Include="wininfo.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins.cpp">
+      <Filter>Source Files\Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="plugincommunication.cpp">
+      <Filter>Source Files\Plugins</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

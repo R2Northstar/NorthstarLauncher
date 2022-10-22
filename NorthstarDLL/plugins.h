@@ -6,6 +6,7 @@ class Plugin
   public:
 	std::string name;
 	std::string displayName;
+	std::string dependencyName;
 	std::string description;
 
 	std::string api_version;
@@ -19,6 +20,11 @@ class Plugin
 	PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
 	PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
 	PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
+	PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
+
+	PLUGIN_RESPOND_SERVER_DATA_TYPE respond_server_data;
+	PLUGIN_RESPOND_GAMESTATE_DATA_TYPE respond_gamestate_data;
+	PLUGIN_RESPOND_RPC_DATA_TYPE respond_rpc_data;
 };
 
 class PluginManager
@@ -28,10 +34,11 @@ class PluginManager
 
   public:
 	bool LoadPlugins();
-	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs);
+	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data);
 
 	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
 	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
+	void InformSQVMDestroyed(ScriptContext context);
 
   private:
 	std::string pluginPath;

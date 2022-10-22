@@ -7,6 +7,7 @@
 #include "tier0.h"
 #include "r2engine.h"
 #include "limits.h"
+#include "plugincommunication.h"
 
 AUTOHOOK_INIT()
 
@@ -104,6 +105,8 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 
 		// update limits for frame
 		g_pServerLimits->RunFrame(flCurrentTime, flFrameTime);
+
+		g_pPluginCommunicationhandler->RunFrame();
 	}
 }
 

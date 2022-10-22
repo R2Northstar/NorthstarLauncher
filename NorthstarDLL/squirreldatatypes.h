@@ -90,6 +90,7 @@ union SQObjectValue
 	float asFloat;
 	int asInteger;
 	SQUserData* asUserdata;
+	SQStructInstance* asStructInstance;
 };
 
 /* 160 */
@@ -286,12 +287,15 @@ struct alignas(8) HSquirrelVM
 struct SQStructInstance
 {
 	void* vftable;
-	unsigned char gap_8[16];
+	__int32 uiRef;
+	BYTE gap_C[4];
+	__int64 unknown_10;
 	void* pointer_18;
-	unsigned char gap_20[8];
+	__int64 unknown_20;
 	SQSharedState* _sharedState;
-	unsigned char gap[8];
-	SQObject data[20];
+	unsigned int size;
+	BYTE gap_34[4];
+	SQObject data[1]; // This struct is dynamically sized, so this size is unknown
 };
 
 /* 148 */

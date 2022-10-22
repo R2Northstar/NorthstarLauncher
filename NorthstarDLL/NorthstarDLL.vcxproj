@@ -123,6 +123,7 @@
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="include\base64.h" />
     <ClInclude Include="invites.h" />
+    <ClInclude Include="plugincommunication.h" />
     <ClInclude Include="squirrelclasstypes.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
@@ -599,6 +600,7 @@
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="latencyflex.cpp" />
     <ClCompile Include="localchatwriter.cpp" />
+    <ClCompile Include="plugincommunication.cpp" />
     <ClCompile Include="printmaps.cpp" />
     <ClCompile Include="maxplayers.cpp" />
     <ClCompile Include="languagehooks.cpp" />

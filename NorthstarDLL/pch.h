@@ -27,6 +27,9 @@ namespace fs = std::filesystem;
 #include "hooks.h"
 #include "memory.h"
 
+typedef void (*callable)();
+typedef void (*callable_v)(void* v);
+
 template <typename ReturnType, typename... Args> ReturnType CallVFunc(int index, void* thisPtr, Args... args)
 {
 	return (*reinterpret_cast<ReturnType(__fastcall***)(void*, Args...)>(thisPtr))[index](thisPtr, args...);

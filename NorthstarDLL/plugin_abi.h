@@ -79,6 +79,63 @@ struct PluginInitFuncs
 	loggerfunc_t logger;
 };
 
-typedef void (*PLUGIN_INIT_TYPE)(PluginInitFuncs* funcs);
+struct PluginNorthstarData {
+	const char* version;
+	HMODULE northstarModule;
+};
+
+struct PluginServerData {
+	const char* id;
+	const char* name;
+	const char* description;
+	const char* password; // NOTE: May be empty
+
+	bool is_local;
+};
+
+struct PluginGameStateData {
+	char map[128];
+	char map_displayname[128];
+	char playlist[128];
+	char playlist_displayname[128];
+	
+	int current_players;
+	int max_players;
+
+	int own_score;
+	int other_highest_score; // NOTE: The highest score OR the second highest score if we have the highest
+	int max_score;
+
+	int timestamp_end;
+};
+
+/// <summary> Async communication within the plugin system
+/// Due to the asynchronous nature of plugins, combined with the limitations of multi-compiler support
+/// and the custom memory allocator used by r2, is it difficult to safely get data across DLL boundaries
+/// from Northstar to plugin unless Northstar can get memory-clear signal back.
+/// To do this, we use a request-response system
+/// This means that if a plugin wants a piece of data, it will send a request to Northstar in the form of an
+/// PLUGIN_REQUESTS_[DATA]_DATA call. The first argument to this call is a function pointer to call to return the data
+/// Northstar will then, when possible, construct the requested data and call the function
+/// This ensures that the process blocks until the data is ingested, and means it can safely be deleted afterwards without risk of dangling pointers
+/// On the plugin side, the data should be ingested into a class guarded by mutexes
+/// The provided Plugin Library will handle all this automatically.
+/// </summary>
+
+// Northstar -> Plugin
+typedef void (*PLUGIN_INIT_TYPE)(PluginInitFuncs* funcs, PluginNorthstarData* data);
 typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);
+typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
+
+// Async Communication types
+
+// Northstar -> Plugin
+typedef void (*PLUGIN_RESPOND_SERVER_DATA_TYPE)(PluginServerData* data);
+typedef void (*PLUGIN_RESPOND_GAMESTATE_DATA_TYPE)(PluginGameStateData* data);
+typedef void (*PLUGIN_RESPOND_RPC_DATA_TYPE)(PluginServerData* server_data, PluginGameStateData* gamestate_data);
+
+// Plugin -> Northstar
+typedef void (*PLUGIN_REQUESTS_SERVER_DATA_TYPE)();
+typedef void (*PLUGIN_REQUESTS_GAMESTATE_DATA_TYPE)();
+typedef void (*PLUGIN_REQUESTS_RPC_DATA_TYPE)();

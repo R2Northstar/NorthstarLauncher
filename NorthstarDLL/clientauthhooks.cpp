@@ -33,9 +33,27 @@ void, __fastcall, (void* a1))
 	AuthWithStryder(a1);
 }
 
+char* p3PToken;
+
+// clang-format off
+AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
+char*, __fastcall, ())
+// clang-format on
+{
+	if (g_pMasterServerManager->m_sOwnClientAuthToken[0])
+	{
+		memset(p3PToken, 0x0, 1024);
+		strcpy(p3PToken, "Protocol 3: Protect the Pilot");
+	}
+
+	return Auth3PToken();
+}
+
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+
+	p3PToken = module.Offset(0x13979D80).As<char*>();
 
 	// this cvar will save to cfg once initially agreed with
 	Cvar_ns_has_agreed_to_send_token = new ConVar(
