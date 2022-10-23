@@ -7,7 +7,6 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-
 #ifdef _MSC_VER
 #undef GetObject // fuck microsoft developers
 #endif
@@ -210,7 +209,12 @@ template <ScriptContext context> void EncodeJSONArray(
 	}
 }
 
-ADD_SQUIRREL_FUNC("table", DecodeJSON, "string json, bool fatalParseErrors = false", "converts a json string to a squirrel table",(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+ADD_SQUIRREL_FUNC(
+	"table",
+	DecodeJSON,
+	"string json, bool fatalParseErrors = false",
+	"converts a json string to a squirrel table",
+	(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	const char* pJson = g_pSquirrel<context>->getstring(sqvm, 1);
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
@@ -237,7 +241,12 @@ ADD_SQUIRREL_FUNC("table", DecodeJSON, "string json, bool fatalParseErrors = fal
 	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
 }
 
-ADD_SQUIRREL_FUNC("string", EncodeJSON, "table data","converts a squirrel table to a json string",(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+ADD_SQUIRREL_FUNC(
+	"string",
+	EncodeJSON,
+	"table data",
+	"converts a squirrel table to a json string",
+	(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	rapidjson_document doc;
 	doc.SetObject();
