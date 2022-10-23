@@ -98,7 +98,7 @@ Vector3 StringToVector(char* pString)
 }
 
 // var function GetDataTable( asset path )
-REPLACE_SQUIRREL_FUNC(GetDataTable,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTable, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	const char* pAssetName;
 	g_pSquirrel<context>->getasset(sqvm, 2, &pAssetName);
@@ -273,7 +273,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTable,(ScriptContext::UI | ScriptContext::CLIENT | 
 }
 
 // int function GetDataTableColumnByName( var datatable, string columnName )
-REPLACE_SQUIRREL_FUNC(GetDataTableColumnByName,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableColumnByName, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -300,7 +300,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableColumnByName,(ScriptContext::UI | ScriptContex
 }
 
 // int function GetDataTableRowCount( var datatable )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowCount,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowCount, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -315,7 +315,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowCount,(ScriptContext::UI | ScriptContext::C
 }
 
 // string function GetDataTableString( var datatable, int row, int col )
-REPLACE_SQUIRREL_FUNC(GetDataTableString,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableString, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -342,7 +342,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableString,(ScriptContext::UI | ScriptContext::CLI
 }
 
 // asset function GetDataTableAsset( var datatable, int row, int col )
-REPLACE_SQUIRREL_FUNC(GetDataTableAsset,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableAsset, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -369,7 +369,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableAsset,(ScriptContext::UI | ScriptContext::CLIE
 }
 
 // int function GetDataTableInt( var datatable, int row, int col )
-REPLACE_SQUIRREL_FUNC(GetDataTableInt,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableInt, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -396,7 +396,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableInt,(ScriptContext::UI | ScriptContext::CLIENT
 }
 
 // float function GetDataTableFloat( var datatable, int row, int col )
-REPLACE_SQUIRREL_FUNC(GetDataTableFloat,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableFloat, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -423,7 +423,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableFloat,(ScriptContext::UI | ScriptContext::CLIE
 }
 
 // bool function GetDataTableBool( var datatable, int row, int col )
-REPLACE_SQUIRREL_FUNC(GetDataTableBool,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableBool, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -450,7 +450,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableBool,(ScriptContext::UI | ScriptContext::CLIEN
 }
 
 // vector function GetDataTableVector( var datatable, int row, int col )
-REPLACE_SQUIRREL_FUNC(GetDataTableVector,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableVector, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -477,7 +477,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableVector,(ScriptContext::UI | ScriptContext::CLI
 }
 
 // int function GetDataTableRowMatchingStringValue( var datatable, int col, string value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingStringValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingStringValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -503,7 +503,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingStringValue,(ScriptContext::UI | Sc
 }
 
 // int function GetDataTableRowMatchingAssetValue( var datatable, int col, asset value )
-REPLACE_SQUIRREL_FUNC(GetDataTableMatchingAssetValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableMatchingAssetValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -530,7 +530,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableMatchingAssetValue,(ScriptContext::UI | Script
 }
 
 // int function GetDataTableRowMatchingFloatValue( var datatable, int col, float value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingFloatValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingFloatValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -556,7 +556,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingFloatValue,(ScriptContext::UI | Scr
 }
 
 // int function GetDataTableRowMatchingIntValue( var datatable, int col, int value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingIntValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingIntValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -582,7 +582,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingIntValue,(ScriptContext::UI | Scrip
 }
 
 // int function GetDataTableRowMatchingVectorValue( var datatable, int col, vector value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingVectorValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingVectorValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -609,7 +609,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowMatchingVectorValue,(ScriptContext::UI | Sc
 }
 
 // int function GetDataTableRowGreaterThanOrEqualToIntValue( var datatable, int col, int value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowGreaterThanOrEqualToIntValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowGreaterThanOrEqualToIntValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -636,7 +636,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowGreaterThanOrEqualToIntValue,(ScriptContext
 }
 
 // int function GetDataTableRowLessThanOrEqualToIntValue( var datatable, int col, int value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowLessThanOrEqualToIntValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowLessThanOrEqualToIntValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -662,7 +662,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowLessThanOrEqualToIntValue,(ScriptContext::U
 }
 
 // int function GetDataTableRowGreaterThanOrEqualToFloatValue( var datatable, int col, float value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowGreaterThanOrEqualToFloatValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowGreaterThanOrEqualToFloatValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -688,7 +688,7 @@ REPLACE_SQUIRREL_FUNC(GetDataTableRowGreaterThanOrEqualToFloatValue,(ScriptConte
 }
 
 // int function GetDataTableRowLessThanOrEqualToFloatValue( var datatable, int col, float value )
-REPLACE_SQUIRREL_FUNC(GetDataTableRowLessThanOrEqualToFloatValue,(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+REPLACE_SQUIRREL_FUNC(GetDataTableRowLessThanOrEqualToFloatValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -886,7 +886,6 @@ void ConCommand_dump_datatables(const CCommand& args)
 	for (const char* datatable : VANILLA_DATATABLE_PATHS)
 		DumpDatatable(datatable);
 }
-
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CModule module))
 {
