@@ -22,20 +22,25 @@ void PluginCommunicationHandler::RunFrame() {
 		PluginDataRequest& request = request_queue.front();
 		PluginServerData* server;
 		PluginGameStateData* gamestate;
+		// Note: these new/deletes are bad practice, should switch to RAII types instead
 		switch (request.type)
 		{
 			case PluginDataRequestType::SERVER:
 				server = GenerateServerData();
 				request.func.asServerData(server);
+				delete server;
 				break;
 			case PluginDataRequestType::GAMESTATE:
 				gamestate = GenerateGameStateData();
 				request.func.asGameStateData(gamestate);
+				delete gamestate;
 				break;
 			case PluginDataRequestType::RPC:
 				server = GenerateServerData();
 				gamestate = GenerateGameStateData();
 				request.func.asRPCData(server, gamestate);
+				delete server;
+				delete gamestate;
 				break;
 		}
 		request_queue.pop();
@@ -47,29 +52,30 @@ PluginServerData* PluginCommunicationHandler::GenerateServerData()
 	PluginServerData* data = new PluginServerData;
 	if (g_pServerPresence->m_bHasPresence)
 	{
+		ServerPresence* pr = &g_pServerPresence->m_ServerPresence;
 		data->is_local = true;
-		data->id = g_pServerPresence->m_ServerPresence.m_sServerId.c_str();
-		data->name = g_pServerPresence->m_ServerPresence.m_sServerName.c_str();
-		data->description = g_pServerPresence->m_ServerPresence.m_sServerDesc.c_str();
-		data->password = g_pServerPresence->m_ServerPresence.m_Password;
+		memcpy(data->id, pr->m_sServerId.c_str(), pr->m_sServerId.length() + 1);
+		memcpy(data->name, pr->m_sServerName.c_str(), pr->m_sServerName.length() + 1);
+		memcpy(data->description, pr->m_sServerDesc.c_str(), pr->m_sServerDesc.length() + 1);
+		memcpy(data->password, pr->m_Password, sizeof(data->password));
 	}
 	else
 	{
 		data->is_local = false;
 		if (!g_pMasterServerManager->m_currentServer.has_value())
 		{
-			data->id = "";
-			data->name = "";
-			data->description = "";
-			data->password = "";
+			memset(data->id, 0, sizeof(data->id));
+			memset(data->name, 0, sizeof(data->name));
+			memset(data->description, 0, sizeof(data->description));
+			memset(data->password, 0, sizeof(data->password));
 		}
 		else
 		{
 			RemoteServerInfo& server = g_pMasterServerManager->m_currentServer.value();
-			data->id = server.id;
-			data->name = server.name;
-			data->description = server.description.c_str();
-			data->password = g_pMasterServerManager->m_sCurrentServerPassword.c_str();
+			memcpy(data->id, server.id, sizeof(server.id));
+			memcpy(data->name, server.name, sizeof(server.name));
+			memcpy(data->description, server.description.c_str(), server.description.length() + 1);
+			memcpy(data->password, g_pMasterServerManager->m_sCurrentServerPassword.c_str(), g_pMasterServerManager->m_sCurrentServerPassword.length() + 1);
 		}
 	}
 	return data;
@@ -107,24 +113,23 @@ void PluginCommunicationHandler::PushRequest(PluginDataRequestType type, PluginR
 
 // TODO: fix this
 EXPORT void PLUGIN_REQUESTS_SERVER_DATA(PLUGIN_RESPOND_SERVER_DATA_TYPE func) {
-	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::SERVER, *(PluginRespondDataCallable*)func);
+	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::SERVER, *(PluginRespondDataCallable*)(&func));
 }
 
 EXPORT void PLUGIN_REQUESTS_GAMESTATE_DATA(PLUGIN_RESPOND_GAMESTATE_DATA_TYPE func)
 {
-	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::GAMESTATE, *(PluginRespondDataCallable*)func);
+	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::GAMESTATE, *(PluginRespondDataCallable*)(&func));
 }
 
 EXPORT void PLUGIN_REQUESTS_RPC_DATA(PLUGIN_RESPOND_RPC_DATA_TYPE func)
 {
-	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::RPC, *(PluginRespondDataCallable*)func);
+	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::RPC, *(PluginRespondDataCallable*)(&func));
 }
-
 
 ON_DLL_LOAD_RELIESON("client.dll", PluginCommunicationSquirrel, ClientSquirrel, (CModule module))
 {
 
-	l_GameStateData = new PluginGameStateData;
+	l_GameStateData = new PluginGameStateData {};
 
 	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
 		"void", "NSPushGameStateData", "var data", "", SQ_PushGameStateData<ScriptContext::CLIENT>);

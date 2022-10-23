@@ -85,10 +85,10 @@ struct PluginNorthstarData {
 };
 
 struct PluginServerData {
-	const char* id;
-	const char* name;
-	const char* description;
-	const char* password; // NOTE: May be empty
+	char id[256];
+	char name[256];
+	char description[2048];
+	char password[256]; // NOTE: May be empty
 
 	bool is_local;
 };
@@ -136,6 +136,6 @@ typedef void (*PLUGIN_RESPOND_GAMESTATE_DATA_TYPE)(PluginGameStateData* data);
 typedef void (*PLUGIN_RESPOND_RPC_DATA_TYPE)(PluginServerData* server_data, PluginGameStateData* gamestate_data);
 
 // Plugin -> Northstar
-typedef void (*PLUGIN_REQUESTS_SERVER_DATA_TYPE)();
-typedef void (*PLUGIN_REQUESTS_GAMESTATE_DATA_TYPE)();
-typedef void (*PLUGIN_REQUESTS_RPC_DATA_TYPE)();
+typedef void (*PLUGIN_REQUESTS_SERVER_DATA_TYPE)(PLUGIN_RESPOND_SERVER_DATA_TYPE* func);
+typedef void (*PLUGIN_REQUESTS_GAMESTATE_DATA_TYPE)(PLUGIN_RESPOND_GAMESTATE_DATA_TYPE* func);
+typedef void (*PLUGIN_REQUESTS_RPC_DATA_TYPE)(PLUGIN_RESPOND_RPC_DATA_TYPE* func);
