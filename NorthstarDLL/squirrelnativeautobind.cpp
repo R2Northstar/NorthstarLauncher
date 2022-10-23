@@ -19,4 +19,3 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrelAutoBind, ServerSquirrel, (CMod
 		autoBindFunc();
 	}
 }
-
