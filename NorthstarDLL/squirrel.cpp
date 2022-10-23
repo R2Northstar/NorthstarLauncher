@@ -238,12 +238,16 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 	return 0;
 }
 
-template <ScriptContext context> CSquirrelVM* (*__fastcall CreateNewVM)(void* a1, ScriptContext realContext);
-template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a1, ScriptContext realContext)
+template <ScriptContext context> CSquirrelVM* (*__fastcall CreateNewVM)(void* a1, int realContext);
+template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a1, int gameContext)
 {
-	CSquirrelVM* sqvm = CreateNewVM<context>(a1, realContext);
-	if (realContext == ScriptContext::UI)
+	CSquirrelVM* sqvm = CreateNewVM<context>(a1, gameContext);
+	ScriptContext realContext = context;
+	if (gameContext == 2)
+	{
 		g_pSquirrel<ScriptContext::UI>->VMCreated(sqvm);
+		realContext = ScriptContext::UI;
+	}
 	else
 		g_pSquirrel<context>->VMCreated(sqvm);
 

@@ -77,10 +77,31 @@ struct SQFuncRegistration
 
 enum class ScriptContext : int
 {
-	SERVER,
-	CLIENT,
-	UI,
+	UI = 1,
+	CLIENT = 2,
+	SERVER = 4,
+
 };
+
+static constexpr int operator&(ScriptContext first, ScriptContext second)
+{
+	return (int)first & (int)second;
+}
+
+static constexpr int operator&(int first, ScriptContext second)
+{
+	return first & (int)second;
+}
+
+static constexpr int operator|(ScriptContext first, ScriptContext second)
+{
+	return (int)first | (int)second;
+}
+
+static constexpr int operator|(int first, ScriptContext second)
+{
+	return first | (int)second;
+}
 
 const char* GetContextName(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);

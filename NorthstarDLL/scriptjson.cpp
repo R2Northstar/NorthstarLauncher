@@ -1,10 +1,12 @@
 #include "pch.h"
 #include "squirrel.h"
+#include "squirrelnativeautobind.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+
 
 #ifdef _MSC_VER
 #undef GetObject // fuck microsoft developers
@@ -209,7 +211,7 @@ template <ScriptContext context> void EncodeJSONArray(
 }
 
 // table function DecodeJSON( string json, bool fatalParseErrors = false )
-template <ScriptContext context> SQRESULT SQ_DecodeJSON(HSquirrelVM* sqvm)
+ADD_SQUIRREL_FUNC("table", DecodeJSON, "string json", "converts a json string to a squirrel table",(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	const char* pJson = g_pSquirrel<context>->getstring(sqvm, 1);
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
@@ -237,7 +239,8 @@ template <ScriptContext context> SQRESULT SQ_DecodeJSON(HSquirrelVM* sqvm)
 }
 
 // string function EncodeJSON( table data )
-template <ScriptContext context> SQRESULT SQ_EncodeJSON(HSquirrelVM* sqvm)
+
+ADD_SQUIRREL_FUNC("string", EncodeJSON, "table data","converts a squirrel table to a json string",(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	rapidjson_document doc;
 	doc.SetObject();
@@ -255,7 +258,7 @@ template <ScriptContext context> SQRESULT SQ_EncodeJSON(HSquirrelVM* sqvm)
 	g_pSquirrel<context>->pushstring(sqvm, pJsonString, -1);
 	return SQRESULT_NOTNULL;
 }
-
+/*
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientScriptJSON, ClientSquirrel, (CModule module))
 {
 	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
@@ -280,3 +283,4 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerScriptJSON, ServerSquirrel, (CModule mo
 	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(
 		"string", "EncodeJSON", "table data", "converts a squirrel table to a json string", SQ_EncodeJSON<ScriptContext::SERVER>);
 }
+*/
