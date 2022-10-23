@@ -1,26 +1,22 @@
 #include "pch.h"
 #include "squirrelnativeautobind.h"
 
-
-std::vector<SqAutoBindFunc> clientSqAutoBindFuncs;
-std::vector<SqAutoBindFunc> serverSqAutoBindFuncs;
-AUTOHOOK_INIT();
+SquirrelAutoBindContainer* g_pSqAutoBindContainer;
 
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrelAutoBind, ClientSquirrel, (CModule module))
 {
-	
-	for (auto& genFunc : clientSqAutoBindFuncs)
+	spdlog::info("ClientSquirrelAutoBInd AutoBindFuncsVectorsize {}", g_pSqAutoBindContainer->clientSqAutoBindFuncs.size());
+	for (auto& autoBindFunc : g_pSqAutoBindContainer->clientSqAutoBindFuncs)
 	{
-		genFunc();
-		
+		autoBindFunc();
 	}
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrelAutoBind, ServerSquirrel, (CModule module))
 {
-	for (auto& genFunc : serverSqAutoBindFuncs)
+	for (auto& autoBindFunc : g_pSqAutoBindContainer->serverSqAutoBindFuncs)
 	{
-		genFunc();
+		autoBindFunc();
 	}
 }
 
