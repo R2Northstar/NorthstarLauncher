@@ -8,7 +8,7 @@
 #include "plugins.h"
 #include "version.h"
 #include "pch.h"
-#include "squirrelnativeautobind.h" 
+#include "squirrelnativeautobind.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
