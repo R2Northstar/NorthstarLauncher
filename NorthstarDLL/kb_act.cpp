@@ -14,6 +14,7 @@ void ModManager::BuildKBActionsList()
 	fs::create_directories(GetCompiledAssetsPath() / "scripts");
 	std::ofstream soCompiledKeys(GetCompiledAssetsPath() / KB_ACT_PATH, std::ios::binary);
 
+	// write vanilla file's content to compiled file
 	soCompiledKeys << R2::ReadVPKOriginalFile(KB_ACT_PATH);
 
 	for (Mod& mod : m_LoadedMods)
@@ -21,6 +22,7 @@ void ModManager::BuildKBActionsList()
 		if (!mod.m_bEnabled)
 			continue;
 
+		// write content of each modded file to compiled file
 		std::ifstream siModKeys(mod.m_ModDirectory / "kb_act.lst");
 
 		if (siModKeys.good())
@@ -31,6 +33,7 @@ void ModManager::BuildKBActionsList()
 
 	soCompiledKeys.close();
 
+	// push to overrides
 	ModOverrideFile overrideFile;
 	overrideFile.m_pOwningMod = nullptr;
 	overrideFile.m_Path = KB_ACT_PATH;
