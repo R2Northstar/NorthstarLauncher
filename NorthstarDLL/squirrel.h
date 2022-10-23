@@ -1,6 +1,7 @@
 #pragma once
 
 #include "squirreldatatypes.h"
+#include "squirrelnativeautobind.h"
 #include "vector.h"
 
 // stolen from ttf2sdk: sqvm types

@@ -1,19 +1,29 @@
 #pragma once
 #include <vector>
 
-class __squirrelautobind;
-
 typedef void (*SqAutoBindFunc)(void);
-extern std::vector<SqAutoBindFunc> clientSqAutoBindFuncs;
-extern std::vector<SqAutoBindFunc> serverSqAutoBindFuncs;
 
+class SquirrelAutoBindContainer {
+	public:
+		std::vector<SqAutoBindFunc> clientSqAutoBindFuncs;
+		std::vector<SqAutoBindFunc> serverSqAutoBindFuncs;
+
+		SquirrelAutoBindContainer () {
+			clientSqAutoBindFuncs = {};
+			serverSqAutoBindFuncs = {};
+		}
+};
+
+extern SquirrelAutoBindContainer* g_pSqAutoBindContainer;
+
+class __squirrelautobind;
 
 #define ADD_SQUIRREL_FUNC(returnType, funcName, argTypes, helpText, runOnContext)                                                          \
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm);                                              \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
-		void CONCAT2(AUTOBIND_FUNC_CLIENT,funcName)()                                                                                                         \
-		{   spdlog::info("TRYING TO AUTOBIND runOnContext = {} result = {}",runOnContext,runOnContext & ScriptContext::UI);                                                                                                                               \
+		void CONCAT2(AUTOBIND_FUNC_CLIENT,funcName)()                                                                                      \
+		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::UI)                                                                                \
 			{                                                                                                                              \
 				g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(                                                                       \
@@ -25,7 +35,7 @@ extern std::vector<SqAutoBindFunc> serverSqAutoBindFuncs;
 					returnType, __STR(funcName), argTypes, helpText, CONCAT2(Script_, funcName) < ScriptContext::CLIENT >);                \
 			}                                                                                                                              \
 		}                                                                                                                                  \
-		void CONCAT2(AUTOBIND_FUNC_SERVER,funcName)()                                                                                                         \
+		void CONCAT2(AUTOBIND_FUNC_SERVER,funcName)()                                                                                      \
 		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::SERVER)                                                                            \
 			{                                                                                                                              \
@@ -41,7 +51,7 @@ extern std::vector<SqAutoBindFunc> serverSqAutoBindFuncs;
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm);                                              \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
-		void CONCAT2(AUTOBIND_FUNC_CLIENT,funcName)()                                                                                                         \
+		void CONCAT2(AUTOBIND_FUNC_CLIENT,funcName)()                                                                                      \
 		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::UI)                                                                                \
 			{                                                                                                                              \
@@ -72,8 +82,11 @@ class __squirrelautobind
 
 	__squirrelautobind(SqAutoBindFunc clientAutoBindFunc, SqAutoBindFunc serverAutoBindFunc)
 	{
-		clientSqAutoBindFuncs.push_back(clientAutoBindFunc);
-		serverSqAutoBindFuncs.push_back(serverAutoBindFunc);
+		// Bit hacky but we can't initialise this normally since this gets run automatically on load  
+		if (g_pSqAutoBindContainer == nullptr) {
+			g_pSqAutoBindContainer = new SquirrelAutoBindContainer();
+		}
+		g_pSqAutoBindContainer->clientSqAutoBindFuncs.push_back(clientAutoBindFunc);
+		g_pSqAutoBindContainer->serverSqAutoBindFuncs.push_back(serverAutoBindFunc);
 	}
 };
-
