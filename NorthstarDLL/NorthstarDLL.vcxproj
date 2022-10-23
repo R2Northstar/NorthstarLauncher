@@ -573,6 +573,7 @@
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
     <ClCompile Include="exploitfixes_lzss.cpp" />
+    <ClCompile Include="kb_act.cpp" />
     <ClCompile Include="limits.cpp" />
     <ClCompile Include="memory.cpp" />
     <ClCompile Include="nsprefix.cpp" />
