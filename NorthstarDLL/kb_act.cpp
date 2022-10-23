@@ -14,7 +14,7 @@ void ModManager::BuildKBActionsList()
 	fs::create_directories(GetCompiledAssetsPath() / "scripts");
 	std::ofstream soCompiledKeys(GetCompiledAssetsPath() / KB_ACT_PATH, std::ios::binary);
 
-	soCompiledKeys << R2::ReadVPKOriginalFile(KB_ACT_PATH); 
+	soCompiledKeys << R2::ReadVPKOriginalFile(KB_ACT_PATH);
 
 	for (Mod& mod : m_LoadedMods)
 	{
