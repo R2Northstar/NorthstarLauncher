@@ -246,8 +246,7 @@ ADD_SQUIRREL_FUNC("string", NSGetServerRequiredModName, "int serverIndex, int mo
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<context>->pushstring(
-		sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Name.c_str());
+	g_pSquirrel<context>->pushstring(sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Name.c_str());
 	return SQRESULT_NOTNULL;
 }
 
@@ -280,8 +279,7 @@ ADD_SQUIRREL_FUNC("string", NSGetServerRequiredModVersion, "int serverIndex, int
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<context>->pushstring(
-		sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Version.c_str());
+	g_pSquirrel<context>->pushstring(sqvm, g_pMasterServerManager->m_vRemoteServers[serverIndex].requiredMods[modIndex].Version.c_str());
 	return SQRESULT_NOTNULL;
 }
 
@@ -293,7 +291,7 @@ ADD_SQUIRREL_FUNC("void", NSClearRecievedServerList, "", "", ScriptContext::UI)
 
 // functions for authenticating with servers
 
-ADD_SQUIRREL_FUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''","", ScriptContext::UI)
+ADD_SQUIRREL_FUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''", "", ScriptContext::UI)
 {
 	SQInteger serverIndex = g_pSquirrel<context>->getinteger(sqvm, 1);
 	const SQChar* password = g_pSquirrel<context>->getstring(sqvm, 2);
