@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "squirrel.h"
-#include "squirrelnativeautobind.h"
+
 #include "serverchathooks.h"
 #include "localchatwriter.h"
 
@@ -46,27 +46,27 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 
 ADD_SQUIRREL_FUNC("void", NSChatWrite, "int context, string text", "", ScriptContext::CLIENT)
 {
-	int l_context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
 
-	LocalChatWriter((LocalChatWriter::Context)l_context).Write(str);
+	LocalChatWriter((LocalChatWriter::Context)chatContext).Write(str);
 	return SQRESULT_NULL;
 }
 
 ADD_SQUIRREL_FUNC("void", NSChatWriteRaw, "int context, string text", "", ScriptContext::CLIENT)
 {
-	int l_context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
 
-	LocalChatWriter((LocalChatWriter::Context)l_context).InsertText(str);
+	LocalChatWriter((LocalChatWriter::Context)chatContext).InsertText(str);
 	return SQRESULT_NULL;
 }
 
 ADD_SQUIRREL_FUNC("void", NSChatWriteLine, "int context, string text", "", ScriptContext::CLIENT)
 {
-	int l_context = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
+	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
 
-	LocalChatWriter((LocalChatWriter::Context)l_context).WriteLine(str);
+	LocalChatWriter((LocalChatWriter::Context)chatContext).WriteLine(str);
 	return SQRESULT_NULL;
 }

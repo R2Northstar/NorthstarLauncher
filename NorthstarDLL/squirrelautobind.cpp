@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "squirrelnativeautobind.h"
+#include "squirrelautobind.h"
 
 SquirrelAutoBindContainer* g_pSqAutoBindContainer;
 

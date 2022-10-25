@@ -1494,7 +1494,7 @@
     <ClInclude Include="vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="squirrelnativeautobind.h">
+    <ClInclude Include="squirrelautobind.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1703,7 +1703,7 @@
     <ClCompile Include="scriptdatatables.cpp">
       <Filter>Source Files\Scripted</Filter>
     </ClCompile>
-    <ClCompile Include="squirrelnativeautobind.cpp">
+    <ClCompile Include="squirrelautobind.cpp">
       <Filter>Source Files\Squirrel</Filter>
     </ClCompile>
   </ItemGroup>

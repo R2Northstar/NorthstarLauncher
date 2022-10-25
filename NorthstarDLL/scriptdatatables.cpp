@@ -12,7 +12,6 @@
 #include <map>
 #include <fstream>
 #include <filesystem>
-#include "squirrelnativeautobind.h"
 
 const uint64_t USERDATA_TYPE_DATATABLE = 0xFFF7FFF700000004;
 const uint64_t USERDATA_TYPE_DATATABLE_CUSTOM = 0xFFFCFFFC12345678;

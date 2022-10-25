@@ -557,7 +557,7 @@
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="exploitfixes_utf8parser.cpp" />
-    <ClInclude Include="squirrelnativeautobind.h" />
+    <ClInclude Include="squirrelautobind.h" />
     <ClInclude Include="tier0.h" />
     <ClInclude Include="vector.h" />
     <ClInclude Include="version.h" />
@@ -632,7 +632,7 @@
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="exploitfixes.cpp" />
-    <ClCompile Include="squirrelnativeautobind.cpp" />
+    <ClCompile Include="squirrelautobind.cpp" />
     <ClCompile Include="tier0.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>

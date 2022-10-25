@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "squirrel.h"
-#include "squirrelnativeautobind.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
