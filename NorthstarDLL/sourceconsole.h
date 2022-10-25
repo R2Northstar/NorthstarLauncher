@@ -100,6 +100,13 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{spdlog::level::err, SourceColor(255, 0, 0, 255)},
 		{spdlog::level::critical, SourceColor(255, 0, 0, 255)},
 		{spdlog::level::off, SourceColor(0, 0, 0, 0)}};
+	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
+	std::map<std::string, SourceColor> m_contexts = {
+		{"UI SCRIPT", SourceColor(0, 255, 255, 255)},
+		{"CLIENT SCRIPT", SourceColor(0, 255, 255, 255)},
+		{"SERVER SCRIPT", SourceColor(0, 255, 255, 255)},
+		{"info", SourceColor(255, 0, 0, 255)},
+		{"warning", SourceColor(255, 0, 0, 255)}};
 
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;

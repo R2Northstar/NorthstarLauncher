@@ -256,6 +256,8 @@ void InitialiseLogging()
 	// this function is pretty empty for now
 	// it will be populated more when i get around to improving logging
 	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
+	if (!strstr(GetCommandLineA(), "-noansi"))
+		spdlog::info("hi");
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))

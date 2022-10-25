@@ -32,7 +32,36 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 	spdlog::memory_buf_t formatted;
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[msg.level], fmt::to_string(formatted).c_str());
+	//(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[msg.level], fmt::to_string(formatted).c_str());
+
+	// get message string
+	std::string str = fmt::to_string(formatted);
+	// get the message "tags" (bits of string surrounded with [])
+	// try to get the colour for each "tag"
+	// print to the console with colours
+	std::map<int, SourceColor> colStrings = {};
+	colStrings.insert({4, SourceColor(255, 0, 0, 255)});
+
+	// iterate through our coloured strings and ColorPrint them in order
+	int lastIdx = 0;
+	SourceColor baseCol = m_LogColours[msg.level];
+	SourceColor lastCol = baseCol;
+	for (auto it = colStrings.begin(); it != colStrings.end(); ++it)
+	{
+		int curIdx = it->first;
+		SourceColor curCol = it->second;
+
+		std::string sub = str.substr(lastIdx, curIdx - lastIdx);
+		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(lastCol, sub.c_str());
+
+		lastIdx = curIdx;
+		lastCol = curCol;
+	}
+	// write the last bit of the string
+	std::string sub = str.substr(lastIdx, str.length() - lastIdx);
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(lastCol, sub.c_str());
+
+
 }
 
 void SourceConsoleSink::flush_() {}
