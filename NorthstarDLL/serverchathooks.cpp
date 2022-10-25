@@ -115,7 +115,7 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	CRecipientFilter__Destruct(&filter);
 }
 
-ADD_SQUIRREL_FUNC("void", NSSendMessage, "int playerIndex, string text, bool isTeam", "", ScriptContext::SERVER)
+ADD_SQFUNC("void", NSSendMessage, "int playerIndex, string text, bool isTeam", "", ScriptContext::SERVER)
 {
 	int playerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
 	const char* text = g_pSquirrel<ScriptContext::SERVER>->getstring(sqvm, 2);
@@ -126,7 +126,7 @@ ADD_SQUIRREL_FUNC("void", NSSendMessage, "int playerIndex, string text, bool isT
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC(
+ADD_SQFUNC(
 	"void",
 	NSBroadcastMessage,
 	"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",

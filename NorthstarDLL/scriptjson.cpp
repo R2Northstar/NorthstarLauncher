@@ -208,7 +208,7 @@ template <ScriptContext context> void EncodeJSONArray(
 	}
 }
 
-ADD_SQUIRREL_FUNC(
+ADD_SQFUNC(
 	"table",
 	DecodeJSON,
 	"string json, bool fatalParseErrors = false",
@@ -240,7 +240,7 @@ ADD_SQUIRREL_FUNC(
 	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
 }
 
-ADD_SQUIRREL_FUNC(
+ADD_SQFUNC(
 	"string",
 	EncodeJSON,
 	"table data",

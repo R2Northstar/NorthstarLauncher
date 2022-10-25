@@ -8,7 +8,7 @@
 
 #include <filesystem>
 
-ADD_SQUIRREL_FUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", ScriptContext::SERVER)
+ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", ScriptContext::SERVER)
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<context>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -31,13 +31,13 @@ ADD_SQUIRREL_FUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player"
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("bool", NSIsWritingPlayerPersistence, "", "", ScriptContext::SERVER)
+ADD_SQFUNC("bool", NSIsWritingPlayerPersistence, "", "", ScriptContext::SERVER)
 {
 	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQUIRREL_FUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext::SERVER)
+ADD_SQFUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext::SERVER)
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -53,7 +53,7 @@ ADD_SQUIRREL_FUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptCont
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQUIRREL_FUNC("bool", NSIsDedicated, "", "", ScriptContext::SERVER)
+ADD_SQFUNC("bool", NSIsDedicated, "", "", ScriptContext::SERVER)
 {
 	g_pSquirrel<context>->pushbool(sqvm, IsDedicatedServer());
 	return SQRESULT_NOTNULL;

@@ -22,19 +22,19 @@ enum eMainMenuPromoDataProperty
 	smallButton2Url,
 	smallButton2ImageIndex
 };
-ADD_SQUIRREL_FUNC("void", NSRequestCustomMainMenuPromos, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSRequestCustomMainMenuPromos, "", "", ScriptContext::UI)
 {
 	g_pMasterServerManager->RequestMainMenuPromos();
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("bool", NSHasCustomMainMenuPromoData, "", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSHasCustomMainMenuPromoData, "", "", ScriptContext::UI)
 {
 	g_pSquirrel<ScriptContext::UI>->pushbool(sqvm, g_pMasterServerManager->m_bHasMainMenuPromoData);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQUIRREL_FUNC("var", NSGetCustomMainMenuPromoData, "int promoDataKey", "", ScriptContext::UI)
+ADD_SQFUNC("var", NSGetCustomMainMenuPromoData, "int promoDataKey", "", ScriptContext::UI)
 {
 	if (!g_pMasterServerManager->m_bHasMainMenuPromoData)
 		return SQRESULT_NULL;

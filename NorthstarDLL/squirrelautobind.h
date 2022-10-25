@@ -14,7 +14,7 @@ extern SquirrelAutoBindContainer* g_pSqAutoBindContainer;
 
 class __squirrelautobind;
 
-#define ADD_SQUIRREL_FUNC(returnType, funcName, argTypes, helpText, runOnContext)                                                          \
+#define ADD_SQFUNC(returnType, funcName, argTypes, helpText, runOnContext)                                                                 \
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm);                                              \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
@@ -39,7 +39,7 @@ class __squirrelautobind;
 	}                                                                                                                                      \
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm)
 
-#define REPLACE_SQUIRREL_FUNC(funcName, runOnContext)                                                                                      \
+#define REPLACE_SQFUNC(funcName, runOnContext)                                                                                             \
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm);                                              \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \

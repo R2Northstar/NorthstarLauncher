@@ -2,7 +2,7 @@
 #include "squirrel.h"
 
 // asset function StringToAsset( string assetName )
-ADD_SQUIRREL_FUNC(
+ADD_SQFUNC(
 	"asset",
 	StringToAsset,
 	"string assetName",

@@ -44,7 +44,7 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
 }
 
-ADD_SQUIRREL_FUNC("void", NSChatWrite, "int context, string text", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSChatWrite, "int context, string text", "", ScriptContext::CLIENT)
 {
 	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
@@ -53,7 +53,7 @@ ADD_SQUIRREL_FUNC("void", NSChatWrite, "int context, string text", "", ScriptCon
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("void", NSChatWriteRaw, "int context, string text", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSChatWriteRaw, "int context, string text", "", ScriptContext::CLIENT)
 {
 	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
@@ -62,7 +62,7 @@ ADD_SQUIRREL_FUNC("void", NSChatWriteRaw, "int context, string text", "", Script
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("void", NSChatWriteLine, "int context, string text", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSChatWriteLine, "int context, string text", "", ScriptContext::CLIENT)
 {
 	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
 	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);

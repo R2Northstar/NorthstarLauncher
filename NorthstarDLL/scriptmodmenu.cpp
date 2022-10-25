@@ -2,7 +2,7 @@
 #include "modmanager.h"
 #include "squirrel.h"
 
-ADD_SQUIRREL_FUNC("array<string>", NSGetModNames, "", "", ScriptContext::UI)
+ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::UI)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
@@ -15,7 +15,7 @@ ADD_SQUIRREL_FUNC("array<string>", NSGetModNames, "", "", ScriptContext::UI)
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQUIRREL_FUNC("bool", NSIsModEnabled, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsModEnabled, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -32,7 +32,7 @@ ADD_SQUIRREL_FUNC("bool", NSIsModEnabled, "string modName", "", ScriptContext::U
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("void", NSSetModEnabled, "string modName, bool enabled", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSSetModEnabled, "string modName, bool enabled", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQBool enabled = g_pSquirrel<context>->getbool(sqvm, 2);
@@ -50,7 +50,7 @@ ADD_SQUIRREL_FUNC("void", NSSetModEnabled, "string modName, bool enabled", "", S
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("string", NSGetModDescriptionByModName, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("string", NSGetModDescriptionByModName, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -67,7 +67,7 @@ ADD_SQUIRREL_FUNC("string", NSGetModDescriptionByModName, "string modName", "", 
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("string", NSGetModVersionByModName, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -84,7 +84,7 @@ ADD_SQUIRREL_FUNC("string", NSGetModVersionByModName, "string modName", "", Scri
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("string", NSGetModDownloadLinkByModName, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("string", NSGetModDownloadLinkByModName, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -101,7 +101,7 @@ ADD_SQUIRREL_FUNC("string", NSGetModDownloadLinkByModName, "string modName", "",
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("int", NSGetModLoadPriority, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("int", NSGetModLoadPriority, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -118,7 +118,7 @@ ADD_SQUIRREL_FUNC("int", NSGetModLoadPriority, "string modName", "", ScriptConte
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("bool", NSIsModRequiredOnClient, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsModRequiredOnClient, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -135,7 +135,7 @@ ADD_SQUIRREL_FUNC("bool", NSIsModRequiredOnClient, "string modName", "", ScriptC
 	return SQRESULT_NULL;
 }
 
-ADD_SQUIRREL_FUNC("array<string>", NSGetModConvarsByModName, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("array<string>", NSGetModConvarsByModName, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	g_pSquirrel<context>->newarray(sqvm, 0);
@@ -158,7 +158,7 @@ ADD_SQUIRREL_FUNC("array<string>", NSGetModConvarsByModName, "string modName", "
 	return SQRESULT_NOTNULL; // return empty array
 }
 
-ADD_SQUIRREL_FUNC("void", NSReloadMods, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
 {
 	g_pModManager->LoadMods();
 	return SQRESULT_NULL;
