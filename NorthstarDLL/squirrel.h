@@ -83,6 +83,7 @@ enum class ScriptContext : int
 };
 
 const char* GetContextName(ScriptContext context);
+const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
 

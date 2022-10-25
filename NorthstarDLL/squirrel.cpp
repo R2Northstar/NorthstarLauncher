@@ -23,6 +23,21 @@ const char* GetContextName(ScriptContext context)
 	}
 }
 
+const char* GetContextName_Short(ScriptContext context)
+{
+	switch (context)
+	{
+	case ScriptContext::CLIENT:
+		return "CL";
+	case ScriptContext::SERVER:
+		return "SV";
+	case ScriptContext::UI:
+		return "UI";
+	default:
+		return "??";
+	}
+}
+
 eSQReturnType SQReturnTypeFromString(const char* pReturnType)
 {
 	static const std::map<std::string, eSQReturnType> sqReturnTypeNameToString = {
