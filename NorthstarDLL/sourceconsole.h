@@ -97,16 +97,21 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{spdlog::level::debug, SourceColor(0, 255, 255, 255)},
 		{spdlog::level::info, SourceColor(255, 255, 255, 255)},
 		{spdlog::level::warn, SourceColor(255, 255, 0, 255)},
-		{spdlog::level::err, SourceColor(255, 0, 0, 255)},
+		{spdlog::level::err, SourceColor(255, 100, 100, 255)}, // i changed this red to be different to the critical red
 		{spdlog::level::critical, SourceColor(255, 0, 0, 255)},
 		{spdlog::level::off, SourceColor(0, 0, 0, 0)}};
+
 	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
 	std::map<std::string, SourceColor> m_contexts = {
-		{"UI SCRIPT", SourceColor(0, 255, 255, 255)},
-		{"CLIENT SCRIPT", SourceColor(0, 255, 255, 255)},
-		{"SERVER SCRIPT", SourceColor(0, 255, 255, 255)},
-		{"info", SourceColor(255, 0, 0, 255)},
-		{"warning", SourceColor(255, 0, 0, 255)}};
+		// UI is light blue, SV is pink, CL is light green
+		{"UI SCRIPT", SourceColor(100, 255, 255, 255)},
+		{"CL SCRIPT", SourceColor(100, 255, 100, 255)},
+		{"SV SCRIPT", SourceColor(255, 100, 255, 255)},
+		// native is just a darker version of script
+		{"SV NATIVE", SourceColor(150, 50, 150, 255)},
+		// echo is just a bit grey
+		{"echo", SourceColor(150, 150, 150, 255)}};
+		
 
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;

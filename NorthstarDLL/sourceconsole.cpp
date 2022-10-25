@@ -32,19 +32,58 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 	spdlog::memory_buf_t formatted;
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-	//(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[msg.level], fmt::to_string(formatted).c_str());
 
-	// get message string
-	std::string str = fmt::to_string(formatted);
+	// if we arent using colour, we should exit early
+	if (!g_bSpdLog_UseAnsiClr)
+	{
+		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[spdlog::level::level_enum::info], fmt::to_string(formatted).c_str());
+		return;
+	}
+
+
 	// get the message "tags" (bits of string surrounded with [])
 	// try to get the colour for each "tag"
 	// print to the console with colours
+
+	// get message string
+	std::string str = fmt::to_string(formatted);
 	std::map<int, SourceColor> colStrings = {};
-	colStrings.insert({4, SourceColor(255, 0, 0, 255)});
+	SourceColor baseCol = m_LogColours[msg.level];
+	int idx = 0;
+	while (true)
+	{
+		idx = str.find('[', idx);
+		if (idx == std::string::npos)
+			break;
+		int startIdx = idx;
+		std::string buf = "";
+		// find the end of the tag
+		while (++idx < str.length() && str[idx] != ']')
+		{
+			buf += str[idx];
+
+		}
+		// if we didn't find a closing tag, break
+		if (str[idx] != ']')
+			break;
+		// we found a closing tag, make the colours
+		if (m_contexts.find(buf) == m_contexts.end())
+		{
+			// if its an unknown tag (no colour), then just use base colour
+			colStrings.insert(std::make_pair(startIdx + 1, baseCol));
+		}
+		else
+		{
+			colStrings.insert(std::make_pair(startIdx + 1, m_contexts[buf]));
+		}
+		
+		colStrings.insert(std::make_pair(idx, baseCol));
+
+	}
+
 
 	// iterate through our coloured strings and ColorPrint them in order
 	int lastIdx = 0;
-	SourceColor baseCol = m_LogColours[msg.level];
 	SourceColor lastCol = baseCol;
 	for (auto it = colStrings.begin(); it != colStrings.end(); ++it)
 	{
@@ -88,7 +127,10 @@ void InitialiseConsoleOnInterfaceCreation()
 	OnCommandSubmittedHook.Dispatch((*g_pSourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted);
 
 	auto consoleLogger = std::make_shared<SourceConsoleSink>();
-	consoleLogger->set_pattern("[%l] %v");
+	if (g_bSpdLog_UseAnsiClr)
+		consoleLogger->set_pattern("%v"); // no need to include the level in the game console, the text colour signifies it anyway
+	else
+		consoleLogger->set_pattern("[%l] %v"); // no colour, so we should show the level for colourblind people
 	spdlog::default_logger()->sinks().push_back(consoleLogger);
 }
 

@@ -246,7 +246,7 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 		if (buf[charsWritten - 1] == '\n')
 			buf[charsWritten - 1] = '\0';
 
-		spdlog::info("[{} SCRIPT] {}", GetContextName(context), buf);
+		spdlog::info("[{} SCRIPT] {}", GetContextName_Short(context), buf);
 	}
 
 	va_end(va);
@@ -294,7 +294,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		bIsFatalError = g_pSquirrel<ScriptContext::UI>->m_bFatalCompilationErrors;
 	}
 
-	spdlog::error("{} SCRIPT COMPILE ERROR {}", GetContextName(realContext), error);
+	spdlog::error("[{} SCRIPT] COMPILE ERROR {}", GetContextName(realContext), error);
 	spdlog::error("{} line [{}] column [{}]", file, line, column);
 
 	// use disconnect to display an error message for the compile error, but only if the compilation error was fatal
