@@ -130,7 +130,7 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 	MessageBoxA(GetForegroundWindow(), text, "Northstar Launcher Error", 0);
 }
 
-void AwaitOriginStartup()
+void AwaitAuthProviderStartup()
 {
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -156,7 +156,7 @@ void AwaitOriginStartup()
 			recv(sock, buf, 4096, 0);
 			std::cout << buf << std::endl;
 
-			// honestly really shit, this isn't needed for origin due to being able to check OriginClientService
+			// honestly really shit, this isn't needed for EA App
 			// but for ea desktop we don't have anything like this, so atm we just have to wait to ensure that we start after logging in
 			Sleep(8000);
 		} while (!strstr(buf, "<LSX>")); // ensure we're actually getting data from lsx
@@ -165,11 +165,14 @@ void AwaitOriginStartup()
 	WSACleanup(); // cleanup sockets and such so game can contact lsx itself
 }
 
-void EnsureOriginStarted()
+void EnsureAuthProviderStarted()
 {
 	if (GetProcessByName(L"Origin.exe") || GetProcessByName(L"EADesktop.exe"))
 		return; // already started
 
+	// Stuff below can probably be deprecated, since Origin is now EOL
+	// However, this hasn't been tested, so keeping this in for now
+	
 	// unpacked exe will crash if origin isn't open on launch, so launch it
 	// get origin path from registry, code here is reversed from OriginSDK.dll
 	HKEY key;
@@ -208,7 +211,7 @@ void EnsureOriginStarted()
 		(LPSTARTUPINFOA)&si,
 		&pi);
 
-	std::cout << "[*] Waiting for Origin..." << std::endl;
+	std::cout << "[*] Waiting for EA Authentication Provider..." << std::endl;
 
 	// wait for origin process to boot
 	do
@@ -217,7 +220,7 @@ void EnsureOriginStarted()
 	} while (!GetProcessByName(L"OriginClientService.exe") && !GetProcessByName(L"EADesktop.exe"));
 
 	// wait for origin to be ready to start
-	AwaitOriginStartup();
+	AwaitAuthProviderStartup();
 
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
@@ -336,13 +339,13 @@ int main(int argc, char* argv[])
 
 	SetCurrentDirectoryW(exePath);
 
-	bool noOriginStartup = false;
+	bool noAuthProviderStartup = false;
 	bool dedicated = false;
 	bool nostubs = false;
 
 	for (int i = 0; i < argc; i++)
-		if (!strcmp(argv[i], "-noOriginStartup"))
-			noOriginStartup = true;
+		if (!strcmp(argv[i], "-noOriginStartup") || !strcmp(argv[i], "-noAuthProviderStartup"))
+			noAuthProviderStartup = true;
 		else if (!strcmp(argv[i], "-dedicated")) // also checked by Northstar.dll
 			dedicated = true;
 		else if (!strcmp(argv[i], "-nostubs"))
@@ -350,9 +353,9 @@ int main(int argc, char* argv[])
 		else if (!strcmp(argv[i], "-noplugins"))
 			noLoadPlugins = true;
 
-	if (!noOriginStartup && !dedicated)
+	if (!noAuthProviderStartup && !dedicated)
 	{
-		EnsureOriginStarted();
+		EnsureAuthProviderStarted();
 	}
 
 	if (dedicated && !nostubs)
