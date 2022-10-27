@@ -67,14 +67,14 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		if (str[idx] != ']')
 			break;
 		// we found a closing tag, make the colours
-		if (m_contexts.find(buf) == m_contexts.end())
+		if (m_tags.find(buf) == m_tags.end())
 		{
 			// if its an unknown tag (no colour), then just use base colour
 			colStrings.insert(std::make_pair(startIdx + 1, baseCol));
 		}
 		else
 		{
-			colStrings.insert(std::make_pair(startIdx + 1, m_contexts[buf]));
+			colStrings.insert(std::make_pair(startIdx + 1, m_tags[buf]));
 		}
 		
 		colStrings.insert(std::make_pair(idx, baseCol));

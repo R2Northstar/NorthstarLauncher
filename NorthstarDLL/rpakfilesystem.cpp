@@ -212,13 +212,13 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 			if (bNeedToFreePakName)
 				delete[] pPath;
 
-			spdlog::info("Not loading pak {} for dedicated server", originalPath);
+			spdlog::info("[FS NATIVE] Not loading pak {} for dedicated server", originalPath);
 			return -1;
 		}
 	}
 
 	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
-	spdlog::info("LoadPakAsync {} {}", pPath, iPakHandle);
+	spdlog::info("[FS NATIVE] LoadPakAsync {} {}", pPath, iPakHandle);
 
 	// trak the pak
 	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
@@ -246,7 +246,7 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 		bShouldUnloadPaks = true;
 	}
 
-	spdlog::info("UnloadPak {}", nPakHandle);
+	spdlog::info("[FS NATIVE] UnloadPak {}", nPakHandle);
 	return UnloadPak(nPakHandle, pCallback);
 }
 
@@ -263,7 +263,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 
 	if (path.extension() == ".stbsp")
 	{
-		spdlog::info("LoadStreamBsp: {}", filename.string());
+		spdlog::info("[FS NATIVE] LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
 		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
@@ -317,7 +317,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		}
 
 	LOG_STARPAK:
-		spdlog::info("LoadStreamPak: {}", filename.string());
+		spdlog::info("[FS NATIVE] LoadStreamPak: {}", filename.string());
 	}
 
 	return ReadFileAsync(pPath, pCallback);

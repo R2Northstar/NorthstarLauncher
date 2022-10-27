@@ -263,7 +263,7 @@ void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 	std::string out = "";
 	// if ansi colour is turned off, just use std::cout and return
-	if (strstr(GetCommandLineA(), "-noansiclr"))
+	if (!g_bSpdLog_UseAnsiClr)
 	{
 		out += fmt::to_string(formatted);
 		goto WRITE_CONSOLE;
@@ -296,8 +296,8 @@ void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 			}
 
 			// if its an unknown tag (no colour), then just use the current colour
-			if (m_contexts.find(buf) != m_contexts.end())
-				out += m_contexts[buf];
+			if (m_tags.find(buf) != m_tags.end())
+				out += m_tags[buf];
 
 			// add the buf
 			out += buf;
@@ -306,14 +306,15 @@ void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 			// add the ] so it doesn't get missed
 			out += str[i];
 		}
-		// end the string with an ansi reset
+		// end the string with an ansi reset just for safety
 		out += "\033[39;39m";
 	}
 	WRITE_CONSOLE:
 	// print the string to the console - this is definitely bad i think
-	auto ignored = WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), out.c_str(), std::strlen(out.c_str()), nullptr, nullptr);
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	auto ignored = WriteConsoleA(handle, out.c_str(), std::strlen(out.c_str()), nullptr, nullptr);
 	(void)ignored;
-	}
+}
 
 void ExternalConsoleSink::flush_()
 {

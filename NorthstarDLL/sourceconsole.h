@@ -102,15 +102,21 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{spdlog::level::off, SourceColor(0, 0, 0, 0)}};
 
 	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
-	std::map<std::string, SourceColor> m_contexts = {
+	// if you add stuff to this, mimic the changes in logging.h
+	std::map<std::string, SourceColor> m_tags = {
 		// UI is light blue, SV is pink, CL is light green
 		{"UI SCRIPT", SourceColor(100, 255, 255, 255)},
 		{"CL SCRIPT", SourceColor(100, 255, 100, 255)},
 		{"SV SCRIPT", SourceColor(255, 100, 255, 255)},
 		// native is just a darker version of script
+		{"UI NATIVE", SourceColor(50, 150, 150, 255)},
+		{"CL NATIVE", SourceColor(50, 150, 50, 255)},
 		{"SV NATIVE", SourceColor(150, 50, 150, 255)},
+		// cool launcher things (filesystem, etc.) add more as they come up
+		{"FS NATIVE", SourceColor(255, 190, 0, 255)}, // orange
 		// echo is just a bit grey
 		{"echo", SourceColor(150, 150, 150, 255)}};
+	
 		
 
   protected:
