@@ -242,7 +242,9 @@ void CreateLogFiles()
 			std::stringstream stream;
 
 			stream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nslog%Y-%m-%d %H-%M-%S.txt").c_str());
-			spdlog::default_logger()->sinks().push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false));
+			auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(stream.str(), false);
+			sink->set_pattern("[%H:%M:%S] [%l] %v");
+			spdlog::default_logger()->sinks().push_back(sink);
 			spdlog::flush_on(spdlog::level::info);
 		}
 		catch (...)
@@ -254,26 +256,122 @@ void CreateLogFiles()
 	}
 }
 
+void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
+{
+	spdlog::memory_buf_t formatted;
+	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
+
+	std::string out = "";
+	// if ansi colour is turned off, just use std::cout and return
+	if (strstr(GetCommandLineA(), "-noansiclr"))
+	{
+		out += fmt::to_string(formatted);
+		goto WRITE_CONSOLE;
+	}
+
+	// get the message "tags" (bits of string surrounded with [])
+	// try to get the colour for each "tag"
+	// print to the console with colours
+	{
+		// get message string
+		std::string str = fmt::to_string(formatted);
+		// should probably be a stack in case of nested tags but honestly i do not care
+		std::string baseCol = m_LogColours[msg.level];
+		out = baseCol; // always start by setting the colour
+		for (int i = 0; i < str.length(); ++i)
+		{
+			char c = str[i];
+			// add the char to the output
+			out += c;
+			// we are only looking for [ for bonus stuff
+			if (c != '[')
+				continue;
+
+			// this could probably be done better with substr and find?
+			// breaks when someone does something like: "thing [ stuff [UI SCRIPT]" which shouldn't rly happen in practice tbh
+			std::string buf = "";
+			while (++i < str.length() && str[i] != ']')
+			{
+				buf += str[i];
+			}
+
+			// if its an unknown tag (no colour), then just use the current colour
+			if (m_contexts.find(buf) != m_contexts.end())
+				out += m_contexts[buf];
+
+			// add the buf
+			out += buf;
+			// reset back to baseCol
+			out += baseCol;
+			// add the ] so it doesn't get missed
+			out += str[i];
+		}
+		// end the string with an ansi reset
+		out += "\033[39;39m";
+	}
+	WRITE_CONSOLE:
+	// print the string to the console - this is definitely bad i think
+	auto ignored = WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), out.c_str(), std::strlen(out.c_str()), nullptr, nullptr);
+	(void)ignored;
+	}
+
+void ExternalConsoleSink::flush_()
+{
+	std::cout << std::flush;
+}
+
 void InitialiseConsole()
 {
 	if (AllocConsole() == FALSE)
 	{
 		std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
-		return;
+	}
+	else
+	{
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
 	}
 
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+	if (!strstr(GetCommandLineA(), "-noansiclr"))
+	{
+		DWORD dwMode = NULL;
+		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+
+		GetConsoleMode(hOutput, &dwMode);
+		dwMode |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+		if (!SetConsoleMode(hOutput, dwMode)) // Some editions of Windows have 'VirtualTerminalLevel' disabled by default.
+		{
+			// Warn the user if 'VirtualTerminalLevel' could not be set on users environment.
+			MessageBoxA(
+				NULL,
+				"Failed to set console mode 'VirtualTerminalLevel'.\n"
+				"Please add the '-noansiclr' parameter and restart \nthe game if output logging appears distorted.",
+				"Northstar Warning",
+				MB_ICONWARNING | MB_OK);
+		}
+	}
 }
 
 void InitialiseLogging()
 {
+	// create a logger, and set it to default
+	spdlog::set_default_logger(std::make_shared<spdlog::logger>("logger"));
+
+	// set whether we should use colour in the logs
 	g_bSpdLog_UseAnsiClr = !strstr(GetCommandLineA(), "-noansiclr");
 
+	// create our console sink
+	auto sink = std::make_shared<ExternalConsoleSink>();
+	// set the pattern
 	if (g_bSpdLog_UseAnsiClr)
-		spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
+		sink->set_pattern("[%H:%M:%S] %^%v%$"); // dont put the log level in the pattern if we are using colours, as the colour will show the log level
 	else
-		spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
+		sink->set_pattern("[%H:%M:%S] [%l] %v");
+
+
+	// add our sink to the logger
+	spdlog::default_logger()->sinks().push_back(sink);
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))

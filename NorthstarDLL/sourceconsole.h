@@ -97,7 +97,7 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{spdlog::level::debug, SourceColor(0, 255, 255, 255)},
 		{spdlog::level::info, SourceColor(255, 255, 255, 255)},
 		{spdlog::level::warn, SourceColor(255, 255, 0, 255)},
-		{spdlog::level::err, SourceColor(255, 100, 100, 255)}, // i changed this red to be different to the critical red
+		{spdlog::level::err, SourceColor(255, 150, 150, 255)}, // i changed this red to be different to the critical red
 		{spdlog::level::critical, SourceColor(255, 0, 0, 255)},
 		{spdlog::level::off, SourceColor(0, 0, 0, 0)}};
 
