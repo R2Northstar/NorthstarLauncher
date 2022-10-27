@@ -338,8 +338,7 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 		R2::CBaseClient__Disconnect(self, 1, "Banned From server.\n");
 		return false;
 	}
-		
-	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken))
+	if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken))
 	{
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed.\n");
 		return false;
