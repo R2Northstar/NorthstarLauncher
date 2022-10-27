@@ -140,15 +140,20 @@ bool ServerAuthenticationManager::VerifyPlayerName(const char* authToken, const 
 		return true;
 	}
 
-	if (m_RemoteAuthenticationData.empty() || m_RemoteAuthenticationData.count(std::string(authToken)) == 0)
-	{
-		spdlog::info("Rejecting player with name '{}' because authToken '{}' was not found", name, authToken);
-		return false;
-	}
-
+	
 	if (!checkIsPlayerNameValid(name))
 	{
 		spdlog::info("Rejecting player with name '{}' because the name contains forbidden characters", name);
+		return false;
+	}
+
+	if (
+		(m_RemoteAuthenticationData.empty() || m_RemoteAuthenticationData.count(std::string(authToken)) == 0)
+		&&
+		strncmp(R2::g_pHostState->m_levelName, "sp_", 3) != 0
+		)
+	{
+		spdlog::info("Rejecting player with name '{}' because authToken '{}' was not found", name, authToken);
 		return false;
 	}
 
@@ -180,6 +185,9 @@ bool ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* player, ui
 {
 	std::string strUid = std::to_string(uid);
 	std::lock_guard<std::mutex> guard(m_AuthDataMutex);
+
+	if (!strncmp(R2::g_pHostState->m_levelName, "sp_", 3))
+		return true;
 
 	// copy uuid
 	strcpy(player->m_UID, strUid.c_str());
