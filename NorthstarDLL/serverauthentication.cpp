@@ -329,13 +329,22 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 		return ret;
 
 	if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, name))
+	{
 		R2::CBaseClient__Disconnect(self, 1, "Invalid Name.\n");
-
+		return false;
+	}
 	if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
+	{
 		R2::CBaseClient__Disconnect(self, 1, "Banned From server.\n");
+		return false;
+	}
+		
 	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken))
+	{
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed.\n");
-
+		return false;
+	}
+		
 	g_pServerAuthentication->AddPlayer(self, pNextPlayerToken);
 	g_pServerLimits->AddPlayer(self);
 
