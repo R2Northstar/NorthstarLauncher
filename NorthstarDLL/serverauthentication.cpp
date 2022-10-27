@@ -296,8 +296,9 @@ void*,, (
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	pNextPlayerToken = serverFilter;
 	iNextPlayerUid = uid;
-	
-	spdlog::info("CBaseServer__ClientConnect attempted connection with uid {}, playerName '{}', serverFilter '{}'", uid, playerName, serverFilter);
+
+	spdlog::info(
+		"CBaseServer__ClientConnect attempted connection with uid {}, playerName '{}', serverFilter '{}'", uid, playerName, serverFilter);
 
 	CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Invalid Name.\n");
 	return nullptr;
@@ -311,7 +312,7 @@ void*,, (
 	{
 		CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Banned From server.\n");
 		return nullptr;
-	}	
+	}
 
 	return CBaseServer__ConnectClient(self, addr, a3, a4, a5, a6, a7, playerName, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
@@ -335,8 +336,7 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 
 	if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
 		R2::CBaseClient__Disconnect(self, 1, "Banned From server.\n");
-	else if (
-		!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken))
+	else if (!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken))
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed.\n");
 
 	g_pServerAuthentication->AddPlayer(self, pNextPlayerToken);

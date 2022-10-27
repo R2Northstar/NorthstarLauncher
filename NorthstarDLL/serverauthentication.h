@@ -22,7 +22,7 @@ struct PlayerAuthenticationData
 	bool needPersistenceWriteOnLeave = true;
 };
 
-typedef int64_t (*CBaseServer__RejectConnectionType)(void* a1, unsigned int a2, void* a3, const char* a4,...);
+typedef int64_t (*CBaseServer__RejectConnectionType)(void* a1, unsigned int a2, void* a3, const char* a4, ...);
 extern CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 
 class ServerAuthenticationManager
@@ -51,7 +51,7 @@ class ServerAuthenticationManager
 	void RemovePlayer(R2::CBaseClient* player);
 	bool CheckDuplicateAccounts(R2::CBaseClient* player);
 	bool AuthenticatePlayer(R2::CBaseClient* player, uint64_t uid, char* authToken);
-	bool VerifyPlayerName(const char* authToken,const char* name);
+	bool VerifyPlayerName(const char* authToken, const char* name);
 	bool RemovePlayerAuthData(R2::CBaseClient* player);
 	void WritePersistentData(R2::CBaseClient* player);
 };
