@@ -140,7 +140,6 @@ bool ServerAuthenticationManager::VerifyPlayerName(const char* authToken, const 
 		return true;
 	}
 
-	
 	if (!checkIsPlayerNameValid(name))
 	{
 		spdlog::info("Rejecting player with name '{}' because the name contains forbidden characters", name);
@@ -149,11 +148,8 @@ bool ServerAuthenticationManager::VerifyPlayerName(const char* authToken, const 
 	// TODO: We should really have a better way of doing this for singleplayer
 	// Best way of doing this would be to check if server is actually in singleplayer mode, or just running a SP map in multiplayer
 	// Currently there's not an easy way of checking this, so we just disable this check if mapname starts with `sp_`
-	if (
-		(m_RemoteAuthenticationData.empty() || m_RemoteAuthenticationData.count(std::string(authToken)) == 0)
-		&&
-		strncmp(R2::g_pHostState->m_levelName, "sp_", 3) != 0
-		)
+	if ((m_RemoteAuthenticationData.empty() || m_RemoteAuthenticationData.count(std::string(authToken)) == 0) &&
+		strncmp(R2::g_pHostState->m_levelName, "sp_", 3) != 0)
 	{
 		spdlog::info("Rejecting player with name '{}' because authToken '{}' was not found", name, authToken);
 		return false;
