@@ -39,7 +39,6 @@ class ServerAuthenticationManager
 	std::mutex m_AuthDataMutex;
 	std::unordered_map<std::string, RemoteAuthData> m_RemoteAuthenticationData;
 	std::unordered_map<R2::CBaseClient*, PlayerAuthenticationData> m_PlayerAuthenticationData;
-	bool m_bRequireClientAuth = true;
 	bool m_bAllowDuplicateAccounts = false;
 	bool m_bRunningPlayerAuthThread = false;
 	bool m_bNeedLocalAuthForNewgame = false;

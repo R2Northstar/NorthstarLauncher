@@ -139,11 +139,6 @@ bool ServerAuthenticationManager::VerifyPlayerName(const char* authToken, const 
 		spdlog::info("Allowing player with name '{}' because ns_auth_allow_insecure is enabled", name);
 		return true;
 	}
-	if (!g_pMasterServerManager->m_bRequireClientAuth)
-	{
-		spdlog::info("Allowing player with name '{}' because MasterServer RequireClientAuth is false", name);
-		return true;
-	}
 
 	if (m_RemoteAuthenticationData.empty() || m_RemoteAuthenticationData.count(std::string(authToken)) == 0)
 	{
@@ -159,7 +154,7 @@ bool ServerAuthenticationManager::VerifyPlayerName(const char* authToken, const 
 
 	const RemoteAuthData& authData = m_RemoteAuthenticationData[authToken];
 
-	if (!*authData.username || strncmp(name, authData.username, 64) != 0)
+	if (*authData.username && strncmp(name, authData.username, 64) != 0)
 	{
 		spdlog::info("Rejecting player with name '{}' because name does not match expected name '{}'", name, authData.username);
 		return false;
@@ -301,14 +296,22 @@ void*,, (
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	pNextPlayerToken = serverFilter;
 	iNextPlayerUid = uid;
+	
+	spdlog::info("CBaseServer__ClientConnect attempted connection with uid {}, playerName '{}', serverFilter '{}'", uid, playerName, serverFilter);
 
-	spdlog::info("CBaseServer__ClientConnect attempted connection with uid {}, playerName '{}', serverFilter '{}'");
+	CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Invalid Name.\n");
+	return nullptr;
 
 	if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, playerName))
-		CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "#NS_INVALID_NAME");
-
+	{
+		CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Invalid Name.\n");
+		return nullptr;
+	}
 	if (!g_pBanSystem->IsUIDAllowed(uid))
-		CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Banned From server");
+	{
+		CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Banned From server.\n");
+		return nullptr;
+	}	
 
 	return CBaseServer__ConnectClient(self, addr, a3, a4, a5, a6, a7, playerName, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
@@ -327,14 +330,14 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 	if (!ret)
 		return ret;
 
+	if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, name))
+		R2::CBaseClient__Disconnect(self, 1, "Invalid Name.\n");
 
-
-	if (strlen(name) >= 64) // fix for name overflow bug
-		R2::CBaseClient__Disconnect(self, 1, "Invalid name");
+	if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
+		R2::CBaseClient__Disconnect(self, 1, "Banned From server.\n");
 	else if (
-		!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken) &&
-		g_pServerAuthentication->m_bRequireClientAuth)
-		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed");
+		!g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken))
+		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed.\n");
 
 	g_pServerAuthentication->AddPlayer(self, pNextPlayerToken);
 	g_pServerLimits->AddPlayer(self);
