@@ -300,9 +300,6 @@ void*,, (
 	spdlog::info(
 		"CBaseServer__ClientConnect attempted connection with uid {}, playerName '{}', serverFilter '{}'", uid, playerName, serverFilter);
 
-	CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Invalid Name.\n");
-	return nullptr;
-
 	if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, playerName))
 	{
 		CBaseServer__RejectConnection(self, *((int*)self + 3), addr, "Invalid Name.\n");
