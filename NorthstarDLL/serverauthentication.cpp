@@ -343,7 +343,7 @@ bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_pl
 		R2::CBaseClient__Disconnect(self, 1, "Authentication Failed.\n");
 		return false;
 	}
-		
+
 	g_pServerAuthentication->AddPlayer(self, pNextPlayerToken);
 	g_pServerLimits->AddPlayer(self);
 
