@@ -6,6 +6,7 @@
 #include "r2engine.h"
 #include "tier0.h"
 #include "plugins.h"
+#include "plugincommunication.h"
 
 #include <any>
 
@@ -326,7 +327,10 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirr
 		g_pSquirrel<ScriptContext::UI>->VMDestroyed();
 	}
 	else
+	{
+		g_pSquirrel<context>->m_pSQVM = nullptr; // Fixes a race-like bug
 		DestroyVM<context>(a1, sqvm);
+	}
 
 	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
@@ -504,6 +508,9 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 
 template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 {
+
+	//g_pPluginCommunicationhandler->RunFrame();
+
 	auto maybe_message = g_pSquirrel<context>->messageBuffer->pop();
 	if (!maybe_message)
 	{

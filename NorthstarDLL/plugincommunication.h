@@ -3,6 +3,7 @@
 #include "plugin_abi.h"
 
 #include <queue>
+#include <mutex>
 
 enum PluginDataRequestType
 {
@@ -15,7 +16,6 @@ union PluginRespondDataCallable
 {
 	PLUGIN_RESPOND_SERVER_DATA_TYPE asServerData;
 	PLUGIN_RESPOND_GAMESTATE_DATA_TYPE asGameStateData;
-	PLUGIN_RESPOND_RPC_DATA_TYPE asRPCData;
 };
 
 class PluginDataRequest
@@ -24,10 +24,6 @@ class PluginDataRequest
 	PluginDataRequestType type;
 	PluginRespondDataCallable func;
 	PluginDataRequest(PluginDataRequestType type, PluginRespondDataCallable func) : type(type), func(func) {}
-	~PluginDataRequest()
-	{
-		spdlog::info("PluginDataRequest destroyed");
-	}
 };
 
 class PluginCommunicationHandler
@@ -37,11 +33,12 @@ class PluginCommunicationHandler
 	void RunFrame();
 	void PushRequest(PluginDataRequestType type, PluginRespondDataCallable func);
 
-  private:
+  public:
 	std::queue<PluginDataRequest> request_queue;
+	std::mutex request_mutex;
 
-	PluginServerData* GenerateServerData();
-	PluginGameStateData* GenerateGameStateData();
+	bool GenerateServerData(PluginServerData* data);
+	bool GenerateGameStateData(PluginGameStateData* data);
 };
 
 void init_plugincommunicationhandler();

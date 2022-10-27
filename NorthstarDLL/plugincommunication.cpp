@@ -12,44 +12,39 @@ AUTOHOOK_INIT()
 PluginCommunicationHandler* g_pPluginCommunicationhandler;
 PluginGameStateData* l_GameStateData;
 
+static PluginDataRequest request {PluginDataRequestType::GAMESTATE, (PluginRespondDataCallable)0};
+
 void init_plugincommunicationhandler() {
 	g_pPluginCommunicationhandler = new PluginCommunicationHandler;
+	g_pPluginCommunicationhandler->request_queue = {};
 }
 
 void PluginCommunicationHandler::RunFrame() {
-	while (!request_queue.empty())
+	std::lock_guard<std::mutex> lock(request_mutex);
+	if (!request_queue.empty())
 	{
-		PluginDataRequest& request = request_queue.front();
-		PluginServerData* server;
-		PluginGameStateData* gamestate;
+		request = request_queue.front();
+		PluginServerData server {};
+		PluginGameStateData* gamestate = new PluginGameStateData();
 		// Note: these new/deletes are bad practice, should switch to RAII types instead
 		switch (request.type)
 		{
 			case PluginDataRequestType::SERVER:
-				server = GenerateServerData();
-				request.func.asServerData(server);
-				delete server;
+				if(GenerateServerData(&server))
+					request.func.asServerData(&server);
+				else
+					request.func.asServerData(nullptr);
 				break;
 			case PluginDataRequestType::GAMESTATE:
-				gamestate = GenerateGameStateData();
-				request.func.asGameStateData(gamestate);
-				delete gamestate;
-				break;
-			case PluginDataRequestType::RPC:
-				server = GenerateServerData();
-				gamestate = GenerateGameStateData();
-				request.func.asRPCData(server, gamestate);
-				delete server;
-				delete gamestate;
+				GenerateGameStateData(gamestate);
 				break;
 		}
 		request_queue.pop();
 	}
 }
 
-PluginServerData* PluginCommunicationHandler::GenerateServerData()
+bool PluginCommunicationHandler::GenerateServerData(PluginServerData* data)
 {
-	PluginServerData* data = new PluginServerData;
 	if (g_pServerPresence->m_bHasPresence)
 	{
 		ServerPresence* pr = &g_pServerPresence->m_ServerPresence;
@@ -75,19 +70,26 @@ PluginServerData* PluginCommunicationHandler::GenerateServerData()
 			memcpy(data->id, server.id, sizeof(server.id));
 			memcpy(data->name, server.name, sizeof(server.name));
 			memcpy(data->description, server.description.c_str(), server.description.length() + 1);
-			memcpy(data->password, g_pMasterServerManager->m_sCurrentServerPassword.c_str(), g_pMasterServerManager->m_sCurrentServerPassword.length() + 1);
+			memcpy(
+				data->password,
+				g_pMasterServerManager->m_sCurrentServerPassword.c_str(),
+				g_pMasterServerManager->m_sCurrentServerPassword.length() + 1);
 		}
 	}
-	return data;
+	return true;
 }
 
-template <ScriptContext context> SQRESULT SQ_PushGameStateData(HSquirrelVM* sqvm) {
+template <ScriptContext context> SQRESULT SQ_PushGameStateData(HSquirrelVM* sqvm)
+{
 
 	SQStructInstance* structInst = g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm->_stackOfCurrentFunction[1]._VAL.asStructInstance;
 	memcpy((void*)l_GameStateData->map, structInst->data[0]._VAL.asString->_val, structInst->data[0]._VAL.asString->length + 1);
 	memcpy((void*)l_GameStateData->map_displayname, structInst->data[1]._VAL.asString->_val, structInst->data[1]._VAL.asString->length + 1);
 	memcpy((void*)l_GameStateData->playlist, structInst->data[2]._VAL.asString->_val, structInst->data[2]._VAL.asString->length + 1);
-	memcpy((void*)l_GameStateData->playlist_displayname, structInst->data[3]._VAL.asString->_val, structInst->data[3]._VAL.asString->length + 1);
+	memcpy(
+		(void*)l_GameStateData->playlist_displayname,
+		structInst->data[3]._VAL.asString->_val,
+		structInst->data[3]._VAL.asString->length + 1);
 
 	l_GameStateData->current_players = structInst->data[4]._VAL.asInteger;
 	l_GameStateData->max_players = structInst->data[5]._VAL.asInteger;
@@ -96,18 +98,29 @@ template <ScriptContext context> SQRESULT SQ_PushGameStateData(HSquirrelVM* sqvm
 	l_GameStateData->max_score = structInst->data[8]._VAL.asInteger;
 	l_GameStateData->timestamp_end = structInst->data[9]._VAL.asInteger;
 
+	request.func.asGameStateData(l_GameStateData);
+
+	delete l_GameStateData;
+
 	return SQRESULT_NOTNULL;
 }
 
-PluginGameStateData* PluginCommunicationHandler::GenerateGameStateData() {
-
+bool PluginCommunicationHandler::GenerateGameStateData(PluginGameStateData* data)
+{
+	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM == nullptr || g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm == nullptr)
+	{
+		request.func.asGameStateData(nullptr);
+		return false;
+	}
+	l_GameStateData = data;
 	g_pSquirrel<ScriptContext::CLIENT>->call("GenerateGameState");
 
-	return l_GameStateData;
+	return true;
 }
 
 void PluginCommunicationHandler::PushRequest(PluginDataRequestType type, PluginRespondDataCallable func)
 {
+	std::lock_guard<std::mutex> lock(request_mutex);
 	request_queue.push(PluginDataRequest {type, func});
 }
 
@@ -119,11 +132,6 @@ EXPORT void PLUGIN_REQUESTS_SERVER_DATA(PLUGIN_RESPOND_SERVER_DATA_TYPE func) {
 EXPORT void PLUGIN_REQUESTS_GAMESTATE_DATA(PLUGIN_RESPOND_GAMESTATE_DATA_TYPE func)
 {
 	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::GAMESTATE, *(PluginRespondDataCallable*)(&func));
-}
-
-EXPORT void PLUGIN_REQUESTS_RPC_DATA(PLUGIN_RESPOND_RPC_DATA_TYPE func)
-{
-	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::RPC, *(PluginRespondDataCallable*)(&func));
 }
 
 ON_DLL_LOAD_RELIESON("client.dll", PluginCommunicationSquirrel, ClientSquirrel, (CModule module))

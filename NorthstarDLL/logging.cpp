@@ -249,7 +249,7 @@ void InitialiseLogging()
 	// work regardless of these two lines
 	// freopen("CONOUT$", "w", stdout);
 	// freopen("CONOUT$", "w", stderr);
-	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%l] %v");
+	spdlog::default_logger()->set_pattern("[%H:%M:%S] [%^%l%$] %v");
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))

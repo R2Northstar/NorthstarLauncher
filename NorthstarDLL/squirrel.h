@@ -91,6 +91,13 @@ template <ScriptContext context> class SquirrelManager
 		// This function assumes the squirrel VM is stopped/blocked at the moment of call
 		// Calling this function while the VM is running is likely to result in a crash due to stack destruction
 		// If you want to call into squirrel asynchronously, use `schedule_call` instead
+
+		if (!m_pSQVM || !m_pSQVM->sqvm)
+		{
+			spdlog::error(
+				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
+		}
+
 		SQObject* functionobj = new SQObject();
 		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
@@ -108,6 +115,11 @@ template <ScriptContext context> class SquirrelManager
 		// This function assumes the squirrel VM is stopped/blocked at the moment of call
 		// Calling this function while the VM is running is likely to result in a crash due to stack destruction
 		// If you want to call into squirrel asynchronously, use `schedule_call` instead
+		if(!m_pSQVM || !m_pSQVM->sqvm)
+		{
+			spdlog::error(
+				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
+		}
 		SQObject* functionobj = new SQObject();
 		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason

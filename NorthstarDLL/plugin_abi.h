@@ -74,11 +74,6 @@ struct LogMsg {
 
 typedef void (*loggerfunc_t)(LogMsg* msg);
 
-struct PluginInitFuncs
-{
-	loggerfunc_t logger;
-};
-
 struct PluginNorthstarData {
 	const char* version;
 	HMODULE northstarModule;
@@ -123,7 +118,7 @@ struct PluginGameStateData {
 /// </summary>
 
 // Northstar -> Plugin
-typedef void (*PLUGIN_INIT_TYPE)(PluginInitFuncs* funcs, PluginNorthstarData* data);
+typedef void (*PLUGIN_INIT_TYPE)(PluginNorthstarData* data);
 typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);
 typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
@@ -133,9 +128,9 @@ typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
 // Northstar -> Plugin
 typedef void (*PLUGIN_RESPOND_SERVER_DATA_TYPE)(PluginServerData* data);
 typedef void (*PLUGIN_RESPOND_GAMESTATE_DATA_TYPE)(PluginGameStateData* data);
-typedef void (*PLUGIN_RESPOND_RPC_DATA_TYPE)(PluginServerData* server_data, PluginGameStateData* gamestate_data);
 
 // Plugin -> Northstar
 typedef void (*PLUGIN_REQUESTS_SERVER_DATA_TYPE)(PLUGIN_RESPOND_SERVER_DATA_TYPE* func);
 typedef void (*PLUGIN_REQUESTS_GAMESTATE_DATA_TYPE)(PLUGIN_RESPOND_GAMESTATE_DATA_TYPE* func);
-typedef void (*PLUGIN_REQUESTS_RPC_DATA_TYPE)(PLUGIN_RESPOND_RPC_DATA_TYPE* func);
+
+typedef void (*PLUGIN_RELAY_INVITE)(const char* invite);

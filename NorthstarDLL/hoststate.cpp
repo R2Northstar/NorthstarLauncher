@@ -97,7 +97,6 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 // clang-format on
 {
 	CHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
-
 	if (*R2::g_pServerState == R2::server_state_t::ss_active)
 	{
 		// update server presence
@@ -105,9 +104,9 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 
 		// update limits for frame
 		g_pServerLimits->RunFrame(flCurrentTime, flFrameTime);
-
-		g_pPluginCommunicationhandler->RunFrame();
 	}
+
+	g_pPluginCommunicationhandler->RunFrame();
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))

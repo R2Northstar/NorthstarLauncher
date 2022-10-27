@@ -20,6 +20,8 @@
 
 namespace fs = std::filesystem;
 
+#define EXPORT extern "C" __declspec(dllexport)
+
 #include "logging.h"
 #include "MinHook.h"
 #include "spdlog/spdlog.h"

@@ -24,7 +24,6 @@ class Plugin
 
 	PLUGIN_RESPOND_SERVER_DATA_TYPE respond_server_data;
 	PLUGIN_RESPOND_GAMESTATE_DATA_TYPE respond_gamestate_data;
-	PLUGIN_RESPOND_RPC_DATA_TYPE respond_rpc_data;
 };
 
 class PluginManager
@@ -34,7 +33,7 @@ class PluginManager
 
   public:
 	bool LoadPlugins();
-	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data);
+	std::optional<Plugin> LoadPlugin(fs::path path, PluginNorthstarData* data);
 
 	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
 	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
@@ -45,6 +44,3 @@ class PluginManager
 };
 
 extern PluginManager* g_pPluginManager;
-
-void initGameState();
-void* getPluginObject(PluginObject var);

@@ -18,7 +18,7 @@ void freeLibrary(HMODULE hLib)
 	}
 }
 
-void PluginLog(LogMsg* msg)
+EXPORT void PLUGIN_LOG(LogMsg* msg)
 {
 	spdlog::source_loc src {};
 	src.filename = msg->source.file;
@@ -27,7 +27,7 @@ void PluginLog(LogMsg* msg)
 	spdlog::log(src, (spdlog::level::level_enum)msg->level, msg->msg);
 }
 
-std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
+std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginNorthstarData* data)
 {
 
 	Plugin plugin {};
@@ -151,9 +151,8 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	plugin.respond_server_data = (PLUGIN_RESPOND_SERVER_DATA_TYPE)GetProcAddress(pluginLib, "PLUGIN_RESPONSE_SERVER_DATA");
 	plugin.respond_gamestate_data = (PLUGIN_RESPOND_GAMESTATE_DATA_TYPE)GetProcAddress(pluginLib, "PLUGIN_RESPONSE_GAMESTATE_DATA");
-	plugin.respond_rpc_data = (PLUGIN_RESPOND_RPC_DATA_TYPE)GetProcAddress(pluginLib, "PLUGIN_RESPONSE_RPC_DATA");
 
-	plugin.init(funcs, data);
+	plugin.init(data);
 
 	return plugin;
 }
@@ -163,9 +162,6 @@ bool PluginManager::LoadPlugins()
 	std::vector<fs::path> paths;
 
 	pluginPath = GetNorthstarPrefix() + "/plugins";
-
-	PluginInitFuncs funcs {};
-	funcs.logger = PluginLog;
 
 	PluginNorthstarData data {};
 	std::string ns_version {version};
@@ -194,7 +190,7 @@ bool PluginManager::LoadPlugins()
 	}
 	for (fs::path path : paths)
 	{
-		auto maybe_plugin = LoadPlugin(path, &funcs, &data);
+		auto maybe_plugin = LoadPlugin(path, &data);
 		if (maybe_plugin.has_value())
 		{
 			m_vLoadedPlugins.push_back(maybe_plugin.value());
@@ -236,16 +232,5 @@ void PluginManager::InformSQVMDestroyed(ScriptContext context)
 		{
 			plugin.inform_sqvm_destroyed(context);
 		}
-	}
-}
-
-void* getPluginObject(PluginObject var)
-{
-	switch (var)
-	{
-	case PluginObject::SQUIRREL:
-		return 0;
-	default:
-		return (void*)-1;
 	}
 }
