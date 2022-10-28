@@ -148,6 +148,7 @@ bool ServerAuthenticationManager::VerifyPlayerName(const char* authToken, const 
 	// TODO: We should really have a better way of doing this for singleplayer
 	// Best way of doing this would be to check if server is actually in singleplayer mode, or just running a SP map in multiplayer
 	// Currently there's not an easy way of checking this, so we just disable this check if mapname starts with `sp_`
+	// This means that player names are not checked on singleplayer
 	if ((m_RemoteAuthenticationData.empty() || m_RemoteAuthenticationData.count(std::string(authToken)) == 0) &&
 		strncmp(R2::g_pHostState->m_levelName, "sp_", 3) != 0)
 	{
