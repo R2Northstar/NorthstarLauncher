@@ -113,9 +113,11 @@ const char* SQTypeNameFromID(const int iTypeId);
 
 void schedule_call_external(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function);
 
-template <ScriptContext context> class SquirrelManager
+// This base class means that only the templated functions have to be rebuilt for each template instance
+// Cuts down on compile time by ~5 seconds
+class SquirrelManagerBase
 {
-  private:
+  public:
 	std::vector<SQFuncRegistration*> m_funcRegistrations;
 
   public:
@@ -170,6 +172,165 @@ template <ScriptContext context> class SquirrelManager
 
 #pragma endregion
 
+#pragma region SQVM func wrappers
+	inline virtual void defconst(CSquirrelVM* sqvm, const SQChar* pName, int nValue) final
+	{
+		__sq_defconst(sqvm, pName, nValue);
+	}
+
+	inline virtual SQRESULT
+	compilebuffer(CompileBufferState* bufferState, const SQChar* bufferName = "unnamedbuffer", const SQBool bShouldThrowError = false) final
+	{
+		return __sq_compilebuffer(m_pSQVM->sqvm, bufferState, bufferName, -1, bShouldThrowError);
+	}
+
+	inline virtual SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args) final
+	{
+		return __sq_call(sqvm, args + 1, false, false);
+	}
+
+	inline virtual SQInteger raiseerror(HSquirrelVM* sqvm, const const SQChar* sError) final
+	{
+		return __sq_raiseerror(sqvm, sError);
+	}
+
+	inline virtual void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0) final
+	{
+		__sq_newarray(sqvm, stackpos);
+	}
+
+	inline virtual SQRESULT arrayappend(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		return __sq_arrayappend(sqvm, stackpos);
+	}
+
+	inline virtual SQRESULT newtable(HSquirrelVM* sqvm) final
+	{
+		return __sq_newtable(sqvm);
+	}
+
+	inline virtual SQRESULT newslot(HSquirrelVM* sqvm, SQInteger idx, SQBool bStatic) final
+	{
+		return __sq_newslot(sqvm, idx, bStatic);
+	}
+
+	inline virtual void pushroottable(HSquirrelVM* sqvm) final
+	{
+		__sq_pushroottable(sqvm);
+	}
+
+	inline virtual void pushstring(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1) final
+	{
+		__sq_pushstring(sqvm, sVal, length);
+	}
+
+	inline virtual void pushinteger(HSquirrelVM* sqvm, const SQInteger iVal) final
+	{
+		__sq_pushinteger(sqvm, iVal);
+	}
+
+	inline virtual void pushfloat(HSquirrelVM* sqvm, const SQFloat flVal) final
+	{
+		__sq_pushfloat(sqvm, flVal);
+	}
+
+	inline virtual void pushbool(HSquirrelVM* sqvm, const SQBool bVal) final
+	{
+		__sq_pushbool(sqvm, bVal);
+	}
+
+	inline virtual void pushasset(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1) final
+	{
+		__sq_pushasset(sqvm, sVal, length);
+	}
+
+	inline virtual void pushvector(HSquirrelVM* sqvm, const Vector3 pVal) final
+	{
+		__sq_pushvector(sqvm, *(float**)&pVal);
+	}
+
+	inline virtual void pushSQObject(HSquirrelVM* sqvm, SQObject* obj) final
+	{
+		__sq_pushSQObject(sqvm, obj);
+	}
+
+	inline virtual const SQChar* getstring(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		return __sq_getstring(sqvm, stackpos);
+	}
+
+	inline virtual SQInteger getinteger(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		return __sq_getinteger(sqvm, stackpos);
+	}
+
+	inline virtual SQFloat getfloat(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		return __sq_getfloat(sqvm, stackpos);
+	}
+
+	inline virtual SQBool getbool(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		return __sq_getbool(sqvm, stackpos);
+	}
+
+	inline virtual SQRESULT get(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		return __sq_get(sqvm, stackpos);
+	}
+
+	inline virtual Vector3 getvector(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	{
+		float* pRet = __sq_getvector(sqvm, stackpos);
+		return *(Vector3*)&pRet;
+	}
+
+	inline virtual int sq_getSquirrelFunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature) final
+	{
+		return __sq_getSquirrelFunction(sqvm, name, returnObj, signature);
+	}
+
+	inline virtual SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result) final
+	{
+		return __sq_getasset(sqvm, stackpos, result);
+	}
+
+	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
+	{
+		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
+	}
+
+	template <typename T> inline T* createuserdata(HSquirrelVM* sqvm, SQInteger size)
+	{
+		void* ret = __sq_createuserdata(sqvm, size);
+		memset(ret, 0, size);
+		return (T*)ret;
+	}
+
+	inline virtual SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, uint64_t typeId) final
+	{
+		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
+	}
+
+	template <typename T> inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
+	{
+		return __sq_getentity(sqvm, (void**)ppEntity);
+	}
+
+	template <typename T> inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
+	{
+		SQObject obj;
+		__sq_getobject(sqvm, iStackPos, &obj);
+
+		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
+		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
+	}
+#pragma endregion
+};
+
+template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
+{
+  public:
 #pragma region MessageBuffer
 	SquirrelMessageBuffer* messageBuffer;
 
@@ -253,7 +414,9 @@ template <ScriptContext context> class SquirrelManager
 #pragma endregion
 
   public:
-	SquirrelManager() : m_pSQVM(nullptr) {}
+	SquirrelManager() {
+		m_pSQVM = nullptr;
+	}
 
 	void VMCreated(CSquirrelVM* newSqvm);
 	void VMDestroyed();
@@ -261,161 +424,6 @@ template <ScriptContext context> class SquirrelManager
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func);
 	SQRESULT setupfunc(const SQChar* funcname);
 	void AddFuncOverride(std::string name, SQFunction func);
-
-#pragma region SQVM func wrappers
-	inline void defconst(CSquirrelVM* sqvm, const SQChar* pName, int nValue)
-	{
-		__sq_defconst(sqvm, pName, nValue);
-	}
-
-	inline SQRESULT
-	compilebuffer(CompileBufferState* bufferState, const SQChar* bufferName = "unnamedbuffer", const SQBool bShouldThrowError = false)
-	{
-		return __sq_compilebuffer(m_pSQVM->sqvm, bufferState, bufferName, -1, bShouldThrowError);
-	}
-
-	inline SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args)
-	{
-		return __sq_call(sqvm, args + 1, false, false);
-	}
-
-	inline SQInteger raiseerror(HSquirrelVM* sqvm, const const SQChar* sError)
-	{
-		return __sq_raiseerror(sqvm, sError);
-	}
-
-	inline void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0)
-	{
-		__sq_newarray(sqvm, stackpos);
-	}
-
-	inline SQRESULT arrayappend(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		return __sq_arrayappend(sqvm, stackpos);
-	}
-
-	inline SQRESULT newtable(HSquirrelVM* sqvm)
-	{
-		return __sq_newtable(sqvm);
-	}
-
-	inline SQRESULT newslot(HSquirrelVM* sqvm, SQInteger idx, SQBool bStatic)
-	{
-		return __sq_newslot(sqvm, idx, bStatic);
-	}
-
-	inline void pushroottable(HSquirrelVM* sqvm)
-	{
-		__sq_pushroottable(sqvm);
-	}
-
-	inline void pushstring(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1)
-	{
-		__sq_pushstring(sqvm, sVal, length);
-	}
-
-	inline void pushinteger(HSquirrelVM* sqvm, const SQInteger iVal)
-	{
-		__sq_pushinteger(sqvm, iVal);
-	}
-
-	inline void pushfloat(HSquirrelVM* sqvm, const SQFloat flVal)
-	{
-		__sq_pushfloat(sqvm, flVal);
-	}
-
-	inline void pushbool(HSquirrelVM* sqvm, const SQBool bVal)
-	{
-		__sq_pushbool(sqvm, bVal);
-	}
-
-	inline void pushasset(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1)
-	{
-		__sq_pushasset(sqvm, sVal, length);
-	}
-
-	inline void pushvector(HSquirrelVM* sqvm, const Vector3 pVal)
-	{
-		__sq_pushvector(sqvm, *(float**)&pVal);
-	}
-
-	inline void pushSQObject(HSquirrelVM* sqvm, SQObject* obj)
-	{
-		__sq_pushSQObject(sqvm, obj);
-	}
-
-	inline const SQChar* getstring(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		return __sq_getstring(sqvm, stackpos);
-	}
-
-	inline SQInteger getinteger(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		return __sq_getinteger(sqvm, stackpos);
-	}
-
-	inline SQFloat getfloat(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		return __sq_getfloat(sqvm, stackpos);
-	}
-
-	inline SQBool getbool(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		return __sq_getbool(sqvm, stackpos);
-	}
-
-	inline SQRESULT get(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		return __sq_get(sqvm, stackpos);
-	}
-
-	inline Vector3 getvector(HSquirrelVM* sqvm, const SQInteger stackpos)
-	{
-		float* pRet = __sq_getvector(sqvm, stackpos);
-		return *(Vector3*)&pRet;
-	}
-
-	inline int sq_getSquirrelFunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature)
-	{
-		return __sq_getSquirrelFunction(sqvm, name, returnObj, signature);
-	}
-
-	inline SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result)
-	{
-		return __sq_getasset(sqvm, stackpos, result);
-	}
-
-	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
-	{
-		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
-	}
-
-	template <typename T> inline T* createuserdata(HSquirrelVM* sqvm, SQInteger size)
-	{
-		void* ret = __sq_createuserdata(sqvm, size);
-		memset(ret, 0, size);
-		return (T*)ret;
-	}
-
-	inline SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, uint64_t typeId)
-	{
-		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
-	}
-
-	template <typename T> inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
-	{
-		return __sq_getentity(sqvm, (void**)ppEntity);
-	}
-
-	template <typename T> inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
-	{
-		SQObject obj;
-		__sq_getobject(sqvm, iStackPos, &obj);
-
-		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
-		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
-	}
-#pragma endregion
 };
 
 template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;

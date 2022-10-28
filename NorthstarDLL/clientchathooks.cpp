@@ -32,7 +32,7 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 
 	SQRESULT res =
 		g_pSquirrel<ScriptContext::CLIENT>->call("CHudChat_ProcessMessageStartThread", (int)senderId - 1, payload, isTeam, isDead, type);
-	if (g_pSquirrel<ScriptContext::CLIENT>->setupfunc("CHudChat_ProcessMessageStartThread") == SQRESULT_ERROR)
+	if (res == SQRESULT_ERROR)
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
 }
