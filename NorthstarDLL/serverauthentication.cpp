@@ -328,9 +328,6 @@ AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (R2::CBaseClient* self, char* name, void* netchan_ptr_arg, char b_fake_player_arg, void* a5, char* Buffer, void* a7))
 // clang-format on
 {
-	// try changing name before all else
-	// g_pServerAuthentication->VerifyPlayerName(self, pNextPlayerToken, name);
-
 	// try to auth player, dc if it fails
 	// we connect regardless of auth, because returning bad from this function can fuck client state p bad
 	bool ret = CBaseClient__Connect(self, name, netchan_ptr_arg, b_fake_player_arg, a5, Buffer, a7);
