@@ -118,10 +118,12 @@ void ServerAuthenticationManager::RemovePlayer(R2::CBaseClient* player)
 bool checkIsPlayerNameValid(const char* name)
 {
 	int len = strlen(name);
+	// Restricts name to max 63 characters
 	if (len >= 64)
 		return false;
 	for (int i = 0; i < len; i++)
 	{
+		// Restricts the characters in the name to a restricted range in ASCII
 		if (static_cast<int>(name[i]) < 32 || static_cast<int>(name[i]) > 126)
 		{
 			return false;
