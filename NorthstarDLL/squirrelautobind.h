@@ -18,7 +18,7 @@ class __squirrelautobind;
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm);                                              \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
-		void CONCAT2(AUTOBIND_FUNC_CLIENT, funcName)()                                                                                     \
+		void CONCAT2(SQ_CLIENT_, funcName)()																							   \
 		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::UI)                                                                                \
 				g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(                                                                       \
@@ -28,14 +28,14 @@ class __squirrelautobind;
 				g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(                                                                   \
 					returnType, __STR(funcName), argTypes, helpText, CONCAT2(Script_, funcName) < ScriptContext::CLIENT >);                \
 		}                                                                                                                                  \
-		void CONCAT2(AUTOBIND_FUNC_SERVER, funcName)()                                                                                     \
+		void CONCAT2(SQ_SERVER_, funcName)()																							   \
 		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::SERVER)                                                                            \
 				g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration(                                                                   \
 					returnType, __STR(funcName), argTypes, helpText, CONCAT2(Script_, funcName) < ScriptContext::SERVER >);                \
 		}                                                                                                                                  \
 		__squirrelautobind                                                                                                                 \
-			CONCAT2(__squirrelautobind, __LINE__)(CONCAT2(AUTOBIND_FUNC_CLIENT, funcName), CONCAT2(AUTOBIND_FUNC_SERVER, funcName));       \
+			CONCAT2(__squirrelautobind, __LINE__)(CONCAT2(SQ_CLIENT_, funcName), CONCAT2(SQ_SERVER_, funcName));						   \
 	}                                                                                                                                      \
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm)
 
@@ -43,7 +43,7 @@ class __squirrelautobind;
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm);                                              \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
-		void CONCAT2(AUTOBIND_FUNC_CLIENT, funcName)()                                                                                     \
+		void CONCAT2(SQ_CLIENT_, funcName)()																							   \
 		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::UI)                                                                                \
 				g_pSquirrel<ScriptContext::UI>->AddFuncOverride(__STR(funcName), CONCAT2(Script_, funcName) < ScriptContext::UI >);        \
@@ -52,14 +52,14 @@ class __squirrelautobind;
 				g_pSquirrel<ScriptContext::CLIENT>->AddFuncOverride(                                                                       \
 					__STR(funcName), CONCAT2(Script_, funcName) < ScriptContext::CLIENT >);                                                \
 		}                                                                                                                                  \
-		void CONCAT2(AUTOBIND_FUNC_SERVER, funcName)()                                                                                     \
+		void CONCAT2(SQ_SERVER_, funcName)()																							   \
 		{                                                                                                                                  \
 			if constexpr (runOnContext & ScriptContext::SERVER)                                                                            \
 				g_pSquirrel<ScriptContext::SERVER>->AddFuncOverride(                                                                       \
 					__STR(funcName), CONCAT2(Script_, funcName) < ScriptContext::SERVER >);                                                \
 		}                                                                                                                                  \
 		__squirrelautobind                                                                                                                 \
-			CONCAT2(__squirrelautobind, __LINE__)(CONCAT2(AUTOBIND_FUNC_CLIENT, funcName), CONCAT2(AUTOBIND_FUNC_SERVER, funcName));       \
+			CONCAT2(__squirrelautobind, __LINE__)(CONCAT2(SQ_CLIENT_, funcName), CONCAT2(SQ_SERVER_, funcName));						   \
 	}                                                                                                                                      \
 	template <ScriptContext context> SQRESULT CONCAT2(Script_, funcName)(HSquirrelVM * sqvm)
 
