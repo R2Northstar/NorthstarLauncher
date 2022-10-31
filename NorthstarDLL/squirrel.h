@@ -413,7 +413,8 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 #pragma endregion
 
   public:
-	SquirrelManager() {
+	SquirrelManager()
+	{
 		m_pSQVM = nullptr;
 	}
 
