@@ -78,30 +78,29 @@ struct SQFuncRegistration
 
 enum class ScriptContext : int
 {
-	UI = 1,
-	CLIENT = 2,
-	SERVER = 4,
-
+	SERVER,
+	CLIENT,
+	UI,
 };
 
 static constexpr int operator&(ScriptContext first, ScriptContext second)
 {
-	return (int)first & (int)second;
+	return first == second;
 }
 
 static constexpr int operator&(int first, ScriptContext second)
 {
-	return first & (int)second;
+	return first & (1 << static_cast<int>(second));
 }
 
 static constexpr int operator|(ScriptContext first, ScriptContext second)
 {
-	return (int)first | (int)second;
+	return (1 << static_cast<int>(first)) + (1 << static_cast<int>(second));
 }
 
 static constexpr int operator|(int first, ScriptContext second)
 {
-	return first | (int)second;
+	return first + (1 << static_cast<int>(second));
 }
 
 const char* GetContextName(ScriptContext context);

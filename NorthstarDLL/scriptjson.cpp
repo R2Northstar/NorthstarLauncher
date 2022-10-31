@@ -213,7 +213,7 @@ ADD_SQFUNC(
 	DecodeJSON,
 	"string json, bool fatalParseErrors = false",
 	"converts a json string to a squirrel table",
-	(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	const char* pJson = g_pSquirrel<context>->getstring(sqvm, 1);
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
@@ -245,7 +245,7 @@ ADD_SQFUNC(
 	EncodeJSON,
 	"table data",
 	"converts a squirrel table to a json string",
-	(ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	rapidjson_document doc;
 	doc.SetObject();
