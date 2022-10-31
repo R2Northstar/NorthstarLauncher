@@ -1,7 +1,6 @@
 #pragma once
 #include "pch.h"
 #include "squirreldatatypes.h"
-#include <map>
 
 enum SQRESULT : SQInteger
 {

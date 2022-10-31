@@ -53,9 +53,9 @@ void, __fastcall, (CServerGameDLL* self, unsigned int senderPlayerId, const char
 	if (!g_pServerLimits->CheckChatLimits(&R2::g_pClientArray[senderPlayerId - 1]))
 		return;
 
-	g_pSquirrel<ScriptContext::SERVER>->call("CServerGameDLL_ProcessMessageStartThread", (int)senderPlayerId - 1, text, isTeam);
+	SQRESULT result = g_pSquirrel<ScriptContext::SERVER>->call("CServerGameDLL_ProcessMessageStartThread", static_cast<int>(senderPlayerId) - 1, text, isTeam);
 
-	if (g_pSquirrel<ScriptContext::SERVER>->setupfunc("CServerGameDLL_ProcessMessageStartThread") == SQRESULT_ERROR)
+	if (result == SQRESULT_ERROR)
 		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
 }
 

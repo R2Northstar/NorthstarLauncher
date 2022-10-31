@@ -120,7 +120,6 @@ class SquirrelManagerBase
   public:
 	std::vector<SQFuncRegistration*> m_funcRegistrations;
 
-  public:
 	CSquirrelVM* m_pSQVM;
 	std::map<std::string, SQFunction> m_funcOverrides = {};
 	std::map<std::string, SQFunction> m_funcOriginals = {};
@@ -368,13 +367,13 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
 		}
 
-		SQObject* functionobj = new SQObject();
-		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, functionobj, 0);
+		SQObject functionobj {};
+		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			return SQRESULT_ERROR;
 		}
-		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, functionobj); // Push the function object
+		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
 		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
 		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, 0);
 	}
@@ -390,13 +389,13 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 			spdlog::error(
 				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
 		}
-		SQObject* functionobj = new SQObject();
-		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, functionobj, 0);
+		SQObject functionobj {};
+		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			return SQRESULT_ERROR;
 		}
-		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, functionobj); // Push the function object
+		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
 		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
 
 		FunctionVector function_vector;

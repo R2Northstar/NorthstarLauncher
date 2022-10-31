@@ -552,15 +552,6 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
-template <ScriptContext context> SQRESULT SQ_CreateMessage(HSquirrelVM* sqvm)
-{
-	const char* string = g_pSquirrel<context>->getstring(sqvm, 1);
-
-	g_pSquirrel<context>->schedule_call("testarray", SquirrelAsset("test"), "test", 1);
-
-	return SQRESULT_NOTNULL;
-}
-
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
@@ -671,8 +662,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	StubUnsafeSQFuncs<ScriptContext::UI>();
 
 	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::CLIENT>);
-
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "test", "string test", "", SQ_CreateMessage<ScriptContext::CLIENT>);
 
 	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::UI>);
 
