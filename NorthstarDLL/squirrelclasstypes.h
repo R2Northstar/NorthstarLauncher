@@ -229,7 +229,6 @@ typedef SQRESULT (*sq_setuserdatatypeidType)(HSquirrelVM* sqvm, SQInteger iStack
 typedef void* (*sq_getentityfrominstanceType)(CSquirrelVM* sqvm, SQObject* pInstance, char** ppEntityConstant);
 typedef char** (*sq_GetEntityConstantType)();
 
-
 typedef int (*sq_getSquirrelFunctionType)(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature);
 
 #pragma endregion
