@@ -1,4 +1,5 @@
 #pragma once
+#include "keyvalues.h"
 
 // use the R2 namespace for game funcs
 namespace R2
@@ -167,7 +168,7 @@ namespace R2
 		// +0x56
 		char pad1[0x202];
 
-		void** m_ConVars; // this is a KeyValues* object but not got that struct mapped out atm
+		KeyValues* m_ConVars; // this is a KeyValues* object but not got that struct mapped out atm
 
 		char pad2[0x240];
 
@@ -180,7 +181,7 @@ namespace R2
 		// +0x4FA
 		char m_PersistenceBuffer[PERSISTENCE_MAX_SIZE];
 
-		char pad4[0x2006];
+		char pad4[0x1239];
 
 		// +0xF500
 		char m_UID[32];
