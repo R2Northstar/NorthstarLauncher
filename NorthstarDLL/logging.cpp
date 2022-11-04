@@ -27,7 +27,7 @@ enum class SpewType_t
 };
 
 const std::unordered_map<SpewType_t, const char*> PrintSpewTypes = {
-	{SpewType_t::SPEW_MESSAGE, "SPEW_MSG"},
+	{SpewType_t::SPEW_MESSAGE, "SPEW_MESSAGE"},
 	{SpewType_t::SPEW_WARNING, "SPEW_WARNING"},
 	{SpewType_t::SPEW_ASSERT, "SPEW_ASSERT"},
 	{SpewType_t::SPEW_ERROR, "SPEW_ERROR"},
