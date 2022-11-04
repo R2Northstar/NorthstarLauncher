@@ -113,7 +113,10 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{"CL NATIVE", SourceColor(50, 150, 50, 255)},
 		{"SV NATIVE", SourceColor(150, 50, 150, 255)},
 		// cool launcher things (filesystem, etc.) add more as they come up
-		{"FS NATIVE", SourceColor(255, 190, 0, 255)}, // orange
+		// finding unique colours is hard
+		{"FS NATIVE", SourceColor(0, 150, 150, 255)}, // dark cyan sorta thing idk
+		{"RP NATIVE", SourceColor(255, 190, 0, 255)}, // orange
+		{"NORTHSTAR", SourceColor(66, 72, 128, 255)}, // one of the blues ripped from northstar logo
 		// echo is just a bit grey
 		{"echo", SourceColor(150, 150, 150, 255)}};
 	
