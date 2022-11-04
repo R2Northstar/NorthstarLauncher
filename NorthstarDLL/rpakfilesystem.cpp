@@ -212,13 +212,13 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 			if (bNeedToFreePakName)
 				delete[] pPath;
 
-			spdlog::info("[FS NATIVE] Not loading pak {} for dedicated server", originalPath);
+			spdlog::info("[RP NATIVE] Not loading pak {} for dedicated server", originalPath);
 			return -1;
 		}
 	}
 
 	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
-	spdlog::info("[FS NATIVE] LoadPakAsync {} {}", pPath, iPakHandle);
+	spdlog::info("[RP NATIVE] LoadPakAsync {} {}", pPath, iPakHandle);
 
 	// trak the pak
 	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
@@ -317,7 +317,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		}
 
 	LOG_STARPAK:
-		spdlog::info("[FS NATIVE] LoadStreamPak: {}", filename.string());
+		spdlog::info("[RP NATIVE] LoadStreamPak: {}", filename.string());
 	}
 
 	return ReadFileAsync(pPath, pCallback);
