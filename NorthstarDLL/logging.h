@@ -43,7 +43,7 @@ class ExternalConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		// echo is just a bit grey
 		{"echo", "\033[38;2;150;150;150;49m"}};
 	// clang-format on
-	
+
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;
 	void flush_() override;

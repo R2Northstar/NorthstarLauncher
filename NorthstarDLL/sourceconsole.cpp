@@ -79,7 +79,6 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		colStrings.insert(std::make_pair(idx, baseCol));
 	}
 
-
 	// iterate through our coloured strings and ColorPrint them in order
 	int lastIdx = 0;
 	SourceColor lastCol = baseCol;

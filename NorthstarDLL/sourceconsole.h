@@ -121,7 +121,6 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		// echo is just a bit grey
 		{"echo", SourceColor(150, 150, 150, 255)}};
 	// clang-format on
-		
 
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;
