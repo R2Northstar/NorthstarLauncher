@@ -309,7 +309,7 @@ void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		// end the string with an ansi reset just for safety
 		out += "\033[39;39m";
 	}
-	WRITE_CONSOLE:
+WRITE_CONSOLE:
 	// print the string to the console - this is definitely bad i think
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	auto ignored = WriteConsoleA(handle, out.c_str(), std::strlen(out.c_str()), nullptr, nullptr);
@@ -333,6 +333,7 @@ void InitialiseConsole()
 		freopen("CONOUT$", "w", stderr);
 	}
 
+	// this if statement is adapted from r5sdk
 	if (!strstr(GetCommandLineA(), "-noansiclr"))
 	{
 		DWORD dwMode = NULL;
@@ -366,10 +367,10 @@ void InitialiseLogging()
 	auto sink = std::make_shared<ExternalConsoleSink>();
 	// set the pattern
 	if (g_bSpdLog_UseAnsiClr)
-		sink->set_pattern("[%H:%M:%S] %^%v%$"); // dont put the log level in the pattern if we are using colours, as the colour will show the log level
+		// dont put the log level in the pattern if we are using colours, as the colour will show the log level
+		sink->set_pattern("[%H:%M:%S] %^%v%$");
 	else
 		sink->set_pattern("[%H:%M:%S] [%l] %v");
-
 
 	// add our sink to the logger
 	spdlog::default_logger()->sinks().push_back(sink);

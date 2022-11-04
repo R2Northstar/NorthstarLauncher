@@ -36,10 +36,10 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 	// if we arent using colour, we should exit early
 	if (!g_bSpdLog_UseAnsiClr)
 	{
-		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(m_LogColours[spdlog::level::level_enum::info], fmt::to_string(formatted).c_str());
+		// dont use ColorPrint since we arent using colour
+		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(fmt::to_string(formatted).c_str());
 		return;
 	}
-
 
 	// get the message "tags" (bits of string surrounded with [])
 	// try to get the colour for each "tag"
@@ -61,7 +61,6 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		while (++idx < str.length() && str[idx] != ']')
 		{
 			buf += str[idx];
-
 		}
 		// if we didn't find a closing tag, break
 		if (str[idx] != ']')
@@ -78,7 +77,6 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		}
 		
 		colStrings.insert(std::make_pair(idx, baseCol));
-
 	}
 
 
@@ -99,8 +97,6 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 	// write the last bit of the string
 	std::string sub = str.substr(lastIdx, str.length() - lastIdx);
 	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(lastCol, sub.c_str());
-
-
 }
 
 void SourceConsoleSink::flush_() {}
