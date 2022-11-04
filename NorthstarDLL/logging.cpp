@@ -262,7 +262,7 @@ void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
 
 	std::string out = "";
-	// if ansi colour is turned off, just use std::cout and return
+	// if ansi colour is turned off, just use WriteConsoleA and return
 	if (!g_bSpdLog_UseAnsiClr)
 	{
 		out += fmt::to_string(formatted);
