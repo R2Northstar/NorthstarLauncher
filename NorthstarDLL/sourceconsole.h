@@ -103,6 +103,7 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 
 	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
 	// if you add stuff to this, mimic the changes in logging.h
+	// clang-format off
 	std::map<std::string, SourceColor> m_tags = {
 		// UI is light blue, SV is pink, CL is light green
 		{"UI SCRIPT", SourceColor(100, 255, 255, 255)},
@@ -119,7 +120,7 @@ class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{"NORTHSTAR", SourceColor(66, 72, 128, 255)}, // one of the blues ripped from northstar logo
 		// echo is just a bit grey
 		{"echo", SourceColor(150, 150, 150, 255)}};
-	
+	// clang-format on
 		
 
   protected:

@@ -24,6 +24,7 @@ class ExternalConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
 	// if you add stuff to this, mimic the changes in sourceconsole.h
 	// all of these atm reset the background colour to default, this might need changing at some point?
+	// clang-format off
 	std::map<std::string, std::string> m_tags = {
 		// UI is light blue, SV is pink, CL is light green
 		{"UI SCRIPT", "\033[38;2;100;255;255;49m"},
@@ -41,6 +42,7 @@ class ExternalConsoleSink : public spdlog::sinks::base_sink<std::mutex>
 		{"NORTHSTAR", "\033[38;2;66;72;128;49m"}, // one of the blues ripped from northstar logo
 		// echo is just a bit grey
 		{"echo", "\033[38;2;150;150;150;49m"}};
+	// clang-format on
 	
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;
