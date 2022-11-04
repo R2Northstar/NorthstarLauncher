@@ -75,7 +75,7 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 		{
 			colStrings.insert(std::make_pair(startIdx + 1, m_tags[buf]));
 		}
-		
+
 		colStrings.insert(std::make_pair(idx, baseCol));
 	}
 
