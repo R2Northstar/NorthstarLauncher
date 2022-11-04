@@ -56,6 +56,8 @@ class ServerPresenceManager
 	bool m_bHasPresence = false;
 	bool m_bFirstPresenceUpdate = false;
 
+	bool m_bCacheInvalid = false;
+
 	std::vector<ServerPresenceReporter*> m_vPresenceReporters;
 
 	double m_flLastPresenceUpdate = 0;

@@ -145,9 +145,11 @@ void ServerPresenceManager::RunFrame(double flCurrentTime)
 	for (ServerPresenceReporter* reporter : m_vPresenceReporters)
 		reporter->RunFrame(flCurrentTime, &m_ServerPresence);
 
-	// run on a specified delay
-	if ((flCurrentTime - m_flLastPresenceUpdate) * 1000 < Cvar_ns_server_presence_update_rate->GetFloat())
+	// run on a specified delay, ignore when cache is force invalidated
+	if ((flCurrentTime - m_flLastPresenceUpdate) * 1000 < Cvar_ns_server_presence_update_rate->GetFloat() && !m_bCacheInvalid)
 		return;
+
+	m_bCacheInvalid = false;
 
 	// is this the first frame we're updating this presence?
 	if (m_bFirstPresenceUpdate)
@@ -169,30 +171,35 @@ void ServerPresenceManager::SetPort(const int iPort)
 {
 	// update port
 	m_ServerPresence.m_iPort = iPort;
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetAuthPort(const int iAuthPort)
 {
 	// update authport
 	m_ServerPresence.m_iAuthPort = iAuthPort;
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetName(const std::string sServerNameUnicode)
 {
 	// update name
 	m_ServerPresence.m_sServerName = sServerNameUnicode;
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetDescription(const std::string sServerDescUnicode)
 {
 	// update desc
 	m_ServerPresence.m_sServerDesc = sServerDescUnicode;
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetPassword(const char* pPassword)
 {
 	// update password
 	strncpy_s(m_ServerPresence.m_Password, sizeof(m_ServerPresence.m_Password), pPassword, sizeof(m_ServerPresence.m_Password) - 1);
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetMap(const char* pMapName, bool isInitialising)
@@ -203,6 +210,7 @@ void ServerPresenceManager::SetMap(const char* pMapName, bool isInitialising)
 
 	// update map
 	strncpy_s(m_ServerPresence.m_MapName, sizeof(m_ServerPresence.m_MapName), pMapName, sizeof(m_ServerPresence.m_MapName) - 1);
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetPlaylist(const char* pPlaylistName)
@@ -222,11 +230,14 @@ void ServerPresenceManager::SetPlaylist(const char* pPlaylistName)
 		m_ServerPresence.m_iMaxPlayers = std::stoi(pMaxPlayers);
 	else
 		m_ServerPresence.m_iMaxPlayers = 6;
+
+	m_bCacheInvalid = true;
 }
 
 void ServerPresenceManager::SetPlayerCount(const int iPlayerCount)
 {
 	m_ServerPresence.m_iPlayerCount = iPlayerCount;
+	m_bCacheInvalid = true;
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (CModule module))
