@@ -19,7 +19,7 @@ namespace NS::Colors
 	Color DEBUG		(0  , 255, 255);
 	Color INFO		(16 , 160, 16 );
 	Color WARN		(255, 255, 0  );
-	Color ERR		(255, 150, 150);
+	Color ERR		(255, 50 , 50 );
 	Color CRIT		(255, 0  , 0  );
 	Color OFF		(0  , 0  , 0  );
 };

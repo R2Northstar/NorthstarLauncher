@@ -8,6 +8,21 @@
 
 AUTOHOOK_INIT()
 
+std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context) {
+	switch (context)
+	{
+		case ScriptContext::UI:
+			return NS::log::SCRIPT_UI;
+		case ScriptContext::CLIENT:
+			return NS::log::SCRIPT_CL;
+		case ScriptContext::SERVER:
+			return NS::log::SCRIPT_SV;
+		default:
+			throw std::runtime_error("getSquirrelLoggerByContext called with invalid context");
+			return nullptr;
+	}
+}
+
 namespace NS::log
 {
 	template <ScriptContext context> std::shared_ptr<spdlog::logger> squirrel_logger()
@@ -305,8 +320,10 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		bIsFatalError = g_pSquirrel<ScriptContext::UI>->m_bFatalCompilationErrors;
 	}
 
-	spdlog::error("[{} SCRIPT] COMPILE ERROR {}", GetContextName(realContext), error);
-	spdlog::error("{} line [{}] column [{}]", file, line, column);
+	auto logger = getSquirrelLoggerByContext(realContext);
+
+	logger->error("COMPILE ERROR {}", error);
+	logger->error("{} line [{}] column [{}]", file, line, column);
 
 	// use disconnect to display an error message for the compile error, but only if the compilation error was fatal
 	// todo, we could get this from sqvm itself probably, rather than hooking sq_compiler_create

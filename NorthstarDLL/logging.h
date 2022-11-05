@@ -108,14 +108,13 @@ void RegisterCustomSink(std::shared_ptr<CustomSink> sink);
 
 inline bool g_bSpdLog_UseAnsiColor = true;
 
+// Could maybe use some different names here, idk
 static const char* level_names[] {"trac", "dbug", "info", "warn", "errr", "crit", "off"};
 
 // spdlog logger, for cool colour things
 class ExternalConsoleSink : public CustomSink
 {
-
   private:
-
 	std::map<spdlog::level::level_enum, std::string> m_LogColours = {
 		{spdlog::level::trace, NS::Colors::TRACE.ToANSIColor()},
 		{spdlog::level::debug, NS::Colors::DEBUG.ToANSIColor()},
