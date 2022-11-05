@@ -23,7 +23,6 @@ enum class TextMsgPrintType_t
 	HUD_PRINTCENTER
 };
 
-
 class ICenterPrint
 {
   public:
@@ -69,7 +68,6 @@ const std::unordered_map<SpewType_t, const char> PrintSpewTypes_Short = {
 	{SpewType_t::SPEW_ASSERT, 'A'},
 	{SpewType_t::SPEW_ERROR, 'E'},
 	{SpewType_t::SPEW_LOG, 'L'}};
-
 
 ICenterPrint* pInternalCenterPrint = NULL;
 
