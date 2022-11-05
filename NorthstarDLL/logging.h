@@ -1,50 +1,135 @@
 #pragma once
 #include "pch.h"
 #include "spdlog/sinks/base_sink.h"
+#include "spdlog/logger.h"
+#include "squirrel.h"
+#include "color.h"
 
 void CreateLogFiles();
 void InitialiseLogging();
 void InitialiseConsole();
 
-inline bool g_bSpdLog_UseAnsiClr = false;
+class ColoredLogger;
+
+struct custom_log_msg : spdlog::details::log_msg
+{
+  public:
+	custom_log_msg(
+		ColoredLogger* origin,
+		spdlog::details::log_msg msg)
+		: origin(origin), spdlog::details::log_msg(msg)
+	{
+	}
+
+	ColoredLogger* origin;
+};
+
+class CustomSink : public spdlog::sinks::base_sink<std::mutex>
+{
+  public:
+	void custom_log(const custom_log_msg& msg);
+	virtual void custom_sink_it_(const custom_log_msg& msg) {
+		throw std::runtime_error("Pure virtual call to CustomSink::custom_sink_it_");
+	}
+};
+
+class ColoredLogger : public spdlog::logger
+{
+  public:
+	std::string ANSIColor;
+	SourceColor SRCColor;
+
+	std::vector<std::shared_ptr<CustomSink>> custom_sinks_;
+
+	ColoredLogger(std::string name, Color color, bool first=false) : spdlog::logger(*spdlog::default_logger())
+	{
+		name_ = std::move(name);
+		if (!first)
+		{
+			custom_sinks_ = dynamic_pointer_cast<ColoredLogger>(spdlog::default_logger())->custom_sinks_;
+		}
+		
+		ANSIColor = color.ToANSIColor();
+		SRCColor = color.ToSourceColor();
+	}
+
+	void sink_it_(const spdlog::details::log_msg& msg)
+	{
+		custom_log_msg custom_msg {this, msg};
+
+		// Ugh
+		for (auto& sink : sinks_)
+		{
+			SPDLOG_TRY
+			{
+				sink->log(custom_msg);
+			}
+			SPDLOG_LOGGER_CATCH()
+		}
+
+		for (auto& sink : custom_sinks_)
+		{
+			SPDLOG_TRY
+			{
+				sink->custom_log(custom_msg);
+			}
+			SPDLOG_LOGGER_CATCH()
+		}
+
+		if (should_flush_(custom_msg))
+		{
+			flush_();
+		}
+	}
+};
+
+namespace NS::log
+{
+	// Squirrel
+	extern std::shared_ptr<ColoredLogger> SCRIPT_UI;
+	extern std::shared_ptr<ColoredLogger> SCRIPT_CL;
+	extern std::shared_ptr<ColoredLogger> SCRIPT_SV;
+
+	// Native code
+	extern std::shared_ptr<ColoredLogger> NATIVE_UI;
+	extern std::shared_ptr<ColoredLogger> NATIVE_CL;
+	extern std::shared_ptr<ColoredLogger> NATIVE_SV;
+	extern std::shared_ptr<ColoredLogger> NATIVE_EN;
+
+	// File system
+	extern std::shared_ptr<ColoredLogger> fs;
+	// RPak
+	extern std::shared_ptr<ColoredLogger> rpak;
+
+	extern std::shared_ptr<ColoredLogger> NORTHSTAR;
+}; // namespace NS::log
+
+void RegisterCustomSink(std::shared_ptr<CustomSink> sink);
+
+inline bool g_bSpdLog_UseAnsiColor = true;
+
+static const char* level_names[] {"trac", "dbug", "info", "warn", "errr", "crit", "off"};
 
 // spdlog logger, for cool colour things
-class ExternalConsoleSink : public spdlog::sinks::base_sink<std::mutex>
+class ExternalConsoleSink : public CustomSink
 {
-  private:
-	std::map<spdlog::level::level_enum, std::string> m_LogColours = {
-		{spdlog::level::trace, "\033[38;2;0;255;255;49m"},
-		{spdlog::level::debug, "\033[38;2;0;255;255;49m"},
-		{spdlog::level::info, "\033[39;49m"}, // this could maybe be just white but idk the nice white that console uses
-		{spdlog::level::warn, "\033[38;2;255;255;0;49m"},
-		{spdlog::level::err, "\033[38;2;255;100;100;49m"},
-		{spdlog::level::critical, "\033[38;2;255;0;0;49m"},
-		{spdlog::level::off, ""}};
 
-	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
-	// if you add stuff to this, mimic the changes in sourceconsole.h
-	// all of these atm reset the background colour to default, this might need changing at some point?
-	// clang-format off
-	std::map<std::string, std::string> m_tags = {
-		// UI is light blue, SV is pink, CL is light green
-		{"UI SCRIPT", "\033[38;2;100;255;255;49m"},
-		{"CL SCRIPT", "\033[38;2;100;255;100;49m"},
-		{"SV SCRIPT", "\033[38;2;255;100;255;49m"},
-		// native is just a darker version of script
-		// tbh unsure if CL and UI will ever be used? 
-		{"UI NATIVE", "\033[38;2;50;150;150;49m"},
-		{"CL NATIVE", "\033[38;2;50;150;50;49m"},
-		{"SV NATIVE", "\033[38;2;150;50;150;49m"},
-		// cool launcher things (filesystem, etc.) add more as they come up
-		// finding unique colours is hard
-		{"FS NATIVE", "\033[38;2;0;150;150;49m"}, // dark cyan sorta thing idk
-		{"RP NATIVE", "\033[38;2;255;190;0;49m"}, // orange
-		{"NORTHSTAR", "\033[38;2;66;72;128;49m"}, // one of the blues ripped from northstar logo
-		// echo is just a bit grey
-		{"echo", "\033[38;2;150;150;150;49m"}};
-	// clang-format on
+  private:
+
+	std::map<spdlog::level::level_enum, std::string> m_LogColours = {
+		{spdlog::level::trace, NS::Colors::TRACE.ToANSIColor()},
+		{spdlog::level::debug, NS::Colors::DEBUG.ToANSIColor()},
+		{spdlog::level::info, NS::Colors::INFO.ToANSIColor()},
+		{spdlog::level::warn, NS::Colors::WARN.ToANSIColor()},
+		{spdlog::level::err, NS::Colors::ERR.ToANSIColor()},
+		{spdlog::level::critical, NS::Colors::CRIT.ToANSIColor()},
+		{spdlog::level::off, NS::Colors::OFF.ToANSIColor()}
+	};
+
+	std::string default_color = "\033[39;49m";
 
   protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;
+	void custom_sink_it_(const custom_log_msg& msg);
 	void flush_() override;
 };

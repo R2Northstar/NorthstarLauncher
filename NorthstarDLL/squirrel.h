@@ -145,6 +145,8 @@ template <ScriptContext context> class SquirrelManager
 
 	bool m_bFatalCompilationErrors = false;
 
+	std::shared_ptr<spdlog::logger> logger;
+
 #pragma region SQVM funcs
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
 	sq_defconstType __sq_defconst;

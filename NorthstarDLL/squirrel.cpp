@@ -8,6 +8,18 @@
 
 AUTOHOOK_INIT()
 
+namespace NS::log
+{
+	template <ScriptContext context> std::shared_ptr<spdlog::logger> squirrel_logger()
+	{
+		// Switch statements can't be constexpr afaik
+		// clang-format off
+		if constexpr (context == ScriptContext::UI) { return SCRIPT_UI; }
+		if constexpr (context == ScriptContext::CLIENT) { return SCRIPT_CL; }
+		if constexpr (context == ScriptContext::SERVER) { return SCRIPT_SV; }
+	}
+};
+
 const char* GetContextName(ScriptContext context)
 {
 	switch (context)
@@ -245,8 +257,7 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 	{
 		if (buf[charsWritten - 1] == '\n')
 			buf[charsWritten - 1] = '\0';
-
-		spdlog::info("[{} SCRIPT] {}", GetContextName_Short(context), buf);
+		g_pSquirrel<context>->logger->info("{}", buf);
 	}
 
 	va_end(va);
@@ -533,6 +544,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 		&g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc);
 	g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc = g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc;
 
+	g_pSquirrel<ScriptContext::CLIENT>->logger = NS::log::SCRIPT_CL;
+	g_pSquirrel<ScriptContext::UI>->logger = NS::log::SCRIPT_UI;
+
 	// uiscript_reset concommand: don't loop forever if compilation fails
 	module.Offset(0x3C6E4C).NOP(6);
 
@@ -596,6 +610,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x418AF0).As<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getentityfrominstance = module.Offset(0x1E920).As<sq_getentityfrominstanceType>();
+
+	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 
 	MAKEHOOK(
 		module.Offset(0x1DD10),

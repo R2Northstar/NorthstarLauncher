@@ -14,6 +14,25 @@ AUTOHOOK_INIT()
 
 ConVar* Cvar_spewlog_enable;
 
+std::vector<std::shared_ptr<ColoredLogger>> loggers {};
+
+namespace NS::log
+{
+	std::shared_ptr<ColoredLogger> SCRIPT_UI;
+	std::shared_ptr<ColoredLogger> SCRIPT_CL;
+	std::shared_ptr<ColoredLogger> SCRIPT_SV;
+
+	std::shared_ptr<ColoredLogger> NATIVE_UI;
+	std::shared_ptr<ColoredLogger> NATIVE_CL;
+	std::shared_ptr<ColoredLogger> NATIVE_SV;
+	std::shared_ptr<ColoredLogger> NATIVE_EN;
+
+	std::shared_ptr<ColoredLogger> fs;
+	std::shared_ptr<ColoredLogger> rpak;
+
+	std::shared_ptr<ColoredLogger> NORTHSTAR;
+}; // namespace NS::log
+
 enum class SpewType_t
 {
 	SPEW_MESSAGE = 0,
@@ -121,7 +140,7 @@ void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_
 	if (formatted[endpos - 1] == '\n')
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
-	spdlog::log(PrintSpewLevels.at(type), "[SV NATIVE] [{}] {}", PrintSpewTypes_Short.at(type), formatted);
+	NS::log::NATIVE_SV->log(PrintSpewLevels.at(type), "{}", formatted);
 }
 
 // used for printing the output of status
@@ -217,6 +236,28 @@ void,, (BFRead* msg))
 }
 
 // clang-format off
+AUTOHOOK(Hook_fprintf, engine.dll + 0x51B1F0,
+int,, (void* const stream, const char* const format, ...))
+// clang-format on
+{
+	va_list va;
+	va_start(va, format);
+
+	SQChar buf[1024];
+	int charsWritten = vsnprintf_s(buf, _TRUNCATE, format, va);
+
+	if (charsWritten > 0)
+	{
+		if (buf[charsWritten - 1] == '\n')
+			buf[charsWritten - 1] = '\0';
+		NS::log::NATIVE_EN->info("{}", buf);
+	}
+
+	va_end(va);
+	return 0;
+}
+
+// clang-format off
 AUTOHOOK(ConCommand_echo, engine.dll + 0x123680,
 void,, (const CCommand& arg))
 // clang-format on
@@ -258,56 +299,39 @@ void CreateLogFiles()
 
 void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 {
+	throw std::runtime_error("sink_it_ called on SourceConsoleSink with pure log_msg. This is an error!");
+}
+
+void ExternalConsoleSink::custom_sink_it_(const custom_log_msg& msg)
+{
 	spdlog::memory_buf_t formatted;
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
 
 	std::string out = "";
 	// if ansi colour is turned off, just use WriteConsoleA and return
-	if (!g_bSpdLog_UseAnsiClr)
+	if (!g_bSpdLog_UseAnsiColor)
 	{
 		out += fmt::to_string(formatted);
 		goto WRITE_CONSOLE;
 	}
 
-	// get the message "tags" (bits of string surrounded with [])
-	// try to get the colour for each "tag"
 	// print to the console with colours
 	{
 		// get message string
 		std::string str = fmt::to_string(formatted);
-		// should probably be a stack in case of nested tags but honestly i do not care
-		std::string baseCol = m_LogColours[msg.level];
-		out = baseCol; // always start by setting the colour
-		for (int i = 0; i < str.length(); ++i)
-		{
-			char c = str[i];
-			// add the char to the output
-			out += c;
-			// we are only looking for [ for bonus stuff
-			if (c != '[')
-				continue;
 
-			// this could probably be done better with substr and find?
-			// breaks when someone does something like: "thing [ stuff [UI SCRIPT]" which shouldn't rly happen in practice tbh
-			std::string buf = "";
-			while (++i < str.length() && str[i] != ']')
-			{
-				buf += str[i];
-			}
+		std::string levelColor = m_LogColours[msg.level];
+		std::string name {msg.logger_name.begin(), msg.logger_name.end()};
 
-			// if its an unknown tag (no colour), then just use the current colour
-			if (m_tags.find(buf) != m_tags.end())
-				out += m_tags[buf];
+		std::string name_str = "[NAME]";
+		int name_pos = str.find(name_str);
+		str.replace(name_pos, name_str.length(),msg.origin->ANSIColor + "[" + name + "]" + default_color);
 
-			// add the buf
-			out += buf;
-			// reset back to baseCol
-			out += baseCol;
-			// add the ] so it doesn't get missed
-			out += str[i];
-		}
-		// end the string with an ansi reset just for safety
-		out += "\033[39;39m";
+		std::string level_str = "[LVL]";
+		int level_pos = str.find(level_str);
+		str.replace(level_pos, level_str.length(), levelColor + "[" + std::string(level_names[msg.level]) + "]" + default_color);
+
+		out += str;
 	}
 WRITE_CONSOLE:
 	// print the string to the console - this is definitely bad i think
@@ -319,6 +343,12 @@ WRITE_CONSOLE:
 void ExternalConsoleSink::flush_()
 {
 	std::cout << std::flush;
+}
+
+void CustomSink::custom_log(const custom_log_msg& msg)
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	custom_sink_it_(msg);
 }
 
 void InitialiseConsole()
@@ -355,25 +385,60 @@ void InitialiseConsole()
 	}
 }
 
+void RegisterCustomSink(std::shared_ptr<CustomSink> sink)
+{
+	for (auto& logger : loggers)
+	{
+		logger->custom_sinks_.push_back(sink);
+	}
+};
+
 void InitialiseLogging()
 {
 	// create a logger, and set it to default
-	spdlog::set_default_logger(std::make_shared<spdlog::logger>("logger"));
+	NS::log::NORTHSTAR = std::make_shared<ColoredLogger>("NORTHSTAR", NS::Colors::NORTHSTAR, true);
+	NS::log::NORTHSTAR->sinks().clear();
+	loggers.push_back(NS::log::NORTHSTAR);
+	spdlog::set_default_logger(NS::log::NORTHSTAR);
 
 	// set whether we should use colour in the logs
-	g_bSpdLog_UseAnsiClr = !strstr(GetCommandLineA(), "-noansiclr");
+	g_bSpdLog_UseAnsiColor = !strstr(GetCommandLineA(), "-noansiclr");
 
 	// create our console sink
 	auto sink = std::make_shared<ExternalConsoleSink>();
 	// set the pattern
-	if (g_bSpdLog_UseAnsiClr)
+	if (g_bSpdLog_UseAnsiColor)
 		// dont put the log level in the pattern if we are using colours, as the colour will show the log level
-		sink->set_pattern("[%H:%M:%S] %^%v%$");
+		sink->set_pattern("[%H:%M:%S] [NAME] [LVL] %v");
 	else
-		sink->set_pattern("[%H:%M:%S] [%l] %v");
+		sink->set_pattern("[%H:%M:%S] [%n] [%l] %v");
 
 	// add our sink to the logger
-	spdlog::default_logger()->sinks().push_back(sink);
+	NS::log::NORTHSTAR->custom_sinks_.push_back(sink);
+
+	NS::log::SCRIPT_UI = std::make_shared<ColoredLogger>("SCRIPT UI", NS::Colors::SCRIPT_UI);
+	NS::log::SCRIPT_CL = std::make_shared<ColoredLogger>("SCRIPT CL", NS::Colors::SCRIPT_CL);
+	NS::log::SCRIPT_SV = std::make_shared<ColoredLogger>("SCRIPT SV", NS::Colors::SCRIPT_SV);
+
+	NS::log::NATIVE_UI = std::make_shared<ColoredLogger>("NATIVE UI", NS::Colors::NATIVE_UI);
+	NS::log::NATIVE_CL = std::make_shared<ColoredLogger>("NATIVE CL", NS::Colors::NATIVE_CL);
+	NS::log::NATIVE_SV = std::make_shared<ColoredLogger>("NATIVE SV", NS::Colors::NATIVE_SV);
+	NS::log::NATIVE_EN = std::make_shared<ColoredLogger>("NATIVE EN", NS::Colors::NATIVE_EN);
+
+	NS::log::fs = std::make_shared<ColoredLogger>("FILESYSTM", NS::Colors::FILESYSTEM);
+	NS::log::rpak = std::make_shared<ColoredLogger>("RPAK_FSYS", NS::Colors::RPAK);
+
+	loggers.push_back(NS::log::SCRIPT_UI);
+	loggers.push_back(NS::log::SCRIPT_CL);
+	loggers.push_back(NS::log::SCRIPT_SV);
+
+	loggers.push_back(NS::log::NATIVE_UI);
+	loggers.push_back(NS::log::NATIVE_CL);
+	loggers.push_back(NS::log::NATIVE_SV);
+	loggers.push_back(NS::log::NATIVE_EN);
+
+	loggers.push_back(NS::log::fs);
+	loggers.push_back(NS::log::rpak);
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))

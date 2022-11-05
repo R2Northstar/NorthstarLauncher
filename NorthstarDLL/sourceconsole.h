@@ -11,30 +11,6 @@ class EditablePanel
 	unsigned char unknown[0x2B0];
 };
 
-struct SourceColor
-{
-	unsigned char R;
-	unsigned char G;
-	unsigned char B;
-	unsigned char A;
-
-	SourceColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-	{
-		R = r;
-		G = g;
-		B = b;
-		A = a;
-	}
-
-	SourceColor()
-	{
-		R = 0;
-		G = 0;
-		B = 0;
-		A = 0;
-	}
-};
-
 class IConsoleDisplayFunc
 {
   public:
@@ -89,40 +65,21 @@ class CGameConsole
 extern SourceInterface<CGameConsole>* g_pSourceGameConsole;
 
 // spdlog logger
-class SourceConsoleSink : public spdlog::sinks::base_sink<std::mutex>
+class SourceConsoleSink : public CustomSink
 {
   private:
 	std::map<spdlog::level::level_enum, SourceColor> m_LogColours = {
-		{spdlog::level::trace, SourceColor(0, 255, 255, 255)},
-		{spdlog::level::debug, SourceColor(0, 255, 255, 255)},
-		{spdlog::level::info, SourceColor(255, 255, 255, 255)},
-		{spdlog::level::warn, SourceColor(255, 255, 0, 255)},
-		{spdlog::level::err, SourceColor(255, 150, 150, 255)}, // i changed this red to be different to the critical red
-		{spdlog::level::critical, SourceColor(255, 0, 0, 255)},
-		{spdlog::level::off, SourceColor(0, 0, 0, 0)}};
-
-	// this map is used to print coloured tags (strings in the form "[<tag>]") to the console
-	// if you add stuff to this, mimic the changes in logging.h
-	// clang-format off
-	std::map<std::string, SourceColor> m_tags = {
-		// UI is light blue, SV is pink, CL is light green
-		{"UI SCRIPT", SourceColor(100, 255, 255, 255)},
-		{"CL SCRIPT", SourceColor(100, 255, 100, 255)},
-		{"SV SCRIPT", SourceColor(255, 100, 255, 255)},
-		// native is just a darker version of script
-		{"UI NATIVE", SourceColor(50, 150, 150, 255)},
-		{"CL NATIVE", SourceColor(50, 150, 50, 255)},
-		{"SV NATIVE", SourceColor(150, 50, 150, 255)},
-		// cool launcher things (filesystem, etc.) add more as they come up
-		// finding unique colours is hard
-		{"FS NATIVE", SourceColor(0, 150, 150, 255)}, // dark cyan sorta thing idk
-		{"RP NATIVE", SourceColor(255, 190, 0, 255)}, // orange
-		{"NORTHSTAR", SourceColor(66, 72, 128, 255)}, // one of the blues ripped from northstar logo
-		// echo is just a bit grey
-		{"echo", SourceColor(150, 150, 150, 255)}};
-	// clang-format on
+		{spdlog::level::trace, NS::Colors::TRACE.ToSourceColor()},
+		{spdlog::level::debug, NS::Colors::DEBUG.ToSourceColor()},
+		{spdlog::level::info, NS::Colors::INFO.ToSourceColor()},
+		{spdlog::level::warn, NS::Colors::WARN.ToSourceColor()},
+		{spdlog::level::err, NS::Colors::ERR.ToSourceColor()},
+		{spdlog::level::critical, NS::Colors::CRIT.ToSourceColor()},
+		{spdlog::level::off, NS::Colors::OFF.ToSourceColor()}
+	};
 
   protected:
+	void custom_sink_it_(const custom_log_msg& msg);
 	void sink_it_(const spdlog::details::log_msg& msg) override;
 	void flush_() override;
 };
