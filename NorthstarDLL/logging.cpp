@@ -137,13 +137,9 @@ void InitialiseConsole()
 
 		if (!SetConsoleMode(hOutput, dwMode)) // Some editions of Windows have 'VirtualTerminalLevel' disabled by default.
 		{
-			// Warn the user if 'VirtualTerminalLevel' could not be set on users environment.
-			MessageBoxA(
-				NULL,
-				"Failed to set console mode 'VirtualTerminalLevel'.\n"
-				"Please add the '-noansiclr' parameter and restart \nthe game if output logging appears distorted.",
-				"Northstar Warning",
-				MB_ICONWARNING | MB_OK);
+			// If 'VirtualTerminalLevel' can't be set, just disable ANSI color, since it wouldnt work anyway.
+			spdlog::warn("could not set VirtualTerminalLevel. Disabling color output");
+			g_bSpdLog_UseAnsiColor = false;
 		}
 	}
 }

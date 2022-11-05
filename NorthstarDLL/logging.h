@@ -14,12 +14,7 @@ class ColoredLogger;
 struct custom_log_msg : spdlog::details::log_msg
 {
   public:
-	custom_log_msg(
-		ColoredLogger* origin,
-		spdlog::details::log_msg msg)
-		: origin(origin), spdlog::details::log_msg(msg)
-	{
-	}
+	custom_log_msg(ColoredLogger* origin, spdlog::details::log_msg msg) : origin(origin), spdlog::details::log_msg(msg) {}
 
 	ColoredLogger* origin;
 };
@@ -28,7 +23,8 @@ class CustomSink : public spdlog::sinks::base_sink<std::mutex>
 {
   public:
 	void custom_log(const custom_log_msg& msg);
-	virtual void custom_sink_it_(const custom_log_msg& msg) {
+	virtual void custom_sink_it_(const custom_log_msg& msg)
+	{
 		throw std::runtime_error("Pure virtual call to CustomSink::custom_sink_it_");
 	}
 };
@@ -41,14 +37,14 @@ class ColoredLogger : public spdlog::logger
 
 	std::vector<std::shared_ptr<CustomSink>> custom_sinks_;
 
-	ColoredLogger(std::string name, Color color, bool first=false) : spdlog::logger(*spdlog::default_logger())
+	ColoredLogger(std::string name, Color color, bool first = false) : spdlog::logger(*spdlog::default_logger())
 	{
 		name_ = std::move(name);
 		if (!first)
 		{
 			custom_sinks_ = dynamic_pointer_cast<ColoredLogger>(spdlog::default_logger())->custom_sinks_;
 		}
-		
+
 		ANSIColor = color.ToANSIColor();
 		SRCColor = color.ToSourceColor();
 	}
@@ -122,8 +118,7 @@ class ExternalConsoleSink : public CustomSink
 		{spdlog::level::warn, NS::Colors::WARN.ToANSIColor()},
 		{spdlog::level::err, NS::Colors::ERR.ToANSIColor()},
 		{spdlog::level::critical, NS::Colors::CRIT.ToANSIColor()},
-		{spdlog::level::off, NS::Colors::OFF.ToANSIColor()}
-	};
+		{spdlog::level::off, NS::Colors::OFF.ToANSIColor()}};
 
 	std::string default_color = "\033[39;49m";
 
