@@ -51,7 +51,6 @@ struct SourceColor
 	}
 };
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Basic handler for an rgb set of colors
 //			This class is fully inline
@@ -59,7 +58,7 @@ struct SourceColor
 class Color
 {
   public:
-	Color(int r, int g, int b, int a=255)
+	Color(int r, int g, int b, int a = 255)
 	{
 		_color[0] = (unsigned char)r;
 		_color[1] = (unsigned char)g;
@@ -155,7 +154,8 @@ class Color
 		return newColor;
 	}
 
-	std::string ToANSIColor() {
+	std::string ToANSIColor()
+	{
 		std::string out = "\033[38;2;";
 		out += std::to_string(_color[0]) + ";";
 		out += std::to_string(_color[1]) + ";";
@@ -164,7 +164,8 @@ class Color
 		return out;
 	}
 
-	SourceColor ToSourceColor() {
+	SourceColor ToSourceColor()
+	{
 		return SourceColor(_color[0], _color[1], _color[2], _color[3]);
 	}
 
@@ -193,4 +194,4 @@ namespace NS::Colors
 	extern Color ERR;
 	extern Color CRIT;
 	extern Color OFF;
-};
+}; // namespace NS::Colors

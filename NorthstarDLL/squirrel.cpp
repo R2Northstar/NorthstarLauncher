@@ -8,18 +8,19 @@
 
 AUTOHOOK_INIT()
 
-std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context) {
+std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context)
+{
 	switch (context)
 	{
-		case ScriptContext::UI:
-			return NS::log::SCRIPT_UI;
-		case ScriptContext::CLIENT:
-			return NS::log::SCRIPT_CL;
-		case ScriptContext::SERVER:
-			return NS::log::SCRIPT_SV;
-		default:
-			throw std::runtime_error("getSquirrelLoggerByContext called with invalid context");
-			return nullptr;
+	case ScriptContext::UI:
+		return NS::log::SCRIPT_UI;
+	case ScriptContext::CLIENT:
+		return NS::log::SCRIPT_CL;
+	case ScriptContext::SERVER:
+		return NS::log::SCRIPT_SV;
+	default:
+		throw std::runtime_error("getSquirrelLoggerByContext called with invalid context");
+		return nullptr;
 	}
 }
 
