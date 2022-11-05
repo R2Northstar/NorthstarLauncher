@@ -75,8 +75,7 @@ class SourceConsoleSink : public CustomSink
 		{spdlog::level::warn, NS::Colors::WARN.ToSourceColor()},
 		{spdlog::level::err, NS::Colors::ERR.ToSourceColor()},
 		{spdlog::level::critical, NS::Colors::CRIT.ToSourceColor()},
-		{spdlog::level::off, NS::Colors::OFF.ToSourceColor()}
-	};
+		{spdlog::level::off, NS::Colors::OFF.ToSourceColor()}};
 
   protected:
 	void custom_sink_it_(const custom_log_msg& msg);
