@@ -328,6 +328,7 @@ int main(int argc, char* argv[])
 	{
 		while (!IsDebuggerPresent())
 		{
+			// Sleep 100ms to give debugger time to attach.
 			Sleep(100);
 		}
 	}
