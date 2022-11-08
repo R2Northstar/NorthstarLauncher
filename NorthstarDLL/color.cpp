@@ -9,7 +9,7 @@ namespace NS::Colors
 	Color NATIVE_UI		(50 , 150, 150);
 	Color NATIVE_CL		(50 , 150, 50 );
 	Color NATIVE_SV		(150, 50 , 150);
-	Color NATIVE_EN		(252, 133, 153);
+	Color NATIVE_ENGINE	(252, 133, 153);
 	Color FILESYSTEM	(0  , 150, 150);
 	Color RPAK			(255, 190, 0  );
 	Color NORTHSTAR		(66 , 72 , 128);

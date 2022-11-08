@@ -181,7 +181,7 @@ namespace NS::Colors
 	extern Color NATIVE_UI;
 	extern Color NATIVE_CL;
 	extern Color NATIVE_SV;
-	extern Color NATIVE_EN;
+	extern Color NATIVE_ENGINE;
 	extern Color FILESYSTEM;
 	extern Color RPAK;
 	extern Color NORTHSTAR;
