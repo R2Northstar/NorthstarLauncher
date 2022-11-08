@@ -20,6 +20,7 @@
 
 namespace fs = std::filesystem;
 
+#include "structs.h"
 #include "logging.h"
 #include "MinHook.h"
 #include "spdlog/spdlog.h"

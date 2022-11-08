@@ -5,25 +5,28 @@
 typedef void* FileHandle_t;
 
 #pragma pack(push, 1)
-struct VPKFileEntry
+
+// clang-format off
+OFFSET_STRUCT(VPKFileEntry)
 {
-	char* directory;
-	char* filename;
-	char* extension;
-	unsigned char unknown[0x38];
+	STRUCT_SIZE(0x44);
+	FIELD(0x0, char* directory)
+	FIELD(0x4, char* filename)
+	FIELD(0x8, char* extension)
 };
+// clang-format on
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct VPKData
+// clang-format off
+OFFSET_STRUCT(VPKData)
 {
-	unsigned char unknown[5];
-	char path[255];
-	unsigned char unknown2[0x134];
-	int32_t numEntries;
-	unsigned char unknown3[12];
-	VPKFileEntry* entries;
+	STRUCT_SIZE(0x24A)
+	FIELD(0x5, char path[255])
+	FIELD(0x238, int32_t numEntries)
+	FIELD(0x23C, VPKFileEntry* entries)
 };
+// clang-format on
 #pragma pack(pop)
 
 enum SearchPathAdd_t
