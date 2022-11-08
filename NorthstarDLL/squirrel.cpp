@@ -33,8 +33,9 @@ namespace NS::log
 		if constexpr (context == ScriptContext::UI) { return SCRIPT_UI; }
 		if constexpr (context == ScriptContext::CLIENT) { return SCRIPT_CL; }
 		if constexpr (context == ScriptContext::SERVER) { return SCRIPT_SV; }
+		// clang-format on
 	}
-};
+}; // namespace NS::log
 
 const char* GetContextName(ScriptContext context)
 {

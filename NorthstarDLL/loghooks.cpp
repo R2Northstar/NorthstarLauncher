@@ -132,7 +132,7 @@ void,, (const CCommand& arg))
 // clang-format on
 {
 	if (arg.ArgC() >= 2)
-		spdlog::info("[echo] {}", arg.ArgS());
+		NS::log::echo->info("{}", arg.ArgS());
 }
 
 // clang-format off

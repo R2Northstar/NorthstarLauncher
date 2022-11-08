@@ -41,10 +41,6 @@ void SourceConsoleSink::custom_sink_it_(const custom_log_msg& msg)
 		return;
 	}
 
-	// get the message "tags" (bits of string surrounded with [])
-	// try to get the colour for each "tag"
-	// print to the console with colours
-
 	// get message string
 	std::string str = fmt::to_string(formatted);
 

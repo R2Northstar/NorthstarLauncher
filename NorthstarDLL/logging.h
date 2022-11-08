@@ -96,6 +96,8 @@ namespace NS::log
 	extern std::shared_ptr<ColoredLogger> fs;
 	// RPak
 	extern std::shared_ptr<ColoredLogger> rpak;
+	// Echo
+	extern std::shared_ptr<ColoredLogger> echo;
 
 	extern std::shared_ptr<ColoredLogger> NORTHSTAR;
 }; // namespace NS::log

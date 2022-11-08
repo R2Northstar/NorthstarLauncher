@@ -246,7 +246,7 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 		bShouldUnloadPaks = true;
 	}
 
-	NS::log::fs->info("UnloadPak {}", nPakHandle);
+	NS::log::rpak->info("UnloadPak {}", nPakHandle);
 	return UnloadPak(nPakHandle, pCallback);
 }
 
@@ -263,7 +263,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 
 	if (path.extension() == ".stbsp")
 	{
-		NS::log::fs->info("LoadStreamBsp: {}", filename.string());
+		NS::log::rpak->info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
 		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
