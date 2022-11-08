@@ -130,6 +130,7 @@ void InitialiseConsole()
 	// this if statement is adapted from r5sdk
 	if (!strstr(GetCommandLineA(), "-noansiclr"))
 	{
+		g_bSpdLog_UseAnsiColor = true;
 		DWORD dwMode = NULL;
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -160,9 +161,6 @@ void InitialiseLogging()
 	NS::log::NORTHSTAR->sinks().clear();
 	loggers.push_back(NS::log::NORTHSTAR);
 	spdlog::set_default_logger(NS::log::NORTHSTAR);
-
-	// set whether we should use colour in the logs
-	g_bSpdLog_UseAnsiColor = !strstr(GetCommandLineA(), "-noansiclr");
 
 	// create our console sink
 	auto sink = std::make_shared<ExternalConsoleSink>();
