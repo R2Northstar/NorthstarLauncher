@@ -25,16 +25,15 @@ OFFSET_STRUCT(Name)
 
 #define OFFSET_STRUCT(name) union name
 #define STRUCT_SIZE(size) char __size[size];
-#define STRUCT_FIELD_OFFSET(offset, signature)                      \
-	struct															\
-	{																\
-		char CONCAT2(pad, __LINE__)[offset];						\
-		signature;													\
+#define STRUCT_FIELD_OFFSET(offset, signature)                                                                                             \
+	struct                                                                                                                                 \
+	{                                                                                                                                      \
+		char CONCAT2(pad, __LINE__)[offset];                                                                                               \
+		signature;                                                                                                                         \
 	};
 
 // Special case for a 0-offset field
 #define STRUCT_FIELD_NOOFFSET(offset, signature) signature;
-
 
 // Based on: https://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument
 // Yes, this is hacky, but it works quite well actually
