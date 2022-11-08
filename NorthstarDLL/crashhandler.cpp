@@ -90,15 +90,15 @@ template <> struct fmt::formatter<M128A> : fmt::formatter<string_view>
 	template <typename FormatContext> auto format(const M128A& obj, FormatContext& ctx)
 	{
 		// Masking the top and bottom half of the long long
-		int v1 = obj.Low && INT_MAX;
-		int v2 = (obj.Low && ((long long)INT_MAX) << 16) >> 16;
-		int v3 = obj.High && INT_MAX;
-		int v4 = (obj.High && ((long long)INT_MAX) << 16) >> 16;
+		int v1 = obj.Low & INT_MAX;
+		int v2 = obj.Low >> 16;
+		int v3 = obj.High & INT_MAX;
+		int v4 = obj.High >> 16;
 		// Oh hey looks, its the evil floating point bit level hack!
 		// Yes, i could use reinterpret cast, but this is more fun :)
 		return fmt::format_to(
 			ctx.out(),
-			"[ [ {:e}, {:e}, {:e}, {:e}], [ 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x} ] ]",
+			"[ {:G}, {:G}, {:G}, {:G}], [ 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x} ]",
 			*(float*)&v1,
 			*(float*)&v2,
 			*(float*)&v3,
