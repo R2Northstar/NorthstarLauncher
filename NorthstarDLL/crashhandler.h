@@ -3,14 +3,12 @@
 void InitialiseCrashHandler();
 void RemoveCrashHandler();
 
-
 struct BacktraceModule
 {
 	std::string name;
 	std::string relativeAddress;
 	std::string address;
 };
-
 
 struct ExceptionLog
 {
