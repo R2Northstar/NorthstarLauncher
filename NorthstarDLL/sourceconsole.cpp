@@ -33,14 +33,6 @@ void SourceConsoleSink::custom_sink_it_(const custom_log_msg& msg)
 	spdlog::memory_buf_t formatted;
 	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
 
-	// if we arent using colour, we should exit early
-	if (!g_bSpdLog_UseAnsiColor)
-	{
-		// dont use ColorPrint since we arent using colour
-		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(fmt::to_string(formatted).c_str());
-		return;
-	}
-
 	// get message string
 	std::string str = fmt::to_string(formatted);
 
