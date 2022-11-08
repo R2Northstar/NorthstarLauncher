@@ -2,6 +2,7 @@
 #include "crashhandler.h"
 #include "dedicated.h"
 #include "nsprefix.h"
+#include "version.h"
 
 #include <minidumpapiset.h>
 
@@ -27,6 +28,7 @@ std::map<int, std::string> ExceptionNames = {
 void PrintExceptionLog(ExceptionLog& exc)
 {
 	// General crash message
+	spdlog::error("Northstar version: {}", version);
 	spdlog::error("Northstar has crashed! a minidump has been written and exception info is available below:");
 	spdlog::error(exc.cause);
 	// If this was a runtime error, print the message
