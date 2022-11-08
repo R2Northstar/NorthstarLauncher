@@ -189,7 +189,6 @@ void InitialiseLogging()
 	NS::log::rpak = std::make_shared<ColoredLogger>("RPAK_FSYS", NS::Colors::RPAK);
 	NS::log::echo = std::make_shared<ColoredLogger>("ECHO", NS::Colors::ECHO);
 
-
 	loggers.push_back(NS::log::SCRIPT_UI);
 	loggers.push_back(NS::log::SCRIPT_CL);
 	loggers.push_back(NS::log::SCRIPT_SV);
