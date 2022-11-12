@@ -3,6 +3,7 @@
 #include "dedicated.h"
 #include "nsprefix.h"
 #include "version.h"
+#include "modmanager.h"
 
 #include <minidumpapiset.h>
 
@@ -30,6 +31,15 @@ void PrintExceptionLog(ExceptionLog& exc)
 	// General crash message
 	spdlog::error("Northstar version: {}", version);
 	spdlog::error("Northstar has crashed! a minidump has been written and exception info is available below:");
+	spdlog::error("Loaded mods: ");
+	for (const auto& mod : g_pModManager->m_LoadedMods)
+	{
+		if (mod.m_bEnabled)
+		{
+			spdlog::error("{} {}", mod.Name, mod.Version);
+		}
+		
+	}
 	spdlog::error(exc.cause);
 	// If this was a runtime error, print the message
 	if (exc.runtimeInfo.length() != 0)
@@ -91,11 +101,9 @@ template <> struct fmt::formatter<M128A> : fmt::formatter<string_view>
 	{
 		// Masking the top and bottom half of the long long
 		int v1 = obj.Low & INT_MAX;
-		int v2 = obj.Low >> 16;
+		int v2 = obj.Low >> 32;
 		int v3 = obj.High & INT_MAX;
-		int v4 = obj.High >> 16;
-		// Oh hey looks, its the evil floating point bit level hack!
-		// Yes, i could use reinterpret cast, but this is more fun :)
+		int v4 = obj.High >> 32;
 		return fmt::format_to(
 			ctx.out(),
 			"[ {:G}, {:G}, {:G}, {:G}], [ 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x} ]",
@@ -249,7 +257,6 @@ void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 
 long GenerateExceptionLog(EXCEPTION_POINTERS* exceptionInfo)
 {
-
 	const DWORD exceptionCode = exceptionInfo->ExceptionRecord->ExceptionCode;
 
 	void* exceptionAddress = exceptionInfo->ExceptionRecord->ExceptionAddress;
