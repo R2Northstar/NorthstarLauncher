@@ -9,10 +9,12 @@ typedef void* FileHandle_t;
 // clang-format off
 OFFSET_STRUCT(VPKFileEntry)
 {
-	STRUCT_SIZE(0x44);
-	FIELD(0x0, char* directory)
-	FIELD(0x4, char* filename)
-	FIELD(0x8, char* extension)
+    STRUCT_SIZE(0x44);
+    FIELDS(0x0, 
+          char* directory;
+          char* filename;
+          char* extension;
+        )
 };
 // clang-format on
 #pragma pack(pop)
@@ -21,10 +23,12 @@ OFFSET_STRUCT(VPKFileEntry)
 // clang-format off
 struct VPKData
 {
-	char* directory;
-	char* filename;
-	char* extension;
-	unsigned char unknown[0x38];
+	STRUCT_SIZE(0x50);
+	FIELDS(0x0,
+		char* directory;
+		char* filename;
+		char* extension;
+	)
 };
 // clang-format on
 #pragma pack(pop)

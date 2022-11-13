@@ -58,5 +58,6 @@ OFFSET_STRUCT(Name)
 #define IS_0(offset) CHECK(DO_PROBE(offset))
 
 #define FIELD(offset, signature) IIF(IS_0(offset))(STRUCT_FIELD_NOOFFSET, STRUCT_FIELD_OFFSET)(offset, signature)
+#define FIELDS FIELD
 
 //clang-format on
