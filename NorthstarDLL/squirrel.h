@@ -1,6 +1,6 @@
 #pragma once
 
-#include "squirreldatatypes.h"
+#include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
 #include "vector.h"
 
@@ -11,77 +11,6 @@ typedef unsigned long SQUnsignedInteger;
 typedef char SQChar;
 typedef SQUnsignedInteger SQBool;
 
-enum SQRESULT : SQInteger
-{
-	SQRESULT_ERROR = -1,
-	SQRESULT_NULL = 0,
-	SQRESULT_NOTNULL = 1,
-};
-
-typedef SQRESULT (*SQFunction)(HSquirrelVM* sqvm);
-
-enum class eSQReturnType
-{
-	Float = 0x1,
-	Vector = 0x3,
-	Integer = 0x5,
-	Boolean = 0x6,
-	Entity = 0xD,
-	String = 0x21,
-	Default = 0x20,
-	Arrays = 0x25,
-	Asset = 0x28,
-	Table = 0x26,
-};
-
-const std::map<SQRESULT, const char*> PrintSQRESULT = {
-	{SQRESULT_ERROR, "SQRESULT_ERROR"}, {SQRESULT_NULL, "SQRESULT_NULL"}, {SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}};
-
-struct CompileBufferState
-{
-	const SQChar* buffer;
-	const SQChar* bufferPlusLength;
-	const SQChar* bufferAgain;
-
-	CompileBufferState(const std::string& code)
-	{
-		buffer = code.c_str();
-		bufferPlusLength = code.c_str() + code.size();
-		bufferAgain = code.c_str();
-	}
-};
-
-struct SQFuncRegistration
-{
-	const char* squirrelFuncName;
-	const char* cppFuncName;
-	const char* helpText;
-	const char* returnTypeString;
-	const char* argTypes;
-	uint32_t unknown1;
-	uint32_t devLevel;
-	const char* shortNameMaybe;
-	uint32_t unknown2;
-	eSQReturnType returnType;
-	uint32_t* externalBufferPointer;
-	uint64_t externalBufferSize;
-	uint64_t unknown3;
-	uint64_t unknown4;
-	SQFunction funcPtr;
-
-	SQFuncRegistration()
-	{
-		memset(this, 0, sizeof(SQFuncRegistration));
-		this->returnType = eSQReturnType::Default;
-	}
-};
-
-enum class ScriptContext : int
-{
-	SERVER,
-	CLIENT,
-	UI,
-};
 
 static constexpr int operator&(ScriptContext first, ScriptContext second)
 {
@@ -489,7 +418,7 @@ inline VoidFunction SQMessageBufferPushArg(T& arg) {
 	localv.push_back([]{g_pSquirrel<context>->newarray(g_pSquirrel<context>->m_pSQVM->sqvm, 0);});
 	
 	for (const auto& item : arg) {
-		SQMessageBufferPushArg<context>(localv, item);
+		localv.push_back(SQMessageBufferPushArg<context>(item));
 		localv.push_back([]{g_pSquirrel<context>->arrayappend(g_pSquirrel<context>->m_pSQVM->sqvm, -2);});
 	}
 
@@ -503,8 +432,8 @@ inline VoidFunction SQMessageBufferPushArg(T& map) {
 	localv.push_back([]{g_pSquirrel<context>->newtable(g_pSquirrel<context>->m_pSQVM->sqvm);});
 	
 	for (const auto& item : map) {
-		SQMessageBufferPushArg<context>(localv, item.first);
-		SQMessageBufferPushArg<context>(localv, item.second);
+		localv.push_back(SQMessageBufferPushArg<context>(item.first));
+		localv.push_back(SQMessageBufferPushArg<context>(item.second));
 		localv.push_back([]{g_pSquirrel<context>->newslot(g_pSquirrel<context>->m_pSQVM->sqvm, -3, false);});
 	}
 

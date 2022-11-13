@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "squirreldatatypes.h"
 
+#include <queue>
+
 enum SQRESULT : SQInteger
 {
 	SQRESULT_ERROR = -1,
@@ -130,7 +132,7 @@ class SquirrelMessageBuffer
 {
 
   private:
-	std::vector<SquirrelMessage> messages = {};
+	std::queue<SquirrelMessage> messages = {};
 
   public:
 	std::mutex mutex;
@@ -139,8 +141,8 @@ class SquirrelMessageBuffer
 		std::lock_guard<std::mutex> guard(mutex);
 		if (!messages.empty())
 		{
-			auto message = messages.back();
-			messages.pop_back();
+			auto message = messages.front();
+			messages.pop();
 			return message;
 		}
 		else
@@ -168,7 +170,7 @@ class SquirrelMessageBuffer
 	void push(SquirrelMessage message)
 	{
 		std::lock_guard<std::mutex> guard(mutex);
-		messages.push_back(message);
+		messages.push(message);
 	}
 };
 

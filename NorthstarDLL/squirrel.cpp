@@ -508,11 +508,8 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 	}
 }
 
-template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
+ADD_SQFUNC("void", NSProcessMessages, "", "", ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
-
-	// g_pPluginCommunicationhandler->RunFrame();
-
 	auto maybe_message = g_pSquirrel<context>->messageBuffer->pop();
 	if (!maybe_message)
 	{
@@ -549,6 +546,31 @@ template <ScriptContext context> SQRESULT SQ_ProcessMessages(HSquirrelVM* sqvm)
 
 	g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, message.args.size());
 
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("void", NSTestMessageBuffer, "bool immediate = true",
+	"Create a Squirrel Message that calls print with the provided argument", ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+{
+	bool immediate = g_pSquirrel<context>->getbool(sqvm, 1);
+	std::string str = "std::string works";
+	std::vector<std::string> vec = {"Vectors", "are", "working"};
+	std::map<std::string, int> map = {{"index_1", 1}, {"index_2", 42}};
+	SquirrelAsset asset {"Assets are working"};
+	if (immediate)
+	{
+		g_pSquirrel<context>->call("MessageBuffer_Print", str);
+		g_pSquirrel<context>->call("MessageBuffer_PrintTable", vec);
+		g_pSquirrel<context>->call("MessageBuffer_PrintArray", map);
+		g_pSquirrel<context>->call("MessageBuffer_PrintAsset", asset);
+	}
+	else
+	{
+		g_pSquirrel<context>->schedule_call("MessageBuffer_Print", str);
+		g_pSquirrel<context>->schedule_call("MessageBuffer_PrintTable", vec);
+		g_pSquirrel<context>->schedule_call("MessageBuffer_PrintArray", map);
+		g_pSquirrel<context>->schedule_call("MessageBuffer_PrintAsset", asset);
+	}
 	return SQRESULT_NOTNULL;
 }
 
@@ -661,10 +683,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	StubUnsafeSQFuncs<ScriptContext::CLIENT>();
 	StubUnsafeSQFuncs<ScriptContext::UI>();
 
-	g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::CLIENT>);
-
-	g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::UI>);
-
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
 }
@@ -741,6 +759,4 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 
 	StubUnsafeSQFuncs<ScriptContext::SERVER>();
-
-	g_pSquirrel<ScriptContext::SERVER>->AddFuncRegistration("void", "NSProcessMessages", "", "", SQ_ProcessMessages<ScriptContext::SERVER>);
 }
