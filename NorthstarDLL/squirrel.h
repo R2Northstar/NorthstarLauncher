@@ -11,7 +11,6 @@ typedef unsigned long SQUnsignedInteger;
 typedef char SQChar;
 typedef SQUnsignedInteger SQBool;
 
-
 static constexpr int operator&(ScriptContext first, ScriptContext second)
 {
 	return first == second;
