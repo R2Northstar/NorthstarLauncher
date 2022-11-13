@@ -1490,11 +1490,13 @@
     </ClInclude>
     <ClInclude Include="squirrelautobind.h">
       <Filter>Header Files\Squirrel</Filter>
+	</ClInclude>
     <ClInclude Include="keyvalues.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="loghooks.h">
       <Filter>Header Files\Console</Filter>
+	 </ClInclude>
     <ClInclude Include="squirrelclasstypes.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
