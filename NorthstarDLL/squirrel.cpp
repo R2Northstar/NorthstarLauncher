@@ -549,8 +549,12 @@ ADD_SQFUNC("void", NSProcessMessages, "", "", ScriptContext::UI | ScriptContext:
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSTestMessageBuffer, "bool immediate = true",
-	"Create a Squirrel Message that calls print with the provided argument", ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+ADD_SQFUNC(
+	"void",
+	NSTestMessageBuffer,
+	"bool immediate = true",
+	"Create a Squirrel Message that calls print with the provided argument",
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	bool immediate = g_pSquirrel<context>->getbool(sqvm, 1);
 	std::string str = "std::string works";
