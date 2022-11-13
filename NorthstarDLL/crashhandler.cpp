@@ -65,7 +65,10 @@ void PrintExceptionLog(ExceptionLog& exc)
 
 	if (!IsDedicatedServer())
 		MessageBoxA(
-			0, "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK | MB_SYSTEMMODAL);
+			0,
+			"Northstar has crashed! Crash info can be found in R2Northstar/logs",
+			"Northstar has crashed!",
+			MB_ICONERROR | MB_OK | MB_SYSTEMMODAL);
 }
 
 std::string GetExceptionName(ExceptionLog& exc)
