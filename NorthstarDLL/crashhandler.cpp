@@ -38,7 +38,6 @@ void PrintExceptionLog(ExceptionLog& exc)
 		{
 			spdlog::error("{} {}", mod.Name, mod.Version);
 		}
-		
 	}
 	spdlog::error(exc.cause);
 	// If this was a runtime error, print the message
