@@ -206,23 +206,19 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
-
-		// dedicated only needs common, common_mp, common_sp, and sp_<map> rpaks
-		// sp_<map> rpaks contain tutorial ghost data
-		// sucks to have to load the entire rpak for that but sp was never meant to be done on dedi
 		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") ||
-									strncmp(&originalPath[0], "common", 6) && strncmp(&originalPath[0], "sp_", 3)))
+									strncmp(&originalPath[0], "common", 6))) // dedicated only needs common and common_mp
 		{
 			if (bNeedToFreePakName)
 				delete[] pPath;
 
-			NS::log::rpak->info("Not loading pak {} for dedicated server", originalPath);
+			spdlog::info("Not loading pak {} for dedicated server", originalPath);
 			return -1;
 		}
 	}
 
 	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
-	NS::log::rpak->info("LoadPakAsync {} {}", pPath, iPakHandle);
+	spdlog::info("LoadPakAsync {} {}", pPath, iPakHandle);
 
 	// trak the pak
 	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
@@ -250,7 +246,7 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 		bShouldUnloadPaks = true;
 	}
 
-	NS::log::rpak->info("UnloadPak {}", nPakHandle);
+	spdlog::info("UnloadPak {}", nPakHandle);
 	return UnloadPak(nPakHandle, pCallback);
 }
 
@@ -267,7 +263,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 
 	if (path.extension() == ".stbsp")
 	{
-		NS::log::rpak->info("LoadStreamBsp: {}", filename.string());
+		spdlog::info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
 		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
@@ -321,7 +317,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		}
 
 	LOG_STARPAK:
-		NS::log::rpak->info("LoadStreamPak: {}", filename.string());
+		spdlog::info("LoadStreamPak: {}", filename.string());
 	}
 
 	return ReadFileAsync(pPath, pCallback);

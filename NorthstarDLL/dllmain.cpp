@@ -145,11 +145,6 @@ bool InitialiseNorthstar()
 
 	bInitialised = true;
 
-	// initialise the console if needed (-northstar needs this)
-	InitialiseConsole();
-	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
-	InitialiseLogging();
-
 	InitialiseNorthstarPrefix();
 	InitialiseVersion();
 
@@ -159,6 +154,7 @@ bool InitialiseNorthstar()
 	curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
 
 	InitialiseCrashHandler();
+	InitialiseLogging();
 	InstallInitialHooks();
 	CreateLogFiles();
 

@@ -122,7 +122,6 @@
     <ClInclude Include="bits.h" />
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="keyvalues.h" />
-    <ClInclude Include="loghooks.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
     <ClInclude Include="maxplayers.h" />
@@ -558,7 +557,6 @@
     <ClInclude Include="sourceinterface.h" />
     <ClInclude Include="squirrel.h" />
     <ClInclude Include="exploitfixes_utf8parser.cpp" />
-    <ClInclude Include="squirrelautobind.h" />
     <ClInclude Include="tier0.h" />
     <ClInclude Include="vector.h" />
     <ClInclude Include="version.h" />
@@ -574,13 +572,9 @@
     <ClCompile Include="clientruihooks.cpp" />
     <ClCompile Include="clientvideooverrides.cpp" />
     <ClCompile Include="concommand.cpp" />
-    <ClCompile Include="diskvmtfixes.cpp" />
     <ClCompile Include="exploitfixes_lzss.cpp" />
-    <ClCompile Include="kb_act.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="limits.cpp" />
-    <ClCompile Include="color.cpp" />
-    <ClCompile Include="loghooks.cpp" />
     <ClCompile Include="memory.cpp" />
     <ClCompile Include="nsprefix.cpp" />
     <ClCompile Include="convar.cpp" />
@@ -639,7 +633,6 @@
     <ClCompile Include="sourceinterface.cpp" />
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="exploitfixes.cpp" />
-    <ClCompile Include="squirrelautobind.cpp" />
     <ClCompile Include="tier0.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>

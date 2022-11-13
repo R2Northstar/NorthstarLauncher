@@ -127,7 +127,6 @@ class ModManager
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
 	size_t m_hPdefHash;
-	size_t m_hKBActHash;
 
   public:
 	std::vector<Mod> m_LoadedMods;
@@ -145,7 +144,6 @@ class ModManager
 	void BuildScriptsRson();
 	void TryBuildKeyValues(const char* filename);
 	void BuildPdef();
-	void BuildKBActionsList();
 };
 
 fs::path GetModFolderPath();
