@@ -65,7 +65,7 @@ void PrintExceptionLog(ExceptionLog& exc)
 
 	if (!IsDedicatedServer())
 		MessageBoxA(
-			0, "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK);
+			0, "Northstar has crashed! Crash info can be found in R2Northstar/logs", "Northstar has crashed!", MB_ICONERROR | MB_OK | MB_SYSTEMMODAL);
 }
 
 std::string GetExceptionName(ExceptionLog& exc)
@@ -106,10 +106,10 @@ template <> struct fmt::formatter<M128A> : fmt::formatter<string_view>
 		return fmt::format_to(
 			ctx.out(),
 			"[ {:G}, {:G}, {:G}, {:G}], [ 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x} ]",
-			*(float*)&v1,
-			*(float*)&v2,
-			*(float*)&v3,
-			*(float*)&v4,
+			*reinterpret_cast<float*>(&v1),
+			*reinterpret_cast<float*>(&v2),
+			*reinterpret_cast<float*>(&v3),
+			*reinterpret_cast<float*>(&v4),
 			v1,
 			v2,
 			v3,
