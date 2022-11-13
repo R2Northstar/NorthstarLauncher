@@ -19,12 +19,12 @@ OFFSET_STRUCT(VPKFileEntry)
 
 #pragma pack(push, 1)
 // clang-format off
-OFFSET_STRUCT(VPKData)
+struct VPKData
 {
-	STRUCT_SIZE(0x24A)
-	FIELD(0x5, char path[255])
-	FIELD(0x238, int32_t numEntries)
-	FIELD(0x23C, VPKFileEntry* entries)
+	char* directory;
+	char* filename;
+	char* extension;
+	unsigned char unknown[0x38];
 };
 // clang-format on
 #pragma pack(pop)
