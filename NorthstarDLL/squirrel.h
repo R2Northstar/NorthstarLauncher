@@ -1,6 +1,7 @@
 #pragma once
 
 #include "squirreldatatypes.h"
+#include "squirrelautobind.h"
 #include "vector.h"
 
 // stolen from ttf2sdk: sqvm types
@@ -82,7 +83,28 @@ enum class ScriptContext : int
 	UI,
 };
 
+static constexpr int operator&(ScriptContext first, ScriptContext second)
+{
+	return first == second;
+}
+
+static constexpr int operator&(int first, ScriptContext second)
+{
+	return first & (1 << static_cast<int>(second));
+}
+
+static constexpr int operator|(ScriptContext first, ScriptContext second)
+{
+	return (1 << static_cast<int>(first)) + (1 << static_cast<int>(second));
+}
+
+static constexpr int operator|(int first, ScriptContext second)
+{
+	return first + (1 << static_cast<int>(second));
+}
+
 const char* GetContextName(ScriptContext context);
+const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
 
@@ -143,6 +165,8 @@ template <ScriptContext context> class SquirrelManager
 	std::map<std::string, SQFunction> m_funcOriginals = {};
 
 	bool m_bFatalCompilationErrors = false;
+
+	std::shared_ptr<spdlog::logger> logger;
 
 #pragma region SQVM funcs
 	RegisterSquirrelFuncType RegisterSquirrelFunc;

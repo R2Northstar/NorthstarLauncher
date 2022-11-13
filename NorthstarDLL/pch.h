@@ -21,9 +21,10 @@
 namespace fs = std::filesystem;
 
 #include "structs.h"
+#include "color.h"
+#include "spdlog/spdlog.h"
 #include "logging.h"
 #include "MinHook.h"
-#include "spdlog/spdlog.h"
 #include "libcurl/include/curl/curl.h"
 #include "hooks.h"
 #include "memory.h"

@@ -1488,11 +1488,16 @@
     <ClInclude Include="vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="squirrelautobind.h">
+      <Filter>Header Files\Squirrel</Filter>
     <ClInclude Include="keyvalues.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="structs.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="loghooks.h">
+      <Filter>Header Files\Console</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1700,8 +1705,23 @@
     <ClCompile Include="scriptdatatables.cpp">
       <Filter>Source Files\Scripted</Filter>
     </ClCompile>
+    <ClCompile Include="squirrelautobind.cpp">
+      <Filter>Source Files\Squirrel</Filter>
+    </ClCompile>
+    <ClCompile Include="kb_act.cpp">
+      <Filter>Source Files\Mods\Compiled Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="diskvmtfixes.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
     <ClCompile Include="keyvalues.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="color.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="loghooks.cpp">
+      <Filter>Source Files\Console</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
