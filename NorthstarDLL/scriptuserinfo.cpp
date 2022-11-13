@@ -3,12 +3,10 @@
 #include "r2engine.h"
 #include "r2server.h"
 
-ADD_SQFUNC(
-	"string",
-	GetUserInfoKVString_Internal,
-	"entity player, string key, string defaultValue = \"\"",
-	"Gets the string value of a given player's userinfo convar by name",
-	ScriptContext::SERVER)
+// clang-format off
+ADD_SQFUNC("string", GetUserInfoKVString_Internal, "entity player, string key, string defaultValue = \"\"",
+	"Gets the string value of a given player's userinfo convar by name", ScriptContext::SERVER)
+// clang-format on
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -25,12 +23,10 @@ ADD_SQFUNC(
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC(
-	"asset",
-	GetUserInfoKVAsset_Internal,
-	"entity player, string key, asset defaultValue = $\"\"",
-	"Gets the asset value of a given player's userinfo convar by name",
-	ScriptContext::SERVER)
+// clang-format off
+ADD_SQFUNC("asset", GetUserInfoKVAsset_Internal, "entity player, string key, asset defaultValue = $\"\"",
+	"Gets the asset value of a given player's userinfo convar by name", ScriptContext::SERVER)
+// clang-format on
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -48,12 +44,10 @@ ADD_SQFUNC(
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC(
-	"int",
-	GetUserInfoKVInt_Internal,
-	"entity player, string key, int defaultValue = 0",
-	"Gets the int value of a given player's userinfo convar by name",
-	ScriptContext::SERVER)
+// clang-format off
+ADD_SQFUNC("int", GetUserInfoKVInt_Internal, "entity player, string key, int defaultValue = 0",
+	"Gets the int value of a given player's userinfo convar by name", ScriptContext::SERVER)
+// clang-format on
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -70,12 +64,10 @@ ADD_SQFUNC(
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC(
-	"float",
-	GetUserInfoKVFloat_Internal,
-	"entity player, string key, float defaultValue = 0",
-	"Gets the float value of a given player's userinfo convar by name",
-	ScriptContext::SERVER)
+// clang-format off
+ADD_SQFUNC("float", GetUserInfoKVFloat_Internal, "entity player, string key, float defaultValue = 0",
+	"Gets the float value of a given player's userinfo convar by name", ScriptContext::SERVER)
+// clang-format on
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -92,12 +84,10 @@ ADD_SQFUNC(
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC(
-	"bool",
-	GetUserInfoKVBool_Internal,
-	"entity player, string key, bool defaultValue = false",
-	"Gets the bool value of a given player's userinfo convar by name",
-	ScriptContext::SERVER)
+// clang-format off
+ADD_SQFUNC("bool", GetUserInfoKVBool_Internal, "entity player, string key, bool defaultValue = false",
+	"Gets the bool value of a given player's userinfo convar by name", ScriptContext::SERVER)
+// clang-format on
 {
 	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
