@@ -291,7 +291,7 @@ long GenerateExceptionLog(EXCEPTION_POINTERS* exceptionInfo)
 
 long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 {
-	if (true)
+	if (!IsDebuggerPresent())
 	{
 		// Check if we are capable of handling this type of exception
 		if (ExceptionNames.find(exceptionInfo->ExceptionRecord->ExceptionCode) == ExceptionNames.end())
