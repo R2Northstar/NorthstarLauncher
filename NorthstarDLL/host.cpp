@@ -20,16 +20,15 @@ void, __fastcall, (void* a1))
 	return CDedicatedAppSystemGroupStarter(a1);
 }
 
-static bool hasPassed = false;
-
+static bool hasPassedBikLoader = false;
 // clang-format off
 AUTOHOOK(BikInterfaceLoader, engine.dll + 0x46320,
 void, __fastcall, (__int64 a1, __int64 a2))
 // clang-format on
 {
-	if (!hasPassed)
+	if (!hasPassedBikLoader) // Only set the splash progress first time
 	{
-		hasPassed = true;
+		hasPassedBikLoader = true;
 		SetSplashMessage("Starting game engine", 7);
 	}
 	return BikInterfaceLoader(a1, a2);
