@@ -350,6 +350,7 @@ int main(int argc, char* argv[])
 	bool noOriginStartup = false;
 	bool dedicated = false;
 	bool nostubs = false;
+	bool nosplash = false;
 
 	for (int i = 0; i < argc; i++)
 		if (!strcmp(argv[i], "-noOriginStartup"))
@@ -360,8 +361,10 @@ int main(int argc, char* argv[])
 			nostubs = true;
 		else if (!strcmp(argv[i], "-noplugins"))
 			noLoadPlugins = true;
+		else if (!strcmp(argv[i], "-nosplash"))
+			nosplash = true;
 
-	if (!dedicated)
+	if (!dedicated && !nosplash)
 	{
 		DisableProcessWindowsGhosting();
 		g_SplashScreen = new CSplashScreen(NULL);
