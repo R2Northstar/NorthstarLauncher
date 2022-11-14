@@ -17,6 +17,8 @@
 #include <string.h>
 #include <filesystem>
 
+#include "splash.h"
+
 typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -145,6 +147,9 @@ bool InitialiseNorthstar()
 
 	bInitialised = true;
 
+	InitialiseSplashScreen();
+
+	SetSplashMessage("Initializing Northstar", 4);
 	// initialise the console if needed (-northstar needs this)
 	InitialiseConsole();
 	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
@@ -158,6 +163,8 @@ bool InitialiseNorthstar()
 
 	curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
 
+	SetSplashMessage("Loading hooks", 5);
+
 	InitialiseCrashHandler();
 	InstallInitialHooks();
 	CreateLogFiles();
@@ -167,6 +174,8 @@ bool InitialiseNorthstar()
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
+
+	SetSplashMessage("Waiting for game data", 6);
 
 	return true;
 }

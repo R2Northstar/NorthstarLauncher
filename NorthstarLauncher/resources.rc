@@ -109,3 +109,11 @@ END
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_SPLASH             BITMAP                  	   "splash.bmp"
+IDB_LOAD	               BITMAP                  "load.bmp"
+IDB_LOAD_FILLED	           BITMAP                  "load_filled.bmp"

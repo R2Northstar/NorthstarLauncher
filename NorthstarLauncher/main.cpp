@@ -12,6 +12,8 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 
+#include "splash.h"
+
 namespace fs = std::filesystem;
 
 extern "C"
@@ -359,8 +361,15 @@ int main(int argc, char* argv[])
 		else if (!strcmp(argv[i], "-noplugins"))
 			noLoadPlugins = true;
 
+	if (!dedicated)
+	{
+		DisableProcessWindowsGhosting();
+		g_SplashScreen = new CSplashScreen(NULL);
+	}
+
 	if (!noOriginStartup && !dedicated)
 	{
+		SetSplashMessage("Waiting for Authentication Provider", 1);
 		EnsureOriginStarted();
 	}
 
@@ -432,6 +441,7 @@ int main(int argc, char* argv[])
 		bool loadNorthstar = ShouldLoadNorthstar(argc, argv);
 		if (loadNorthstar)
 		{
+			SetSplashMessage("Loading Northstar", 2);
 			std::cout << "[*] Loading Northstar" << std::endl;
 			if (!LoadNorthstar())
 				return 1;
@@ -448,7 +458,6 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 	}
-
 	std::cout << "[*] Launching the game..." << std::endl;
 	auto LauncherMain = GetLauncherMain();
 	if (!LauncherMain)
