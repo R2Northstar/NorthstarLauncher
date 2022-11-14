@@ -5,10 +5,12 @@ typedef void (*SetSplashMessageExternal_t)(const char* msg, int progress, bool c
 
 SetSplashMessageExternal_t SetSplashMessageExternal;
 
-void SetSplashMessage(const char* msg, int progress, bool close) {
+void SetSplashMessage(const char* msg, int progress, bool close)
+{
 	SetSplashMessageExternal(msg, progress, close);
 }
 
-void InitialiseSplashScreen() {
+void InitialiseSplashScreen()
+{
 	SetSplashMessageExternal = (SetSplashMessageExternal_t)GetProcAddress(NULL, "SetSplashMessage");
 }
