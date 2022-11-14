@@ -303,9 +303,8 @@ void CSplashScreen::Paint()
 	EndPaint(m_hWnd, &ps);
 }
 
-extern "C" __declspec(dllexport) void SetSplashMessage(const char* msg, int progress, bool close) {
+extern "C" __declspec(dllexport) void SetSplashMessage(const char* msg, int progress, bool close)
+{
 	if (g_SplashScreen)
-	{
 		g_SplashScreen->SetSplashMessage(msg, progress, close);
-	}
 }

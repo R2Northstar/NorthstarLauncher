@@ -44,7 +44,7 @@ void, __fastcall, (bool bDedicated))
 		[]()
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		SetSplashMessage("Done", 10, true);
+			SetSplashMessage("Done", 10, true);
 		});
 	test.detach();
 	spdlog::info("Host_Init()");
