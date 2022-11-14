@@ -7,7 +7,7 @@ namespace R2
 {
 	// server entity stuff
 	class CBaseEntity;
-	extern CBaseEntity* (*Server_GetEntityByIndex)(int32_t index);
+	extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
 
 	// clang-format off
 	OFFSET_STRUCT(CBasePlayer)
@@ -36,7 +36,7 @@ namespace R2
 		FIELD(0x1F64, int32_t m_iObserverMode)
 		FIELD(0x1F6C, int32_t m_hObserverTarget)
 		FIELD(0x2098, int32_t m_hViewModel)
-		FIELD(10212, int32_t m_ubEFNoint32_terpParity)
+		FIELD(10212, int32_t m_ubEFNointerpParity)
 		FIELD(0x1FA4, int32_t m_activeBurnCardIndex)
 		FIELD(0x1B68, int32_t m_hColorCorrectionCtrl)
 		FIELD(0x19E0, int32_t m_PlayerFog__m_hCtrl)
@@ -59,13 +59,13 @@ namespace R2
 		FIELD(0x2354, float m_traversalYawDelta)
 		FIELD(0x2358, int32_t m_traversalYawPoseParameter)
 		FIELD(0x2050, int32_t m_grappleHook)
-		FIELD(0x27C0, int32_t m_autoSprint32_tForced)
-		FIELD(0x27C4, bool m_fIsSprint32_ting)
-		FIELD(0x27CC, float m_sprint32_tStartedTime)
-		FIELD(0x27D0, float m_sprint32_tStartedFrac)
-		FIELD(0x27D4, float m_sprint32_tEndedTime)
-		FIELD(0x27D8, float m_sprint32_tEndedFrac)
-		FIELD(0x27DC, float m_stickySprint32_tStartTime)
+		FIELD(0x27C0, int32_t m_autoSprintForced)
+		FIELD(0x27C4, bool m_fIsSprinting)
+		FIELD(0x27CC, float m_sprintStartedTime)
+		FIELD(0x27D0, float m_sprintStartedFrac)
+		FIELD(0x27D4, float m_sprintEndedTime)
+		FIELD(0x27D8, float m_sprintEndedFrac)
+		FIELD(0x27DC, float m_stickySprintStartTime)
 		FIELD(10648, float m_smartAmmoPreviousHighestLockOnMeFractionValue)
 		FIELD(0x23FC, int32_t m_activeZipline)
 		FIELD(0x2400, bool m_ziplineReverse)
@@ -106,5 +106,5 @@ namespace R2
 	};
 	// clang-format on
 
-	extern CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int32_t playerIndex);
+	extern CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
 } // namespace R2
