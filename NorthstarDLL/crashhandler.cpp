@@ -262,6 +262,8 @@ void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 
 long GenerateExceptionLog(EXCEPTION_POINTERS* exceptionInfo)
 {
+	storedException->exceptionRecord = *exceptionInfo->ExceptionRecord;
+	storedException->contextRecord = *exceptionInfo->ContextRecord;
 	const DWORD exceptionCode = exceptionInfo->ExceptionRecord->ExceptionCode;
 
 	void* exceptionAddress = exceptionInfo->ExceptionRecord->ExceptionAddress;
