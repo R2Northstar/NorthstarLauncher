@@ -168,7 +168,7 @@ void NSSplashScreen::LoadFromFile(std::string& path)
 	if (doc.HasMember("status_top"))
 		statusRect.top = doc["status_top"].GetInt();
 	else
-		statusRect.top = 0;
+		statusRect.top = 550;
 
 	if (doc.HasMember("status_bottom"))
 	{
@@ -394,14 +394,27 @@ void NSSplashScreen::Paint()
 	{
 		// Alternate background must be the same size as the normal one
 		// I don't care enough to support multiple sizes
-		m_bitmap = (HBITMAP)LoadImage(NULL, m_altBackground.c_str(), IMAGE_BITMAP, SPLASH_WIDTH, SPLASH_HEIGHT, LR_LOADFROMFILE);
+		if (m_altBackground.length() != 0)
+			m_bitmap = (HBITMAP)LoadImage(NULL, m_altBackground.c_str(), IMAGE_BITMAP, SPLASH_WIDTH, SPLASH_HEIGHT, LR_LOADFROMFILE);
+		else
+			m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
+
+		if (m_altLoad.length() != 0)
+			m_loadbar = (HBITMAP)LoadImage(NULL, m_altLoad.c_str(), IMAGE_BITMAP, LOAD_WIDTH, LOAD_HEIGHT, LR_LOADFROMFILE);
+		else
+			m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
+
+		if (m_altLoadFilled.length() != 0)
+			m_loadbar_filled = (HBITMAP)LoadImage(NULL, m_altLoadFilled.c_str(), IMAGE_BITMAP, LOAD_WIDTH, LOAD_HEIGHT, LR_LOADFROMFILE);
+		else
+			m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
 	}
 	else
 	{
 		m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
+		m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
+		m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
 	}
-	m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
-	m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
 
 	SelectObject(dc_splash, m_bitmap);
 	SelectObject(dc_load, m_loadbar);
