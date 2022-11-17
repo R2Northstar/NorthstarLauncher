@@ -7,17 +7,9 @@
 
 // Windows Header Files:
 #include <windows.h>
-
-#include <crtdbg.h> // for _ASSERT()
-#include <stdio.h> // for vsprintf
-#include <stdarg.h> // for vsprintf
 #include <stdexcept>
 
 // C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
 #include <string>
 
 #include "splash.h"

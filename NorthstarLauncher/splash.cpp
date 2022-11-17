@@ -4,18 +4,12 @@
 
 #include "resource1.h"
 #include "splash.h"
-#include <crtdbg.h> // for _ASSERT()
-#include <stdio.h> // for vsprintf
-#include <stdarg.h> // for vsprintf
 #include <stdexcept>
 
 // Windows Header Files:
 #include <windows.h>
 
 // C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
 #include <tchar.h>
 #include <string>
 #include <chrono>
@@ -196,8 +190,6 @@ void NSSplashScreen::SetSplashMessage(const char* message, int progress, bool cl
 	Paint();
 }
 
-#include <gdiplusheaders.h>
-
 void NSSplashScreen::Paint()
 {
 	PAINTSTRUCT ps;
@@ -213,8 +205,6 @@ void NSSplashScreen::Paint()
 	m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
 	m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
 	m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
-
-	Apply
 
 	SelectObject(dc_splash, m_bitmap);
 	SelectObject(dc_load, m_loadbar);
