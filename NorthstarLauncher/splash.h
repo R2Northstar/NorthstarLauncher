@@ -17,18 +17,17 @@
 class NSSplashScreen
 {
   public:
-	NSSplashScreen();
+	NSSplashScreen(std::string altBackground = "");
 
 	void HideSplashScreen();
 
 	void SetSplashMessage(const char* message, int progress, bool close);
 
-	BOOL RegisterClass(LPCTSTR szWindowClassName);
-
   protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	HFONT CreatePointFont(int pointSize, HDC dc);
+	BOOL RegisterClass(LPCTSTR szWindowClassName);
 	void Paint();
 
   private:
@@ -48,6 +47,9 @@ class NSSplashScreen
 	HBITMAP m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
 	HBITMAP m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
 	HBITMAP m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
+
+	bool m_useAltBackground = false;
+	std::wstring m_altBackground {};
 
 	std::wstring m_message {};
 	int m_progress = 0;

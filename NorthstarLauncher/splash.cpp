@@ -24,8 +24,14 @@ NSSplashScreen* NSSplashScreen::m_pSplashWnd = NULL;
 ATOM NSSplashScreen::m_szWindowClass = 0;
 BOOL NSSplashScreen::m_useStderr = FALSE;
 
-NSSplashScreen::NSSplashScreen()
+NSSplashScreen::NSSplashScreen(std::string altBackground)
 {
+
+	if (altBackground != "")
+	{
+		m_useAltBackground = true;
+		m_altBackground = std::wstring(altBackground.begin(), altBackground.end());
+	}
 
 	redrawRect.left = 0;
 	redrawRect.top = 0;
@@ -100,7 +106,6 @@ BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 {
 	m_instance = GetModuleHandle(NULL);
 	// register class
-	DWORD lastError;
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -202,7 +207,16 @@ void NSSplashScreen::Paint()
 	// For some godawful reason copying a bitmap between two devices clears the source
 	// Im not even fucking kidding
 	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt#remarks
-	m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
+	if (m_useAltBackground)
+	{
+		// Alternate background must be the same size as the normal one
+		// I don't care enough to support multiple sizes
+		m_bitmap = (HBITMAP)LoadImage(NULL, m_altBackground.c_str(), IMAGE_BITMAP, SPLASH_WIDTH, SPLASH_HEIGHT, LR_LOADFROMFILE);
+	}
+	else
+	{
+		m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
+	}
 	m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
 	m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
 
@@ -212,7 +226,7 @@ void NSSplashScreen::Paint()
 
 	SetStretchBltMode(paintDC, COLORONCOLOR);
 
-	BitBlt(paintDC, 0, 0, SPLASH_WIDTH, SPLASH_HEIGHT, dc_splash, 0, 0,  SRCCOPY);
+	BitBlt(paintDC, 0, 0, SPLASH_WIDTH, SPLASH_HEIGHT, dc_splash, 0, 0, SRCCOPY);
 	for (int i = 0; i < 9; i++)
 	{
 		if (i >= m_progress)
@@ -221,17 +235,22 @@ void NSSplashScreen::Paint()
 			TransparentBlt(paintDC, 55 + i * 45, 520, 50, 13, dc_load_filled, 0, 0, 50, 13, RGB(255, 0, 0));
 	}
 
-	HFONT font;
-	HFONT productNameFont = CreatePointFont(14, paintDC);
-	HFONT originalFont = (HFONT)SelectObject(paintDC, productNameFont);
+	HFONT statusFont = CreatePointFont(14, paintDC);
+	SelectObject(paintDC, statusFont);
 
 	SetTextColor(paintDC, RGB(255, 255, 255));
 	SetBkMode(paintDC, TRANSPARENT);
 
-	DrawText(paintDC, m_message.c_str(), m_message.length(), &statusRect, DT_CENTER | DT_SINGLELINE);
+	DrawText(paintDC, m_message.c_str(), static_cast<int>(m_message.length()), &statusRect, DT_CENTER | DT_SINGLELINE);
 
-	SelectObject(paintDC, originalFont);
-	DeleteObject(productNameFont);
+	SelectObject(paintDC, statusFont);
+	DeleteObject(statusFont);
+	DeleteObject(dc_splash);
+	DeleteObject(dc_load);
+	DeleteObject(dc_load_filled);
+	DeleteObject(m_bitmap);
+	DeleteObject(m_loadbar);
+	DeleteObject(m_loadbar_filled);
 
 	EndPaint(m_hWnd, &ps);
 }
