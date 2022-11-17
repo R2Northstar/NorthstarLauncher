@@ -396,7 +396,15 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW,
 HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 // clang-format on
 {
-	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
+	HMODULE moduleAddress = NULL;
+	try
+	{
+		moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
+	}
+	catch (std::exception& e)
+	{
+		spdlog::error(e.what());
+	}
 
 	if (moduleAddress)
 		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);

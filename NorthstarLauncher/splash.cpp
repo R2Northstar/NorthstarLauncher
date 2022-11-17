@@ -1,38 +1,59 @@
-// SplashScreen.cpp: implementation of the CSplashScreen class.
-//
-//////////////////////////////////////////////////////////////////////
+/*
+Custom Splash Screen format:
+
+{
+	"img_background": "path_to_background.bmp",
+	"img_load": "path_to_load.bmp",
+	"img_load_filled": "path_to_load_filled.bmp",
+	"load_spacing": 45,
+	"load_x": 55,
+	"load_y": 520,
+	"status_left": 0,
+	"status_right": SPLASH_WIDTH,
+	"status_top": 0,
+	"status_bottom": SPLASH_HEIGHT,
+	"status_fontsize": 14,
+	"status_font": "",
+	"status_weight": 400,
+	"status_color": 0,
+	"transparency": 255,
+}
+
+Use with parameter: `-alternateSplash=path_to_folder`
+Path syntax is the same as for profiles
+Images are loaded from the same directory as the splash json
+Transparency can be calculated with the `RGB` macro
+If `status_right` or `status_bottom` are 0, they will be set to the image width and height respectivel
+`img_load` and `img_load_filled` must be the same size to work correctly
+*/
 
 #include "resource1.h"
-#include "splash.h"
+
 #include <stdexcept>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 
-// Windows Header Files:
-#include <windows.h>
+#define RAPIDJSON_NOMEMBERITERATORCLASS // need this for rapidjson
+#define RAPIDJSON_HAS_STDSTRING 1
 
-// C RunTime Header Files
-#include <tchar.h>
-#include <string>
-#include <chrono>
+#include "rapidjson/error/en.h"
+#include "rapidjson/document.h"
+#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/writer.h"
+typedef rapidjson::GenericDocument<rapidjson::UTF8<>> rapidjson_document;
+namespace fs = std::filesystem;
+
+#include "splash.h"
 
 NSSplashScreen* g_SplashScreen;
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-// static CSplashScreen *gDlg;
 NSSplashScreen* NSSplashScreen::m_pSplashWnd = NULL;
 ATOM NSSplashScreen::m_szWindowClass = 0;
 BOOL NSSplashScreen::m_useStderr = FALSE;
 
-NSSplashScreen::NSSplashScreen(std::string altBackground)
+void NSSplashScreen::LoadDefaults()
 {
-
-	if (altBackground != "")
-	{
-		m_useAltBackground = true;
-		m_altBackground = std::wstring(altBackground.begin(), altBackground.end());
-	}
-
 	redrawRect.left = 0;
 	redrawRect.top = 0;
 	redrawRect.right = SPLASH_WIDTH;
@@ -43,9 +64,165 @@ NSSplashScreen::NSSplashScreen(std::string altBackground)
 	statusRect.right = SPLASH_WIDTH / 2 + 200;
 	statusRect.bottom = 600;
 
+	m_useAltBitmaps = false;
+}
+
+void NSSplashScreen::LoadFromFile(std::string& path)
+{
+
+	std::ifstream altSplashFile(path + "\\splash.json");
+	std::stringstream altSplashStream;
+
+	rapidjson_document doc;
+
+	if (!altSplashFile.fail())
+	{
+		altSplashStream << altSplashFile.rdbuf();
+
+		altSplashFile.close();
+		doc.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(altSplashStream.str().c_str());
+		if (!doc.IsObject())
+		{
+			throw std::runtime_error("Could not load altSplashScreen json");
+			exit(-1);
+		}
+	}
+	auto test1 = doc.IsObject();
+	auto test = doc.HasMember("img_background");
+
+	HDC imageDC = ::CreateCompatibleDC(NULL);
+	HBITMAP temp_bg = NULL;
+	HBITMAP temp_load = NULL;
+	if (doc.HasMember("img_background"))
+	{
+		std::string img_str = path + "\\" + doc["img_background"].GetString();
+		m_altBackground = std::wstring(img_str.begin(), img_str.end());
+		temp_bg = (HBITMAP)LoadImage(NULL, m_altBackground.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	}
+	else
+		temp_bg = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
+
+	if (doc.HasMember("img_load"))
+	{
+		std::string img_str = path + "\\" + doc["img_load"].GetString();
+		m_altLoad = std::wstring(img_str.begin(), img_str.end());
+		temp_load = (HBITMAP)LoadImage(NULL, m_altLoad.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	}
+	else
+		temp_load = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
+
+	if (doc.HasMember("img_load_filled"))
+	{
+		std::string img_str = path + "\\" + doc["img_load_filled"].GetString();
+		m_altLoadFilled = std::wstring(img_str.begin(), img_str.end());
+	}
+
+	BITMAPINFO bitmapInfo;
+	memset(&bitmapInfo, 0, sizeof(BITMAPINFOHEADER));
+	bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	int scanLines = GetDIBits(
+		imageDC, // handle to DC
+		temp_bg, // handle to bitmap
+		0, // first scan line to set
+		0, // number of scan lines to copy
+		NULL, // array for bitmap bits
+		&bitmapInfo, // bitmap data buffer
+		DIB_RGB_COLORS); // RGB or palette index
+
+	SPLASH_WIDTH = bitmapInfo.bmiHeader.biWidth;
+	SPLASH_HEIGHT = bitmapInfo.bmiHeader.biHeight;
+
+	memset(&bitmapInfo, 0, sizeof(BITMAPINFOHEADER));
+	bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	scanLines = GetDIBits(
+		imageDC, // handle to DC
+		temp_load, // handle to bitmap
+		0, // first scan line to set
+		0, // number of scan lines to copy
+		NULL, // array for bitmap bits
+		&bitmapInfo, // bitmap data buffer
+		DIB_RGB_COLORS); // RGB or palette index
+
+	LOAD_WIDTH = bitmapInfo.bmiHeader.biWidth;
+	LOAD_HEIGHT = bitmapInfo.bmiHeader.biHeight;
+
+	redrawRect.left = 0;
+	redrawRect.top = 0;
+	redrawRect.right = SPLASH_WIDTH;
+	redrawRect.bottom = SPLASH_HEIGHT;
+
+	if (doc.HasMember("status_left"))
+		statusRect.left = doc["status_left"].GetInt();
+	else
+		statusRect.left = 0;
+
+	if (doc.HasMember("status_right"))
+	{
+		statusRect.right = doc["status_right"].GetInt();
+		if (statusRect.right == 0)
+			statusRect.right = SPLASH_WIDTH;
+	}
+	else
+		statusRect.right = SPLASH_WIDTH;
+
+	if (doc.HasMember("status_top"))
+		statusRect.top = doc["status_top"].GetInt();
+	else
+		statusRect.top = 0;
+
+	if (doc.HasMember("status_bottom"))
+	{
+		statusRect.bottom = doc["status_bottom"].GetInt();
+		if (statusRect.bottom == 0)
+			statusRect.bottom = SPLASH_HEIGHT;
+	}
+	else
+		statusRect.bottom = SPLASH_HEIGHT;
+
+	if (doc.HasMember("status_fontsize"))
+		m_statusFontSize = doc["status_fontsize"].GetInt();
+
+	if (doc.HasMember("status_font"))
+	{
+		std::string fontStr = doc["status_font"].GetString();
+		m_fontFace = std::wstring(fontStr.begin(), fontStr.end());
+	}
+
+	if (doc.HasMember("status_weight"))
+		m_statusFontWeight = doc["status_weight"].GetInt();
+
+	if (doc.HasMember("status_color"))
+		m_statusColor = doc["status_color"].GetInt();
+
+	if (doc.HasMember("transparency"))
+		m_transparency = doc["transparency"].GetInt();
+
+	if (doc.HasMember("load_x"))
+		m_loadX = doc["load_x"].GetInt();
+
+	if (doc.HasMember("load_y"))
+		m_loadY = doc["load_y"].GetInt();
+
+	if (doc.HasMember("load_spacing"))
+		m_loadSpacing = doc["load_spacing"].GetInt();
+
+	m_useAltBitmaps = true;
+
+	DeleteObject(temp_bg);
+	DeleteObject(temp_load);
+}
+
+NSSplashScreen::NSSplashScreen(std::string altSplash)
+{
+
 	m_pSplashWnd = this;
 
 	m_instance = GetModuleHandle(NULL);
+
+	if (altSplash != "")
+		LoadFromFile(altSplash);
+	else
+		LoadDefaults();
 
 	LPCTSTR szTitle = TEXT("Northstar Launcher");
 	LPCTSTR szWindowClassName = TEXT("Northstar Launcher");
@@ -57,7 +234,7 @@ NSSplashScreen::NSSplashScreen(std::string altBackground)
 			throw std::runtime_error("Failed to create window class");
 	}
 
-	DWORD exStyle = 0;
+	DWORD exStyle = WS_EX_LAYERED | WS_EX_TOOLWINDOW;
 
 	RECT parentRect;
 	GetWindowRect(GetDesktopWindow(), &parentRect);
@@ -71,7 +248,7 @@ NSSplashScreen::NSSplashScreen(std::string altBackground)
 		exStyle,
 		szWindowClassName,
 		szTitle,
-		WS_EX_LAYERED | WS_POPUP | WS_VISIBLE,
+		WS_POPUP | WS_VISIBLE,
 		xPos,
 		yPos,
 		SPLASH_WIDTH,
@@ -80,7 +257,6 @@ NSSplashScreen::NSSplashScreen(std::string altBackground)
 		menu,
 		m_instance,
 		this);
-	SetWindowLong(m_hWnd, GWL_EXSTYLE, GetWindowLong(m_hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 	SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 0, LWA_COLORKEY | LWA_ALPHA);
 
 	if (m_hWnd == NULL)
@@ -113,7 +289,8 @@ BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = m_instance;
-	wcex.hIcon = (HICON)LoadImage(m_instance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, ::GetSystemMetrics(IDI_ICON1), ::GetSystemMetrics(IDI_ICON1), 0);
+	wcex.hIcon = (HICON)LoadImage(
+		m_instance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, ::GetSystemMetrics(IDI_ICON1), ::GetSystemMetrics(IDI_ICON1), 0);
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
@@ -168,18 +345,23 @@ LRESULT CALLBACK NSSplashScreen::WndProc(HWND hWnd, UINT message, WPARAM wParam,
 }
 HFONT NSSplashScreen::CreatePointFont(int pointSize, HDC dc)
 {
-	HFONT font;
+	int height = -MulDiv(pointSize, GetDeviceCaps(dc, LOGPIXELSY), 72); // pointSize * 10;
 
-	LOGFONT logicalFont;
-	memset(&logicalFont, 0, sizeof(LOGFONT));
-	logicalFont.lfWeight = FW_ULTRALIGHT;
-	logicalFont.lfClipPrecision = CLIP_EMBEDDED;
-	logicalFont.lfQuality = PROOF_QUALITY;
-	logicalFont.lfOutPrecision = OUT_STRING_PRECIS;
-
-	logicalFont.lfHeight = -MulDiv(pointSize, GetDeviceCaps(dc, LOGPIXELSY), 72); // pointSize * 10;
-	font = CreateFontIndirect(&logicalFont);
-	return font;
+	return CreateFontW(
+		height,
+		0,
+		0,
+		0,
+		m_statusFontWeight,
+		FALSE,
+		FALSE,
+		FALSE,
+		DEFAULT_CHARSET,
+		OUT_OUTLINE_PRECIS,
+		CLIP_EMBEDDED,
+		PROOF_QUALITY,
+		DEFAULT_PITCH,
+		m_fontFace.c_str());
 }
 
 void NSSplashScreen::SetSplashMessage(const char* message, int progress, bool close)
@@ -208,7 +390,7 @@ void NSSplashScreen::Paint()
 	// For some godawful reason copying a bitmap between two devices clears the source
 	// Im not even fucking kidding
 	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt#remarks
-	if (m_useAltBackground)
+	if (m_useAltBitmaps)
 	{
 		// Alternate background must be the same size as the normal one
 		// I don't care enough to support multiple sizes
@@ -225,21 +407,45 @@ void NSSplashScreen::Paint()
 	SelectObject(dc_load, m_loadbar);
 	SelectObject(dc_load_filled, m_loadbar_filled);
 
+	int test = RGB(255, 0, 0);
+
 	SetStretchBltMode(paintDC, COLORONCOLOR);
 
 	BitBlt(paintDC, 0, 0, SPLASH_WIDTH, SPLASH_HEIGHT, dc_splash, 0, 0, SRCCOPY);
 	for (int i = 0; i < 9; i++)
 	{
 		if (i >= m_progress)
-			TransparentBlt(paintDC, 55 + i * 45, 520, 50, 13, dc_load, 0, 0, 50, 13, RGB(255, 0, 0));
+			TransparentBlt(
+				paintDC,
+				m_loadX + i * m_loadSpacing,
+				m_loadY,
+				LOAD_WIDTH,
+				LOAD_HEIGHT,
+				dc_load,
+				0,
+				0,
+				LOAD_WIDTH,
+				LOAD_HEIGHT,
+				RGB(255, 0, 0));
 		else
-			TransparentBlt(paintDC, 55 + i * 45, 520, 50, 13, dc_load_filled, 0, 0, 50, 13, RGB(255, 0, 0));
+			TransparentBlt(
+				paintDC,
+				m_loadX + i * m_loadSpacing,
+				m_loadY,
+				LOAD_WIDTH,
+				LOAD_HEIGHT,
+				dc_load_filled,
+				0,
+				0,
+				LOAD_WIDTH,
+				LOAD_HEIGHT,
+				RGB(255, 0, 0));
 	}
 
-	HFONT statusFont = CreatePointFont(14, paintDC);
+	HFONT statusFont = CreatePointFont(m_statusFontSize, paintDC);
 	SelectObject(paintDC, statusFont);
 
-	SetTextColor(paintDC, RGB(255, 255, 255));
+	SetTextColor(paintDC, m_statusColor);
 	SetBkMode(paintDC, TRANSPARENT);
 
 	DrawText(paintDC, m_message.c_str(), static_cast<int>(m_message.length()), &statusRect, DT_CENTER | DT_SINGLELINE);

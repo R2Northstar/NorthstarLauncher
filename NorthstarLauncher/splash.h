@@ -8,11 +8,10 @@
 // Windows Header Files:
 #include <windows.h>
 #include <stdexcept>
+#include <thread>
 
 // C RunTime Header Files
 #include <string>
-
-#include "splash.h"
 
 class NSSplashScreen
 {
@@ -30,9 +29,19 @@ class NSSplashScreen
 	BOOL RegisterClass(LPCTSTR szWindowClassName);
 	void Paint();
 
+	void LoadDefaults();
+	void LoadFromFile(std::string& path);
+
   private:
 	int SPLASH_WIDTH = 512;
 	int SPLASH_HEIGHT = 650;
+
+	int LOAD_WIDTH = 50;
+	int LOAD_HEIGHT = 13;
+
+	int m_loadSpacing = 45;
+	int m_loadX = 55;
+	int m_loadY = 520;
 
 	RECT redrawRect;
 	RECT statusRect;
@@ -48,8 +57,17 @@ class NSSplashScreen
 	HBITMAP m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
 	HBITMAP m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
 
-	bool m_useAltBackground = false;
+	bool m_useAltBitmaps = false;
 	std::wstring m_altBackground {};
+	std::wstring m_altLoad {};
+	std::wstring m_altLoadFilled {};
+
+	int m_statusFontSize = 14;
+	int m_transparency = RGB(255, 0, 0);
+	int m_statusColor = RGB(255, 255, 255);
+
+	std::wstring m_fontFace {};
+	int m_statusFontWeight = FW_ULTRALIGHT;
 
 	std::wstring m_message {};
 	int m_progress = 0;

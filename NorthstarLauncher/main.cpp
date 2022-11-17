@@ -369,7 +369,26 @@ int main(int argc, char* argv[])
 
 	if (!dedicated && !nosplash)
 	{
-		g_SplashScreen = new NSSplashScreen();
+		char* clachar = strstr(GetCommandLineA(), "-altsplash=");
+		std::string altSplash = "";
+		if (clachar)
+		{
+			std::string cla =  clachar;
+			if (strncmp(cla.substr(12, 1).c_str(), "\"", 1))
+			{
+				cla = cla.substr(12);
+				int space = cla.find("\"");
+				altSplash = cla.substr(0, space);
+			}
+			else
+			{
+				std::string quote = "\"";
+				int quote1 = cla.find(quote);
+				int quote2 = (cla.substr(quote1 + 1)).find(quote);
+				altSplash = cla.substr(quote1 + 1, quote2);
+			}
+		}
+		g_SplashScreen = new NSSplashScreen(altSplash);
 		DisableProcessWindowsGhosting();
 	}
 

@@ -58,6 +58,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/F8000000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)NorthstarDLL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,6 +81,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/F8000000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir)NorthstarDLL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -99,6 +101,41 @@
     <ClCompile Include="splash.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\allocators.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\document.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\encodedstream.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\encodings.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\error\en.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\error\error.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\filereadstream.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\filewritestream.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\fwd.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\biginteger.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\diyfp.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\dtoa.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\ieee754.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\itoa.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\meta.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\pow10.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\regex.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\stack.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\strfunc.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\strtod.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\swap.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\istreamwrapper.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\memorybuffer.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\memorystream.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\msinttypes\inttypes.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\msinttypes\stdint.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\ostreamwrapper.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\pointer.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\prettywriter.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\rapidjson.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\reader.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\schema.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\stream.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\stringbuffer.h" />
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\writer.h" />
     <ClInclude Include="resource1.h" />
     <ClInclude Include="splash.h" />
   </ItemGroup>

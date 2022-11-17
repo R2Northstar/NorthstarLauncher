@@ -13,6 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\include">
+      <UniqueIdentifier>{edd42629-a0d5-42b0-88b3-6e63e04770b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include\rapidjson">
+      <UniqueIdentifier>{e03cd02d-e426-4f1f-bfb3-039c4fa4b426}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include\rapidjson\error">
+      <UniqueIdentifier>{fb44d9ee-295e-442f-b710-beef3e61ec1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include\rapidjson\internal">
+      <UniqueIdentifier>{f81247a0-4dd8-4855-9148-6564e67ab2a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\include\rapidjson\msinttypes">
+      <UniqueIdentifier>{ef283712-3455-444c-af7c-f75429a2690e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -28,6 +43,111 @@
     </ClInclude>
     <ClInclude Include="splash.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\allocators.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\document.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\encodedstream.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\encodings.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\filereadstream.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\filewritestream.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\fwd.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\istreamwrapper.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\memorybuffer.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\memorystream.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\ostreamwrapper.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\pointer.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\prettywriter.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\rapidjson.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\reader.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\schema.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\stream.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\stringbuffer.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\writer.h">
+      <Filter>Header Files\include\rapidjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\error\en.h">
+      <Filter>Header Files\include\rapidjson\error</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\error\error.h">
+      <Filter>Header Files\include\rapidjson\error</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\biginteger.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\diyfp.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\dtoa.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\ieee754.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\itoa.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\meta.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\pow10.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\regex.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\stack.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\strfunc.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\strtod.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\internal\swap.h">
+      <Filter>Header Files\include\rapidjson\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\msinttypes\inttypes.h">
+      <Filter>Header Files\include\rapidjson\msinttypes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\NorthstarDLL\include\rapidjson\msinttypes\stdint.h">
+      <Filter>Header Files\include\rapidjson\msinttypes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

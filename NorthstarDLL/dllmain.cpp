@@ -139,11 +139,15 @@ bool LoadPlugins()
 	return true;
 }
 
+#include "logging.h"
+
 bool InitialiseNorthstar()
 {
 	static bool bInitialised = false;
 	if (bInitialised)
 		return false;
+
+	InitialiseCrashHandler();
 
 	atexit(CloseConsole);
 
@@ -167,7 +171,6 @@ bool InitialiseNorthstar()
 
 	SetSplashMessage("Loading hooks", 5);
 
-	InitialiseCrashHandler();
 	InstallInitialHooks();
 	CreateLogFiles();
 

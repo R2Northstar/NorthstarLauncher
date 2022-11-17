@@ -124,39 +124,23 @@ void CloseConsole() {
 
 void InitialiseConsole()
 {
-	//if (strstr(GetCommandLineA(), "-showconsole") || strstr(GetCommandLineA(), "-nosplash"))
+	bool hasAttached = AttachConsole(-1);
+	if (!hasAttached)
 	{
-		if (AllocConsole() == FALSE)
+		if (strstr(GetCommandLineA(), "-showconsole") || strstr(GetCommandLineA(), "-nosplash"))
 		{
-			std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
-		}
-		else
-		{
-			// Hide console by default
+			if (AllocConsole() == FALSE)
+			{
+				std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
+			}
+			else
+			{
+				// Hide console by default
 
-			freopen("CONOUT$", "w", stdout);
-			freopen("CONOUT$", "w", stderr);
+				freopen("CONOUT$", "w", stdout);
+				freopen("CONOUT$", "w", stderr);
+			}
 		}
-	}
-	//else
-	{
-		STARTUPINFO siStartInfo {};
-		siStartInfo.wShowWindow = SW_HIDE;
-		siStartInfo.dwFlags = STARTF_USESHOWWINDOW;
-		BOOL success = CreateProcess(
-			L"C:\\Windows\\System32\\cmd.exe", // absolute path to the application
-			NULL, // command line
-			NULL, // process security attributes
-			NULL, // primary thread security attributes
-			TRUE, // handles are inherited
-			CREATE_NEW_CONSOLE, // creation flags
-			NULL, // use parent's environment
-			NULL, // use parent's current directory
-			&siStartInfo, // STARTUPINFO pointer
-			&processInfo); // receives PROCESS_INFORMATION
-		if (!success)
-			spdlog::info("Failed to create console window: {}", std::system_category().message(GetLastError()));
-		AttachConsole(processInfo.dwProcessId);
 	}
 
 	// this if statement is adapted from r5sdk

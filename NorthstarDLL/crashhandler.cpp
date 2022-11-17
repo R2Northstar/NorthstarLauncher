@@ -230,6 +230,7 @@ void GenerateTrace(ExceptionLog& exc, bool skipErrorHandlingFrames = true, int n
 
 void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 {
+
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
@@ -296,7 +297,6 @@ long __stdcall ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 		// Check if we are capable of handling this type of exception
 		if (ExceptionNames.find(exceptionInfo->ExceptionRecord->ExceptionCode) == ExceptionNames.end())
 			return EXCEPTION_CONTINUE_SEARCH;
-		CreateMiniDump(exceptionInfo);
 		return GenerateExceptionLog(exceptionInfo);
 	}
 
