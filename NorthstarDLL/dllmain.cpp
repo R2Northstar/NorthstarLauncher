@@ -145,6 +145,8 @@ bool InitialiseNorthstar()
 	if (bInitialised)
 		return false;
 
+	atexit(CloseConsole);
+
 	bInitialised = true;
 
 	InitialiseSplashScreen();

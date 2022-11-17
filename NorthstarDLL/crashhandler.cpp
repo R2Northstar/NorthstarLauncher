@@ -340,7 +340,6 @@ BOOL WINAPI ConsoleHandlerRoutine(DWORD eventCode)
 		// User closed console, shut everything down
 		spdlog::info("Exiting due to console close...");
 		RemoveCrashHandler();
-		exit(EXIT_SUCCESS);
 		return FALSE;
 	}
 

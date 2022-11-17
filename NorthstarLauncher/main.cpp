@@ -351,6 +351,7 @@ int main(int argc, char* argv[])
 	bool dedicated = false;
 	bool nostubs = false;
 	bool nosplash = false;
+	bool showConsole = false;
 
 	for (int i = 0; i < argc; i++)
 		if (!strcmp(argv[i], "-noOriginStartup"))
@@ -363,11 +364,18 @@ int main(int argc, char* argv[])
 			noLoadPlugins = true;
 		else if (!strcmp(argv[i], "-nosplash"))
 			nosplash = true;
+		else if (!strcmp(argv[i], "-showconsole"))
+			showConsole = true;
 
 	if (!dedicated && !nosplash)
 	{
 		g_SplashScreen = new NSSplashScreen();
 		DisableProcessWindowsGhosting();
+	}
+
+	if (!nosplash && !showConsole)
+	{
+		ShowWindow(GetConsoleWindow(), SW_HIDE);
 	}
 
 	if (!noOriginStartup && !dedicated)

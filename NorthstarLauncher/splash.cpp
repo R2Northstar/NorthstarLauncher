@@ -113,12 +113,14 @@ BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = m_instance;
-	wcex.hIcon = NULL;
+	wcex.hIcon = (HICON)LoadImage(m_instance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, ::GetSystemMetrics(IDI_ICON1), ::GetSystemMetrics(IDI_ICON1), 0);
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = szWindowClassName;
-	wcex.hIconSm = NULL;
+	wcex.hIconSm = (HICON)LoadImage(
+		m_instance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), 0);
+	;
 	m_szWindowClass = RegisterClassEx(&wcex);
 	if (m_szWindowClass == 0)
 	{
@@ -129,7 +131,6 @@ BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 
 void NSSplashScreen::HideSplashScreen()
 {
-	// Destroy the window, and update the mainframe.
 	if (m_hWnd != NULL)
 	{
 		std::thread fadeOut(
@@ -139,13 +140,13 @@ void NSSplashScreen::HideSplashScreen()
 				{
 					std::this_thread::sleep_for(std::chrono::microseconds(2));
 					SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 255 - i * 2, LWA_COLORKEY | LWA_ALPHA);
-					DestroyWindow(m_hWnd);
-					if (m_hWnd && IsWindow(m_hWnd))
-						UpdateWindow(m_hWnd);
 				}
+				// DestroyWindow doesnt work from threads :/
+				PostMessage(m_hWnd, WM_CLOSE, 0, 0);
 			});
 		fadeOut.detach();
 	}
+	m_hWnd = NULL;
 }
 
 LRESULT CALLBACK NSSplashScreen::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
