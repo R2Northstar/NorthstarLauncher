@@ -20,44 +20,36 @@
 #include <string>
 #include <chrono>
 
-CSplashScreen* g_SplashScreen;
-
-int SRC_X = 512;
-int SRC_Y = 650;
-int DST_X = 512;
-int DST_Y = 650;
+NSSplashScreen* g_SplashScreen;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 // static CSplashScreen *gDlg;
-CSplashScreen* CSplashScreen::m_pSplashWnd = NULL;
-ATOM CSplashScreen::m_szWindowClass = 0;
-BOOL CSplashScreen::m_useStderr = FALSE;
+NSSplashScreen* NSSplashScreen::m_pSplashWnd = NULL;
+ATOM NSSplashScreen::m_szWindowClass = 0;
+BOOL NSSplashScreen::m_useStderr = FALSE;
 
-CSplashScreen::CSplashScreen(HWND parentWnd)
+NSSplashScreen::NSSplashScreen()
 {
 
 	redrawRect.left = 0;
 	redrawRect.top = 0;
-	redrawRect.right = DST_X;
-	redrawRect.bottom = DST_Y;
+	redrawRect.right = SPLASH_WIDTH;
+	redrawRect.bottom = SPLASH_HEIGHT;
 
-	statusRect.left = DST_X / 2 - 200;
+	statusRect.left = SPLASH_WIDTH / 2 - 200;
 	statusRect.top = 550;
-	statusRect.right = DST_X / 2 + 200;
+	statusRect.right = SPLASH_WIDTH / 2 + 200;
 	statusRect.bottom = 600;
-
-	m_hParentWnd = parentWnd;
 
 	m_pSplashWnd = this;
 
 	m_instance = GetModuleHandle(NULL);
 
-	LPCTSTR szTitle = TEXT("");
-	LPCTSTR szWindowClassName = TEXT("SplashScreen");
+	LPCTSTR szTitle = TEXT("Northstar Launcher");
+	LPCTSTR szWindowClassName = TEXT("Northstar Launcher");
 
-	// register splash window class if not already registered
 	if (m_szWindowClass == 0)
 	{
 		BOOL result = RegisterClass(szWindowClassName);
@@ -66,43 +58,35 @@ CSplashScreen::CSplashScreen(HWND parentWnd)
 	}
 
 	DWORD exStyle = 0;
-	int xPos = 0;
-	int yPos = 0;
-	int width = DST_X;
-	int height = DST_Y;
 
-	// if parent window, center it on the parent window. otherwise center it on the screen
 	RECT parentRect;
-	if (m_hParentWnd == NULL)
-	{
-		::GetWindowRect(GetDesktopWindow(), &parentRect);
-	}
-	else
-	{
-		::GetWindowRect(m_hParentWnd, &parentRect);
-	}
+	GetWindowRect(GetDesktopWindow(), &parentRect);
 	HWND hwnd = GetDesktopWindow();
 
-	xPos = parentRect.left + (parentRect.right - parentRect.left) / 2 - (width / 2);
-	yPos = parentRect.top + (parentRect.bottom - parentRect.top) / 2 - (height / 2);
+	int xPos = parentRect.left + (parentRect.right - parentRect.left) / 2 - (SPLASH_WIDTH / 2);
+	int yPos = parentRect.top + (parentRect.bottom - parentRect.top) / 2 - (SPLASH_HEIGHT / 2);
 
 	HMENU menu = NULL;
-	m_hWnd = CreateWindowEx(
+	m_hWnd = CreateWindowExW(
 		exStyle,
 		szWindowClassName,
 		szTitle,
 		WS_EX_LAYERED | WS_POPUP | WS_VISIBLE,
 		xPos,
 		yPos,
-		width,
-		height,
+		SPLASH_WIDTH,
+		SPLASH_HEIGHT,
 		m_hParentWnd,
 		menu,
 		m_instance,
 		this);
-
 	SetWindowLong(m_hWnd, GWL_EXSTYLE, GetWindowLong(m_hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 	SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 0, LWA_COLORKEY | LWA_ALPHA);
+
+	if (m_hWnd == NULL)
+	{
+		throw std::runtime_error("Failed to create window");
+	}
 
 	std::thread fadeIn(
 		[m_hWnd = m_hWnd]()
@@ -115,50 +99,16 @@ CSplashScreen::CSplashScreen(HWND parentWnd)
 		});
 	fadeIn.detach();
 
-	if (m_hWnd == NULL)
-	{
-		throw std::runtime_error("Failed to create window");
-	}
-
-	// if no parent window, make it a topmost, so eventual application window will appear under it
-	if (m_hParentWnd == NULL)
-	{
-		::SetWindowPos(m_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-	}
+	SetWindowPos(m_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
-void CSplashScreen::HideSplashScreen()
-{
-
-	// Destroy the window, and update the mainframe.
-	if (m_pSplashWnd != NULL)
-	{
-		HWND hParentWnd = m_pSplashWnd->m_hParentWnd;
-		::DestroyWindow(m_pSplashWnd->m_hWnd);
-		if (hParentWnd && ::IsWindow(hParentWnd))
-			::UpdateWindow(hParentWnd);
-	}
-}
-
-void CSplashScreen::ReportError(LPCTSTR format, ...)
-{
-	TCHAR buffer[4096];
-	va_list argp;
-	va_start(argp, format);
-	_tcprintf(buffer, format, argp);
-	va_end(argp);
-	MessageBox(m_hWnd, buffer, TEXT("Error"), MB_ICONERROR);
-}
-BOOL CSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
+BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 {
 	m_instance = GetModuleHandle(NULL);
-
 	// register class
 	DWORD lastError;
 	WNDCLASSEX wcex;
-
 	wcex.cbSize = sizeof(WNDCLASSEX);
-
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = (WNDPROC)WndProc;
 	wcex.cbClsExtra = 0;
@@ -170,23 +120,40 @@ BOOL CSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = szWindowClassName;
 	wcex.hIconSm = NULL;
-
 	m_szWindowClass = RegisterClassEx(&wcex);
 	if (m_szWindowClass == 0)
 	{
-		ReportError(TEXT("Failed to register class"));
-		return FALSE;
+		throw std::runtime_error("Failed to create window class");
 	}
 	return TRUE;
 }
 
-LRESULT CALLBACK CSplashScreen::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+void NSSplashScreen::HideSplashScreen()
+{
+	// Destroy the window, and update the mainframe.
+	if (m_hWnd != NULL)
+	{
+		std::thread fadeOut(
+			[m_hWnd = m_hWnd]()
+			{
+				for (int i = 0; i < 128; i++)
+				{
+					std::this_thread::sleep_for(std::chrono::microseconds(2));
+					SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 255 - i * 2, LWA_COLORKEY | LWA_ALPHA);
+					DestroyWindow(m_hWnd);
+					if (m_hWnd && IsWindow(m_hWnd))
+						UpdateWindow(m_hWnd);
+				}
+			});
+		fadeOut.detach();
+	}
+}
+
+LRESULT CALLBACK NSSplashScreen::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-
 	case WM_PAINT:
-		// m_pSplashWnd->Paint ();
 		break;
 
 	case WM_NCDESTROY:
@@ -194,27 +161,12 @@ LRESULT CALLBACK CSplashScreen::WndProc(HWND hWnd, UINT message, WPARAM wParam, 
 		m_pSplashWnd = NULL;
 		break;
 
-	case WM_TIMER:
-		m_pSplashWnd->HideSplashScreen();
-		break;
-
-	case WM_KEYDOWN:
-	case WM_SYSKEYDOWN:
-	case WM_LBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-	case WM_MBUTTONDOWN:
-	case WM_NCLBUTTONDOWN:
-	case WM_NCRBUTTONDOWN:
-	case WM_NCMBUTTONDOWN:
-		m_pSplashWnd->HideSplashScreen();
-		break;
-
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;
 }
-HFONT CSplashScreen::CreatePointFont(int pointSize, HDC dc)
+HFONT NSSplashScreen::CreatePointFont(int pointSize, HDC dc)
 {
 	HFONT font;
 
@@ -224,30 +176,17 @@ HFONT CSplashScreen::CreatePointFont(int pointSize, HDC dc)
 	logicalFont.lfClipPrecision = CLIP_EMBEDDED;
 	logicalFont.lfQuality = PROOF_QUALITY;
 	logicalFont.lfOutPrecision = OUT_STRING_PRECIS;
-	logicalFont.lfPitchAndFamily = FF_DONTCARE;
 
 	logicalFont.lfHeight = -MulDiv(pointSize, GetDeviceCaps(dc, LOGPIXELSY), 72); // pointSize * 10;
 	font = CreateFontIndirect(&logicalFont);
 	return font;
 }
 
-void CSplashScreen::SetSplashMessage(const char* message, int progress, bool close)
+void NSSplashScreen::SetSplashMessage(const char* message, int progress, bool close)
 {
 	if (close)
 	{
-		std::thread fadeOut(
-			[m_hWnd = m_hWnd]()
-			{
-				for (int i = 0; i < 128; i++)
-				{
-					std::this_thread::sleep_for(std::chrono::microseconds(2));
-					SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 255 - i * 2, LWA_COLORKEY | LWA_ALPHA);
-				}
-			});
-		fadeOut.detach();
-		::ShowWindow(m_hWnd, SW_HIDE);
-		::UpdateWindow(m_hWnd);
-		::DestroyWindow(m_hWnd);
+		HideSplashScreen();
 		return;
 	}
 	m_progress = progress;
@@ -257,29 +196,33 @@ void CSplashScreen::SetSplashMessage(const char* message, int progress, bool clo
 	Paint();
 }
 
-void CSplashScreen::Paint()
+#include <gdiplusheaders.h>
+
+void NSSplashScreen::Paint()
 {
 	PAINTSTRUCT ps;
 	HDC paintDC = BeginPaint(m_hWnd, &ps);
 
-	HDC dc_splash = ::CreateCompatibleDC(paintDC);
-	HDC dc_load = ::CreateCompatibleDC(paintDC);
-	HDC dc_load_filled = ::CreateCompatibleDC(paintDC);
+	HDC dc_splash = CreateCompatibleDC(paintDC);
+	HDC dc_load = CreateCompatibleDC(paintDC);
+	HDC dc_load_filled = CreateCompatibleDC(paintDC);
 
 	// For some godawful reason copying a bitmap between two devices clears the source
 	// Im not even fucking kidding
 	// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt#remarks
 	m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
-	m_pip = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
-	m_pipfull = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
+	m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
+	m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
+
+	Apply
 
 	SelectObject(dc_splash, m_bitmap);
-	SelectObject(dc_load, m_pip);
-	SelectObject(dc_load_filled, m_pipfull);
+	SelectObject(dc_load, m_loadbar);
+	SelectObject(dc_load_filled, m_loadbar_filled);
 
 	SetStretchBltMode(paintDC, COLORONCOLOR);
 
-	StretchBlt(paintDC, 0, 0, DST_X, DST_Y, dc_splash, 0, 0, SRC_X, SRC_Y, SRCCOPY);
+	BitBlt(paintDC, 0, 0, SPLASH_WIDTH, SPLASH_HEIGHT, dc_splash, 0, 0,  SRCCOPY);
 	for (int i = 0; i < 9; i++)
 	{
 		if (i >= m_progress)
@@ -289,7 +232,7 @@ void CSplashScreen::Paint()
 	}
 
 	HFONT font;
-	HFONT productNameFont = CreatePointFont(22, paintDC);
+	HFONT productNameFont = CreatePointFont(14, paintDC);
 	HFONT originalFont = (HFONT)SelectObject(paintDC, productNameFont);
 
 	SetTextColor(paintDC, RGB(255, 255, 255));
@@ -303,6 +246,7 @@ void CSplashScreen::Paint()
 	EndPaint(m_hWnd, &ps);
 }
 
+// Used to expose splash screen to launcher dll
 extern "C" __declspec(dllexport) void SetSplashMessage(const char* msg, int progress, bool close)
 {
 	if (g_SplashScreen)

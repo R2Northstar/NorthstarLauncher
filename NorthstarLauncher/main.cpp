@@ -366,8 +366,8 @@ int main(int argc, char* argv[])
 
 	if (!dedicated && !nosplash)
 	{
+		g_SplashScreen = new NSSplashScreen();
 		DisableProcessWindowsGhosting();
-		g_SplashScreen = new CSplashScreen(NULL);
 	}
 
 	if (!noOriginStartup && !dedicated)
