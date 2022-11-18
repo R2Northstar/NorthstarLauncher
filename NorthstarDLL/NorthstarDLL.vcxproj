@@ -397,7 +397,6 @@
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="keyvalues.h" />
     <ClInclude Include="loghooks.h" />
-    <ClInclude Include="splash.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />
     <ClInclude Include="maxplayers.h" />
@@ -515,7 +514,6 @@
     <ClCompile Include="serverpresence.cpp" />
     <ClCompile Include="sourceconsole.cpp" />
     <ClCompile Include="sourceinterface.cpp" />
-    <ClCompile Include="splash.cpp" />
     <ClCompile Include="squirrel.cpp" />
     <ClCompile Include="exploitfixes.cpp" />
     <ClCompile Include="squirrelautobind.cpp" />

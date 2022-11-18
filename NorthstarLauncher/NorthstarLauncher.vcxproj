@@ -98,7 +98,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="splash.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\rapidjson\allocators.h" />
@@ -137,7 +136,6 @@
     <ClInclude Include="..\include\rapidjson\stringbuffer.h" />
     <ClInclude Include="..\include\rapidjson\writer.h" />
     <ClInclude Include="resource1.h" />
-    <ClInclude Include="splash.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources.rc" />

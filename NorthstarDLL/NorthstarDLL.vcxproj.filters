@@ -300,9 +300,6 @@
     <ClInclude Include="loghooks.h">
       <Filter>Header Files\Console</Filter>
     </ClInclude>
-    <ClInclude Include="splash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\httplib.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
@@ -1348,9 +1345,6 @@
     </ClCompile>
     <ClCompile Include="loghooks.cpp">
       <Filter>Source Files\Console</Filter>
-    </ClCompile>
-    <ClCompile Include="splash.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
