@@ -33,7 +33,7 @@ class NSSplashScreen
 	void LoadFromFile(std::string& path);
 
   private:
-	  // Config
+	// Config
 	int SPLASH_WIDTH = 512;
 	int SPLASH_HEIGHT = 650;
 

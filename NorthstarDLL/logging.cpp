@@ -120,7 +120,8 @@ void CustomSink::custom_log(const custom_log_msg& msg)
 	custom_sink_it_(msg);
 }
 
-void CloseConsole() {
+void CloseConsole()
+{
 	spdlog::info("Closing console now.");
 	TerminateProcess(processInfo.hProcess, 0);
 }

@@ -373,7 +373,7 @@ int main(int argc, char* argv[])
 		std::string altSplash = "";
 		if (clachar)
 		{
-			std::string cla =  clachar;
+			std::string cla = clachar;
 			if (strncmp(cla.substr(12, 1).c_str(), "\"", 1))
 			{
 				cla = cla.substr(12);
