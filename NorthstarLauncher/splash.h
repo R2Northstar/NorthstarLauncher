@@ -16,7 +16,7 @@
 class NSSplashScreen
 {
   public:
-	NSSplashScreen(std::string altBackground = "");
+	NSSplashScreen(std::string altSplashPath = "");
 
 	void HideSplashScreen();
 
@@ -33,29 +33,23 @@ class NSSplashScreen
 	void LoadFromFile(std::string& path);
 
   private:
+	  // Config
 	int SPLASH_WIDTH = 512;
 	int SPLASH_HEIGHT = 650;
 
 	int LOAD_WIDTH = 50;
 	int LOAD_HEIGHT = 13;
 
+	RECT redrawRect;
+	RECT statusRect;
+
 	int m_loadSpacing = 45;
 	int m_loadX = 55;
 	int m_loadY = 520;
 
-	RECT redrawRect;
-	RECT statusRect;
-	HWND m_hDlg = NULL;
-	HWND m_hParentWnd = NULL;
-	HWND m_hWnd = NULL;
-	HINSTANCE m_instance = NULL;
-	static NSSplashScreen* m_pSplashWnd;
-	static ATOM m_szWindowClass;
-	static BOOL m_useStderr;
-
-	HBITMAP m_bitmap = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_SPLASH));
-	HBITMAP m_loadbar = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD));
-	HBITMAP m_loadbar_filled = LoadBitmap(m_instance, MAKEINTRESOURCE(IDB_LOAD_FILLED));
+	HBITMAP m_bitmap = NULL;
+	HBITMAP m_loadbar = NULL;
+	HBITMAP m_loadbar_filled = NULL;
 
 	bool m_useAltBitmaps = false;
 	std::wstring m_altBackground {};
@@ -68,6 +62,14 @@ class NSSplashScreen
 
 	std::wstring m_fontFace {};
 	int m_statusFontWeight = FW_ULTRALIGHT;
+
+	HWND m_hDlg = NULL;
+	HWND m_hParentWnd = NULL;
+	HWND m_hWnd = NULL;
+	HINSTANCE m_instance = NULL;
+	static NSSplashScreen* m_pSplashWnd;
+	static ATOM m_szWindowClass;
+	static BOOL m_useStderr;
 
 	std::wstring m_message {};
 	int m_progress = 0;

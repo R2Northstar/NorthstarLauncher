@@ -212,15 +212,15 @@ void NSSplashScreen::LoadFromFile(std::string& path)
 	DeleteObject(temp_load);
 }
 
-NSSplashScreen::NSSplashScreen(std::string altSplash)
+NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 {
 
 	m_pSplashWnd = this;
 
 	m_instance = GetModuleHandle(NULL);
 
-	if (altSplash != "")
-		LoadFromFile(altSplash);
+	if (altSplashPath != "")
+		LoadFromFile(altSplashPath);
 	else
 		LoadDefaults();
 
