@@ -6,17 +6,13 @@ Custom Splash Screen format:
 	"img_load": "path_to_load.bmp",
 	"img_load_filled": "path_to_load_filled.bmp",
 	"load_spacing": 45,
-	"load_x": 55,
-	"load_y": 520,
-	"status_left": 0,
-	"status_right": SPLASH_WIDTH,
-	"status_top": 0,
-	"status_bottom": SPLASH_HEIGHT,
+	"load_pos": [200, 520],
+	"status_rect": [0, 0, 0, 0],
 	"status_fontsize": 14,
 	"status_font": "",
 	"status_weight": 400,
-	"status_color": 0,
-	"transparency": 255,
+	"status_color": [0, 0, 0],
+	"transparency": [255, 0, 0],
 }
 
 Use with parameter: `-alternateSplash=path_to_folder`
@@ -25,6 +21,8 @@ Images are loaded from the same directory as the splash json
 Transparency can be calculated with the `RGB` macro
 If `status_right` or `status_bottom` are 0, they will be set to the image width and height respectivel
 `img_load` and `img_load_filled` must be the same size to work correctly
+`load_pos` maps its members in order to LOAD_X and LOAD_Y
+`status_rect` maps its members in order to LEFT, RIGHT, TOP, and BOTTOM
 */
 
 #include "resource1.h"
@@ -151,33 +149,25 @@ void NSSplashScreen::LoadFromFile(std::string& path)
 	redrawRect.right = SPLASH_WIDTH;
 	redrawRect.bottom = SPLASH_HEIGHT;
 
-	if (doc.HasMember("status_left"))
-		statusRect.left = doc["status_left"].GetInt();
-	else
-		statusRect.left = 0;
-
-	if (doc.HasMember("status_right"))
+	if (doc.HasMember("status_rect") && doc["status_rect"].IsArray())
 	{
-		statusRect.right = doc["status_right"].GetInt();
+		statusRect.left = doc["status_rect"][0].GetInt();
+		statusRect.right = doc["status_rect"][1].GetInt();
+		statusRect.top = doc["status_rect"][2].GetInt();
+		statusRect.bottom = doc["status_rect"][3].GetInt();
+
 		if (statusRect.right == 0)
 			statusRect.right = SPLASH_WIDTH;
-	}
-	else
-		statusRect.right = SPLASH_WIDTH;
-
-	if (doc.HasMember("status_top"))
-		statusRect.top = doc["status_top"].GetInt();
-	else
-		statusRect.top = 550;
-
-	if (doc.HasMember("status_bottom"))
-	{
-		statusRect.bottom = doc["status_bottom"].GetInt();
 		if (statusRect.bottom == 0)
 			statusRect.bottom = SPLASH_HEIGHT;
 	}
 	else
+	{
+		statusRect.left = 0;
+		statusRect.top = 0;
+		statusRect.right = SPLASH_WIDTH;
 		statusRect.bottom = SPLASH_HEIGHT;
+	}
 
 	if (doc.HasMember("status_fontsize"))
 		m_statusFontSize = doc["status_fontsize"].GetInt();
@@ -191,17 +181,17 @@ void NSSplashScreen::LoadFromFile(std::string& path)
 	if (doc.HasMember("status_weight"))
 		m_statusFontWeight = doc["status_weight"].GetInt();
 
-	if (doc.HasMember("status_color"))
-		m_statusColor = doc["status_color"].GetInt();
+	if (doc.HasMember("status_color") && doc["status_color"].IsArray())
+		m_statusColor = RGB(doc["status_color"][0].GetInt(), doc["status_color"][1].GetInt(), doc["status_color"][2].GetInt());
 
-	if (doc.HasMember("transparency"))
-		m_transparency = doc["transparency"].GetInt();
+	if (doc.HasMember("transparency") && doc["transparency"].IsArray())
+		m_transparency = RGB(doc["transparency"][0].GetInt(), doc["transparency"][1].GetInt(), doc["transparency"][2].GetInt());
 
-	if (doc.HasMember("load_x"))
-		m_loadX = doc["load_x"].GetInt();
-
-	if (doc.HasMember("load_y"))
-		m_loadY = doc["load_y"].GetInt();
+	if (doc.HasMember("load_pos") && doc["load_pos"].IsArray())
+	{
+		m_loadX = doc["load_pos"][0].GetInt();
+		m_loadY = doc["load_pos"][1].GetInt();
+	}
 
 	if (doc.HasMember("load_spacing"))
 		m_loadSpacing = doc["load_spacing"].GetInt();
