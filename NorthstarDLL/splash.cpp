@@ -40,7 +40,6 @@ void InitialiseSplashScreen()
 	SetSplashMessageExternal = (SetSplashMessageExternal_t)GetProcAddress(NULL, "SetSplashMessage");
 }
 
-
 ON_DLL_LOAD("engine.dll", Splash, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
