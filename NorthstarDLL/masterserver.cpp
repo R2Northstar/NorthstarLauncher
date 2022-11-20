@@ -213,8 +213,8 @@ void MasterServerManager::RequestServerList()
 				// rapidjson conforms to JSON Schema draft 4
 				rapidjson::Document schemaDoc;
 				// this schema validates each entry in the array of servers
-				schemaDoc.Parse(
-					R"({
+				schemaDoc.Parse(R"(
+{
 	"type": "object",
 		"properties": {
 			"lastHeartbeat": {
