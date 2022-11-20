@@ -294,14 +294,14 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		}
 
 		SQObject functionobj {};
-		int result = g_pSquirrel<context>->sq_getfunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
+		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			return SQRESULT_ERROR;
 		}
-		g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
-		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
-		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, 0);
+		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
+		pushroottable(m_pSQVM->sqvm); // Push root table
+		return _call(>m_pSQVM->sqvm, 0);
 	}
 
 	template <typename... Args> SQRESULT Call(const char* funcname, Args... args)
@@ -316,13 +316,13 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
 		}
 		SQObject functionobj {};
-		int result = g_pSquirrel<context>->sq_getfunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
+		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			return SQRESULT_ERROR;
 		}
-		g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
-		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
+		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
+		pushroottable(m_pSQVM->sqvm); // Push root table
 
 		FunctionVector functionVector;
 		SqRecurseArgs<context>(functionVector, args...);
@@ -333,7 +333,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 			v();
 		}
 
-		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, functionVector.size());
+		return _call(m_pSQVM->sqvm, functionVector.size());
 	}
 
 #pragma endregion
