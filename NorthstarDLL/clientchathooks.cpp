@@ -30,7 +30,7 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 		payload = message + 1;
 	}
 
-	SQRESULT result = g_pSquirrel<ScriptContext::CLIENT>->call(
+	SQRESULT result = g_pSquirrel<ScriptContext::CLIENT>->Call(
 		"CHudChat_ProcessMessageStartThread", static_cast<int>(senderId) - 1, payload, isTeam, isDead, type);
 	if (result == SQRESULT_ERROR)
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)

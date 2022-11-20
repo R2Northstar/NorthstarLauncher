@@ -142,12 +142,12 @@ const char* SQTypeNameFromID(int type)
 
 // Allows for generating squirrelmessages from plugins.
 // Not used in this version, but will be used later
-void schedule_call_external(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function)
+void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function)
 {
 	SquirrelMessage message {};
-	message.function_name = func_name;
-	message.is_external = true;
-	message.external_func = function;
+	message.functionName = func_name;
+	message.isExternal = true;
+	message.externalFunc = function;
 	switch (context)
 	{
 	case ScriptContext::CLIENT:
@@ -510,26 +510,26 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 
 template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBuffer()
 {
-	auto maybe_message = messageBuffer->pop();
-	if (!maybe_message)
+	auto maybeMessage = messageBuffer->pop();
+	if (!maybeMessage)
 	{
 		return;
 	}
 
-	SquirrelMessage message = maybe_message.value();
+	SquirrelMessage message = maybeMessage.value();
 
 	SQObject functionobj {};
-	int result = sq_getSquirrelFunction(m_pSQVM->sqvm, message.function_name.c_str(), &functionobj, 0);
+	int result = sq_getfunction(m_pSQVM->sqvm, message.functionName.c_str(), &functionobj, 0);
 	if (result != 0) // This func returns 0 on success for some reason
 	{
-		spdlog::error("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name);
+		spdlog::error("ProcessMessageBuffer was unable to find function with name '{}' on {}. Is it global?", message.functionName, GetContextName(context));
 		return;
 	}
 	pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
 	pushroottable(m_pSQVM->sqvm);
-	if (message.is_external)
+	if (message.isExternal)
 	{
-		message.external_func(m_pSQVM->sqvm);
+		message.externalFunc(m_pSQVM->sqvm);
 	}
 	else
 	{
@@ -620,8 +620,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	// Message buffer stuff
 	g_pSquirrel<ScriptContext::UI>->messageBuffer = g_pSquirrel<ScriptContext::CLIENT>->messageBuffer;
-	g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction = module.Offset(0x572FB0).As<sq_getSquirrelFunctionType>();
-	g_pSquirrel<ScriptContext::UI>->__sq_getSquirrelFunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction;
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x572FB0).As<sq_getfunctionType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_getfunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction;
 
 	MAKEHOOK(
 		module.Offset(0x108E0),
@@ -652,8 +652,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	StubUnsafeSQFuncs<ScriptContext::CLIENT>();
 	StubUnsafeSQFuncs<ScriptContext::UI>();
 
-	g_pSquirrel<ScriptContext::CLIENT>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
-	g_pSquirrel<ScriptContext::UI>->__sq_getSquirrelFunction = module.Offset(0x6CB0).As<sq_getSquirrelFunctionType>();
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x6CB0).As<sq_getfunctionType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_getfunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction;
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
@@ -704,7 +704,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff
-	g_pSquirrel<ScriptContext::SERVER>->__sq_getSquirrelFunction = module.Offset(0x6C85).As<sq_getSquirrelFunctionType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_getfunction = module.Offset(0x6C85).As<sq_getfunctionType>();
 
 	MAKEHOOK(
 		module.Offset(0x1DD10),

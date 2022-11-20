@@ -31,9 +31,6 @@ static constexpr int operator|(int first, ScriptContext second)
 	return first + (1 << static_cast<int>(second));
 }
 
-#include "squirrelclasstypes.h"
-#include "vector.h"
-
 const char* GetContextName(ScriptContext context);
 const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
@@ -45,9 +42,10 @@ void schedule_call_external(ScriptContext context, const char* func_name, Squirr
 // Cuts down on compile time by ~5 seconds
 class SquirrelManagerBase
 {
-  public:
+  protected:
 	std::vector<SQFuncRegistration*> m_funcRegistrations;
 
+  public:
 	CSquirrelVM* m_pSQVM;
 	std::map<std::string, SQFunction> m_funcOverrides = {};
 	std::map<std::string, SQFunction> m_funcOriginals = {};
@@ -92,7 +90,7 @@ class SquirrelManagerBase
 
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
-	sq_getSquirrelFunctionType __sq_getSquirrelFunction;
+	sq_getfunctionType __sq_getfunction;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
@@ -212,9 +210,9 @@ class SquirrelManagerBase
 		return *(Vector3*)&pRet;
 	}
 
-	inline int sq_getSquirrelFunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature)
+	inline int sq_getfunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature)
 	{
-		return __sq_getSquirrelFunction(sqvm, name, returnObj, signature);
+		return __sq_getfunction(sqvm, name, returnObj, signature);
 	}
 
 	inline SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result)
@@ -261,7 +259,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 #pragma region MessageBuffer
 	SquirrelMessageBuffer* messageBuffer;
 
-	template <typename... Args> SquirrelMessage schedule_call(std::string funcname, Args... args)
+	template <typename... Args> SquirrelMessage AsyncCall(std::string funcname, Args... args)
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
@@ -272,7 +270,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		return message;
 	}
 
-	SquirrelMessage schedule_call(std::string funcname)
+	SquirrelMessage AsyncCall(std::string funcname)
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
@@ -282,12 +280,12 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		return message;
 	}
 
-	SQRESULT call(const char* funcname)
+	SQRESULT Call(const char* funcname)
 	{
 		// Warning!
 		// This function assumes the squirrel VM is stopped/blocked at the moment of call
 		// Calling this function while the VM is running is likely to result in a crash due to stack destruction
-		// If you want to call into squirrel asynchronously, use `schedule_call` instead
+		// If you want to call into squirrel asynchronously, use `AsyncCall` instead
 
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
@@ -296,7 +294,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		}
 
 		SQObject functionobj {};
-		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
+		int result = g_pSquirrel<context>->sq_getfunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			return SQRESULT_ERROR;
@@ -306,7 +304,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, 0);
 	}
 
-	template <typename... Args> SQRESULT call(const char* funcname, Args... args)
+	template <typename... Args> SQRESULT Call(const char* funcname, Args... args)
 	{
 		// Warning!
 		// This function assumes the squirrel VM is stopped/blocked at the moment of call
@@ -318,7 +316,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
 		}
 		SQObject functionobj {};
-		int result = g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
+		int result = g_pSquirrel<context>->sq_getfunction(g_pSquirrel<context>->m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			return SQRESULT_ERROR;
@@ -326,16 +324,16 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
 		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
 
-		FunctionVector function_vector;
-		SqRecurseArgs<context>(function_vector, args...);
+		FunctionVector functionVector;
+		SqRecurseArgs<context>(functionVector, args...);
 
-		for (auto& v : function_vector)
+		for (auto& v : functionVector)
 		{
 			// Execute lambda to push arg to stack
 			v();
 		}
 
-		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, function_vector.size());
+		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, functionVector.size());
 	}
 
 #pragma endregion

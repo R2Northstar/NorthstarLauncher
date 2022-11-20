@@ -122,10 +122,10 @@ typedef void (*sq_schedule_call_externalType)(ScriptContext context, const char*
 class SquirrelMessage
 {
   public:
-	std::string function_name;
+	std::string functionName;
 	FunctionVector args;
-	bool is_external = false;
-	SquirrelMessage_External_Pop external_func = NULL;
+	bool isExternal = false;
+	SquirrelMessage_External_Pop externalFunc = NULL;
 };
 
 class SquirrelMessageBuffer
@@ -153,13 +153,13 @@ class SquirrelMessageBuffer
 
 	void unwind()
 	{
-		auto maybe_message = this->pop();
-		if (!maybe_message)
+		auto maybeMessage = this->pop();
+		if (!maybeMessage)
 		{
 			spdlog::error("Plugin tried consuming SquirrelMessage while buffer was empty");
 			return;
 		}
-		auto message = maybe_message.value();
+		auto message = maybeMessage.value();
 		for (auto& v : message.args)
 		{
 			// Execute lambda to push arg to stack
@@ -231,7 +231,7 @@ typedef SQRESULT (*sq_setuserdatatypeidType)(HSquirrelVM* sqvm, SQInteger iStack
 typedef void* (*sq_getentityfrominstanceType)(CSquirrelVM* sqvm, SQObject* pInstance, char** ppEntityConstant);
 typedef char** (*sq_GetEntityConstantType)();
 
-typedef int (*sq_getSquirrelFunctionType)(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature);
+typedef int (*sq_getfunctionType)(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature);
 
 #pragma endregion
 

@@ -6,7 +6,7 @@
 void ConCommand_ns_script_servertoclientstringcommand(const CCommand& arg)
 {
 	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM)
-		g_pSquirrel<ScriptContext::CLIENT>->call("NSClientCodeCallback_RecievedServerToClientStringCommand", arg.ArgS());
+		g_pSquirrel<ScriptContext::CLIENT>->Call("NSClientCodeCallback_RecievedServerToClientStringCommand", arg.ArgS());
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ScriptServerToClientStringCommand, ClientSquirrel, (CModule module))
