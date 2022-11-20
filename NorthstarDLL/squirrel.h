@@ -100,124 +100,124 @@ class SquirrelManagerBase
 #pragma endregion
 
 #pragma region SQVM func wrappers
-	inline virtual void defconst(CSquirrelVM* sqvm, const SQChar* pName, int nValue) final
+	inline void defconst(CSquirrelVM* sqvm, const SQChar* pName, int nValue)
 	{
 		__sq_defconst(sqvm, pName, nValue);
 	}
 
-	inline virtual SQRESULT
-	compilebuffer(CompileBufferState* bufferState, const SQChar* bufferName = "unnamedbuffer", const SQBool bShouldThrowError = false) final
+	inline SQRESULT
+	compilebuffer(CompileBufferState* bufferState, const SQChar* bufferName = "unnamedbuffer", const SQBool bShouldThrowError = false)
 	{
 		return __sq_compilebuffer(m_pSQVM->sqvm, bufferState, bufferName, -1, bShouldThrowError);
 	}
 
-	inline virtual SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args) final
+	inline SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args)
 	{
 		return __sq_call(sqvm, args + 1, false, false);
 	}
 
-	inline virtual SQInteger raiseerror(HSquirrelVM* sqvm, const const SQChar* sError) final
+	inline SQInteger raiseerror(HSquirrelVM* sqvm, const const SQChar* sError)
 	{
 		return __sq_raiseerror(sqvm, sError);
 	}
 
-	inline virtual void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0) final
+	inline void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0)
 	{
 		__sq_newarray(sqvm, stackpos);
 	}
 
-	inline virtual SQRESULT arrayappend(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline SQRESULT arrayappend(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_arrayappend(sqvm, stackpos);
 	}
 
-	inline virtual SQRESULT newtable(HSquirrelVM* sqvm) final
+	inline SQRESULT newtable(HSquirrelVM* sqvm)
 	{
 		return __sq_newtable(sqvm);
 	}
 
-	inline virtual SQRESULT newslot(HSquirrelVM* sqvm, SQInteger idx, SQBool bStatic) final
+	inline SQRESULT newslot(HSquirrelVM* sqvm, SQInteger idx, SQBool bStatic)
 	{
 		return __sq_newslot(sqvm, idx, bStatic);
 	}
 
-	inline virtual void pushroottable(HSquirrelVM* sqvm) final
+	inline void pushroottable(HSquirrelVM* sqvm)
 	{
 		__sq_pushroottable(sqvm);
 	}
 
-	inline virtual void pushstring(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1) final
+	inline void pushstring(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1)
 	{
 		__sq_pushstring(sqvm, sVal, length);
 	}
 
-	inline virtual void pushinteger(HSquirrelVM* sqvm, const SQInteger iVal) final
+	inline void pushinteger(HSquirrelVM* sqvm, const SQInteger iVal)
 	{
 		__sq_pushinteger(sqvm, iVal);
 	}
 
-	inline virtual void pushfloat(HSquirrelVM* sqvm, const SQFloat flVal) final
+	inline void pushfloat(HSquirrelVM* sqvm, const SQFloat flVal)
 	{
 		__sq_pushfloat(sqvm, flVal);
 	}
 
-	inline virtual void pushbool(HSquirrelVM* sqvm, const SQBool bVal) final
+	inline void pushbool(HSquirrelVM* sqvm, const SQBool bVal)
 	{
 		__sq_pushbool(sqvm, bVal);
 	}
 
-	inline virtual void pushasset(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1) final
+	inline void pushasset(HSquirrelVM* sqvm, const SQChar* sVal, int length = -1)
 	{
 		__sq_pushasset(sqvm, sVal, length);
 	}
 
-	inline virtual void pushvector(HSquirrelVM* sqvm, const Vector3 pVal) final
+	inline void pushvector(HSquirrelVM* sqvm, const Vector3 pVal)
 	{
 		__sq_pushvector(sqvm, *(float**)&pVal);
 	}
 
-	inline virtual void pushSQObject(HSquirrelVM* sqvm, SQObject* obj) final
+	inline void pushSQObject(HSquirrelVM* sqvm, SQObject* obj)
 	{
 		__sq_pushSQObject(sqvm, obj);
 	}
 
-	inline virtual const SQChar* getstring(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline const SQChar* getstring(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_getstring(sqvm, stackpos);
 	}
 
-	inline virtual SQInteger getinteger(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline SQInteger getinteger(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_getinteger(sqvm, stackpos);
 	}
 
-	inline virtual SQFloat getfloat(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline SQFloat getfloat(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_getfloat(sqvm, stackpos);
 	}
 
-	inline virtual SQBool getbool(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline SQBool getbool(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_getbool(sqvm, stackpos);
 	}
 
-	inline virtual SQRESULT get(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline SQRESULT get(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		return __sq_get(sqvm, stackpos);
 	}
 
-	inline virtual Vector3 getvector(HSquirrelVM* sqvm, const SQInteger stackpos) final
+	inline Vector3 getvector(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
 		float* pRet = __sq_getvector(sqvm, stackpos);
 		return *(Vector3*)&pRet;
 	}
 
-	inline virtual int sq_getSquirrelFunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature) final
+	inline int sq_getSquirrelFunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature)
 	{
 		return __sq_getSquirrelFunction(sqvm, name, returnObj, signature);
 	}
 
-	inline virtual SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result) final
+	inline SQRESULT getasset(HSquirrelVM* sqvm, const SQInteger stackpos, const char** result)
 	{
 		return __sq_getasset(sqvm, stackpos, result);
 	}
@@ -234,7 +234,7 @@ class SquirrelManagerBase
 		return (T*)ret;
 	}
 
-	inline virtual SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, uint64_t typeId) final
+	inline SQRESULT setuserdatatypeid(HSquirrelVM* sqvm, const SQInteger stackpos, uint64_t typeId)
 	{
 		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
 	}
