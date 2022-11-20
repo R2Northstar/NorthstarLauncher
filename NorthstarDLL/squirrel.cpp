@@ -519,8 +519,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 	SquirrelMessage message = maybe_message.value();
 
 	SQObject functionobj {};
-	int result =
-		sq_getSquirrelFunction(m_pSQVM->sqvm, message.function_name.c_str(), &functionobj, 0);
+	int result = sq_getSquirrelFunction(m_pSQVM->sqvm, message.function_name.c_str(), &functionobj, 0);
 	if (result != 0) // This func returns 0 on success for some reason
 	{
 		spdlog::error("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name);
