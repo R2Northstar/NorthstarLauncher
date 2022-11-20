@@ -301,7 +301,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
 		pushroottable(m_pSQVM->sqvm); // Push root table
-		return _call(>m_pSQVM->sqvm, 0);
+		return _call(m_pSQVM->sqvm, 0);
 	}
 
 	template <typename... Args> SQRESULT Call(const char* funcname, Args... args)
