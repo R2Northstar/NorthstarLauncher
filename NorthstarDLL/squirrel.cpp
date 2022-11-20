@@ -544,35 +544,6 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 	_call(m_pSQVM->sqvm, message.args.size());
 }
 
-ADD_SQFUNC(
-	"void",
-	NSTestMessageBuffer,
-	"bool immediate = true",
-	"Create a Squirrel Message that calls print with the provided argument",
-	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
-{
-	bool immediate = g_pSquirrel<context>->getbool(sqvm, 1);
-	std::string str = "std::string works";
-	std::vector<std::string> vec = {"Vectors", "are", "working"};
-	std::map<std::string, int> map = {{"index_1", 1}, {"index_2", 42}};
-	SquirrelAsset asset {"Assets are working"};
-	if (immediate)
-	{
-		g_pSquirrel<context>->call("MessageBuffer_Print", str);
-		g_pSquirrel<context>->call("MessageBuffer_PrintTable", vec);
-		g_pSquirrel<context>->call("MessageBuffer_PrintArray", map);
-		g_pSquirrel<context>->call("MessageBuffer_PrintAsset", asset);
-	}
-	else
-	{
-		g_pSquirrel<context>->schedule_call("MessageBuffer_Print", str);
-		g_pSquirrel<context>->schedule_call("MessageBuffer_PrintTable", vec);
-		g_pSquirrel<context>->schedule_call("MessageBuffer_PrintArray", map);
-		g_pSquirrel<context>->schedule_call("MessageBuffer_PrintAsset", asset);
-	}
-	return SQRESULT_NOTNULL;
-}
-
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
