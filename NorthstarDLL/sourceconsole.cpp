@@ -3,78 +3,90 @@
 #include "sourceconsole.h"
 #include "sourceinterface.h"
 #include "concommand.h"
-#include "hookutils.h"
+#include "printcommand.h"
 
-SourceInterface<CGameConsole>* g_SourceGameConsole;
+SourceInterface<CGameConsole>* g_pSourceGameConsole;
 
 void ConCommand_toggleconsole(const CCommand& arg)
 {
-	if ((*g_SourceGameConsole)->IsConsoleVisible())
-		(*g_SourceGameConsole)->Hide();
+	if ((*g_pSourceGameConsole)->IsConsoleVisible())
+		(*g_pSourceGameConsole)->Hide();
 	else
-		(*g_SourceGameConsole)->Activate();
+		(*g_pSourceGameConsole)->Activate();
 }
 
-typedef void (*OnCommandSubmittedType)(CConsoleDialog* consoleDialog, const char* pCommand);
-OnCommandSubmittedType onCommandSubmittedOriginal;
-void OnCommandSubmittedHook(CConsoleDialog* consoleDialog, const char* pCommand)
+void ConCommand_showconsole(const CCommand& arg)
+{
+	(*g_pSourceGameConsole)->Activate();
+}
+
+void ConCommand_hideconsole(const CCommand& arg)
+{
+	(*g_pSourceGameConsole)->Hide();
+}
+
+void SourceConsoleSink::custom_sink_it_(const custom_log_msg& msg)
+{
+	if (!(*g_pSourceGameConsole)->m_bInitialized)
+		return;
+
+	spdlog::memory_buf_t formatted;
+	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
+
+	// get message string
+	std::string str = fmt::to_string(formatted);
+
+	SourceColor levelColor = m_LogColours[msg.level];
+	std::string name {msg.logger_name.begin(), msg.logger_name.end()};
+
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(msg.origin->SRCColor, ("[" + name + "]").c_str());
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(" ");
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(levelColor, ("[" + std::string(level_names[msg.level]) + "]").c_str());
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(" ");
+	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(fmt::to_string(formatted).c_str());
+}
+
+void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
+{
+	throw std::runtime_error("sink_it_ called on SourceConsoleSink with pure log_msg. This is an error!");
+}
+
+void SourceConsoleSink::flush_() {}
+
+// clang-format off
+HOOK(OnCommandSubmittedHook, OnCommandSubmitted, 
+void, __fastcall, (CConsoleDialog* consoleDialog, const char* pCommand))
+// clang-format on
 {
 	consoleDialog->m_pConsolePanel->Print("] ");
 	consoleDialog->m_pConsolePanel->Print(pCommand);
 	consoleDialog->m_pConsolePanel->Print("\n");
 
-	// todo: call the help command in the future
+	TryPrintCvarHelpForCommand(pCommand);
 
-	onCommandSubmittedOriginal(consoleDialog, pCommand);
+	OnCommandSubmitted(consoleDialog, pCommand);
 }
 
 // called from sourceinterface.cpp in client createinterface hooks, on GameClientExports001
 void InitialiseConsoleOnInterfaceCreation()
 {
-	(*g_SourceGameConsole)->Initialize();
-
-	auto consoleLogger = std::make_shared<SourceConsoleSink>();
-	consoleLogger->set_pattern("[%l] %v");
-
-	spdlog::default_logger()->sinks().push_back(consoleLogger);
-
+	(*g_pSourceGameConsole)->Initialize();
 	// hook OnCommandSubmitted so we print inputted commands
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook,
-		(void*)((*g_SourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted),
-		&OnCommandSubmittedHook,
-		reinterpret_cast<LPVOID*>(&onCommandSubmittedOriginal));
+	OnCommandSubmittedHook.Dispatch((*g_pSourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted);
+
+	auto consoleSink = std::make_shared<SourceConsoleSink>();
+	if (g_bSpdLog_UseAnsiColor)
+		consoleSink->set_pattern("%v"); // no need to include the level in the game console, the text colour signifies it anyway
+	else
+		consoleSink->set_pattern("[%n] [%l] %v"); // no colour, so we should show the level for colourblind people
+	RegisterCustomSink(consoleSink);
 }
 
-void InitialiseSourceConsole(HMODULE baseAddress)
+ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (CModule module))
 {
-	g_SourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
-	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "toggles the console", FCVAR_DONTRECORD);
+	g_pSourceGameConsole = new SourceInterface<CGameConsole>("client.dll", "GameConsole004");
+
+	RegisterConCommand("toggleconsole", ConCommand_toggleconsole, "Show/hide the console.", FCVAR_DONTRECORD);
+	RegisterConCommand("showconsole", ConCommand_showconsole, "Show the console.", FCVAR_DONTRECORD);
+	RegisterConCommand("hideconsole", ConCommand_hideconsole, "Hide the console.", FCVAR_DONTRECORD);
 }
-
-// logging stuff
-
-SourceConsoleSink::SourceConsoleSink()
-{
-	logColours.emplace(spdlog::level::trace, SourceColor(0, 255, 255, 255));
-	logColours.emplace(spdlog::level::debug, SourceColor(0, 255, 255, 255));
-	logColours.emplace(spdlog::level::info, SourceColor(255, 255, 255, 255));
-	logColours.emplace(spdlog::level::warn, SourceColor(255, 255, 0, 255));
-	logColours.emplace(spdlog::level::err, SourceColor(255, 0, 0, 255));
-	logColours.emplace(spdlog::level::critical, SourceColor(255, 0, 0, 255));
-	logColours.emplace(spdlog::level::off, SourceColor(0, 0, 0, 0));
-}
-
-void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
-{
-	if (!(*g_SourceGameConsole)->m_bInitialized)
-		return;
-
-	spdlog::memory_buf_t formatted;
-	spdlog::sinks::base_sink<std::mutex>::formatter_->format(msg, formatted);
-	(*g_SourceGameConsole)
-		->m_pConsole->m_pConsolePanel->ColorPrint(logColours[msg.level], fmt::to_string(formatted).c_str()); // todo needs colour support
-}
-
-void SourceConsoleSink::flush_() {}

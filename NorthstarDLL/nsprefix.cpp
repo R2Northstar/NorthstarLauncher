@@ -1,13 +1,13 @@
-#include <string>
 #include "pch.h"
 #include "nsprefix.h"
+#include <string>
 
 std::string GetNorthstarPrefix()
 {
 	return NORTHSTAR_FOLDER_PREFIX;
 }
 
-void parseConfigurables()
+void InitialiseNorthstarPrefix()
 {
 	char* clachar = strstr(GetCommandLineA(), "-profile=");
 	if (clachar)
@@ -35,4 +35,7 @@ void parseConfigurables()
 		spdlog::info("Profile was not found in command line arguments. Using default: R2Northstar");
 		NORTHSTAR_FOLDER_PREFIX = "R2Northstar";
 	}
+
+	// set the console title to show the current profile
+	SetConsoleTitleA((std::string("NorthstarLauncher | ") + NORTHSTAR_FOLDER_PREFIX).c_str());
 }

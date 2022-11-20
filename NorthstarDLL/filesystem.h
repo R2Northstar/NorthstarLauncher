@@ -5,25 +5,32 @@
 typedef void* FileHandle_t;
 
 #pragma pack(push, 1)
-struct VPKFileEntry
+
+// clang-format off
+OFFSET_STRUCT(VPKFileEntry)
 {
-	char* directory;
-	char* filename;
-	char* extension;
-	unsigned char unknown[0x38];
+    STRUCT_SIZE(0x44);
+    FIELDS(0x0, 
+          char* directory;
+          char* filename;
+          char* extension;
+        )
 };
+// clang-format on
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+// clang-format off
 struct VPKData
 {
-	unsigned char unknown[5];
-	char path[255];
-	unsigned char unknown2[0x134];
-	int32_t numEntries;
-	unsigned char unknown3[12];
-	VPKFileEntry* entries;
+	STRUCT_SIZE(0x50);
+	FIELDS(0x0,
+		char* directory;
+		char* filename;
+		char* extension;
+	)
 };
+// clang-format on
 #pragma pack(pop)
 
 enum SearchPathAdd_t
@@ -59,7 +66,8 @@ class IFileSystem
 		FileHandle_t (*Open)(
 			IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pOptions, const char* pathID, int64_t unknown);
 		void (*Close)(IFileSystem* fileSystem, FileHandle_t file);
-		void* unknown2[6];
+		long long (*Seek)(IFileSystem::VTable2** fileSystem, FileHandle_t file, long long offset, long long whence);
+		void* unknown2[5];
 		bool (*FileExists)(IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pPathID);
 	};
 
@@ -67,8 +75,11 @@ class IFileSystem
 	VTable2* m_vtable2;
 };
 
-std::string ReadVPKFile(const char* path);
-std::string ReadVPKOriginalFile(const char* path);
+// use the R2 namespace for game funcs
+namespace R2
+{
+	extern SourceInterface<IFileSystem>* g_pFilesystem;
 
-void InitialiseFilesystem(HMODULE baseAddress);
-extern SourceInterface<IFileSystem>* g_Filesystem;
+	std::string ReadVPKFile(const char* path);
+	std::string ReadVPKOriginalFile(const char* path);
+} // namespace R2
