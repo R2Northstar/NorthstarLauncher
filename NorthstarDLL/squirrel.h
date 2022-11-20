@@ -263,9 +263,9 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
-		FunctionVector function_vector;
-		SqRecurseArgs<context>(function_vector, args...);
-		SquirrelMessage message = {funcname, function_vector};
+		FunctionVector functionVector;
+		SqRecurseArgs<context>(functionVector, args...);
+		SquirrelMessage message = {funcname, functionVector};
 		messageBuffer->push(message);
 		return message;
 	}
@@ -274,8 +274,8 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
-		FunctionVector function_vector = {};
-		SquirrelMessage message = {funcname, function_vector};
+		FunctionVector functionVector = {};
+		SquirrelMessage message = {funcname, functionVector};
 		messageBuffer->push(message);
 		return message;
 	}
