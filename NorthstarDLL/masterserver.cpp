@@ -214,7 +214,7 @@ void MasterServerManager::RequestServerList()
 				rapidjson::Document schemaDoc;
 				// this schema validates each entry in the array of servers
 				schemaDoc.Parse(
-R"({
+					R"({
 	"type": "object",
 		"properties": {
 			"lastHeartbeat": {
