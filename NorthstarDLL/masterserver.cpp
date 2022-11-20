@@ -13,6 +13,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
+#include "rapidjson/schema.h"
 
 #include <cstring>
 #include <regex>
@@ -209,6 +210,78 @@ void MasterServerManager::RequestServerList()
 					goto REQUEST_END_CLEANUP;
 				}
 
+				// rapidjson conforms to JSON Schema draft 4
+				rapidjson::Document schemaDoc;
+				// this schema validates each entry in the array of servers
+				schemaDoc.Parse(
+R"({
+	"type": "object",
+		"properties": {
+			"lastHeartbeat": {
+				"type": "integer"
+			},
+			"id": {
+				"type": "string"
+			},
+			"name": {
+				"type": "string"
+			},
+			"region": {
+				"type": "string"
+			},
+			"description": {
+				"type": "string"
+			},
+			"playerCount": {
+				"type": "integer"
+			},
+			"maxPlayers": {
+				"type": "integer"
+			},
+			"map": {
+				"type": "string"
+			},
+			"playlist": {
+				"type": "string"
+			},
+			"hasPassword": {
+				"type": "boolean"
+			},
+			"modInfo": { 
+				"type": "object",
+				"properties": {
+					"Mods": {
+						"type": "array"
+					}
+				},
+				"required": [ "Mods" ]
+			}
+		},
+		"required": [
+			"lastHeartbeat",
+			"id",
+			"name",
+			"region",
+			"description",
+			"playerCount",
+			"maxPlayers",
+			"map",
+			"playlist",
+			"hasPassword",
+			"modInfo"
+		]
+})");
+				if (schemaDoc.HasParseError())
+				{
+					// this should never happen, if you get this, you fucked up the above raw literal in some way
+					// however if you do get this, use https://www.jsonschemavalidator.net/ to fix it (schema draft v4)
+					spdlog::error("JSON SCHEMA IN masterserver.cpp IS INVALID OH GOD");
+					goto REQUEST_END_CLEANUP;
+				}
+				rapidjson::SchemaDocument schema(schemaDoc);
+				// create the validator to check the various servers against when in the loop
+				rapidjson::SchemaValidator validator(schema);
+
 				if (!serverInfoJson.IsArray())
 				{
 					spdlog::error("Failed reading masterserver response: root object is not an array");
@@ -221,24 +294,11 @@ void MasterServerManager::RequestServerList()
 
 				for (auto& serverObj : serverArray)
 				{
-					if (!serverObj.IsObject())
-					{
-						spdlog::error("Failed reading masterserver response: member of server array is not an object");
-						goto REQUEST_END_CLEANUP;
-					}
-
-					// todo: verify json props are fine before adding to m_remoteServers
-					if (!serverObj.HasMember("id") || !serverObj["id"].IsString() || !serverObj.HasMember("name") ||
-						!serverObj["name"].IsString() || !serverObj.HasMember("description") || !serverObj["description"].IsString() ||
-						!serverObj.HasMember("map") || !serverObj["map"].IsString() || !serverObj.HasMember("playlist") ||
-						!serverObj["playlist"].IsString() || !serverObj.HasMember("playerCount") || !serverObj["playerCount"].IsNumber() ||
-						!serverObj.HasMember("maxPlayers") || !serverObj["maxPlayers"].IsNumber() || !serverObj.HasMember("hasPassword") ||
-						!serverObj["hasPassword"].IsBool() || !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") ||
-						!serverObj["modInfo"]["Mods"].IsArray())
+					if (!serverObj.Accept(validator))
 					{
 						spdlog::error("Failed reading masterserver response: malformed server object");
 						continue;
-					};
+					}
 
 					const char* id = serverObj["id"].GetString();
 
