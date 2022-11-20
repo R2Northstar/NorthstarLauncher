@@ -508,32 +508,29 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 	}
 }
 
-ADD_SQFUNC("void", NSProcessMessages, "", "", ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBuffer()
 {
-	auto maybe_message = g_pSquirrel<context>->messageBuffer->pop();
+	auto maybe_message = messageBuffer->pop();
 	if (!maybe_message)
 	{
-		return SQRESULT_NULL;
+		return;
 	}
 
 	SquirrelMessage message = maybe_message.value();
 
 	SQObject functionobj {};
 	int result =
-		g_pSquirrel<context>->sq_getSquirrelFunction(g_pSquirrel<context>->m_pSQVM->sqvm, message.function_name.c_str(), &functionobj, 0);
+		sq_getSquirrelFunction(m_pSQVM->sqvm, message.function_name.c_str(), &functionobj, 0);
 	if (result != 0) // This func returns 0 on success for some reason
 	{
 		spdlog::error("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name);
-		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name).c_str());
-		return SQRESULT_ERROR;
+		return;
 	}
-	g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
-	g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm);
+	pushSQObject(m_pSQVM->sqvm, &functionobj); // Push the function object
+	pushroottable(m_pSQVM->sqvm);
 	if (message.is_external)
 	{
-		message.external_func(sqvm);
+		message.external_func(m_pSQVM->sqvm);
 	}
 	else
 	{
@@ -544,9 +541,7 @@ ADD_SQFUNC("void", NSProcessMessages, "", "", ScriptContext::UI | ScriptContext:
 		}
 	}
 
-	g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, message.args.size());
-
-	return SQRESULT_NOTNULL;
+	_call(m_pSQVM->sqvm, message.args.size());
 }
 
 ADD_SQFUNC(

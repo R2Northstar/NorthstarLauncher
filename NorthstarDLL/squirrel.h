@@ -352,6 +352,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func);
 	SQRESULT setupfunc(const SQChar* funcname);
 	void AddFuncOverride(std::string name, SQFunction func);
+	void ProcessMessageBuffer();
 };
 
 template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;
