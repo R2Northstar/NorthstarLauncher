@@ -77,7 +77,7 @@ class SquirrelManagerBase
 	sq_pushboolType __sq_pushbool;
 	sq_pushassetType __sq_pushasset;
 	sq_pushvectorType __sq_pushvector;
-	sq_pushSQObjectType __sq_pushSQObject;
+	sq_pushobjectType __sq_pushobject;
 
 	sq_getstringType __sq_getstring;
 	sq_getintegerType __sq_getinteger;
@@ -176,9 +176,9 @@ class SquirrelManagerBase
 		__sq_pushvector(sqvm, *(float**)&pVal);
 	}
 
-	inline void pushSQObject(HSquirrelVM* sqvm, SQObject* obj)
+	inline void pushobject(HSquirrelVM* sqvm, SQObject* obj)
 	{
-		__sq_pushSQObject(sqvm, obj);
+		__sq_pushobject(sqvm, obj);
 	}
 
 	inline const SQChar* getstring(HSquirrelVM* sqvm, const SQInteger stackpos)
@@ -301,7 +301,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		{
 			return SQRESULT_ERROR;
 		}
-		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
+		g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
 		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
 		return g_pSquirrel<context>->_call(g_pSquirrel<context>->m_pSQVM->sqvm, 0);
 	}
@@ -323,7 +323,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		{
 			return SQRESULT_ERROR;
 		}
-		g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
+		g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, &functionobj); // Push the function object
 		g_pSquirrel<context>->pushroottable(g_pSquirrel<context>->m_pSQVM->sqvm); // Push root table
 
 		FunctionVector function_vector;

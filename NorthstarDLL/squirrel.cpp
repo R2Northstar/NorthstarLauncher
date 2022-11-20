@@ -525,7 +525,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 		spdlog::error("SQ_ProcessMessages was unable to find function with name '{}'. Is it global?", message.function_name);
 		return;
 	}
-	pushSQObject(m_pSQVM->sqvm, &functionobj); // Push the function object
+	pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
 	pushroottable(m_pSQVM->sqvm);
 	if (message.is_external)
 	{
@@ -577,7 +577,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushbool = module.Offset(0x3710).As<sq_pushboolType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushasset = module.Offset(0x3560).As<sq_pushassetType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushvector = module.Offset(0x3780).As<sq_pushvectorType>();
-	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushSQObject = module.Offset(0x83D0).As<sq_pushSQObjectType>();
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushobject = module.Offset(0x83D0).As<sq_pushobjectType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_raiseerror = module.Offset(0x8470).As<sq_raiseerrorType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_pushstring = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushstring;
 	g_pSquirrel<ScriptContext::UI>->__sq_pushinteger = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushinteger;
@@ -585,7 +585,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->__sq_pushbool = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushbool;
 	g_pSquirrel<ScriptContext::UI>->__sq_pushvector = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushvector;
 	g_pSquirrel<ScriptContext::UI>->__sq_pushasset = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushasset;
-	g_pSquirrel<ScriptContext::UI>->__sq_pushSQObject = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushSQObject;
+	g_pSquirrel<ScriptContext::UI>->__sq_pushobject = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushobject;
 	g_pSquirrel<ScriptContext::UI>->__sq_raiseerror = g_pSquirrel<ScriptContext::CLIENT>->__sq_raiseerror;
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getstring = module.Offset(0x60C0).As<sq_getstringType>();
@@ -680,7 +680,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::SERVER>->__sq_pushbool = module.Offset(0x3710).As<sq_pushboolType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_pushasset = module.Offset(0x3560).As<sq_pushassetType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_pushvector = module.Offset(0x3780).As<sq_pushvectorType>();
-	g_pSquirrel<ScriptContext::SERVER>->__sq_pushSQObject = module.Offset(0x83A0).As<sq_pushSQObjectType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_pushobject = module.Offset(0x83A0).As<sq_pushobjectType>();
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_raiseerror = module.Offset(0x8440).As<sq_raiseerrorType>();
 

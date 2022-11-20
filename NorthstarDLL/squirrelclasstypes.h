@@ -209,7 +209,7 @@ typedef void (*sq_pushfloatType)(HSquirrelVM* sqvm, SQFloat f);
 typedef void (*sq_pushboolType)(HSquirrelVM* sqvm, SQBool b);
 typedef void (*sq_pushassetType)(HSquirrelVM* sqvm, const SQChar* str, SQInteger iLength);
 typedef void (*sq_pushvectorType)(HSquirrelVM* sqvm, const SQFloat* pVec);
-typedef void (*sq_pushSQObjectType)(HSquirrelVM* sqvm, SQObject* pVec);
+typedef void (*sq_pushobjectType)(HSquirrelVM* sqvm, SQObject* pVec);
 
 // sq stack get funcs
 typedef const SQChar* (*sq_getstringType)(HSquirrelVM* sqvm, SQInteger iStackpos);
