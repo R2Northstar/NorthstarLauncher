@@ -261,7 +261,6 @@ void MasterServerManager::RequestServerList()
 			"lastHeartbeat",
 			"id",
 			"name",
-			"region",
 			"description",
 			"playerCount",
 			"maxPlayers",
