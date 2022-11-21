@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "plugin_abi.h"
+#include "gamepresence.h"
 
 #include <queue>
 #include <mutex>
@@ -30,11 +31,11 @@ class PluginCommunicationHandler
 	void RunFrame();
 	void PushRequest(PluginDataRequestType type, PluginRespondDataCallable func);
 
+	void GeneratePresenceObjects();
+
   public:
 	std::queue<PluginDataRequest> request_queue;
 	std::mutex request_mutex;
-
-	bool PushPresenceData(PluginGameStatePresence* data);
 };
 
 void init_plugincommunicationhandler();

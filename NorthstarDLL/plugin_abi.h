@@ -17,6 +17,13 @@ enum PluginObject
 	DUMMY = 0xFFFF
 };
 
+enum GameState {
+	LOADING = 0,
+	MAINMENU = 1,
+	LOBBY = 2,
+	INGAME = 3
+};
+
 struct SquirrelFunctions
 {
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
@@ -82,20 +89,26 @@ struct PluginNorthstarData
 	HMODULE northstarModule;
 };
 
+struct PluginInitFuncs
+{
+	loggerfunc_t logger;
+};
+
 struct PluginGameStatePresence
 {
-	char id[256];
-	char name[256];
-	char description[2048];
-	char password[256]; // NOTE: May be empty
+	const char* id;
+	const char* name;
+	const char* description;
+	const char* password;
 
 	bool is_server;
 	bool is_local;
+	GameState state;
 
-	char map[128];
-	char map_displayname[128];
-	char playlist[128];
-	char playlist_displayname[128];
+	const char* map;
+	const char* map_displayname;
+	const char* playlist;
+	const char* playlist_displayname;
 
 	int current_players;
 	int max_players;
@@ -122,7 +135,7 @@ struct PluginGameStatePresence
 /// </summary>
 
 // Northstar -> Plugin
-typedef void (*PLUGIN_INIT_TYPE)(PluginNorthstarData* data);
+typedef void (*PLUGIN_INIT_TYPE)(PluginInitFuncs* funcs, PluginNorthstarData* data);
 typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);
 typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);

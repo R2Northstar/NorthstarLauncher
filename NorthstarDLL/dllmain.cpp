@@ -8,6 +8,7 @@
 #include "plugins.h"
 #include "version.h"
 #include "pch.h"
+#include "gamepresence.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -49,6 +50,9 @@ bool InitialiseNorthstar()
 	InitialiseNorthstarPrefix();
 	InitialiseVersion();
 
+	g_pServerPresence = new ServerPresenceManager();
+
+	g_pGameStatePresence = new GameStatePresence();
 	g_pPluginManager = new PluginManager();
 	g_pPluginManager->LoadPlugins();
 

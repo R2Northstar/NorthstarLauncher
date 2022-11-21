@@ -697,7 +697,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	SquirrelFunctions s = {};
 	g_pSquirrel<ScriptContext::CLIENT>->GenerateSquirrelFunctionsStruct(&s);
 	g_pPluginManager->InformSQVMLoad(ScriptContext::CLIENT, &s);
-	g_pPluginManager->InformSQVMLoad(ScriptContext::UI, &s);
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))

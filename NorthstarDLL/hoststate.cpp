@@ -8,6 +8,8 @@
 #include "r2engine.h"
 #include "limits.h"
 #include "squirrel.h"
+#include "plugins.h"
+#include "pluginbackend.h"
 
 AUTOHOOK_INIT()
 
@@ -113,6 +115,8 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 
 	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
 		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
+
+	g_pGameStatePresence->RunFrame();
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))

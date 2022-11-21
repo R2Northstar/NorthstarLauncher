@@ -74,9 +74,9 @@ class ServerPresenceManager
 	ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
   public:
-	ServerPresenceManager();
-
 	void AddPresenceReporter(ServerPresenceReporter* reporter);
+
+	void CreateConVars();
 
 	void CreatePresence();
 	void DestroyPresence();

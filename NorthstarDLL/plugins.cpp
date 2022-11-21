@@ -27,7 +27,7 @@ EXPORT void PLUGIN_LOG(LogMsg* msg)
 	spdlog::log(src, (spdlog::level::level_enum)msg->level, msg->msg);
 }
 
-std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginNorthstarData* data)
+std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
 {
 
 	Plugin plugin {};
@@ -105,6 +105,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginNorthstarDa
 		spdlog::error("{} is missing 'run_on_client' in its manifest", pathstring);
 		return std::nullopt;
 	}
+	auto test = manifestJSON["api_version"].GetString();
 	if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 	{
 		spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
@@ -151,7 +152,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginNorthstarDa
 
 	plugin.push_presence = (PLUGIN_PUSH_PRESENCE_TYPE)GetProcAddress(pluginLib, "PLUGIN_RECEIVE_PRESENCE");
 
-	plugin.init(data);
+	plugin.init(funcs, data);
 
 	return plugin;
 }
@@ -164,6 +165,9 @@ bool PluginManager::LoadPlugins()
 
 	PluginNorthstarData data {};
 	std::string ns_version {version};
+
+	PluginInitFuncs funcs {};
+	funcs.logger = PLUGIN_LOG;
 
 	init_plugincommunicationhandler();
 
@@ -189,7 +193,7 @@ bool PluginManager::LoadPlugins()
 	}
 	for (fs::path path : paths)
 	{
-		auto maybe_plugin = LoadPlugin(path, &data);
+		auto maybe_plugin = LoadPlugin(path, &funcs, &data);
 		if (maybe_plugin.has_value())
 		{
 			m_vLoadedPlugins.push_back(maybe_plugin.value());
