@@ -3,6 +3,7 @@
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
 #include "vector.h"
+#include "plugin_abi.h"
 
 // stolen from ttf2sdk: sqvm types
 typedef float SQFloat;
@@ -36,7 +37,7 @@ const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
 
-void schedule_call_external(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function);
+void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function);
 
 // This base class means that only the templated functions have to be rebuilt for each template instance
 // Cuts down on compile time by ~5 seconds
@@ -253,6 +254,7 @@ class SquirrelManagerBase
 #pragma endregion
 };
 
+
 template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
 {
   public:
@@ -351,6 +353,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 	SQRESULT setupfunc(const SQChar* funcname);
 	void AddFuncOverride(std::string name, SQFunction func);
 	void ProcessMessageBuffer();
+	void GenerateSquirrelFunctionsStruct(SquirrelFunctions* s);
 };
 
 template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;

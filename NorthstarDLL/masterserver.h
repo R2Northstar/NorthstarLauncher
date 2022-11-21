@@ -111,6 +111,9 @@ class MasterServerManager
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_sMainMenuPromoData;
 
+	std::optional<RemoteServerInfo> m_currentServer;
+	std::string m_sCurrentServerPassword;
+
   public:
 	MasterServerManager();
 
@@ -119,7 +122,7 @@ class MasterServerManager
 	void RequestMainMenuPromos();
 	void AuthenticateOriginWithMasterServer(const char* uid, const char* originToken);
 	void AuthenticateWithOwnServer(const char* uid, const char* playerToken);
-	void AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password);
+	void AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password);
 	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
 };
 

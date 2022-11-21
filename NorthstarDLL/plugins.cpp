@@ -1,422 +1,246 @@
 #include "pch.h"
-#include "squirrel.h"
 #include "plugins.h"
-#include "masterserver.h"
-#include "convar.h"
-#include "serverpresence.h"
+#include "nsprefix.h"
 
-#include <chrono>
-#include <windows.h>
+#include <optional>
 
-/// <summary>
-/// The data is split into two different representations: one for internal, and one for plugins, for thread safety reasons
-/// The struct exposed to plugins contains getter functions for the various data types.
-/// We can safely use C++ types like std::string here since these are only ever handled by Northstar internally
-/// </summary>
-struct InternalGameState
+#include "version.h"
+#include "pluginbackend.h"
+#include "wininfo.h"
+
+PluginManager* g_pPluginManager;
+
+void freeLibrary(HMODULE hLib)
 {
-	int ourScore;
-	int secondHighestScore;
-	int highestScore;
-
-	bool connected;
-	bool loading;
-	std::string map;
-	std::string mapDisplayName;
-	std::string playlist;
-	std::string playlistDisplayName;
-	int players;
-};
-struct InternalServerInfo
-{
-	std::string id;
-	std::string name;
-	std::string description;
-	std::string password;
-	int maxPlayers;
-	bool roundBased;
-	int scoreLimit;
-	int endTime;
-};
-// TODO: need to extend this to include current player data like loadouts
-struct InternalPlayerInfo
-{
-	int uid;
-};
-
-InternalGameState gameState;
-InternalServerInfo serverInfo;
-InternalPlayerInfo playerInfo;
-
-GameState gameStateExport;
-ServerInfo serverInfoExport;
-PlayerInfo playerInfoExport;
-
-/// <summary>
-/// We use SRW Locks because plugins will often be running their own thread
-/// To ensure thread safety, and to make it difficult to fuck up, we force them to use *our* functions to get data
-/// </summary>
-static SRWLOCK gameStateLock;
-static SRWLOCK serverInfoLock;
-static SRWLOCK playerInfoLock;
-
-void* getPluginObject(PluginObject var)
-{
-	switch (var)
+	if (!FreeLibrary(hLib))
 	{
-	case PluginObject::GAMESTATE:
-		return &gameStateExport;
-	case PluginObject::SERVERINFO:
-		return &serverInfoExport;
-	case PluginObject::PLAYERINFO:
-		return &playerInfoExport;
-	default:
-		return (void*)-1;
+		spdlog::error("There was an error while trying to free library");
 	}
 }
 
-void initGameState()
+EXPORT void PLUGIN_LOG(LogMsg* msg)
 {
-	// Initalize the Slim Reader / Writer locks
-	InitializeSRWLock(&gameStateLock);
-	InitializeSRWLock(&serverInfoLock);
-	InitializeSRWLock(&playerInfoLock);
-
-	gameStateExport.getGameStateChar = &getGameStateChar;
-	gameStateExport.getGameStateInt = &getGameStateInt;
-	gameStateExport.getGameStateBool = &getGameStateBool;
-
-	serverInfoExport.getServerInfoChar = &getServerInfoChar;
-	serverInfoExport.getServerInfoInt = &getServerInfoInt;
-	serverInfoExport.getServerInfoBool = &getServerInfoBool;
-
-	playerInfoExport.getPlayerInfoChar = &getPlayerInfoChar;
-	playerInfoExport.getPlayerInfoInt = &getPlayerInfoInt;
-	playerInfoExport.getPlayerInfoBool = &getPlayerInfoBool;
-
-	serverInfo.id = "";
-	serverInfo.name = "";
-	serverInfo.description = "";
-	serverInfo.password = "";
-	serverInfo.maxPlayers = 0;
-	gameState.connected = false;
-	gameState.loading = false;
-	gameState.map = "";
-	gameState.mapDisplayName = "";
-	gameState.playlist = "";
-	gameState.playlistDisplayName = "";
-	gameState.players = 0;
-
-	playerInfo.uid = 123;
+	spdlog::source_loc src {};
+	src.filename = msg->source.file;
+	src.funcname = msg->source.func;
+	src.line = msg->source.line;
+	spdlog::log(src, (spdlog::level::level_enum)msg->level, msg->msg);
 }
 
-// string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading
-SQRESULT SQ_UpdateGameStateUI(HSquirrelVM* sqvm)
+std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginNorthstarData* data)
 {
-	AcquireSRWLockExclusive(&gameStateLock);
-	gameState.map = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
-	gameState.mapDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 2);
-	gameState.playlist = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 3);
-	gameState.playlistDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 4);
-	gameState.connected = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 5);
-	gameState.loading = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 6);
-	ReleaseSRWLockExclusive(&gameStateLock);
-	return SQRESULT_NOTNULL;
-}
 
-// int playerCount, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit
-SQRESULT SQ_UpdateGameStateClient(HSquirrelVM* sqvm)
-{
-	AcquireSRWLockExclusive(&gameStateLock);
-	AcquireSRWLockExclusive(&serverInfoLock);
-	gameState.players = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	serverInfo.maxPlayers = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 2);
-	gameState.ourScore = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 3);
-	gameState.secondHighestScore = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 4);
-	gameState.highestScore = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 5);
-	serverInfo.roundBased = g_pSquirrel<ScriptContext::CLIENT>->getbool(sqvm, 6);
-	serverInfo.scoreLimit = g_pSquirrel<ScriptContext::CLIENT>->getbool(sqvm, 7);
-	ReleaseSRWLockExclusive(&gameStateLock);
-	ReleaseSRWLockExclusive(&serverInfoLock);
-	return SQRESULT_NOTNULL;
-}
+	Plugin plugin {};
 
-// string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, string
-// playlistDisplayName
-SQRESULT SQ_UpdateServerInfo(HSquirrelVM* sqvm)
-{
-	AcquireSRWLockExclusive(&gameStateLock);
-	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 1);
-	serverInfo.name = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 2);
-	serverInfo.password = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 3);
-	gameState.players = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 4);
-	serverInfo.maxPlayers = g_pSquirrel<ScriptContext::UI>->getinteger(sqvm, 5);
-	gameState.map = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 6);
-	gameState.mapDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 7);
-	gameState.playlist = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 8);
-	gameState.playlistDisplayName = g_pSquirrel<ScriptContext::UI>->getstring(sqvm, 9);
-	ReleaseSRWLockExclusive(&gameStateLock);
-	ReleaseSRWLockExclusive(&serverInfoLock);
-	return SQRESULT_NOTNULL;
-}
+	std::string pathstring = (pluginPath / path).string();
+	std::wstring wpath = (pluginPath / path).wstring();
 
-// int maxPlayers
-SQRESULT SQ_UpdateServerInfoBetweenRounds(HSquirrelVM* sqvm)
-{
-	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 1);
-	serverInfo.name = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
-	serverInfo.password = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 3);
-	serverInfo.maxPlayers = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 4);
-	ReleaseSRWLockExclusive(&serverInfoLock);
-	return SQRESULT_NOTNULL;
-}
-
-// float timeInFuture
-SQRESULT SQ_UpdateTimeInfo(HSquirrelVM* sqvm)
-{
-	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.endTime = ceil(g_pSquirrel<ScriptContext::CLIENT>->getfloat(sqvm, 1));
-	ReleaseSRWLockExclusive(&serverInfoLock);
-	return SQRESULT_NOTNULL;
-}
-
-// bool loading
-SQRESULT SQ_SetConnected(HSquirrelVM* sqvm)
-{
-	AcquireSRWLockExclusive(&gameStateLock);
-	gameState.loading = g_pSquirrel<ScriptContext::UI>->getbool(sqvm, 1);
-	ReleaseSRWLockExclusive(&gameStateLock);
-	return SQRESULT_NOTNULL;
-}
-
-SQRESULT SQ_UpdateListenServer(HSquirrelVM* sqvm)
-{
-	AcquireSRWLockExclusive(&serverInfoLock);
-	serverInfo.id = g_pMasterServerManager->m_sOwnServerId;
-	serverInfo.password = ""; // g_pServerPresence->Cvar_ns_server_password->GetString(); todo this fr
-	ReleaseSRWLockExclusive(&serverInfoLock);
-	return SQRESULT_NOTNULL;
-}
-
-int getServerInfoChar(char* out_buf, size_t out_buf_len, ServerInfoType var)
-{
-	AcquireSRWLockShared(&serverInfoLock);
-	int n = 0;
-	switch (var)
+	LPCWSTR wpptr = wpath.c_str();
+	HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
+	if (datafile == NULL)
 	{
-	case ServerInfoType::id:
-		strncpy(out_buf, serverInfo.id.c_str(), out_buf_len);
-		break;
-	case ServerInfoType::name:
-		strncpy(out_buf, serverInfo.name.c_str(), out_buf_len);
-		break;
-	case ServerInfoType::description:
-		strncpy(out_buf, serverInfo.id.c_str(), out_buf_len);
-		break;
-	case ServerInfoType::password:
-		strncpy(out_buf, serverInfo.password.c_str(), out_buf_len);
-		break;
-	default:
-		n = -1;
+		spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
+		return std::nullopt;
+	}
+	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
+
+	if (manifestResource == NULL)
+	{
+		spdlog::info("Could not find manifest for library {}", pathstring);
+		freeLibrary(datafile);
+		return std::nullopt;
+	}
+	spdlog::info("Loading resource from library");
+	HGLOBAL myResourceData = LoadResource(datafile, manifestResource);
+	if (myResourceData == NULL)
+	{
+		spdlog::error("Failed to load resource from library");
+		freeLibrary(datafile);
+		return std::nullopt;
+	}
+	int manifestSize = SizeofResource(datafile, manifestResource);
+	std::string manifest = std::string((const char*)LockResource(myResourceData), 0, manifestSize);
+	freeLibrary(datafile);
+
+	rapidjson_document manifestJSON;
+	manifestJSON.Parse(manifest.c_str());
+
+	if (manifestJSON.HasParseError())
+	{
+		spdlog::error("Manifest for {} was invalid", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("name"))
+	{
+		spdlog::error("{} is missing a name in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("displayname"))
+	{
+		spdlog::error("{} is missing a displayname in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("description"))
+	{
+		spdlog::error("{} is missing a description in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("api_version"))
+	{
+		spdlog::error("{} is missing a api_version in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("version"))
+	{
+		spdlog::error("{} is missing a version in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("run_on_server"))
+	{
+		spdlog::error("{} is missing 'run_on_server' in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (!manifestJSON.HasMember("run_on_client"))
+	{
+		spdlog::error("{} is missing 'run_on_client' in its manifest", pathstring);
+		return std::nullopt;
+	}
+	if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
+	{
+		spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
+		return std::nullopt;
+	}
+	// Passed all checks, going to actually load it now
+
+	HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
+	if (pluginLib == NULL)
+	{
+		spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
+		return std::nullopt;
+	}
+	plugin.init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
+	if (plugin.init == NULL)
+	{
+		spdlog::info("Library {} has no function initializePlugin", pathstring);
+		return std::nullopt;
+	}
+	spdlog::info("Succesfully loaded {}", pathstring);
+
+	plugin.name = manifestJSON["name"].GetString();
+	plugin.displayName = manifestJSON["displayname"].GetString();
+	plugin.description = manifestJSON["description"].GetString();
+	plugin.api_version = manifestJSON["api_version"].GetString();
+	plugin.version = manifestJSON["version"].GetString();
+
+	plugin.run_on_client = manifestJSON["run_on_client"].GetBool();
+	plugin.run_on_server = manifestJSON["run_on_server"].GetBool();
+
+	if (manifestJSON.HasMember("dependencyName"))
+	{
+		plugin.dependencyName = manifestJSON["dependencyName"].GetString();
+	}
+	else
+	{
+		plugin.dependencyName = plugin.name;
 	}
 
-	ReleaseSRWLockShared(&serverInfoLock);
+	plugin.init_sqvm_client = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_CLIENT");
+	plugin.init_sqvm_server = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_SERVER");
+	plugin.inform_sqvm_created = (PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
+	plugin.inform_sqvm_destroyed = (PLUGIN_INFORM_SQVM_DESTROYED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_DESTROYED");
 
-	return n;
+	plugin.push_presence = (PLUGIN_PUSH_PRESENCE_TYPE)GetProcAddress(pluginLib, "PLUGIN_RECEIVE_PRESENCE");
+
+	plugin.init(data);
+
+	return plugin;
 }
-int getServerInfoInt(int* out_ptr, ServerInfoType var)
+
+bool PluginManager::LoadPlugins()
 {
-	AcquireSRWLockShared(&serverInfoLock);
-	int n = 0;
-	switch (var)
+	std::vector<fs::path> paths;
+
+	pluginPath = GetNorthstarPrefix() + "/plugins";
+
+	PluginNorthstarData data {};
+	std::string ns_version {version};
+
+	init_plugincommunicationhandler();
+
+	data.version = ns_version.c_str();
+	data.northstarModule = g_NorthstarModule;
+
+	if (!fs::exists(pluginPath))
 	{
-	case ServerInfoType::maxPlayers:
-		*out_ptr = serverInfo.maxPlayers;
-		break;
-	case ServerInfoType::scoreLimit:
-		*out_ptr = serverInfo.scoreLimit;
-		break;
-	case ServerInfoType::endTime:
-		*out_ptr = serverInfo.endTime;
-		break;
-	default:
-		n = -1;
+		spdlog::warn("Could not find a plugins directory. Skipped loading plugins");
+		return false;
 	}
-
-	ReleaseSRWLockShared(&serverInfoLock);
-
-	return n;
-}
-int getServerInfoBool(bool* out_ptr, ServerInfoType var)
-{
-	AcquireSRWLockShared(&serverInfoLock);
-	int n = 0;
-	switch (var)
+	// ensure dirs exist
+	fs::recursive_directory_iterator iterator(pluginPath);
+	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
 	{
-	case ServerInfoType::roundBased:
-		*out_ptr = serverInfo.roundBased;
-		break;
-	default:
-		n = -1;
+		spdlog::warn("Could not find any plugins. Skipped loading plugins");
+		return false;
 	}
-
-	ReleaseSRWLockShared(&serverInfoLock);
-
-	return n;
-}
-
-int getGameStateChar(char* out_buf, size_t out_buf_len, GameStateInfoType var)
-{
-	AcquireSRWLockShared(&gameStateLock);
-	int n = 0;
-	switch (var)
+	for (auto const& entry : iterator)
 	{
-	case GameStateInfoType::map:
-		strncpy(out_buf, gameState.map.c_str(), out_buf_len);
-		break;
-	case GameStateInfoType::mapDisplayName:
-		strncpy(out_buf, gameState.mapDisplayName.c_str(), out_buf_len);
-		break;
-	case GameStateInfoType::playlist:
-		strncpy(out_buf, gameState.playlist.c_str(), out_buf_len);
-		break;
-	case GameStateInfoType::playlistDisplayName:
-		strncpy(out_buf, gameState.playlistDisplayName.c_str(), out_buf_len);
-		break;
-	default:
-		n = -1;
+		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+			paths.emplace_back(entry.path().filename());
 	}
-
-	ReleaseSRWLockShared(&gameStateLock);
-
-	return n;
-}
-int getGameStateInt(int* out_ptr, GameStateInfoType var)
-{
-	AcquireSRWLockShared(&gameStateLock);
-	int n = 0;
-	switch (var)
+	for (fs::path path : paths)
 	{
-	case GameStateInfoType::ourScore:
-		*out_ptr = gameState.ourScore;
-		break;
-	case GameStateInfoType::secondHighestScore:
-		*out_ptr = gameState.secondHighestScore;
-		break;
-	case GameStateInfoType::highestScore:
-		*out_ptr = gameState.highestScore;
-		break;
-	case GameStateInfoType::players:
-		*out_ptr = gameState.players;
-		break;
-	default:
-		n = -1;
+		auto maybe_plugin = LoadPlugin(path, &data);
+		if (maybe_plugin.has_value())
+		{
+			m_vLoadedPlugins.push_back(maybe_plugin.value());
+		}
 	}
-
-	ReleaseSRWLockShared(&gameStateLock);
-
-	return n;
+	return true;
 }
-int getGameStateBool(bool* out_ptr, GameStateInfoType var)
+
+void PluginManager::InformSQVMLoad(ScriptContext context, SquirrelFunctions* s)
 {
-	AcquireSRWLockShared(&gameStateLock);
-	int n = 0;
-	switch (var)
+	for (auto plugin : m_vLoadedPlugins)
 	{
-	case GameStateInfoType::connected:
-		*out_ptr = gameState.connected;
-		break;
-	case GameStateInfoType::loading:
-		*out_ptr = gameState.loading;
-		break;
-	default:
-		n = -1;
+		if (context == ScriptContext::CLIENT && plugin.init_sqvm_client != NULL)
+		{
+			plugin.init_sqvm_client(s);
+		}
+		else if (context == ScriptContext::SERVER && plugin.init_sqvm_server != NULL)
+		{
+			plugin.init_sqvm_server(s);
+		}
 	}
-
-	ReleaseSRWLockShared(&gameStateLock);
-
-	return n;
 }
 
-int getPlayerInfoChar(char* out_buf, size_t out_buf_len, PlayerInfoType var)
+void PluginManager::InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm)
 {
-	AcquireSRWLockShared(&playerInfoLock);
-	int n = 0;
-	switch (var)
+	for (auto plugin : m_vLoadedPlugins)
 	{
-	default:
-		n = -1;
+		if (plugin.inform_sqvm_created != NULL)
+		{
+			plugin.inform_sqvm_created(context, sqvm);
+		}
 	}
-
-	ReleaseSRWLockShared(&playerInfoLock);
-
-	return n;
 }
-int getPlayerInfoInt(int* out_ptr, PlayerInfoType var)
+
+void PluginManager::InformSQVMDestroyed(ScriptContext context)
 {
-	AcquireSRWLockShared(&playerInfoLock);
-	int n = 0;
-	switch (var)
+	for (auto plugin : m_vLoadedPlugins)
 	{
-	case PlayerInfoType::uid:
-		*out_ptr = playerInfo.uid;
-		break;
-	default:
-		n = -1;
+		if (plugin.inform_sqvm_destroyed != NULL)
+		{
+			plugin.inform_sqvm_destroyed(context);
+		}
 	}
-
-	ReleaseSRWLockShared(&playerInfoLock);
-
-	return n;
-}
-int getPlayerInfoBool(bool* out_ptr, PlayerInfoType var)
-{
-	AcquireSRWLockShared(&playerInfoLock);
-	int n = 0;
-	switch (var)
-	{
-	default:
-		n = -1;
-	}
-
-	ReleaseSRWLockShared(&playerInfoLock);
-
-	return n;
 }
 
-ON_DLL_LOAD_CLIENT_RELIESON("client.dll", PluginCommands, ClientSquirrel, (CModule module))
-{
-	// i swear there's a way to make this not have be run in 2 contexts but i can't figure it out
-	// some funcs i need are just not available in UI or CLIENT
-
-	if (g_pSquirrel<ScriptContext::UI> && g_pSquirrel<ScriptContext::CLIENT>)
+void PluginManager::PushPresence(PluginGameStatePresence* data) {
+	for (auto plugin : m_vLoadedPlugins)
 	{
-		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
-			"void",
-			"NSUpdateGameStateUI",
-			"string gamemode, string gamemodeName, string map, string mapName, bool connected, bool loading",
-			"",
-			SQ_UpdateGameStateUI);
-		g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
-			"void",
-			"NSUpdateGameStateClient",
-			"int playerCount, int maxPlayers, int outScore, int secondHighestScore, int highestScore, bool roundBased, int scoreLimit",
-			"",
-			SQ_UpdateGameStateClient);
-		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration(
-			"void",
-			"NSUpdateServerInfo",
-			"string id, string name, string password, int players, int maxPlayers, string map, string mapDisplayName, string playlist, "
-			"string "
-			"playlistDisplayName",
-			"",
-			SQ_UpdateServerInfo);
-		g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration(
-			"void", "NSUpdateServerInfoReload", "int maxPlayers", "", SQ_UpdateServerInfoBetweenRounds);
-		g_pSquirrel<ScriptContext::CLIENT>->AddFuncRegistration("void", "NSUpdateTimeInfo", "float timeInFuture", "", SQ_UpdateTimeInfo);
-		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSSetLoading", "bool loading", "", SQ_SetConnected);
-		g_pSquirrel<ScriptContext::UI>->AddFuncRegistration("void", "NSUpdateListenServer", "", "", SQ_UpdateListenServer);
+		if (plugin.push_presence != NULL)
+		{
+			plugin.push_presence(data);
+		}
 	}
 }

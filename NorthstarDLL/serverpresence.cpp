@@ -177,6 +177,12 @@ void ServerPresenceManager::SetAuthPort(const int iAuthPort)
 	m_ServerPresence.m_iAuthPort = iAuthPort;
 }
 
+void ServerPresenceManager::SetId(const std::string sServerId)
+{
+	// update id
+	m_ServerPresence.m_sServerId = sServerId;
+}
+
 void ServerPresenceManager::SetName(const std::string sServerNameUnicode)
 {
 	// update name
