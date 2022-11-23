@@ -108,16 +108,15 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 	// Don't run buffers that belongs to context that is not initialized on dedicated server
 	if (!IsDedicatedServer())
 	{
-		if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr &&
-			g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
-				g_pSquirrel<ScriptContext::UI>->ProcessMessageBuffer();
+		if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
+			g_pSquirrel<ScriptContext::UI>->ProcessMessageBuffer();
 
 		if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm != nullptr)
- 			g_pSquirrel<ScriptContext::CLIENT>->ProcessMessageBuffer();
+			g_pSquirrel<ScriptContext::CLIENT>->ProcessMessageBuffer();
  	}
  
 	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
- 		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
+		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
