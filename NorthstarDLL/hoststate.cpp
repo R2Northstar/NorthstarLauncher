@@ -105,12 +105,16 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 	}
 
 	// Run Squirrel message buffer
-	if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
-		g_pSquirrel<ScriptContext::UI>->ProcessMessageBuffer();
+	// Don't run buffers that belongs to context that is not initialized on dedicated server
+	if (!IsDedicatedServer())
+	{
+		if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
+			g_pSquirrel<ScriptContext::UI>->ProcessMessageBuffer();
 
-	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm != nullptr)
-		g_pSquirrel<ScriptContext::CLIENT>->ProcessMessageBuffer();
-
+		if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm != nullptr)
+			g_pSquirrel<ScriptContext::CLIENT>->ProcessMessageBuffer();
+	}
+	
 	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
 		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
 }
