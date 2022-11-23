@@ -115,9 +115,9 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
  			g_pSquirrel<ScriptContext::CLIENT>->ProcessMessageBuffer();
  	}
  
--	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr &&
--		g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
-+	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
+	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr &&
+		g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
+	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
  		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
  }
 
