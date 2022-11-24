@@ -12,6 +12,12 @@ class Plugin
 	std::string api_version;
 	std::string version;
 
+	// For now this is just implemented as the index into the plugins array
+	// Maybe a bit shit but it works
+	int handle;
+
+	std::shared_ptr<ColoredLogger> logger;
+
 	bool run_on_client = false;
 	bool run_on_server = false;
 

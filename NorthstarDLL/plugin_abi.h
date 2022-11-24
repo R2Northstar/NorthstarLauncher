@@ -79,6 +79,7 @@ struct LogMsg
 	uint64_t timestamp;
 	const char* msg;
 	MessageSource source;
+	int pluginHandle;
 };
 
 typedef void (*loggerfunc_t)(LogMsg* msg);
@@ -87,6 +88,8 @@ struct PluginNorthstarData
 {
 	const char* version;
 	HMODULE northstarModule;
+
+	int pluginHandle;
 };
 
 struct PluginInitFuncs

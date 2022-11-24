@@ -7,6 +7,7 @@
 #include "version.h"
 #include "pluginbackend.h"
 #include "wininfo.h"
+#include "logging.h"
 
 PluginManager* g_pPluginManager;
 
@@ -24,7 +25,8 @@ EXPORT void PLUGIN_LOG(LogMsg* msg)
 	src.filename = msg->source.file;
 	src.funcname = msg->source.func;
 	src.line = msg->source.line;
-	spdlog::log(src, (spdlog::level::level_enum)msg->level, msg->msg);
+	auto&& logger = g_pPluginManager->m_vLoadedPlugins[msg->pluginHandle].logger;
+	logger->log(src, (spdlog::level::level_enum)msg->level, msg->msg);
 }
 
 std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
@@ -39,22 +41,22 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
 	if (datafile == NULL)
 	{
-		spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
+		NS::log::PLUGINSYS->info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
 	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
 
 	if (manifestResource == NULL)
 	{
-		spdlog::info("Could not find manifest for library {}", pathstring);
+		NS::log::PLUGINSYS->info("Could not find manifest for library {}", pathstring);
 		freeLibrary(datafile);
 		return std::nullopt;
 	}
-	spdlog::info("Loading resource from library");
+	NS::log::PLUGINSYS->info("Loading resource from library");
 	HGLOBAL myResourceData = LoadResource(datafile, manifestResource);
 	if (myResourceData == NULL)
 	{
-		spdlog::error("Failed to load resource from library");
+		NS::log::PLUGINSYS->error("Failed to load resource from library");
 		freeLibrary(datafile);
 		return std::nullopt;
 	}
@@ -67,48 +69,48 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	if (manifestJSON.HasParseError())
 	{
-		spdlog::error("Manifest for {} was invalid", pathstring);
+		NS::log::PLUGINSYS->error("Manifest for {} was invalid", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("name"))
 	{
-		spdlog::error("{} is missing a name in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing a name in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("displayname"))
 	{
-		spdlog::error("{} is missing a displayname in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing a displayname in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("description"))
 	{
-		spdlog::error("{} is missing a description in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing a description in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("api_version"))
 	{
-		spdlog::error("{} is missing a api_version in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing a api_version in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("version"))
 	{
-		spdlog::error("{} is missing a version in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing a version in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("run_on_server"))
 	{
-		spdlog::error("{} is missing 'run_on_server' in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing 'run_on_server' in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("run_on_client"))
 	{
-		spdlog::error("{} is missing 'run_on_client' in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} is missing 'run_on_client' in its manifest", pathstring);
 		return std::nullopt;
 	}
 	auto test = manifestJSON["api_version"].GetString();
 	if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 	{
-		spdlog::error("{} has an incompatible API version number in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("{} has an incompatible API version number in its manifest", pathstring);
 		return std::nullopt;
 	}
 	// Passed all checks, going to actually load it now
@@ -116,16 +118,16 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
 	if (pluginLib == NULL)
 	{
-		spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
+		NS::log::PLUGINSYS->info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
 	plugin.init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
 	if (plugin.init == NULL)
 	{
-		spdlog::info("Library {} has no function initializePlugin", pathstring);
+		NS::log::PLUGINSYS->info("Library {} has no function initializePlugin", pathstring);
 		return std::nullopt;
 	}
-	spdlog::info("Succesfully loaded {}", pathstring);
+	NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring);
 
 	plugin.name = manifestJSON["name"].GetString();
 	plugin.displayName = manifestJSON["displayname"].GetString();
@@ -152,6 +154,12 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	plugin.push_presence = (PLUGIN_PUSH_PRESENCE_TYPE)GetProcAddress(pluginLib, "PLUGIN_RECEIVE_PRESENCE");
 
+	plugin.handle = m_vLoadedPlugins.size();
+	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName.c_str(), NS::Colors::PLUGIN);
+	RegisterLogger(plugin.logger);
+	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.displayName, plugin.version);
+	m_vLoadedPlugins.push_back(plugin);
+
 	plugin.init(funcs, data);
 
 	return plugin;
@@ -176,14 +184,14 @@ bool PluginManager::LoadPlugins()
 
 	if (!fs::exists(pluginPath))
 	{
-		spdlog::warn("Could not find a plugins directory. Skipped loading plugins");
+		NS::log::PLUGINSYS->warn("Could not find a plugins directory. Skipped loading plugins");
 		return false;
 	}
 	// ensure dirs exist
 	fs::recursive_directory_iterator iterator(pluginPath);
 	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
 	{
-		spdlog::warn("Could not find any plugins. Skipped loading plugins");
+		NS::log::PLUGINSYS->warn("Could not find any plugins. Skipped loading plugins");
 		return false;
 	}
 	for (auto const& entry : iterator)
@@ -192,13 +200,7 @@ bool PluginManager::LoadPlugins()
 			paths.emplace_back(entry.path().filename());
 	}
 	for (fs::path path : paths)
-	{
-		auto maybe_plugin = LoadPlugin(path, &funcs, &data);
-		if (maybe_plugin.has_value())
-		{
-			m_vLoadedPlugins.push_back(maybe_plugin.value());
-		}
-	}
+		LoadPlugin(path, &funcs, &data);
 	return true;
 }
 
@@ -239,7 +241,8 @@ void PluginManager::InformSQVMDestroyed(ScriptContext context)
 	}
 }
 
-void PluginManager::PushPresence(PluginGameStatePresence* data) {
+void PluginManager::PushPresence(PluginGameStatePresence* data)
+{
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (plugin.push_presence != NULL)
