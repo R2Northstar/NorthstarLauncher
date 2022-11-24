@@ -9,6 +9,7 @@
 #include "limits.h"
 #include "squirrel.h"
 #include "dedicated.h"
+
 AUTOHOOK_INIT()
 
 using namespace R2;
