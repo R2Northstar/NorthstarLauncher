@@ -175,7 +175,6 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_schedule_call_external = AsyncCall_External;
 }
 
-
 // Allows for generating squirrelmessages from plugins.
 // Not used in this version, but will be used later
 void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function)
