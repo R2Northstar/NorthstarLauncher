@@ -8,12 +8,13 @@
 
 GameStatePresence* g_pGameStatePresence;
 
-
-GameStatePresence::GameStatePresence() {
+GameStatePresence::GameStatePresence()
+{
 	g_pServerPresence->AddPresenceReporter(&m_GameStateServerPresenceReporter);
 }
 
-void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPresence* pServerPresence) {
+void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPresence* pServerPresence)
+{
 	g_pGameStatePresence->id = pServerPresence->m_sServerId;
 	g_pGameStatePresence->name = pServerPresence->m_sServerName;
 	g_pGameStatePresence->description = pServerPresence->m_sServerDesc;
@@ -27,7 +28,8 @@ void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const Serve
 	g_pGameStatePresence->is_local = !IsDedicatedServer();
 }
 
-void GameStatePresence::RunFrame() {
+void GameStatePresence::RunFrame()
+{
 	if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
 		g_pSquirrel<ScriptContext::UI>->Call("GenerateUIPresence");
 

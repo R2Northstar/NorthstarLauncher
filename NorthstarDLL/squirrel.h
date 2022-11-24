@@ -254,7 +254,6 @@ class SquirrelManagerBase
 #pragma endregion
 };
 
-
 template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
 {
   public:

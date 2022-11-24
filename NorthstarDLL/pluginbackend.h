@@ -34,8 +34,8 @@ class PluginCommunicationHandler
 	void GeneratePresenceObjects();
 
   public:
-	std::queue<PluginDataRequest> request_queue;
-	std::mutex request_mutex;
+	std::queue<PluginDataRequest> requestQueue;
+	std::mutex requestMutex;
 };
 
 void init_plugincommunicationhandler();

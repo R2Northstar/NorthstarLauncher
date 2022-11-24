@@ -17,7 +17,8 @@ enum PluginObject
 	DUMMY = 0xFFFF
 };
 
-enum GameState {
+enum GameState
+{
 	LOADING = 0,
 	MAINMENU = 1,
 	LOBBY = 2,
@@ -121,7 +122,6 @@ struct PluginGameStatePresence
 	int max_score;
 
 	int timestamp_end;
-
 };
 
 /// <summary> Async communication within the plugin system

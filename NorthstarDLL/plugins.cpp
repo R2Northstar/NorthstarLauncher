@@ -8,6 +8,7 @@
 #include "pluginbackend.h"
 #include "wininfo.h"
 #include "logging.h"
+#include "dedicated.h"
 
 PluginManager* g_pPluginManager;
 
@@ -137,6 +138,9 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	plugin.run_on_client = manifestJSON["run_on_client"].GetBool();
 	plugin.run_on_server = manifestJSON["run_on_server"].GetBool();
+
+	if (!plugin.run_on_server && IsDedicatedServer())
+		return std::nullopt;
 
 	if (manifestJSON.HasMember("dependencyName"))
 	{

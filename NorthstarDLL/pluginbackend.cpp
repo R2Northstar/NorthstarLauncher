@@ -12,38 +12,39 @@ AUTOHOOK_INIT()
 
 PluginCommunicationHandler* g_pPluginCommunicationhandler;
 
-static PluginDataRequest storedRequest {PluginDataRequestType::END, (PluginRespondDataCallable)nullptr};
+static PluginDataRequest storedRequest {PluginDataRequestType::END, (PluginRespondDataCallable) nullptr};
 
 void init_plugincommunicationhandler()
 {
 	g_pPluginCommunicationhandler = new PluginCommunicationHandler;
-	g_pPluginCommunicationhandler->request_queue = {};
+	g_pPluginCommunicationhandler->requestQueue = {};
 }
 
 void PluginCommunicationHandler::RunFrame()
 {
-	std::lock_guard<std::mutex> lock(request_mutex);
-	if (!request_queue.empty())
+	std::lock_guard<std::mutex> lock(requestMutex);
+	if (!requestQueue.empty())
 	{
-		storedRequest = request_queue.front();
+		storedRequest = requestQueue.front();
 		switch (storedRequest.type)
 		{
 		default:
 			spdlog::error("{} was called with invalid request type '{}'", __FUNCTION__, static_cast<int>(storedRequest.type));
 		}
-		request_queue.pop();
+		requestQueue.pop();
 	}
 }
 
 void PluginCommunicationHandler::PushRequest(PluginDataRequestType type, PluginRespondDataCallable func)
 {
-	std::lock_guard<std::mutex> lock(request_mutex);
-	request_queue.push(PluginDataRequest {type, func});
+	std::lock_guard<std::mutex> lock(requestMutex);
+	requestQueue.push(PluginDataRequest {type, func});
 }
 
-void PluginCommunicationHandler::GeneratePresenceObjects() {
+void PluginCommunicationHandler::GeneratePresenceObjects()
+{
 	PluginGameStatePresence presence {};
-	
+
 	presence.id = g_pGameStatePresence->id.c_str();
 	presence.name = g_pGameStatePresence->name.c_str();
 	presence.description = g_pGameStatePresence->description.c_str();
@@ -81,4 +82,3 @@ EXPORT void PLUGIN_REQUESTS_PRESENCE_DATA(PLUGIN_RESPOND_PRESENCE_DATA_TYPE func
 	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::PRESENCE, *(PluginRespondDataCallable*)(&func));
 }
 */
-
