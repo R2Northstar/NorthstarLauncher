@@ -9,7 +9,13 @@ HttpRequestHandler* g_httpRequestHandler;
 bool IsHttpDisabled()
 {
 	const static bool bIsHttpDisabled = Tier0::CommandLine()->FindParm("-disablehttprequests");
-	return !bIsHttpDisabled;
+	return bIsHttpDisabled;
+}
+
+bool IsLocalHttpAllowed()
+{
+	const static bool bIsLocalHttpAllowed = Tier0::CommandLine()->FindParm("-allowlocalhttp");
+	return bIsLocalHttpAllowed;
 }
 
 void HttpRequestHandler::StartHttpRequestHandler()
@@ -202,7 +208,7 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 		return -1;
 	}
 
-	bool bAllowLocalHttp = Tier0::CommandLine()->FindParm("-allowlocalhttp");
+	bool bAllowLocalHttp = IsLocalHttpAllowed();
 
 	// This handle will be returned to Squirrel so it can wait for the response and assign a callback for it.
 	int handle = ++m_iLastRequestHandle;
@@ -295,23 +301,29 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 					!HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) ||
 				requestParameters.body.empty())
 			{
-				int idx = 0;
+				bool isFirstValue = true;
 				for (const auto& kv : requestParameters.queryParameters)
 				{
 					char* key = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
-					char* value = curl_easy_escape(curl, kv.second.c_str(), kv.second.length());
 
-					if (idx == 0 && !bUrlContainsQuery)
+					for (const std::string& queryValue : kv.second)
 					{
-						queryUrl.append(fmt::format("?{}={}", key, value));
-					}
-					else
-					{
-						queryUrl.append(fmt::format("&{}={}", key, value));
+						char* value = curl_easy_escape(curl, queryValue.c_str(), queryValue.length());
+
+						if (isFirstValue && !bUrlContainsQuery)
+						{
+							queryUrl.append(fmt::format("?{}={}", key, value));
+							isFirstValue = false;
+						}
+						else
+						{
+							queryUrl.append(fmt::format("&{}={}", key, value));
+						}
+
+						curl_free(value);
 					}
 
 					curl_free(key);
-					curl_free(value);
 				}
 			}
 
@@ -472,9 +484,20 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 		// SQTypeNameFromID(node->val._Type)).c_str()); 	return SQRESULT_ERROR;
 		//}
 
-		if (node->key._Type == OT_STRING && node->val._Type == OT_STRING)
+		if (node->key._Type == OT_STRING && node->val._Type == OT_ARRAY)
 		{
-			request.queryParameters[node->key._VAL.asString->_val] = node->val._VAL.asString->_val;
+			SQArray* valueArray = node->val._VAL.asArray;
+			std::vector<std::string> queryValues;
+
+			for (int vIdx = 0; vIdx < valueArray->_usedSlots; ++vIdx)
+			{
+				if (valueArray->_values[vIdx]._Type == OT_STRING)
+				{
+					queryValues.push_back(valueArray->_values[vIdx]._VAL.asString->_val);
+				}
+			}
+
+			request.queryParameters[node->key._VAL.asString->_val] = queryValues;
 		}
 	}
 
@@ -508,8 +531,9 @@ ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel
 
 ON_DLL_LOAD("engine.dll", HttpRequestHandler_Init, (CModule module))
 {
-	// Cache the parameter as early as possible in order to avoid possible exploits that change it at runtime.
+	// Cache the launch parameters as early as possible in order to avoid possible exploits that change them at runtime.
 	IsHttpDisabled();
+	IsLocalHttpAllowed();
 
 	g_httpRequestHandler = new HttpRequestHandler;
 	g_httpRequestHandler->StartHttpRequestHandler();

@@ -81,8 +81,7 @@ struct HttpRequest
 	std::unordered_map<std::string, std::string> headers;
 
 	/** Query parameters for this http request. */
-	// TODO: Check if we should keep the order on those. *Most* APIs shouldn't really care but you never know.
-	std::unordered_map<std::string, std::string> queryParameters;
+	std::unordered_map<std::string, std::vector<std::string>> queryParameters;
 
 	/** The content type of this http request. Defaults to text/plain & UTF-8 charset. */
 	std::string contentType = "text/plain; charset=utf-8";
