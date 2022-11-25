@@ -38,8 +38,6 @@ void HttpRequestHandler::StopHttpRequestHandler()
 
 bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostname, std::string& outAddress, std::string& outPort)
 {
-	bool bAllowed = false;
-
 	CURLU* url = curl_url();
 	if (!url)
 	{
@@ -131,7 +129,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 		curl_free(urlPort);
 		curl_url_cleanup(url);
 
-		return bAllowed;
+		return false;
 	}
 
 	// Fast checks for private ranges of IPv4.
@@ -161,11 +159,10 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 			curl_free(urlPort);
 			curl_url_cleanup(url);
 
-			return bAllowed;
+			return false;
 		}
 	}
 
-	bAllowed = true;
 	char resolvedStr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &sockaddr_ipv4->sin_addr, resolvedStr, INET_ADDRSTRLEN);
 
@@ -181,7 +178,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	curl_free(urlPort);
 	curl_url_cleanup(url);
 
-	return bAllowed;
+	return true;
 }
 
 size_t HttpCurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb, void* userp)
