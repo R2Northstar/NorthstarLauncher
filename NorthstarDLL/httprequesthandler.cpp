@@ -6,11 +6,17 @@
 
 HttpRequestHandler* g_httpRequestHandler;
 
+bool IsHttpDisabled()
+{
+	const static bool bIsHttpDisabled = Tier0::CommandLine()->FindParm("-disablehttprequests");
+	return !bIsHttpDisabled;
+}
+
 void HttpRequestHandler::StartHttpRequestHandler()
 {
 	if (IsRunning())
 	{
-		spdlog::warn("HttpRequestHandler::StartHttpRequestHandler was called while IsRunning() is true");
+		spdlog::warn("%s was called while IsRunning() is true!", __FUNCTION__);
 		return;
 	}
 
@@ -22,10 +28,9 @@ void HttpRequestHandler::StopHttpRequestHandler()
 {
 	if (!IsRunning())
 	{
-		spdlog::warn("HttpRequestHandler::StopHttpRequestHandler was called while IsRunning() is false");
+		spdlog::warn("%s was called while IsRunning() is false", __FUNCTION__);
 		return;
 	}
-
 
 	m_bIsHttpRequestHandlerRunning = false;
 	spdlog::info("HttpRequestHandler stopped.");
@@ -120,53 +125,62 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 		{
 			spdlog::error("Failed to resolve http request destination {} into a valid IPv4 address.", urlHostname);
 		}
-		
-		goto CLEANUP;
+
+		curl_free(urlHostname);
+		curl_free(urlScheme);
+		curl_free(urlPort);
+		curl_url_cleanup(url);
+
+		return bAllowed;
 	}
 
 	// Fast checks for private ranges of IPv4.
 	{
 		auto addrBytes = sockaddr_ipv4->sin_addr.S_un.S_un_b;
 
-		if (addrBytes.s_b1 == 10															// 10.0.0.0			- 10.255.255.255		(Class A Private)
-			|| addrBytes.s_b1 == 172 && addrBytes.s_b2 >= 16 && addrBytes.s_b2 <= 31		// 172.16.0.0		- 172.31.255.255		(Class B Private)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 168								// 192.168.0.0		- 192.168.255.255		(Class C Private)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 0			// 192.0.0.0		- 192.0.0.255			(IETF Assignment)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 2			// 192.0.2.0		- 192.0.2.255			(TEST-NET-1)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 88 && addrBytes.s_b3 == 99		// 192.88.99.0		- 192.88.99.255			(IPv4-IPv6 Relay)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 >= 18 && addrBytes.s_b2 <= 19		// 192.18.0.0		- 192.19.255.255		(Internet Benchmark)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 51 && addrBytes.s_b3 == 100		// 192.51.100.0		- 192.51.100.255		(TEST-NET-2)
-			|| addrBytes.s_b1 == 203 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 113		// 203.0.113.0		- 203.0.113.255			(TEST-NET-3)
-			|| addrBytes.s_b1 == 169 && addrBytes.s_b2 == 254								// 169.254.00		- 169.254.255.255		(Link-local/APIPA) 
-			|| addrBytes.s_b1 == 127														// 127.0.0.0		- 127.255.255.255		(Loopback)
-			|| addrBytes.s_b1 == 0															// 0.0.0.0			- 0.255.255.255			(Current network)
-			|| addrBytes.s_b1 == 100 && addrBytes.s_b2 >= 64 && addrBytes.s_b2 <= 127		// 100.64.0.0		- 100.127.255.255		(Shared address space)
-			|| sockaddr_ipv4->sin_addr.S_un.S_addr == 0xFFFFFFFF							// 255.255.255.255							(Broadcast)
-			|| addrBytes.s_b1 >= 224 && addrBytes.s_b2 <= 239								// 224.0.0.0		- 239.255.255.255		(Multicast)
-			|| addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0		// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
-			|| addrBytes.s_b1 >= 240 && addrBytes.s_b4 <= 254)								// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
+		if (addrBytes.s_b1 == 10														// 10.0.0.0			- 10.255.255.255		(Class A Private)
+			|| addrBytes.s_b1 == 172 && addrBytes.s_b2 >= 16 && addrBytes.s_b2 <= 31	// 172.16.0.0		- 172.31.255.255		(Class B Private)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 168							// 192.168.0.0		- 192.168.255.255		(Class C Private)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 0		// 192.0.0.0		- 192.0.0.255			(IETF Assignment)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 2		// 192.0.2.0		- 192.0.2.255			(TEST-NET-1)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 88 && addrBytes.s_b3 == 99	// 192.88.99.0		- 192.88.99.255 (IPv4-IPv6 Relay)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 >= 18 &&	addrBytes.s_b2 <= 19	// 192.18.0.0		- 192.19.255.255		(Internet Benchmark)
+			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 51 && addrBytes.s_b3 == 100	// 192.51.100.0		- 192.51.100.255		(TEST-NET-2)
+			|| addrBytes.s_b1 == 203 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 113	// 203.0.113.0		- 203.0.113.255			(TEST-NET-3)
+			|| addrBytes.s_b1 == 169 && addrBytes.s_b2 == 254							// 169.254.00		- 169.254.255.255		(Link-local/APIPA)
+			|| addrBytes.s_b1 == 127													// 127.0.0.0		- 127.255.255.255		(Loopback)
+			|| addrBytes.s_b1 == 0														// 0.0.0.0			- 0.255.255.255			(Current network)
+			|| addrBytes.s_b1 == 100 && addrBytes.s_b2 >= 64 && addrBytes.s_b2 <= 127	// 100.64.0.0		- 100.127.255.255		(Shared address space)
+			|| sockaddr_ipv4->sin_addr.S_un.S_addr == 0xFFFFFFFF						// 255.255.255.255							(Broadcast)
+			|| addrBytes.s_b1 >= 224 && addrBytes.s_b2 <= 239							// 224.0.0.0		- 239.255.255.255		(Multicast)
+			|| addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0	// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
+			|| addrBytes.s_b1 >= 240 && addrBytes.s_b4 <= 254)							// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
 		{
-			goto CLEANUP;
+			curl_free(urlHostname);
+			curl_free(urlScheme);
+			curl_free(urlPort);
+			curl_url_cleanup(url);
+
+			return bAllowed;
 		}
 	}
 
 	bAllowed = true;
 	char resolvedStr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &sockaddr_ipv4->sin_addr, resolvedStr, INET_ADDRSTRLEN);
-	
+
 	// Use the resolved address as the new request host.
 	outHostname = urlHostname;
 	outAddress = resolvedStr;
 	outPort = urlPort;
-	
-	freeaddrinfo(result);
 
-CLEANUP:
+	freeaddrinfo(result);
 
 	curl_free(urlHostname);
 	curl_free(urlScheme);
 	curl_free(urlPort);
 	curl_url_cleanup(url);
+
 	return bAllowed;
 }
 
@@ -176,16 +190,15 @@ size_t HttpCurlWriteToStringBufferCallback(char* contents, size_t size, size_t n
 	return size * nmemb;
 }
 
-template <ScriptContext context>
-int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
+template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 {
 	if (!IsRunning())
 	{
-		spdlog::warn("HttpRequestHandler::MakeHttpRequest was called while IsRunning() is false");
+		spdlog::warn("%s was called while IsRunning() is false!", __FUNCTION__);
 		return -1;
 	}
 
-	if (Tier0::CommandLine()->FindParm("-disablehttprequests"))
+	if (IsHttpDisabled())
 	{
 		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
 					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
@@ -209,8 +222,12 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 					spdlog::warn(
 						"HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed when "
 						"running the game with -allowlocalhttp.");
-
-					g_pSquirrel<context>->schedule_call("NSHandleFailedHttpRequest", handle, (int)0, "Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more information.");			
+					g_pSquirrel<context>->AsyncCall(
+						"NSHandleFailedHttpRequest",
+						handle,
+						(int)0,
+						"Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more "
+						"information.");
 					return;
 				}
 			}
@@ -219,8 +236,8 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 			if (!curl)
 			{
 				spdlog::error("HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.");
-				g_pSquirrel<context>->schedule_call(
-					"NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));				
+				g_pSquirrel<context>->AsyncCall(
+					"NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));
 				return;
 			}
 
@@ -229,7 +246,7 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 			{
 				curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 			}
-				
+
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HttpRequestMethod::ToString(requestParameters.method).c_str());
 
 			// Only resolve to IPv4 if we don't allow private network requests.
@@ -275,12 +292,11 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 				curl_url_cleanup(curlUrl);
 			}
 
-			curlUrl = nullptr;
-
 			// GET requests, or POST-like requests with an empty body, can have query parameters.
 			// Append them to the base url.
-			if (HttpRequestMethod::CanHaveQueryParameters(requestParameters.method)
-				&& !HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) || requestParameters.body.empty())
+			if (HttpRequestMethod::CanHaveQueryParameters(requestParameters.method) &&
+					!HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) ||
+				requestParameters.body.empty())
 			{
 				int idx = 0;
 				for (const auto& kv : requestParameters.queryParameters)
@@ -364,13 +380,16 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 					// Squirrel side will handle firing the correct callback.
 					long httpCode = 0;
 					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-					g_pSquirrel<context>->schedule_call("NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);				
+					g_pSquirrel<context>->AsyncCall(
+						"NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);
 				}
 				else
 				{
 					// Pass CURL result code & error.
-					spdlog::error("curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
-					g_pSquirrel<context>->schedule_call("NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));			
+					spdlog::error(
+						"curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
+					g_pSquirrel<context>->AsyncCall(
+						"NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));
 				}
 			}
 
@@ -383,33 +402,27 @@ int HttpRequestHandler::MakeHttpRequest(const HttpRequest& requestParameters)
 	return handle;
 }
 
-
-template <ScriptContext context>
-void HttpRequestHandler::RegisterSQFuncs()
+template <ScriptContext context> void HttpRequestHandler::RegisterSQFuncs()
 {
-	g_pSquirrel<context>->AddFuncRegistration
-	(
+	g_pSquirrel<context>->AddFuncRegistration(
 		"int",
 		"NS_InternalMakeHttpRequest",
-		"int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body, int timeout, string userAgent",
+		"int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body, "
+		"int timeout, string userAgent",
 		"[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
-		SQ_InternalMakeHttpRequest<context>
-	);
+		SQ_InternalMakeHttpRequest<context>);
 
-	g_pSquirrel<context>->AddFuncRegistration
-	(
+	g_pSquirrel<context>->AddFuncRegistration(
 		"bool",
 		"NSIsHttpEnabled",
 		"",
 		"Whether or not HTTP requests are enabled. You can opt-out by starting the game with -disablehttprequests.",
-		SQ_IsHttpEnabled<context>
-	);
+		SQ_IsHttpEnabled<context>);
 }
 
 // int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams,
 //	string contentType, string body, int timeout, string userAgent)
-template<ScriptContext context>
-SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 {
 	if (!g_httpRequestHandler || !g_httpRequestHandler->IsRunning())
 	{
@@ -437,11 +450,11 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 
 		// TODO: Figure out why the first three nodes of this table are OT_NULL with a single value.
 		// Then re-enable this if possible.
-		//if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
+		// if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
 		//{
 		//	g_pSquirrel<context>->raiseerror(
-		//		sqvm, fmt::format("Invalid header type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type), SQTypeNameFromID(node->val._Type)).c_str());
-		//	return SQRESULT_ERROR;
+		//		sqvm, fmt::format("Invalid header type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type),
+		// SQTypeNameFromID(node->val._Type)).c_str()); 	return SQRESULT_ERROR;
 		//}
 
 		if (node->key._Type == OT_STRING && node->val._Type == OT_STRING)
@@ -455,11 +468,11 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 	{
 		tableNode* node = &queryTable->_nodes[idx];
 		// Same as above.
-		//if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
+		// if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
 		//{
 		//	g_pSquirrel<context>->raiseerror(
-		//		sqvm, fmt::format("Invalid query parameter type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type), SQTypeNameFromID(node->val._Type)).c_str());
-		//	return SQRESULT_ERROR;
+		//		sqvm, fmt::format("Invalid query parameter type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type),
+		// SQTypeNameFromID(node->val._Type)).c_str()); 	return SQRESULT_ERROR;
 		//}
 
 		if (node->key._Type == OT_STRING && node->val._Type == OT_STRING)
@@ -479,10 +492,9 @@ SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
 }
 
 // bool NSIsHttpEnabled()
-template<ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSquirrelVM* sqvm)
 {
-	const bool bIsDisabled = Tier0::CommandLine()->FindParm("-disablehttprequests");
-	g_pSquirrel<context>->pushbool(sqvm, !bIsDisabled);
+	g_pSquirrel<context>->pushbool(sqvm, !IsHttpDisabled());
 	return SQRESULT_NOTNULL;
 }
 
@@ -499,6 +511,9 @@ ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel
 
 ON_DLL_LOAD("engine.dll", HttpRequestHandler_Init, (CModule module))
 {
+	// Cache the parameter as early as possible in order to avoid possible exploits that change it at runtime.
+	IsHttpDisabled();
+
 	g_httpRequestHandler = new HttpRequestHandler;
 	g_httpRequestHandler->StartHttpRequestHandler();
 }
