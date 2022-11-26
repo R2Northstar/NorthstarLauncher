@@ -368,7 +368,10 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 
 			for (const auto& kv : requestParameters.headers)
 			{
-				headers = curl_slist_append(headers, fmt::format("{}: {}", kv.first, kv.second).c_str());
+				for (const std::string& headerValue : kv.second)
+				{
+					headers = curl_slist_append(headers, fmt::format("{}: {}", kv.first, headerValue).c_str());
+				}
 			}
 
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
