@@ -25,6 +25,14 @@ enum GameState
 	INGAME = 3
 };
 
+
+enum PluginLoadDLL
+{
+	ENGINE = 0,
+	CLIENT,
+	SERVER
+};
+
 struct SquirrelFunctions
 {
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
@@ -98,6 +106,15 @@ struct PluginInitFuncs
 	loggerfunc_t logger;
 };
 
+struct PluginEngineData
+{
+	void* ConCommandConstructor;
+	void* conVarMalloc;
+	void* conVarRegister;
+	void* ConVar_Vtable;
+	void* IConVar_Vtable;
+};
+
 struct PluginGameStatePresence
 {
 	const char* id;
@@ -147,5 +164,7 @@ typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
 
 // Northstar -> Plugin
 typedef void (*PLUGIN_PUSH_PRESENCE_TYPE)(PluginGameStatePresence* data);
+typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data);
+
 
 typedef void (*PLUGIN_RELAY_INVITE)(const char* invite);

@@ -36,6 +36,8 @@ class PluginCommunicationHandler
   public:
 	std::queue<PluginDataRequest> requestQueue;
 	std::mutex requestMutex;
+
+	PluginEngineData m_sEngineData {};
 };
 
 void init_plugincommunicationhandler();

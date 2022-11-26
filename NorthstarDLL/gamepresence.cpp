@@ -54,7 +54,7 @@ ADD_SQFUNC("void", NSPushGameStateData, "struct gamestate", "", ScriptContext::C
 	g_pGameStatePresence->own_score = structInst->data[6]._VAL.asInteger;
 	g_pGameStatePresence->other_highest_score = structInst->data[7]._VAL.asInteger;
 	g_pGameStatePresence->max_score = structInst->data[8]._VAL.asInteger;
-	g_pGameStatePresence->timestamp_end = structInst->data[9]._VAL.asFloat;
+	g_pGameStatePresence->timestamp_end = ceil(structInst->data[9]._VAL.asFloat);
 
 	return SQRESULT_NOTNULL;
 }

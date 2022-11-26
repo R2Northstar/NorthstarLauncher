@@ -6,6 +6,8 @@
 #include "squirrel.h"
 #include "plugins.h"
 
+#include "concommand.h"
+
 #define EXPORT extern "C" __declspec(dllexport)
 
 AUTOHOOK_INIT()
@@ -74,6 +76,11 @@ void PluginCommunicationHandler::GeneratePresenceObjects()
 	presence.max_score = g_pGameStatePresence->max_score;
 	presence.timestamp_end = g_pGameStatePresence->timestamp_end;
 	g_pPluginManager->PushPresence(&presence);
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", PluginBackendEngine, ConCommand, (CModule module))
+{
+	g_pPluginManager->InformDLLLoad(PluginLoadDLL::ENGINE, &g_pPluginCommunicationhandler->m_sEngineData);
 }
 
 /* Example for later use

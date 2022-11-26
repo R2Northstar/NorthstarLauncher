@@ -158,6 +158,8 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	plugin.push_presence = (PLUGIN_PUSH_PRESENCE_TYPE)GetProcAddress(pluginLib, "PLUGIN_RECEIVE_PRESENCE");
 
+	plugin.inform_dll_load = (PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_DLL_LOAD");
+
 	plugin.handle = m_vLoadedPlugins.size();
 	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName.c_str(), NS::Colors::PLUGIN);
 	RegisterLogger(plugin.logger);
@@ -252,6 +254,17 @@ void PluginManager::PushPresence(PluginGameStatePresence* data)
 		if (plugin.push_presence != NULL)
 		{
 			plugin.push_presence(data);
+		}
+	}
+}
+
+void PluginManager::InformDLLLoad(PluginLoadDLL dll, void* data)
+{
+	for (auto plugin : m_vLoadedPlugins)
+	{
+		if (plugin.inform_dll_load != NULL)
+		{
+			plugin.inform_dll_load(dll, data);
 		}
 	}
 }
