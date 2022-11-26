@@ -149,23 +149,34 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	{
 		auto addrBytes = sockaddr_ipv4->sin_addr.S_un.S_un_b;
 
-		if (addrBytes.s_b1 == 10														// 10.0.0.0			- 10.255.255.255		(Class A Private)
-			|| addrBytes.s_b1 == 172 && addrBytes.s_b2 >= 16 && addrBytes.s_b2 <= 31	// 172.16.0.0		- 172.31.255.255		(Class B Private)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 168							// 192.168.0.0		- 192.168.255.255		(Class C Private)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 0		// 192.0.0.0		- 192.0.0.255			(IETF Assignment)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 2		// 192.0.2.0		- 192.0.2.255			(TEST-NET-1)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 88 && addrBytes.s_b3 == 99	// 192.88.99.0		- 192.88.99.255 (IPv4-IPv6 Relay)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 >= 18 &&	addrBytes.s_b2 <= 19	// 192.18.0.0		- 192.19.255.255		(Internet Benchmark)
-			|| addrBytes.s_b1 == 192 && addrBytes.s_b2 == 51 && addrBytes.s_b3 == 100	// 192.51.100.0		- 192.51.100.255		(TEST-NET-2)
-			|| addrBytes.s_b1 == 203 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 113	// 203.0.113.0		- 203.0.113.255			(TEST-NET-3)
-			|| addrBytes.s_b1 == 169 && addrBytes.s_b2 == 254							// 169.254.00		- 169.254.255.255		(Link-local/APIPA)
-			|| addrBytes.s_b1 == 127													// 127.0.0.0		- 127.255.255.255		(Loopback)
-			|| addrBytes.s_b1 == 0														// 0.0.0.0			- 0.255.255.255			(Current network)
-			|| addrBytes.s_b1 == 100 && addrBytes.s_b2 >= 64 && addrBytes.s_b2 <= 127	// 100.64.0.0		- 100.127.255.255		(Shared address space)
-			|| sockaddr_ipv4->sin_addr.S_un.S_addr == 0xFFFFFFFF						// 255.255.255.255							(Broadcast)
-			|| addrBytes.s_b1 >= 224 && addrBytes.s_b2 <= 239							// 224.0.0.0		- 239.255.255.255		(Multicast)
-			|| addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0	// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
-			|| addrBytes.s_b1 >= 240 && addrBytes.s_b4 <= 254)							// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
+		// 10.0.0.0			- 10.255.255.255		(Class A Private)
+		// 172.16.0.0		- 172.31.255.255		(Class B Private)
+		// 192.168.0.0		- 192.168.255.255		(Class C Private)
+		// 192.0.0.0		- 192.0.0.255			(IETF Assignment)
+		// 192.0.2.0		- 192.0.2.255			(TEST-NET-1)
+		// 192.88.99.0		- 192.88.99.255 (IPv4-IPv6 Relay)
+		// 192.18.0.0		- 192.19.255.255		(Internet Benchmark)
+		// 192.51.100.0		- 192.51.100.255		(TEST-NET-2)
+		// 203.0.113.0		- 203.0.113.255			(TEST-NET-3)
+		// 169.254.00		- 169.254.255.255		(Link-local/APIPA)
+		// 127.0.0.0		- 127.255.255.255		(Loopback)
+		// 0.0.0.0			- 0.255.255.255			(Current network)
+		// 100.64.0.0		- 100.127.255.255		(Shared address space)
+		// 255.255.255.255							(Broadcast)
+		// 224.0.0.0		- 239.255.255.255		(Multicast)
+		// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
+		// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
+
+		if (addrBytes.s_b1 == 10 || addrBytes.s_b1 == 172 && addrBytes.s_b2 >= 16 && addrBytes.s_b2 <= 31 ||
+			addrBytes.s_b1 == 192 && addrBytes.s_b2 == 168 || addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 0 ||
+			addrBytes.s_b1 == 192 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 2 ||
+			addrBytes.s_b1 == 192 && addrBytes.s_b2 == 88 && addrBytes.s_b3 == 99 ||
+			addrBytes.s_b1 == 192 && addrBytes.s_b2 >= 18 && addrBytes.s_b2 <= 19 ||
+			addrBytes.s_b1 == 192 && addrBytes.s_b2 == 51 && addrBytes.s_b3 == 100 ||
+			addrBytes.s_b1 == 203 && addrBytes.s_b2 == 0 && addrBytes.s_b3 == 113 || addrBytes.s_b1 == 169 && addrBytes.s_b2 == 254 ||
+			addrBytes.s_b1 == 127 || addrBytes.s_b1 == 0 || addrBytes.s_b1 == 100 && addrBytes.s_b2 >= 64 && addrBytes.s_b2 <= 127 ||
+			sockaddr_ipv4->sin_addr.S_un.S_addr == 0xFFFFFFFF || addrBytes.s_b1 >= 224 && addrBytes.s_b2 <= 239 ||
+			addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0 || addrBytes.s_b1 >= 240 && addrBytes.s_b4 <= 254)
 		{
 			curl_free(urlHostname);
 			curl_free(urlScheme);
