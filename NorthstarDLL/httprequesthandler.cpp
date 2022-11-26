@@ -154,7 +154,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 		// 192.168.0.0		- 192.168.255.255		(Class C Private)
 		// 192.0.0.0		- 192.0.0.255			(IETF Assignment)
 		// 192.0.2.0		- 192.0.2.255			(TEST-NET-1)
-		// 192.88.99.0		- 192.88.99.255 (IPv4-IPv6 Relay)
+		// 192.88.99.0		- 192.88.99.255			(IPv4-IPv6 Relay)
 		// 192.18.0.0		- 192.19.255.255		(Internet Benchmark)
 		// 192.51.100.0		- 192.51.100.255		(TEST-NET-2)
 		// 203.0.113.0		- 203.0.113.255			(TEST-NET-3)
