@@ -19,7 +19,10 @@ class GameStatePresence
 	bool is_server;
 	bool is_local = false;
 	bool is_loading;
-	bool is_main_menu;
+	bool is_lobby;
+	std::string loading_level;
+
+	std::string ui_map;
 
 	std::string map;
 	std::string map_displayname;

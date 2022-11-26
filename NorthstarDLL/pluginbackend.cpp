@@ -53,11 +53,11 @@ void PluginCommunicationHandler::GeneratePresenceObjects()
 	presence.is_server = g_pGameStatePresence->is_server;
 	presence.is_local = g_pGameStatePresence->is_local;
 
-	if (g_pGameStatePresence->is_main_menu)
-		presence.state = GameState::MAINMENU;
-	else if (g_pGameStatePresence->is_loading)
+	if (g_pGameStatePresence->is_loading)
 		presence.state = GameState::LOADING;
-	else if (g_pGameStatePresence->map == "mp_lobby" && g_pGameStatePresence->is_local)
+	else if (g_pGameStatePresence->ui_map == "")
+		presence.state = GameState::MAINMENU;
+	else if (g_pGameStatePresence->map == "mp_lobby" && g_pGameStatePresence->is_local && g_pGameStatePresence->is_lobby)
 		presence.state = GameState::LOBBY;
 	else
 		presence.state = GameState::INGAME;

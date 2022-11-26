@@ -30,6 +30,7 @@ void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const Serve
 
 void GameStatePresence::RunFrame()
 {
+	auto test = g_pSquirrel<ScriptContext::UI>;
 	if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
 		g_pSquirrel<ScriptContext::UI>->Call("GenerateUIPresence");
 
@@ -63,7 +64,9 @@ ADD_SQFUNC("void", NSPushUIPresence, "struct presence", "", ScriptContext::UI)
 	SQStructInstance* structInst = g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm->_stackOfCurrentFunction[1]._VAL.asStructInstance;
 
 	g_pGameStatePresence->is_loading = structInst->data[0]._VAL.asInteger;
-	g_pGameStatePresence->is_main_menu = structInst->data[1]._VAL.asInteger;
+	g_pGameStatePresence->is_lobby = structInst->data[1]._VAL.asInteger;
+	g_pGameStatePresence->loading_level = structInst->data[2]._VAL.asString->_val;
+	g_pGameStatePresence->ui_map = structInst->data[3]._VAL.asString->_val;
 
 	return SQRESULT_NOTNULL;
 }
