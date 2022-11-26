@@ -235,10 +235,9 @@ void MasterServerManager::RequestServerList()
 					if (!serverObj.HasMember("id") || !serverObj["id"].IsString() || !serverObj.HasMember("name") ||
 						!serverObj["name"].IsString() || !serverObj.HasMember("description") || !serverObj["description"].IsString() ||
 						!serverObj.HasMember("map") || !serverObj["map"].IsString() || !serverObj.HasMember("playlist") ||
-						!serverObj["playlist"].IsString() || !serverObj.HasMember("region") || !serverObj["region"].IsString() ||
-						!serverObj.HasMember("playerCount") || !serverObj["playerCount"].IsNumber() || !serverObj.HasMember("maxPlayers") ||
-						!serverObj["maxPlayers"].IsNumber() || !serverObj.HasMember("hasPassword") || !serverObj["hasPassword"].IsBool() ||
-						!serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") ||
+						!serverObj["playlist"].IsString() || !serverObj.HasMember("playerCount") || !serverObj["playerCount"].IsNumber() ||
+						!serverObj.HasMember("maxPlayers") || !serverObj["maxPlayers"].IsNumber() || !serverObj.HasMember("hasPassword") ||
+						!serverObj["hasPassword"].IsBool() || !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") ||
 						!serverObj["modInfo"]["Mods"].IsArray())
 					{
 						spdlog::error("Failed reading masterserver response: malformed server object");
@@ -261,7 +260,7 @@ void MasterServerManager::RequestServerList()
 								serverObj["description"].GetString(),
 								serverObj["map"].GetString(),
 								serverObj["playlist"].GetString(),
-								serverObj["region"].GetString(),
+								(serverObj.HasMember("region") && serverObj["region"].IsString()) ? serverObj["region"].GetString() : "",
 								serverObj["playerCount"].GetInt(),
 								serverObj["maxPlayers"].GetInt(),
 								serverObj["hasPassword"].IsTrue());
@@ -279,7 +278,7 @@ void MasterServerManager::RequestServerList()
 							serverObj["description"].GetString(),
 							serverObj["map"].GetString(),
 							serverObj["playlist"].GetString(),
-							serverObj["region"].GetString(),
+							(serverObj.HasMember("region") && serverObj["region"].IsString()) ? serverObj["region"].GetString() : "",
 							serverObj["playerCount"].GetInt(),
 							serverObj["maxPlayers"].GetInt(),
 							serverObj["hasPassword"].IsTrue());
