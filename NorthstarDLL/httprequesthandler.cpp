@@ -18,6 +18,13 @@ bool IsLocalHttpAllowed()
 	return bIsLocalHttpAllowed;
 }
 
+HttpRequestHandler::HttpRequestHandler()
+{
+	// Cache the launch parameters as early as possible in order to avoid possible exploits that change them at runtime.
+	IsHttpDisabled();
+	IsLocalHttpAllowed();
+}
+
 void HttpRequestHandler::StartHttpRequestHandler()
 {
 	if (IsRunning())
@@ -427,6 +434,14 @@ template <ScriptContext context> void HttpRequestHandler::RegisterSQFuncs()
 		"",
 		"Whether or not HTTP requests are enabled. You can opt-out by starting the game with -disablehttprequests.",
 		SQ_IsHttpEnabled<context>);
+
+	g_pSquirrel<context>->AddFuncRegistration(
+		"bool",
+		"NSIsLocalHttpAllowed",
+		"",
+		"Whether or not HTTP requests can be made to a private network address. You can enable this by starting the game with "
+		"-allowlocalhttp.",
+		SQ_IsLocalHttpAllowed<context>);
 }
 
 // int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams,
@@ -440,7 +455,7 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 		return SQRESULT_NOTNULL;
 	}
 
-	if (Tier0::CommandLine()->FindParm("-disablehttprequests"))
+	if (IsHttpDisabled())
 	{
 		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
 					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
@@ -452,6 +467,7 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	request.method = static_cast<HttpRequestMethod::Type>(g_pSquirrel<context>->getinteger(sqvm, 1));
 	request.baseUrl = g_pSquirrel<context>->getstring(sqvm, 2);
 
+	// Read the tables for headers and query parameters.
 	SQTable* headerTable = sqvm->_stackOfCurrentFunction[3]._VAL.asTable;
 	for (int idx = 0; idx < headerTable->_numOfNodes; ++idx)
 	{
@@ -466,9 +482,20 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 		// SQTypeNameFromID(node->val._Type)).c_str()); 	return SQRESULT_ERROR;
 		//}
 
-		if (node->key._Type == OT_STRING && node->val._Type == OT_STRING)
+		if (node->key._Type == OT_STRING && node->val._Type == OT_ARRAY)
 		{
-			request.headers[node->key._VAL.asString->_val] = node->val._VAL.asString->_val;
+			SQArray* valueArray = node->val._VAL.asArray;
+			std::vector<std::string> headerValues;
+
+			for (int vIdx = 0; vIdx < valueArray->_usedSlots; ++vIdx)
+			{
+				if (valueArray->_values[vIdx]._Type == OT_STRING)
+				{
+					headerValues.push_back(valueArray->_values[vIdx]._VAL.asString->_val);
+				}
+			}
+
+			request.headers[node->key._VAL.asString->_val] = headerValues;
 		}
 	}
 
@@ -518,6 +545,13 @@ template <ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSquirrelVM* sqvm)
 	return SQRESULT_NOTNULL;
 }
 
+// bool NSIsLocalHttpAllowed()
+template <ScriptContext context> SQRESULT SQ_IsLocalHttpAllowed(HSquirrelVM* sqvm)
+{
+	g_pSquirrel<context>->pushbool(sqvm, IsLocalHttpAllowed());
+	return SQRESULT_NOTNULL;
+}
+
 ON_DLL_LOAD_RELIESON("client.dll", HttpRequestHandler_ClientInit, ClientSquirrel, (CModule module))
 {
 	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::CLIENT>();
@@ -531,10 +565,6 @@ ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel
 
 ON_DLL_LOAD("engine.dll", HttpRequestHandler_Init, (CModule module))
 {
-	// Cache the launch parameters as early as possible in order to avoid possible exploits that change them at runtime.
-	IsHttpDisabled();
-	IsLocalHttpAllowed();
-
 	g_httpRequestHandler = new HttpRequestHandler;
 	g_httpRequestHandler->StartHttpRequestHandler();
 }

@@ -78,7 +78,7 @@ struct HttpRequest
 	std::string baseUrl;
 
 	/** Headers used for this http request. Some may get overridden or ignored. */
-	std::unordered_map<std::string, std::string> headers;
+	std::unordered_map<std::string, std::vector<std::string>> headers;
 
 	/** Query parameters for this http request. */
 	std::unordered_map<std::string, std::vector<std::string>> queryParameters;
@@ -102,6 +102,8 @@ struct HttpRequest
 class HttpRequestHandler
 {
   public:
+
+	HttpRequestHandler();
 
 	// Start/Stop the HTTP request handler. Right now this doesn't do much. 
 	void StartHttpRequestHandler();
