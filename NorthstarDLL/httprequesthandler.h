@@ -66,7 +66,7 @@ namespace HttpRequestMethod
 	{
 		return method == HttpRequestMethod::HRM_GET || UsesCurlPostOptions(method);
 	}
-};
+}; // namespace HttpRequestMethod
 
 /** Contains data about an http request that has been queued. */
 struct HttpRequest
@@ -102,29 +102,29 @@ struct HttpRequest
 class HttpRequestHandler
 {
   public:
-
 	HttpRequestHandler();
 
-	// Start/Stop the HTTP request handler. Right now this doesn't do much. 
+	// Start/Stop the HTTP request handler. Right now this doesn't do much.
 	void StartHttpRequestHandler();
 	void StopHttpRequestHandler();
 
 	// Whether or not this http request handler is currently running.
-	bool IsRunning() const { return m_bIsHttpRequestHandlerRunning; }
+	bool IsRunning() const
+	{
+		return m_bIsHttpRequestHandlerRunning;
+	}
 
 	/**
 	 * Creates a new thread to execute an HTTP request.
 	 * @param requestParameters The parameters to use for this http request.
 	 * @returns The handle for the http request being sent, or -1 if the request failed.
 	 */
-	template <ScriptContext context>
-	int MakeHttpRequest(const HttpRequest& requestParameters);
+	template <ScriptContext context> int MakeHttpRequest(const HttpRequest& requestParameters);
 
 	/** Registers the HTTP request Squirrel functions for the given script context. */
 	template <ScriptContext context> void RegisterSQFuncs();
 
   private:
-
 	int m_iLastRequestHandle = 0;
 	std::atomic_bool m_bIsHttpRequestHandlerRunning = false;
 };
