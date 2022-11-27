@@ -316,6 +316,7 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	spdlog::info("CreateNewVM {} {}", GetContextName(realContext), (void*)sqvm);
 	return sqvm;
 }
+
 template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, CSquirrelVM* sqvm);
 template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirrelVM* sqvm)
 {
