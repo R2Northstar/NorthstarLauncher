@@ -5,6 +5,7 @@
 #include "plugins.h"
 #include "dedicated.h"
 #include "serverpresence.h"
+#include "masterserver.h"
 
 GameStatePresence* g_pGameStatePresence;
 
@@ -55,6 +56,14 @@ ADD_SQFUNC("void", NSPushGameStateData, "struct gamestate", "", ScriptContext::C
 	g_pGameStatePresence->other_highest_score = structInst->data[7]._VAL.asInteger;
 	g_pGameStatePresence->max_score = structInst->data[8]._VAL.asInteger;
 	g_pGameStatePresence->timestamp_end = ceil(structInst->data[9]._VAL.asFloat);
+
+	if (g_pMasterServerManager->m_currentServer)
+	{
+		g_pGameStatePresence->id = g_pMasterServerManager->m_currentServer->id;
+		g_pGameStatePresence->name = g_pMasterServerManager->m_currentServer->name;
+		g_pGameStatePresence->description = g_pMasterServerManager->m_currentServer->description;
+		g_pGameStatePresence->password = g_pMasterServerManager->m_sCurrentServerPassword;
+	}
 
 	return SQRESULT_NOTNULL;
 }
