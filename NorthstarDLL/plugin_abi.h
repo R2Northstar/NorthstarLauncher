@@ -25,7 +25,6 @@ enum GameState
 	INGAME = 3
 };
 
-
 enum PluginLoadDLL
 {
 	ENGINE = 0,
@@ -94,20 +93,17 @@ struct LogMsg
 typedef void (*loggerfunc_t)(LogMsg* msg);
 typedef void (*PLUGIN_RELAY_INVITE_TYPE)(const char* invite);
 
-
 struct PluginNorthstarData
 {
 	const char* version;
 	HMODULE northstarModule;
-
-	PLUGIN_RELAY_INVITE_TYPE relayInviteFunc;
-
 	int pluginHandle;
 };
 
 struct PluginInitFuncs
 {
 	loggerfunc_t logger;
+	PLUGIN_RELAY_INVITE_TYPE relayInviteFunc;
 };
 
 struct PluginEngineData

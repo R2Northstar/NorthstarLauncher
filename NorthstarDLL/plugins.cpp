@@ -182,12 +182,12 @@ bool PluginManager::LoadPlugins()
 
 	PluginInitFuncs funcs {};
 	funcs.logger = PLUGIN_LOG;
+	funcs.relayInviteFunc = nullptr;
 
 	init_plugincommunicationhandler();
 
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
-	data.relayInviteFunc = nullptr;
 
 	if (!fs::exists(pluginPath))
 	{
