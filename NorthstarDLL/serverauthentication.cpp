@@ -50,14 +50,22 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 			m_PlayerAuthServer.Get(
 				"/verify",
 				[](const httplib::Request& request, httplib::Response& response)
-				{ response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain"); });
+				{
+					if (g_pMasterServerManager && *g_pMasterServerManager->m_sOwnServerId)
+						response.set_header("X-Northstar-Server-Id", g_pMasterServerManager->m_sOwnServerId);
+
+					response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain");
+				});
 
 			m_PlayerAuthServer.Post(
 				"/authenticate_incoming_player",
 				[this](const httplib::Request& request, httplib::Response& response)
 				{
-					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= R2::PERSISTENCE_MAX_SIZE ||
-						!request.has_param("serverAuthToken") ||
+					if (g_pMasterServerManager && *g_pMasterServerManager->m_sOwnServerId)
+						response.set_header("X-Northstar-Server-Id", g_pMasterServerManager->m_sOwnServerId);
+
+					if (!g_pMasterServerManager || !request.has_param("id") || !request.has_param("authToken") ||
+						request.body.size() >= R2::PERSISTENCE_MAX_SIZE || !request.has_param("serverAuthToken") ||
 						strcmp(g_pMasterServerManager->m_sOwnServerAuthToken, request.get_param_value("serverAuthToken").c_str()))
 					{
 						response.set_content("{\"success\":false}", "application/json");
