@@ -187,6 +187,7 @@ bool PluginManager::LoadPlugins()
 
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
+	data.relayInviteFunc = nullptr;
 
 	if (!fs::exists(pluginPath))
 	{

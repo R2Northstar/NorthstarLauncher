@@ -92,11 +92,15 @@ struct LogMsg
 };
 
 typedef void (*loggerfunc_t)(LogMsg* msg);
+typedef void (*PLUGIN_RELAY_INVITE_TYPE)(const char* invite);
+
 
 struct PluginNorthstarData
 {
 	const char* version;
 	HMODULE northstarModule;
+
+	PLUGIN_RELAY_INVITE_TYPE relayInviteFunc;
 
 	int pluginHandle;
 };
@@ -165,6 +169,3 @@ typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
 // Northstar -> Plugin
 typedef void (*PLUGIN_PUSH_PRESENCE_TYPE)(PluginGameStatePresence* data);
 typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data);
-
-
-typedef void (*PLUGIN_RELAY_INVITE)(const char* invite);

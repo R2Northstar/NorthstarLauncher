@@ -82,10 +82,3 @@ ON_DLL_LOAD_RELIESON("engine.dll", PluginBackendEngine, ConCommand, (CModule mod
 {
 	g_pPluginManager->InformDLLLoad(PluginLoadDLL::ENGINE, &g_pPluginCommunicationhandler->m_sEngineData);
 }
-
-/* Example for later use
-EXPORT void PLUGIN_REQUESTS_PRESENCE_DATA(PLUGIN_RESPOND_PRESENCE_DATA_TYPE func)
-{
-	g_pPluginCommunicationhandler->PushRequest(PluginDataRequestType::PRESENCE, *(PluginRespondDataCallable*)(&func));
-}
-*/
