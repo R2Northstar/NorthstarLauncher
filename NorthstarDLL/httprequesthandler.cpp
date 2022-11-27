@@ -18,11 +18,18 @@ bool IsLocalHttpAllowed()
 	return bIsLocalHttpAllowed;
 }
 
+bool DisableHttpSsl()
+{
+	const static bool bDisableHttpSsl = Tier0::CommandLine()->FindParm("-disablehttpssl");
+	return bDisableHttpSsl;
+}
+
 HttpRequestHandler::HttpRequestHandler()
 {
 	// Cache the launch parameters as early as possible in order to avoid possible exploits that change them at runtime.
 	IsHttpDisabled();
 	IsLocalHttpAllowed();
+	DisableHttpSsl();
 }
 
 void HttpRequestHandler::StartHttpRequestHandler()
@@ -377,8 +384,18 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 				}
 			}
 
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-			curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
+			if (headers != nullptr)
+			{
+				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+				curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
+			}
+
+			// Disable SSL checks if requested by the user.
+			if (DisableHttpSsl())
+			{
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
+			}
 
 			// Enforce the Northstar user agent, unless an override was specified.
 			if (requestParameters.userAgent.empty())
@@ -410,6 +427,15 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 					// Pass CURL result code & error.
 					spdlog::error(
 						"curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
+
+					// If it's an SSL issue, tell the user they may disable SSL checks using -disablehttpssl.
+					if (result == CURLE_PEER_FAILED_VERIFICATION || result == CURLE_SSL_CERTPROBLEM ||
+						result == CURLE_SSL_INVALIDCERTSTATUS)
+					{
+						spdlog::error("You can try disabling SSL verifications for this issue using the -disablehttpssl launch argument. "
+									  "Keep in mind this is potentially dangerous!");
+					}
+
 					g_pSquirrel<context>->AsyncCall(
 						"NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));
 				}
@@ -429,7 +455,8 @@ template <ScriptContext context> void HttpRequestHandler::RegisterSQFuncs()
 	g_pSquirrel<context>->AddFuncRegistration(
 		"int",
 		"NS_InternalMakeHttpRequest",
-		"int method, string baseUrl, table<string, string> headers, table<string, string> queryParams, string contentType, string body, "
+		"int method, string baseUrl, table<string, array<string> > headers, table<string, array<string> > queryParams, string contentType, "
+		"string body, "
 		"int timeout, string userAgent",
 		"[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
 		SQ_InternalMakeHttpRequest<context>);
