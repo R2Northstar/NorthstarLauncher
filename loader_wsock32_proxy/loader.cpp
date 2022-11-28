@@ -36,7 +36,7 @@ bool ShouldLoadNorthstar()
 		std::stringstream runNorthstarFileBuffer;
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
-		if (!runNorthstarFileBuffer.str()._Starts_with("0"))
+		if (!runNorthstarFileBuffer.str().starts_with("0"))
 			loadNorthstar = true;
 	}
 	return loadNorthstar;
@@ -94,9 +94,12 @@ bool ProvisionNorthstar()
 		return false;
 	}
 
-	LPVOID pTarget = GetProcAddress(launcherHandle, "LauncherMain");
-	if (MH_CreateHook(pTarget, &LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
-		MH_EnableHook(pTarget) != MH_OK)
+	auto pTarget = GetProcAddress(launcherHandle, "LauncherMain");
+	if (MH_CreateHook(
+			reinterpret_cast<LPVOID>(pTarget),
+			reinterpret_cast<LPVOID>(&LauncherMainHook),
+			reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
+		MH_EnableHook(reinterpret_cast<LPVOID>(pTarget)) != MH_OK)
 		MessageBoxA(GetForegroundWindow(), "Hook creation failed for function LauncherMain.", "Northstar Wsock32 Proxy Error", 0);
 
 	return true;

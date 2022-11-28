@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "memory.h"
+#include <cassert>
 
 MemoryAddress::MemoryAddress() : m_nAddress(0) {}
 MemoryAddress::MemoryAddress(const uintptr_t nAddress) : m_nAddress(nAddress) {}
@@ -132,7 +133,7 @@ inline std::vector<uint8_t> HexBytesToString(const char* pHexString)
 				}
 				else
 				{
-					assert(false, "Failed to parse invalid hex string.");
+					assert(false);
 					val = -1;
 				}
 
@@ -324,7 +325,7 @@ inline std::pair<std::vector<uint8_t>, std::string> MaskedBytesFromPattern(const
 				}
 				else
 				{
-					assert(false, "Failed to parse invalid pattern string.");
+					assert(false);
 					val = -1;
 				}
 

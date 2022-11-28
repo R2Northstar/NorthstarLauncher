@@ -180,7 +180,7 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 
 	R2::g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
-	AddSearchPathHook.Dispatch((*g_pFilesystem)->m_vtable->AddSearchPath);
-	ReadFromCacheHook.Dispatch((*g_pFilesystem)->m_vtable->ReadFromCache);
-	MountVPKHook.Dispatch((*g_pFilesystem)->m_vtable->MountVPK);
+	AddSearchPathHook.Dispatch(reinterpret_cast<LPVOID>((*g_pFilesystem)->m_vtable->AddSearchPath));
+	ReadFromCacheHook.Dispatch(reinterpret_cast<LPVOID>((*g_pFilesystem)->m_vtable->ReadFromCache));
+	MountVPKHook.Dispatch(reinterpret_cast<LPVOID>((*g_pFilesystem)->m_vtable->MountVPK));
 }

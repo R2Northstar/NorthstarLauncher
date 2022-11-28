@@ -10,7 +10,7 @@
 
 ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", ScriptContext::SERVER)
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<context>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<context>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		spdlog::warn("NSEarlyWritePlayerPersistenceForLeave got null player");
@@ -39,7 +39,7 @@ ADD_SQFUNC("bool", NSIsWritingPlayerPersistence, "", "", ScriptContext::SERVER)
 
 ADD_SQFUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext::SERVER)
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		spdlog::warn("NSIsPlayerLocalPlayer got null player");

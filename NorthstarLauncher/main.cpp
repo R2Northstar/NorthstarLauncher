@@ -6,8 +6,8 @@
 #include <fstream>
 #include <shlwapi.h>
 #include <iostream>
-
-#pragma comment(lib, "Ws2_32.lib")
+#include <optional>
+#include <vector>
 
 #include <winsock2.h>
 #include <WS2tcpip.h>
@@ -223,14 +223,44 @@ void EnsureOriginStarted()
 	CloseHandle(pi.hThread);
 }
 
+[[nodiscard]] static std::optional<std::wstring> get_environment_variable(const wchar_t* var_name) noexcept
+{
+#ifdef _MSC_VER
+	wchar_t* buffer = nullptr;
+	size_t buffer_count = 0;
+	const auto error = _wdupenv_s(&buffer, &buffer_count, var_name);
+	if (!buffer || buffer_count == 0 || error)
+		return std::nullopt;
+
+	std::wstring str {buffer, buffer_count};
+	free(buffer);
+
+	return str;
+#elif defined(__MINGW32__)
+	// For some reason mingw doesn't have a definition of _wdupenv_s despite it being declared
+	std::vector<wchar_t> buffer;
+
+	while (true)
+	{
+		const auto size = GetEnvironmentVariableW(var_name, buffer.data(), buffer.size());
+		if (size == 0)
+			return std::nullopt;
+
+		if (size < buffer.size())
+			return std::wstring {buffer.data()};
+
+		buffer.resize(size);
+	}
+#endif
+}
+
 void PrependPath()
 {
-	wchar_t* pPath;
-	size_t len;
-	errno_t err = _wdupenv_s(&pPath, &len, L"PATH");
-	if (!err)
+	const auto path_opt = get_environment_variable(L"PATH");
+	if (path_opt)
 	{
-		swprintf_s(buffer, L"PATH=%s\\bin\\x64_retail\\;%s", exePath, pPath);
+		const auto& path = *path_opt;
+		swprintf_s(buffer, L"PATH=%s\\bin\\x64_retail\\;%s", exePath, path.c_str());
 		auto result = _wputenv(buffer);
 		if (result == -1)
 		{
@@ -241,7 +271,6 @@ void PrependPath()
 				L"Northstar Launcher Warning",
 				0);
 		}
-		free(pPath);
 	}
 	else
 	{

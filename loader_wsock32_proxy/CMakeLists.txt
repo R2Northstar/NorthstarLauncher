@@ -4,14 +4,18 @@ add_library(loader_wsock32_proxy SHARED
             loader.h
             pch.cpp
             pch.h
-            wsock32.asm
             wsock32.def
             )
+
+if(MSVC)
+	target_sources(loader_wsock32_proxy PRIVATE
+	               wsock32.asm
+	               )
+endif()
 
 add_library(Northstar::loader_wsock32_proxy ALIAS loader_wsock32_proxy)
 
 target_link_libraries(loader_wsock32_proxy PRIVATE
-                      ${CMAKE_CURRENT_SOURCE_DIR}/include/MinHook.x64.lib
                       mswsock.lib
                       ws2_32.lib
                       Shlwapi.lib
@@ -30,6 +34,16 @@ target_link_libraries(loader_wsock32_proxy PRIVATE
                       odbc32.lib
                       odbccp32.lib
                       )
+
+if(MSVC)
+	target_link_libraries(loader_wsock32_proxy PRIVATE
+	                                            ${CMAKE_CURRENT_SOURCE_DIR}/include/MinHook.x64.lib
+	                      )
+else()
+	target_link_libraries(loader_wsock32_proxy PRIVATE
+	                      ${CMAKE_CURRENT_SOURCE_DIR}/include/minhook.a
+	                      )
+endif()
 
 target_include_directories(loader_wsock32_proxy PRIVATE
                            include

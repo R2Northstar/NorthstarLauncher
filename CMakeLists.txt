@@ -1,6 +1,14 @@
-project(NorthstarLauncher CXX ASM_MASM)
-
 cmake_minimum_required(VERSION 3.23)
+
+project(NorthstarLauncher CXX)
+
+if(MSVC)
+	enable_language(ASM_MASM)
+else()
+	enable_language(ASM)
+	set(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp -masm=intel")
+	set(CMAKE_CXX_FLAGS "-Wa,-mbig-obj")
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)

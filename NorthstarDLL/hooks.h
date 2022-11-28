@@ -115,7 +115,7 @@ class __autohook
 	{
 		iAddressResolutionMode = ABSOLUTE_ADDR;
 
-		const int iFuncNameStrlen = strlen(funcName) + 1;
+		const auto iFuncNameStrlen = strlen(funcName) + 1;
 		pFuncName = new char[iFuncNameStrlen];
 		memcpy(pFuncName, funcName, iFuncNameStrlen);
 
@@ -127,11 +127,11 @@ class __autohook
 	{
 		iAddressResolutionMode = OFFSET_STRING;
 
-		const int iFuncNameStrlen = strlen(funcName) + 1;
+		const auto iFuncNameStrlen = strlen(funcName) + 1;
 		pFuncName = new char[iFuncNameStrlen];
 		memcpy(pFuncName, funcName, iFuncNameStrlen);
 
-		const int iAddrStrlen = strlen(addrString) + 1;
+		const auto iAddrStrlen = strlen(addrString) + 1;
 		pAddrString = new char[iAddrStrlen];
 		memcpy(pAddrString, addrString, iAddrStrlen);
 
@@ -143,15 +143,15 @@ class __autohook
 	{
 		iAddressResolutionMode = PROCADDRESS;
 
-		const int iFuncNameStrlen = strlen(funcName) + 1;
+		const auto iFuncNameStrlen = strlen(funcName) + 1;
 		pFuncName = new char[iFuncNameStrlen];
 		memcpy(pFuncName, funcName, iFuncNameStrlen);
 
-		const int iModuleNameStrlen = strlen(moduleName) + 1;
+		const auto iModuleNameStrlen = strlen(moduleName) + 1;
 		pModuleName = new char[iModuleNameStrlen];
 		memcpy(pModuleName, moduleName, iModuleNameStrlen);
 
-		const int iProcNameStrlen = strlen(procName) + 1;
+		const auto iProcNameStrlen = strlen(procName) + 1;
 		pProcName = new char[iProcNameStrlen];
 		memcpy(pProcName, procName, iProcNameStrlen);
 
@@ -206,7 +206,7 @@ class __autohook
 			uintptr_t iOffset = 0;
 
 			int iOffsetBegin = iDllNameEnd;
-			int iOffsetEnd = strlen(pAddrString);
+			auto iOffsetEnd = strlen(pAddrString);
 
 			// seek until we hit the start of the number offset
 			for (; !(pAddrString[iOffsetBegin] >= '0' && pAddrString[iOffsetBegin] <= '9') && pAddrString[iOffsetBegin]; iOffsetBegin++)
@@ -225,7 +225,7 @@ class __autohook
 
 		case PROCADDRESS:
 		{
-			targetAddr = GetProcAddress(GetModuleHandleA(pModuleName), pProcName);
+			targetAddr = reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandleA(pModuleName), pProcName));
 			break;
 		}
 		}
@@ -260,7 +260,7 @@ class __autohook
 	{                                                                                                                                      \
 		type(*callingConvention name) args;                                                                                                \
 		__autohook                                                                                                                         \
-			CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
+			CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), (LPVOID*)addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
 	}                                                                                                                                      \
 	type callingConvention CONCAT2(__autohookfunc, name) args
 

@@ -15,10 +15,6 @@
 #include <stdio.h>
 #include <string>
 
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "Mswsock.lib")
-#pragma comment(lib, "AdvApi32.lib")
-
 namespace spdlog {
 namespace details {
 class tcp_client

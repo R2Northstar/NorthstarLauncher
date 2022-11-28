@@ -74,7 +74,7 @@ ConVar::ConVar(
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
 
 	conVarMalloc(&this->m_pMalloc, 0, 0); // Allocate new memory for ConVar.
-	conVarRegister(this, pszName, pszDefaultValue, nFlags, pszHelpString, bMin, fMin, bMax, fMax, pCallback);
+	conVarRegister(this, pszName, pszDefaultValue, nFlags, pszHelpString, bMin, fMin, bMax, fMax, reinterpret_cast<LPVOID>(pCallback));
 }
 
 //-----------------------------------------------------------------------------

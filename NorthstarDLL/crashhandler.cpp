@@ -5,7 +5,7 @@
 #include "version.h"
 #include "modmanager.h"
 
-#include <minidumpapiset.h>
+#include <dbghelp.h>
 
 HANDLE hExceptionFilter;
 

@@ -1,7 +1,6 @@
 add_library(NorthstarDLL SHARED
             audio.cpp
             audio.h
-            audio_asm.asm
             bansystem.cpp
             bansystem.h
             bitbuf.h
@@ -128,16 +127,34 @@ add_library(NorthstarDLL SHARED
             version.h
             )
 
+if(MSVC)
+	target_sources(NorthstarDLL PRIVATE
+	               audio_asm.asm
+	               )
+endif()
+
 add_library(Northstar::DLL ALIAS NorthstarDLL)
 
 target_link_libraries(NorthstarDLL PRIVATE
-                      ${CMAKE_CURRENT_SOURCE_DIR}/include/MinHook.x64.lib
-                      ${CMAKE_CURRENT_SOURCE_DIR}/include/libcurl/lib/libcurl_a.lib
                       dbghelp.lib
                       Wldap32.lib
                       Normaliz.lib
                       version.lib
+                      ws2_32.lib
                       )
+
+if(MSVC)
+	target_link_libraries(NorthstarDLL PRIVATE
+	                      crypt32.lib
+	                      ${CMAKE_CURRENT_SOURCE_DIR}/include/MinHook.x64.lib
+	                      ${CMAKE_CURRENT_SOURCE_DIR}/include/libcurl/lib/libcurl_a.lib
+	                      )
+else()
+	target_link_libraries(NorthstarDLL PRIVATE
+	                      ${CMAKE_CURRENT_SOURCE_DIR}/include/minhook.a
+	                      ${CMAKE_CURRENT_SOURCE_DIR}/include/libcurl/lib/libcurl.dll.a
+	                      )
+endif()
 
 target_include_directories(NorthstarDLL PRIVATE
                            include

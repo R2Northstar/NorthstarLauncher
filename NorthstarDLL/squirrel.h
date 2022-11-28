@@ -114,7 +114,7 @@ class SquirrelManagerBase
 		return __sq_call(sqvm, args + 1, false, false);
 	}
 
-	inline SQInteger raiseerror(HSquirrelVM* sqvm, const const SQChar* sError)
+	inline SQInteger raiseerror(HSquirrelVM* sqvm, const SQChar* sError)
 	{
 		return __sq_raiseerror(sqvm, sError);
 	}
@@ -237,11 +237,6 @@ class SquirrelManagerBase
 		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
 	}
 
-	template <typename T> inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
-	{
-		return __sq_getentity(sqvm, (void**)ppEntity);
-	}
-
 	template <typename T> inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
 	{
 		SQObject obj;
@@ -252,6 +247,12 @@ class SquirrelManagerBase
 	}
 #pragma endregion
 };
+
+template <ScriptContext context, typename T>
+inline void SqRecurseArgs(FunctionVector& v, T& arg);
+
+template <ScriptContext context, typename T, typename... Args>
+inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
 
 template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
 {

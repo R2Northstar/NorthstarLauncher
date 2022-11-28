@@ -628,8 +628,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	MAKEHOOK(
 		module.Offset(0x108E0),
-		&RegisterSquirrelFunctionHook<ScriptContext::CLIENT>,
-		&g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc);
+		reinterpret_cast<LPVOID>(&RegisterSquirrelFunctionHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc));
 	g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc = g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc;
 
 	g_pSquirrel<ScriptContext::CLIENT>->logger = NS::log::SCRIPT_CL;
@@ -638,16 +638,37 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	// uiscript_reset concommand: don't loop forever if compilation fails
 	module.Offset(0x3C6E4C).NOP(6);
 
-	MAKEHOOK(module.Offset(0x8AD0), &sq_compiler_createHook<ScriptContext::CLIENT>, &sq_compiler_create<ScriptContext::CLIENT>);
+	MAKEHOOK(
+		module.Offset(0x8AD0),
+		reinterpret_cast<LPVOID>(&sq_compiler_createHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&sq_compiler_create<ScriptContext::CLIENT>));
 
-	MAKEHOOK(module.Offset(0x12B00), &SQPrintHook<ScriptContext::CLIENT>, &SQPrint<ScriptContext::CLIENT>);
-	MAKEHOOK(module.Offset(0x12BA0), &SQPrintHook<ScriptContext::UI>, &SQPrint<ScriptContext::UI>);
+	MAKEHOOK(
+		module.Offset(0x12B00),
+		reinterpret_cast<LPVOID>(&SQPrintHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&SQPrint<ScriptContext::CLIENT>));
+	MAKEHOOK(
+		module.Offset(0x12BA0),
+		reinterpret_cast<LPVOID>(&SQPrintHook<ScriptContext::UI>),
+		reinterpret_cast<LPVOID>(&SQPrint<ScriptContext::UI>));
 
-	MAKEHOOK(module.Offset(0x26130), &CreateNewVMHook<ScriptContext::CLIENT>, &CreateNewVM<ScriptContext::CLIENT>);
-	MAKEHOOK(module.Offset(0x26E70), &DestroyVMHook<ScriptContext::CLIENT>, &DestroyVM<ScriptContext::CLIENT>);
-	MAKEHOOK(module.Offset(0x79A50), &ScriptCompileErrorHook<ScriptContext::CLIENT>, &SQCompileError<ScriptContext::CLIENT>);
+	MAKEHOOK(
+		module.Offset(0x26130),
+		reinterpret_cast<LPVOID>(&CreateNewVMHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&CreateNewVM<ScriptContext::CLIENT>));
+	MAKEHOOK(
+		module.Offset(0x26E70),
+		reinterpret_cast<LPVOID>(&DestroyVMHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&DestroyVM<ScriptContext::CLIENT>));
+	MAKEHOOK(
+		module.Offset(0x79A50),
+		reinterpret_cast<LPVOID>(&ScriptCompileErrorHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&SQCompileError<ScriptContext::CLIENT>));
 
-	MAKEHOOK(module.Offset(0x10190), &CallScriptInitCallbackHook<ScriptContext::CLIENT>, &CallScriptInitCallback<ScriptContext::CLIENT>);
+	MAKEHOOK(
+		module.Offset(0x10190),
+		reinterpret_cast<LPVOID>(&CallScriptInitCallbackHook<ScriptContext::CLIENT>),
+		reinterpret_cast<LPVOID>(&CallScriptInitCallback<ScriptContext::CLIENT>));
 
 	RegisterConCommand("script_client", ConCommand_script<ScriptContext::CLIENT>, "Executes script code on the client vm", FCVAR_CLIENTDLL);
 	RegisterConCommand("script_ui", ConCommand_script<ScriptContext::UI>, "Executes script code on the ui vm", FCVAR_CLIENTDLL);
@@ -711,16 +732,34 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	MAKEHOOK(
 		module.Offset(0x1DD10),
-		&RegisterSquirrelFunctionHook<ScriptContext::SERVER>,
-		&g_pSquirrel<ScriptContext::SERVER>->RegisterSquirrelFunc);
+		reinterpret_cast<LPVOID>(&RegisterSquirrelFunctionHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&g_pSquirrel<ScriptContext::SERVER>->RegisterSquirrelFunc));
 
-	MAKEHOOK(module.Offset(0x8AA0), &sq_compiler_createHook<ScriptContext::SERVER>, &sq_compiler_create<ScriptContext::SERVER>);
+	MAKEHOOK(
+		module.Offset(0x8AA0),
+		reinterpret_cast<LPVOID>(&sq_compiler_createHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&sq_compiler_create<ScriptContext::SERVER>));
 
-	MAKEHOOK(module.Offset(0x1FE90), &SQPrintHook<ScriptContext::SERVER>, &SQPrint<ScriptContext::SERVER>);
-	MAKEHOOK(module.Offset(0x260E0), &CreateNewVMHook<ScriptContext::SERVER>, &CreateNewVM<ScriptContext::SERVER>);
-	MAKEHOOK(module.Offset(0x26E20), &DestroyVMHook<ScriptContext::SERVER>, &DestroyVM<ScriptContext::SERVER>);
-	MAKEHOOK(module.Offset(0x799E0), &ScriptCompileErrorHook<ScriptContext::SERVER>, &SQCompileError<ScriptContext::SERVER>);
-	MAKEHOOK(module.Offset(0x1D5C0), &CallScriptInitCallbackHook<ScriptContext::SERVER>, &CallScriptInitCallback<ScriptContext::SERVER>);
+	MAKEHOOK(
+		module.Offset(0x1FE90),
+		reinterpret_cast<LPVOID>(&SQPrintHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&SQPrint<ScriptContext::SERVER>));
+	MAKEHOOK(
+		module.Offset(0x260E0),
+		reinterpret_cast<LPVOID>(&CreateNewVMHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&CreateNewVM<ScriptContext::SERVER>));
+	MAKEHOOK(
+		module.Offset(0x26E20),
+		reinterpret_cast<LPVOID>(&DestroyVMHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&DestroyVM<ScriptContext::SERVER>));
+	MAKEHOOK(
+		module.Offset(0x799E0),
+		reinterpret_cast<LPVOID>(&ScriptCompileErrorHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&SQCompileError<ScriptContext::SERVER>));
+	MAKEHOOK(
+		module.Offset(0x1D5C0),
+		reinterpret_cast<LPVOID>(&CallScriptInitCallbackHook<ScriptContext::SERVER>),
+		reinterpret_cast<LPVOID>(&CallScriptInitCallback<ScriptContext::SERVER>));
 
 	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats
 	// are enabled for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want

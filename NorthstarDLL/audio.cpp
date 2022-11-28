@@ -15,6 +15,15 @@ extern "C"
 {
 	// should be called only in LoadSampleMetadata_Hook
 	extern void* __fastcall Audio_GetParentEvent();
+
+#ifdef __MINGW32__
+	void * __attribute__((noinline)) Audio_GetParentEvent()
+	{
+		void *r12;
+		asm volatile ("mov {%%r12, %[reg]|%[reg], r12}": [reg] "=r" (r12));
+		return r12;
+	}
+#endif
 }
 
 ConVar* Cvar_ns_print_played_sounds;

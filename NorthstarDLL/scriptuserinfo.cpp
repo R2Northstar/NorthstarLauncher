@@ -8,7 +8,7 @@ ADD_SQFUNC("string", GetUserInfoKVString_Internal, "entity player, string key, s
 	"Gets the string value of a given player's userinfo convar by name", ScriptContext::SERVER)
 // clang-format on
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, "player is null");
@@ -28,7 +28,7 @@ ADD_SQFUNC("asset", GetUserInfoKVAsset_Internal, "entity player, string key, ass
 	"Gets the asset value of a given player's userinfo convar by name", ScriptContext::SERVER)
 // clang-format on
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, "player is null");
@@ -49,7 +49,7 @@ ADD_SQFUNC("int", GetUserInfoKVInt_Internal, "entity player, string key, int def
 	"Gets the int value of a given player's userinfo convar by name", ScriptContext::SERVER)
 // clang-format on
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, "player is null");
@@ -69,7 +69,7 @@ ADD_SQFUNC("float", GetUserInfoKVFloat_Internal, "entity player, string key, flo
 	"Gets the float value of a given player's userinfo convar by name", ScriptContext::SERVER)
 // clang-format on
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, "player is null");
@@ -89,7 +89,7 @@ ADD_SQFUNC("bool", GetUserInfoKVBool_Internal, "entity player, string key, bool 
 	"Gets the bool value of a given player's userinfo convar by name", ScriptContext::SERVER)
 // clang-format on
 {
-	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->getentity<R2::CBasePlayer>(sqvm, 1);
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<R2::CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		g_pSquirrel<ScriptContext::SERVER>->raiseerror(sqvm, "player is null");

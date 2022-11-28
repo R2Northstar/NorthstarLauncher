@@ -118,7 +118,14 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 extern "C"
 {
 	FARPROC PA = NULL;
+#ifdef _MSC_VER
 	int RunASM();
+#elif defined(__MINGW32__)
+	void __attribute__((naked)) RunASM()
+	{
+		asm volatile ("jmp *%[PA]" : : [PA] "m" (PA));
+	}
+#endif
 
 	void PROXY_EnumProtocolsA()
 	{

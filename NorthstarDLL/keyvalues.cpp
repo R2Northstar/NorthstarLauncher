@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "keyvalues.h"
 #include <winnt.h>
+#include <cassert>
 
 // implementation of the ConVar class
 // heavily based on https://github.com/Mauler125/r5sdk/blob/master/r5dev/vpc/keyvalues.cpp
@@ -205,7 +206,7 @@ void KeyValues::RemoveEverything(void)
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::FindKey(const char* pszKeyName, bool bCreate)
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 
 	if (!pszKeyName || !*pszKeyName)
 		return this;
@@ -504,7 +505,7 @@ bool KeyValues::IsEmpty(const char* pszKeyName)
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::GetFirstTrueSubKey(void) const
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 	KeyValues* pRet = this ? m_pSub : nullptr;
 	while (pRet && pRet->m_iDataType != TYPE_NONE)
 		pRet = pRet->m_pPeer;
@@ -518,7 +519,7 @@ KeyValues* KeyValues::GetFirstTrueSubKey(void) const
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::GetNextTrueSubKey(void) const
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 	KeyValues* pRet = this ? m_pPeer : nullptr;
 	while (pRet && pRet->m_iDataType != TYPE_NONE)
 		pRet = pRet->m_pPeer;
@@ -532,7 +533,7 @@ KeyValues* KeyValues::GetNextTrueSubKey(void) const
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::GetFirstValue(void) const
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 	KeyValues* pRet = this ? m_pSub : nullptr;
 	while (pRet && pRet->m_iDataType == TYPE_NONE)
 		pRet = pRet->m_pPeer;
@@ -546,7 +547,7 @@ KeyValues* KeyValues::GetFirstValue(void) const
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::GetNextValue(void) const
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 	KeyValues* pRet = this ? m_pPeer : nullptr;
 	while (pRet && pRet->m_iDataType == TYPE_NONE)
 		pRet = pRet->m_pPeer;
@@ -559,7 +560,7 @@ KeyValues* KeyValues::GetNextValue(void) const
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::GetFirstSubKey() const
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 	return this ? m_pSub : nullptr;
 }
 
@@ -568,7 +569,7 @@ KeyValues* KeyValues::GetFirstSubKey() const
 //-----------------------------------------------------------------------------
 KeyValues* KeyValues::GetNextKey() const
 {
-	assert(this, "Member function called on NULL KeyValues");
+	assert(this);
 	return this ? m_pPeer : nullptr;
 }
 

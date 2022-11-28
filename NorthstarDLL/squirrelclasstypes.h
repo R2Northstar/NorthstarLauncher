@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "squirreldatatypes.h"
 
+#include <optional>
 #include <queue>
 
 enum SQRESULT : SQInteger

@@ -78,7 +78,8 @@ bool LoadPlugins()
 			spdlog::info("Failed to load library {}: ", std::system_category().message(GetLastError()));
 			continue;
 		}
-		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
+		static const auto rt_rcdataw = MAKEINTRESOURCEW(10);
+		HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), rt_rcdataw);
 
 		if (manifestResource == NULL)
 		{

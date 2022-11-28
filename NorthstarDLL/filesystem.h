@@ -10,7 +10,7 @@ typedef void* FileHandle_t;
 OFFSET_STRUCT(VPKFileEntry)
 {
     STRUCT_SIZE(0x44);
-    FIELDS(0x0, 
+    STRUCT_FIELD_NOOFFSET(0x0,
           char* directory;
           char* filename;
           char* extension;
@@ -24,7 +24,7 @@ OFFSET_STRUCT(VPKFileEntry)
 struct VPKData
 {
 	STRUCT_SIZE(0x50);
-	FIELDS(0x0,
+	STRUCT_FIELD_NOOFFSET(0x0,
 		char* directory;
 		char* filename;
 		char* extension;
