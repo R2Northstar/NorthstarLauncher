@@ -155,16 +155,6 @@ ADD_SQFUNC("string", GetVerifiedModsList, "", "", ScriptContext::UI)
 	return SQRESULT_NOTNULL;
 }
 
-/*
-* TODO TEST BEFORE REMOVING ALL OF THESE
-SQRESULT SQ_GetVerifiedModsList(void* sqvm)
-{
-	std::string mods = GetVerifiedModsList();
-	const SQChar* buffer = mods.c_str();
-	ClientSq_pushstring(sqvm, buffer, -1);
-	return SQRESULT_NOTNULL;
-}*/
-
 ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
@@ -175,21 +165,3 @@ ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", Scrip
 
 	return SQRESULT_NOTNULL;
 }
-
-/*
-SQRESULT SQ_IsModVerified(void* sqvm)
-{
-	const SQChar* modName = ClientSq_getstring(sqvm, 1);
-	const SQChar* modVersion = ClientSq_getstring(sqvm, 2);
-
-	bool result = IsModVerified((char*)modName, (char*)modVersion);
-
-	ClientSq_pushbool(sqvm, result);
-	return SQRESULT_NOTNULL;
-}
-
-void InitialiseVerifiedModsScripts(HMODULE baseAddress)
-{
-	g_UISquirrelManager->AddFuncRegistration("string", "GetVerifiedModsList", "", "", SQ_GetVerifiedModsList);
-	g_UISquirrelManager->AddFuncRegistration("bool", "IsModVerified", "string modName, string modVersion", "", SQ_IsModVerified);
-}*/
