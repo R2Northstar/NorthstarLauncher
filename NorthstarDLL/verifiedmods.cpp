@@ -217,3 +217,11 @@ ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", Scrip
 
 	return SQRESULT_NOTNULL;
 }
+
+ADD_SQFUNC("void", DownloadMod, "string modName, string modVersion", "", ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
+	DownloadMod((char*)modName, (char*)modVersion);
+	return SQRESULT_NULL;
+}
