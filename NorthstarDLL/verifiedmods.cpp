@@ -14,9 +14,10 @@ Document verifiedModsJson;
 const char* modsTestString =
 	"{"
 	"\"Dinorush's LTS Rebalance\" : {\"DependencyPrefix\" : \"Dinorush-LTSRebalance\", \"Versions\" : []}, "
-	"\"Dinorush.Brute4\" : {\"DependencyPrefix\" : \"Dinorush-Brute4\", \"Versions\" : [  \"1.5\", \"1.6\" ]}, "
+	"\"Dinorush.Brute4\" : {\"DependencyPrefix\" : \"Dinorush-DinorushBrute4\", \"Versions\" : [  \"1.5\", \"1.6.0\" ]}, "
 	"\"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, "
-	"\"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]}"
+	"\"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]},"
+	"\"Fifty.mp_frostbite\" : {\"DependencyPrefix\" : \"Fifty-Frostbite\", \"Versions\" : [ \"0.0.1\" ]}"
 	"}";
 
 void _FetchVerifiedModsList()
@@ -132,15 +133,66 @@ bool IsModVerified(char* modName, char* modVersion)
 	return false;
 }
 
+size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+	size_t written;
+	written = fwrite(ptr, size, nmemb, stream);
+	return written;
+}
+
 void DownloadMod(char* modName, char* modVersion)
 {
 	if (!IsModVerified(modName, modVersion))
 		return;
 
-	// TODO check if mod is already present
-	// TODO check if mod is verified (throw if not)
-	// TODO download zip in temporary folder
-	// TODO move mod to mods/ folder
+	// Rebuild mod dependency string.
+	const Value& entry = verifiedModsJson[modName];
+	std::string dependencyString = entry["DependencyPrefix"].GetString();
+	GenericArray versions = entry["Versions"].GetArray();
+	dependencyString.append("-");
+	dependencyString.append(modVersion);
+
+	std::thread requestThread(
+		[dependencyString]()
+		{
+			// loading game path
+			std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / ((std::string)dependencyString + ".zip");
+			
+			CURL* curl = curl_easy_init();
+			FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
+			CURLcode result;
+
+			std::string url = "https://gcdn.thunderstore.io/live/repository/packages/" + (std::string)dependencyString + ".zip";
+			spdlog::info("Downloading mod:");
+			spdlog::info("    => from {}", url);
+			spdlog::info("    => to {}", downloadPath.generic_string());
+
+			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+		
+			spdlog::info("Fetching mod {} from Thunderstore...", dependencyString);
+			result = curl_easy_perform(curl);
+			curl_easy_cleanup(curl);
+
+			if (result == CURLcode::CURLE_OK)
+			{
+				spdlog::info("Ok");
+			}
+			else
+			{
+				spdlog::info("Fetching mod failed: {}", curl_easy_strerror(result));
+				return;
+			}
+
+			// TODO unzip folder
+			// TODO move mod to mods/ folder
+			// TODO remove temporary folder
+
+		REQUEST_END_CLEANUP:
+			fclose(fp);
+		});
+	requestThread.detach();
 }
 
 /**
