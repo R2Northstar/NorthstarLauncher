@@ -8,7 +8,10 @@
 
 using namespace rapidjson;
 
+// This JSON contains all verified mods.
 Document verifiedModsJson;
+
+// This list holds the names of all mods that are currently being downloaded.
 std::vector<std::string> modsBeingDownloaded {};
 
 // Test string used to test branch without masterserver
@@ -21,6 +24,11 @@ const char* modsTestString =
 	"\"Fifty.mp_frostbite\" : {\"DependencyPrefix\" : \"Fifty-Frostbite\", \"Versions\" : [ \"0.0.1\" ]}"
 	"}";
 
+
+/**
+ * Fetches the list of verified mods from the master server, and store it in the verifiedModsJson variable.
+ * Since master server does not expose verified mods resource *yet*, this uses mods stored in the modsTestString variable.
+ **/
 void _FetchVerifiedModsList()
 {
 	spdlog::info("Requesting verified mods list from {}", Cvar_ns_masterserver_hostname->GetString());
@@ -80,6 +88,11 @@ void _FetchVerifiedModsList()
 	requestThread.detach();
 }
 
+
+/**
+ * Loads up verified mods list in memory, and returns it when it was received from master server.
+ * This method is called by the Squirrel VM at launch.
+ **/
 std::string GetVerifiedModsList()
 {
 	if (verifiedModsJson.IsNull())
@@ -104,7 +117,7 @@ std::string GetVerifiedModsList()
 /**
  * Checks if a mod is verified by controlling if its name matches a key in the verified mods JSON
  * document, and if its version is included in the JSON versions list.
- */
+ **/
 bool IsModVerified(char* modName, char* modVersion)
 {
 	// 1. Mod is not verified if its name isn't a `verifiedModsJson` key.
@@ -134,11 +147,19 @@ bool IsModVerified(char* modName, char* modVersion)
 	return false;
 }
 
+
+/**
+ * Tells if a mod is currently being downloaded by checking if its name is included in the `modsBeingDownloaded` variable.
+ **/
 bool IsModBeingDownloaded(char* modName)
 {
 	return std::find(modsBeingDownloaded.begin(), modsBeingDownloaded.end(), modName) != modsBeingDownloaded.end();
 }
 
+
+/**
+ * cURL method to write data to disk.
+ **/
 size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
 	size_t written;
@@ -146,6 +167,14 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 	return written;
 }
 
+/**
+ * Downloads a given mod from Thunderstore API to local game folder.
+ * This is done following these steps:
+ *     * Recreating mod dependency string from verified mods information;
+ *     * Fetching mod .zip archive from Thunderstore API to local temporary storage;
+ *     * Extracting archive content into game folder;
+ *     * Cleaning.
+ **/
 void DownloadMod(char* modName, char* modVersion)
 {
 	if (!IsModVerified(modName, modVersion))
