@@ -4,10 +4,11 @@ project(NorthstarLauncher CXX)
 
 if(MSVC)
 	enable_language(ASM_MASM)
+	add_compile_options("/sdl" "/EHsc")
 else()
 	enable_language(ASM)
 	set(CMAKE_ASM_FLAGS "${CFLAGS} -x assembler-with-cpp -masm=intel")
-	set(CMAKE_CXX_FLAGS "-Wa,-mbig-obj")
+	add_compile_options("-Wa,-mbig-obj")
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
