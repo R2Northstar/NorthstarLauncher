@@ -9,6 +9,7 @@
 using namespace rapidjson;
 
 Document verifiedModsJson;
+std::vector<std::string> modsBeingDownloaded {};
 
 // Test string used to test branch without masterserver
 const char* modsTestString =
@@ -133,6 +134,11 @@ bool IsModVerified(char* modName, char* modVersion)
 	return false;
 }
 
+bool IsModBeingDownloaded(char* modName)
+{
+	return std::find(modsBeingDownloaded.begin(), modsBeingDownloaded.end(), modName) != modsBeingDownloaded.end();
+}
+
 size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
 	size_t written;
@@ -145,6 +151,8 @@ void DownloadMod(char* modName, char* modVersion)
 	if (!IsModVerified(modName, modVersion))
 		return;
 
+	modsBeingDownloaded.push_back( modName );
+
 	// Rebuild mod dependency string.
 	const Value& entry = verifiedModsJson[modName];
 	std::string dependencyString = entry["DependencyPrefix"].GetString();
@@ -153,7 +161,7 @@ void DownloadMod(char* modName, char* modVersion)
 	dependencyString.append(modVersion);
 
 	std::thread requestThread(
-		[dependencyString]()
+		[dependencyString, modName]()
 		{
 			// loading game path
 			std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / ((std::string)dependencyString + ".zip");
@@ -191,6 +199,7 @@ void DownloadMod(char* modName, char* modVersion)
 
 		REQUEST_END_CLEANUP:
 			fclose(fp);
+			modsBeingDownloaded.erase( std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName) );
 		});
 	requestThread.detach();
 }
@@ -213,6 +222,16 @@ ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", Scrip
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
 
 	bool result = IsModVerified((char*)modName, (char*)modVersion);
+	g_pSquirrel<context>->pushbool(sqvm, result);
+
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("bool", IsModBeingDownloaded, "string modName", "", ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	bool result = IsModBeingDownloaded((char*)modName);
 	g_pSquirrel<context>->pushbool(sqvm, result);
 
 	return SQRESULT_NOTNULL;
