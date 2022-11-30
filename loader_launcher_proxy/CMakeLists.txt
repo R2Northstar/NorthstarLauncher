@@ -35,7 +35,5 @@ set_target_properties(loader_launcher_proxy PROPERTIES
                       )
 
 if(MSVC)
-	set_target_properties(loader_launcher_proxy PROPERTIES
-	                      LINK_FLAGS "/MANIFESTUAC:NO /SUBSYSTEM:WINDOWS"
-	                      )
+	target_link_options(loader_launcher_proxy PRIVATE "/MANIFESTUAC:NO" "/SUBSYSTEM:WINDOWS")
 endif()

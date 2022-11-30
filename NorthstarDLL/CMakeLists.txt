@@ -173,7 +173,5 @@ set_target_properties(NorthstarDLL PROPERTIES
                       )
 
 if(MSVC)
-	set_target_properties(NorthstarDLL PROPERTIES
-	                      LINK_FLAGS "/MANIFESTUAC:NO /SUBSYSTEM:WINDOWS"
-	                      )
+	target_link_options(NorthstarDLL PRIVATE "/MANIFESTUAC:NO" "/SUBSYSTEM:WINDOWS")
 endif()

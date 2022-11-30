@@ -61,7 +61,5 @@ set_target_properties(loader_wsock32_proxy PROPERTIES
                       )
 
 if(MSVC)
-	set_target_properties(loader_wsock32_proxy PROPERTIES
-	                      LINK_FLAGS "/MANIFESTUAC:NO /SUBSYSTEM:WINDOWS"
-	                      )
+	target_link_options(loader_wsock32_proxy PRIVATE "/MANIFESTUAC:NO" "/SUBSYSTEM:WINDOWS")
 endif()
