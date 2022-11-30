@@ -259,8 +259,8 @@ class __autohook
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
 		type(*callingConvention name) args;                                                                                                \
-		__autohook                                                                                                                         \
-			CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), (LPVOID*)addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
+		__autohook CONCAT2(__autohook, __LINE__)(                                                                                          \
+			&__FILEAUTOHOOK, __STR(name), (LPVOID*)addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));                           \
 	}                                                                                                                                      \
 	type callingConvention CONCAT2(__autohookfunc, name) args
 

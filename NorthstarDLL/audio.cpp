@@ -17,10 +17,10 @@ extern "C"
 	extern void* __fastcall Audio_GetParentEvent();
 
 #ifdef __MINGW32__
-	void * __attribute__((noinline)) Audio_GetParentEvent()
+	void* __attribute__((noinline)) Audio_GetParentEvent()
 	{
-		void *r12;
-		asm volatile ("mov {%%r12, %[reg]|%[reg], r12}": [reg] "=r" (r12));
+		void* r12;
+		asm volatile("mov {%%r12, %[reg]|%[reg], r12}" : [reg] "=r"(r12));
 		return r12;
 	}
 #endif

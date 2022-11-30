@@ -248,11 +248,9 @@ class SquirrelManagerBase
 #pragma endregion
 };
 
-template <ScriptContext context, typename T>
-inline void SqRecurseArgs(FunctionVector& v, T& arg);
+template <ScriptContext context, typename T> inline void SqRecurseArgs(FunctionVector& v, T& arg);
 
-template <ScriptContext context, typename T, typename... Args>
-inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
+template <ScriptContext context, typename T, typename... Args> inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
 
 template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
 {
