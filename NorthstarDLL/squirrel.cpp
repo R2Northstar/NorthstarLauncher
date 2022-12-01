@@ -526,8 +526,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 	int result = sq_getfunction(m_pSQVM->sqvm, message.functionName.c_str(), &functionobj, 0);
 	if (result != 0) // This func returns 0 on success for some reason
 	{
-		NS::log::squirrel_logger<context>()->error(
-			"Call was unable to find function with name '{}'. Is it global?", message.functionName);
+		NS::log::squirrel_logger<context>()->error("Call was unable to find function with name '{}'. Is it global?", message.functionName);
 		return;
 	}
 	pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
