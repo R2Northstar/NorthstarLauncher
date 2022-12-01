@@ -362,7 +362,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		{
 			// flush the logger before we exit so debug things get saved to log file
 			logger->flush();
-			exit(-1);
+			exit(1);
 		}
 		else
 		{
