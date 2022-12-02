@@ -117,31 +117,19 @@ template <ScriptContext context> void EncodeJSONTable(
 					rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::StringRef(node->val._VAL.asString->_val), allocator);
 				break;
 			case OT_INTEGER:
-				obj->AddMember(
-					rapidjson::StringRef(node->key._VAL.asString->_val),
-					node->val._VAL.asInteger,
-					allocator);
+				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asInteger, allocator);
 				break;
 			case OT_FLOAT:
-				obj->AddMember(
-					rapidjson::StringRef(node->key._VAL.asString->_val),
-					node->val._VAL.asFloat,
-					allocator);
+				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asFloat, allocator);
 				break;
 			case OT_BOOL:
 				if (node->val._VAL.asInteger)
 				{
-					obj->AddMember(
-						rapidjson::StringRef(node->key._VAL.asString->_val),
-						true,
-						allocator);
+					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), true, allocator);
 				}
 				else
 				{
-					obj->AddMember(
-						rapidjson::StringRef(node->key._VAL.asString->_val),
-						false,
-						allocator);
+					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), false, allocator);
 				}
 				break;
 			case OT_TABLE:
@@ -178,14 +166,10 @@ template <ScriptContext context> void EncodeJSONArray(
 			obj->PushBack(rapidjson::StringRef(node->_VAL.asString->_val), allocator);
 			break;
 		case OT_INTEGER:
-			obj->PushBack(
-				node->_VAL.asInteger,
-				allocator);
+			obj->PushBack(node->_VAL.asInteger, allocator);
 			break;
 		case OT_FLOAT:
-			obj->PushBack(
-				node->_VAL.asFloat,
-				allocator);
+			obj->PushBack(node->_VAL.asFloat, allocator);
 			break;
 		case OT_BOOL:
 			if (node->_VAL.asInteger)

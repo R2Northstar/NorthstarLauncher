@@ -46,7 +46,6 @@ OFFSET_STRUCT(Name)
 
 #define PROBE(x) x, 1
 
-
 #define CHECK(...) CHECK_N(__VA_ARGS__, 0)
 #define DO_PROBE(offset) PROBE_PROXY(OFFSET_##offset) // concatenate prefix with offset
 #define PROBE_PROXY(...) PROBE_PRIMITIVE(__VA_ARGS__) // expand arguments

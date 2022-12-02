@@ -650,8 +650,7 @@ void ModManager::UnloadMods()
 		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
 		// what we wanna do
 		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false,
-				m_EnabledModsCfg.GetAllocator());
+			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
 
 		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
 	}
