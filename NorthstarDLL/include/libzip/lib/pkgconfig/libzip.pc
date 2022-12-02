@@ -1,0 +1,15 @@
+prefix=${pcfiledir}/../..
+
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+zipcmp=${bindir}/zipcmp
+
+Name: libzip
+Description: library for handling zip archives
+Version: 1.9.2
+Libs:  -L"${libdir}" -lzip
+Libs.private:  -ladvapi32 -lbz2 -lbcrypt -lz
+Cflags: -I"${includedir}"
