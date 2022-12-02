@@ -52,7 +52,7 @@ const char* modsTestString =
  * Fetches the list of verified mods from the master server, and store it in the verifiedModsJson variable.
  * Since master server does not expose verified mods resource *yet*, this uses mods stored in the modsTestString variable.
  **/
-void _FetchVerifiedModsList()
+void FetchVerifiedModsList()
 {
 	spdlog::info("Requesting verified mods list from {}", Cvar_ns_masterserver_hostname->GetString());
 
@@ -107,35 +107,11 @@ void _FetchVerifiedModsList()
 
 		REQUEST_END_CLEANUP:
 			curl_easy_cleanup(curl);
+			spdlog::info("Verified mods list successfully fetched.");
 		});
 	requestThread.detach();
 }
 
-
-/**
- * Loads up verified mods list in memory, and returns it when it was received from master server.
- * This method is called by the Squirrel VM at launch.
- **/
-std::string GetVerifiedModsList()
-{
-	if (verifiedModsJson.IsNull())
-	{
-		_FetchVerifiedModsList();
-
-		while (verifiedModsJson.IsNull())
-		{
-			spdlog::info("Wait for verified mods list to arrive...");
-			Sleep(2000); // TODO do this asynchronously to avoid blocking the thread
-		}
-
-		spdlog::info("Verified mods list arrived.");
-	}
-
-	StringBuffer buffer;
-	Writer<StringBuffer> writer(buffer);
-	verifiedModsJson.Accept(writer);
-	return buffer.GetString();
-}
 
 /**
  * Checks if a mod is verified by controlling if its name matches a key in the verified mods JSON
@@ -275,12 +251,10 @@ void DownloadMod(char* modName, char* modVersion)
 */
 
 
-ADD_SQFUNC("string", GetVerifiedModsList, "", "", ScriptContext::UI)
+ADD_SQFUNC("string", FetchVerifiedModsList, "", "", ScriptContext::UI)
 {
-	std::string mods = GetVerifiedModsList();
-	const SQChar* buffer = mods.c_str();
-	g_pSquirrel<context>->pushstring(sqvm, buffer, -1);
-	return SQRESULT_NOTNULL;
+	FetchVerifiedModsList();
+	return SQRESULT_NULL;
 }
 
 ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", ScriptContext::UI)
