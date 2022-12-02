@@ -19,6 +19,7 @@ target_link_libraries(NorthstarDLL PRIVATE
 	dbghelp
 )
 
+set_target_properties(NorthstarDLL PROPERTIES OUTPUT_NAME Northstar)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)

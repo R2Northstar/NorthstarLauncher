@@ -16,6 +16,8 @@ target_link_libraries(loader_wsock32_proxy
 	kernel32
 )
 
+set_target_properties(loader_wsock32_proxy PROPERTIES OUTPUT_NAME wsock32)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

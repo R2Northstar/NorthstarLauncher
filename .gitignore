@@ -363,3 +363,5 @@ install_manifest.txt
 compile_commands.json
 _deps
 *.cmake
+NorthstarLauncher/RCa16020
+NorthstarLauncher/RCb16020
