@@ -9,6 +9,7 @@ The following steps will allow you to compile your own NorthstarLauncher executa
 3. **Place the file somewhere memorable,** such as in your Documents directory
 4. **Install Visual Studio 2022** from [this link](https://visualstudio.microsoft.com/downloads/). Northstar uses the vc2022 compiler, which is provided with Visual Studio. *You only need to download the Community edition.*
 5. If you are prompted to download Workloads, check "Desktop Development with C++" If you are not prompted, don't worry, you'll be able to install this later on as well.
+6. From the `Individual Components` tab, install `C++ Clang Compiler for Windows`
 
 ![Desktop Development Workload](https://user-images.githubusercontent.com/40443620/147722260-b6ec90e9-7b74-4fb7-b512-680c039afaef.png)
 
@@ -18,15 +19,14 @@ The following steps will allow you to compile your own NorthstarLauncher executa
 
 This is a good time to edit the code. From the Solution Explorer, you can find any file you want to modify and do so. Don't forget to save your changes.
 
-7. **Double click on R2Northstar.sln** in the Solution Explorer. If you have not installed the Desktop Development Workload, you might be prompted now. If everything is correct, the Solution Explorer should change to two files: Northstar and NorthstarLauncher
-8. In the top ribbon, press on **Build,** then **Build Solution.**
+7. In the top ribbon, press on **Build,** then **Build Solution.**
 
 ![Build Ribbon Button](https://user-images.githubusercontent.com/40443620/147722646-3f50f6f4-61dd-4458-8f16-7dafec0be979.png)
 
-9. Wait for your build to finish. You can check on its status from the Output tab at the bottom
-10. Once your build is finished, **Open the directory in File Explorer.** Then, go to x86 > Debug. You should see NorthstarLauncher.exe and Northstar.dll, as well as a couple other files.
-11. **_In your Titanfall2 directory_**, move the preexisting NorthstarLauncher.exe and Northstar.dll into a new folder. You'll want to keep the default launcher backed up before testing any changes.
-12. Back in the build debug directory, **Move NorthstarLauncher.exe and Northstar.dll to your Titanfall2 folder.**
+8. Wait for your build to finish. You can check on its status from the Output tab at the bottom
+9. Once your build is finished, **Open the directory in File Explorer.** Then, go to `build` > `x64-debug` > `bin`. You should see `NorthstarLauncher.exe` and `Northstar.dll`, as well as a couple other files.
+10. **_In your Titanfall2 directory_**, move the preexisting `NorthstarLauncher.exe` and `Northstar.dll` into a new folder. You'll want to keep the default launcher backed up before testing any changes.
+11. Back in the build debug directory, **Move `NorthstarLauncher.exe` and `Northstar.dll` to your Titanfall2 folder.**
 
 If everything is correct, you should now be able to launch the Northstar client with your changes applied.
 
