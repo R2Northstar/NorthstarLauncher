@@ -1,9 +1,13 @@
+# Add files to the library
 add_library(loader_wsock32_proxy SHARED "dllmain.cpp" "loader.cpp")
 
-target_precompile_headers(loader_wsock32_proxy PRIVATE "pch.h")
-
+# Define includes
 include_directories("../include/")
 
+# Precompile pch
+target_precompile_headers(loader_wsock32_proxy PRIVATE "pch.h")
+
+# Link dynamic libraries
 target_link_libraries(loader_wsock32_proxy
 	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.x64.lib"
 	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.a"

@@ -1,5 +1,7 @@
+# Create the dll
 add_library(loader_launcher_proxy SHARED "dllmain.cpp")
 
+# Link dynamic libraries
 target_link_libraries(loader_launcher_proxy shlwapi kernel32)
 
 set(CMAKE_CXX_STANDARD 20)
