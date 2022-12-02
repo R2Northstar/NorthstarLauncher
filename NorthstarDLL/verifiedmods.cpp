@@ -5,7 +5,6 @@
 #include "rapidjson/stringbuffer.h"
 #include "squirrel.h"
 #include "verifiedmods.h"
-#include "libzip/include/zip.h"
 
 using namespace rapidjson;
 
@@ -247,16 +246,6 @@ void DownloadMod(char* modName, char* modVersion)
 			}
 
 			// TODO unzip folder
-			int err = 0;
-			auto zip = zip_open(downloadPath.generic_string().c_str(), ZIP_RDONLY, &err);
-			if (err != ZIP_ER_OK)
-			{
-				spdlog::error("Unzipping mod archive failed: {}", zip_strerror(zip));
-				return;
-			}
-			spdlog::info("Unzipping ok!");
-
-
 			// TODO move mod to mods/ folder
 			// TODO remove temporary folder
 
