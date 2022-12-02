@@ -351,6 +351,7 @@ MigrationBackup/
 
 # CMake
 out/
+build/
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
