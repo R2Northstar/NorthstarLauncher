@@ -208,13 +208,13 @@ void DownloadMod(char* modName, char* modVersion)
 */
 
 
-ADD_SQFUNC("string", FetchVerifiedModsList, "", "", ScriptContext::UI)
+ADD_SQFUNC("string", NSFetchVerifiedModsList, "", "", ScriptContext::UI)
 {
 	FetchVerifiedModsList();
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsModVerified, "string modName, string modVersion", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
@@ -225,7 +225,7 @@ ADD_SQFUNC("bool", IsModVerified, "string modName, string modVersion", "", Scrip
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", IsModBeingDownloaded, "string modName", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsModBeingDownloaded, "string modName", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -235,7 +235,7 @@ ADD_SQFUNC("bool", IsModBeingDownloaded, "string modName", "", ScriptContext::UI
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", DownloadMod, "string modName, string modVersion", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSDownloadMod, "string modName, string modVersion", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
