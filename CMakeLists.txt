@@ -1,4 +1,4 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
+# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.8)
@@ -15,5 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 project(NorthstarLauncher CXX ASM_MASM)
 
 # Include sub-projects.
-add_subdirectory ("NorthstarDLL")
-add_subdirectory ("NorthstarLauncher")
+add_subdirectory (NorthstarDLL)
+add_subdirectory (NorthstarLauncher)
+add_subdirectory (loader_launcher_proxy)
+add_subdirectory (loader_wsock32_proxy)

@@ -347,10 +347,11 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 	void VMCreated(CSquirrelVM* newSqvm);
 	void VMDestroyed();
 	void ExecuteCode(const char* code);
-	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func);
+	void __attribute__((used))
+	AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func);
 	SQRESULT setupfunc(const SQChar* funcname);
-	void AddFuncOverride(std::string name, SQFunction func);
-	void ProcessMessageBuffer();
+	void __attribute__((used)) AddFuncOverride(std::string name, SQFunction func);
+	void __attribute__((used)) ProcessMessageBuffer();
 };
 
 template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;

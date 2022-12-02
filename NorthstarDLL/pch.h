@@ -21,7 +21,7 @@
 namespace fs = std::filesystem;
 
 // clang-format off
-#define assert_msg(expression, msg) (void)((assert((!!(expression)(_CRT_WIDE(__STR(CONCAT3(expression, - , msg))), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0))))
+#define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on
 
 #include "structs.h"
