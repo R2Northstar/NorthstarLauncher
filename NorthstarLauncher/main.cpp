@@ -7,8 +7,6 @@
 #include <shlwapi.h>
 #include <iostream>
 
-#pragma comment(lib, "Ws2_32.lib")
-
 #include <winsock2.h>
 #include <WS2tcpip.h>
 
@@ -29,7 +27,7 @@ wchar_t buffer[8192];
 
 bool noLoadPlugins = false;
 
-DWORD GetProcessByName(std::wstring processName)
+DWORD GetProcessByName(std::string processName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -44,7 +42,7 @@ DWORD GetProcessByName(std::wstring processName)
 
 	while (Process32Next(snapshot, &processSnapshotEntry))
 	{
-		if (!wcscmp(processSnapshotEntry.szExeFile, processName.c_str()))
+		if (!strcmp(processSnapshotEntry.szExeFile, processName.c_str()))
 		{
 			CloseHandle(snapshot);
 			return processSnapshotEntry.th32ProcessID;
@@ -167,7 +165,7 @@ void AwaitOriginStartup()
 
 void EnsureOriginStarted()
 {
-	if (GetProcessByName(L"Origin.exe") || GetProcessByName(L"EADesktop.exe"))
+	if (GetProcessByName("Origin.exe") || GetProcessByName("EADesktop.exe"))
 		return; // already started
 
 	// unpacked exe will crash if origin isn't open on launch, so launch it
@@ -214,7 +212,7 @@ void EnsureOriginStarted()
 	do
 	{
 		Sleep(500);
-	} while (!GetProcessByName(L"OriginClientService.exe") && !GetProcessByName(L"EADesktop.exe"));
+	} while (!GetProcessByName("OriginClientService.exe") && !GetProcessByName("EADesktop.exe"));
 
 	// wait for origin to be ready to start
 	AwaitOriginStartup();

@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "playlist.h"
-#include "concommand.h"
-#include "convar.h"
-#include "squirrel.h"
+#include "convar/concommand.h"
+#include "convar/convar.h"
+#include "squirrel/squirrel.h"
 #include "hoststate.h"
-#include "serverpresence.h"
+#include "server/serverpresence.h"
 
 AUTOHOOK_INIT()
 

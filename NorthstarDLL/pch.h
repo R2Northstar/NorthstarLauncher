@@ -20,13 +20,20 @@
 
 namespace fs = std::filesystem;
 
+// clang-format off
+#define assert_msg(expression, msg) (void)(                                                       \
+            (!!(expression)) ||                                                              \
+            (_wassert(_CRT_WIDE(__STR(CONCAT3(expression, - , msg))), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0) \
+        )
+//clang-format on
+
 #include "structs.h"
-#include "color.h"
+#include "math/color.h"
 #include "spdlog/spdlog.h"
-#include "logging.h"
+#include "console/logging.h"
 #include "MinHook.h"
 #include "libcurl/include/curl/curl.h"
-#include "hooks.h"
+#include "hooks/hooks.h"
 #include "memory.h"
 
 template <typename ReturnType, typename... Args> ReturnType CallVFunc(int index, void* thisPtr, Args... args)

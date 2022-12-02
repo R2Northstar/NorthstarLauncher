@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "hoststate.h"
 #include "masterserver.h"
-#include "serverauthentication.h"
-#include "serverpresence.h"
+#include "server/auth/serverauthentication.h"
+#include "server/serverpresence.h"
 #include "playlist.h"
-#include "tier0.h"
-#include "r2engine.h"
-#include "limits.h"
-#include "squirrel.h"
+#include "game_functions/tier0.h"
+#include "game_functions/r2engine.h"
+#include "exploit_fixes/ns_limits.h"
+#include "squirrel/squirrel.h"
 
 AUTOHOOK_INIT()
 

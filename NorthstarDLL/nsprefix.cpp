@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "nsprefix.h"
-#include "dedicated.h"
+#include "dedicated_server/dedicated.h"
 #include <string>
 
 std::string GetNorthstarPrefix()

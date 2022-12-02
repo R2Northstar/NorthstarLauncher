@@ -1,0 +1,101 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.8"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "NorthstarDLL",
+					"jsonFile" : "directory-NorthstarDLL-Debug-ef0dd361ce6f9916f26f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.8"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "NorthstarDLL",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "NorthstarLauncher",
+					"jsonFile" : "directory-NorthstarLauncher-Debug-dec685412a40517345b7.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.8"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "NorthstarLauncher",
+					"targetIndexes" : 
+					[
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2
+					],
+					"name" : "NorthstarLauncher",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "NorthstarDLL::@3810222d8c2132ee99fe",
+					"jsonFile" : "target-NorthstarDLL-Debug-5c4929c2f58acbd1c5f8.json",
+					"name" : "NorthstarDLL",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "NorthstarLauncher::@724392a9de906cc82e2a",
+					"jsonFile" : "target-NorthstarLauncher-Debug-a98b61841e9d44194bb8.json",
+					"name" : "NorthstarLauncher",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "Z:/tf2dev/NorthstarLauncher/out/build/x64-debug",
+		"source" : "Z:/tf2dev/NorthstarLauncher"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

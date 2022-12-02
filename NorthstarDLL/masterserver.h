@@ -1,7 +1,7 @@
 #pragma once
 
-#include "convar.h"
-#include "serverpresence.h"
+#include "convar/convar.h"
+#include "server/serverpresence.h"
 #include <winsock2.h>
 #include <string>
 #include <cstring>

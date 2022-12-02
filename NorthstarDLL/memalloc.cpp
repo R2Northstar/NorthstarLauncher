@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "memalloc.h"
-#include "tier0.h"
+#include "game_functions/tier0.h"
 
 using namespace Tier0;
 

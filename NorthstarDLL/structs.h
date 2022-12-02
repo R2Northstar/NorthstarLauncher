@@ -46,14 +46,14 @@ OFFSET_STRUCT(Name)
 
 #define PROBE(x) x, 1
 
-#define MSVC_VA_ARGS_WORKAROUND(define, args) define args
-#define CHECK(...) MSVC_VA_ARGS_WORKAROUND(CHECK_N, (__VA_ARGS__, 0))
-#define CHECK_N(x, n, ...) n
 
+#define CHECK(...) CHECK_N(__VA_ARGS__, 0)
 #define DO_PROBE(offset) PROBE_PROXY(OFFSET_##offset) // concatenate prefix with offset
 #define PROBE_PROXY(...) PROBE_PRIMITIVE(__VA_ARGS__) // expand arguments
-#define PROBE_PRIMITIVE(x) PROBE_COMBINE_##x // merge
+#define PROBE_PRIMITIVE(x) PROBE_COMBINE_ x // merge
 #define PROBE_COMBINE_(...) PROBE(~) // if merge successful, expand to probe
+
+#define CHECK_N(x, n, ...) n
 
 #define IS_0(offset) CHECK(DO_PROBE(offset))
 
