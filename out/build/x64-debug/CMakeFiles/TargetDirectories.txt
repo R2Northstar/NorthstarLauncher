@@ -1,8 +1,0 @@
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/CMakeFiles/edit_cache.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/CMakeFiles/rebuild_cache.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/NorthstarDLL/CMakeFiles/NorthstarDLL.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/NorthstarDLL/CMakeFiles/edit_cache.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/NorthstarDLL/CMakeFiles/rebuild_cache.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/NorthstarLauncher/CMakeFiles/NorthstarLauncher.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/NorthstarLauncher/CMakeFiles/edit_cache.dir
-Z:/tf2dev/NorthstarLauncher/out/build/x64-debug/NorthstarLauncher/CMakeFiles/rebuild_cache.dir
