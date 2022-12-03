@@ -27,7 +27,7 @@ wchar_t buffer[8192];
 
 bool noLoadPlugins = false;
 
-DWORD GetProcessByName(std::string processName)
+DWORD GetProcessByName(std::wstring processName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -42,7 +42,7 @@ DWORD GetProcessByName(std::string processName)
 
 	while (Process32Next(snapshot, &processSnapshotEntry))
 	{
-		if (!strcmp(processSnapshotEntry.szExeFile, processName.c_str()))
+		if (!wcscmp(processSnapshotEntry.szExeFile, processName.c_str()))
 		{
 			CloseHandle(snapshot);
 			return processSnapshotEntry.th32ProcessID;
@@ -76,6 +76,7 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 {
 	char text[8192];
 	std::string message = std::system_category().message(dwMessageId);
+
 
 	sprintf_s(
 		text,
@@ -165,7 +166,7 @@ void AwaitOriginStartup()
 
 void EnsureOriginStarted()
 {
-	if (GetProcessByName("Origin.exe") || GetProcessByName("EADesktop.exe"))
+	if (GetProcessByName(L"Origin.exe") || GetProcessByName(L"EADesktop.exe"))
 		return; // already started
 
 	// unpacked exe will crash if origin isn't open on launch, so launch it
@@ -212,7 +213,7 @@ void EnsureOriginStarted()
 	do
 	{
 		Sleep(500);
-	} while (!GetProcessByName("OriginClientService.exe") && !GetProcessByName("EADesktop.exe"));
+	} while (!GetProcessByName(L"OriginClientService.exe") && !GetProcessByName(L"EADesktop.exe"));
 
 	// wait for origin to be ready to start
 	AwaitOriginStartup();
@@ -279,7 +280,7 @@ bool LoadNorthstar()
 	FARPROC Hook_Init = nullptr;
 	{
 		swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
-		hHookModule = LoadLibraryExW(buffer, 0, 8u);
+		hHookModule = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 		if (hHookModule)
 			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
 		if (!hHookModule || Hook_Init == nullptr)

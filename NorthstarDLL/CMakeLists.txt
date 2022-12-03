@@ -14,10 +14,15 @@ target_precompile_headers(NorthstarDLL PRIVATE "pch.h")
 # Link dynamic libraries
 target_link_libraries(NorthstarDLL PRIVATE
 	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.x64.lib"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.a"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../include/libcurl/lib/libcurl.dll.a"
-	dbghelp
+	"${CMAKE_CURRENT_SOURCE_DIR}/../include/libcurl/lib/libcurl_a.lib"
+	dbghelp.lib
+    Wldap32.lib
+    ws2_32.lib
 )
+
+target_compile_definitions(NorthstarDLL PRIVATE
+                           CURL_STATICLIB
+                           )
 
 set_target_properties(NorthstarDLL PROPERTIES OUTPUT_NAME Northstar)
 
