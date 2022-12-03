@@ -62,13 +62,13 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)include\libzip\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;$(SolutionDir)include\libzip\lib\zip.lib;$(SolutionDir)include\libzip\lib\zlib.lib;$(SolutionDir)include\libzip\lib\bz2.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -92,7 +92,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)include\libzip\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
     </ClCompile>
@@ -102,7 +102,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;$(SolutionDir)include\libzip\lib\zip.lib;$(SolutionDir)include\libzip\lib\zlib.lib;$(SolutionDir)include\libzip\lib\bz2.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -127,6 +127,11 @@
     <ClInclude Include="..\include\libcurl\include\curl\system.h" />
     <ClInclude Include="..\include\libcurl\include\curl\typecheck-gcc.h" />
     <ClInclude Include="..\include\libcurl\include\curl\urlapi.h" />
+    <ClInclude Include="..\include\libzip\include\bzlib.h" />
+    <ClInclude Include="..\include\libzip\include\zconf.h" />
+    <ClInclude Include="..\include\libzip\include\zip.h" />
+    <ClInclude Include="..\include\libzip\include\zipconf.h" />
+    <ClInclude Include="..\include\libzip\include\zlib.h" />
     <ClInclude Include="..\include\MinHook.h" />
     <ClInclude Include="..\include\openssl\aes.h" />
     <ClInclude Include="..\include\openssl\asn1.h" />

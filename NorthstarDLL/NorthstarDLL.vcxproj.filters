@@ -299,7 +299,7 @@
     </ClInclude>
     <ClInclude Include="loghooks.h">
       <Filter>Header Files\Console</Filter>
-	 </ClInclude>
+    </ClInclude>
     <ClInclude Include="squirrelclasstypes.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
@@ -1116,9 +1116,9 @@
     <ClInclude Include="..\include\spdlog\sinks\tcp_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
-	<ClInclude Include="..\include\spdlog\sinks\win_eventlog_sink.h">
+    <ClInclude Include="..\include\spdlog\sinks\win_eventlog_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
@@ -1126,6 +1126,21 @@
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
     <ClInclude Include="verifiedmods.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\libzip\include\bzlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\libzip\include\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\libzip\include\zip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\libzip\include\zipconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\libzip\include\zlib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
