@@ -11,16 +11,22 @@ include_directories("./")
 # Precompile pch
 target_precompile_headers(NorthstarDLL PRIVATE "pch.h")
 
+set(CURL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include/libcurl)
+
+find_package( CURL REQUIRED )
+
 # Link dynamic libraries
-target_link_libraries(NorthstarDLL PRIVATE
-	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.x64.lib"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../include/libcurl/lib/libcurl_a.lib"
+target_link_libraries(NorthstarDLL
+	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.a"
+	CURL::libcurl
 	dbghelp.lib
     Wldap32.lib
     ws2_32.lib
 )
 
 target_compile_definitions(NorthstarDLL PRIVATE
+                           UNICODE
+                           _UNICODE
                            CURL_STATICLIB
                            )
 

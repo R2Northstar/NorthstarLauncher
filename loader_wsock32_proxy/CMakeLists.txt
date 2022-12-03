@@ -1,22 +1,41 @@
 # Add files to the library
-add_library(loader_wsock32_proxy SHARED "dllmain.cpp" "loader.cpp")
+add_library(wsock32 SHARED "dllmain.cpp" "loader.cpp" "loader.h")
 
 # Define includes
 include_directories("../include/")
-
-# Precompile pch
-target_precompile_headers(loader_wsock32_proxy PRIVATE "pch.h")
+include_directories("./")
 
 # Link dynamic libraries
-target_link_libraries(loader_wsock32_proxy
-	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.x64.lib"
-	"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.a"
-	wsock32
-	shlwapi
-	kernel32
+target_link_libraries(wsock32
+						"${CMAKE_CURRENT_SOURCE_DIR}/../include/MinHook.a"
+						mswsock.lib
+						ws2_32.lib
+						Shlwapi.lib
+						imagehlp.lib
+						dbghelp.lib
+						kernel32.lib
+						user32.lib
+						gdi32.lib
+						winspool.lib
+						comdlg32.lib
+						advapi32.lib
+						shell32.lib
+						ole32.lib
+						oleaut32.lib
+						uuid.lib
+						odbc32.lib
+						odbccp32.lib
+)
+target_compile_definitions(wsock32 PRIVATE
+                        UNICODE
+                        _UNICODE
+						_DEBUG
+						LOADERWSOCK32PROXY_EXPORTS
+						_WINDOWS
+						_USRDLL
 )
 
-set_target_properties(loader_wsock32_proxy PROPERTIES OUTPUT_NAME wsock32)
+target_link_options(wsock32 PUBLIC "/DEF:${CMAKE_CURRENT_SOURCE_DIR}/wsock32.def" "/OPT:REF" "/SUBSYSTEM:WINDOWS" "/INCREMENTAL" "/MANIFESTUAC:NO" "/DEBUG" "/NXCOMPAT" "/DYNAMICBASE")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)

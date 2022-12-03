@@ -1,10 +1,12 @@
-#include "pch.h"
 #include "loader.h"
 #include <string>
 #include <system_error>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <windows.h>
+
+#include "MinHook.h"
 
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
