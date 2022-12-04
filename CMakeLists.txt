@@ -17,4 +17,3 @@ project(NorthstarLauncher CXX ASM_MASM)
 # Include sub-projects.
 add_subdirectory (NorthstarDLL)
 add_subdirectory (NorthstarLauncher)
-add_subdirectory (loader_wsock32_proxy)
