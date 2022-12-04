@@ -7,6 +7,7 @@
 #include "verifiedmods.h"
 #include "libzip/include/zip.h"
 #include <fstream>
+#include "nsprefix.h"
 
 using namespace rapidjson;
 
@@ -200,6 +201,9 @@ void DownloadMod(char* modName, char* modVersion)
 			}
 
 			spdlog::info("Starting extracting files from archive.");
+
+			InitialiseNorthstarPrefix();
+
 			zip_int64_t num_entries = zip_get_num_entries(zip, 0);
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
 			{
@@ -211,26 +215,25 @@ void DownloadMod(char* modName, char* modVersion)
 				}
 
 				// Only extracting files that belong to mods.
-				// TODO uncomment line below when extracting to game folder
 				std::string modName = name;
-				if (/* strcmp(name, "mods/") == 0 ||*/ modName.substr(0, 5) != "mods/")
+				if (strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
 				{
 					continue;
 				}
 
 				spdlog::info("    => {}", name);
+				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / name;
 
-				// TODO create directories and files into game folder
 				if (modName.back() == '/')
 				{
-					std::filesystem::create_directory(std::filesystem::temp_directory_path() / name);
+					std::filesystem::create_directory(destination);
 				}
 				else
 				{
 					struct zip_stat sb;
 					zip_stat_index(zip, i, 0, &sb);
 					struct zip_file* zf = zip_fopen_index(zip, i, 0);
-					std::ofstream writeStream(std::filesystem::temp_directory_path() / name, std::ofstream::binary);
+					std::ofstream writeStream(destination, std::ofstream::binary);
 
 					int sum = 0;
 					int len = 0;
