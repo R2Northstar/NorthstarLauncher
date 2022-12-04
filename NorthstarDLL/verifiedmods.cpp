@@ -210,8 +210,9 @@ void DownloadMod(char* modName, char* modVersion)
 				}
 
 				// Only extracting files that belong to mods.
+				// TODO uncomment line below when extracting to game folder
 				std::string modName = name;
-				if (strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
+				if (/* strcmp(name, "mods/") == 0 ||*/ modName.substr(0, 5) != "mods/")
 				{
 					continue;
 				}
@@ -219,6 +220,10 @@ void DownloadMod(char* modName, char* modVersion)
 				spdlog::info("    => {}", name);
 
 				// TODO create directories and files into game folder
+				if (modName.back() == '/')
+				{
+					std::filesystem::create_directory(std::filesystem::temp_directory_path() / name);
+				}
 			}
 		
 			// TODO remove temporary folder
