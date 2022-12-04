@@ -131,12 +131,12 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
  *     * Fetching mod .zip archive from Thunderstore API to local temporary storage;
  *     * Extracting archive content into game folder;
  *     * Cleaning.
+ *
+ * Before calling this, you MUST ensure mod is verified by invoking the
+ * IsModVerified method.
  **/
 void DownloadMod(char* modName, char* modVersion)
 {
-	if (!IsModVerified(modName, modVersion))
-		return;
-
 	modsBeingDownloaded.push_back( modName );
 
 	// Rebuild mod dependency string.
