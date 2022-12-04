@@ -77,7 +77,6 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 	char text[8192];
 	std::string message = std::system_category().message(dwMessageId);
 
-
 	sprintf_s(
 		text,
 		"Failed to load the %ls at \"%ls\" (%lu):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "

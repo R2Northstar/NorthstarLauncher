@@ -308,5 +308,4 @@ class ManualHook
 	args
 
 void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFuncName = "");
-#define MAKEHOOK(pTarget, pDetour, ppOriginal)                                                                                             \
-	MakeHook(static_cast<LPVOID>(pTarget), *pDetour, ppOriginal, __STR(pDetour))
+#define MAKEHOOK(pTarget, pDetour, ppOriginal) MakeHook(static_cast<LPVOID>(pTarget), *pDetour, ppOriginal, __STR(pDetour))
