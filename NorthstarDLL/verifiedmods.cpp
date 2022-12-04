@@ -5,6 +5,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "squirrel.h"
 #include "verifiedmods.h"
+#include "libzip/include/zip.h"
 
 using namespace rapidjson;
 
@@ -148,14 +149,15 @@ void DownloadMod(char* modName, char* modVersion)
 	std::thread requestThread(
 		[dependencyString, modName]()
 		{
+			std::string archiveName = (std::string)dependencyString + ".zip";
 			// loading game path
-			std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / ((std::string)dependencyString + ".zip");
+			std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
 			
 			CURL* curl = curl_easy_init();
 			FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
 			CURLcode result;
 
-			std::string url = "https://gcdn.thunderstore.io/live/repository/packages/" + (std::string)dependencyString + ".zip";
+			std::string url = "https://gcdn.thunderstore.io/live/repository/packages/" + archiveName;
 			spdlog::info("Downloading mod:");
 			spdlog::info("    => from {}", url);
 			spdlog::info("    => to {}", downloadPath.generic_string());
@@ -170,7 +172,8 @@ void DownloadMod(char* modName, char* modVersion)
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				spdlog::info("Ok");
+				spdlog::info("Mod successfully fetched.");
+				fclose(fp);
 			}
 			else
 			{
@@ -178,8 +181,46 @@ void DownloadMod(char* modName, char* modVersion)
 				return;
 			}
 
-			// TODO unzip folder
-			// TODO move mod to mods/ folder
+			// Unzip mods from downloaded archive.
+			int err = 0;
+			zip_t* zip = zip_open(downloadPath.generic_string().c_str(), ZIP_RDONLY, &err);
+
+			if (err != ZIP_ER_OK)
+			{
+				spdlog::error("Opening mod archive failed: {}", zip_strerror(zip));
+				return;
+			}
+
+			zip_file* p_file = zip_fopen(zip, "mods/", 0);
+			if (p_file == NULL)
+			{
+				spdlog::error("Reading mod archive failed: {}", zip_strerror(zip));
+				return;
+			}
+
+			spdlog::info("Starting extracting files from archive.");
+			zip_int64_t num_entries = zip_get_num_entries(zip, 0);
+			for (zip_uint64_t i = 0; i < num_entries; ++i)
+			{
+				const char* name = zip_get_name(zip, i, 0);
+				if (name == nullptr)
+				{
+					spdlog::error("Failed reading archive.");
+					return;
+				}
+
+				// Only extracting files that belong to mods.
+				std::string modName = name;
+				if (strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
+				{
+					continue;
+				}
+
+				spdlog::info("    => {}", name);
+
+				// TODO create directories and files into game folder
+			}
+		
 			// TODO remove temporary folder
 
 		REQUEST_END_CLEANUP:
