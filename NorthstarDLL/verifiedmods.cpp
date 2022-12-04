@@ -6,6 +6,7 @@
 #include "squirrel.h"
 #include "verifiedmods.h"
 #include "libzip/include/zip.h"
+#include <fstream>
 
 using namespace rapidjson;
 
@@ -223,6 +224,25 @@ void DownloadMod(char* modName, char* modVersion)
 				if (modName.back() == '/')
 				{
 					std::filesystem::create_directory(std::filesystem::temp_directory_path() / name);
+				}
+				else
+				{
+					struct zip_stat sb;
+					zip_stat_index(zip, i, 0, &sb);
+					struct zip_file* zf = zip_fopen_index(zip, i, 0);
+					std::ofstream writeStream(std::filesystem::temp_directory_path() / name, std::ofstream::binary);
+
+					int sum = 0;
+					int len = 0;
+					char buf[100];
+
+					while (sum != sb.size)
+					{
+						len = zip_fread(zf, buf, 100);
+						writeStream.write((char*)buf, len);
+						sum += len;
+					}
+					writeStream.close();
 				}
 			}
 		
