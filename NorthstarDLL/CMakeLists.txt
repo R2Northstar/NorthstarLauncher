@@ -38,6 +38,7 @@ set_target_properties(NorthstarDLL PROPERTIES OUTPUT_NAME Northstar)
 target_compile_options(NorthstarDLL PUBLIC
 					-Wno-unused-variable		# We use a lot of unused variables in our decompiles
 					-Wno-unused-private-field	# We use a lot of unused private fields in decompiled structs
+					-Wno-microsoft-cast			# Pointer-to-func to Pointer-to-obj conversion warning
 )
 
 set(CMAKE_CXX_STANDARD 20)
