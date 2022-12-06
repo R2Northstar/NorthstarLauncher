@@ -147,8 +147,13 @@ void DownloadMod(char* modName, char* modVersion)
 	std::thread requestThread(
 		[dependencyString, modName]()
 		{
-			std::string archiveName = (std::string)dependencyString + ".zip";
+			// zip parsing variables
+			zip_int64_t num_entries;
+			int err = 0;
+			zip_t* zip;
+
 			// loading game path
+			std::string archiveName = (std::string)dependencyString + ".zip";
 			std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
 			
 			CURL* curl = curl_easy_init();
@@ -176,31 +181,30 @@ void DownloadMod(char* modName, char* modVersion)
 			else
 			{
 				spdlog::info("Fetching mod failed: {}", curl_easy_strerror(result));
-				return;
+				goto REQUEST_END_CLEANUP;
 			}
 
 			// Unzip mods from downloaded archive.
-			int err = 0;
-			zip_t* zip = zip_open(downloadPath.generic_string().c_str(), ZIP_RDONLY, &err);
+			zip = zip_open(downloadPath.generic_string().c_str(), ZIP_RDONLY, &err);
 
 			if (err != ZIP_ER_OK)
 			{
 				spdlog::error("Opening mod archive failed: {}", zip_strerror(zip));
-				return;
+				goto REQUEST_END_CLEANUP;
 			}
 
 			spdlog::info("Starting extracting files from archive.");
 
 			InitialiseNorthstarPrefix();
 
-			zip_int64_t num_entries = zip_get_num_entries(zip, 0);
+			num_entries = zip_get_num_entries(zip, 0);
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
 			{
 				const char* name = zip_get_name(zip, i, 0);
 				if (name == nullptr)
 				{
 					spdlog::error("Failed reading archive.");
-					return;
+					goto REQUEST_END_CLEANUP;
 				}
 
 				// Only extracting files that belong to mods.
