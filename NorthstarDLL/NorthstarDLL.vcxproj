@@ -621,6 +621,7 @@
     <ClCompile Include="r2client.cpp" />
     <ClCompile Include="r2engine.cpp" />
     <ClCompile Include="r2server.cpp" />
+    <ClCompile Include="rejectconnectionfixes.cpp" />
     <ClCompile Include="rpakfilesystem.cpp" />
     <ClCompile Include="runframe.cpp" />
     <ClCompile Include="scriptbrowserhooks.cpp" />

@@ -26,7 +26,12 @@ void ServerStartingOrChangingMap()
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
 	// sucks for security but just how it be
 	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
+	{
 		g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
+		g_pServerAuthentication->m_bStartingLocalSPGame = true;
+	}
+	else
+		g_pServerAuthentication->m_bStartingLocalSPGame = false;
 }
 
 // clang-format off

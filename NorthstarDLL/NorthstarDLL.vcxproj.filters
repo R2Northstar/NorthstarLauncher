@@ -1490,7 +1490,7 @@
     </ClInclude>
     <ClInclude Include="squirrelautobind.h">
       <Filter>Header Files\Squirrel</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="keyvalues.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1499,7 +1499,7 @@
     </ClInclude>
     <ClInclude Include="loghooks.h">
       <Filter>Header Files\Console</Filter>
-	 </ClInclude>
+    </ClInclude>
     <ClInclude Include="squirrelclasstypes.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
@@ -1729,6 +1729,9 @@
     </ClCompile>
     <ClCompile Include="loghooks.cpp">
       <Filter>Source Files\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="rejectconnectionfixes.cpp">
+      <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
