@@ -387,7 +387,6 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 			if (headers != nullptr)
 			{
 				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-				curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
 			}
 
 			// Disable SSL checks if requested by the user.
