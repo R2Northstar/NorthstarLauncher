@@ -212,7 +212,7 @@ void ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* pPlayer, u
 		pPlayer->m_iPersistenceReady = R2::ePersistenceReady::READY_REMOTE;
 	}
 	// we probably allow insecure at this point, but make sure not to write anyway if not insecure
-	else if (Cvar_ns_auth_allow_insecure->GetBool() || pPlayer->m_bFakePlayer) 
+	else if (Cvar_ns_auth_allow_insecure->GetBool() || pPlayer->m_bFakePlayer)
 	{
 		// set persistent data as ready
 		// note: actual placeholder persistent data is populated in script with InitPersistentData()
@@ -316,7 +316,7 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 			pAuthenticationFailure = "Authentication Failed.";
 	}
 	else // need to copy name for bots still
-		strncpy_s(pVerifiedName, pName, 63); 
+		strncpy_s(pVerifiedName, pName, 63);
 
 	if (pAuthenticationFailure)
 	{
