@@ -195,8 +195,10 @@ void DownloadMod(char* modName, char* modVersion)
 
 			spdlog::info("Starting extracting files from archive.");
 
+			// TODO why do we call this
 			InitialiseNorthstarPrefix();
 
+			// TODO detail zip format (no subfolders, but rather a list of files)
 			num_entries = zip_get_num_entries(zip, 0);
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
 			{
@@ -208,6 +210,7 @@ void DownloadMod(char* modName, char* modVersion)
 				}
 
 				// Only extracting files that belong to mods.
+				// TODO detail a bit mod architecture maybe
 				std::string modName = name;
 				if (strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
 				{
@@ -219,6 +222,7 @@ void DownloadMod(char* modName, char* modVersion)
 
 				if (modName.back() == '/')
 				{
+					// TODO catch errors
 					std::filesystem::create_directory(destination);
 				}
 				else
@@ -227,6 +231,8 @@ void DownloadMod(char* modName, char* modVersion)
 					zip_stat_index(zip, i, 0, &sb);
 					struct zip_file* zf = zip_fopen_index(zip, i, 0);
 					std::ofstream writeStream(destination, std::ofstream::binary);
+
+					// TODO return if stream is not open
 
 					int sum = 0;
 					int len = 0;
@@ -241,12 +247,12 @@ void DownloadMod(char* modName, char* modVersion)
 					writeStream.close();
 				}
 			}
-		
-			// TODO remove temporary folder
 
 		REQUEST_END_CLEANUP:
 			fclose(fp);
 			modsBeingDownloaded.erase( std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName) );
+			// TODO close zip
+			// TODO remove temporary folder
 		});
 	requestThread.detach();
 }
