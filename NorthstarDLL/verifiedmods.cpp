@@ -32,11 +32,7 @@ std::vector<std::string> modsBeingDownloaded {};
 // Test string used to test branch without masterserver
 const char* modsTestString =
 	"{"
-	"\"Dinorush's LTS Rebalance\" : {\"DependencyPrefix\" : \"Dinorush-LTSRebalance\", \"Versions\" : []}, "
-	"\"Dinorush.Brute4\" : {\"DependencyPrefix\" : \"Dinorush-DinorushBrute4\", \"Versions\" : [  \"1.5\", \"1.6.0\" ]}, "
-	"\"Mod Settings\" : {\"DependencyPrefix\" : \"EladNLG-ModSettings\", \"Versions\" : [ \"1.0.0\", \"1.1.0\" ]}, "
-	"\"Moblin.Archon\" : {\"DependencyPrefix\" : \"GalacticMoblin-MoblinArchon\", \"Versions\" : [ \"1.3.0\", \"1.3.1\" ]},"
-	"\"Fifty.mp_frostbite\" : {\"DependencyPrefix\" : \"Fifty-Frostbite\", \"Versions\" : [ \"0.0.1\" ]}"
+		"\"Fifty.mp_frostbite\" : {\"DependencyPrefix\" : \"Fifty-Frostbite\", \"Versions\" : [ \"0.0.1\" ]}"
 	"}";
 
 
