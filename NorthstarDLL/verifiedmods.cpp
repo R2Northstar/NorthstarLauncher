@@ -193,13 +193,6 @@ void DownloadMod(char* modName, char* modVersion)
 				return;
 			}
 
-			zip_file* p_file = zip_fopen(zip, "mods/", 0);
-			if (p_file == NULL)
-			{
-				spdlog::error("Reading mod archive failed: {}", zip_strerror(zip));
-				return;
-			}
-
 			spdlog::info("Starting extracting files from archive.");
 
 			InitialiseNorthstarPrefix();
