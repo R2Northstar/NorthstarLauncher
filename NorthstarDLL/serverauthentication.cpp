@@ -320,7 +320,7 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 
 	if (pAuthenticationFailure)
 	{
-		spdlog::info("{}'s (uid {}) connection was rejected: \"{}\"", pName, self->m_UID, pAuthenticationFailure);
+		spdlog::info("{}'s (uid {}) connection was rejected: \"{}\"", pName, iNextPlayerUid, pAuthenticationFailure);
 
 		strncpy_s(pDisconnectReason, 256, pAuthenticationFailure, 255);
 		return false;
