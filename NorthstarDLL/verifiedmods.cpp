@@ -48,8 +48,10 @@ const char* modsTestString =
 
 
 /**
- * Fetches the list of verified mods from the master server, and store it in the verifiedModsJson variable.
- * Since master server does not expose verified mods resource *yet*, this uses mods stored in the modsTestString variable.
+ * Fetches the list of verified mods from the master server, and store it in
+ * the verifiedModsJson variable.
+ * Since master server does not expose verified mods resource *yet*, this
+ * uses mods stored in the modsTestString variable.
  **/
 void FetchVerifiedModsList()
 {
@@ -70,8 +72,9 @@ void FetchVerifiedModsList()
 
 
 /**
- * Checks if a mod is verified by controlling if its name matches a key in the verified mods JSON
- * document, and if its version is included in the JSON versions list.
+ * Checks if a mod is verified by controlling if its name matches a key in the
+ * verified mods JSON document, and if its version is included in the JSON
+ * versions list.
  **/
 bool IsModVerified(char* modName, char* modVersion)
 {
@@ -104,7 +107,8 @@ bool IsModVerified(char* modName, char* modVersion)
 
 
 /**
- * Tells if a mod is currently being downloaded by checking if its name is included in the `modsBeingDownloaded` variable.
+ * Tells if a mod is currently being downloaded by checking if its name is included
+ * in the `modsBeingDownloaded` variable.
  **/
 bool IsModBeingDownloaded(char* modName)
 {
@@ -195,10 +199,18 @@ void DownloadMod(char* modName, char* modVersion)
 
 			spdlog::info("Starting extracting files from archive.");
 
-			// TODO why do we call this
+			// This will extract the archive contents into game folder, so we need
+			// to ensure Northstar installation folder has been loaded in memory.
 			InitialiseNorthstarPrefix();
 
-			// TODO detail zip format (no subfolders, but rather a list of files)
+			// `zip_get_name` returns a file name among files contained in the archive;
+			// file names are organized as a list that has the following format:
+			//     * archive.zip/icon.png
+			//     * archive.zip/manifest.json
+			//     * archive.zip/mods/
+			//     * archive.zip/mods/firstMod/
+			//     * archive.zip/mods/firstMod/mod.json
+			// etc.
 			num_entries = zip_get_num_entries(zip, 0);
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
 			{
@@ -209,9 +221,16 @@ void DownloadMod(char* modName, char* modVersion)
 					goto REQUEST_END_CLEANUP;
 				}
 
-				// Only extracting files that belong to mods.
-				// TODO detail a bit mod architecture maybe
 				std::string modName = name;
+
+				// Only extracting files that belong to mods.
+				//
+				// We don't need to recreate the mods/ directory, as it should already
+				// exist in a R2Northstar installation.
+				// 
+				// A well-formatted Thunderstore archive contains files such as icon.png,
+				// manifest.json and README.md; we don't want to extract those, but only
+				// the content of the mods/ directory.
 				if (strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
 				{
 					continue;
