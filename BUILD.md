@@ -9,7 +9,7 @@ The following steps will allow you to compile your own NorthstarLauncher executa
 3. **Place the file somewhere memorable,** such as in your Documents directory
 4. **Install Visual Studio 2022** from [this link](https://visualstudio.microsoft.com/downloads/). Northstar uses the vc2022 compiler, which is provided with Visual Studio. *You only need to download the Community edition.*
 5. If you are prompted to download Workloads, check "Desktop Development with C++" If you are not prompted, don't worry, you'll be able to install this later on as well.
-6. From the `Individual Components` tab, install `C++ Clang Compiler for Windows`
+6. From the `Individual Components` tab, install `C++ Clang Compiler for Windows` and ``Clang-cl Compiler for Windows``
 
 ![Desktop Development Workload](https://user-images.githubusercontent.com/40443620/147722260-b6ec90e9-7b74-4fb7-b512-680c039afaef.png)
 
