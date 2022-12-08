@@ -40,10 +40,6 @@ target_compile_options(NorthstarDLL PUBLIC
 					-Wno-unused-private-field	# We use a lot of unused private fields in decompiled structs
 					-Wno-microsoft-cast			# Pointer-to-func to Pointer-to-obj conversion warning
 )
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # using GCC
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # using Intel C++
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # using Visual Studio C++
 endif()
