@@ -32,7 +32,11 @@ std::vector<std::string> modsBeingDownloaded {};
 // Test string used to test branch without masterserver
 const char* modsTestString =
 	"{"
-		"\"Fifty.mp_frostbite\" : {\"DependencyPrefix\" : \"Fifty-Frostbite\", \"Versions\" : [ \"0.0.1\" ]}"
+		"\"Fifty.mp_frostbite\": {"
+			"\"DependencyPrefix\": \"Fifty-Frostbite\","
+			"\"Versions\" : ["
+				"{ \"Version\": \"0.0.1\" }"
+			"]}"
 	"}";
 
 
@@ -93,8 +97,9 @@ bool IsModVerified(char* modName, char* modVersion)
 
 	for (rapidjson::Value::ConstValueIterator iterator = versions.Begin(); iterator != versions.End(); iterator++)
 	{
-		const rapidjson::Value& version = *iterator;
-		if (strcmp(version.GetString(), modVersion) == 0)
+		const Value& currentModVersion = *iterator;
+		const auto currentVersionText = currentModVersion["Version"].GetString();
+		if (strcmp(currentVersionText, modVersion) == 0)
 		{
 			spdlog::info("Mod \"{}\" (version {}) is verified.", modName, modVersion);
 			return true;
