@@ -228,6 +228,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
+	g_pPluginManager->InformSQVMCreated(context, newSqvm);
 }
 
 template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
