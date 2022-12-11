@@ -399,7 +399,11 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 	{
 		// kill dedicated server if we hit this
 		if (IsDedicatedServer())
-			abort();
+		{
+			// flush the logger before we exit so debug things get saved to log file
+			logger->flush();
+			exit(EXIT_FAILURE);
+		}
 		else
 		{
 			R2::Cbuf_AddText(
