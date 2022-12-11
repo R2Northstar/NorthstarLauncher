@@ -3,6 +3,7 @@
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
 #include "vector.h"
+#include "modmanager.h"
 
 // stolen from ttf2sdk: sqvm types
 typedef float SQFloat;
@@ -91,6 +92,7 @@ class SquirrelManagerBase
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
 	sq_getfunctionType __sq_getfunction;
+	sq_stackinfosType __sq_stackinfos;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
@@ -220,6 +222,11 @@ class SquirrelManagerBase
 		return __sq_getasset(sqvm, stackpos, result);
 	}
 
+	inline long long sq_stackinfos(HSquirrelVM* sqvm, int level, SQStackInfos& out)
+	{
+		return __sq_stackinfos(sqvm, level, &out, sqvm->_callsstacksize);
+	}
+
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
 	{
 		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
@@ -249,6 +256,19 @@ class SquirrelManagerBase
 
 		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
+	}
+	inline Mod* getcallingmod(HSquirrelVM* sqvm)
+	{
+		SQStackInfos stackInfo {};
+		sq_stackinfos(sqvm, 1, stackInfo);
+		std::string sourceName = stackInfo._sourceName;
+		std::replace(sourceName.begin(), sourceName.end(), '/', '\\');
+		std::string filename = "scripts\\vscripts\\" + sourceName;
+		if (auto res = g_pModManager->m_ModFiles.find(filename); res != g_pModManager->m_ModFiles.end())
+		{
+			return res->second.m_pOwningMod;
+		}
+		return nullptr;
 	}
 #pragma endregion
 };

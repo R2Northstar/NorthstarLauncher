@@ -397,6 +397,7 @@
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="keyvalues.h" />
     <ClInclude Include="loghooks.h" />
+    <ClInclude Include="macros.h" />
     <ClInclude Include="squirrelclasstypes.h" />
     <ClInclude Include="squirreldatatypes.h" />
     <ClInclude Include="limits.h" />

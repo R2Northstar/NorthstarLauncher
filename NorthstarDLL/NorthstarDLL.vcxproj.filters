@@ -299,7 +299,7 @@
     </ClInclude>
     <ClInclude Include="loghooks.h">
       <Filter>Header Files\Console</Filter>
-	 </ClInclude>
+    </ClInclude>
     <ClInclude Include="squirrelclasstypes.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
@@ -1124,6 +1124,9 @@
     </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink-inl.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
+    </ClInclude>
+    <ClInclude Include="macros.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
