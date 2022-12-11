@@ -11,7 +11,6 @@ template <typename T, size_t index, typename... Args> constexpr T CallVFunc_Alt(
 
 #define STR_HASH(s) (std::hash<std::string>()(s))
 
-
 // Example usage: M_VMETHOD(int, GetEntityIndex, 8, (CBaseEntity* ent), (this, ent))
 #define M_VMETHOD(returnType, name, index, args, argsRaw)                                                                                  \
 	FORCEINLINE returnType name args noexcept                                                                                              \
