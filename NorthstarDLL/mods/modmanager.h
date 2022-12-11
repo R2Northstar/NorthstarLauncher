@@ -1,6 +1,6 @@
 #pragma once
-#include "convar/convar.h"
-#include "util/memalloc.h"
+#include "core/convar/convar.h"
+#include "core/memalloc.h"
 #include "squirrel/squirrel.h"
 
 #include "rapidjson/document.h"

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "masterserver/masterserver.h"
-#include "convar/convar.h"
-#include "game_functions/r2client.h"
+#include "core/convar/convar.h"
+#include "client/r2client.h"
 
 AUTOHOOK_INIT()
 

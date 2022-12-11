@@ -2,7 +2,7 @@
 
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
-#include "math/vector.h"
+#include "core/math/vector.h"
 
 // stolen from ttf2sdk: sqvm types
 typedef float SQFloat;

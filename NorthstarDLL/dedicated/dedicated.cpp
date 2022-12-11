@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "dedicated.h"
-#include "game_functions/tier0.h"
+#include "core/tier0.h"
 #include "playlist.h"
-#include "game_functions/r2engine.h"
-#include "game_functions/hoststate.h"
+#include "engine/r2engine.h"
+#include "engine/hoststate.h"
 #include "server/auth/serverauthentication.h"
 #include "masterserver/masterserver.h"
-#include "console/printcommand.h"
+#include "util/printcommands.h"
 
 AUTOHOOK_INIT()
 

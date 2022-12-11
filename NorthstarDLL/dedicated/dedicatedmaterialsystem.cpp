@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "dedicated.h"
-#include "game_functions/tier0.h"
+#include "core/tier0.h"
 
 AUTOHOOK_INIT()
 

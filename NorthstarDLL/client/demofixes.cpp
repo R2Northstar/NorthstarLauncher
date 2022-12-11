@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "convar/convar.h"
+#include "core/convar/convar.h"
 
 ON_DLL_LOAD_CLIENT("engine.dll", EngineDemoFixes, (CModule module))
 {

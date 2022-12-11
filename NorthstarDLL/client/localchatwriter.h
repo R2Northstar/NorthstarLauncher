@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "math/color.h"
+#include "core/math/color.h"
 
 class vgui_BaseRichText;
 

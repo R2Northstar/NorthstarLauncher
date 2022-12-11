@@ -1,7 +1,7 @@
 #pragma once
-#include "convar/convar.h"
+#include "core/convar/convar.h"
 #include "httplib.h"
-#include "game_functions/r2engine.h"
+#include "engine/r2engine.h"
 #include <unordered_map>
 #include <string>
 

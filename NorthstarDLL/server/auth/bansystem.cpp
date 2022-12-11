@@ -2,10 +2,10 @@
 #include "pch.h"
 #include "bansystem.h"
 #include "serverauthentication.h"
-#include "game_functions/maxplayers.h"
-#include "convar/concommand.h"
-#include "game_functions/r2server.h"
-#include "game_functions/r2engine.h"
+#include "shared/maxplayers.h"
+#include "core/convar/concommand.h"
+#include "server/r2server.h"
+#include "engine/r2engine.h"
 #include "config/profile.h"
 
 #include <filesystem>

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mods/modmanager.h"
-#include "filesystem/filesystem.h"
+#include "core/filesystem/filesystem.h"
 
 #include <fstream>
 

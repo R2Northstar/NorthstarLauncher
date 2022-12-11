@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "dedicated/dedicated.h"
-#include "convar/cvar.h"
-#include "math/vector.h"
+#include "core/convar/cvar.h"
+#include "core/math/vector.h"
 
 AUTOHOOK_INIT()
 

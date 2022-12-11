@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "game_functions/tier0.h"
+#include "core/tier0.h"
 
 #include <filesystem>
 #include <regex>

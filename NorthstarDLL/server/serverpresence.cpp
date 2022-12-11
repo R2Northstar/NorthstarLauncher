@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "serverpresence.h"
-#include "game_functions/playlist.h"
-#include "game_functions/tier0.h"
-#include "convar/convar.h"
+#include "shared/playlist.h"
+#include "core/tier0.h"
+#include "core/convar/convar.h"
 
 #include <regex>
 

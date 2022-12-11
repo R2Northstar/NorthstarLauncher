@@ -2,7 +2,7 @@
 #include "squirrel/squirrel.h"
 #include "plugins.h"
 #include "masterserver/masterserver.h"
-#include "convar/convar.h"
+#include "core/convar/convar.h"
 #include "server/serverpresence.h"
 
 #include <chrono>

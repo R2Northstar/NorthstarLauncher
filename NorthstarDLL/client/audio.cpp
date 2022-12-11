@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "audio.h"
 #include "dedicated/dedicated.h"
-#include "convar/convar.h"
+#include "core/convar/convar.h"
 
 #include "rapidjson/error/en.h"
 #include <fstream>

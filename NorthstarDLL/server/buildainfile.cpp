@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "convar/convar.h"
-#include "game_functions/hoststate.h"
-#include "game_functions/r2engine.h"
+#include "core/convar/convar.h"
+#include "engine/hoststate.h"
+#include "engine/r2engine.h"
 
 #include <fstream>
 #include <filesystem>
