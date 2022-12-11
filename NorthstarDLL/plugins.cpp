@@ -42,22 +42,21 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
 	if (datafile == NULL)
 	{
-		NS::log::PLUGINSYS->info("Failed to load library {}: ", std::system_category().message(GetLastError()));
+		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
 	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
 
 	if (manifestResource == NULL)
 	{
-		NS::log::PLUGINSYS->info("Could not find manifest for library {}", pathstring);
+		NS::log::PLUGINSYS->info("Could not find manifest for library '{}'", pathstring);
 		freeLibrary(datafile);
 		return std::nullopt;
 	}
-	NS::log::PLUGINSYS->info("Loading resource from library");
 	HGLOBAL myResourceData = LoadResource(datafile, manifestResource);
 	if (myResourceData == NULL)
 	{
-		NS::log::PLUGINSYS->error("Failed to load resource from library");
+		NS::log::PLUGINSYS->error("Failed to load manifest from library '{}'", pathstring);
 		freeLibrary(datafile);
 		return std::nullopt;
 	}
@@ -70,48 +69,48 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	if (manifestJSON.HasParseError())
 	{
-		NS::log::PLUGINSYS->error("Manifest for {} was invalid", pathstring);
+		NS::log::PLUGINSYS->error("Manifest for '{}' was invalid", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("name"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing a name in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing a name in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("displayname"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing a displayname in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing a displayname in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("description"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing a description in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing a description in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("api_version"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing a api_version in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing a api_version in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("version"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing a version in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing a version in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("run_on_server"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing 'run_on_server' in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing 'run_on_server' in its manifest", pathstring);
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("run_on_client"))
 	{
-		NS::log::PLUGINSYS->error("{} is missing 'run_on_client' in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' is missing 'run_on_client' in its manifest", pathstring);
 		return std::nullopt;
 	}
 	auto test = manifestJSON["api_version"].GetString();
 	if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 	{
-		NS::log::PLUGINSYS->error("{} has an incompatible API version number in its manifest", pathstring);
+		NS::log::PLUGINSYS->error("'{}' has an incompatible API version number '{}' in its manifest. Current ABI version is '{}'", pathstring, ABI_VERSION);
 		return std::nullopt;
 	}
 	// Passed all checks, going to actually load it now
@@ -119,13 +118,13 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
 	if (pluginLib == NULL)
 	{
-		NS::log::PLUGINSYS->info("Failed to load library {}: ", std::system_category().message(GetLastError()));
+		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
 	plugin.init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
 	if (plugin.init == NULL)
 	{
-		NS::log::PLUGINSYS->info("Library {} has no function initializePlugin", pathstring);
+		NS::log::PLUGINSYS->info("Library '{}' has no function 'PLUGIN_INIT'", pathstring);
 		return std::nullopt;
 	}
 	NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring);

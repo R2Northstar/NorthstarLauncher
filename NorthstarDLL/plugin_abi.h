@@ -3,19 +3,6 @@
 #include "squirrelclasstypes.h"
 
 #define ABI_VERSION 2
-/// <summary>
-/// This enum is used for referencing the different types of objects we can pass to a plugin
-/// Anything exposed to a plugin must not a be C++ type, as they could break when compiling with a different compiler.
-/// Any ABI incompatible change must increment the version number.
-/// Nothing must be removed from this enum, only appended. When it absolutely necessary to deprecate an object, it should return UNSUPPORTED
-/// when retrieved
-/// </summary>
-enum PluginObject
-{
-	UNSUPPORTED = 0,
-	SQUIRREL = 1,
-	DUMMY = 0xFFFF
-};
 
 enum GameState
 {
@@ -79,7 +66,7 @@ struct MessageSource
 	int line;
 };
 
-// This is a stripped down version of spdlog::details::log_msg
+// This is a modified version of spdlog::details::log_msg
 // This is so that we can make it cross DLL boundaries
 struct LogMsg
 {
@@ -144,14 +131,10 @@ struct PluginGameStatePresence
 /// <summary> Async communication within the plugin system
 /// Due to the asynchronous nature of plugins, combined with the limitations of multi-compiler support
 /// and the custom memory allocator used by r2, is it difficult to safely get data across DLL boundaries
-/// from Northstar to plugin unless Northstar can get memory-clear signal back.
-/// To do this, we use a request-response system
-/// This means that if a plugin wants a piece of data, it will send a request to Northstar in the form of an
-/// PLUGIN_REQUESTS_[DATA]_DATA call. The first argument to this call is a function pointer to call to return the data
-/// Northstar will then, when possible, construct the requested data and call the function
-/// This ensures that the process blocks until the data is ingested, and means it can safely be deleted afterwards without risk of dangling
-/// pointers On the plugin side, the data should be ingested into a class guarded by mutexes The provided Plugin Library will handle all
-/// this automatically.
+/// from Northstar to plugin unless Northstar can own that memory.
+/// This means that plugins should manage their own memory and can only receive data from northstar using one of the functions below.
+/// These should be exports of the plugin DLL. If they are not exported, they will not be called.
+/// Note that it is not required to have these exports if you do not use them.
 /// </summary>
 
 // Northstar -> Plugin
