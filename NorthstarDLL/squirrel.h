@@ -224,7 +224,7 @@ class SquirrelManagerBase
 
 	inline long long sq_stackinfos(HSquirrelVM* sqvm, int level, SQStackInfos& out)
 	{
-		return __sq_stackinfos(sqvm, level, &out, sqvm->_callsstacksize);
+		return __sq_stackinfos(sqvm, level, &out, sqvm->_callstacksize);
 	}
 
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
@@ -257,10 +257,14 @@ class SquirrelManagerBase
 		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
 	}
-	inline Mod* getcallingmod(HSquirrelVM* sqvm)
+	inline Mod* getcallingmod(HSquirrelVM* sqvm, int depth = 0)
 	{
 		SQStackInfos stackInfo {};
-		sq_stackinfos(sqvm, 1, stackInfo);
+		if (1 + depth >= sqvm->_callstacksize)
+		{
+			return nullptr;
+		}
+		sq_stackinfos(sqvm, 1 + depth, stackInfo);
 		std::string sourceName = stackInfo._sourceName;
 		std::replace(sourceName.begin(), sourceName.end(), '/', '\\');
 		std::string filename = "scripts\\vscripts\\" + sourceName;

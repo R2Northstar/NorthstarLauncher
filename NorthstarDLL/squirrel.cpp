@@ -554,11 +554,12 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 ADD_SQFUNC(
 	"string",
 	NSGetModName,
-	"",
+	"int depth = 0",
 	"Returns the mod name of the script running this function",
 	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
-	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm); mod == nullptr)
+	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
+	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "Unknown (Vanilla/Console)");
 	}
