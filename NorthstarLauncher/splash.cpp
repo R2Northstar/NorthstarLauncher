@@ -259,7 +259,7 @@ NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 		{
 			for (int i = 0; i < 128; i++)
 			{
-				std::this_thread::sleep_for(std::chrono::microseconds(2));
+				std::this_thread::sleep_for(std::chrono::nanoseconds(200));
 				SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), i * 2, LWA_COLORKEY | LWA_ALPHA);
 			}
 		});
@@ -305,7 +305,7 @@ void NSSplashScreen::HideSplashScreen()
 			{
 				for (int i = 0; i < 128; i++)
 				{
-					std::this_thread::sleep_for(std::chrono::microseconds(2));
+					std::this_thread::sleep_for(std::chrono::microseconds(1));
 					SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 255 - i * 2, LWA_COLORKEY | LWA_ALPHA);
 				}
 				// DestroyWindow doesnt work from threads :/
