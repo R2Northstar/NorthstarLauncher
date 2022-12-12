@@ -9,6 +9,7 @@
 #include "version.h"
 #include "pch.h"
 #include "gamepresence.h"
+#include "squirrel.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
