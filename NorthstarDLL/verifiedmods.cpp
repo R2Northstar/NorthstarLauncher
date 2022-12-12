@@ -11,8 +11,6 @@
 
 using namespace rapidjson;
 
-
-
 /*
  ██████╗ ██╗      ██████╗ ██████╗  █████╗ ██╗         ██╗   ██╗ █████╗ ██████╗ ██╗ █████╗ ██████╗ ██╗     ███████╗███████╗
 ██╔════╝ ██║     ██╔═══██╗██╔══██╗██╔══██╗██║         ██║   ██║██╔══██╗██╔══██╗██║██╔══██╗██╔══██╗██║     ██╔════╝██╔════╝
@@ -21,7 +19,6 @@ using namespace rapidjson;
 ╚██████╔╝███████╗╚██████╔╝██████╔╝██║  ██║███████╗     ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██████╔╝███████╗███████╗███████║
  ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝      ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝╚══════╝
 */
-
 
 // This JSON contains all verified mods.
 Document verifiedModsJson;
@@ -40,7 +37,6 @@ const char* modsTestString =
 	"}";
 
 
-
 /*
 ███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ ███████╗
 ████╗ ████║██╔════╝╚══██╔══╝██║  ██║██╔═══██╗██╔══██╗██╔════╝
@@ -49,7 +45,6 @@ const char* modsTestString =
 ██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝███████║
 ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
 */
-
 
 /**
  * Fetches the list of verified mods from the master server, and store it in
@@ -73,7 +68,6 @@ void FetchVerifiedModsList()
 		});
 	requestThread.detach();
 }
-
 
 /**
  * Checks if a mod is verified by controlling if its name matches a key in the
@@ -110,7 +104,6 @@ bool IsModVerified(char* modName, char* modVersion)
 	return false;
 }
 
-
 /**
  * Tells if a mod is currently being downloaded by checking if its name is included
  * in the `modsBeingDownloaded` variable.
@@ -119,7 +112,6 @@ bool IsModBeingDownloaded(char* modName)
 {
 	return std::find(modsBeingDownloaded.begin(), modsBeingDownloaded.end(), modName) != modsBeingDownloaded.end();
 }
-
 
 /**
  * cURL method to write data to disk.
@@ -144,7 +136,7 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
  **/
 void DownloadMod(char* modName, char* modVersion)
 {
-	modsBeingDownloaded.push_back( modName );
+	modsBeingDownloaded.push_back(modName);
 
 	// Rebuild mod dependency string.
 	const Value& entry = verifiedModsJson[modName];
@@ -164,7 +156,7 @@ void DownloadMod(char* modName, char* modVersion)
 			// loading game path
 			std::string archiveName = (std::string)dependencyString + ".zip";
 			std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
-			
+
 			CURL* curl = curl_easy_init();
 			FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
 			CURLcode result;
@@ -177,7 +169,7 @@ void DownloadMod(char* modName, char* modVersion)
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-		
+
 			spdlog::info("Fetching mod {} from Thunderstore...", dependencyString);
 			result = curl_easy_perform(curl);
 			curl_easy_cleanup(curl);
@@ -232,7 +224,7 @@ void DownloadMod(char* modName, char* modVersion)
 				//
 				// We don't need to recreate the mods/ directory, as it should already
 				// exist in a R2Northstar installation.
-				// 
+				//
 				// A well-formatted Thunderstore archive contains files such as icon.png,
 				// manifest.json and README.md; we don't want to extract those, but only
 				// the content of the mods/ directory.
@@ -274,14 +266,12 @@ void DownloadMod(char* modName, char* modVersion)
 
 		REQUEST_END_CLEANUP:
 			fclose(fp);
-			modsBeingDownloaded.erase( std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName) );
+			modsBeingDownloaded.erase(std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName));
 			// TODO close zip
 			// TODO remove temporary folder
 		});
 	requestThread.detach();
 }
-
-
 
 /*
 ███████╗ ██████╗ ██╗   ██╗██╗██████╗ ██████╗ ███████╗██╗      ███████╗██╗  ██╗██████╗  ██████╗ ███████╗███████╗██████╗
@@ -298,7 +288,6 @@ void DownloadMod(char* modName, char* modVersion)
 ╚███╔███╔╝██║  ██║██║  ██║██║     ██║     ███████╗██║  ██║    ██║ ╚═╝ ██║███████╗   ██║   ██║  ██║╚██████╔╝██████╔╝███████║
  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
 */
-
 
 ADD_SQFUNC("string", NSFetchVerifiedModsList, "", "", ScriptContext::UI)
 {
