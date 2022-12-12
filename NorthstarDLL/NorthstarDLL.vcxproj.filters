@@ -149,10 +149,10 @@
       <UniqueIdentifier>{7263403a-7550-4aa2-a724-f622ab200eed}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Plugins">
-      <UniqueIdentifier>{0299edc7-63f8-4f2c-b9e1-5a481aa3aa2a}</UniqueIdentifier>
+      <UniqueIdentifier>{e8478b04-5ebb-4c57-bc49-3e414042b1a3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Plugins">
-      <UniqueIdentifier>{a17ed146-1ed5-44c5-aa1c-a0267db8c9ef}</UniqueIdentifier>
+      <UniqueIdentifier>{675ba79d-b8f1-48e4-b7d9-079c8c0e3b0d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -305,7 +305,7 @@
     </ClInclude>
     <ClInclude Include="loghooks.h">
       <Filter>Header Files\Console</Filter>
-	 </ClInclude>
+    </ClInclude>
     <ClInclude Include="squirrelclasstypes.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
@@ -1005,8 +1005,6 @@
     <ClInclude Include="..\include\spdlog\fmt\fmt.h">
       <Filter>Header Files\include\spdlog\fmt</Filter>
     </ClInclude>
-    <ClInclude Include="version.h">
-      <Filter>Header Files</Filter>
     <ClInclude Include="..\include\spdlog\fmt\ostr.h">
       <Filter>Header Files\include\spdlog\fmt</Filter>
     </ClInclude>
@@ -1124,35 +1122,20 @@
     <ClInclude Include="..\include\spdlog\sinks\tcp_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
-    <ClInclude Include="squirrelautobind.h">
-      <Filter>Header Files\Squirrel</Filter>
-    </ClInclude>
-    <ClInclude Include="keyvalues.h">
-      <Filter>Header Files</Filter>
     <ClInclude Include="..\include\spdlog\sinks\win_eventlog_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
-    <ClInclude Include="loghooks.h">
-      <Filter>Header Files\Console</Filter>
     </ClInclude>
-    <ClInclude Include="squirrelclasstypes.h">
-      <Filter>Header Files\Squirrel</Filter>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink-inl.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_abi.h">
-      <Filter>Header Files\Plugins</Filter>
     </ClInclude>
     <ClInclude Include="pluginbackend.h">
       <Filter>Header Files\Plugins</Filter>
     </ClInclude>
-    <ClInclude Include="plugins.h">
-      <Filter>Header Files\Plugins</Filter>
-    </ClInclude>
     <ClInclude Include="gamepresence.h">
-      <Filter>Header Files\Plugins</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="wininfo.h">
       <Filter>Header Files</Filter>
@@ -1215,6 +1198,9 @@
     </ClCompile>
     <ClCompile Include="localchatwriter.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="plugins.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="debugoverlay.cpp">
       <Filter>Source Files\Client</Filter>
@@ -1384,11 +1370,8 @@
     <ClCompile Include="pluginbackend.cpp">
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
-    <ClCompile Include="plugins.cpp">
-      <Filter>Source Files\Plugins</Filter>
-    </ClCompile>
     <ClCompile Include="gamepresence.cpp">
-      <Filter>Source Files\Plugins</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="wininfo.cpp">
       <Filter>Source Files</Filter>
