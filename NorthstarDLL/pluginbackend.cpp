@@ -82,3 +82,14 @@ ON_DLL_LOAD_RELIESON("engine.dll", PluginBackendEngine, ConCommand, (CModule mod
 {
 	g_pPluginManager->InformDLLLoad(PluginLoadDLL::ENGINE, &g_pPluginCommunicationhandler->m_sEngineData);
 }
+
+ON_DLL_LOAD_RELIESON("client.dll", PluginBackendClient, ConCommand, (CModule module))
+{
+	g_pPluginManager->InformDLLLoad(PluginLoadDLL::CLIENT, nullptr);
+}
+
+
+ON_DLL_LOAD_RELIESON("server.dll", PluginBackendServer, ConCommand, (CModule module))
+{
+	g_pPluginManager->InformDLLLoad(PluginLoadDLL::SERVER, nullptr);
+}
