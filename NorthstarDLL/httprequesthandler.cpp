@@ -505,15 +505,6 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	{
 		tableNode* node = &headerTable->_nodes[idx];
 
-		// TODO: Figure out why the first three nodes of this table are OT_NULL with a single value.
-		// Then re-enable this if possible.
-		// if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
-		//{
-		//	g_pSquirrel<context>->raiseerror(
-		//		sqvm, fmt::format("Invalid header type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type),
-		// SQTypeNameFromID(node->val._Type)).c_str()); 	return SQRESULT_ERROR;
-		//}
-
 		if (node->key._Type == OT_STRING && node->val._Type == OT_ARRAY)
 		{
 			SQArray* valueArray = node->val._VAL.asArray;
@@ -535,13 +526,6 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	for (int idx = 0; idx < queryTable->_numOfNodes; ++idx)
 	{
 		tableNode* node = &queryTable->_nodes[idx];
-		// Same as above.
-		// if (node->key._Type != OT_STRING || node->val._Type != OT_STRING)
-		//{
-		//	g_pSquirrel<context>->raiseerror(
-		//		sqvm, fmt::format("Invalid query parameter type or value (expected string, got {} = {})", SQTypeNameFromID(node->key._Type),
-		// SQTypeNameFromID(node->val._Type)).c_str()); 	return SQRESULT_ERROR;
-		//}
 
 		if (node->key._Type == OT_STRING && node->val._Type == OT_ARRAY)
 		{
