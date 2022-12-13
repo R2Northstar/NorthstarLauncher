@@ -27,15 +27,13 @@ Document verifiedModsJson;
 std::vector<std::string> modsBeingDownloaded {};
 
 // Test string used to test branch without masterserver
-const char* modsTestString =
-	"{"
-		"\"Fifty.mp_frostbite\": {"
-			"\"DependencyPrefix\": \"Fifty-Frostbite\","
-			"\"Versions\" : ["
-				"{ \"Version\": \"0.0.1\" }"
-			"]}"
-	"}";
-
+const char* modsTestString = "{"
+							 "\"Fifty.mp_frostbite\": {"
+							 "\"DependencyPrefix\": \"Fifty-Frostbite\","
+							 "\"Versions\" : ["
+							 "{ \"Version\": \"0.0.1\" }"
+							 "]}"
+							 "}";
 
 /*
 ███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ ███████╗
