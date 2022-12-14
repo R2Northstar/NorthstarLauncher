@@ -1116,14 +1116,34 @@
     <ClInclude Include="..\include\spdlog\sinks\tcp_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
+
+    <ClInclude Include="squirrelautobind.h">
+      <Filter>Header Files\Squirrel</Filter>
+    </ClInclude>
+    <ClInclude Include="keyvalues.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+
     <ClInclude Include="..\include\spdlog\sinks\win_eventlog_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
+
     </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
+
+    <ClInclude Include="loghooks.h">
+      <Filter>Header Files\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="squirrelclasstypes.h">
+      <Filter>Header Files\Squirrel</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink-inl.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
+
+    </ClInclude>
+    <ClInclude Include="httprequesthandler.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="splash.h">
       <Filter>Header Files</Filter>
@@ -2178,6 +2198,9 @@
       <Filter>Source Files\Console</Filter>
     </ClCompile>
     <ClCompile Include="splash.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="httprequesthandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

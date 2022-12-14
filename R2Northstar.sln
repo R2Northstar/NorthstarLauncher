@@ -6,8 +6,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NorthstarDLL", "NorthstarDL
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NorthstarLauncher", "NorthstarLauncher\NorthstarLauncher.vcxproj", "{0EA82CB0-53FE-4D4C-96DF-47FA970513D0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_launcher_proxy", "loader_launcher_proxy\loader_launcher_proxy.vcxproj", "{F65C322D-66DF-4AF1-B650-70221DE334C0}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_wsock32_proxy", "loader_wsock32_proxy\loader_wsock32_proxy.vcxproj", "{CF55F3B5-F348-450A-9CCB-C269F21D629D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SplashScreen", "SplashScreen\SplashScreen.vcxproj", "{31E30D89-5FC3-4F8F-86C3-F43DFF3EE757}"
