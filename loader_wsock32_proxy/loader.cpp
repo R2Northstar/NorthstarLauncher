@@ -6,6 +6,9 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <iostream>
+
+typedef void (*InitializeSplashScreenType)(const char* loadPath);
 
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
@@ -75,6 +78,59 @@ bool ProvisionNorthstar()
 {
 	if (!ShouldLoadNorthstar())
 		return true;
+
+	bool dedicated = strstr(GetCommandLineA(), "-dedicated");
+	bool nosplash = strstr(GetCommandLineA(), "-nosplash");
+	bool showConsole = strstr(GetCommandLineA(), "-showconsole");
+
+	if (!dedicated && !nosplash)
+	{
+		char* clachar = strstr(GetCommandLineA(), "-altsplash=");
+		std::string altSplash = "";
+		if (clachar)
+		{
+			std::string cla = clachar;
+			if (strncmp(cla.substr(12, 1).c_str(), "\"", 1))
+			{
+				cla = cla.substr(12);
+				int space = cla.find("\"");
+				altSplash = cla.substr(0, space);
+			}
+			else
+			{
+				std::string quote = "\"";
+				int quote1 = cla.find(quote);
+				int quote2 = (cla.substr(quote1 + 1)).find(quote);
+				altSplash = cla.substr(quote1 + 1, quote2);
+			}
+		}
+		auto splashDLL = LoadLibraryExW(L"splash.dll", 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+		if (!splashDLL)
+		{
+			MessageBoxA(
+				GetForegroundWindow(),
+				"Failed to load splash.dll!",
+				"Northstar Wsock32 Proxy Error",
+				0);
+			return false;
+		}
+		auto initSplash = (InitializeSplashScreenType)GetProcAddress(splashDLL, "InitializeSplashScreen");
+		if (!initSplash)
+		{
+			MessageBoxA(GetForegroundWindow(), "Failed to load splash screen!", "Northstar Wsock32 Proxy Error", 0);
+			return false;
+		}
+		else
+		{
+			initSplash(altSplash.c_str());
+			DisableProcessWindowsGhosting();
+		}
+	}
+
+	if (!nosplash && !showConsole)
+	{
+		ShowWindow(GetConsoleWindow(), SW_HIDE);
+	}
 
 	if (MH_Initialize() != MH_OK)
 	{

@@ -25,12 +25,13 @@ If `status_right` or `status_bottom` are 0, they will be set to the image width 
 `status_rect` maps its members in order to LEFT, RIGHT, TOP, and BOTTOM
 */
 
-#include "resource1.h"
+#include "resource.h"
 
 #include <stdexcept>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 #define RAPIDJSON_NOMEMBERITERATORCLASS // need this for rapidjson
 #define RAPIDJSON_HAS_STDSTRING 1
@@ -43,6 +44,7 @@ typedef rapidjson::GenericDocument<rapidjson::UTF8<>> rapidjson_document;
 namespace fs = std::filesystem;
 
 #include "splash.h"
+#include "dllmain.h"
 
 NSSplashScreen* g_SplashScreen;
 
@@ -85,7 +87,11 @@ void NSSplashScreen::LoadFromFile(std::string& path)
 			exit(-1);
 		}
 	}
-	auto test1 = doc.IsObject();
+	if (!doc.IsObject())
+	{
+		std::cout << "Invalid Alternate Splash Screen location." << std::endl;
+		return;
+	}
 	auto test = doc.HasMember("img_background");
 
 	HDC imageDC = ::CreateCompatibleDC(NULL);
@@ -207,7 +213,7 @@ NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 
 	m_pSplashWnd = this;
 
-	m_instance = GetModuleHandle(NULL);
+	m_instance = handle;
 
 	if (altSplashPath != "")
 		LoadFromFile(altSplashPath);
@@ -259,7 +265,7 @@ NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 		{
 			for (int i = 0; i < 128; i++)
 			{
-				std::this_thread::sleep_for(std::chrono::nanoseconds(200));
+				std::this_thread::sleep_for(std::chrono::microseconds(2));
 				SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), i * 2, LWA_COLORKEY | LWA_ALPHA);
 			}
 		});
@@ -270,7 +276,7 @@ NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 
 BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
 {
-	m_instance = GetModuleHandle(NULL);
+	m_instance = handle;
 	// register class
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -464,6 +470,12 @@ void NSSplashScreen::Paint()
 
 	EndPaint(m_hWnd, &ps);
 }
+
+extern "C" __declspec(dllexport) void InitializeSplashScreen(const char* loadPath)
+{
+	g_SplashScreen = new NSSplashScreen(loadPath);
+}
+
 
 // Used to expose splash screen to launcher dll
 extern "C" __declspec(dllexport) void SetSplashMessage(const char* msg, int progress, bool close)

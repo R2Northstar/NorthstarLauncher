@@ -4,10 +4,6 @@
 //
 #define IDI_ICON1 101
 
-#define IDB_SPLASH 901
-#define IDB_LOAD 902
-#define IDB_LOAD_FILLED 903
-
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED

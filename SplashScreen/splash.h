@@ -3,7 +3,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "resource1.h"
+#include "resource.h"
 
 // Windows Header Files:
 #include <windows.h>

@@ -10,9 +10,11 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 
-#include "splash.h"
-
 namespace fs = std::filesystem;
+
+typedef void (*E_SetSplashMessageType)(const char* msg, int progress, bool close);
+typedef void (*InitializeSplashScreenType)(const char* loadPath);
+E_SetSplashMessageType e_SetSplashMessage;
 
 extern "C"
 {
@@ -28,6 +30,13 @@ wchar_t exePath[4096];
 wchar_t buffer[8192];
 
 bool noLoadPlugins = false;
+
+void SetSplashMessage(const char* msg, int progress, bool close = false)
+{
+	if (e_SetSplashMessage)
+		e_SetSplashMessage(msg, progress, close);
+}
+
 
 DWORD GetProcessByName(std::wstring processName)
 {
@@ -386,8 +395,23 @@ int main(int argc, char* argv[])
 				altSplash = cla.substr(quote1 + 1, quote2);
 			}
 		}
-		g_SplashScreen = new NSSplashScreen(altSplash);
-		DisableProcessWindowsGhosting();
+		auto splashDLL = LoadLibraryExW(L"splash.dll", 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+		if (!splashDLL)
+		{
+			MessageBoxA(GetForegroundWindow(), "Failed to load splash.dll!", "Northstar Wsock32 Proxy Error", 0);
+			return false;
+		}
+		e_SetSplashMessage = (E_SetSplashMessageType)GetProcAddress(splashDLL, "SetSplashMessage");
+		auto initSplash = (InitializeSplashScreenType)GetProcAddress(splashDLL, "InitializeSplashScreen");
+		if (!initSplash || !e_SetSplashMessage)
+		{
+			std::cout << "Failed to load splash screen" << std::endl;
+		}
+		else
+		{
+			initSplash(altSplash.c_str());
+			DisableProcessWindowsGhosting();
+		}
 	}
 
 	if (!nosplash && !showConsole)

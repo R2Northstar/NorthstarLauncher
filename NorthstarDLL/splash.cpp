@@ -32,12 +32,15 @@ SetSplashMessageExternal_t SetSplashMessageExternal;
 
 void SetSplashMessage(const char* msg, int progress, bool close)
 {
-	SetSplashMessageExternal(msg, progress, close);
+	if (SetSplashMessageExternal)
+		SetSplashMessageExternal(msg, progress, close);
 }
 
 void InitialiseSplashScreen()
 {
-	SetSplashMessageExternal = (SetSplashMessageExternal_t)GetProcAddress(NULL, "SetSplashMessage");
+	HMODULE splashDLL;
+	GetModuleHandleExA(NULL, "splash.dll", &splashDLL);
+	SetSplashMessageExternal = (SetSplashMessageExternal_t)GetProcAddress(splashDLL, "SetSplashMessage");
 }
 
 ON_DLL_LOAD("engine.dll", Splash, (CModule module))
