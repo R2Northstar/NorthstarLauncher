@@ -37,7 +37,6 @@ void SetSplashMessage(const char* msg, int progress, bool close = false)
 		e_SetSplashMessage(msg, progress, close);
 }
 
-
 DWORD GetProcessByName(std::wstring processName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
