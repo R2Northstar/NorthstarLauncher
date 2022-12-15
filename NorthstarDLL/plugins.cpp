@@ -207,7 +207,10 @@ bool PluginManager::LoadPlugins()
 			paths.emplace_back(entry.path().filename());
 	}
 	for (fs::path path : paths)
+	{
 		LoadPlugin(path, &funcs, &data);
+		data.pluginHandle += 1;
+	}
 	return true;
 }
 

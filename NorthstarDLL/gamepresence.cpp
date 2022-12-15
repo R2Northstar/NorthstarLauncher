@@ -6,6 +6,7 @@
 #include "dedicated.h"
 #include "serverpresence.h"
 #include "masterserver.h"
+#include "squirrel.h"
 
 GameStatePresence* g_pGameStatePresence;
 
@@ -31,7 +32,6 @@ void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const Serve
 
 void GameStatePresence::RunFrame()
 {
-	auto test = g_pSquirrel<ScriptContext::UI>;
 	if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
 		g_pSquirrel<ScriptContext::UI>->Call("GenerateUIPresence");
 
