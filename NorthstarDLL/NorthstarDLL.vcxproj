@@ -396,6 +396,7 @@
     <ClInclude Include="bits.h" />
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="gamepresence.h" />
+    <ClInclude Include="httprequesthandler.h" />
     <ClInclude Include="keyvalues.h" />
     <ClInclude Include="loghooks.h" />
     <ClInclude Include="pluginbackend.h" />
@@ -459,6 +460,7 @@
     <ClCompile Include="diskvmtfixes.cpp" />
     <ClCompile Include="exploitfixes_lzss.cpp" />
     <ClCompile Include="gamepresence.cpp" />
+    <ClCompile Include="httprequesthandler.cpp" />
     <ClCompile Include="kb_act.cpp" />
     <ClCompile Include="keyvalues.cpp" />
     <ClCompile Include="limits.cpp" />
