@@ -16,12 +16,7 @@ ADD_SQFUNC(
 }
 
 // string function NSGetLocalPlayerUID()
-ADD_SQFUNC(
-	"string",
-	NSGetLocalPlayerUID,
-	"",
-	"Returns the local player's uid.",
-	ScriptContext::CLIENT)
+ADD_SQFUNC("string", NSGetLocalPlayerUID, "", "Returns the local player's uid.", ScriptContext::CLIENT)
 {
 	if (R2::g_pLocalPlayerUserID)
 	{
