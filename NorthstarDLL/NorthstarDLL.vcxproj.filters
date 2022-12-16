@@ -996,34 +996,14 @@
     <ClInclude Include="..\include\spdlog\sinks\tcp_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
-
-    <ClInclude Include="squirrelautobind.h">
-      <Filter>Header Files\Squirrel</Filter>
-    </ClInclude>
-    <ClInclude Include="keyvalues.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-
     <ClInclude Include="..\include\spdlog\sinks\win_eventlog_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
-
     </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
     </ClInclude>
-
-    <ClInclude Include="loghooks.h">
-      <Filter>Header Files\Console</Filter>
-    </ClInclude>
-    <ClInclude Include="squirrelclasstypes.h">
-      <Filter>Header Files\Squirrel</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\spdlog\sinks\wincolor_sink-inl.h">
       <Filter>Header Files\include\spdlog\sinks</Filter>
-
-    </ClInclude>
-    <ClInclude Include="httprequesthandler.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="client\audio.h">
       <Filter>Header Files\client</Filter>
@@ -1180,6 +1160,9 @@
     </ClInclude>
     <ClInclude Include="server\serverchathooks.h">
       <Filter>Header Files\server</Filter>
+    </ClInclude>
+    <ClInclude Include="scripts\scripthttprequesthandler.h">
+      <Filter>Header Files\scripts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1412,6 +1395,9 @@
     </ClCompile>
     <ClCompile Include="util\printmaps.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="scripts\scripthttprequesthandler.cpp">
+      <Filter>Source Files\scripts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

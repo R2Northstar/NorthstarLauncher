@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "httprequesthandler.h"
-#include "version.h"
-#include "squirrel.h"
-#include "tier0.h"
+#include "scripthttprequesthandler.h"
+#include "util/version.h"
+#include "squirrel/squirrel.h"
+#include "core/tier0.h"
 
 HttpRequestHandler* g_httpRequestHandler;
 

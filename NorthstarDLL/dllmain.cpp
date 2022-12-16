@@ -7,8 +7,7 @@
 #include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
 #include "util/version.h"
-#include "pch.h"
-#include "squirrel.h"
+#include "squirrel/squirrel.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"

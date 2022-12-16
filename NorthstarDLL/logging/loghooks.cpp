@@ -6,6 +6,7 @@
 #include "core/math/bitbuf.h"
 #include "config/profile.h"
 #include "core/tier0.h"
+#include "squirrel/squirrel.h"
 #include <iomanip>
 #include <sstream>
 

@@ -429,6 +429,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="plugins\plugins.h" />
     <ClInclude Include="plugins\plugin_abi.h" />
+    <ClInclude Include="scripts\scripthttprequesthandler.h" />
     <ClInclude Include="server\auth\bansystem.h" />
     <ClInclude Include="server\auth\serverauthentication.h" />
     <ClInclude Include="server\r2server.h" />
@@ -503,6 +504,7 @@
     <ClCompile Include="scripts\client\scriptserverbrowser.cpp" />
     <ClCompile Include="scripts\client\scriptservertoclientstringcommand.cpp" />
     <ClCompile Include="scripts\scriptdatatables.cpp" />
+    <ClCompile Include="scripts\scripthttprequesthandler.cpp" />
     <ClCompile Include="scripts\scriptjson.cpp" />
     <ClCompile Include="scripts\scriptutility.cpp" />
     <ClCompile Include="scripts\server\miscserverfixes.cpp" />
