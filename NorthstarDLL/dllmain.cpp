@@ -8,6 +8,7 @@
 #include "plugins/plugins.h"
 #include "util/version.h"
 #include "pch.h"
+#include "squirrel.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"

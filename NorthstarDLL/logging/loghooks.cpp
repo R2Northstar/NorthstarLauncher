@@ -6,7 +6,6 @@
 #include "core/math/bitbuf.h"
 #include "config/profile.h"
 #include "core/tier0.h"
-
 #include <iomanip>
 #include <sstream>
 
