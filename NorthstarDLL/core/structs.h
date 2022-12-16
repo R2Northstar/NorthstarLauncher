@@ -45,7 +45,7 @@ OFFSET_STRUCT(Name)
 #define IIF_1(t, ...) t
 
 #define PROBE(x) x, 1
-
+#define MSVC_VA_ARGS_WORKAROUND(define, args) define args
 #define CHECK(...) MSVC_VA_ARGS_WORKAROUND(CHECK_N, (__VA_ARGS__, 0))
 #define DO_PROBE(offset) PROBE_PROXY(OFFSET_##offset) // concatenate prefix with offset
 #define PROBE_PROXY(...) PROBE_PRIMITIVE(__VA_ARGS__) // expand arguments
