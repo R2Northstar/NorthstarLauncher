@@ -1059,9 +1059,6 @@
     <ClInclude Include="squirrel\squirreldatatypes.h">
       <Filter>Header Files\squirrel</Filter>
     </ClInclude>
-    <ClInclude Include="util\structs.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="util\version.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>

@@ -441,7 +441,6 @@
     <ClInclude Include="squirrel\squirrelautobind.h" />
     <ClInclude Include="squirrel\squirrelclasstypes.h" />
     <ClInclude Include="squirrel\squirreldatatypes.h" />
-    <ClInclude Include="util\structs.h" />
     <ClInclude Include="util\version.h" />
   </ItemGroup>
   <ItemGroup>
