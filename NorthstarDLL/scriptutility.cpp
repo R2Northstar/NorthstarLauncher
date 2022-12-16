@@ -1,4 +1,6 @@
 #include "pch.h"
+#include "r2engine.h"
+#include "r2client.h"
 #include "squirrel.h"
 
 // asset function StringToAsset( string assetName )
@@ -11,4 +13,21 @@ ADD_SQFUNC(
 {
 	g_pSquirrel<context>->pushasset(sqvm, g_pSquirrel<context>->getstring(sqvm, 1), -1);
 	return SQRESULT_NOTNULL;
+}
+
+// string function NSGetLocalPlayerUID()
+ADD_SQFUNC(
+	"string",
+	NSGetLocalPlayerUID,
+	"",
+	"Returns the local player's uid.",
+	ScriptContext::CLIENT)
+{
+	if (R2::g_pLocalPlayerUserID)
+	{
+		g_pSquirrel<context>->pushstring(sqvm, R2::g_pLocalPlayerUserID);
+		return SQRESULT_NOTNULL;
+	}
+
+	return SQRESULT_NULL;
 }
