@@ -161,6 +161,84 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
+	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
+	{
+		for (auto& concommandObj : modJson["ConCommands"].GetArray())
+		{
+			if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") || !concommandObj.HasMember("Context"))
+				continue;
+
+			// have to allocate this manually, otherwise concommand registration will break
+			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
+			ModConCommand* concommand = new ModConCommand;
+			concommand->Name = concommandObj["Name"].GetString();
+			concommand->Function = concommandObj["Function"].GetString();
+			concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
+			if (concommand->Context == ScriptContext::INVALID)
+			{
+				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
+				continue;
+			}
+
+			if (concommandObj.HasMember("HelpString"))
+				concommand->HelpString = concommandObj["HelpString"].GetString();
+			else
+				concommand->HelpString = "";
+
+			concommand->Flags = FCVAR_NONE;
+
+			if (concommandObj.HasMember("Flags"))
+			{
+				// read raw integer flags
+				if (concommandObj["Flags"].IsInt())
+					concommand->Flags = concommandObj["Flags"].GetInt();
+				else if (concommandObj["Flags"].IsString())
+				{
+					// parse cvar flags from string
+					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
+
+					std::string sFlags = concommandObj["Flags"].GetString();
+					sFlags += '|'; // add additional | so we register the last flag
+					std::string sCurrentFlag;
+
+					for (int i = 0; i < sFlags.length(); i++)
+					{
+						if (isspace(sFlags[i]))
+							continue;
+
+						// if we encounter a |, add current string as a flag
+						if (sFlags[i] == '|')
+						{
+							bool bHasFlags = false;
+							int iCurrentFlags;
+
+							for (auto& flagPair : g_PrintCommandFlags)
+							{
+								if (!sCurrentFlag.compare(flagPair.second))
+								{
+									iCurrentFlags = flagPair.first;
+									bHasFlags = true;
+									break;
+								}
+							}
+
+							if (bHasFlags)
+								concommand->Flags |= iCurrentFlags;
+							else
+								spdlog::warn("Mod ConCommand {} has unknown flag {}", concommand->Name, sCurrentFlag);
+
+							sCurrentFlag = "";
+						}
+						else
+							sCurrentFlag += sFlags[i];
+					}
+				}
+			}
+
+			ConCommands.push_back(concommand);
+		}
+	}
+
 	// mod scripts
 	if (modJson.HasMember("Scripts") && modJson["Scripts"].IsArray())
 	{
@@ -199,7 +277,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				if (scriptObj["ClientCallback"].HasMember("After") && scriptObj["ClientCallback"]["After"].IsString())
 					callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
 
-				script.Callbacks.push_back(callback);
+script.Callbacks.push_back(callback);
 			}
 
 			if (scriptObj.HasMember("UICallback") && scriptObj["UICallback"].IsObject())
@@ -265,6 +343,57 @@ ModManager::ModManager()
 	m_hKBActHash = STR_HASH("scripts\\kb_act.lst");
 
 	LoadMods();
+}
+
+struct Test
+{
+	std::string funcName;
+	ScriptContext context;
+};
+
+template <ScriptContext context> auto ModConCommandCallback_Internal(std::string name, const CCommand& command)
+{
+	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
+	{
+		std::vector<std::string> args;
+		args.reserve(command.ArgC());
+		for (int i = 1; i < command.ArgC(); i++)
+			args.push_back(command.Arg(i));
+		g_pSquirrel<context>->AsyncCall(name, args);
+	}
+}
+
+auto ModConCommandCallback(const CCommand& command)
+{
+	ModConCommand* found = nullptr;
+	auto commandString = std::string(command.GetCommandString());
+	auto firstSpace = commandString.find(' ');
+	if (firstSpace)
+	{
+		commandString = commandString.substr(0, firstSpace);
+	}
+	for (auto& mod : g_pModManager->m_LoadedMods)
+	{
+		auto res = std::find_if(mod.ConCommands.begin(),
+			mod.ConCommands.end(),
+			[&commandString](const ModConCommand* other) { return other->Name == commandString; }
+		);
+		if (res != mod.ConCommands.end()) {
+			found = *res;
+			break;
+		}
+	}
+	if (!found)
+		return;
+	switch (found->Context)
+	{
+	case ScriptContext::CLIENT:
+		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
+	case ScriptContext::SERVER:
+		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
+	case ScriptContext::UI:
+		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
+	};
 }
 
 void ModManager::LoadMods()
@@ -368,6 +497,16 @@ void ModManager::LoadMods()
 			if (!R2::g_pCVar->FindVar(convar->Name.c_str())) // make sure convar isn't registered yet, unsure if necessary but idk what
 															 // behaviour is for defining same convar multiple times
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
+
+		for (ModConCommand* command : mod.ConCommands)
+			if (!R2::g_pCVar->FindCommand(command->Name.c_str())) // make sure command isnt't registered multiple times.
+			{
+				ConCommand* newCommand = new ConCommand();
+				std::string funcName = command->Function;
+				RegisterConCommand(
+					command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
+			}
+
 
 		// read vpk paths
 		if (fs::exists(mod.m_ModDirectory / "vpk"))
