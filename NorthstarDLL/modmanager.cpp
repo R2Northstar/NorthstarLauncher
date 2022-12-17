@@ -165,7 +165,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	{
 		for (auto& concommandObj : modJson["ConCommands"].GetArray())
 		{
-			if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") || !concommandObj.HasMember("Context"))
+			if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") ||
+				!concommandObj.HasMember("Context"))
 				continue;
 
 			// have to allocate this manually, otherwise concommand registration will break
@@ -374,11 +375,12 @@ auto ModConCommandCallback(const CCommand& command)
 	}
 	for (auto& mod : g_pModManager->m_LoadedMods)
 	{
-		auto res = std::find_if(mod.ConCommands.begin(),
+		auto res = std::find_if(
+			mod.ConCommands.begin(),
 			mod.ConCommands.end(),
-			[&commandString](const ModConCommand* other) { return other->Name == commandString; }
-		);
-		if (res != mod.ConCommands.end()) {
+			[&commandString](const ModConCommand* other) { return other->Name == commandString; });
+		if (res != mod.ConCommands.end())
+		{
 			found = *res;
 			break;
 		}
@@ -503,10 +505,8 @@ void ModManager::LoadMods()
 			{
 				ConCommand* newCommand = new ConCommand();
 				std::string funcName = command->Function;
-				RegisterConCommand(
-					command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
+				RegisterConCommand(command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
 			}
-
 
 		// read vpk paths
 		if (fs::exists(mod.m_ModDirectory / "vpk"))
