@@ -277,7 +277,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				if (scriptObj["ClientCallback"].HasMember("After") && scriptObj["ClientCallback"]["After"].IsString())
 					callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
 
-script.Callbacks.push_back(callback);
+				script.Callbacks.push_back(callback);
 			}
 
 			if (scriptObj.HasMember("UICallback") && scriptObj["UICallback"].IsObject())
