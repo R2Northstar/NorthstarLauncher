@@ -167,7 +167,9 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		{
 			if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") ||
 				!concommandObj.HasMember("Context"))
+			{
 				continue;
+			}
 
 			// have to allocate this manually, otherwise concommand registration will break
 			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
@@ -192,7 +194,9 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			{
 				// read raw integer flags
 				if (concommandObj["Flags"].IsInt())
+				{
 					concommand->Flags = concommandObj["Flags"].GetInt();
+				}
 				else if (concommandObj["Flags"].IsString())
 				{
 					// parse cvar flags from string
@@ -231,7 +235,9 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 							sCurrentFlag = "";
 						}
 						else
+						{
 							sCurrentFlag += sFlags[i];
+						}
 					}
 				}
 			}
@@ -391,10 +397,13 @@ auto ModConCommandCallback(const CCommand& command)
 	{
 	case ScriptContext::CLIENT:
 		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
+		break;
 	case ScriptContext::SERVER:
 		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
+		break;
 	case ScriptContext::UI:
 		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
+		break;
 	};
 }
 
@@ -496,17 +505,25 @@ void ModManager::LoadMods()
 		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
 		// causes us to leak memory on reload, but not much, potentially find a way to not do this at some point
 		for (ModConVar* convar : mod.ConVars)
-			if (!R2::g_pCVar->FindVar(convar->Name.c_str())) // make sure convar isn't registered yet, unsure if necessary but idk what
-															 // behaviour is for defining same convar multiple times
+		{
+			// make sure convar isn't registered yet, unsure if necessary but idk what
+			// behaviour is for defining same convar multiple times
+			if (!R2::g_pCVar->FindVar(convar->Name.c_str()))
+			{
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
+			}
+		}
 
 		for (ModConCommand* command : mod.ConCommands)
-			if (!R2::g_pCVar->FindCommand(command->Name.c_str())) // make sure command isnt't registered multiple times.
+		{
+			// make sure command isnt't registered multiple times.
+			if (!R2::g_pCVar->FindCommand(command->Name.c_str()))
 			{
 				ConCommand* newCommand = new ConCommand();
 				std::string funcName = command->Function;
 				RegisterConCommand(command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
 			}
+		}
 
 		// read vpk paths
 		if (fs::exists(mod.m_ModDirectory / "vpk"))
