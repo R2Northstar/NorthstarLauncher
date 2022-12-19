@@ -529,6 +529,7 @@
     <ClCompile Include="tier0.cpp" />
     <ClCompile Include="version.cpp" />
     <ClCompile Include="wininfo.cpp" />
+	  <ClCompile Include="cursorposition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm" />
