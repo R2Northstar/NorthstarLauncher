@@ -9,7 +9,7 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 
 // add headers that you want to pre-compile here
-#include "memalloc.h"
+#include "core/memalloc.h"
 
 #include <windows.h>
 #include <psapi.h>
@@ -20,14 +20,18 @@
 
 namespace fs = std::filesystem;
 
-#include "macros.h"
-#include "structs.h"
-#include "color.h"
+// clang-format off
+#define assert_msg(exp, msg) assert((exp, msg))
+//clang-format on
+
+#include "core/macros.h"
+#include "core/structs.h"
+#include "core/math/color.h"
 #include "spdlog/spdlog.h"
-#include "logging.h"
+#include "logging/logging.h"
 #include "MinHook.h"
 #include "libcurl/include/curl/curl.h"
-#include "hooks.h"
+#include "core/hooks.h"
 #include "memory.h"
 
 #endif
