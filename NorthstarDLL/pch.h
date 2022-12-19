@@ -25,6 +25,7 @@ namespace fs = std::filesystem;
 //clang-format on
 
 #include "core/macros.h"
+
 #include "core/structs.h"
 #include "core/math/color.h"
 #include "spdlog/spdlog.h"
@@ -32,6 +33,6 @@ namespace fs = std::filesystem;
 #include "MinHook.h"
 #include "libcurl/include/curl/curl.h"
 #include "core/hooks.h"
-#include "memory.h"
+#include "core/memory.h"
 
 #endif

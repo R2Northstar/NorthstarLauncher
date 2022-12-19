@@ -1,10 +1,9 @@
 #pragma once
 
-#include "logging/logging.h"
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
-#include "mods/modmanager.h"
 #include "core/math/vector.h"
+#include "mods/modmanager.h"
 
 // stolen from ttf2sdk: sqvm types
 typedef float SQFloat;
@@ -37,6 +36,11 @@ const char* GetContextName(ScriptContext context);
 const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
+
+namespace NS::log
+{
+	template <ScriptContext context> std::shared_ptr<spdlog::logger> squirrel_logger();
+}; // namespace NS::log
 
 void schedule_call_external(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function);
 
@@ -90,10 +94,11 @@ class SquirrelManagerBase
 	sq_getthisentityType __sq_getthisentity;
 	sq_getobjectType __sq_getobject;
 
+	sq_stackinfosType __sq_stackinfos;
+
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
 	sq_getfunctionType __sq_getfunction;
-	sq_stackinfosType __sq_stackinfos;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
@@ -228,6 +233,23 @@ class SquirrelManagerBase
 		return __sq_stackinfos(sqvm, level, &out, sqvm->_callstacksize);
 	}
 
+	inline Mod* getcallingmod(HSquirrelVM* sqvm, int depth = 0)
+	{
+		SQStackInfos stackInfo {};
+		if (1 + depth >= sqvm->_callstacksize)
+		{
+			return nullptr;
+		}
+		sq_stackinfos(sqvm, 1 + depth, stackInfo);
+		std::string sourceName = stackInfo._sourceName;
+		std::replace(sourceName.begin(), sourceName.end(), '/', '\\');
+		std::string filename = "scripts\\vscripts\\" + sourceName;
+		if (auto res = g_pModManager->m_ModFiles.find(filename); res != g_pModManager->m_ModFiles.end())
+		{
+			return res->second.m_pOwningMod;
+		}
+		return nullptr;
+	}
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
 	{
 		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
@@ -257,23 +279,6 @@ class SquirrelManagerBase
 
 		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
-	}
-	inline Mod* getcallingmod(HSquirrelVM* sqvm, int depth = 0)
-	{
-		SQStackInfos stackInfo {};
-		if (1 + depth >= sqvm->_callstacksize)
-		{
-			return nullptr;
-		}
-		sq_stackinfos(sqvm, 1 + depth, stackInfo);
-		std::string sourceName = stackInfo._sourceName;
-		std::replace(sourceName.begin(), sourceName.end(), '/', '\\');
-		std::string filename = "scripts\\vscripts\\" + sourceName;
-		if (auto res = g_pModManager->m_ModFiles.find(filename); res != g_pModManager->m_ModFiles.end())
-		{
-			return res->second.m_pOwningMod;
-		}
-		return nullptr;
 	}
 #pragma endregion
 };
@@ -322,6 +327,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
+			NS::log::squirrel_logger<context>()->error("Call was unable to find function with name '{}'. Is it global?", funcname);
 			return SQRESULT_ERROR;
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
@@ -344,6 +350,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
+			NS::log::squirrel_logger<context>()->error("Call was unable to find function with name '{}'. Is it global?", funcname);
 			return SQRESULT_ERROR;
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object

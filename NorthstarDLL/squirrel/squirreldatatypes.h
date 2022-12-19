@@ -275,7 +275,7 @@ struct alignas(8) HSquirrelVM
 	int _nnativecalls;
 	int _suspended;
 	int _suspended_root;
-	int unk;
+	int _unk;
 	int _suspended_target;
 	int trapAmount;
 	int _suspend_varargs;
