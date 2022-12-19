@@ -1161,6 +1161,9 @@
     <ClInclude Include="scripts\scripthttprequesthandler.h">
       <Filter>Header Files\scripts</Filter>
     </ClInclude>
+    <ClInclude Include="core\macros.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
