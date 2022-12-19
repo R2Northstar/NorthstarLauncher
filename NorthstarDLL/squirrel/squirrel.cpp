@@ -549,6 +549,25 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 	_call(m_pSQVM->sqvm, message.args.size());
 }
 
+ADD_SQFUNC(
+	"string",
+	NSGetModName,
+	"int depth = 0",
+	"Returns the mod name of the script running this function",
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+{
+	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
+	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
+	{
+		g_pSquirrel<context>->pushstring(sqvm, "Unknown (Vanilla/Console)");
+	}
+	else
+	{
+		g_pSquirrel<context>->pushstring(sqvm, mod->Name.c_str());
+	}
+	return SQRESULT_NOTNULL;
+}
+
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
@@ -609,6 +628,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->__sq_getvector = g_pSquirrel<ScriptContext::CLIENT>->__sq_getvector;
 	g_pSquirrel<ScriptContext::UI>->__sq_getthisentity = g_pSquirrel<ScriptContext::CLIENT>->__sq_getthisentity;
 	g_pSquirrel<ScriptContext::UI>->__sq_getobject = g_pSquirrel<ScriptContext::CLIENT>->__sq_getobject;
+
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_stackinfos = module.Offset(0x35970).As<sq_stackinfosType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_stackinfos = g_pSquirrel<ScriptContext::CLIENT>->__sq_stackinfos;
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_createuserdata = module.Offset(0x38D0).As<sq_createuserdataType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_setuserdatatypeid = module.Offset(0x6490).As<sq_setuserdatatypeidType>();
@@ -696,6 +718,8 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getthisentity = module.Offset(0x203B0).As<sq_getthisentityType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getobject = module.Offset(0x6140).As<sq_getobjectType>();
+
+	g_pSquirrel<ScriptContext::SERVER>->__sq_stackinfos = module.Offset(0x35920).As<sq_stackinfosType>();
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_createuserdata = module.Offset(0x38D0).As<sq_createuserdataType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_setuserdatatypeid = module.Offset(0x6470).As<sq_setuserdatatypeidType>();
