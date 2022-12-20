@@ -1161,6 +1161,9 @@
     <ClInclude Include="scripts\scripthttprequesthandler.h">
       <Filter>Header Files\scripts</Filter>
     </ClInclude>
+    <ClInclude Include="client\splash.h">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1395,6 +1398,9 @@
     </ClCompile>
     <ClCompile Include="scripts\scripthttprequesthandler.cpp">
       <Filter>Source Files\scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="client\splash.cpp">
+      <Filter>Source Files\client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

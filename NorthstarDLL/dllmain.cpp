@@ -17,7 +17,7 @@
 #include <string.h>
 #include <filesystem>
 
-#include "splash.h"
+#include "client/splash.h"
 
 typedef void (*initPluginFuncPtr)(void* (*getPluginObject)(PluginObject));
 
@@ -138,8 +138,6 @@ bool LoadPlugins()
 	}
 	return true;
 }
-
-#include "logging.h"
 
 bool InitialiseNorthstar()
 {

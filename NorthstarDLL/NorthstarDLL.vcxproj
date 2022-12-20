@@ -393,6 +393,7 @@
     <ClInclude Include="client\audio.h" />
     <ClInclude Include="client\localchatwriter.h" />
     <ClInclude Include="client\r2client.h" />
+    <ClInclude Include="client\splash.h" />
     <ClInclude Include="config\profile.h" />
     <ClInclude Include="core\convar\concommand.h" />
     <ClInclude Include="core\convar\convar.h" />
@@ -460,6 +461,7 @@
     <ClCompile Include="client\localchatwriter.cpp" />
     <ClCompile Include="client\modlocalisation.cpp" />
     <ClCompile Include="client\r2client.cpp" />
+    <ClCompile Include="client\splash.cpp" />
     <ClCompile Include="config\profile.cpp" />
     <ClCompile Include="core\convar\concommand.cpp" />
     <ClCompile Include="core\convar\convar.cpp" />

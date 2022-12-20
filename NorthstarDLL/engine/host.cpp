@@ -6,7 +6,7 @@
 #include "shared/misccommands.h"
 #include "r2engine.h"
 #include "core/tier0.h"
-#include "splash.h"
+#include "client/splash.h"
 
 #include <chrono>
 
