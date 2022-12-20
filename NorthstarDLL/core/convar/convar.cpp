@@ -489,7 +489,8 @@ bool ConVar::ClampValue(float& flValue)
 	return false;
 }
 
-int ParseConVarFlagsString(std::string modName, std::string sFlags) {
+int ParseConVarFlagsString(std::string modName, std::string sFlags)
+{
 	sFlags += '|'; // add additional | so we register the last flag
 	std::string sCurrentFlag;
 
