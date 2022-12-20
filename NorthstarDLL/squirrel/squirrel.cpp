@@ -551,7 +551,27 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 
 ADD_SQFUNC(
 	"string",
-	NSGetModName,
+	NSGetCurrentModName,
+	"",
+	"Returns the mod name of the script running this function",
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+{
+	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
+	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "NSGetModName was called from a non-mod script. This shouldn't be possible");
+		return SQRESULT_ERROR;
+	}
+	else
+	{
+		g_pSquirrel<context>->pushstring(sqvm, mod->Name.c_str());
+	}
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC(
+	"string",
+	NSGetCallingModName,
 	"int depth = 0",
 	"Returns the mod name of the script running this function",
 	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
@@ -559,7 +579,7 @@ ADD_SQFUNC(
 	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
 	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
 	{
-		g_pSquirrel<context>->pushstring(sqvm, "Unknown (Vanilla/Console)");
+		g_pSquirrel<context>->pushstring(sqvm, "Unknown");
 	}
 	else
 	{
