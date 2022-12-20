@@ -517,7 +517,6 @@ int ParseConVarFlagsString(std::string modName, std::string sFlags) {
 			if (bHasFlags)
 				return iCurrentFlags;
 			else
-				return -1;
 				spdlog::warn("Mod ConCommand {} has unknown flag {}", modName, sCurrentFlag);
 
 			sCurrentFlag = "";
