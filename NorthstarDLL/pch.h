@@ -20,7 +20,6 @@
 
 namespace fs = std::filesystem;
 
-
 #define EXPORT extern "C" __declspec(dllexport)
 
 typedef void (*callable)();

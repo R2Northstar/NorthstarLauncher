@@ -371,7 +371,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirr
 		g_pPluginManager->InformSQVMDestroyed(context);
 		DestroyVM<ScriptContext::CLIENT>(a1, sqvm); // If we pass UI here it crashes
 	}
-	
+
 	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
 
