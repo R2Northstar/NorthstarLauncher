@@ -17,11 +17,7 @@ void, __fastcall, (bool bDedicated))
 // clang-format on
 {
 	SetSplashMessage("Loading Main Menu", 9);
-	std::thread disable_splash(
-		[]()
-		{
-			SetSplashMessage("Done", 10, true);
-		});
+	std::thread disable_splash([]() { SetSplashMessage("Done", 10, true); });
 	disable_splash.detach();
 	spdlog::info("Host_Init()");
 	Host_Init(bDedicated);
