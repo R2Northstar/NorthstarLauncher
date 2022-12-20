@@ -69,6 +69,7 @@ class SquirrelManagerBase
 	sq_compilebufferType __sq_compilebuffer;
 	sq_callType __sq_call;
 	sq_raiseerrorType __sq_raiseerror;
+	sq_compilefileType __sq_compilefile;
 
 	sq_newarrayType __sq_newarray;
 	sq_arrayappendType __sq_arrayappend;
@@ -125,6 +126,10 @@ class SquirrelManagerBase
 	inline SQInteger raiseerror(HSquirrelVM* sqvm, const SQChar* sError)
 	{
 		return __sq_raiseerror(sqvm, sError);
+	}
+
+	inline bool compilefile(HSquirrelVM* sqvm, const char* path, const char* name, int a4) {
+		return __sq_compilefile(sqvm,path,name,a4);
 	}
 
 	inline void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0)
