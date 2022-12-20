@@ -118,42 +118,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				{
 					// parse cvar flags from string
 					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-
-					std::string sFlags = convarObj["Flags"].GetString();
-					sFlags += '|'; // add additional | so we register the last flag
-					std::string sCurrentFlag;
-
-					for (int i = 0; i < sFlags.length(); i++)
-					{
-						if (isspace(sFlags[i]))
-							continue;
-
-						// if we encounter a |, add current string as a flag
-						if (sFlags[i] == '|')
-						{
-							bool bHasFlags = false;
-							int iCurrentFlags;
-
-							for (auto& flagPair : g_PrintCommandFlags)
-							{
-								if (!sCurrentFlag.compare(flagPair.second))
-								{
-									iCurrentFlags = flagPair.first;
-									bHasFlags = true;
-									break;
-								}
-							}
-
-							if (bHasFlags)
-								convar->Flags |= iCurrentFlags;
-							else
-								spdlog::warn("Mod ConVar {} has unknown flag {}", convar->Name, sCurrentFlag);
-
-							sCurrentFlag = "";
-						}
-						else
-							sCurrentFlag += sFlags[i];
-					}
+					convar->Flags |= ParseConVarFlagsString(convar->Name, convarObj["Flags"].GetString());
 				}
 			}
 
@@ -201,44 +166,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				{
 					// parse cvar flags from string
 					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-
-					std::string sFlags = concommandObj["Flags"].GetString();
-					sFlags += '|'; // add additional | so we register the last flag
-					std::string sCurrentFlag;
-
-					for (int i = 0; i < sFlags.length(); i++)
-					{
-						if (isspace(sFlags[i]))
-							continue;
-
-						// if we encounter a |, add current string as a flag
-						if (sFlags[i] == '|')
-						{
-							bool bHasFlags = false;
-							int iCurrentFlags;
-
-							for (auto& flagPair : g_PrintCommandFlags)
-							{
-								if (!sCurrentFlag.compare(flagPair.second))
-								{
-									iCurrentFlags = flagPair.first;
-									bHasFlags = true;
-									break;
-								}
-							}
-
-							if (bHasFlags)
-								concommand->Flags |= iCurrentFlags;
-							else
-								spdlog::warn("Mod ConCommand {} has unknown flag {}", concommand->Name, sCurrentFlag);
-
-							sCurrentFlag = "";
-						}
-						else
-						{
-							sCurrentFlag += sFlags[i];
-						}
-					}
+					concommand->Flags |= ParseConVarFlagsString(concommand->Name, concommandObj["Flags"].GetString());
 				}
 			}
 
@@ -368,17 +296,25 @@ template <ScriptContext context> auto ModConCommandCallback_Internal(std::string
 			args.push_back(command.Arg(i));
 		g_pSquirrel<context>->AsyncCall(name, args);
 	}
+	else
+	{
+		spdlog::warn("ConCommand `{}` was called while the associated Squirrel VM `{}` was unloaded", name, GetContextName(context));
+	}
 }
 
 auto ModConCommandCallback(const CCommand& command)
 {
 	ModConCommand* found = nullptr;
 	auto commandString = std::string(command.GetCommandString());
+
+	// Finding the first space to remove the command's name
 	auto firstSpace = commandString.find(' ');
 	if (firstSpace)
 	{
 		commandString = commandString.substr(0, firstSpace);
 	}
+
+	// Find the mod this command belongs to
 	for (auto& mod : g_pModManager->m_LoadedMods)
 	{
 		auto res = std::find_if(
@@ -393,6 +329,7 @@ auto ModConCommandCallback(const CCommand& command)
 	}
 	if (!found)
 		return;
+
 	switch (found->Context)
 	{
 	case ScriptContext::CLIENT:
