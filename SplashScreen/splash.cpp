@@ -230,7 +230,7 @@ NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 			throw std::runtime_error("Failed to create window class");
 	}
 
-	DWORD exStyle = WS_EX_LAYERED | WS_EX_TOOLWINDOW;
+	DWORD exStyle = WS_EX_LAYERED;
 
 	RECT parentRect;
 	GetWindowRect(GetDesktopWindow(), &parentRect);
@@ -271,7 +271,7 @@ NSSplashScreen::NSSplashScreen(std::string altSplashPath)
 		});
 	fadeIn.detach();
 
-	SetWindowPos(m_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	SetWindowPos(m_hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 BOOL NSSplashScreen::RegisterClass(LPCTSTR szWindowClassName)
@@ -306,20 +306,9 @@ void NSSplashScreen::HideSplashScreen()
 {
 	if (m_hWnd != NULL)
 	{
-		std::thread fadeOut(
-			[m_hWnd = m_hWnd]()
-			{
-				for (int i = 0; i < 128; i++)
-				{
-					std::this_thread::sleep_for(std::chrono::microseconds(1));
-					SetLayeredWindowAttributes(m_hWnd, RGB(255, 0, 0), 255 - i * 2, LWA_COLORKEY | LWA_ALPHA);
-				}
-				// DestroyWindow doesnt work from threads :/
-				PostMessage(m_hWnd, WM_CLOSE, 0, 0);
-			});
-		fadeOut.detach();
+		PostMessage(m_hWnd, WM_CLOSE, 0, 0);
+		m_hWnd = NULL;
 	}
-	m_hWnd = NULL;
 }
 
 LRESULT CALLBACK NSSplashScreen::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

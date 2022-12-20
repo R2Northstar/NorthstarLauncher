@@ -20,7 +20,6 @@ void, __fastcall, (bool bDedicated))
 	std::thread disable_splash(
 		[]()
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			SetSplashMessage("Done", 10, true);
 		});
 	disable_splash.detach();
