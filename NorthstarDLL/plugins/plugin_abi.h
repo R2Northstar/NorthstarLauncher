@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "squirrelclasstypes.h"
+#include "squirrel/squirrelclasstypes.h"
 
 #define ABI_VERSION 2
 

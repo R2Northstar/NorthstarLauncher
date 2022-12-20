@@ -4,7 +4,7 @@
 #include "convar.h"
 #include "shared/sourceinterface.h"
 
-#include "pluginbackend.h"
+#include "plugins/pluginbackend.h"
 
 #include <float.h>
 

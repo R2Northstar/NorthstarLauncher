@@ -8,7 +8,8 @@
 #include "plugins/plugins.h"
 #include "util/version.h"
 #include "squirrel/squirrel.h"
-
+#include "shared/gamepresence.h"
+#include "server/serverpresence.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"

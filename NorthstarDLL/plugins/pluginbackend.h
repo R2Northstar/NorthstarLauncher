@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "plugin_abi.h"
-#include "gamepresence.h"
+#include "shared/gamepresence.h"
 
 #include <queue>
 #include <mutex>

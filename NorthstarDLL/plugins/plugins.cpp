@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "plugins.h"
-#include "nsprefix.h"
+#include "config/profile.h"
 
 #include "squirrel/squirrel.h"
 #include "plugins.h"
@@ -10,11 +10,11 @@
 #include "server/serverpresence.h"
 #include <optional>
 
-#include "version.h"
+#include "util/version.h"
 #include "pluginbackend.h"
-#include "wininfo.h"
-#include "logging.h"
-#include "dedicated.h"
+#include "util/wininfo.h"
+#include "logging/logging.h"
+#include "dedicated/dedicated.h"
 
 PluginManager* g_pPluginManager;
 

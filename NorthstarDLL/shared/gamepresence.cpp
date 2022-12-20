@@ -1,12 +1,12 @@
 #include "pch.h"
 
 #include "gamepresence.h"
-#include "pluginbackend.h"
-#include "plugins.h"
-#include "dedicated.h"
-#include "serverpresence.h"
-#include "masterserver.h"
-#include "squirrel.h"
+#include "plugins/pluginbackend.h"
+#include "plugins/plugins.h"
+#include "dedicated/dedicated.h"
+#include "server/serverpresence.h"
+#include "masterserver/masterserver.h"
+#include "squirrel/squirrel.h"
 
 GameStatePresence* g_pGameStatePresence;
 

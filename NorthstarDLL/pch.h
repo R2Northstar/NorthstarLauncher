@@ -26,9 +26,6 @@ namespace fs = std::filesystem;
 typedef void (*callable)();
 typedef void (*callable_v)(void* v);
 
-#include "structs.h"
-#include "color.h"
-
 // clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on

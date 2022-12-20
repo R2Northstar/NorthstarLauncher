@@ -2,7 +2,7 @@
 #include "concommand.h"
 #include "shared/misccommands.h"
 
-#include "pluginbackend.h"
+#include "plugins/pluginbackend.h"
 
 #include <iostream>
 

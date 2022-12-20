@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "pluginbackend.h"
 #include "plugin_abi.h"
-#include "serverpresence.h"
-#include "masterserver.h"
-#include "squirrel.h"
+#include "server/serverpresence.h"
+#include "masterserver/masterserver.h"
+#include "squirrel/squirrel.h"
 #include "plugins.h"
 
-#include "concommand.h"
+#include "core/convar/concommand.h"
 
 #define EXPORT extern "C" __declspec(dllexport)
 
