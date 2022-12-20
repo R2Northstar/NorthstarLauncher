@@ -1,13 +1,13 @@
 #include "pch.h"
-#include "masterserver.h"
+#include "masterserver/masterserver.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#include "squirrel.h"
+#include "squirrel/squirrel.h"
 #include "verifiedmods.h"
 #include "libzip/include/zip.h"
 #include <fstream>
-#include "nsprefix.h"
+#include "config/profile.h"
 
 using namespace rapidjson;
 

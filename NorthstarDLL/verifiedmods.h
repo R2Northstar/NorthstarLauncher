@@ -1,4 +1,4 @@
 #pragma once
-#include "memalloc.h"
+#include "core/memalloc.h"
 
 void InitialiseVerifiedModsScripts(HMODULE baseAddress);
