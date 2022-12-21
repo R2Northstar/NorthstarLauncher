@@ -353,15 +353,21 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	return sqvm;
 }
 
-template <ScriptContext context> void (*__fastcall CSquirrelVM_init)(CSquirrelVM* vm, ScriptContext realContext,float time);
-template <ScriptContext context> void __fastcall CSquirrelVM_initHook(CSquirrelVM* vm, ScriptContext realContext, float time) {
-	CSquirrelVM_init<context>(vm,realContext,time);
-	for (Mod mod : g_pModManager->m_LoadedMods) {
-		std::string path = mod.initScript;
-		std::string name = path.substr(path.find_last_of('/')+1);
-		if(g_pSquirrel<context>->compilefile(vm->sqvm,path.c_str(), name.c_str(), 0))
-			g_pSquirrel<context>->compilefile(vm->sqvm,path.c_str(), name.c_str(), 1);
+template <ScriptContext context> bool (*__fastcall CSquirrelVM_init)(CSquirrelVM* vm, ScriptContext realContext, float time);
+template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelVM* vm, ScriptContext realContext, float time)
+{
+	bool ret = CSquirrelVM_init<context>(vm, realContext, time);
+	for (Mod mod : g_pModManager->m_LoadedMods)
+	{
+		if (mod.initScript.size() != 0) {
+			std::string path = mod.initScript;
+			std::string name = path.substr(path.find_last_of('/') + 1);
+			if (g_pSquirrel<context>->compilefile(vm->sqvm, path.c_str(), name.c_str(), 0))
+				g_pSquirrel<context>->compilefile(vm->sqvm, path.c_str(), name.c_str(), 1);
+		}
+
 	}
+	return ret;
 }
 
 template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, HSquirrelVM* sqvm);

@@ -128,8 +128,9 @@ class SquirrelManagerBase
 		return __sq_raiseerror(sqvm, sError);
 	}
 
-	inline bool compilefile(HSquirrelVM* sqvm, const char* path, const char* name, int a4) {
-		return __sq_compilefile(sqvm,path,name,a4);
+	inline bool compilefile(HSquirrelVM* sqvm, const char* path, const char* name, int a4)
+	{
+		return __sq_compilefile(sqvm, path, name, a4);
 	}
 
 	inline void newarray(HSquirrelVM* sqvm, const SQInteger stackpos = 0)

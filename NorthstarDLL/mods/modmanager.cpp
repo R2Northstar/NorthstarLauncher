@@ -220,7 +220,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
-	if (modJson.HasMember("InitScript") && modJson["InitScript"].IsString()) {
+	if (modJson.HasMember("InitScript") && modJson["InitScript"].IsString())
+	{
 		initScript = modJson["InitScript"].GetString();
 	}
 
