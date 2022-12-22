@@ -1163,6 +1163,7 @@
     </ClInclude>
     <ClInclude Include="client\splash.h">
       <Filter>Header Files\client</Filter>
+		</ClInclude>
     <ClInclude Include="shared\maxplayers.h">
       <Filter>Header Files\shared</Filter>
     </ClInclude>
