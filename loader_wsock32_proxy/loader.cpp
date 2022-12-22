@@ -81,7 +81,6 @@ bool ProvisionNorthstar()
 
 	bool dedicated = strstr(GetCommandLineA(), "-dedicated");
 	bool nosplash = strstr(GetCommandLineA(), "-nosplash");
-	bool showConsole = strstr(GetCommandLineA(), "-showconsole");
 
 	if (!dedicated && !nosplash)
 	{
@@ -125,11 +124,6 @@ bool ProvisionNorthstar()
 			initSplash(altSplash.c_str());
 			DisableProcessWindowsGhosting();
 		}
-	}
-
-	if (!nosplash && !showConsole)
-	{
-		ShowWindow(GetConsoleWindow(), SW_HIDE);
 	}
 
 	if (MH_Initialize() != MH_OK)

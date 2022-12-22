@@ -145,6 +145,7 @@ bool InitialiseNorthstar()
 	if (bInitialised)
 		return false;
 
+	InitialiseVersion();
 	InitialiseCrashHandler();
 
 	atexit(CloseConsole);
@@ -160,7 +161,6 @@ bool InitialiseNorthstar()
 	InitialiseLogging();
 
 	InitialiseNorthstarPrefix();
-	InitialiseVersion();
 
 	InitialiseSquirrelManagers();
 

@@ -6,6 +6,8 @@
 char version[16];
 char NSUserAgent[256];
 
+bool IsDevBuild = false;
+
 void InitialiseVersion()
 {
 	constexpr int northstar_version[4] {NORTHSTAR_VERSION};
@@ -24,6 +26,7 @@ void InitialiseVersion()
 			northstar_version[0],
 			northstar_version[1],
 			northstar_version[2]);
+		IsDevBuild = true;
 	}
 	else
 	{

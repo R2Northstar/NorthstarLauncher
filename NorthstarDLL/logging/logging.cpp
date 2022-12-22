@@ -5,6 +5,7 @@
 #include "config/profile.h"
 #include "core/tier0.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "util/version.h"
 
 #include <iomanip>
 #include <sstream>
@@ -131,7 +132,7 @@ void InitialiseConsole()
 	bool hasAttached = AttachConsole(-1);
 	if (!hasAttached)
 	{
-		if (strstr(GetCommandLineA(), "-showconsole") || strstr(GetCommandLineA(), "-nosplash"))
+		if (strstr(GetCommandLineA(), "-showconsole") || strstr(GetCommandLineA(), "-nosplash") || IsDevBuild)
 		{
 			if (AllocConsole() == FALSE)
 			{
