@@ -1161,9 +1161,6 @@
     <ClInclude Include="scripts\scripthttprequesthandler.h">
       <Filter>Header Files\scripts</Filter>
     </ClInclude>
-    <ClInclude Include="core\macros.h">
-     <Filter>Header Files\shared</Filter>
-    </ClInclude>
     <ClInclude Include="shared\maxplayers.h">
       <Filter>Header Files\shared</Filter>
     </ClInclude>
@@ -1171,6 +1168,9 @@
       <Filter>Header Files\shared</Filter>
     </ClInclude>
     <ClInclude Include="core\sourceinterface.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\macros.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
