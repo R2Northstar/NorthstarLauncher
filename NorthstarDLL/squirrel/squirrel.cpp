@@ -88,6 +88,18 @@ eSQReturnType SQReturnTypeFromString(const char* pReturnType)
 		return eSQReturnType::Default; // previous default value
 }
 
+ScriptContext ScriptContextFromString(std::string string)
+{
+	if (string == "UI")
+		return ScriptContext::UI;
+	if (string == "CLIENT")
+		return ScriptContext::CLIENT;
+	if (string == "SERVER")
+		return ScriptContext::SERVER;
+	else
+		return ScriptContext::INVALID;
+}
+
 const char* SQTypeNameFromID(int type)
 {
 	switch (type)
@@ -317,11 +329,11 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	return sqvm;
 }
 
-template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, HSquirrelVM* sqvm);
-template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirrelVM* sqvm)
+template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, CSquirrelVM* sqvm);
+template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirrelVM* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
-	if (IsUIVM(context, sqvm))
+	if (IsUIVM(context, sqvm->sqvm))
 	{
 		realContext = ScriptContext::UI;
 		g_pSquirrel<ScriptContext::UI>->VMDestroyed();
@@ -329,7 +341,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirr
 	}
 	else
 	{
-		g_pSquirrel<context>->m_pSQVM = nullptr; // Fixes a race-like bug
+		g_pSquirrel<context>->VMDestroyed();
 		DestroyVM<context>(a1, sqvm);
 	}
 
