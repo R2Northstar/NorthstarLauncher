@@ -359,34 +359,31 @@ template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelV
 	bool ret = CSquirrelVM_init<context>(vm, realContext, time);
 	for (Mod mod : g_pModManager->m_LoadedMods)
 	{
-		if (mod.initScript.size() != 0) {
-			std::string path = mod.initScript;
-			std::string name = path.substr(path.find_last_of('/') + 1);
-			if (g_pSquirrel<context>->compilefile(vm->sqvm, path.c_str(), name.c_str(), 0))
-				g_pSquirrel<context>->compilefile(vm->sqvm, path.c_str(), name.c_str(), 1);
+		if (mod.initScript.size() != 0)
+		{
+			std::string name = mod.initScript.substr(mod.initScript.find_last_of('/') + 1);
+			std::string path = std::string("scripts/vscripts/") + mod.initScript;
+			if (g_pSquirrel<context>->compilefile(vm, path.c_str(), name.c_str(), 0))
+				g_pSquirrel<context>->compilefile(vm, path.c_str(), name.c_str(), 1);
 		}
-
 	}
 	return ret;
 }
 
-template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, HSquirrelVM* sqvm);
-template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirrelVM* sqvm)
+template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, CSquirrelVM* sqvm);
+template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirrelVM* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
-	if (IsUIVM(context, sqvm))
+	if (IsUIVM(context, sqvm->sqvm))
 	{
 		realContext = ScriptContext::UI;
 		g_pSquirrel<ScriptContext::UI>->VMDestroyed();
-		g_pPluginManager->InformSQVMDestroyed(ScriptContext::UI);
-		// Don't call DestroyVM here because it crashes.
-		// Respawn Code :tm:
+		DestroyVM<ScriptContext::CLIENT>(a1, sqvm); // If we pass UI here it crashes
 	}
 	else
 	{
 		g_pSquirrel<context>->VMDestroyed();
-		g_pPluginManager->InformSQVMDestroyed(context);
-		DestroyVM<ScriptContext::CLIENT>(a1, sqvm); // If we pass UI here it crashes
+		DestroyVM<context>(a1, sqvm);
 	}
 
 	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);

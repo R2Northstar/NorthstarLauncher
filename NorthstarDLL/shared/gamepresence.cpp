@@ -33,16 +33,16 @@ void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const Serve
 void GameStatePresence::RunFrame()
 {
 	if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
-		g_pSquirrel<ScriptContext::UI>->Call("GenerateUIPresence");
+		g_pSquirrel<ScriptContext::UI>->Call("NorthstarCodeCallback_GenerateUIPresence");
 
 	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm != nullptr)
 	{
-		auto test = g_pSquirrel<ScriptContext::CLIENT>->Call("GenerateGameState");
+		auto test = g_pSquirrel<ScriptContext::CLIENT>->Call("NorthstarCodeCallback_GenerateGameState");
 	}
 	g_pPluginCommunicationhandler->GeneratePresenceObjects();
 }
 
-ADD_SQFUNC("void", NSPushGameStateData, "struct gamestate", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSPushGameStateData, "GameStateStruct gamestate", "", ScriptContext::CLIENT)
 {
 	SQStructInstance* structInst = g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm->_stackOfCurrentFunction[1]._VAL.asStructInstance;
 	g_pGameStatePresence->map = structInst->data[0]._VAL.asString->_val;
@@ -68,7 +68,7 @@ ADD_SQFUNC("void", NSPushGameStateData, "struct gamestate", "", ScriptContext::C
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSPushUIPresence, "struct presence", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSPushUIPresence, "UIPresenceStruct presence", "", ScriptContext::UI)
 {
 	SQStructInstance* structInst = g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm->_stackOfCurrentFunction[1]._VAL.asStructInstance;
 
