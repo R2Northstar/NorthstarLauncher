@@ -39,7 +39,7 @@ eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
 
 void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function);
-std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context);
+
 ScriptContext ScriptContextFromString(std::string string);
 
 namespace NS::log

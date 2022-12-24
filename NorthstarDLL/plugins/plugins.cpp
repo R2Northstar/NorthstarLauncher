@@ -214,8 +214,8 @@ bool PluginManager::LoadPlugins()
 	}
 	for (fs::path path : paths)
 	{
-		LoadPlugin(path, &funcs, &data);
-		data.pluginHandle += 1;
+		if (LoadPlugin(path, &funcs, &data))
+			data.pluginHandle += 1;
 	}
 	return true;
 }
