@@ -158,13 +158,17 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 {
 	s->RegisterSquirrelFunc = RegisterSquirrelFunc;
 	s->__sq_defconst = __sq_defconst;
+
 	s->__sq_compilebuffer = __sq_compilebuffer;
 	s->__sq_call = __sq_call;
 	s->__sq_raiseerror = __sq_raiseerror;
+
 	s->__sq_newarray = __sq_newarray;
 	s->__sq_arrayappend = __sq_arrayappend;
+
 	s->__sq_newtable = __sq_newtable;
 	s->__sq_newslot = __sq_newslot;
+
 	s->__sq_pushroottable = __sq_pushroottable;
 	s->__sq_pushstring = __sq_pushstring;
 	s->__sq_pushinteger = __sq_pushinteger;
@@ -174,6 +178,11 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_pushvector = __sq_pushvector;
 	s->__sq_pushobject = __sq_pushobject;
 	s->__sq_getstring = __sq_getstring;
+	s->__sq_getthisentity = __sq_getthisentity;
+	s->__sq_getobject = __sq_getobject;
+
+	s->__sq_stackinfos = __sq_stackinfos;
+
 	s->__sq_getinteger = __sq_getinteger;
 	s->__sq_getfloat = __sq_getfloat;
 	s->__sq_getbool = __sq_getbool;
@@ -184,6 +193,10 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_createuserdata = __sq_createuserdata;
 	s->__sq_setuserdatatypeid = __sq_setuserdatatypeid;
 	s->__sq_getfunction = __sq_getfunction;
+
+	s->__sq_getentityfrominstance = __sq_getentityfrominstance;
+	s->__sq_GetEntityConstant_CBaseEntity = __sq_GetEntityConstant_CBaseEntity;
+
 	s->__sq_schedule_call_external = AsyncCall_External;
 }
 
