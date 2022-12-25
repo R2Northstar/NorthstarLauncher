@@ -537,10 +537,12 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 		{
 			NS::log::squirrel_logger<context>()->error(
 				"ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
-			return;
+			continue;
 		}
+
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
 		pushroottable(m_pSQVM->sqvm);
+
 		if (message.isExternal)
 		{
 			message.externalFunc(m_pSQVM->sqvm);
