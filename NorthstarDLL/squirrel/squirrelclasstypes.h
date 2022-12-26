@@ -73,6 +73,7 @@ struct SQFuncRegistration
 
 enum class ScriptContext : int
 {
+	INVALID = -1,
 	SERVER,
 	CLIENT,
 	UI,
@@ -222,6 +223,8 @@ typedef SQRESULT (*sq_getuserdataType)(HSquirrelVM* sqvm, SQInteger iStackpos, v
 typedef SQFloat* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger iStackpos);
 typedef SQBool (*sq_getthisentityType)(HSquirrelVM*, void** ppEntity);
 typedef void (*sq_getobjectType)(HSquirrelVM*, SQInteger iStackPos, SQObject* pOutObj);
+
+typedef long long (*sq_stackinfosType)(HSquirrelVM* sqvm, int iLevel, SQStackInfos* pOutObj, int iCallStackSize);
 
 // sq stack userpointer funcs
 typedef void* (*sq_createuserdataType)(HSquirrelVM* sqvm, SQInteger iSize);

@@ -1179,6 +1179,18 @@
     <ClInclude Include="scripts\scripthttprequesthandler.h">
       <Filter>Header Files\scripts</Filter>
     </ClInclude>
+    <ClInclude Include="shared\maxplayers.h">
+      <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="shared\misccommands.h">
+      <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="core\sourceinterface.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\macros.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1416,6 +1428,9 @@
     </ClCompile>
     <ClCompile Include="verifiedmods.cpp">
       <Filter>Source Files\scripts\client</Filter>
+    </ClCompile>
+    <ClCompile Include="core\sourceinterface.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
