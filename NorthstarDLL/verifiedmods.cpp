@@ -186,8 +186,8 @@ void DownloadMod(char* modName, char* modVersion)
 			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
 			spdlog::info("Fetching mod {} from Thunderstore...", dependencyString);
-			result = curl_easy_perform(curl);
 			currentDownloadProgress = 0;
+			result = curl_easy_perform(curl);
 			curl_easy_cleanup(curl);
 
 			if (result == CURLcode::CURLE_OK)
