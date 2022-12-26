@@ -332,6 +332,12 @@ ADD_SQFUNC("bool", NSIsModBeingDownloaded, "string modName", "", ScriptContext::
 	return SQRESULT_NOTNULL;
 }
 
+ADD_SQFUNC("float", NSGetCurrentDownloadProgress, "", "", ScriptContext::UI)
+{
+	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadProgress);
+	return SQRESULT_NOTNULL;
+}
+
 ADD_SQFUNC("void", NSDownloadMod, "string modName, string modVersion", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
