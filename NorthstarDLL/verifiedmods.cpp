@@ -123,13 +123,14 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 }
 
 /**
- * cURL method to follow download progression. 
+ * cURL method to follow download progression.
  **/
-int progress_callback(void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded)
+int progress_callback(
+	void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded)
 {
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
-		currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize *100);
+		currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
 		spdlog::info("    => Download progress: {}%", currentDownloadProgress);
 	}
 
