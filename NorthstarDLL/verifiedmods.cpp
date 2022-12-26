@@ -129,8 +129,8 @@ int progress_callback(void* ptr, curl_off_t totalDownloadSize, curl_off_t finish
 {
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
-		currentDownloadProgress = static_cast<float>(finishedDownloadSize) / totalDownloadSize;
-		spdlog::info("    => Download progress: {}", currentDownloadProgress);
+		currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize *100);
+		spdlog::info("    => Download progress: {}%", currentDownloadProgress);
 	}
 
 	return 0;
