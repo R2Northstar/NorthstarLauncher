@@ -25,6 +25,7 @@ Document verifiedModsJson;
 
 // This list holds the names of all mods that are currently being downloaded.
 std::vector<std::string> modsBeingDownloaded {};
+float currentDownloadProgress = 0;
 
 // Test string used to test branch without masterserver
 const char* modsTestString = "{"
@@ -122,6 +123,20 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 }
 
 /**
+ * cURL method to follow download progression. 
+ **/
+int progress_callback(void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded)
+{
+	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
+	{
+		currentDownloadProgress = static_cast<float>(finishedDownloadSize) / totalDownloadSize;
+		spdlog::info("    => Download progress: {}", currentDownloadProgress);
+	}
+
+	return 0;
+}
+
+/**
  * Downloads a given mod from Thunderstore API to local game folder.
  * This is done following these steps:
  *     * Recreating mod dependency string from verified mods information;
@@ -167,9 +182,12 @@ void DownloadMod(char* modName, char* modVersion)
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
 			spdlog::info("Fetching mod {} from Thunderstore...", dependencyString);
 			result = curl_easy_perform(curl);
+			currentDownloadProgress = 0;
 			curl_easy_cleanup(curl);
 
 			if (result == CURLcode::CURLE_OK)
