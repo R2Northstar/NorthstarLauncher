@@ -33,6 +33,12 @@ const char* modsTestString = "{"
 							 "\"DependencyPrefix\": \"Fifty-Frostbite\","
 							 "\"Versions\" : ["
 							 "{ \"Version\": \"0.0.1\" }"
+							 "]},"
+
+							 "\"Zircon Spitfire\": {"
+							 "\"DependencyPrefix\": \"Juicys_Emporium-Zircon_Spitfire\","
+							 "\"Versions\" : ["
+							 "{ \"Version\": \"1.0.0\" }"
 							 "]}"
 							 "}";
 
