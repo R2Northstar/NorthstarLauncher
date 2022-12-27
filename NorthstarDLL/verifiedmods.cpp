@@ -25,6 +25,17 @@ Document verifiedModsJson;
 
 // This list holds the names of all mods that are currently being downloaded.
 std::vector<std::string> modsBeingDownloaded {};
+
+// This vector holds information about the currently downloaded mod:
+//     1. received quantity
+//     2. total quantity expected
+//     3. ratio of received / expected (computed in native for PERFS!)
+//     4. nature of previous data (0=download stats [in MBs], 1=extraction stats [in files count])
+//
+// The following information should only be used with big files (as there's no need to display this
+// for small files due to extraction speed):
+//     5. extracted size of current file
+//     6. total size of current file
 std::vector<float> currentDownloadStats(6);
 
 // Test string used to test branch without masterserver
@@ -138,7 +149,8 @@ int progress_callback(
 	{
 		auto currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
 		spdlog::info("    => Download progress: {}%", currentDownloadProgress);
-		currentDownloadStats = {static_cast<float>(finishedDownloadSize), static_cast<float>(totalDownloadSize), currentDownloadProgress, 0, 0, 0};
+		currentDownloadStats = {
+			static_cast<float>(finishedDownloadSize), static_cast<float>(totalDownloadSize), currentDownloadProgress, 0, 0, 0};
 	}
 
 	return 0;
