@@ -25,7 +25,7 @@ Document verifiedModsJson;
 
 // This list holds the names of all mods that are currently being downloaded.
 std::vector<std::string> modsBeingDownloaded {};
-std::vector<float> currentDownloadStats(3);
+std::vector<float> currentDownloadStats(4);
 
 // Test string used to test branch without masterserver
 const char* modsTestString = "{"
@@ -138,7 +138,7 @@ int progress_callback(
 	{
 		auto currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
 		spdlog::info("    => Download progress: {}%", currentDownloadProgress);
-		currentDownloadStats = {static_cast<float>(finishedDownloadSize), static_cast<float>(totalDownloadSize), currentDownloadProgress};
+		currentDownloadStats = {static_cast<float>(finishedDownloadSize), static_cast<float>(totalDownloadSize), currentDownloadProgress, 0};
 	}
 
 	return 0;
@@ -194,7 +194,7 @@ void DownloadMod(char* modName, char* modVersion)
 			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
 			spdlog::info("Fetching mod {} from Thunderstore...", dependencyString);
-			currentDownloadStats = {0, 100, 0};
+			currentDownloadStats = {0, 100, 0, 0};
 			result = curl_easy_perform(curl);
 			curl_easy_cleanup(curl);
 
@@ -233,6 +233,10 @@ void DownloadMod(char* modName, char* modVersion)
 			//     * archive.zip/mods/firstMod/mod.json
 			// etc.
 			num_entries = zip_get_num_entries(zip, 0);
+
+			// Update current statistics to display extraction progress.
+			currentDownloadStats = {0, static_cast<float>(num_entries), 0, 1};
+
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
 			{
 				const char* name = zip_get_name(zip, i, 0);
@@ -286,6 +290,11 @@ void DownloadMod(char* modName, char* modVersion)
 					}
 					writeStream.close();
 				}
+
+				// Sets first statistics field to the count of extracted files, and update
+				// progression percentage accordingly.
+				currentDownloadStats[0] = static_cast<float>(i);
+				currentDownloadStats[2] = roundf(currentDownloadStats[0] / currentDownloadStats[1] * 100);
 			}
 
 		REQUEST_END_CLEANUP:
@@ -349,6 +358,8 @@ ADD_SQFUNC("array<float>", NSGetCurrentDownloadProgress, "", "", ScriptContext::
 	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadStats[1]);
 	g_pSquirrel<context>->arrayappend(sqvm, -2);
 	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadStats[2]);
+	g_pSquirrel<context>->arrayappend(sqvm, -2);
+	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadStats[3]);
 	g_pSquirrel<context>->arrayappend(sqvm, -2);
 
 	return SQRESULT_NOTNULL;
