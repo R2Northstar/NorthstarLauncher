@@ -25,7 +25,7 @@ Document verifiedModsJson;
 
 // This list holds the names of all mods that are currently being downloaded.
 std::vector<std::string> modsBeingDownloaded {};
-float currentDownloadProgress = 0;
+std::vector<float> currentDownloadStats(3);
 
 // Test string used to test branch without masterserver
 const char* modsTestString = "{"
@@ -130,8 +130,9 @@ int progress_callback(
 {
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
-		currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
+		auto currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
 		spdlog::info("    => Download progress: {}%", currentDownloadProgress);
+		currentDownloadStats = {static_cast<float>(finishedDownloadSize), static_cast<float>(totalDownloadSize), currentDownloadProgress};
 	}
 
 	return 0;
@@ -187,7 +188,7 @@ void DownloadMod(char* modName, char* modVersion)
 			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
 			spdlog::info("Fetching mod {} from Thunderstore...", dependencyString);
-			currentDownloadProgress = 0;
+			currentDownloadStats = {0, 100, 0};
 			result = curl_easy_perform(curl);
 			curl_easy_cleanup(curl);
 
@@ -333,9 +334,17 @@ ADD_SQFUNC("bool", NSIsModBeingDownloaded, "string modName", "", ScriptContext::
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("float", NSGetCurrentDownloadProgress, "", "", ScriptContext::UI)
+ADD_SQFUNC("array<float>", NSGetCurrentDownloadProgress, "", "", ScriptContext::UI)
 {
-	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadProgress);
+	g_pSquirrel<context>->newarray(sqvm, 0);
+
+	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadStats[0]);
+	g_pSquirrel<context>->arrayappend(sqvm, -2);
+	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadStats[1]);
+	g_pSquirrel<context>->arrayappend(sqvm, -2);
+	g_pSquirrel<context>->pushfloat(sqvm, currentDownloadStats[2]);
+	g_pSquirrel<context>->arrayappend(sqvm, -2);
+
 	return SQRESULT_NOTNULL;
 }
 
