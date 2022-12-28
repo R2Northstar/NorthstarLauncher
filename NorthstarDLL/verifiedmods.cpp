@@ -148,7 +148,6 @@ int progress_callback(
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
 		auto currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
-		spdlog::info("    => Download progress: {}%", currentDownloadProgress);
 		currentDownloadStats[0] = static_cast<float>(finishedDownloadSize);
 		currentDownloadStats[1] = static_cast<float>(totalDownloadSize);
 		currentDownloadStats[2] = static_cast<float>(currentDownloadProgress);
