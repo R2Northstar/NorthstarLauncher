@@ -315,6 +315,8 @@ void DownloadMod(char* modName, char* modVersion)
 				currentDownloadStats[2] = roundf(currentDownloadStats[0] / currentDownloadStats[1] * 100);
 			}
 
+			spdlog::info("Mod successfully extracted.");
+
 		REQUEST_END_CLEANUP:
 			fclose(fp);
 			modsBeingDownloaded.erase(std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName));
