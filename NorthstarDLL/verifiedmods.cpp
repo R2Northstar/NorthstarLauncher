@@ -157,6 +157,32 @@ int progress_callback(
 }
 
 /**
+ * Returns uncompressed size of all mod files from a Thunderstore archive.
+ * This excludes all Thunderstore-related files.
+ **/
+int get_mod_archive_content_size(zip_t* zip)
+{
+	int totalSize = 0;
+	int num_entries = zip_get_num_entries(zip, 0);
+
+	for (zip_uint64_t i = 0; i < num_entries; ++i)
+	{
+		const char* name = zip_get_name(zip, i, 0);
+		std::string modName = name;
+		if (modName.back() == '/' || strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
+		{
+			continue;
+		}
+
+		struct zip_stat sb;
+		zip_stat_index(zip, i, 0, &sb);
+		totalSize += sb.size;
+	}
+
+	return totalSize;
+}
+
+/**
  * Downloads a given mod from Thunderstore API to local game folder.
  * This is done following these steps:
  *     * Recreating mod dependency string from verified mods information;
@@ -249,23 +275,11 @@ void DownloadMod(char* modName, char* modVersion)
 			// etc.
 			num_entries = zip_get_num_entries(zip, 0);
 
-			// Update current statistics to display extraction progress.
+			// Update current statistics to display files extraction progress.
 			currentDownloadStats = {0, static_cast<float>(num_entries), 0, 1, 0, 0};
-			
-			// Compute total size of archive by looping over its files.
-			for (zip_uint64_t i = 0; i < num_entries; ++i)
-			{
-				const char* name = zip_get_name(zip, i, 0);
-				std::string modName = name;
-				if (modName.back() == '/' || strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
-				{
-					continue;
-				}
 
-				struct zip_stat sb;
-				zip_stat_index(zip, i, 0, &sb);
-				totalSize += sb.size;
-			}
+			// Compute total mod size to update extraction progress.
+			totalSize = get_mod_archive_content_size(zip);
 
 			// Start unzipping archive.
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
