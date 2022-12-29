@@ -185,6 +185,9 @@ void DownloadMod(char* modName, char* modVersion)
 			zip_int64_t num_entries;
 			int err = 0;
 			zip_t* zip;
+			struct zip_stat sb;
+			int totalSize = 0;
+			int extractedSize = 0;
 
 			// loading game path
 			std::string archiveName = (std::string)dependencyString + ".zip";
@@ -248,7 +251,23 @@ void DownloadMod(char* modName, char* modVersion)
 
 			// Update current statistics to display extraction progress.
 			currentDownloadStats = {0, static_cast<float>(num_entries), 0, 1, 0, 0};
+			
+			// Compute total size of archive by looping over its files.
+			for (zip_uint64_t i = 0; i < num_entries; ++i)
+			{
+				const char* name = zip_get_name(zip, i, 0);
+				std::string modName = name;
+				if (modName.back() == '/' || strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
+				{
+					continue;
+				}
 
+				struct zip_stat sb;
+				zip_stat_index(zip, i, 0, &sb);
+				totalSize += sb.size;
+			}
+
+			// Start unzipping archive.
 			for (zip_uint64_t i = 0; i < num_entries; ++i)
 			{
 				const char* name = zip_get_name(zip, i, 0);
@@ -304,15 +323,17 @@ void DownloadMod(char* modName, char* modVersion)
 						len = zip_fread(zf, buf, 100);
 						writeStream.write((char*)buf, len);
 						sum += len;
+						extractedSize += len;
 						currentDownloadStats[4] = static_cast<float>(sum);
+						currentDownloadStats[2] = roundf(static_cast<float>(extractedSize) / totalSize * 100);
 					}
 					writeStream.close();
 				}
 
 				// Sets first statistics field to the count of extracted files, and update
-				// progression percentage accordingly.
+				// progression percentage regarding extracted content size.
 				currentDownloadStats[0] = static_cast<float>(i);
-				currentDownloadStats[2] = roundf(currentDownloadStats[0] / currentDownloadStats[1] * 100);
+				currentDownloadStats[2] = roundf(static_cast<float>(extractedSize) / totalSize * 100);
 			}
 
 			spdlog::info("Mod successfully extracted.");
