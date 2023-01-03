@@ -48,7 +48,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>Northstar</TargetName>
-    <OutDir>D:\SteamLibrary\steamapps\common\Titanfall2\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -503,6 +502,7 @@
     </ClCompile>
     <ClCompile Include="plugins\plugins.cpp" />
     <ClCompile Include="scripts\client\clientchathooks.cpp" />
+    <ClCompile Include="scripts\client\cursorposition.cpp" />
     <ClCompile Include="scripts\client\scriptbrowserhooks.cpp" />
     <ClCompile Include="scripts\client\scriptmainmenupromos.cpp" />
     <ClCompile Include="scripts\client\scriptmodmenu.cpp" />

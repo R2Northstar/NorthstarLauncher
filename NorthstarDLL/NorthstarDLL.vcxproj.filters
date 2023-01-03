@@ -1321,6 +1321,9 @@
     <ClCompile Include="scripts\client\clientchathooks.cpp">
       <Filter>Source Files\scripts\client</Filter>
     </ClCompile>
+    <ClCompile Include="scripts\client\cursorposition.cpp">
+      <Filter>Source Files\scripts\client</Filter>
+    </ClCompile>
     <ClCompile Include="scripts\client\scriptbrowserhooks.cpp">
       <Filter>Source Files\scripts\client</Filter>
     </ClCompile>
