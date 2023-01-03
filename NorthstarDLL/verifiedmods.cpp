@@ -186,7 +186,10 @@ int get_mod_archive_content_size(zip_t* zip)
 }
 
 /**
- * sha256 code shamelessly stolen from https://stackoverflow.com/a/74671723/11243782
+ * Computes the hash of the archive located at `path`, and compares it
+ * with `expectedHash`: this will return true if the two are equal,
+ * false otherwise.
+ * SHA256 code shamelessly stolen from https://stackoverflow.com/a/74671723/11243782
  **/
 bool check_mod_archive_checksum(std::filesystem::path path, std::string expectedHash)
 {
@@ -430,6 +433,8 @@ void DownloadMod(char* modName, char* modVersion)
 
 			spdlog::info("Mod successfully extracted.");
 
+		// Called at the end of the thread, regardless if mod download and extraction went
+		// successfully or not.
 		REQUEST_END_CLEANUP:
 			fclose(fp);
 			modsBeingDownloaded.erase(std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName));
