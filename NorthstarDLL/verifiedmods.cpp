@@ -321,12 +321,12 @@ void DownloadMod(char* modName, char* modVersion)
 			}
 
 			// Verify checksum of downloaded archive.
-			if (check_mod_archive_checksum(downloadPath, modChecksum))
+			if (!check_mod_archive_checksum(downloadPath, modChecksum))
 			{
 				spdlog::error("Archive checksum does not match verified hash.");
 				goto REQUEST_END_CLEANUP;
 			}
-			spdlog::error("Checksum OK!");
+			spdlog::info("Checksum OK!");
 
 			// Unzip mods from downloaded archive.
 			zip = zip_open(downloadPath.generic_string().c_str(), ZIP_RDONLY, &err);
