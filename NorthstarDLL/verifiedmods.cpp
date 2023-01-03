@@ -285,6 +285,7 @@ void DownloadMod(char* modName, char* modVersion)
 			int err = 0;
 			zip_t* zip;
 			struct zip_stat sb;
+			std::error_code ec;
 			int totalSize = 0;
 			int extractedSize = 0;
 
@@ -392,8 +393,12 @@ void DownloadMod(char* modName, char* modVersion)
 
 				if (modName.back() == '/')
 				{
-					// TODO catch errors
-					std::filesystem::create_directory(destination);
+					if (!std::filesystem::create_directory(destination, ec))
+					{
+						spdlog::error("Directory creation failed: {}", zip_strerror(zip));
+						// TODO check ec for custom error message
+						goto REQUEST_END_CLEANUP;
+					}
 				}
 				else
 				{
