@@ -22,7 +22,9 @@ void,, (bool a1, const char* fmt, ...))
 		// when COM_ExplainDisconnection is called from engine.dll + 19ff1c for connection rejected, it doesn't
 		// call Host_Disconnect, which properly shuts down listen server
 		// not doing this gets our client in a pretty weird state so we need to shut it down manually here
-		R2::g_pHostState->m_iNextState = R2::HostState_t::HS_GAME_SHUTDOWN;
+
+		// don't call Cbuf_Execute because we don't need this called immediately
+		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "disconnect", R2::cmd_source_t::kCommandSrcCode);
 	}
 
 	return COM_ExplainDisconnection(a1, buf);

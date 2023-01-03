@@ -65,6 +65,34 @@ void, __fastcall, (CHostState* self))
 }
 
 // clang-format off
+AUTOHOOK(CHostState__State_LoadGame, engine.dll + 0x16E730,
+void, __fastcall, (CHostState* self))
+// clang-format on
+{
+	// singleplayer server starting
+	// useless in 99% of cases but without it things could potentially break very much
+
+	spdlog::info("HostState: LoadGame");
+
+	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
+	Cbuf_Execute();
+
+	// this is normally done in ServerStartingOrChangingMap(), but seemingly the map name isn't set at this point
+	g_pCVar->FindVar("net_data_block_enabled")->SetValue(true);
+	g_pServerAuthentication->m_bStartingLocalSPGame = true;
+
+	double dStartTime = Tier0::Plat_FloatTime();
+	CHostState__State_LoadGame(self);
+	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
+
+	// no server presence, can't do it because no map name in hoststate
+	// and also not super important for sp saves really
+	
+	g_pServerAuthentication->StartPlayerAuthServer();
+	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
+}
+
+// clang-format off
 AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
 void, __fastcall, (CHostState* self))
 // clang-format on
