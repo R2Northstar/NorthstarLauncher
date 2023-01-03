@@ -8,6 +8,8 @@
 #include "libzip/include/zip.h"
 #include <fstream>
 #include "config/profile.h"
+#include "openssl/evp.h"
+#include "openssl/sha.h"
 
 using namespace rapidjson;
 
@@ -39,19 +41,20 @@ std::vector<std::string> modsBeingDownloaded {};
 std::vector<float> currentDownloadStats(6);
 
 // Test string used to test branch without masterserver
-const char* modsTestString = "{"
-							 "\"Fifty.mp_frostbite\": {"
-							 "\"DependencyPrefix\": \"Fifty-Frostbite\","
-							 "\"Versions\" : ["
-							 "{ \"Version\": \"0.0.1\" }"
-							 "]},"
+const char* modsTestString =
+	"{"
+	"\"Fifty.mp_frostbite\": {"
+	"\"DependencyPrefix\": \"Fifty-Frostbite\","
+	"\"Versions\" : ["
+	"{ \"Version\": \"0.0.1\", \"Checksum\": \"8cf111c9ac2ab1521677769702e10be4db8d47c0eca16bda197aceb895cf2b5c\" }"
+	"]},"
 
-							 "\"Zircon Spitfire\": {"
-							 "\"DependencyPrefix\": \"Juicys_Emporium-Zircon_Spitfire\","
-							 "\"Versions\" : ["
-							 "{ \"Version\": \"1.0.0\" }"
-							 "]}"
-							 "}";
+	"\"Zircon Spitfire\": {"
+	"\"DependencyPrefix\": \"Juicys_Emporium-Zircon_Spitfire\","
+	"\"Versions\" : ["
+	"{ \"Version\": \"1.0.0\", \"Checksum\": \"b742d09832a97bdbbd6b9184884712ef4093e3b4ba29eae40b40db26308ba42e\" }"
+	"]}"
+	"}";
 
 /*
 ███╗   ███╗███████╗████████╗██╗  ██╗ ██████╗ ██████╗ ███████╗
@@ -183,6 +186,55 @@ int get_mod_archive_content_size(zip_t* zip)
 }
 
 /**
+ * sha256 code shamelessly stolen from https://stackoverflow.com/a/74671723/11243782
+ **/
+bool check_mod_archive_checksum(std::filesystem::path path, std::string expectedHash)
+{
+	auto sha256 = [](std::string fname, std::vector<unsigned char>& hash) -> bool
+	{
+		std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> evpCtx(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+		EVP_DigestInit_ex(evpCtx.get(), EVP_sha256(), nullptr);
+
+		constexpr size_t buffer_size {1 << 12};
+		std::vector<char> buffer(buffer_size, '\0');
+
+		std::ifstream fp(fname, std::ios::binary);
+		if (!fp.is_open())
+		{
+			spdlog::error("Unable to open {}.", fname);
+			return false;
+		}
+		while (fp.good())
+		{
+			fp.read(buffer.data(), buffer_size);
+			EVP_DigestUpdate(evpCtx.get(), buffer.data(), fp.gcount());
+		}
+		fp.close();
+
+		hash.resize(SHA256_DIGEST_LENGTH);
+		std::fill(hash.begin(), hash.end(), 0);
+		unsigned int len;
+		EVP_DigestFinal_ex(evpCtx.get(), hash.data(), &len);
+
+		return true;
+	};
+
+	// Compute hash of downloaded archive.
+	std::vector<unsigned char> hash;
+	if (!sha256(path.generic_string(), hash))
+	{
+		return false;
+	}
+	std::stringstream out;
+	for (size_t i = 0; i < hash.size(); i++)
+		out << std::setfill('0') << std::setw(2) << std::hex << int(hash[i]);
+	std::string archiveHash = out.str();
+
+	// Compare computed hash with expected hash.
+	return strcmp(archiveHash.c_str(), expectedHash.c_str()) == 0;
+}
+
+/**
  * Downloads a given mod from Thunderstore API to local game folder.
  * This is done following these steps:
  *     * Recreating mod dependency string from verified mods information;
@@ -204,8 +256,26 @@ void DownloadMod(char* modName, char* modVersion)
 	dependencyString.append("-");
 	dependencyString.append(modVersion);
 
+	// Get expected checksum.
+	std::string modChecksum = "";
+	for (rapidjson::Value::ConstValueIterator iterator = versions.Begin(); iterator != versions.End(); iterator++)
+	{
+		const Value& currentModVersion = *iterator;
+		const auto currentVersionText = currentModVersion["Version"].GetString();
+		if (strcmp(currentVersionText, modVersion) == 0)
+		{
+			modChecksum = currentModVersion["Checksum"].GetString();
+			break;
+		}
+	}
+	if (modChecksum.empty())
+	{
+		spdlog::error("Failed to load expected archive checksum.");
+		return;
+	}
+
 	std::thread requestThread(
-		[dependencyString, modName]()
+		[dependencyString, modName, modChecksum]()
 		{
 			// zip parsing variables
 			zip_int64_t num_entries;
@@ -249,6 +319,14 @@ void DownloadMod(char* modName, char* modVersion)
 				spdlog::info("Fetching mod failed: {}", curl_easy_strerror(result));
 				goto REQUEST_END_CLEANUP;
 			}
+
+			// Verify checksum of downloaded archive.
+			if (!check_mod_archive_checksum(downloadPath, modChecksum))
+			{
+				spdlog::error("Archive checksum does not match verified hash.");
+				goto REQUEST_END_CLEANUP;
+			}
+			spdlog::info("Checksum OK!");
 
 			// Unzip mods from downloaded archive.
 			zip = zip_open(downloadPath.generic_string().c_str(), ZIP_RDONLY, &err);
