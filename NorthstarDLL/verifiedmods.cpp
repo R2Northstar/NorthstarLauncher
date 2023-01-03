@@ -396,7 +396,7 @@ void DownloadMod(char* modName, char* modVersion)
 					if (!std::filesystem::create_directory(destination, ec))
 					{
 						spdlog::error("Directory creation failed: {}", zip_strerror(zip));
-						// TODO check ec for custom error message
+						// TODO check ec for custom error message (values: https://en.cppreference.com/w/cpp/error/errc)
 						goto REQUEST_END_CLEANUP;
 					}
 				}
