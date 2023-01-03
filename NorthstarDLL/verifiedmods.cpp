@@ -407,7 +407,11 @@ void DownloadMod(char* modName, char* modVersion)
 					struct zip_file* zf = zip_fopen_index(zip, i, 0);
 					std::ofstream writeStream(destination, std::ofstream::binary);
 
-					// TODO return if stream is not open
+					if (!writeStream.is_open())
+					{
+						spdlog::error("Failed writing file to disk.");
+						goto REQUEST_END_CLEANUP;
+					}
 
 					int sum = 0;
 					int len = 0;
