@@ -86,7 +86,7 @@ ServerPresenceManager::ServerPresenceManager()
 			Cvar_hostname->SetValue(g_pServerPresence->Cvar_ns_server_name->GetString());
 		});
 
-	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL | FCVAR_REPLICATED, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
 			g_pServerPresence->SetDescription(UnescapeUnicode(g_pServerPresence->Cvar_ns_server_desc->GetString()));
 		});
 
