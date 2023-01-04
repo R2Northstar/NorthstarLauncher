@@ -400,12 +400,6 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 	else
 	{
 		logger->warn("Not disconnecting, compile error is non-fatal");
-
-		// likely temp: show console so user can see any errors, as error message wont display if ui is dead
-		// maybe we could disable all mods other than the coremods and try a reload before doing this?
-		// could also maybe do some vgui bullshit to show something visually rather than console
-		if (realContext == ScriptContext::UI)
-			R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode);
 	}
 
 	// dont call the original function since it kills game lol
