@@ -382,8 +382,6 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		}
 		else
 		{
-			logger->error("Disconnecting, compile error is fatal");
-
 			R2::Cbuf_AddText(
 				R2::Cbuf_GetCurrentPlayer(),
 				fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
@@ -396,10 +394,6 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 			if (realContext == ScriptContext::UI)
 				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode);
 		}
-	}
-	else
-	{
-		logger->warn("Not disconnecting, compile error is non-fatal");
 	}
 
 	// dont call the original function since it kills game lol
