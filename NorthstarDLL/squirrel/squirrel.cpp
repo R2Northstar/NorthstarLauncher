@@ -383,13 +383,13 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		}
 		else
 		{
+			logger->error("Disconnecting due to fatal compile error");
+
 			R2::Cbuf_AddText(
 				R2::Cbuf_GetCurrentPlayer(),
 				fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
 					.c_str(),
 				R2::cmd_source_t::kCommandSrcCode);
-
-			logger->error("Disconnecting due to fatal compile error");
 
 			// likely temp: show console so user can see any errors, as error message wont display if ui is dead
 			// maybe we could disable all mods other than the coremods and try a reload before doing this?
