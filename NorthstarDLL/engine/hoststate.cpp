@@ -87,7 +87,7 @@ void, __fastcall, (CHostState* self))
 
 	// no server presence, can't do it because no map name in hoststate
 	// and also not super important for sp saves really
-	
+
 	g_pServerAuthentication->StartPlayerAuthServer();
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
