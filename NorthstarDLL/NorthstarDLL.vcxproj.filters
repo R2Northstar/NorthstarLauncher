@@ -1503,6 +1503,9 @@
     <ClInclude Include="squirrelclasstypes.h">
       <Filter>Header Files\Squirrel</Filter>
     </ClInclude>
+    <ClInclude Include="bots.h">
+      <Filter>Header Files\Server</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -1732,6 +1735,9 @@
     </ClCompile>
     <ClCompile Include="rejectconnectionfixes.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="bots.cpp">
+      <Filter>Source Files\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

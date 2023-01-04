@@ -120,6 +120,7 @@
     <ClInclude Include="bansystem.h" />
     <ClInclude Include="bitbuf.h" />
     <ClInclude Include="bits.h" />
+    <ClInclude Include="bots.h" />
     <ClInclude Include="crashhandler.h" />
     <ClInclude Include="keyvalues.h" />
     <ClInclude Include="loghooks.h" />
@@ -569,6 +570,7 @@
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="bansystem.cpp" />
     <ClCompile Include="bits.cpp" />
+    <ClCompile Include="bots.cpp" />
     <ClCompile Include="buildainfile.cpp" />
     <ClCompile Include="chatcommand.cpp" />
     <ClCompile Include="clientauthhooks.cpp" />

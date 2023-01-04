@@ -188,7 +188,7 @@ void ConCommand_ban(const CCommand& args)
 	{
 		R2::CBaseClient* player = &R2::g_pClientArray[i];
 
-		if (!strcmp(player->m_Name, args.Arg(1)) || !strcmp(player->m_UID, args.Arg(1)))
+		if (player->m_Signon >= R2::eSignonState::CONNECTED && !strcmp(player->m_Name, args.Arg(1)) || !strcmp(player->m_UID, args.Arg(1)))
 		{
 			g_pBanSystem->BanUID(strtoull(player->m_UID, nullptr, 10));
 			R2::CBaseClient__Disconnect(player, 1, "Banned from server");

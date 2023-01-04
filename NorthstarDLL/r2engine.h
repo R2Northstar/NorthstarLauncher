@@ -175,6 +175,7 @@ namespace R2
 	OFFSET_STRUCT(CBaseClient)
 	{
 		STRUCT_SIZE(0x2D728)
+		FIELD(0x14, uint16_t edict)
 		FIELD(0x16, char m_Name[64])
 		FIELD(0x258, KeyValues* m_ConVars)
 		FIELD(0x2A0, eSignonState m_Signon)

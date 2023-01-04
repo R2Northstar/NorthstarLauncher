@@ -15,6 +15,7 @@
 #include "r2engine.h"
 #include "r2client.h"
 #include "r2server.h"
+#include "bots.h"
 
 #include "httplib.h"
 
@@ -188,10 +189,6 @@ bool ServerAuthenticationManager::CheckAuthentication(R2::CBaseClient* pPlayer, 
 
 void ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken)
 {
-	// for bot players, generate a new uid
-	if (pPlayer->m_bFakePlayer)
-		iUid = 0; // is this a good way of doing things :clueless:
-
 	std::string sUid = std::to_string(iUid);
 
 	// copy uuid
@@ -316,7 +313,12 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 			pAuthenticationFailure = "Authentication Failed.";
 	}
 	else // need to copy name for bots still
+	{
+		// generate uid and token for bot
+		iNextPlayerUid = 0;
+		pNextPlayerToken = (char*)"";
 		strncpy_s(pVerifiedName, pName, 63);
+	}
 
 	if (pAuthenticationFailure)
 	{
@@ -332,6 +334,9 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 
 	// we already know this player's authentication data is legit, actually write it to them now
 	g_pServerAuthentication->AuthenticatePlayer(self, iNextPlayerUid, pNextPlayerToken);
+
+	if (bFakePlayer)
+		g_pBots->SetupPlayer(self);
 
 	g_pServerAuthentication->AddPlayer(self, pNextPlayerToken);
 	g_pServerLimits->AddPlayer(self);

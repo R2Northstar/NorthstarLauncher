@@ -15,6 +15,8 @@ namespace R2
 		STRUCT_SIZE(0x1D02);
 		FIELD(0x58, uint32_t m_nPlayerIndex)
 
+		FIELD(0x5E4, int m_nTeam)
+
 		FIELD(0x1C90, bool m_hasBadReputation)
 		FIELD(0x1C91, char m_communityName[64])
 		FIELD(0x1CD1, char m_communityClanTag[16])
