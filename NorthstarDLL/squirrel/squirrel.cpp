@@ -88,6 +88,18 @@ eSQReturnType SQReturnTypeFromString(const char* pReturnType)
 		return eSQReturnType::Default; // previous default value
 }
 
+ScriptContext ScriptContextFromString(std::string string)
+{
+	if (string == "UI")
+		return ScriptContext::UI;
+	if (string == "CLIENT")
+		return ScriptContext::CLIENT;
+	if (string == "SERVER")
+		return ScriptContext::SERVER;
+	else
+		return ScriptContext::INVALID;
+}
+
 const char* SQTypeNameFromID(int type)
 {
 	switch (type)
@@ -152,10 +164,13 @@ void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMe
 	{
 	case ScriptContext::CLIENT:
 		g_pSquirrel<ScriptContext::CLIENT>->messageBuffer->push(message);
+		break;
 	case ScriptContext::SERVER:
 		g_pSquirrel<ScriptContext::SERVER>->messageBuffer->push(message);
+		break;
 	case ScriptContext::UI:
 		g_pSquirrel<ScriptContext::UI>->messageBuffer->push(message);
+		break;
 	}
 }
 
@@ -268,8 +283,7 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 // hooks
 bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
 {
-	return context != ScriptContext::SERVER && g_pSquirrel<ScriptContext::UI>->m_pSQVM &&
-		   g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm == pSqvm;
+	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
 template <ScriptContext context> void* (*__fastcall sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
@@ -317,11 +331,11 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	return sqvm;
 }
 
-template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, HSquirrelVM* sqvm);
-template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirrelVM* sqvm)
+template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, CSquirrelVM* sqvm);
+template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirrelVM* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
-	if (IsUIVM(context, sqvm))
+	if (IsUIVM(context, sqvm->sqvm))
 	{
 		realContext = ScriptContext::UI;
 		g_pSquirrel<ScriptContext::UI>->VMDestroyed();
@@ -329,7 +343,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, HSquirr
 	}
 	else
 	{
-		g_pSquirrel<context>->m_pSQVM = nullptr; // Fixes a race-like bug
+		g_pSquirrel<context>->VMDestroyed();
 		DestroyVM<context>(a1, sqvm);
 	}
 
@@ -361,6 +375,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		// kill dedicated server if we hit this
 		if (IsDedicatedServer())
 		{
+			logger->error("Exiting dedicated server, compile error is fatal");
 			// flush the logger before we exit so debug things get saved to log file
 			logger->flush();
 			exit(EXIT_FAILURE);
@@ -515,38 +530,76 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 
 template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBuffer()
 {
-	auto maybeMessage = messageBuffer->pop();
-	if (!maybeMessage)
+	while (std::optional<SquirrelMessage> maybeMessage = messageBuffer->pop())
 	{
-		return;
-	}
+		SquirrelMessage message = maybeMessage.value();
 
-	SquirrelMessage message = maybeMessage.value();
+		SQObject functionobj {};
+		int result = sq_getfunction(m_pSQVM->sqvm, message.functionName.c_str(), &functionobj, 0);
+		if (result != 0) // This func returns 0 on success for some reason
+		{
+			NS::log::squirrel_logger<context>()->error(
+				"ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
+			continue;
+		}
 
-	SQObject functionobj {};
-	int result = sq_getfunction(m_pSQVM->sqvm, message.functionName.c_str(), &functionobj, 0);
-	if (result != 0) // This func returns 0 on success for some reason
-	{
-		NS::log::squirrel_logger<context>()->error(
-			"ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
-		return;
+		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
+		pushroottable(m_pSQVM->sqvm);
+
+		if (message.isExternal)
+		{
+			message.externalFunc(m_pSQVM->sqvm);
+		}
+		else
+		{
+			for (auto& v : message.args)
+			{
+				// Execute lambda to push arg to stack
+				v();
+			}
+		}
+
+		_call(m_pSQVM->sqvm, message.args.size());
 	}
-	pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
-	pushroottable(m_pSQVM->sqvm);
-	if (message.isExternal)
+}
+
+ADD_SQFUNC(
+	"string",
+	NSGetCurrentModName,
+	"",
+	"Returns the mod name of the script running this function",
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+{
+	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
+	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
 	{
-		message.externalFunc(m_pSQVM->sqvm);
+		g_pSquirrel<context>->raiseerror(sqvm, "NSGetModName was called from a non-mod script. This shouldn't be possible");
+		return SQRESULT_ERROR;
 	}
 	else
 	{
-		for (auto& v : message.args)
-		{
-			// Execute lambda to push arg to stack
-			v();
-		}
+		g_pSquirrel<context>->pushstring(sqvm, mod->Name.c_str());
 	}
+	return SQRESULT_NOTNULL;
+}
 
-	_call(m_pSQVM->sqvm, message.args.size());
+ADD_SQFUNC(
+	"string",
+	NSGetCallingModName,
+	"int depth = 0",
+	"Returns the mod name of the script running this function",
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+{
+	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
+	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
+	{
+		g_pSquirrel<context>->pushstring(sqvm, "Unknown");
+	}
+	else
+	{
+		g_pSquirrel<context>->pushstring(sqvm, mod->Name.c_str());
+	}
+	return SQRESULT_NOTNULL;
 }
 
 ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
@@ -625,6 +678,8 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->messageBuffer = g_pSquirrel<ScriptContext::CLIENT>->messageBuffer;
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x572FB0).As<sq_getfunctionType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_getfunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction;
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_stackinfos = module.Offset(0x35970).As<sq_stackinfosType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_stackinfos = g_pSquirrel<ScriptContext::CLIENT>->__sq_stackinfos;
 
 	MAKEHOOK(
 		module.Offset(0x108E0),
@@ -706,6 +761,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getfunction = module.Offset(0x6C85).As<sq_getfunctionType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_stackinfos = module.Offset(0x35920).As<sq_stackinfosType>();
 
 	MAKEHOOK(
 		module.Offset(0x1DD10),
