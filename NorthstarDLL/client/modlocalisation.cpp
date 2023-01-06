@@ -35,10 +35,9 @@ void, __fastcall, (void* pVguiLocalize))
 	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
 }
 
-AUTOHOOK(CEngineVGui__Init, engine.dll + 0x247E10,
-void, __fastcall, (void* self))
+AUTOHOOK(CEngineVGui__Init, engine.dll + 0x247E10, void, __fastcall, (void* self))
 {
-	CEngineVGui__Init(self);
+	CEngineVGui__Init(self); // this loads r1_english, valve_english, dev_english
 
 	// previously we did this in CLocalize::AddFile, but for some reason it won't properly overwrite localization from
 	// files loaded previously if done there, very weird but this works so whatever
