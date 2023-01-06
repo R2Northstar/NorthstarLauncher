@@ -1,6 +1,5 @@
 #pragma once
 
-#include "pch.h"
 
 enum class ScriptContext;
 
