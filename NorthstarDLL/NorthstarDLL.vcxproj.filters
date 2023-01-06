@@ -1167,6 +1167,9 @@
     <ClInclude Include="core\sourceinterface.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
+    <ClInclude Include="util\utils.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1401,6 +1404,12 @@
     </ClCompile>
     <ClCompile Include="core\sourceinterface.cpp">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="client\rejectconnectionfixes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\utils.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
