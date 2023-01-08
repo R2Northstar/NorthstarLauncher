@@ -3,6 +3,7 @@
 #include "masterserver/masterserver.h"
 #include "server/auth/serverauthentication.h"
 #include "server/serverpresence.h"
+#include "server/bots.h"
 #include "shared/playlist.h"
 #include "core/tier0.h"
 #include "engine/r2engine.h"
@@ -105,6 +106,7 @@ void, __fastcall, (CHostState* self))
 	CHostState__State_ChangeLevelMP(self);
 	spdlog::info("loading took {}s", Tier0::Plat_FloatTime() - dStartTime);
 
+	g_pBots->StartMatch();
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
 

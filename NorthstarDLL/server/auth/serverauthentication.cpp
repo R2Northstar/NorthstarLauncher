@@ -399,6 +399,27 @@ void,, (R2::CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, 
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
 }
 
+// clang-format off
+AUTOHOOK(CBaseClient__Clear, engine.dll + 0x101480,
+	void, __fastcall, (R2::CBaseClient* self))
+// clang-format on
+{
+	// final cleanup, humans should never hit this without being disconnected already!
+	// bots generally will on level change, however, so this is necessary
+	if (g_pServerAuthentication->m_PlayerAuthenticationData.find(self) != g_pServerAuthentication->m_PlayerAuthenticationData.end())
+	{
+		if (!self->m_bFakePlayer)
+			spdlog::warn("player {} has auth data in CBaseClient::Clear()!");
+
+		// fully cleanup
+		g_pServerAuthentication->RemovePlayerAuthData(self);
+		g_pServerAuthentication->RemovePlayer(self);
+		g_pServerLimits->RemovePlayer(self);
+	}
+
+	CBaseClient__Clear(self);
+}
+
 void ConCommand_ns_resetpersistence(const CCommand& args)
 {
 	if (*R2::g_pServerState == R2::server_state_t::ss_active)

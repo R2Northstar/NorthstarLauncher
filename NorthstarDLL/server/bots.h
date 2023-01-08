@@ -7,9 +7,12 @@ class ServerBotManager
 
   public:
 	ConVar* Cvar_bot_quota;
+	ConVar* Cvar_bot_quota_ignorehumans;
 	ConVar* Cvar_bot_teams;
 
 	ConVar* Cvar_bot_clantag;
+
+	ConVar* Cvar_bot_simulate;
 
 	ConVar* Cvar_bot_pilot_settings;
 	ConVar* Cvar_bot_force_pilot_primary;
@@ -29,6 +32,7 @@ class ServerBotManager
 
 	// events we react to
 	void StartMatch();
+	void UpdateBotCounts();
 	void SetupPlayer(R2::CBaseClient* pPlayer);
 	void SimulatePlayers();
 

@@ -21,6 +21,7 @@ void (*__fastcall ServerGameClients__ClientFullyConnect)(void* self, uint16_t ed
 
 void (*__fastcall CBasePlayer__RunNullCommand)(R2::CBasePlayer* self);
 
+// maybe this could be defined in a cfg instead at some point?
 const std::vector<const char*> BOT_NAMES = {
 	// normal titanfall names
 	"Jack",
@@ -93,13 +94,13 @@ void, __fastcall, (char a1))
 }
 
 void ConCommand_bot_add(const CCommand& arg)
-{
-	if (arg.ArgC() == 1)
-		g_pBots->AddBot();
-	else if (arg.ArgC() == 2)
+{		
+	if (arg.ArgC() == 2)
 		g_pBots->AddBot(arg.Arg(1));
-	else if (arg.ArgC() == 2)
+	else if (arg.ArgC() == 3)
 		g_pBots->AddBot(arg.Arg(1), std::stoi(arg.Arg(2)));
+	else
+		g_pBots->AddBot();
 }
 
 ServerBotManager::ServerBotManager()
@@ -112,13 +113,58 @@ ServerBotManager::ServerBotManager()
 void ServerBotManager::AddBot(const char* pName, int iTeam)
 {
 	if (!*pName)
+	{
+		for (int i = 0; i < R2::GetMaxPlayers(); i++)
+		{
+			R2::CBaseClient* pClient = &R2::g_pClientArray[i];
+			if (pClient->m_Signon >= R2::eSignonState::CONNECTED)
+			{
+			}
+		}
+	}
 		pName = BOT_NAMES[rand() % BOT_NAMES.size()];
 
-	if (iTeam == -1)
+	const bool bCheckTeams = iTeam == -1;
+	const int nMaxPlayers = std::stoi(R2::GetCurrentPlaylistVar("max_players", true));
+
+	int nPlayers = 0;
+
+	int nImcPlayers = 0;
+	int nMilitiaPlayers = 0;
+
+	// NOTE: doesn't currently support ffa teams
+	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+	{
+		R2::CBaseClient* pClient = &R2::g_pClientArray[i];
+		if (pClient->m_Signon >= R2::eSignonState::CONNECTED)
+			nPlayers++;
+
+		R2::CBasePlayer* pPlayer = R2::UTIL_PlayerByIndex(i + 1);
+		if (!pPlayer)
+			continue;
+
+		if (bCheckTeams)
+		{
+			if (pPlayer->m_nTeam == 2)
+				nImcPlayers++;
+			else
+				nMilitiaPlayers++;
+		}
+	}
+
+	if (nPlayers >= nMaxPlayers)
+	{
+		spdlog::warn("tried to spawn more bots than the server has slots available!");
+		return;
+	}
+
+	if (bCheckTeams)
 	{
 		// pick team that needs players
-		// oops i cant be bothered just do imc for now
-		iTeam = 2;
+		if (nImcPlayers > nMilitiaPlayers)
+			iTeam = 3;
+		else
+			iTeam = 2;
 	}
 
 	const R2::CBaseClient* pPlayer = CBaseServer__CreateFakeClient(pServer, pName, "", "", iTeam);
@@ -131,9 +177,44 @@ void ServerBotManager::AddBot(const char* pName, int iTeam)
 // add bots at the start of a game
 void ServerBotManager::StartMatch()
 {
-	int nNumBots = Cvar_bot_quota->GetInt() - g_pServerAuthentication->m_PlayerAuthenticationData.size();
-	for (int i = nNumBots; i > 0; i--)
-		AddBot();
+	UpdateBotCounts();
+}
+
+void ServerBotManager::UpdateBotCounts()
+{
+	int nNumBots = 0;
+	int nNumHumans = 0;
+
+	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+	{
+		R2::CBaseClient* pClient = &R2::g_pClientArray[i];
+		if (pClient->m_Signon >= R2::eSignonState::CONNECTED)
+		{
+			if (pClient->m_bFakePlayer)
+				nNumBots++;
+			else
+				nNumHumans++;
+		}
+	}
+
+	// ignore specified number of humans unless convar = -1
+	if (Cvar_bot_quota_ignorehumans->GetInt() >= 0)
+		nNumHumans = std::max(0, nNumHumans - Cvar_bot_quota_ignorehumans->GetInt());
+	else
+		nNumHumans = 0;
+
+	int nRequiredBots = Cvar_bot_quota->GetInt() - nNumBots - nNumHumans;
+	if (nRequiredBots >= 0)
+	{
+		for (int i = nRequiredBots; i > 0; i--)
+			AddBot();
+	}
+	else
+	{
+		// remove bots
+		//for (int i = nRequiredBots; i < 0; i++)
+		
+	}
 }
 
 // setup bot after it connects
@@ -145,6 +226,9 @@ void ServerBotManager::SetupPlayer(R2::CBaseClient* pPlayer)
 // every server frame, run bot usercmds
 void ServerBotManager::SimulatePlayers()
 {
+	if (!Cvar_bot_simulate->GetBool())
+		return;
+
 	for (int i = 0; i < R2::GetMaxPlayers(); i++)
 	{
 		R2::CBaseClient* pClient = &R2::g_pClientArray[i];
@@ -160,7 +244,10 @@ ON_DLL_LOAD_RELIESON("engine.dll", Bots, (ConVar, ConCommand), (CModule module))
 {
 	g_pBots = new ServerBotManager;
 	g_pBots->Cvar_bot_quota = new ConVar("bot_quota", "0", FCVAR_GAMEDLL, "Minimum number of players when filling game with bots");
+	g_pBots->Cvar_bot_quota_ignorehumans =
+		new ConVar("bot_quota_ignorehumans", "0", FCVAR_GAMEDLL, "Number of human players to ignore for bot_quota, -1 to ignore all (for ignoring spectator players)");
 	g_pBots->Cvar_bot_clantag = new ConVar("bot_clantag", "BOT", FCVAR_GAMEDLL, "Clantag to give bots");
+	g_pBots->Cvar_bot_simulate = new ConVar("bot_simulate", "1", FCVAR_GAMEDLL, "Whether to run bot movement at all");
 
 	g_pBots->Cvar_bot_pilot_settings = new ConVar("bot_pilot_settings", "", FCVAR_GAMEDLL, "force pilot playersettings for bots");
 	g_pBots->Cvar_bot_force_pilot_primary = new ConVar("bot_force_pilot_primary", "", FCVAR_GAMEDLL, "force pilot primary weapon for bots");
