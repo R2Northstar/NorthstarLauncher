@@ -454,6 +454,7 @@
     <ClInclude Include="squirrel\squirreldatatypes.h" />
     <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
+    <ClInclude Include="verification_results.h" />
     <ClInclude Include="verifiedmods.h" />
   </ItemGroup>
   <ItemGroup>
@@ -510,7 +511,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="verification_result.cpp" />
+    <ClCompile Include="verification_results.cpp" />
     <ClCompile Include="verifiedmods.cpp" />
     <ClCompile Include="plugins\plugins.cpp" />
     <ClCompile Include="scripts\client\clientchathooks.cpp" />

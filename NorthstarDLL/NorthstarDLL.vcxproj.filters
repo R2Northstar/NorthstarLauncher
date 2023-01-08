@@ -184,6 +184,9 @@
     <Filter Include="Source Files\mods\verified">
       <UniqueIdentifier>{d14c40a3-f54b-41f6-acca-3ecc4b83cc38}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\mods\verified">
+      <UniqueIdentifier>{8b2cefce-037f-4c76-af2d-bbbd85588e3b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\httplib.h">
@@ -1197,6 +1200,9 @@
     <ClInclude Include="util\utils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="verification_results.h">
+      <Filter>Header Files\mods\verified</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1444,7 +1450,7 @@
     <ClCompile Include="verifiedmods.cpp">
       <Filter>Source Files\mods\verified</Filter>
     </ClCompile>
-    <ClCompile Include="verification_result.cpp">
+    <ClCompile Include="verification_results.cpp">
       <Filter>Source Files\mods\verified</Filter>
     </ClCompile>
   </ItemGroup>
