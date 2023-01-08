@@ -10,7 +10,7 @@
 #include "config/profile.h"
 #include "openssl/evp.h"
 #include "openssl/sha.h"
-#include <verification_result.cpp>
+#include <verification_results.h>
 
 using namespace rapidjson;
 
@@ -505,6 +505,12 @@ ADD_SQFUNC("bool", NSIsModBeingDownloaded, "string modName", "", ScriptContext::
 	bool result = IsModBeingDownloaded((char*)modName);
 	g_pSquirrel<context>->pushbool(sqvm, result);
 
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("string", NSGetModExtractionResult, "", "", ScriptContext::UI)
+{
+	g_pSquirrel<context>->pushstring(sqvm, GetVerifiedModErrorString(modDownloadAndExtractionResult));
 	return SQRESULT_NOTNULL;
 }
 
