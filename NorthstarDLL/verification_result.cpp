@@ -9,6 +9,7 @@ enum VerificationResult
 {
 	OK,
 	FAILED,						// Generic error message, should be avoided as much as possible
+	FAILED_READING_ARCHIVE,
 	FAILED_WRITING_TO_DISK,
 	MOD_FETCHING_FAILED,
 	MOD_CORRUPTED,				// Downloaded archive checksum does not match verified hash
