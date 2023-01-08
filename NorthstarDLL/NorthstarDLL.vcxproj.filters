@@ -181,6 +181,9 @@
     <Filter Include="Header Files\shared\exploit_fixes">
       <UniqueIdentifier>{1a377c09-bd3d-4757-b3bc-9cd0a1e6ac0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\mods\verified">
+      <UniqueIdentifier>{d14c40a3-f54b-41f6-acca-3ecc4b83cc38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\httplib.h">
@@ -1429,9 +1432,6 @@
     <ClCompile Include="scripts\scripthttprequesthandler.cpp">
       <Filter>Source Files\scripts</Filter>
     </ClCompile>
-    <ClCompile Include="verifiedmods.cpp">
-      <Filter>Source Files\scripts\client</Filter>
-    </ClCompile>
     <ClCompile Include="core\sourceinterface.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
@@ -1440,6 +1440,9 @@
     </ClCompile>
     <ClCompile Include="util\utils.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="verifiedmods.cpp">
+      <Filter>Source Files\mods\verified</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
