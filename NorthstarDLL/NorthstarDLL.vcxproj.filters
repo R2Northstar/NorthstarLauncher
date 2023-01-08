@@ -1444,6 +1444,9 @@
     <ClCompile Include="verifiedmods.cpp">
       <Filter>Source Files\mods\verified</Filter>
     </ClCompile>
+    <ClCompile Include="verification_result.cpp">
+      <Filter>Source Files\mods\verified</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">
