@@ -452,6 +452,7 @@
     <ClInclude Include="squirrel\squirrelautobind.h" />
     <ClInclude Include="squirrel\squirrelclasstypes.h" />
     <ClInclude Include="squirrel\squirreldatatypes.h" />
+    <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
     <ClInclude Include="verifiedmods.h" />
   </ItemGroup>
@@ -464,6 +465,7 @@
     <ClCompile Include="client\clientauthhooks.cpp" />
     <ClCompile Include="client\clientruihooks.cpp" />
     <ClCompile Include="client\clientvideooverrides.cpp" />
+    <ClCompile Include="client\rejectconnectionfixes.cpp" />
     <ClCompile Include="client\debugoverlay.cpp" />
     <ClCompile Include="client\demofixes.cpp" />
     <ClCompile Include="client\diskvmtfixes.cpp" />
@@ -541,6 +543,7 @@
     <ClCompile Include="squirrel\squirrelautobind.cpp" />
     <ClCompile Include="util\printcommands.cpp" />
     <ClCompile Include="util\printmaps.cpp" />
+    <ClCompile Include="util\utils.cpp" />
     <ClCompile Include="util\version.cpp" />
   </ItemGroup>
   <ItemGroup>
