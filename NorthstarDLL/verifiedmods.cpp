@@ -10,6 +10,7 @@
 #include "config/profile.h"
 #include "openssl/evp.h"
 #include "openssl/sha.h"
+#include <verification_result.cpp>
 
 using namespace rapidjson;
 
@@ -27,6 +28,9 @@ Document verifiedModsJson;
 
 // This list holds the names of all mods that are currently being downloaded.
 std::vector<std::string> modsBeingDownloaded {};
+
+// This holds result of mod downloading and extraction.
+VerificationResult modDownloadAndExtractionResult;
 
 // This vector holds information about the currently downloaded mod:
 //     1. received quantity
@@ -274,6 +278,7 @@ void DownloadMod(char* modName, char* modVersion)
 	if (modChecksum.empty())
 	{
 		spdlog::error("Failed to load expected archive checksum.");
+		modDownloadAndExtractionResult = FAILED;
 		return;
 	}
 
@@ -321,6 +326,7 @@ void DownloadMod(char* modName, char* modVersion)
 			else
 			{
 				spdlog::info("Fetching mod failed: {}", curl_easy_strerror(result));
+				modDownloadAndExtractionResult = MOD_FETCHING_FAILED;
 				goto REQUEST_END_CLEANUP;
 			}
 
@@ -328,6 +334,7 @@ void DownloadMod(char* modName, char* modVersion)
 			if (!check_mod_archive_checksum(downloadPath, modChecksum))
 			{
 				spdlog::error("Archive checksum does not match verified hash.");
+				modDownloadAndExtractionResult = MOD_CORRUPTED;
 				goto REQUEST_END_CLEANUP;
 			}
 			spdlog::info("Checksum OK!");
@@ -338,6 +345,7 @@ void DownloadMod(char* modName, char* modVersion)
 			if (err != ZIP_ER_OK)
 			{
 				spdlog::error("Opening mod archive failed: {}", zip_strerror(zip));
+				modDownloadAndExtractionResult = FAILED;
 				goto REQUEST_END_CLEANUP;
 			}
 
@@ -370,6 +378,7 @@ void DownloadMod(char* modName, char* modVersion)
 				if (name == nullptr)
 				{
 					spdlog::error("Failed reading archive.");
+					modDownloadAndExtractionResult = FAILED_READING_ARCHIVE;
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -397,6 +406,7 @@ void DownloadMod(char* modName, char* modVersion)
 					{
 						spdlog::error("Directory creation failed: {}", zip_strerror(zip));
 						// TODO check ec for custom error message (values: https://en.cppreference.com/w/cpp/error/errc)
+						modDownloadAndExtractionResult = FAILED_WRITING_TO_DISK;
 						goto REQUEST_END_CLEANUP;
 					}
 				}
@@ -410,6 +420,7 @@ void DownloadMod(char* modName, char* modVersion)
 					if (!writeStream.is_open())
 					{
 						spdlog::error("Failed writing file to disk.");
+						modDownloadAndExtractionResult = FAILED_WRITING_TO_DISK;
 						goto REQUEST_END_CLEANUP;
 					}
 
@@ -441,6 +452,7 @@ void DownloadMod(char* modName, char* modVersion)
 			}
 
 			spdlog::info("Mod successfully extracted.");
+			modDownloadAndExtractionResult = OK;
 
 		// Called at the end of the thread, regardless if mod download and extraction went
 		// successfully or not.
