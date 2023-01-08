@@ -162,6 +162,17 @@ ON_DLL_LOAD_RELIESON("engine.dll", Bots, (ConVar, ConCommand), (CModule module))
 	g_pBots->Cvar_bot_quota = new ConVar("bot_quota", "0", FCVAR_GAMEDLL, "Minimum number of players when filling game with bots");
 	g_pBots->Cvar_bot_clantag = new ConVar("bot_clantag", "BOT", FCVAR_GAMEDLL, "Clantag to give bots");
 
+	g_pBots->Cvar_bot_pilot_settings = new ConVar("bot_pilot_settings", "", FCVAR_GAMEDLL, "force pilot playersettings for bots");
+	g_pBots->Cvar_bot_force_pilot_primary = new ConVar("bot_force_pilot_primary", "", FCVAR_GAMEDLL, "force pilot primary weapon for bots");
+	g_pBots->Cvar_bot_force_pilot_secondary = new ConVar("bot_force_pilot_secondary", "", FCVAR_GAMEDLL, "force pilot secondary weapon for bots");
+	g_pBots->Cvar_bot_force_pilot_weapon3 = new ConVar("bot_force_pilot_weapon3", "", FCVAR_GAMEDLL, "force pilot 3rd weapon for bots");
+	g_pBots->Cvar_bot_force_pilot_ordnance = new ConVar("bot_force_pilot_ordnance", "", FCVAR_GAMEDLL, "force pilot ordnance for bots");
+	g_pBots->Cvar_bot_force_pilot_ability = new ConVar("bot_force_pilot_ability", "", FCVAR_GAMEDLL, "force pilot ability for bots");
+
+	g_pBots->Cvar_bot_titan_settings = new ConVar("bot_titan_settings", "", FCVAR_GAMEDLL, "force titan playersettings for bots");
+	g_pBots->Cvar_bot_force_titan_ordnance = new ConVar("bot_force_titan_ordnance", "", FCVAR_GAMEDLL, "force titan ordnance for bots");
+	g_pBots->Cvar_bot_force_titan_ability = new ConVar("bot_force_titan_ability", "", FCVAR_GAMEDLL, "force titan ability for bots");
+
 	pServer = module.Offset(0x12A53D40).As<void*>();
 	pServerGameClients = module.Offset(0x13F0AAA8).As<void*>();
 
