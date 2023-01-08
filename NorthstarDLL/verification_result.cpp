@@ -1,4 +1,4 @@
-#pragma once
+#include "pch.h"
 
 /**
  * This enumeration allows to characterize result of verified mod downloading and extraction.
