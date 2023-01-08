@@ -83,6 +83,8 @@ const std::vector<const char*> BOT_NAMES = {
 	"Botmos",
 	"Botscuit",
 	"Botty_RaVen",
+
+	"deez_bots", // this is really funny ok
 };
 
 // this is the root func from what usercmd running is called from

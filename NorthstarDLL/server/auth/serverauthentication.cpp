@@ -406,7 +406,8 @@ AUTOHOOK(CBaseClient__Clear, engine.dll + 0x101480,
 {
 	// final cleanup, humans should never hit this without being disconnected already!
 	// bots generally will on level change, however, so this is necessary
-	if (g_pServerAuthentication->m_PlayerAuthenticationData.find(self) != g_pServerAuthentication->m_PlayerAuthenticationData.end())
+	if (self->m_Signon >= R2::eSignonState::CONNECTED &&
+		g_pServerAuthentication->m_PlayerAuthenticationData.find(self) != g_pServerAuthentication->m_PlayerAuthenticationData.end())
 	{
 		if (!self->m_bFakePlayer)
 			spdlog::warn("player {} has auth data in CBaseClient::Clear()!");
