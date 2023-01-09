@@ -288,7 +288,7 @@ void DownloadMod(char* modName, char* modVersion)
 			// zip parsing variables
 			zip_int64_t num_entries;
 			int err = 0;
-			zip_t* zip;
+			zip_t* zip = NULL;
 			struct zip_stat sb;
 			std::error_code ec;
 			int totalSize = 0;
@@ -457,9 +457,16 @@ void DownloadMod(char* modName, char* modVersion)
 		// successfully or not.
 		REQUEST_END_CLEANUP:
 			fclose(fp);
+			zip_close(zip);
+			try
+			{
+				remove(downloadPath);
+			}
+			catch (const std::exception& a)
+			{
+				spdlog::error("Error while removing downloaded archive: {}", a.what());
+			}
 			modsBeingDownloaded.erase(std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName));
-			// TODO close zip
-			// TODO remove temporary folder
 		});
 	requestThread.detach();
 }
