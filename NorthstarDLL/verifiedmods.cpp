@@ -420,6 +420,7 @@ void DownloadMod(char* modName, char* modVersion)
 					{
 						spdlog::error("Failed writing file to disk.");
 						modDownloadAndExtractionResult = FAILED_WRITING_TO_DISK;
+						zip_fclose(zf);
 						goto REQUEST_END_CLEANUP;
 					}
 
@@ -442,6 +443,7 @@ void DownloadMod(char* modName, char* modVersion)
 						currentDownloadStats[2] = roundf(static_cast<float>(extractedSize) / totalSize * 100);
 					}
 					writeStream.close();
+					zip_fclose(zf);
 				}
 
 				// Sets first statistics field to the count of extracted files, and update
