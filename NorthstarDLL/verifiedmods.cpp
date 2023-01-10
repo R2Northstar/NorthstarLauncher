@@ -293,6 +293,7 @@ void DownloadMod(char* modName, char* modVersion)
 			std::error_code ec;
 			int totalSize = 0;
 			int extractedSize = 0;
+			std::filesystem::path manifestPath = std::filesystem::path(GetNorthstarPrefix()) / "manifest.json";
 
 			// loading game path
 			std::string archiveName = (std::string)dependencyString + ".zip";
@@ -392,7 +393,7 @@ void DownloadMod(char* modName, char* modVersion)
 				// A well-formatted Thunderstore archive contains files such as icon.png,
 				// manifest.json and README.md; we don't want to extract those, but only
 				// the content of the mods/ directory.
-				if (strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/")
+				if ((strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/") && strcmp(name, "manifest.json") != 0)
 				{
 					continue;
 				}
@@ -402,11 +403,18 @@ void DownloadMod(char* modName, char* modVersion)
 
 				if (modName.back() == '/')
 				{
+					// Create directory
 					if (!std::filesystem::create_directory(destination, ec))
 					{
 						spdlog::error("Directory creation failed: {}", zip_strerror(zip));
 						modDownloadAndExtractionResult = ec.value() == ENOSPC ? NO_DISK_SPACE_AVAILABLE : FAILED_WRITING_TO_DISK;
 						goto REQUEST_END_CLEANUP;
+					}
+
+					// Extracting manifest.json to mods root directory
+					if (std::count(modName.begin(), modName.end(), '/') == 2)
+					{
+						std::filesystem::copy(manifestPath, destination / "manifest.json");
 					}
 				}
 				else
@@ -467,6 +475,10 @@ void DownloadMod(char* modName, char* modVersion)
 			catch (const std::exception& a)
 			{
 				spdlog::error("Error while removing downloaded archive: {}", a.what());
+			}
+			if (exists(manifestPath))
+			{
+				remove(manifestPath);
 			}
 			modsBeingDownloaded.erase(std::remove(std::begin(modsBeingDownloaded), std::end(modsBeingDownloaded), modName));
 		});
