@@ -1175,6 +1175,8 @@
     </ClInclude>
 		<ClInclude Include="wininfo.h">
     	<Filter>Header Files</Filter>
+    <ClInclude Include="util\utils.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1419,6 +1421,12 @@
     </ClCompile>
     <ClCompile Include="wininfo.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="client\rejectconnectionfixes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\utils.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
