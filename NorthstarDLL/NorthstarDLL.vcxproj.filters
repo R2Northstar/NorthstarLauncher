@@ -1173,6 +1173,9 @@
     <ClInclude Include="core\macros.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
+		<ClInclude Include="wininfo.h">
+    	<Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1413,6 +1416,9 @@
     </ClCompile>
     <ClCompile Include="core\sourceinterface.cpp">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="wininfo.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
