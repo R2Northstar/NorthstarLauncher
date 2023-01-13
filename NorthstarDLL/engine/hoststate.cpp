@@ -26,12 +26,17 @@ void ServerStartingOrChangingMap()
 {
 	ConVar* Cvar_mp_gamemode = g_pCVar->FindVar("mp_gamemode");
 
+	// ensure there's no ; chars in mp_gamemode that might allow someone to append any commands after the exec
+	char* pMode = const_cast<char*>(Cvar_mp_gamemode->GetString());
+	for (int i = 0; pMode[i]; i++)
+		if (pMode[i] == ';')
+			pMode[i] = ' ';
+
 	if (sLastMode.length())
 		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("exec cleanup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode);
 
 	Cbuf_AddText(
-		Cbuf_GetCurrentPlayer(),
-		fmt::format("exec setup_gamemode_{}", sLastMode = Cvar_mp_gamemode->GetString()).c_str(),
+		Cbuf_GetCurrentPlayer(), fmt::format("exec setup_gamemode_{}", sLastMode = pMode).c_str(),
 		cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
