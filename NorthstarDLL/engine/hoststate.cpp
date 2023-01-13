@@ -34,7 +34,8 @@ void ServerStartingOrChangingMap()
 	memset(commandBuf, 0, sizeof(commandBuf));
 	CCommand tempCommand = *(CCommand*)&commandBuf;
 	if (sLastMode.length() &&
-		CCommand__Tokenize(tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
+		CCommand__Tokenize(
+			tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
 		_Cmd_Exec_f(tempCommand, false, false);
 
 	memset(commandBuf, 0, sizeof(commandBuf));
@@ -151,7 +152,8 @@ void, __fastcall, (CHostState* self))
 		char* commandBuf[1040]; // assumedly this is the size of CCommand since we don't have an actual constructor
 		memset(commandBuf, 0, sizeof(commandBuf));
 		CCommand tempCommand = *(CCommand*)&commandBuf;
-		if (CCommand__Tokenize(tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
+		if (CCommand__Tokenize(
+				tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
 		{
 			_Cmd_Exec_f(tempCommand, false, false);
 			Cbuf_Execute();
