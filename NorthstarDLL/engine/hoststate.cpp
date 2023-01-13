@@ -20,25 +20,33 @@ namespace R2
 } // namespace R2
 
 ConVar* Cvar_hostport;
-std::string sLastMode; 
+std::string sLastMode;
+
+void (*_fastcall _Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists);
 
 void ServerStartingOrChangingMap()
 {
 	ConVar* Cvar_mp_gamemode = g_pCVar->FindVar("mp_gamemode");
 
-	// ensure there's no ; chars in mp_gamemode that might allow someone to append any commands after the exec
-	char* pMode = const_cast<char*>(Cvar_mp_gamemode->GetString());
-	for (int i = 0; pMode[i]; i++)
-		if (pMode[i] == ';')
-			pMode[i] = ' ';
+	// directly call _Cmd_Exec_f to avoid weirdness with ; being in mp_gamemode potentially
+	// if we ran exec {mp_gamemode} and mp_gamemode contained semicolons, this could be used to execute more commands
+	char* commandBuf[1040]; // assumedly this is the size of CCommand since we don't have an actual constructor
+	memset(commandBuf, 0, sizeof(commandBuf));
+	CCommand tempCommand = *(CCommand*)&commandBuf;
+	if (sLastMode.length() &&
+		CCommand__Tokenize(tempCommand, fmt::format("exec cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
+		_Cmd_Exec_f(tempCommand, false, false);
 
-	if (sLastMode.length())
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("exec cleanup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode);
+	memset(commandBuf, 0, sizeof(commandBuf));
+	if (CCommand__Tokenize(
+			tempCommand,
+			fmt::format("exec setup_gamemode_{}", sLastMode = Cvar_mp_gamemode->GetString()).c_str(),
+			R2::cmd_source_t::kCommandSrcCode))
+	{
+		_Cmd_Exec_f(tempCommand, false, false);
+	}
 
-	Cbuf_AddText(
-		Cbuf_GetCurrentPlayer(), fmt::format("exec setup_gamemode_{}", sLastMode = pMode).c_str(),
-		cmd_source_t::kCommandSrcCode);
-	Cbuf_Execute();
+	Cbuf_Execute(); // exec everything right now
 
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
 	// sucks for security but just how it be
@@ -140,7 +148,15 @@ void, __fastcall, (CHostState* self))
 	// run gamemode cleanup cfg now instead of when we start next map
 	if (sLastMode.length())
 	{
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("exec cleaup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode);
+		char* commandBuf[1040]; // assumedly this is the size of CCommand since we don't have an actual constructor
+		memset(commandBuf, 0, sizeof(commandBuf));
+		CCommand tempCommand = *(CCommand*)&commandBuf;
+		if (CCommand__Tokenize(tempCommand, fmt::format("exec cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
+		{
+			_Cmd_Exec_f(tempCommand, false, false);
+			Cbuf_Execute();
+		}
+
 		sLastMode.clear();
 	}
 }
@@ -178,4 +194,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 
 	g_pHostState = module.Offset(0x7CF180).As<CHostState*>();
 	Cvar_hostport = module.Offset(0x13FA6070).As<ConVar*>();
+
+	_Cmd_Exec_f = module.Offset(0x1232C0).As<void (*__fastcall)(const CCommand&, bool, bool)>();
 }
