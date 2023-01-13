@@ -447,7 +447,7 @@
     <ClInclude Include="squirrel\squirreldatatypes.h" />
     <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
-		<ClInclude Include="wininfo.h" />
+		<ClInclude Include="util\wininfo.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst" />
@@ -538,7 +538,7 @@
     <ClCompile Include="util\printmaps.cpp" />
     <ClCompile Include="util\utils.cpp" />
     <ClCompile Include="util\version.cpp" />
-		<ClCompile Include="wininfo.cpp" />
+		<ClCompile Include="util\wininfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm" />

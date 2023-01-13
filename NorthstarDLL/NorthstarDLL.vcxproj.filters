@@ -1173,7 +1173,7 @@
     <ClInclude Include="core\macros.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-		<ClInclude Include="wininfo.h">
+		<ClInclude Include="util\wininfo.h">
     	<Filter>Header Files</Filter>
     <ClInclude Include="util\utils.h">
       <Filter>Header Files\util</Filter>
@@ -1419,7 +1419,7 @@
     <ClCompile Include="core\sourceinterface.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="wininfo.cpp">
+    <ClCompile Include="util\wininfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="client\rejectconnectionfixes.cpp">
