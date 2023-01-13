@@ -20,9 +20,21 @@ namespace R2
 } // namespace R2
 
 ConVar* Cvar_hostport;
+std::string sLastMode; 
 
 void ServerStartingOrChangingMap()
 {
+	ConVar* Cvar_mp_gamemode = g_pCVar->FindVar("mp_gamemode");
+
+	if (sLastMode.length())
+		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("exec cleanup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode);
+
+	Cbuf_AddText(
+		Cbuf_GetCurrentPlayer(),
+		fmt::format("exec setup_gamemode_{}", sLastMode = Cvar_mp_gamemode->GetString()).c_str(),
+		cmd_source_t::kCommandSrcCode);
+	Cbuf_Execute();
+
 	// net_data_block_enabled is required for sp, force it if we're on an sp map
 	// sucks for security but just how it be
 	if (!strncmp(g_pHostState->m_levelName, "sp_", 3))
@@ -119,6 +131,13 @@ void, __fastcall, (CHostState* self))
 	g_pServerAuthentication->StopPlayerAuthServer();
 
 	CHostState__State_GameShutdown(self);
+
+	// run gamemode cleanup cfg now instead of when we start next map
+	if (sLastMode.length())
+	{
+		Cbuf_AddText(Cbuf_GetCurrentPlayer(), fmt::format("exec cleaup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode);
+		sLastMode.clear();
+	}
 }
 
 // clang-format off
