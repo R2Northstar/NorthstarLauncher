@@ -24,6 +24,6 @@ $(BUILD_DIR)/Northstar.dll:
 
 .PHONY: clean
 clean:
-	rm -r $(BUILD_DIR)
+	$(RM) -r $(BUILD_DIR)
 	$(MAKE) -C NorthstarDLL/ clean
 	$(MAKE) -C NorthstarLauncher/

@@ -2,7 +2,7 @@
 CXX=x86_64-w64-mingw32-g++
 
 CXXFLAGS := -std=c++20 -fpermissive
-LDFLAGS := -shared -static-libgcc -static-libstdc++ -lwsock32 -lws2_32 -L./minhook -lMinHook -Wl,-Bstatic -l:libz.dll.a -l:libnghttp2.dll.a -l:libcurl.dll.a -l:libcares.dll.a
+LDFLAGS := -shared -Wl,--stack=8000000 -static-libgcc -static-libstdc++ -lwsock32 -lws2_32 -L./minhook -lMinHook -Wl,-Bstatic -l:libz.dll.a -l:libnghttp2.dll.a -l:libcurl.dll.a -l:libcares.dll.a
 
 BUILD_DIR := linuxbuild
 SRCS := $(shell find . -type f -name '*.cpp')
@@ -33,5 +33,5 @@ minhook/libMinHook.a:
 
 .PHONY: clean
 clean:
-	rm -r $(BUILD_DIR)
+	$(RM) -r $(BUILD_DIR)
 	$(MAKE) -C minhook/build/MinGW clean
