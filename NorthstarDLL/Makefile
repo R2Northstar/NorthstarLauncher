@@ -10,11 +10,12 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 INCLUDES := $(addprefix -I,$(shell find . -type d))
 INCLUDES += -I../include
 
-debug: CXXFLAGS += -g
-debug: all
-
 
 all: $(BUILD_DIR)/Northstar.dll
+
+
+debug: CXXFLAGS += -g
+debug: all
 
 
 $(BUILD_DIR)/Northstar.dll: $(OBJS) minhook/libMinHook.a

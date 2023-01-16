@@ -9,11 +9,11 @@ SRCS := main.cpp
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
 
+all: $(BUILD_DIR)/NorthstarLauncher.exe
+
+
 debug: CXXFLAGS += -g
 debug: all
-
-
-all: $(BUILD_DIR)/NorthstarLauncher.exe
 
 
 $(BUILD_DIR)/NorthstarLauncher.exe: $(OBJS)
