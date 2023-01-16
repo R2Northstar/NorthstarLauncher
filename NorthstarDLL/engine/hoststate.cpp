@@ -28,7 +28,6 @@ void (*_fastcall _Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUse
 __fastcall void (*_Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists);
 #endif
 
-
 void ServerStartingOrChangingMap()
 {
 	ConVar* Cvar_mp_gamemode = g_pCVar->FindVar("mp_gamemode");

@@ -51,9 +51,9 @@ OFFSET_STRUCT(Name)
 #define PROBE_PROXY(...) PROBE_PRIMITIVE(__VA_ARGS__) // expand arguments
 
 #ifdef __MINGW32__
-#define PROBE_PRIMITIVE( x ) PROBE_COMBINE_ x // merge, but for MinGW
+#define PROBE_PRIMITIVE(x) PROBE_COMBINE_ x // merge, but for MinGW
 #else
-#define PROBE_PRIMITIVE( x ) PROBE_COMBINE_##x // merge
+#define PROBE_PRIMITIVE(x) PROBE_COMBINE_##x // merge
 #endif
 
 #define PROBE_COMBINE_(...) PROBE(~) // if merge successful, expand to probe
