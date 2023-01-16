@@ -30,8 +30,15 @@ namespace fs = std::filesystem;
 #include "core/math/color.h"
 #include "spdlog/spdlog.h"
 #include "logging/logging.h"
+
+#ifndef __MINGW32__
+#include "MinHook.h"
+#include "libcurl/include/curl/curl.h"
+#else
 #include "minhook/include/MinHook.h"
 #include <curl/curl.h>
+#endif
+
 #include "core/hooks.h"
 #include "core/memory.h"
 
