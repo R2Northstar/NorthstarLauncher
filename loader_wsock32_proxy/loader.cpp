@@ -36,7 +36,7 @@ bool ShouldLoadNorthstar()
 		std::stringstream runNorthstarFileBuffer;
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
-		if (!runNorthstarFileBuffer.str()._Starts_with("0"))
+		if (!runNorthstarFileBuffer.str().starts_with("0"))
 			loadNorthstar = true;
 	}
 	return loadNorthstar;

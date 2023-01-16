@@ -13,8 +13,19 @@ AUTOHOOK_INIT()
 
 extern "C"
 {
+#ifndef __MINGW32__
 	// should be called only in LoadSampleMetadata_Hook
 	extern void* __fastcall Audio_GetParentEvent();
+#else
+	// Inline asm since MinGW as cannot assemble audio_asm.asm
+	// Maybe MSVC version should be made inline too
+	void* __attribute__((naked)) Audio_GetParentEvent() {
+		__asm(
+			"mov %rax, %r12		\n\t"
+			"ret			\n\t"
+		);
+	}
+#endif
 }
 
 ConVar* Cvar_ns_print_played_sounds;

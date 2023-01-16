@@ -549,7 +549,7 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	request.timeout = g_pSquirrel<context>->getinteger(sqvm, 7);
 	request.userAgent = g_pSquirrel<context>->getstring(sqvm, 8);
 
-	int handle = g_httpRequestHandler->MakeHttpRequest<context>(request);
+	int handle = g_httpRequestHandler->template MakeHttpRequest<context>(request);
 	g_pSquirrel<context>->pushinteger(sqvm, handle);
 	return SQRESULT_NOTNULL;
 }
@@ -570,13 +570,13 @@ template <ScriptContext context> SQRESULT SQ_IsLocalHttpAllowed(HSquirrelVM* sqv
 
 ON_DLL_LOAD_RELIESON("client.dll", HttpRequestHandler_ClientInit, ClientSquirrel, (CModule module))
 {
-	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::CLIENT>();
-	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::UI>();
+	g_httpRequestHandler->template RegisterSQFuncs<ScriptContext::CLIENT>();
+	g_httpRequestHandler->template RegisterSQFuncs<ScriptContext::UI>();
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel, (CModule module))
 {
-	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::SERVER>();
+	g_httpRequestHandler->template RegisterSQFuncs<ScriptContext::SERVER>();
 }
 
 ON_DLL_LOAD("engine.dll", HttpRequestHandler_Init, (CModule module))

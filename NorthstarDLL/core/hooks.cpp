@@ -8,7 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
-#include <Psapi.h>
+#include <psapi.h>
 
 AUTOHOOK_INIT()
 

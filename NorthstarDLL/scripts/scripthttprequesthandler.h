@@ -130,3 +130,7 @@ class HttpRequestHandler
 };
 
 extern HttpRequestHandler* g_httpRequestHandler;
+
+template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm);
+template <ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSquirrelVM* sqvm);
+template <ScriptContext context> SQRESULT SQ_IsLocalHttpAllowed(HSquirrelVM* sqvm);

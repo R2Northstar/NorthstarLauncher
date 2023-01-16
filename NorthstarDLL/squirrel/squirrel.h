@@ -39,6 +39,16 @@ const char* SQTypeNameFromID(const int iTypeId);
 
 ScriptContext ScriptContextFromString(std::string string);
 
+
+#ifndef MessageBufferFuncs
+template <ScriptContext context, typename T>
+inline void SqRecurseArgs(FunctionVector& v, T& arg);
+
+template <ScriptContext context, typename T, typename... Args>
+inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
+#endif
+
+
 namespace NS::log
 {
 	template <ScriptContext context> std::shared_ptr<spdlog::logger> squirrel_logger();

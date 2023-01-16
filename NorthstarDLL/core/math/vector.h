@@ -21,7 +21,7 @@ union Vector3
 	void MakeValid()
 	{
 		for (auto& fl : raw)
-			if (isnan(fl))
+			if (std::isnan(fl))
 				fl = 0;
 	}
 

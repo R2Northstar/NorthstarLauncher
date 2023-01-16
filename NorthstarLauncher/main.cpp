@@ -10,7 +10,7 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 #include <winsock2.h>
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
 
 namespace fs = std::filesystem;
 
@@ -44,7 +44,7 @@ DWORD GetProcessByName(std::wstring processName)
 
 	while (Process32Next(snapshot, &processSnapshotEntry))
 	{
-		if (!wcscmp(processSnapshotEntry.szExeFile, processName.c_str()))
+		if (!wcscmp((const wchar_t*)processSnapshotEntry.szExeFile, processName.c_str()))
 		{
 			CloseHandle(snapshot);
 			return processSnapshotEntry.th32ProcessID;

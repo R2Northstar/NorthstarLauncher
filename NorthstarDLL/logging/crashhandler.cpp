@@ -5,7 +5,9 @@
 #include "util/version.h"
 #include "mods/modmanager.h"
 
+#ifndef __MINGW32__
 #include <minidumpapiset.h>
+#endif
 
 HANDLE hExceptionFilter;
 
@@ -233,6 +235,7 @@ void GenerateTrace(ExceptionLog& exc, bool skipErrorHandlingFrames = true, int n
 
 void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 {
+#ifndef __MINGW32__
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
@@ -258,6 +261,7 @@ void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 	}
 	else
 		spdlog::error("Failed to write minidump file {}!", stream.str());
+#endif
 }
 
 long GenerateExceptionLog(EXCEPTION_POINTERS* exceptionInfo)

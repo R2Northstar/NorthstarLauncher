@@ -22,7 +22,12 @@ namespace R2
 ConVar* Cvar_hostport;
 std::string sLastMode;
 
+#ifndef __MINGW32__
 void (*_fastcall _Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists);
+#else
+__fastcall void (*_Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists);
+#endif
+
 
 void ServerStartingOrChangingMap()
 {
@@ -197,5 +202,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 	g_pHostState = module.Offset(0x7CF180).As<CHostState*>();
 	Cvar_hostport = module.Offset(0x13FA6070).As<ConVar*>();
 
+#ifndef __MINGW32__
 	_Cmd_Exec_f = module.Offset(0x1232C0).As<void (*__fastcall)(const CCommand&, bool, bool)>();
+#else
+	_Cmd_Exec_f = module.Offset(0x1232C0).As<__fastcall void (*)(const CCommand&, bool, bool)>(); // THIS MIGHT NOT WORK VERY VELL
+#endif
 }

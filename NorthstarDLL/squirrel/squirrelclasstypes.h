@@ -3,6 +3,7 @@
 #include "squirreldatatypes.h"
 
 #include <queue>
+#include <optional>
 
 enum SQRESULT : SQInteger
 {
