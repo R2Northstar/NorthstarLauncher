@@ -1,16 +1,22 @@
 
 BUILD_DIR := linuxbuild/
+MAKEOPTS :=
+
+debug: MAKEOPTS += debug
+debug: all
+
 
 all: $(BUILD_DIR)/NorthstarLauncher.exe $(BUILD_DIR)/Northstar.dll
-	cp NorthstarDLL/$(BUILD_DIR)/Northstar.dll
-	cp NorthstarLauncher/$(BUILD_DIR)/NorthstarLauncher.exe
+	cp NorthstarDLL/$(BUILD_DIR)/Northstar.dll $(BUILD_DIR)
+	cp NorthstarLauncher/$(BUILD_DIR)/NorthstarLauncher.exe $(BUILD_DIR)
+
 
 $(BUILD_DIR)/NorthstarLauncher.exe:
-	$(MAKE) -C NorthstarLauncher/
+	$(MAKE) -C NorthstarLauncher/ $(MAKEOPTS)
 
 
 $(BUILD_DIR)/Northstar.dll:
-	$(MAKE) -C NorthstarDLL/
+	$(MAKE) -C NorthstarDLL/ $(MAKEOPTS)
 
 
 .PHONY: clean

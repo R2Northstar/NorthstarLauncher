@@ -8,6 +8,14 @@ BUILD_DIR := linuxbuild
 SRCS := main.cpp
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
+
+debug: CXXFLAGS += -g
+debug: all
+
+
+all: $(BUILD_DIR)/NorthstarLauncher.exe
+
+
 $(BUILD_DIR)/NorthstarLauncher.exe: $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 

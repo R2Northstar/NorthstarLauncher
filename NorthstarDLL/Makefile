@@ -11,7 +11,10 @@ INCLUDES := $(addprefix -I,$(shell find . -type d))
 INCLUDES += -I../include
 
 debug: CXXFLAGS += -g
-debug: $(BUILD_DIR)/Northstar.dll
+debug: all
+
+
+all: $(BUILD_DIR)/Northstar.dll
 
 
 $(BUILD_DIR)/Northstar.dll: $(OBJS) minhook/libMinHook.a
@@ -24,10 +27,10 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 
 
 minhook/libMinHook.a:
-	$(WINE) -C minhook -f build/MinGW/Makefile
+	$(MAKE) -C minhook -f build/MinGW/Makefile
 
 
 .PHONY: clean
 clean:
 	rm -r $(BUILD_DIR)
-	$(WINE) -C minhook/build/MinGW clean
+	$(MAKE) -C minhook/build/MinGW clean
