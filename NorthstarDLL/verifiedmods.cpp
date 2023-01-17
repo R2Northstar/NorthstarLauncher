@@ -11,6 +11,9 @@
 #include "openssl/evp.h"
 #include "openssl/sha.h"
 #include <verification_results.h>
+#include <rapidjson/fwd.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
 
 using namespace rapidjson;
 
@@ -125,6 +128,45 @@ bool IsModVerified(char* modName, char* modVersion)
 
 	spdlog::info("Required version {} for mod \"{}\" is not verified, and thus couldn't be downloaded.", modVersion, modName);
 	return false;
+}
+
+/**
+ * Adds a `"AutoDownloaded": true` entry into json file located at `filepath`.
+ **/
+bool MarkModJson(std::filesystem::path filepath)
+{
+	spdlog::info("Add autodownload key to {}", filepath.generic_string());
+	using namespace rapidjson;
+
+	std::ifstream ifs {filepath.generic_string().c_str()};
+	if (!ifs.is_open())
+	{
+		spdlog::error("Could not open manifest file for reading.");
+		return false;
+	}
+	IStreamWrapper isw {ifs};
+	Document doc {};
+	doc.ParseStream(isw);
+
+	if (doc.HasParseError())
+	{
+		spdlog::error("Manifest file is not formatted correctly.");
+		return false;
+	}
+
+	doc.AddMember("AutoDownloaded", true, doc.GetAllocator());
+
+	std::ofstream ofs {filepath.generic_string().c_str()};
+	if (!ofs.is_open())
+	{
+		spdlog::error("Could not open manifest file for writing.");
+		return false;
+	}
+	OStreamWrapper osw {ofs};
+	Writer<OStreamWrapper> writer {osw};
+	doc.Accept(writer);
+
+	return true;
 }
 
 /**
@@ -452,6 +494,18 @@ void DownloadMod(char* modName, char* modVersion)
 					}
 					writeStream.close();
 					zip_fclose(zf);
+
+					// If extracted file is a mod manifest (mod top-level JSON file), we add an
+					// entry to it, to mark it as "auto-downloaded".
+					int modNameLength = modName.length();
+					if (std::count(modName.begin(), modName.end(), '/') == 2 &&
+						strcmp(modName.substr(modNameLength - 8, modNameLength).c_str(), "mod.json") == 0)
+					{
+						if (!MarkModJson(destination))
+						{
+							spdlog::error("Failed to mark mod manifest");
+						}
+					}
 				}
 
 				// Sets first statistics field to the count of extracted files, and update
