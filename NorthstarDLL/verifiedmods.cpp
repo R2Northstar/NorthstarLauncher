@@ -14,6 +14,7 @@
 #include <rapidjson/fwd.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/prettywriter.h>
 
 using namespace rapidjson;
 
@@ -163,7 +164,7 @@ bool MarkModJson(std::filesystem::path filepath)
 		return false;
 	}
 	OStreamWrapper osw {ofs};
-	Writer<OStreamWrapper> writer {osw};
+	PrettyWriter<OStreamWrapper> writer(osw);
 	doc.Accept(writer);
 
 	return true;
