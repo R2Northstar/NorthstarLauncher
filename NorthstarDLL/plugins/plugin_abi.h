@@ -19,6 +19,12 @@ enum PluginLoadDLL
 	SERVER
 };
 
+enum ObjectType
+{
+	CONCOMMANDS = 0,
+	CONVAR = 1,
+};
+
 struct SquirrelFunctions
 {
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
@@ -85,6 +91,7 @@ struct LogMsg
 
 typedef void (*loggerfunc_t)(LogMsg* msg);
 typedef void (*PLUGIN_RELAY_INVITE_TYPE)(const char* invite);
+typedef void* (*CreateObjectFunc)(ObjectType type);
 
 struct PluginNorthstarData
 {
@@ -97,6 +104,7 @@ struct PluginInitFuncs
 {
 	loggerfunc_t logger;
 	PLUGIN_RELAY_INVITE_TYPE relayInviteFunc;
+	CreateObjectFunc createObject;
 };
 
 struct PluginEngineData
