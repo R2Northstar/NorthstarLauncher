@@ -258,6 +258,8 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 {
+	g_pPluginManager->InformSQVMDestroyed(context);
+
 	m_pSQVM = nullptr;
 }
 
