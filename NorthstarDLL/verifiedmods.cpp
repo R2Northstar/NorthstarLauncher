@@ -609,3 +609,8 @@ ADD_SQFUNC("void", NSDownloadMod, "string modName, string modVersion", "", Scrip
 	DownloadMod((char*)modName, (char*)modVersion);
 	return SQRESULT_NULL;
 }
+
+ON_DLL_LOAD_CLIENT("client.dll", VerifiedMods, (CModule module))
+{
+	FetchVerifiedModsList();
+}
