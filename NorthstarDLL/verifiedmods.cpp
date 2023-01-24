@@ -556,12 +556,6 @@ void DownloadMod(char* modName, char* modVersion)
  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
 */
 
-ADD_SQFUNC("string", NSFetchVerifiedModsList, "", "", ScriptContext::UI)
-{
-	FetchVerifiedModsList();
-	return SQRESULT_NULL;
-}
-
 ADD_SQFUNC("bool", NSIsModVerified, "string modName, string modVersion", "", ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
