@@ -435,6 +435,7 @@
     <ClInclude Include="masterserver\masterserver.h" />
     <ClInclude Include="mods\modmanager.h" />
     <ClInclude Include="mods\verified\verification_results.h" />
+    <ClInclude Include="mods\verified\verifiedmodsutils.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="plugins\plugins.h" />
@@ -508,6 +509,7 @@
     <ClCompile Include="mods\modmanager.cpp" />
     <ClCompile Include="mods\verified\verification_results.cpp" />
     <ClCompile Include="mods\verified\verifiedmods.cpp" />
+    <ClCompile Include="mods\verified\verifiedmodsutils.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
