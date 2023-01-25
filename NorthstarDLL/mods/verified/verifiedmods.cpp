@@ -4,7 +4,6 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "squirrel/squirrel.h"
-#include "verifiedmods.h"
 #include "libzip/include/zip.h"
 #include <fstream>
 #include "config/profile.h"

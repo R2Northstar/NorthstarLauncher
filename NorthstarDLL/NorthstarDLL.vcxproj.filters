@@ -1200,9 +1200,6 @@
     <ClInclude Include="mods\verified\verification_results.h">
       <Filter>Header Files\mods\verified</Filter>
     </ClInclude>
-    <ClInclude Include="mods\verified\verifiedmods.h">
-      <Filter>Header Files\mods\verified</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">

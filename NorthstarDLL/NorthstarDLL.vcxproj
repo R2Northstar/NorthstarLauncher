@@ -435,7 +435,6 @@
     <ClInclude Include="masterserver\masterserver.h" />
     <ClInclude Include="mods\modmanager.h" />
     <ClInclude Include="mods\verified\verification_results.h" />
-    <ClInclude Include="mods\verified\verifiedmods.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="plugins\plugins.h" />
