@@ -10,7 +10,7 @@
 #include "config/profile.h"
 #include "openssl/evp.h"
 #include "openssl/sha.h"
-#include <verification_results.h>
+#include "verification_results.h"
 #include <rapidjson/fwd.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
