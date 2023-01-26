@@ -354,6 +354,7 @@ void ModManager::LoadMods()
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
 	fs::create_directories(GetModFolderPath());
+	fs::create_directories(GetRemoteModFolderPath());
 
 	m_DependencyConstants.clear();
 
@@ -804,6 +805,10 @@ void ConCommand_reload_mods(const CCommand& args)
 fs::path GetModFolderPath()
 {
 	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
+}
+fs::path GetRemoteModFolderPath()
+{
+	return fs::path(GetNorthstarPrefix() + REMOTE_MOD_FOLDER_SUFFIX);
 }
 fs::path GetCompiledAssetsPath()
 {
