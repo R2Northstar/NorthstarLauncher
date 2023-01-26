@@ -7,6 +7,11 @@
 bool MarkModJson(std::filesystem::path filepath);
 
 /**
+ * Creates a file at `filepath`, and writes `authorName` in it.
+ **/
+bool CreateModAuthorFile(std::string authorName, std::filesystem::path filepath);
+
+/**
  * cURL method to write data to disk.
  **/
 size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream);

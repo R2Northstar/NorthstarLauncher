@@ -330,6 +330,7 @@ void DownloadMod(char* modName, char* modVersion)
 					if (std::count(modName.begin(), modName.end(), '/') == 2)
 					{
 						std::filesystem::copy(manifestPath, destination / "manifest.json");
+						CreateModAuthorFile(dependencyString.substr(0, dependencyString.find('-')), destination / "thunderstore_author.txt");
 					}
 				}
 				else
@@ -370,6 +371,9 @@ void DownloadMod(char* modName, char* modVersion)
 
 					// If extracted file is a mod manifest (mod top-level JSON file), we add an
 					// entry to it, to mark it as "auto-downloaded".
+					// (not done anymore, check https://github.com/0neGal/viper/issues/165 for
+					// information on new format)
+					/*
 					int modNameLength = modName.length();
 					if (std::count(modName.begin(), modName.end(), '/') == 2 &&
 						strcmp(modName.substr(modNameLength - 8, modNameLength).c_str(), "mod.json") == 0)
@@ -379,6 +383,7 @@ void DownloadMod(char* modName, char* modVersion)
 							spdlog::error("Failed to mark mod manifest");
 						}
 					}
+					*/
 				}
 
 				// Sets first statistics field to the count of extracted files, and update

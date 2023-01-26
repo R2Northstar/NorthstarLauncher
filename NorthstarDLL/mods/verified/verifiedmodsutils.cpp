@@ -43,6 +43,18 @@ bool MarkModJson(std::filesystem::path filepath)
 	return true;
 }
 
+bool CreateModAuthorFile(std::string authorName, std::filesystem::path filepath) {
+	std::ofstream writeStream(filepath);
+	if (!writeStream.is_open())
+	{
+		spdlog::error("Failed to open author file.");
+		return false;
+	}
+	writeStream << authorName;
+	writeStream.close();
+	return true;
+}
+
 size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
 	size_t written;
