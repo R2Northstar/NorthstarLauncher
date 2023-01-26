@@ -330,7 +330,8 @@ void DownloadMod(char* modName, char* modVersion)
 					if (std::count(modName.begin(), modName.end(), '/') == 2)
 					{
 						std::filesystem::copy(manifestPath, destination / "manifest.json");
-						CreateModAuthorFile(dependencyString.substr(0, dependencyString.find('-')), destination / "thunderstore_author.txt");
+						CreateModAuthorFile(
+							dependencyString.substr(0, dependencyString.find('-')), destination / "thunderstore_author.txt");
 					}
 				}
 				else

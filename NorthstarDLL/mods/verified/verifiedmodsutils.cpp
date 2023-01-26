@@ -43,7 +43,8 @@ bool MarkModJson(std::filesystem::path filepath)
 	return true;
 }
 
-bool CreateModAuthorFile(std::string authorName, std::filesystem::path filepath) {
+bool CreateModAuthorFile(std::string authorName, std::filesystem::path filepath)
+{
 	std::ofstream writeStream(filepath);
 	if (!writeStream.is_open())
 	{
