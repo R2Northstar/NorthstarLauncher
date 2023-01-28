@@ -4,7 +4,7 @@
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"&
+#include "rapidjson/stringbuffer.h"
 #include "squirrel/squirrel.h"
 
 template <ScriptContext context> void EncodeJSONTable(

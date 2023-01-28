@@ -21,12 +21,6 @@ bool ContainsNonASCIIChars(std::string str)
 
 ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
-	/* if (!saveFilesEnabled)
-	{
-		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("Your mods have taken up too much space. Uninstall mods or reduce their character limits.").c_str());
-		return SQRESULT_ERROR;
-	}*/
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	if (mod == nullptr)
 	{
@@ -57,11 +51,11 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 				return SQRESULT_ERROR;
 			}
 			fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename());
-			std::ofstream fileStr(
-				fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
+			std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
 			if (fileStr.fail())
 			{
-				g_pSquirrel<context>->raiseerror(sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
+				g_pSquirrel<context>->raiseerror(
+					sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
 				return SQRESULT_ERROR;
 			}
 			fileStr.write(content.c_str(), content.length());
@@ -92,8 +86,7 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 	{
 		if (file.Name == fileName)
 		{
-			std::ifstream fileStr(
-				fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (file.Name));
+			std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (file.Name));
 			if (fileStr.fail())
 			{
 				g_pSquirrel<context>->pushstring(sqvm, "");
@@ -106,7 +99,6 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 			return SQRESULT_NOTNULL;
 		}
 	}
-	g_pSquirrel<context>->raiseerror(
-		sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, mod->Name).c_str());
+	g_pSquirrel<context>->raiseerror(sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, mod->Name).c_str());
 	return SQRESULT_ERROR;
 }
