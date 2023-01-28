@@ -61,8 +61,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 				fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
 			if (fileStr.fail())
 			{
-				g_pSquirrel<context>->raiseerror(
-					sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
+				g_pSquirrel<context>->raiseerror(sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
 				return SQRESULT_ERROR;
 			}
 			fileStr.write(content.c_str(), content.length());
