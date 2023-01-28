@@ -48,6 +48,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>Northstar</TargetName>
+    <OutDir>..\..\..\..\..\..\Program Files %28x86%29\Steam\steamapps\common\Titanfall2</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -427,11 +428,13 @@
     <ClInclude Include="logging\sourceconsole.h" />
     <ClInclude Include="masterserver\masterserver.h" />
     <ClInclude Include="mods\modmanager.h" />
+    <ClInclude Include="mods\modsavefiles.h" />
     <ClInclude Include="ns_version.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="plugins\plugins.h" />
     <ClInclude Include="plugins\plugin_abi.h" />
     <ClInclude Include="scripts\scripthttprequesthandler.h" />
+    <ClInclude Include="scripts\scriptjson.h" />
     <ClInclude Include="server\auth\bansystem.h" />
     <ClInclude Include="server\auth\serverauthentication.h" />
     <ClInclude Include="server\r2server.h" />
@@ -447,7 +450,7 @@
     <ClInclude Include="squirrel\squirreldatatypes.h" />
     <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
-		<ClInclude Include="util\wininfo.h" />
+    <ClInclude Include="util\wininfo.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst" />
@@ -499,6 +502,7 @@
     <ClCompile Include="mods\compiled\modpdef.cpp" />
     <ClCompile Include="mods\compiled\modscriptsrson.cpp" />
     <ClCompile Include="mods\modmanager.cpp" />
+    <ClCompile Include="mods\modsavefiles.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -538,7 +542,7 @@
     <ClCompile Include="util\printmaps.cpp" />
     <ClCompile Include="util\utils.cpp" />
     <ClCompile Include="util\version.cpp" />
-		<ClCompile Include="util\wininfo.cpp" />
+    <ClCompile Include="util\wininfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm" />
