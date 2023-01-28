@@ -374,7 +374,7 @@ void ModManager::LoadMods()
 	}
 
 	// get mod directories
-	for (fs::directory_entry dir : fs::directory_iterator(GetModFolderPath()))
+	for (fs::directory_entry dir : fs::recursive_directory_iterator(GetModFolderPath()))
 		if (fs::exists(dir.path() / "mod.json"))
 			modDirs.push_back(dir.path());
 
