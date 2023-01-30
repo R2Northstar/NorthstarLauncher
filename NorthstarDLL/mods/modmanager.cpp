@@ -12,7 +12,7 @@
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
-#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -445,6 +445,7 @@ void ModManager::LoadMods()
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
 	fs::create_directories(GetModFolderPath());
+	fs::create_directories(GetRemoteModFolderPath());
 
 	m_DependencyConstants.clear();
 
@@ -465,9 +466,13 @@ void ModManager::LoadMods()
 	}
 
 	// get mod directories
-	for (fs::directory_entry dir : fs::directory_iterator(GetModFolderPath()))
-		if (fs::exists(dir.path() / "mod.json"))
-			modDirs.push_back(dir.path());
+	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
+	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
+
+	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
+		for (fs::directory_entry dir : modIterator)
+			if (fs::exists(dir.path() / "mod.json"))
+				modDirs.push_back(dir.path());
 
 	for (fs::path modDir : modDirs)
 	{
@@ -841,7 +846,7 @@ void ModManager::UnloadMods()
 
 	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
-	rapidjson::Writer<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
+	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
 	m_EnabledModsCfg.Accept(writer);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
@@ -895,6 +900,10 @@ void ConCommand_reload_mods(const CCommand& args)
 fs::path GetModFolderPath()
 {
 	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
+}
+fs::path GetRemoteModFolderPath()
+{
+	return fs::path(GetNorthstarPrefix() + REMOTE_MOD_FOLDER_SUFFIX);
 }
 fs::path GetCompiledAssetsPath()
 {

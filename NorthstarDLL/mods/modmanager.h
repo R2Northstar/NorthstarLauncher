@@ -170,6 +170,7 @@ class ModManager
 };
 
 fs::path GetModFolderPath();
+fs::path GetRemoteModFolderPath();
 fs::path GetCompiledAssetsPath();
 
 extern ModManager* g_pModManager;
