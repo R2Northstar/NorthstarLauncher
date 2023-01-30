@@ -9,7 +9,6 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "config/profile.h"
-#include "scripts/scriptjson.h"
 
 bool ContainsNonASCIIChars(std::string str)
 {
@@ -29,6 +28,56 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 	}
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
 	std::string content = g_pSquirrel<context>->getstring(sqvm, 2);
+	if (ContainsNonASCIIChars(content))
+	{
+		g_pSquirrel<context>->raiseerror(
+			sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!", mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+	for (ModSaveFile& file : mod->SaveFiles)
+	{
+		if (file.Name == fileName)
+		{
+			if (content.length() > file.CharacterLimit)
+			{
+				g_pSquirrel<context>->raiseerror(
+					sqvm,
+					fmt::format(
+						"File content length over character limit ({})! Reduce the table's contents, or increase it!",
+						file.CharacterLimit,
+						mod->Name)
+						.c_str());
+				return SQRESULT_ERROR;
+			}
+			fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename());
+			std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
+			if (fileStr.fail())
+			{
+				g_pSquirrel<context>->raiseerror(
+					sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
+				return SQRESULT_ERROR;
+			}
+			fileStr.write(content.c_str(), content.length());
+			fileStr.close();
+			return SQRESULT_NULL;
+		}
+	}
+	g_pSquirrel<context>->raiseerror(sqvm, fmt::format("Mod with name {} was not found!", fileName).c_str());
+	return SQRESULT_ERROR;
+}
+
+#include "scripts/scriptjson.h"
+
+ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	if (mod == nullptr)
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "Has to be called from a mod function!");
+		return SQRESULT_ERROR;
+	}
+	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
+	std::string content = EncodeJSON<context>(sqvm);
 	if (ContainsNonASCIIChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
@@ -101,4 +150,75 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 	}
 	g_pSquirrel<context>->raiseerror(sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, mod->Name).c_str());
 	return SQRESULT_ERROR;
+}
+
+ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	if (mod == nullptr)
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "Has to be called from a mod function!");
+		return SQRESULT_ERROR;
+	}
+	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	if (!mod->m_bEnabled)
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, fmt::format("Mod with name {} was not found!", mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+	for (ModSaveFile& file : mod->SaveFiles)
+	{
+		if (file.Name == fileName)
+		{
+			std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (file.Name));
+			if (fileStr.fail())
+			{
+				g_pSquirrel<context>->pushstring(sqvm, "");
+				return SQRESULT_NOTNULL;
+			}
+			std::stringstream jsonStringStream;
+			while (fileStr.peek() != EOF)
+				jsonStringStream << (char)fileStr.get();
+			DecodeJSON<context>(sqvm, jsonStringStream.str().c_str());
+			return SQRESULT_NOTNULL;
+		}
+	}
+	g_pSquirrel<context>->raiseerror(sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, mod->Name).c_str());
+	return SQRESULT_ERROR;
+}
+
+template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
+{
+	rapidjson_document doc;
+	doc.SetObject();
+
+	HSquirrelVM* vm = (HSquirrelVM*)sqvm;
+	SQTable* table = vm->_stackOfCurrentFunction[3]._VAL.asTable;
+	EncodeJSONTable<context>(table, &doc, doc.GetAllocator());
+	rapidjson::StringBuffer buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	doc.Accept(writer);
+	return buffer.GetString();
+}
+
+template <ScriptContext context> void DecodeJSON(HSquirrelVM* sqvm, std::string content)
+{
+	rapidjson_document doc;
+	doc.Parse(content);
+	if (doc.HasParseError())
+	{
+		g_pSquirrel<context>->newtable(sqvm);
+
+		std::string sErrorString = fmt::format(
+			"Failed parsing json file: encountered parse error \"{}\" at offset {}",
+			GetParseError_En(doc.GetParseError()),
+			doc.GetErrorOffset());
+
+		spdlog::warn(sErrorString);
+
+		return SQRESULT_NOTNULL;
+	}
+
+	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
 }
