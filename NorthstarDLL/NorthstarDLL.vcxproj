@@ -449,7 +449,7 @@
     <ClInclude Include="squirrel\squirreldatatypes.h" />
     <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
-    <ClInclude Include="util\wininfo.h" />
+		<ClInclude Include="util\wininfo.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst" />
