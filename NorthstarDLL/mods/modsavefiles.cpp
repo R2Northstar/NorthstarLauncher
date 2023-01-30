@@ -9,6 +9,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "config/profile.h"
+#include "rapidjson/error/en.h"
 
 bool ContainsNonASCIIChars(std::string str)
 {
@@ -180,32 +181,48 @@ ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | S
 			std::stringstream jsonStringStream;
 			while (fileStr.peek() != EOF)
 				jsonStringStream << (char)fileStr.get();
-			DecodeJSON<context>(sqvm, jsonStringStream.str().c_str());
-			return SQRESULT_NOTNULL;
+
+			return DecodeJSON<context>(sqvm, jsonStringStream.str().c_str());
 		}
 	}
 	g_pSquirrel<context>->raiseerror(sqvm, fmt::format("File with name {} was not registered for mod {}!", fileName, mod->Name).c_str());
 	return SQRESULT_ERROR;
 }
 
+// ok, I'm just gonna explain what the fuck is going on here because this
+// is the pinnacle of my stupidity and I do not want to touch this ever
+// again & someone will eventually have to maintain this.
+
+// P.S. if you don't want me to do the entire table -> JSON -> string thing...
+// Fix it in scriptjson first k thx bye
 template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 {
+	// new rapidjson
 	rapidjson_document doc;
 	doc.SetObject();
 
 	HSquirrelVM* vm = (HSquirrelVM*)sqvm;
-	SQTable* table = vm->_stackOfCurrentFunction[3]._VAL.asTable;
+
+	// get the SECOND param
+	SQTable* table = vm->_stackOfCurrentFunction[2]._VAL.asTable;
+	// take the table and copy it's contents over into the rapidjson_document
 	EncodeJSONTable<context>(table, &doc, doc.GetAllocator());
+
+	// convert JSON document to string
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	doc.Accept(writer);
+
+	// return the converted string
 	return buffer.GetString();
 }
 
-template <ScriptContext context> void DecodeJSON(HSquirrelVM* sqvm, std::string content)
+template <ScriptContext context> SQRESULT DecodeJSON(HSquirrelVM* sqvm, std::string content)
 {
 	rapidjson_document doc;
 	doc.Parse(content);
+
+	// basic parse checking shit
 	if (doc.HasParseError())
 	{
 		g_pSquirrel<context>->newtable(sqvm);
@@ -215,10 +232,13 @@ template <ScriptContext context> void DecodeJSON(HSquirrelVM* sqvm, std::string 
 			GetParseError_En(doc.GetParseError()),
 			doc.GetErrorOffset());
 
-		spdlog::warn(sErrorString);
+		// errors are fatal.
 
-		return SQRESULT_NOTNULL;
+		g_pSquirrel<context>->raiseerror(sqvm, sErrorString.c_str());
+		return SQRESULT_ERROR;
 	}
 
+	// let scriptjson do the rest of the work since it automatically pushes the table to the stack
 	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
+	return SQRESULT_NOTNULL;
 }
