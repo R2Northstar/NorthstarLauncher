@@ -208,7 +208,7 @@ void DownloadMod(char* modName, char* modVersion)
 			std::error_code ec;
 			int totalSize = 0;
 			int extractedSize = 0;
-			std::filesystem::path manifestPath = std::filesystem::path(GetNorthstarPrefix()) / "manifest.json";
+			std::filesystem::path manifestPath = std::filesystem::path(GetNorthstarPrefix()) / "runtime/remote/manifest.json";
 
 			// loading game path
 			std::string archiveName = (std::string)dependencyString + ".zip";
@@ -313,8 +313,11 @@ void DownloadMod(char* modName, char* modVersion)
 					continue;
 				}
 
-				spdlog::info("    => {}", name);
-				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / name;
+				// Install mods in remote mods directory.
+				modName = "runtime/remote/" + modName;
+
+				spdlog::info("    => {}", modName);
+				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / modName;
 
 				if (modName.back() == '/')
 				{
@@ -327,7 +330,7 @@ void DownloadMod(char* modName, char* modVersion)
 					}
 
 					// Extracting manifest.json to mods root directory
-					if (std::count(modName.begin(), modName.end(), '/') == 2)
+					if (std::count(modName.begin(), modName.end(), '/') == 4)
 					{
 						std::filesystem::copy(manifestPath, destination / "manifest.json");
 						CreateModAuthorFile(
