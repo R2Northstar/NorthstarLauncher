@@ -208,7 +208,7 @@ void DownloadMod(char* modName, char* modVersion)
 			std::error_code ec;
 			int totalSize = 0;
 			int extractedSize = 0;
-			std::filesystem::path manifestPath = std::filesystem::path(GetNorthstarPrefix()) / "runtime/remote/manifest.json";
+			std::filesystem::path manifestPath = std::filesystem::path(GetNorthstarPrefix()) / "runtime/remote/mods/manifest.json";
 
 			// loading game path
 			std::string archiveName = (std::string)dependencyString + ".zip";
@@ -313,8 +313,16 @@ void DownloadMod(char* modName, char* modVersion)
 					continue;
 				}
 
+				// Use thunderstore dependency string as mod folder name.
+				// (example: mods/Bombing Run/mod.json => runtime/remote/mods/Alystrasz-BombingRun-0.0.3/mod.json)
+				if (strcmp(name, "manifest.json") != 0)
+				{
+					std::string fileNameWithoutModName = modName.substr(modName.find("/", 5), modName.length());
+					modName = dependencyString + fileNameWithoutModName;
+				}
+
 				// Install mods in remote mods directory.
-				modName = "runtime/remote/" + modName;
+				modName = "runtime/remote/mods/" + modName;
 
 				spdlog::info("    => {}", modName);
 				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / modName;
