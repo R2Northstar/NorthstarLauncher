@@ -298,7 +298,7 @@ void DownloadMod(char* modName, char* modVersion)
 					goto REQUEST_END_CLEANUP;
 				}
 
-				std::string modName = name;
+				std::string fileName = name;
 
 				// Only extracting files that belong to mods.
 				//
@@ -308,7 +308,7 @@ void DownloadMod(char* modName, char* modVersion)
 				// A well-formatted Thunderstore archive contains files such as icon.png,
 				// manifest.json and README.md; we don't want to extract those, but only
 				// the content of the mods/ directory.
-				if ((strcmp(name, "mods/") == 0 || modName.substr(0, 5) != "mods/") && strcmp(name, "manifest.json") != 0)
+				if ((strcmp(name, "mods/") == 0 || fileName.substr(0, 5) != "mods/") && strcmp(name, "manifest.json") != 0)
 				{
 					continue;
 				}
@@ -317,17 +317,17 @@ void DownloadMod(char* modName, char* modVersion)
 				// (example: mods/Bombing Run/mod.json => runtime/remote/mods/Alystrasz-BombingRun-0.0.3/mod.json)
 				if (strcmp(name, "manifest.json") != 0)
 				{
-					std::string fileNameWithoutModName = modName.substr(modName.find("/", 5), modName.length());
-					modName = dependencyString + fileNameWithoutModName;
+					std::string fileNameWithoutModName = fileName.substr(fileName.find("/", 5), fileName.length());
+					fileName = dependencyString + fileNameWithoutModName;
 				}
 
 				// Install mods in remote mods directory.
-				modName = "runtime/remote/mods/" + modName;
+				fileName = "runtime/remote/mods/" + fileName;
 
-				spdlog::info("    => {}", modName);
-				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / modName;
+				spdlog::info("    => {}", fileName);
+				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / fileName;
 
-				if (modName.back() == '/')
+				if (fileName.back() == '/')
 				{
 					// Create directory
 					if (!std::filesystem::create_directory(destination, ec))
@@ -338,7 +338,7 @@ void DownloadMod(char* modName, char* modVersion)
 					}
 
 					// Extracting manifest.json to mods root directory
-					if (std::count(modName.begin(), modName.end(), '/') == 4)
+					if (std::count(fileName.begin(), fileName.end(), '/') == 4)
 					{
 						std::filesystem::copy(manifestPath, destination / "manifest.json");
 						CreateModAuthorFile(
