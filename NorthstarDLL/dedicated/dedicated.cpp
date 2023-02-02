@@ -57,9 +57,6 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
-	// get tickinterval
-	ConVar* Cvar_base_tickinterval_mp = g_pCVar->FindVar("base_tickinterval_mp");
-
 	// main loop
 	double frameTitle = 0;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
@@ -68,7 +65,7 @@ void RunServer(CDedicatedExports* dedicated)
 		g_pEngine->Frame();
 
 		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(
-			Cvar_base_tickinterval_mp->GetFloat() - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
+			g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
 
