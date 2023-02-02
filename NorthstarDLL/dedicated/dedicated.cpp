@@ -64,8 +64,8 @@ void RunServer(CDedicatedExports* dedicated)
 		double frameStart = Tier0::Plat_FloatTime();
 		g_pEngine->Frame();
 
-		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(
-			g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
+		std::this_thread::sleep_for(
+			std::chrono::duration<double, std::ratio<1>>(g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
 
