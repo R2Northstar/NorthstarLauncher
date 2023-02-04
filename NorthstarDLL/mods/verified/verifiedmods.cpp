@@ -56,6 +56,12 @@ const char* modsTestString =
 	"{ \"Version\": \"0.0.1\", \"Checksum\": \"8cf111c9ac2ab1521677769702e10be4db8d47c0eca16bda197aceb895cf2b5c\" }"
 	"]},"
 
+	"\"Dinorush.Brute4\": {"
+	"\"DependencyPrefix\": \"Dinorush-DinorushBrute4\","
+	"\"Versions\" : ["
+	"{ \"Version\": \"1.7.2\", \"Checksum\": \"e5b752006e893061fb908c3671a5984093f5f6600da2f861dab30ab5f50f56a2\" }"
+	"]},"
+
 	"\"Zircon Spitfire\": {"
 	"\"DependencyPrefix\": \"Juicys_Emporium-Zircon_Spitfire\","
 	"\"Versions\" : ["
