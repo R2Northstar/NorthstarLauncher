@@ -17,7 +17,6 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <server/serverchathooks.h>
 
 ModManager* g_pModManager;
 
