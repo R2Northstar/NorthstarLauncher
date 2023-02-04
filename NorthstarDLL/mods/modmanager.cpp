@@ -381,19 +381,23 @@ void ModManager::LoadMods()
 
 	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
 		for (fs::directory_entry dir : modIterator)
+		{
 			if (fs::exists(dir.path() / "mod.json"))
 				modDirs.push_back(dir.path());
 			else
 			{
+				std::string filename = dir.path().filename().generic_string().c_str();
+				// Don't display an error for hidden directories
+				if (filename.at(0) == '.')
+					continue;
+
 				spdlog::warn("Directory {} has no mod.json file.", dir.path().generic_string().c_str());
 				std::string errorMessage = std::format(
 					"The directory {} does not contain a mod.json file.\nMake sure you correctly installed it.",
 					dir.path().generic_string().c_str());
-				MessageBoxA(
-					GetForegroundWindow(), errorMessage.c_str(),
-					"Badly formatted mod",
-					0);
+				MessageBoxA(GetForegroundWindow(), errorMessage.c_str(), "Badly formatted mod", 0);
 			}
+		}
 
 	for (fs::path modDir : modDirs)
 	{
