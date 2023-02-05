@@ -398,11 +398,11 @@ void ModManager::LoadMods()
 							dir.path().generic_string().c_str(),
 							subdir.path().generic_string().c_str());
 						std::string errorMessage = std::format(
-							"The folder {} does contain a mod.json file, but not at the correct location.\n\nExpected: {}\nFound: {}\n\nMake sure you correctly installed it.",
+							"The folder {} does contain a mod.json file, but not at the correct location.\n\nExpected: {}\nFound: "
+							"{}\n\nMake sure you correctly installed it.",
 							dir.path().filename().generic_string(),
 							dir.path().generic_string().append("/mod.json"),
-							subdir.path().generic_string().append("/mod.json")
-						);
+							subdir.path().generic_string().append("/mod.json"));
 						MessageBoxA(GetForegroundWindow(), errorMessage.c_str(), "Badly formatted mod", 0);
 					}
 			}
