@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "squirrel/squirrel.h"
+#include "util/utils.h"
 
 #include "server/serverchathooks.h"
 #include "client/localchatwriter.h"
@@ -29,6 +30,8 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 		type = message[0];
 		payload = message + 1;
 	}
+
+	NS::Utils::RemoveAsciiControlSequences(const_cast<char*>(message), true);
 
 	SQRESULT result = g_pSquirrel<ScriptContext::CLIENT>->Call(
 		"CHudChat_ProcessMessageStartThread", static_cast<int>(senderId) - 1, payload, isTeam, isDead, type);
