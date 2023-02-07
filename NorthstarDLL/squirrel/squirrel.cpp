@@ -229,20 +229,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 						continue;
 					}
 
-					SQObject functionobj {};
-					int result = sq_getfunction(m_pSQVM->sqvm, callback.DestroyCallback.c_str(), &functionobj, 0);
-					if (result != 0) // This func returns 0 on success for some reason
-					{
-						NS::log::squirrel_logger<context>()->error(
-							"VMDestroyed() was unable to find function with name '{}'. Is it global?", callback.DestroyCallback);
-						continue;
-					}
-
-					pushobject(m_pSQVM->sqvm, &functionobj);
-					pushroottable(m_pSQVM->sqvm);
-
-					_call(m_pSQVM->sqvm, 0);
-
+					Call(callback.DestroyCallback.c_str());
 					NS::log::squirrel_logger<context>()->info("Executed Destroy callback {}.", callback.DestroyCallback);
 				}
 			}
