@@ -97,7 +97,6 @@ class ConCommandBase
 	bool IsCommand(void) const;
 	bool IsRegistered(void) const;
 	bool IsFlagSet(int nFlags) const;
-	static bool IsFlagSet(ConCommandBase* pCommandBase, int nFlags); // For hooking to engine's implementation.
 
 	int GetFlags(void) const;
 	ConCommandBase* GetNext(void) const;

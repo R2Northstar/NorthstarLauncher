@@ -527,4 +527,6 @@ int ParseConVarFlagsString(std::string modName, std::string sFlags)
 			sCurrentFlag += sFlags[i];
 		}
 	}
+
+	return FCVAR_NONE;
 }
