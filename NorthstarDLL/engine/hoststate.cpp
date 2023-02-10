@@ -195,7 +195,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 	AUTOHOOK_DISPATCH()
 
 	g_pHostState = module.Offset(0x7CF180).As<CHostState*>();
-	Cvar_hostport = module.Offset().As<ConVar*>();
-
-	_Cmd_Exec_f = module.Offset().As<void (*__fastcall)(const CCommand&, bool, bool)>();
 }
