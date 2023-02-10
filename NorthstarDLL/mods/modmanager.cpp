@@ -451,16 +451,37 @@ void ModManager::LoadMods()
 			continue;
 
 		// register convars
-		// for reloads, this is sorta barebones, when we have a good findconvar method, we could probably reset flags and stuff on
-		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
-		// causes us to leak memory on reload, but not much, potentially find a way to not do this at some point
 		for (ModConVar* convar : mod.ConVars)
 		{
-			// make sure convar isn't registered yet, unsure if necessary but idk what
-			// behaviour is for defining same convar multiple times
-			if (!R2::g_pCVar->FindVar(convar->Name.c_str()))
-			{
+			ConVar* pVar = R2::g_pCVar->FindVar(convar->Name.c_str());
+
+			// make sure convar isn't registered yet, if it is then modify its flags, helpstring etc
+			if (!pVar)
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
+			else
+			{
+				// TODO: should probably make sure this is actually a mod convar we're messing with
+
+				pVar->m_ConCommandBase.m_nFlags = convar->Flags;
+
+				// unfortunately this leaks memory and we can't really not leak memory because we don't know who allocated this
+				// so we can't delete it without risking a crash
+				if (convar->HelpString.compare(pVar->GetHelpText()))
+				{
+					int nHelpSize = convar->HelpString.size();
+					char* pNewHelpString = new char[nHelpSize + 1];
+					strncpy_s(pNewHelpString, nHelpSize + 1, convar->HelpString.c_str(), convar->HelpString.size());
+					pVar->m_ConCommandBase.m_pszHelpString = pNewHelpString;
+				}
+				
+				if (convar->DefaultValue.compare(pVar->m_pszDefaultValue))
+				{
+					int nDefaultValueSize = convar->DefaultValue.size();
+					char* pNewDefaultValueString = new char[nDefaultValueSize + 1];
+					strncpy_s(pNewDefaultValueString, nDefaultValueSize + 1, convar->DefaultValue.c_str(), convar->DefaultValue.size());
+					pVar->m_pszDefaultValue = pNewDefaultValueString;
+					pVar->SetValue(pNewDefaultValueString);
+				}
 			}
 		}
 
@@ -469,7 +490,6 @@ void ModManager::LoadMods()
 			// make sure command isnt't registered multiple times.
 			if (!R2::g_pCVar->FindCommand(command->Name.c_str()))
 			{
-				ConCommand* newCommand = new ConCommand();
 				std::string funcName = command->Function;
 				RegisterConCommand(command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
 			}
