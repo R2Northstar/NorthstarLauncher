@@ -37,7 +37,7 @@ void RefreshMapList()
 
 	// get modded maps
 	// TODO: could probably check mod vpks to get mapnames from there too?
-	for (auto& modFilePair : g_pModManager->m_ModFiles)
+	for (auto& modFilePair : g_pModManager->GetModFiles())
 	{
 		ModOverrideFile file = modFilePair.second;
 		if (file.m_Path.extension() == ".bsp" && file.m_Path.parent_path().string() == "maps") // only allow mod maps actually in /maps atm

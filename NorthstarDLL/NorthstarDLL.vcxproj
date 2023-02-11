@@ -447,7 +447,7 @@
     <ClInclude Include="squirrel\squirreldatatypes.h" />
     <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
-		<ClInclude Include="util\wininfo.h" />
+    <ClInclude Include="util\wininfo.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst" />
@@ -496,7 +496,6 @@
     <ClCompile Include="masterserver\masterserver.cpp" />
     <ClCompile Include="mods\compiled\kb_act.cpp" />
     <ClCompile Include="mods\compiled\modkeyvalues.cpp" />
-    <ClCompile Include="mods\compiled\modpdef.cpp" />
     <ClCompile Include="mods\compiled\modscriptsrson.cpp" />
     <ClCompile Include="mods\modmanager.cpp" />
     <ClCompile Include="pch.cpp">
@@ -538,7 +537,7 @@
     <ClCompile Include="util\printmaps.cpp" />
     <ClCompile Include="util\utils.cpp" />
     <ClCompile Include="util\version.cpp" />
-		<ClCompile Include="util\wininfo.cpp" />
+    <ClCompile Include="util\wininfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm" />

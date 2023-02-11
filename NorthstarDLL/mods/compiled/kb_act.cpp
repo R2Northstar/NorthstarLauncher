@@ -17,7 +17,7 @@ void ModManager::BuildKBActionsList()
 	// write vanilla file's content to compiled file
 	soCompiledKeys << R2::ReadVPKOriginalFile(KB_ACT_PATH);
 
-	for (Mod& mod : m_LoadedMods)
+	for (Mod& mod : GetMods())
 	{
 		if (!mod.m_bEnabled)
 			continue;
@@ -38,8 +38,8 @@ void ModManager::BuildKBActionsList()
 	overrideFile.m_pOwningMod = nullptr;
 	overrideFile.m_Path = KB_ACT_PATH;
 
-	if (m_ModFiles.find(KB_ACT_PATH) == m_ModFiles.end())
-		m_ModFiles.insert(std::make_pair(KB_ACT_PATH, overrideFile));
+	if (GetModFiles().find(KB_ACT_PATH) == GetModFiles().end())
+		GetModFiles().insert(std::make_pair(KB_ACT_PATH, overrideFile));
 	else
-		m_ModFiles[KB_ACT_PATH] = overrideFile;
+		GetModFiles()[KB_ACT_PATH] = overrideFile;
 }

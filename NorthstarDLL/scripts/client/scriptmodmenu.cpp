@@ -6,7 +6,7 @@ ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::SERVER | Scrip
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str());
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
@@ -20,7 +20,7 @@ ADD_SQFUNC("bool", NSIsModEnabled, "string modName", "", ScriptContext::SERVER |
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -38,7 +38,7 @@ ADD_SQFUNC("void", NSSetModEnabled, "string modName, bool enabled", "", ScriptCo
 	const SQBool enabled = g_pSquirrel<context>->getbool(sqvm, 2);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -55,7 +55,7 @@ ADD_SQFUNC("string", NSGetModDescriptionByModName, "string modName", "", ScriptC
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -72,7 +72,7 @@ ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptConte
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -89,7 +89,7 @@ ADD_SQFUNC("string", NSGetModDownloadLinkByModName, "string modName", "", Script
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -106,7 +106,7 @@ ADD_SQFUNC("int", NSGetModLoadPriority, "string modName", "", ScriptContext::SER
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -123,7 +123,7 @@ ADD_SQFUNC("bool", NSIsModRequiredOnClient, "string modName", "", ScriptContext:
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{
@@ -142,7 +142,7 @@ ADD_SQFUNC(
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
 	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.Name.compare(modName))
 		{

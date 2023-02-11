@@ -25,14 +25,14 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	// copy over patch kv files, and add #bases to new file, last mods' patches should be applied first
 	// note: #include should be identical but it's actually just broken, thanks respawn
-	for (int64_t i = m_LoadedMods.size() - 1; i > -1; i--)
+	for (Mod& mod : GetMods() | std::views::reverse)
 	{
-		if (!m_LoadedMods[i].m_bEnabled)
+		if (mod.m_bEnabled)
 			continue;
 
 		size_t fileHash = STR_HASH(normalisedPath);
-		auto modKv = m_LoadedMods[i].KeyValues.find(fileHash);
-		if (modKv != m_LoadedMods[i].KeyValues.end())
+		auto modKv = mod.KeyValues.find(fileHash);
+		if (modKv != mod.KeyValues.end())
 		{
 			// should result in smth along the lines of #include "mod_patch_5_mp_weapon_car.txt"
 
@@ -47,7 +47,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 			fs::remove(compiledDir / patchFilePath);
 
-			fs::copy_file(m_LoadedMods[i].m_ModDirectory / "keyvalues" / filename, compiledDir / patchFilePath);
+			fs::copy_file(mod.m_ModDirectory / "keyvalues" / filename, compiledDir / patchFilePath);
 		}
 	}
 
@@ -100,8 +100,8 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	overrideFile.m_pOwningMod = nullptr;
 	overrideFile.m_Path = normalisedPath;
 
-	if (m_ModFiles.find(normalisedPath) == m_ModFiles.end())
-		m_ModFiles.insert(std::make_pair(normalisedPath, overrideFile));
+	if (GetModFiles().find(normalisedPath) == GetModFiles().end())
+		GetModFiles().insert(std::make_pair(normalisedPath, overrideFile));
 	else
-		m_ModFiles[normalisedPath] = overrideFile;
+		GetModFiles()[normalisedPath] = overrideFile;
 }

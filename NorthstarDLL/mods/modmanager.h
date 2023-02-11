@@ -96,9 +96,9 @@ class Mod
 	// custom scripts used by the mod
 	std::vector<ModScript> Scripts;
 	// convars created by the mod
-	std::vector<ModConVar*> ConVars;
+	std::vector<ModConVar> ConVars;
 	// concommands created by the mod
-	std::vector<ModConCommand*> ConCommands;
+	std::vector<ModConCommand> ConCommands;
 	// custom localisation files created by the mod
 	std::vector<std::string> LocalisationFiles;
 
@@ -125,8 +125,16 @@ class Mod
 struct ModOverrideFile
 {
   public:
-	Mod* m_pOwningMod;
+	Mod* m_pOwningMod; // don't need to explicitly clean this up
 	fs::path m_Path;
+};
+
+class ModLoadState
+{
+  public:
+	std::vector<Mod> m_LoadedMods;
+	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
+	std::unordered_map<std::string, std::string> m_DependencyConstants;
 };
 
 class ModManager
@@ -142,9 +150,8 @@ class ModManager
 	size_t m_hKBActHash;
 
   public:
-	std::vector<Mod> m_LoadedMods;
-	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
-	std::unordered_map<std::string, std::string> m_DependencyConstants;
+	ModLoadState m_LastModLoadState;
+	ModLoadState m_ModLoadState;
 
   public:
 	ModManager();
@@ -152,6 +159,22 @@ class ModManager
 	void UnloadMods();
 	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
+
+	// getters
+	inline std::vector<Mod>& GetMods()
+	{
+		return m_ModLoadState.m_LoadedMods;
+	};
+
+	inline std::unordered_map<std::string, ModOverrideFile>& GetModFiles()
+	{
+		return m_ModLoadState.m_ModFiles;
+	};
+
+	inline std::unordered_map<std::string, std::string>& GetDependencyConstants()
+	{
+		return m_ModLoadState.m_DependencyConstants;
+	};
 
 	// compile asset type stuff, these are done in files under runtime/compiled/
 	void BuildScriptsRson();

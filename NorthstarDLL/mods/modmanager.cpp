@@ -98,27 +98,27 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 			// have to allocate this manually, otherwise convar registration will break
 			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
-			ModConVar* convar = new ModConVar;
-			convar->Name = convarObj["Name"].GetString();
-			convar->DefaultValue = convarObj["DefaultValue"].GetString();
+			ModConVar convar;
+			convar.Name = convarObj["Name"].GetString();
+			convar.DefaultValue = convarObj["DefaultValue"].GetString();
 
 			if (convarObj.HasMember("HelpString"))
-				convar->HelpString = convarObj["HelpString"].GetString();
+				convar.HelpString = convarObj["HelpString"].GetString();
 			else
-				convar->HelpString = "";
+				convar.HelpString = "";
 
-			convar->Flags = FCVAR_NONE;
+			convar.Flags = FCVAR_NONE;
 
 			if (convarObj.HasMember("Flags"))
 			{
 				// read raw integer flags
 				if (convarObj["Flags"].IsInt())
-					convar->Flags = convarObj["Flags"].GetInt();
+					convar.Flags = convarObj["Flags"].GetInt();
 				else if (convarObj["Flags"].IsString())
 				{
 					// parse cvar flags from string
 					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-					convar->Flags |= ParseConVarFlagsString(convar->Name, convarObj["Flags"].GetString());
+					convar.Flags |= ParseConVarFlagsString(convar.Name, convarObj["Flags"].GetString());
 				}
 			}
 
@@ -126,6 +126,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
+	// mod commands
 	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
 	{
 		for (auto& concommandObj : modJson["ConCommands"].GetArray())
@@ -138,35 +139,35 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 			// have to allocate this manually, otherwise concommand registration will break
 			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
-			ModConCommand* concommand = new ModConCommand;
-			concommand->Name = concommandObj["Name"].GetString();
-			concommand->Function = concommandObj["Function"].GetString();
-			concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
-			if (concommand->Context == ScriptContext::INVALID)
+			ModConCommand concommand;
+			concommand.Name = concommandObj["Name"].GetString();
+			concommand.Function = concommandObj["Function"].GetString();
+			concommand.Context = ScriptContextFromString(concommandObj["Context"].GetString());
+			if (concommand.Context == ScriptContext::INVALID)
 			{
-				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
+				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand.Name, concommandObj["Context"].GetString());
 				continue;
 			}
 
 			if (concommandObj.HasMember("HelpString"))
-				concommand->HelpString = concommandObj["HelpString"].GetString();
+				concommand.HelpString = concommandObj["HelpString"].GetString();
 			else
-				concommand->HelpString = "";
+				concommand.HelpString = "";
 
-			concommand->Flags = FCVAR_NONE;
+			concommand.Flags = FCVAR_NONE;
 
 			if (concommandObj.HasMember("Flags"))
 			{
 				// read raw integer flags
 				if (concommandObj["Flags"].IsInt())
 				{
-					concommand->Flags = concommandObj["Flags"].GetInt();
+					concommand.Flags = concommandObj["Flags"].GetInt();
 				}
 				else if (concommandObj["Flags"].IsString())
 				{
 					// parse cvar flags from string
 					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-					concommand->Flags |= ParseConVarFlagsString(concommand->Name, concommandObj["Flags"].GetString());
+					concommand.Flags |= ParseConVarFlagsString(concommand.Name, concommandObj["Flags"].GetString());
 				}
 			}
 
@@ -280,66 +281,54 @@ ModManager::ModManager()
 	LoadMods();
 }
 
-struct Test
-{
-	std::string funcName;
-	ScriptContext context;
-};
-
 template <ScriptContext context> auto ModConCommandCallback_Internal(std::string name, const CCommand& command)
 {
-	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
+	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM->sqvm)
 	{
-		std::vector<std::string> args;
-		args.reserve(command.ArgC());
+		std::vector<std::string> vArgs;
+		vArgs.reserve(command.ArgC());
 		for (int i = 1; i < command.ArgC(); i++)
-			args.push_back(command.Arg(i));
-		g_pSquirrel<context>->AsyncCall(name, args);
+			vArgs.push_back(command.Arg(i));
+
+		g_pSquirrel<context>->AsyncCall(name, vArgs);
 	}
 	else
-	{
-		spdlog::warn("ConCommand `{}` was called while the associated Squirrel VM `{}` was unloaded", name, GetContextName(context));
-	}
+		spdlog::warn("ConCommand \"{}\" was called while the associated Squirrel VM \"{}\" was unloaded", name, GetContextName(context));
 }
 
 auto ModConCommandCallback(const CCommand& command)
 {
-	ModConCommand* found = nullptr;
-	auto commandString = std::string(command.GetCommandString());
-
-	// Finding the first space to remove the command's name
-	auto firstSpace = commandString.find(' ');
-	if (firstSpace)
-	{
-		commandString = commandString.substr(0, firstSpace);
-	}
+	ModConCommand* pFoundCommand = nullptr;
+	std::string sCommandName = command.Arg(0);
 
 	// Find the mod this command belongs to
-	for (auto& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		auto res = std::find_if(
 			mod.ConCommands.begin(),
 			mod.ConCommands.end(),
-			[&commandString](const ModConCommand* other) { return other->Name == commandString; });
+			[&sCommandName](const ModConCommand* other) { return other->Name == sCommandName; });
+
 		if (res != mod.ConCommands.end())
 		{
-			found = *res;
+			pFoundCommand = &*res;
 			break;
 		}
 	}
-	if (!found)
+
+	if (!pFoundCommand)
 		return;
 
-	switch (found->Context)
+	switch (pFoundCommand->Context)
 	{
 	case ScriptContext::CLIENT:
-		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
+		ModConCommandCallback_Internal<ScriptContext::CLIENT>(pFoundCommand->Function, command);
 		break;
 	case ScriptContext::SERVER:
-		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
+		ModConCommandCallback_Internal<ScriptContext::SERVER>(pFoundCommand->Function, command);
 		break;
 	case ScriptContext::UI:
-		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
+		ModConCommandCallback_Internal<ScriptContext::UI>(pFoundCommand->Function, command);
 		break;
 	};
 }
@@ -430,7 +419,10 @@ void ModManager::LoadMods()
 	}
 
 	// sort by load prio, lowest-highest
-	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
+	std::sort(
+		m_ModLoadState.m_LoadedMods.begin(),
+		m_ModLoadState.m_LoadedMods.end(),
+		[](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
 
 	for (Mod& mod : m_LoadedMods)
 	{
@@ -438,47 +430,47 @@ void ModManager::LoadMods()
 			continue;
 
 		// register convars
-		for (ModConVar* convar : mod.ConVars)
+		for (ModConVar convar : mod.ConVars)
 		{
-			ConVar* pVar = R2::g_pCVar->FindVar(convar->Name.c_str());
+			ConVar* pVar = R2::g_pCVar->FindVar(convar.Name.c_str());
 
 			// make sure convar isn't registered yet, if it is then modify its flags, helpstring etc
 			if (!pVar)
-				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
+				new ConVar(convar.Name.c_str(), convar.DefaultValue.c_str(), convar.Flags, convar.HelpString.c_str());
 			else
 			{
 				// TODO: should probably make sure this is actually a mod convar we're messing with
 
-				pVar->m_ConCommandBase.m_nFlags = convar->Flags;
+				pVar->m_ConCommandBase.m_nFlags = convar.Flags;
 
 				// unfortunately this leaks memory and we can't really not leak memory because we don't know who allocated this
 				// so we can't delete it without risking a crash
-				if (convar->HelpString.compare(pVar->GetHelpText()))
+				if (convar.HelpString.compare(pVar->GetHelpText()))
 				{
-					int nHelpSize = convar->HelpString.size();
+					int nHelpSize = convar.HelpString.size();
 					char* pNewHelpString = new char[nHelpSize + 1];
-					strncpy_s(pNewHelpString, nHelpSize + 1, convar->HelpString.c_str(), convar->HelpString.size());
+					strncpy_s(pNewHelpString, nHelpSize + 1, convar.HelpString.c_str(), convar.HelpString.size());
 					pVar->m_ConCommandBase.m_pszHelpString = pNewHelpString;
 				}
 				
-				if (convar->DefaultValue.compare(pVar->m_pszDefaultValue))
+				if (convar.DefaultValue.compare(pVar->m_pszDefaultValue))
 				{
-					int nDefaultValueSize = convar->DefaultValue.size();
+					int nDefaultValueSize = convar.DefaultValue.size();
 					char* pNewDefaultValueString = new char[nDefaultValueSize + 1];
-					strncpy_s(pNewDefaultValueString, nDefaultValueSize + 1, convar->DefaultValue.c_str(), convar->DefaultValue.size());
+					strncpy_s(pNewDefaultValueString, nDefaultValueSize + 1, convar.DefaultValue.c_str(), convar.DefaultValue.size());
 					pVar->m_pszDefaultValue = pNewDefaultValueString;
 					pVar->SetValue(pNewDefaultValueString);
 				}
 			}
 		}
 
-		for (ModConCommand* command : mod.ConCommands)
+		for (ModConCommand command : mod.ConCommands)
 		{
 			// make sure command isnt't registered multiple times.
-			if (!R2::g_pCVar->FindCommand(command->Name.c_str()))
+			if (!R2::g_pCVar->FindCommand(command.Name.c_str()))
 			{
-				std::string funcName = command->Function;
-				RegisterConCommand(command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
+				std::string funcName = command.Function;
+				RegisterConCommand(command.Name.c_str(), ModConCommandCallback, command.HelpString.c_str(), command.Flags);
 			}
 		}
 
@@ -741,6 +733,8 @@ void ModManager::LoadMods()
 
 void ModManager::UnloadMods()
 {
+	m_LastModLoadState = m_ModLoadState;
+
 	// clean up stuff from mods before we unload
 	m_ModFiles.clear();
 	fs::remove_all(GetCompiledAssetsPath());
@@ -755,8 +749,6 @@ void ModManager::UnloadMods()
 		// remove all built kvs
 		for (std::pair<size_t, std::string> kvPaths : mod.KeyValues)
 			fs::remove(GetCompiledAssetsPath() / fs::path(kvPaths.second).lexically_relative(mod.m_ModDirectory));
-
-		mod.KeyValues.clear();
 
 		// write to m_enabledModsCfg
 		// should we be doing this here or should scripts be doing this manually?
@@ -796,13 +788,15 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	if (fileHash == m_hScriptsRsonHash)
 		BuildScriptsRson();
 	else if (fileHash == m_hPdefHash)
-		BuildPdef();
+	{
+		// BuildPdef(); todo
+	}
 	else if (fileHash == m_hKBActHash)
 		BuildKBActionsList();
 	else
 	{
 		// check if we should build keyvalues, depending on whether any of our mods have patch kvs for this file
-		for (Mod& mod : m_LoadedMods)
+		for (Mod& mod : GetMods())
 		{
 			if (!mod.m_bEnabled)
 				continue;

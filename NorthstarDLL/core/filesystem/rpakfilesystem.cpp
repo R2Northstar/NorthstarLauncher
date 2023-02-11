@@ -90,15 +90,14 @@ void* PakLoadManager::LoadFile(const char* path)
 void HandlePakAliases(char** map)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > -1; i--)
+	for (Mod& mod : g_pModManager->GetMods() | std::views::reverse)
 	{
-		Mod* mod = &g_pModManager->m_LoadedMods[i];
-		if (!mod->m_bEnabled)
+		if (!mod.m_bEnabled)
 			continue;
 
-		if (mod->RpakAliases.find(*map) != mod->RpakAliases.end())
+		if (mod.RpakAliases.find(*map) != mod.RpakAliases.end())
 		{
-			*map = &mod->RpakAliases[*map][0];
+			*map = &mod.RpakAliases[*map][0];
 			return;
 		}
 	}
@@ -107,7 +106,7 @@ void HandlePakAliases(char** map)
 void LoadPreloadPaks()
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.m_bEnabled)
 			continue;
@@ -124,7 +123,7 @@ void LoadPreloadPaks()
 void LoadPostloadPaks(const char* pPath)
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.m_bEnabled)
 			continue;
@@ -144,7 +143,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	bool bHasOriginalPak = fs::exists(fs::path("r2/paks/Win64/") / *pakName);
 
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.m_bEnabled)
 			continue;
@@ -270,8 +269,8 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		NS::log::rpak->info("LoadStreamBsp: {}", filename.string());
 
 		// resolve modded stbsp path so we can load mod stbsps
-		auto modFile = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
-		if (modFile != g_pModManager->m_ModFiles.end())
+		auto modFile = g_pModManager->GetModFiles().find(g_pModManager->NormaliseModFilePath(fs::path("maps" / filename)));
+		if (modFile != g_pModManager->GetModFiles().end())
 		{
 			newPath = (modFile->second.m_pOwningMod->m_ModDirectory / "mod" / modFile->second.m_Path).string();
 			pPath = newPath.c_str();
@@ -299,7 +298,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 			size_t hashed = STR_HASH(starpakPath);
 
 			// loop through all loaded mods
-			for (Mod& mod : g_pModManager->m_LoadedMods)
+			for (Mod& mod : g_pModManager->GetMods())
 			{
 				// ignore non-loaded mods
 				if (!mod.m_bEnabled)
