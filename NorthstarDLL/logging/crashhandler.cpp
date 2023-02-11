@@ -33,12 +33,10 @@ void PrintExceptionLog(ExceptionLog& exc)
 	if (g_pModManager)
 	{
 		spdlog::error("Loaded mods: ");
-		for (const auto& mod : g_pModManager->m_LoadedMods)
+		for (const Mod& mod : g_pModManager->GetMods())
 		{
 			if (mod.m_bEnabled)
-			{
 				spdlog::error("{} {}", mod.Name, mod.Version);
-			}
 		}
 	}
 	spdlog::error(exc.cause);

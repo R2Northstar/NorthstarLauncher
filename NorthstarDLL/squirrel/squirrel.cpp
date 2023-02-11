@@ -189,11 +189,11 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		RegisterSquirrelFunc(m_pSQVM, funcReg, 1);
 	}
 
-	for (auto& pair : g_pModManager->m_DependencyConstants)
+	for (auto& pair : g_pModManager->GetDependencyConstants())
 	{
 		bool bWasFound = false;
 
-		for (Mod& dependency : g_pModManager->m_LoadedMods)
+		for (Mod& dependency : g_pModManager->GetMods())
 		{
 			if (!dependency.m_bEnabled)
 				continue;
@@ -471,7 +471,7 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 
 	if (bShouldCallCustomCallbacks)
 	{
-		for (Mod mod : g_pModManager->m_LoadedMods)
+		for (Mod& mod : g_pModManager->GetMods())
 		{
 			if (!mod.m_bEnabled)
 				continue;
@@ -498,7 +498,7 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 	// run after callbacks
 	if (bShouldCallCustomCallbacks)
 	{
-		for (Mod mod : g_pModManager->m_LoadedMods)
+		for (Mod& mod : g_pModManager->GetMods())
 		{
 			if (!mod.m_bEnabled)
 				continue;

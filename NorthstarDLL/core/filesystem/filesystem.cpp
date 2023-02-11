@@ -94,8 +94,8 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 
 	// idk how efficient the lexically normal check is
 	// can't just set all /s in path to \, since some paths aren't in writeable memory
-	auto file = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
-	if (file != g_pModManager->m_ModFiles.end())
+	auto file = g_pModManager->GetModFiles().find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
+	if (file != g_pModManager->GetModFiles().end())
 	{
 		SetNewModSearchPaths(file->second.m_pOwningMod);
 		return true;
@@ -146,7 +146,7 @@ HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* 
 	NS::log::fs->info("MountVPK {}", pVpkPath);
 	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
-	for (Mod mod : g_pModManager->m_LoadedMods)
+	for (Mod mod : g_pModManager->GetMods())
 	{
 		if (!mod.m_bEnabled)
 			continue;

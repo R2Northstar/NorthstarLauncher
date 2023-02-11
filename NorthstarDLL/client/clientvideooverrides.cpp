@@ -11,20 +11,20 @@ void*, __fastcall, (const char* path, uint32_t flags))
 	spdlog::info("BinkOpen {}", filename);
 
 	// figure out which mod is handling the bink
-	Mod* fileOwner = nullptr;
-	for (Mod& mod : g_pModManager->m_LoadedMods)
+	Mod* pFileOwner = nullptr;
+	for (Mod& mod : g_pModManager->GetMods())
 	{
 		if (!mod.m_bEnabled)
 			continue;
 
 		if (std::find(mod.BinkVideos.begin(), mod.BinkVideos.end(), filename) != mod.BinkVideos.end())
-			fileOwner = &mod;
+			pFileOwner = &mod;
 	}
 
-	if (fileOwner)
+	if (pFileOwner)
 	{
 		// create new path
-		fs::path binkPath(fileOwner->m_ModDirectory / "media" / filename);
+		fs::path binkPath(pFileOwner->m_ModDirectory / "media" / filename);
 		return BinkOpen(binkPath.string().c_str(), flags);
 	}
 	else

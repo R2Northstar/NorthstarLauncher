@@ -1173,8 +1173,8 @@
     <ClInclude Include="core\macros.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-		<ClInclude Include="util\wininfo.h">
-    	<Filter>Header Files</Filter>
+    <ClInclude Include="util\wininfo.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\utils.h">
       <Filter>Header Files\util</Filter>
@@ -1238,9 +1238,6 @@
       <Filter>Source Files\mods\compiled</Filter>
     </ClCompile>
     <ClCompile Include="mods\compiled\modkeyvalues.cpp">
-      <Filter>Source Files\mods\compiled</Filter>
-    </ClCompile>
-    <ClCompile Include="mods\compiled\modpdef.cpp">
       <Filter>Source Files\mods\compiled</Filter>
     </ClCompile>
     <ClCompile Include="mods\compiled\modscriptsrson.cpp">
