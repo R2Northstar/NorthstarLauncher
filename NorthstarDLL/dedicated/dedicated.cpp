@@ -48,9 +48,9 @@ void RunServer(CDedicatedExports* dedicated)
 	// initialise engine
 	g_pEngine->Frame();
 
-	// add +map if not present
+	// add +map if no map loading command is present
 	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
-	if (!Tier0::CommandLine()->CheckParm("+map"))
+	if (!Tier0::CommandLine()->CheckParm("+map") && !Tier0::CommandLine()->CheckParm("+launchplaylist"))
 		Tier0::CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
 	// re-run commandline
@@ -278,7 +278,10 @@ void, __fastcall, (void* sqvm))
 	// atm, this will crash if not aborted, so this just closes more gracefully
 	static ConVar* Cvar_fatal_script_errors = g_pCVar->FindVar("fatal_script_errors");
 	if (Cvar_fatal_script_errors->GetBool())
+	{
+		NS::log::FlushLoggers();
 		abort();
+	}
 }
 
 ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
