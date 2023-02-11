@@ -264,6 +264,9 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
+	// A mod is remote if it's located in the remote mods folder
+	m_bIsRemote = m_ModDirectory.generic_string().find(GetRemoteModFolderPath().generic_string()) != std::string::npos;
+
 	m_bWasReadSuccessfully = true;
 }
 
