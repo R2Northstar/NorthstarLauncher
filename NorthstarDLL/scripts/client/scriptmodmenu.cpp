@@ -145,9 +145,9 @@ ADD_SQFUNC(
 	{
 		if (!mod.Name.compare(modName))
 		{
-			for (ModConVar* cvar : mod.ConVars)
+			for (ModConVar& cvar : mod.ConVars)
 			{
-				g_pSquirrel<context>->pushstring(sqvm, cvar->Name.c_str());
+				g_pSquirrel<context>->pushstring(sqvm, cvar.Name.c_str());
 				g_pSquirrel<context>->arrayappend(sqvm, -2);
 			}
 

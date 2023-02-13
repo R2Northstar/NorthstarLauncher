@@ -2,7 +2,7 @@
 #include "dedicated/dedicated.h"
 #include <string>
 
-std::string GetNorthstarPrefix()
+fs::path GetNorthstarPrefix()
 {
 	return NORTHSTAR_FOLDER_PREFIX;
 }
@@ -39,5 +39,5 @@ void InitialiseNorthstarPrefix()
 	// set the console title to show the current profile
 	// dont do this on dedi as title contains useful information on dedi and setting title breaks it as well
 	if (!IsDedicatedServer())
-		SetConsoleTitleA((std::string("NorthstarLauncher | ") + NORTHSTAR_FOLDER_PREFIX).c_str());
+		SetConsoleTitleA((fs::path("NorthstarLauncher | ") / NORTHSTAR_FOLDER_PREFIX).string().c_str());
 }

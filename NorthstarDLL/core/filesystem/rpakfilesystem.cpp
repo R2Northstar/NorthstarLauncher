@@ -89,11 +89,8 @@ void* PakLoadManager::LoadFile(const char* path)
 void HandlePakAliases(char** map)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (Mod& mod : g_pModManager->GetMods() | std::views::reverse)
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled | std::views::reverse)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		if (mod.RpakAliases.find(*map) != mod.RpakAliases.end())
 		{
 			*map = &mod.RpakAliases[*map][0];
@@ -105,11 +102,8 @@ void HandlePakAliases(char** map)
 void LoadPreloadPaks()
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->GetMods())
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// need to get a relative path of mod to mod folder
 		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
@@ -122,11 +116,8 @@ void LoadPreloadPaks()
 void LoadPostloadPaks(const char* pPath)
 {
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->GetMods())
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// need to get a relative path of mod to mod folder
 		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 

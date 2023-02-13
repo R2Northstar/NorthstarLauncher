@@ -33,16 +33,15 @@ void PrintExceptionLog(ExceptionLog& exc)
 	if (g_pModManager)
 	{
 		spdlog::error("Loaded mods: ");
-		for (const Mod& mod : g_pModManager->GetMods())
-		{
-			if (mod.m_bEnabled)
-				spdlog::error("{} {}", mod.Name, mod.Version);
-		}
+		for (const Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
+			spdlog::error("{} {}", mod.Name, mod.Version);
 	}
+
 	spdlog::error(exc.cause);
 	// If this was a runtime error, print the message
 	if (exc.runtimeInfo.length() != 0)
 		spdlog::error("\"{}\"", exc.runtimeInfo);
+
 	spdlog::error("At: {} + {}", exc.trace[0].name, exc.trace[0].relativeAddress);
 	spdlog::error("");
 	spdlog::error("Stack trace:");
@@ -235,7 +234,7 @@ void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 	time_t time = std::time(nullptr);
 	tm currentTime = *std::localtime(&time);
 	std::stringstream stream;
-	stream << std::put_time(&currentTime, (GetNorthstarPrefix() + "/logs/nsdump%Y-%m-%d %H-%M-%S.dmp").c_str());
+	stream << std::put_time(&currentTime, (GetNorthstarPrefix() / "logs/nsdump%Y-%m-%d %H-%M-%S.dmp").string().c_str());
 
 	auto hMinidumpFile = CreateFileA(stream.str().c_str(), GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (hMinidumpFile)

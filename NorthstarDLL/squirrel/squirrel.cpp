@@ -193,11 +193,8 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	{
 		bool bWasFound = false;
 
-		for (Mod& dependency : g_pModManager->GetMods())
+		for (Mod& dependency : g_pModManager->GetMods() | ModManager::FilterEnabled)
 		{
-			if (!dependency.m_bEnabled)
-				continue;
-
 			if (dependency.Name == pair.second)
 			{
 				bWasFound = true;
@@ -207,6 +204,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
+
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 }
 
@@ -217,7 +215,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 	{
 		NS::log::squirrel_logger<context>()->info("Calling Destroy callbacks for all loaded mods.");
 
-		for (const Mod& loadedMod : g_pModManager->m_LoadedMods)
+		for (const Mod& loadedMod : g_pModManager->GetMods())
 		{
 			for (const ModScript& script : loadedMod.Scripts)
 			{
@@ -471,11 +469,8 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 
 	if (bShouldCallCustomCallbacks)
 	{
-		for (Mod& mod : g_pModManager->GetMods())
+		for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 		{
-			if (!mod.m_bEnabled)
-				continue;
-
 			for (ModScript script : mod.Scripts)
 			{
 				for (ModScriptCallback modCallback : script.Callbacks)
@@ -498,11 +493,8 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 	// run after callbacks
 	if (bShouldCallCustomCallbacks)
 	{
-		for (Mod& mod : g_pModManager->GetMods())
+		for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 		{
-			if (!mod.m_bEnabled)
-				continue;
-
 			for (ModScript script : mod.Scripts)
 			{
 				for (ModScriptCallback modCallback : script.Callbacks)
