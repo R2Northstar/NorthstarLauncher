@@ -225,6 +225,8 @@ class ModManager
 
 	// for std::views::filter, e.g. for (Mod& mod : g_pModManager::GetMods() | ModManager::FilterEnabled)
 	static inline constexpr auto FilterEnabled = std::views::filter([](Mod& mod) { return mod.m_bEnabled; });
+	static inline constexpr auto FilterRemote = std::views::filter([](Mod& mod) { return mod.m_bRemote; });
+	static inline constexpr auto FilterLocal = std::views::filter([](Mod& mod) { return !mod.m_bRemote; });
 };
 
 fs::path GetModFolderPath();
