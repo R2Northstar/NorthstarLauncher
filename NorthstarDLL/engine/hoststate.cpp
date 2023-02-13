@@ -134,6 +134,10 @@ void, __fastcall, (CHostState* self))
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
 
+// TODO: due to exception in code for singleplayer (see connect command) this func will never run
+// when connect is ran on the ip localhost, while connected to a local listen server
+// i dont really care
+
 // clang-format off
 AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E640,
 void, __fastcall, (CHostState* self))

@@ -1039,7 +1039,7 @@ void ModManager::SaveEnabledMods()
 	enabledModsCfg.SetObject();
 
 	// add values
-	for (Mod& mod : GetMods())
+	for (Mod& mod : GetMods() | FilterLocal)
 		enabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), mod.m_bEnabled, enabledModsCfg.GetAllocator());
 
 	// write
