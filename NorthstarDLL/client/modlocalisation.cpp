@@ -26,10 +26,9 @@ void, __fastcall, (void* pVguiLocalize))
 // clang-format on
 {
 	// load all mod localization manually, so we keep track of all files, not just previously loaded ones
-	for (Mod& mod : g_pModManager->GetMods())
-		if (mod.m_bEnabled)
-			for (std::string& localisationFile : mod.LocalisationFiles)
-				CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
+		for (std::string& localisationFile : mod.LocalisationFiles)
+			CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 
 	spdlog::info("reloading localization...");
 	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
@@ -44,10 +43,9 @@ void, __fastcall, (void* self))
 
 	// previously we did this in CLocalize::AddFile, but for some reason it won't properly overwrite localization from
 	// files loaded previously if done there, very weird but this works so whatever
-	for (Mod& mod : g_pModManager->GetMods())
-		if (mod.m_bEnabled)
-			for (std::string& localisationFile : mod.LocalisationFiles)
-				CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
+		for (std::string& localisationFile : mod.LocalisationFiles)
+			CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 }
 
 ON_DLL_LOAD_CLIENT("localize.dll", Localize, (CModule module))

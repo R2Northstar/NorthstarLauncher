@@ -46,7 +46,7 @@ bool LoadPlugins()
 
 	std::vector<fs::path> paths;
 
-	std::string pluginPath = GetNorthstarPrefix() + "/plugins";
+	fs::path pluginPath = GetNorthstarPrefix() / "plugins";
 	if (!fs::exists(pluginPath))
 	{
 		spdlog::warn("Could not find a plugins directory. Skipped loading plugins");

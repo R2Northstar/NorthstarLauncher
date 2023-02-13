@@ -17,11 +17,8 @@ void ModManager::BuildScriptsRson()
 	std::string scriptsRson = R2::ReadVPKOriginalFile(VPK_SCRIPTS_RSON_PATH);
 	scriptsRson += "\n\n// START MODDED SCRIPT CONTENT\n\n"; // newline before we start custom stuff
 
-	for (Mod& mod : GetMods())
+	for (Mod& mod : GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// this isn't needed at all, just nice to have imo
 		scriptsRson += "// MOD: ";
 		scriptsRson += mod.Name;

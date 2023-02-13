@@ -13,11 +13,8 @@ void*, __fastcall, (const char* path, uint32_t flags))
 
 	// figure out which mod is handling the bink
 	Mod* pFileOwner = nullptr;
-	for (Mod& mod : g_pModManager->GetMods())
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		if (std::find(mod.BinkVideos.begin(), mod.BinkVideos.end(), filename) != mod.BinkVideos.end())
 			pFileOwner = &mod;
 	}

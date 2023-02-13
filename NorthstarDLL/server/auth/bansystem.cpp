@@ -17,7 +17,7 @@ ServerBanSystem* g_pBanSystem;
 
 void ServerBanSystem::OpenBanlist()
 {
-	std::ifstream banlistStream(GetNorthstarPrefix() + "/banlist.txt");
+	std::ifstream banlistStream(GetNorthstarPrefix() / "banlist.txt");
 
 	if (!banlistStream.fail())
 	{
@@ -47,12 +47,12 @@ void ServerBanSystem::OpenBanlist()
 	}
 
 	// open write stream for banlist // dont do this to allow for all time access
-	// m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	// m_sBanlistStream.open(GetNorthstarPrefix() / "banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 }
 
 void ServerBanSystem::ReloadBanlist()
 {
-	std::ifstream fsBanlist(GetNorthstarPrefix() + "/banlist.txt");
+	std::ifstream fsBanlist(GetNorthstarPrefix() / "banlist.txt");
 
 	if (!fsBanlist.fail())
 	{
@@ -72,18 +72,18 @@ void ServerBanSystem::ClearBanlist()
 
 	// reopen the file, don't provide std::ofstream::app so it clears on open
 	m_sBanlistStream.close();
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
+	m_sBanlistStream.open(GetNorthstarPrefix() / "banlist.txt", std::ofstream::out | std::ofstream::binary);
 	m_sBanlistStream.close();
 }
 
 void ServerBanSystem::BanUID(uint64_t uid)
 {
 	// checking if last char is \n to make sure uids arent getting fucked
-	std::ifstream fsBanlist(GetNorthstarPrefix() + "/banlist.txt");
+	std::ifstream fsBanlist(GetNorthstarPrefix() / "banlist.txt");
 	std::string content((std::istreambuf_iterator<char>(fsBanlist)), (std::istreambuf_iterator<char>()));
 	fsBanlist.close();
 
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	m_sBanlistStream.open(GetNorthstarPrefix() / "banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 	if (content.back() != '\n')
 		m_sBanlistStream << std::endl;
 
@@ -102,7 +102,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	m_vBannedUids.erase(findResult);
 
 	std::vector<std::string> banlistText;
-	std::ifstream fs_readBanlist(GetNorthstarPrefix() + "/banlist.txt");
+	std::ifstream fs_readBanlist(GetNorthstarPrefix() / "banlist.txt");
 
 	if (!fs_readBanlist.fail())
 	{
@@ -164,7 +164,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	// open write stream for banlist // without append so we clear the file
 	if (m_sBanlistStream.is_open())
 		m_sBanlistStream.close();
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
+	m_sBanlistStream.open(GetNorthstarPrefix() / "banlist.txt", std::ofstream::out | std::ofstream::binary);
 
 	for (std::string updatedLine : banlistText)
 		m_sBanlistStream << updatedLine << std::endl;

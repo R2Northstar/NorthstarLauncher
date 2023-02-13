@@ -147,11 +147,8 @@ HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* 
 	NS::log::fs->info("MountVPK {}", pVpkPath);
 	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
-	for (Mod mod : g_pModManager->GetMods())
+	for (Mod mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		for (ModVPKEntry& vpkEntry : mod.Vpks)
 		{
 			// if we're autoloading, just load no matter what

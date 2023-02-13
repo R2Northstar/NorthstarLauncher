@@ -25,11 +25,8 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	// copy over patch kv files, and add #bases to new file, last mods' patches should be applied first
 	// note: #include should be identical but it's actually just broken, thanks respawn
-	for (Mod& mod : GetMods() | std::views::reverse)
+	for (Mod& mod : GetMods() | ModManager::FilterEnabled | std::views::reverse)
 	{
-		if (mod.m_bEnabled)
-			continue;
-
 		size_t fileHash = STR_HASH(normalisedPath);
 		auto modKv = mod.KeyValues.find(fileHash);
 		if (modKv != mod.KeyValues.end())

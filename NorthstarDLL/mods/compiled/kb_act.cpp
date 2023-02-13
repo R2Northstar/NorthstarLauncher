@@ -17,11 +17,8 @@ void ModManager::BuildKBActionsList()
 	// write vanilla file's content to compiled file
 	soCompiledKeys << R2::ReadVPKOriginalFile(KB_ACT_PATH);
 
-	for (Mod& mod : GetMods())
+	for (Mod& mod : GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// write content of each modded file to compiled file
 		std::ifstream siModKeys(mod.m_ModDirectory / "kb_act.lst");
 
