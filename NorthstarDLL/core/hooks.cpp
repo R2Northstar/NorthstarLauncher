@@ -68,7 +68,7 @@ void __fileAutohook::Dispatch()
 {
 	for (__autovar* var : vars)
 		var->Dispatch();
-	
+
 	for (__autohook* hook : hooks)
 		hook->Dispatch();
 }

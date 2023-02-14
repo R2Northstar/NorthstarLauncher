@@ -307,10 +307,17 @@ class __autovar
 };
 
 // VAR_AT(engine.dll+0x404, ConVar*, Cvar_host_timescale)
-#define VAR_AT(addrString, type, name) \
-type name; namespace { __autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name); }
+#define VAR_AT(addrString, type, name)                                                                                                     \
+	type name;                                                                                                                             \
+	namespace                                                                                                                              \
+	{                                                                                                                                      \
+		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
+	}
 
 // FUNCTION_AT(engine.dll + 0xDEADBEEF, void, __fastcall, SomeFunc, (void* a1))
-#define FUNCTION_AT(addrString, type, callingConvention, name, args) \
-type(*callingConvention name) args; namespace { __autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name); }
-
+#define FUNCTION_AT(addrString, type, callingConvention, name, args)                                                                       \
+	type(*callingConvention name) args;                                                                                                    \
+	namespace                                                                                                                              \
+	{                                                                                                                                      \
+		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
+	}
