@@ -10,6 +10,8 @@
 #include "server/auth/serverauthentication.h"
 #include "squirrel/squirrel.h"
 
+AUTOHOOK_INIT()
+
 void ConCommand_force_newgame(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
@@ -138,6 +140,22 @@ void AddMiscConCommands()
 		"overwrites the current value and default value of a cvar, for use with script and cvar_reset",
 		FCVAR_NONE);
 	RegisterConCommand("cvar_reset", ConCommand_cvar_reset, "resets a cvar's value to its default value", FCVAR_NONE);
+}
+
+AUTOHOOK(Connect_f, engine.dll + 0x76720, void, , (const CCommand& arg))
+{
+	// tickcount number is weird, but consistent!
+	// todo this check sucks
+
+	if (*R2::g_pServerState != R2::server_state_t::ss_dead && R2::g_pGlobals->m_nTickCount != 60 && !strncmp(arg.Arg(1), "localhost", 9))
+		strncpy(const_cast<char*>(arg.GetCommandString() + 8), "127.0.0.1", 9);
+
+	Connect_f(arg);
+}
+
+ON_DLL_LOAD("engine.dll", connecttest, (CModule module))
+{
+	AUTOHOOK_DISPATCH()
 }
 
 // fixes up various cvar flags to have more sane values

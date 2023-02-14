@@ -169,6 +169,7 @@ class ModManager
 		bool bPlayerSettings = false;
 		bool bAiSettings = false;
 		bool bDamageDefs = false; // damagedefs
+		bool bDatatables = false;
 
 		// can't actually reload this atm, just print a warning (todo, could maybe restart client to ensure loaded?)
 		bool bModels = false;
