@@ -940,6 +940,12 @@ void ModManager::CheckModFilesForChanges()
 				m_AssetTypesToReload.bDamageDefs = true;
 				continue;
 			}
+
+			if (m_AssetTypesToReload.bDatatables && !pChangedFile->m_Path.parent_path().compare("scripts/datatable/"))
+			{
+				m_AssetTypesToReload.bDatatables = true;
+				continue;
+			}
 		}
 	}
 
@@ -988,6 +994,11 @@ void ModManager::ReloadNecessaryModAssets()
 	if (m_AssetTypesToReload.bAimAssistSettings)
 		vReloadCommands.push_back("ReloadAimAssistSettings");
 
+	if (m_AssetTypesToReload.bDatatables)
+	{
+		// TODO: clear disk datatable cache in scriptdatatables.cpp
+	}
+
 	// need to reimplement mat_reloadmaterials for this
 	//if (m_AssetTypesToReload.bMaterials)
 	//	R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "mat_reloadmaterials", R2::cmd_source_t::kCommandSrcCode);
@@ -1007,6 +1018,14 @@ void ModManager::ReloadNecessaryModAssets()
 	}
 
 	R2::Cbuf_Execute();
+
+	// reset everything we've already reloaded at this point
+	m_AssetTypesToReload.bUiScript = false;
+	m_AssetTypesToReload.bLocalisation = false;
+	m_AssetTypesToReload.bPlaylists = false;
+	m_AssetTypesToReload.bAimAssistSettings = false;
+	m_AssetTypesToReload.bDatatables = false;
+	m_AssetTypesToReload.bModels = false;
 }
 
 void ModManager::InstallMods()
@@ -1116,9 +1135,30 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ConCommand_reload_mods(const CCommand& args)
+void ConCommand_mods_reload(const CCommand& args)
 {
 	g_pModManager->LoadMods();
+}
+
+void ConCommand_mods_getfileowner(const CCommand& args)
+{
+	if (args.ArgC() < 2)
+	{
+		spdlog::warn("usage: mods_getfileowner path/to/file.mdl");
+		return;
+	}
+
+	auto findFile = g_pModManager->GetModFiles().find(g_pModManager->NormaliseModFilePath(args.Arg(1)));
+	if (findFile != g_pModManager->GetModFiles().end())
+	{
+		// this can be null if asset is compiled!
+		if (findFile->second.m_pOwningMod != nullptr)
+			spdlog::info("file \"{}\" is owned by mod {}", args.Arg(1), findFile->second.m_pOwningMod->Name);
+		else
+			spdlog::info("file \"{}\" is overriden by a runtime compiled asset", args.Arg(1));
+	}
+	else
+		spdlog::warn("file not override not found");
 }
 
 fs::path GetModFolderPath()
@@ -1138,5 +1178,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CMod
 {
 	g_pModManager = new ModManager;
 
-	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("reload_mods", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("mods_reload", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("mods_getfileowner", ConCommand_mods_getfileowner, "find the mod that owns a given file", FCVAR_NONE);
 }
