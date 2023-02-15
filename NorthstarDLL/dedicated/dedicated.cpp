@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "dedicated.h"
 #include "core/tier0.h"
 #include "playlist.h"
@@ -48,17 +47,14 @@ void RunServer(CDedicatedExports* dedicated)
 	// initialise engine
 	g_pEngine->Frame();
 
-	// add +map if not present
+	// add +map if no map loading command is present
 	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
-	if (!Tier0::CommandLine()->CheckParm("+map"))
+	if (!Tier0::CommandLine()->CheckParm("+map") && !Tier0::CommandLine()->CheckParm("+launchplaylist"))
 		Tier0::CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
 	// re-run commandline
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
-
-	// get tickinterval
-	ConVar* Cvar_base_tickinterval_mp = g_pCVar->FindVar("base_tickinterval_mp");
 
 	// main loop
 	double frameTitle = 0;
@@ -67,8 +63,8 @@ void RunServer(CDedicatedExports* dedicated)
 		double frameStart = Tier0::Plat_FloatTime();
 		g_pEngine->Frame();
 
-		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(
-			Cvar_base_tickinterval_mp->GetFloat() - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
+		std::this_thread::sleep_for(
+			std::chrono::duration<double, std::ratio<1>>(g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
 
@@ -278,7 +274,10 @@ void, __fastcall, (void* sqvm))
 	// atm, this will crash if not aborted, so this just closes more gracefully
 	static ConVar* Cvar_fatal_script_errors = g_pCVar->FindVar("fatal_script_errors");
 	if (Cvar_fatal_script_errors->GetBool())
+	{
+		NS::log::FlushLoggers();
 		abort();
+	}
 }
 
 ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))

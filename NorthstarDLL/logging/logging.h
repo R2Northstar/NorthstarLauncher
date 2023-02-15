@@ -1,5 +1,4 @@
 #pragma once
-#include "pch.h"
 #include "spdlog/sinks/base_sink.h"
 #include "spdlog/logger.h"
 #include "squirrel/squirrel.h"
@@ -100,6 +99,8 @@ namespace NS::log
 	extern std::shared_ptr<ColoredLogger> echo;
 
 	extern std::shared_ptr<ColoredLogger> NORTHSTAR;
+
+	void FlushLoggers();
 }; // namespace NS::log
 
 void RegisterCustomSink(std::shared_ptr<CustomSink> sink);
