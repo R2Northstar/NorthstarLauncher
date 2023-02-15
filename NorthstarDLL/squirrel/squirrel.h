@@ -255,13 +255,15 @@ class SquirrelManagerBase
 		return nullptr;
 	}
 
-    inline SQTable* getConstants(HSquirrelVM* sqvm) {
-        return __sq_getconstantstable(sqvm);
-    }
+	inline SQTable* getConstants(HSquirrelVM* sqvm)
+	{
+		return __sq_getconstantstable(sqvm);
+	}
 
-    inline __int64 removeFromStack(HSquirrelVM* sqvm) {
-        return __sq_removefromstack(sqvm);
-    }
+	inline __int64 removeFromStack(HSquirrelVM* sqvm)
+	{
+		return __sq_removefromstack(sqvm);
+	}
 
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
 	{
