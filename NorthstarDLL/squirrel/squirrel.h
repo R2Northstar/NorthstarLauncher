@@ -101,6 +101,8 @@ class SquirrelManagerBase
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
 	sq_getfunctionType __sq_getfunction;
+	sq_getconstantstableType __sq_getconstantstable;
+	sq_removefromstackType __sq_removefromstack;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
@@ -252,6 +254,15 @@ class SquirrelManagerBase
 		}
 		return nullptr;
 	}
+
+    inline SQTable* getConstants(HSquirrelVM* sqvm) {
+        return __sq_getconstantstable(sqvm);
+    }
+
+    inline __int64 removeFromStack(HSquirrelVM* sqvm) {
+        return __sq_removefromstack(sqvm);
+    }
+
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
 	{
 		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
