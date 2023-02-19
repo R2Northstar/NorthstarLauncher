@@ -68,13 +68,6 @@ struct ModRpakEntry
 	std::string m_sLoadAfterPak;
 };
 
-struct ModSaveFile
-{
-  public:
-	std::string Name;
-	int CharacterLimit = 50000; // modify this to change the default character limit
-};
-
 class Mod
 {
   public:
@@ -108,8 +101,6 @@ class Mod
 	std::vector<ModConCommand*> ConCommands;
 	// custom localisation files created by the mod
 	std::vector<std::string> LocalisationFiles;
-	// safe I/O files defined by the mod.
-	std::vector<ModSaveFile> SaveFiles;
 
 	// other files:
 
