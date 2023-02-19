@@ -46,11 +46,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format(
-				"File content length over character limit ({})! Reduce the table's contents, or increase it!",
-				file.CharacterLimit,
-				mod->Name)
-				.c_str());
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -91,11 +87,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!",
-				file.CharacterLimit,
-				mod->Name)
-				.c_str());
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -134,12 +126,11 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", file.CharacterLimit, mod->Name)
-				.c_str());
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
-	
-	std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (file.Name));
+
+	std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "");
@@ -168,12 +159,11 @@ ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | S
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", file.CharacterLimit, mod->Name)
-				.c_str());
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
-	std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (file.Name));
+	std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "");
