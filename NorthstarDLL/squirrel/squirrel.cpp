@@ -205,7 +205,14 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 				size_t last = 0;
 				size_t next = 0;
 
-				while ((next = v.find(".", last)) != std::string::npos)
+
+				size_t rc = v.find('-');
+				if (rc != std::string::npos)
+				{
+					v = v.substr(0, rc);
+				}
+
+				while ((next = v.find('.', last)) != std::string::npos)
 				{
 					std::string sub = v.substr(last, next - last);
 					if (std::all_of(sub.begin(), sub.end(), ::isdigit))
