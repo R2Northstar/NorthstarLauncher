@@ -132,7 +132,7 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 		return SQRESULT_ERROR;
 	}
 
-	std::ifstream fileStr(dir / (fileName));
+	std::ifstream fileStr(savePath / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "");
