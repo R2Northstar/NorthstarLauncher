@@ -896,6 +896,7 @@ void ModManager::CheckModFilesForChanges()
 				{
 
 					// TODO: need to check whether any ui scripts have changed
+					// need to do this by calling LoadScriptsRson (client.dll+3177D0) and getting the list of scripts loaded from that maybe
 
 					if (!pChangedFile->m_Path.parent_path().compare("resource/ui/"))
 					{

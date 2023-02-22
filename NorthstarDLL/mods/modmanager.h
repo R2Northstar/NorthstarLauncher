@@ -126,6 +126,9 @@ struct ModOverrideFile
 	fs::file_time_type m_tLastWriteTime;
 };
 
+// defined in reloadmodweapons.cpp
+extern struct SidedWeaponReloadPointers;
+
 class ModManager
 {
   private:
@@ -165,7 +168,6 @@ class ModManager
 		bool bPlaylists = false;
 		bool bAimAssistSettings = false;
 		bool bMaterials = false; // vmts
-		bool bWeaponSettings = false;
 		bool bPlayerSettings = false;
 		bool bAiSettings = false;
 		bool bDamageDefs = false; // damagedefs
@@ -177,6 +179,7 @@ class ModManager
 		bool bRPaks = false;
 
 		// assets that we can reload individually
+		std::unordered_set<std::string> setsWeaponSettings;
 		//std::vector<ModAudioOverride> vAudioOverrides
 	} m_AssetTypesToReload;
 
@@ -223,6 +226,9 @@ class ModManager
 	void BuildScriptsRson();
 	void TryBuildKeyValues(const char* filename);
 	void BuildKBActionsList();
+
+	// asset reloading funcs
+	bool TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers);
 
 	// for std::views::filter, e.g. for (Mod& mod : g_pModManager::GetMods() | ModManager::FilterEnabled)
 	static inline constexpr auto FilterEnabled = std::views::filter([](Mod& mod) { return mod.m_bEnabled; });

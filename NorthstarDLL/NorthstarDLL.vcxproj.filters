@@ -181,6 +181,9 @@
     <Filter Include="Header Files\shared\exploit_fixes">
       <UniqueIdentifier>{1a377c09-bd3d-4757-b3bc-9cd0a1e6ac0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\mods\reload">
+      <UniqueIdentifier>{f7aff0ef-a51c-4053-866a-4e5e3db71fce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\httplib.h">
@@ -1425,6 +1428,9 @@
     </ClCompile>
     <ClCompile Include="util\utils.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\reload\reloadmodweapons.cpp">
+      <Filter>Source Files\mods\reload</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
