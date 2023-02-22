@@ -11,6 +11,8 @@
 #include "config/profile.h"
 #include "rapidjson/error/en.h"
 
+fs::path savePath = fs::path(GetNorthstarPrefix()) / "save_data";
+
 bool ContainsNonASCIIChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
@@ -58,8 +60,8 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 		return SQRESULT_ERROR;
 	}
 
-	fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename());
-	std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	fs::create_directories(savePath / fs::path(mod->m_ModDirectory).filename());
+	std::ofstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->raiseerror(
@@ -99,8 +101,8 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 		return SQRESULT_ERROR;
 	}
 
-	fs::create_directories(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename());
-	std::ofstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	fs::create_directories(savePath / fs::path(mod->m_ModDirectory).filename());
+	std::ofstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->raiseerror(
@@ -130,7 +132,7 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 		return SQRESULT_ERROR;
 	}
 
-	std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	std::ifstream fileStr(dir / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "");
@@ -163,7 +165,7 @@ ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | S
 		return SQRESULT_ERROR;
 	}
 
-	std::ifstream fileStr(fs::path(GetNorthstarPrefix()) / "saveData" / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "");
@@ -174,7 +176,7 @@ ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | S
 	while (fileStr.peek() != EOF)
 		jsonStringStream << (char)fileStr.get();
 
-	return DecodeJSON<context>(sqvm, jsonStringStream.str().c_str());
+	return DecodeJSON<context>(fileName, sqvm, jsonStringStream.str().c_str());
 }
 
 // ok, I'm just gonna explain what the fuck is going on here because this
@@ -205,7 +207,7 @@ template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 	return buffer.GetString();
 }
 
-template <ScriptContext context> SQRESULT DecodeJSON(HSquirrelVM* sqvm, std::string content)
+template <ScriptContext context> SQRESULT DecodeJSON(std::string fileName, HSquirrelVM* sqvm, std::string content)
 {
 	rapidjson_document doc;
 	doc.Parse(content);
@@ -216,7 +218,8 @@ template <ScriptContext context> SQRESULT DecodeJSON(HSquirrelVM* sqvm, std::str
 		g_pSquirrel<context>->newtable(sqvm);
 
 		std::string sErrorString = fmt::format(
-			"Failed parsing json file: encountered parse error \"{}\" at offset {}",
+			"Failed parsing json file: encountered parse error for file {}:\n\n\"{}\" at offset {}",
+			fileName,
 			GetParseError_En(doc.GetParseError()),
 			doc.GetErrorOffset());
 
