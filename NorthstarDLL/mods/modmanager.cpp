@@ -915,13 +915,6 @@ void ModManager::CheckModFilesForChanges()
 			// could also check this but no point as it should only be changed from mod keyvalues
 			// if (!m_AssetTypesToReload.bPlaylists && !pChangedFile->m_Path.compare("playlists_v2.txt"))
 
-			// we also check these on change of mod keyvalues
-			if (!m_AssetTypesToReload.bWeaponSettings && !pChangedFile->m_Path.parent_path().compare("scripts/weapons/"))
-			{
-				m_AssetTypesToReload.bWeaponSettings = true;
-				continue;
-			}
-
 			if (!m_AssetTypesToReload.bPlayerSettings && !pChangedFile->m_Path.parent_path().compare("scripts/players/"))
 			{
 				m_AssetTypesToReload.bPlayerSettings = true;
@@ -1081,7 +1074,6 @@ void ModManager::UnloadMods()
 	m_AssetTypesToReload.bAimAssistSettings = false;
 	m_AssetTypesToReload.bMaterials = false;
 	m_AssetTypesToReload.bRPaks = false;
-	m_AssetTypesToReload.bWeaponSettings = false;
 	m_AssetTypesToReload.bPlayerSettings = false;
 	m_AssetTypesToReload.bAiSettings = false;
 	m_AssetTypesToReload.bDamageDefs = false;
