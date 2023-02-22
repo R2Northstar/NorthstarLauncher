@@ -324,7 +324,7 @@ class __autovar
 
 // int* g_pSomeInt;
 // DEFINED_VAR_AT(engine.dll + 0x5005, g_pSomeInt)
-#define DEFINED_VAR_AT(addrString, name)                                                                                                \
+#define DEFINED_VAR_AT(addrString, name)                                                                                                   \
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
 		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
