@@ -321,3 +321,11 @@ class __autovar
 	{                                                                                                                                      \
 		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
 	}
+
+// int* g_pSomeInt;
+// PREDEFINED_VAR_AT(engine.dll + 0x5005, g_pSomeInt)
+#define PREDEFINED_VAR_AT(addrString, name)                                                                                                \
+	namespace                                                                                                                              \
+	{                                                                                                                                      \
+		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
+	}
