@@ -17,7 +17,7 @@ fs::path savePath = fs::path(GetNorthstarPrefix()) / "save_data";
 uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
 {
 	uintmax_t result = 0;
-	for (const auto& entry : fs::directory_iterator(savePath / fs::path(m->m_ModDirectory).filename()))
+	for (const auto& entry : fs::directory_iterator(dir))
 	{
 		if (entry.path().filename() == file)
 			continue;
@@ -81,8 +81,9 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
 		return SQRESULT_ERROR;
 	}
-	// because an ascii-only string takes 1 byte per character exactly whilst encoded with UTF-8,
-	// we can use this to see if writing to the file would surpass the max size.
+	// this actually allows mods to go over the limit, but not by much
+	// the limit is to prevent mods from taking gigabytes of space,
+	// this ain't a cloud service.
 	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
 	{
 		// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
@@ -137,8 +138,9 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
 		return SQRESULT_ERROR;
 	}
-	// because an ascii-only string takes 1 byte per character exactly whilst encoded with UTF-8,
-	// we can use this to see if writing to the file would surpass the max size.
+	// this actually allows mods to go over the limit, but not by much
+	// the limit is to prevent mods from taking gigabytes of space,
+	// this ain't a cloud service.
 	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
 	{
 		// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
@@ -260,7 +262,7 @@ ADD_SQFUNC("bool", NSGetFileSize, "string file", "", ScriptContext::CLIENT | Scr
 	{
 		g_pSquirrel<context>->pushinteger(
 			sqvm,
-			(int)(fs::file_size(savePath / fs::path(mod->m_ModDirectory).filename() / fileName) / 1000)); // throws if file does not exist
+			(int)(fs::file_size(savePath / fs::path(mod->m_ModDirectory).filename() / fileName) / 1024)); // throws if file does not exist
 	}
 	catch (std::filesystem::filesystem_error const& ex)
 	{
@@ -291,7 +293,7 @@ ADD_SQFUNC("array<string>", NSGetAllFiles, "", "", ScriptContext::CLIENT | Scrip
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	for (const auto& entry : fs::directory_iterator(savePath / fs::path(mod->m_ModDirectory).filename()))
 	{
-		g_pSquirrel<context>->pushstring(sqvm, entry.path().c_str());
+		g_pSquirrel<context>->pushstring(sqvm, entry.path().filename().string().c_str());
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
 	}
 	return SQRESULT_NOTNULL;
