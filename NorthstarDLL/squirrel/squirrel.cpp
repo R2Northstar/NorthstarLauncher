@@ -394,6 +394,17 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 	return 0;
 }
 
+template <ScriptContext context> void (*SetConVarString)(HSquirrelVM* sqvm);
+template <ScriptContext context> void SetConVarStringHook(HSquirrelVM* sqvm, long long p2, long long p3, long long p4)
+{
+	// const char* (*func_ABCC)(int*, const char*) = (const char* (*)(int*, const char*))(module.Offset(0x2ae010));
+
+	// SetConVarStringHook(sqvm, p2, p3, p4);
+
+	g_pSquirrel<context>->logger->info("cool hook yo {} {} {}", p2, p3, p4);
+	return;
+}
+
 template <ScriptContext context> CSquirrelVM* (*__fastcall CreateNewVM)(void* a1, ScriptContext realContext);
 template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a1, ScriptContext realContext)
 {
@@ -859,6 +870,15 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	MAKEHOOK(module.Offset(0x26E20), &DestroyVMHook<ScriptContext::SERVER>, &DestroyVM<ScriptContext::SERVER>);
 	MAKEHOOK(module.Offset(0x799E0), &ScriptCompileErrorHook<ScriptContext::SERVER>, &SQCompileError<ScriptContext::SERVER>);
 	MAKEHOOK(module.Offset(0x1D5C0), &CallScriptInitCallbackHook<ScriptContext::SERVER>, &CallScriptInitCallback<ScriptContext::SERVER>);
+
+	MAKEHOOK(module.Offset(0x2ae010), &SetConVarStringHook<ScriptContext::SERVER>, &SetConVarString<ScriptContext::SERVER>);
+	/*auto f = [&module](HSquirrelVM* sqvm, long long p2, long long p3, long long p4)
+	{
+		g_pSquirrel<ScriptContext::SERVER>->logger->info("lol");
+		return;
+	};
+
+	MAKEHOOK(module.Offset(0x2ae010), &f, &SetConVarString<ScriptContext::SERVER>);*/
 
 	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats
 	// are enabled for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
