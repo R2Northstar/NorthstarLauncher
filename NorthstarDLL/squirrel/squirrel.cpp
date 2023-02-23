@@ -189,6 +189,8 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		RegisterSquirrelFunc(m_pSQVM, funcReg, 1);
 	}
 
+	getConstants(m_pSQVM->sqvm);
+
 	for (auto& pair : g_pModManager->m_DependencyConstants)
 	{
 		bool bWasFound = false;
@@ -234,7 +236,6 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 				last = 0;
 				next = 0;
 
-				getConstants(m_pSQVM->sqvm);
 				pushstring(m_pSQVM->sqvm, pair.first.c_str());
 				newtable(m_pSQVM->sqvm);
 				pushstring(m_pSQVM->sqvm, "major");
@@ -247,11 +248,11 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 				pushinteger(m_pSQVM->sqvm, 2 < semver.size() ? semver[2] : -1);
 				newslot(m_pSQVM->sqvm, -3, 0);
 				newslot(m_pSQVM->sqvm, -3, 0);
-				removeFromStack(m_pSQVM->sqvm);
 				bWasFound = true;
 				break;
 			}
 		}
+		removeFromStack(m_pSQVM->sqvm);
 
 		if (!bWasFound)
 			defconst(m_pSQVM, pair.first.c_str(), bWasFound);
