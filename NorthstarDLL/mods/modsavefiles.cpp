@@ -11,8 +11,20 @@
 #include "config/profile.h"
 #include "rapidjson/error/en.h"
 
+const int MAX_FOLDER_SIZE = 262144000; // 250MB (250 * 1024 * 1024)
 fs::path savePath = fs::path(GetNorthstarPrefix()) / "save_data";
 
+uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
+{
+	uintmax_t result = 0;
+	for (const auto& entry : fs::directory_iterator(savePath / fs::path(m->m_ModDirectory).filename()))
+	{
+		if (entry.path().filename() == file)
+			continue;
+		result += fs::file_size(entry.path());
+	}
+	return result;
+}
 bool ContainsNonASCIIChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
@@ -60,12 +72,27 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 		return SQRESULT_ERROR;
 	}
 
-	fs::create_directories(savePath / fs::path(mod->m_ModDirectory).filename());
-	std::ofstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
+	fs::create_directories(dir);
+	std::ofstream fileStr(dir / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
+		return SQRESULT_ERROR;
+	}
+	// because an ascii-only string takes 1 byte per character exactly whilst encoded with UTF-8,
+	// we can use this to see if writing to the file would surpass the max size.
+	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
+	{
+		// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
+		g_pSquirrel<context>->raiseerror(
+			sqvm,
+			fmt::format(
+				"Congrats, {}!\nYou have reached the maximum folder size!\n\n... please delete something. Or make your file shorter. "
+				"Either works.",
+				mod->Name)
+				.c_str());
 		return SQRESULT_ERROR;
 	}
 	fileStr.write(content.c_str(), content.length());
@@ -101,12 +128,27 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 		return SQRESULT_ERROR;
 	}
 
-	fs::create_directories(savePath / fs::path(mod->m_ModDirectory).filename());
-	std::ofstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
+	fs::create_directories(dir);
+	std::ofstream fileStr(dir / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
+		return SQRESULT_ERROR;
+	}
+	// because an ascii-only string takes 1 byte per character exactly whilst encoded with UTF-8,
+	// we can use this to see if writing to the file would surpass the max size.
+	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
+	{
+		// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
+		g_pSquirrel<context>->raiseerror(
+			sqvm,
+			fmt::format(
+				"Congrats, {}!\nYou have reached the maximum folder size!\n\n... please delete something. Or make your file shorter. "
+				"Either works.",
+				mod->Name)
+				.c_str());
 		return SQRESULT_ERROR;
 	}
 	fileStr.write(content.c_str(), content.length());
@@ -132,7 +174,7 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 		return SQRESULT_ERROR;
 	}
 
-	std::ifstream fileStr(savePath / (fileName));
+	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
 		g_pSquirrel<context>->pushstring(sqvm, "");
@@ -241,6 +283,17 @@ ADD_SQFUNC("bool", NSDeleteFile, "string file", "", ScriptContext::CLIENT | Scri
 	}
 
 	g_pSquirrel<context>->pushbool(sqvm, fs::remove(savePath / fs::path(mod->m_ModDirectory).filename() / fileName));
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("array<string>", NSGetAllFiles, "", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	for (const auto& entry : fs::directory_iterator(savePath / fs::path(mod->m_ModDirectory).filename()))
+	{
+		g_pSquirrel<context>->pushstring(sqvm, entry.path().c_str());
+		g_pSquirrel<context>->arrayappend(sqvm, -2);
+	}
 	return SQRESULT_NOTNULL;
 }
 
