@@ -179,6 +179,68 @@ ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | S
 	return DecodeJSON<context>(fileName, sqvm, jsonStringStream.str().c_str());
 }
 
+ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
+	if (CheckFileName(fileName))
+	{
+		g_pSquirrel<context>->raiseerror(
+			sqvm,
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
+	if (fileStr.fail())
+	{
+		g_pSquirrel<context>->pushbool(sqvm, false);
+		return SQRESULT_NOTNULL;
+	}
+
+	g_pSquirrel<context>->pushbool(sqvm, true);
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("bool", NSGetFileSize, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
+	if (CheckFileName(fileName))
+	{
+		g_pSquirrel<context>->raiseerror(
+			sqvm,
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+	try
+	{
+		g_pSquirrel<context>->pushinteger(sqvm, (int)(fs::file_size(savePath / fs::path(mod->m_ModDirectory).filename() / fileName) / 1000)); // throws if file does not exist
+	}
+	catch (std::filesystem::filesystem_error const& ex)
+	{
+		spdlog::info(ex.what());
+		g_pSquirrel<context>->pushinteger(sqvm, -1);
+	}
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("bool", NSDeleteFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
+	if (CheckFileName(fileName))
+	{
+		g_pSquirrel<context>->raiseerror(
+			sqvm,
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+
+	g_pSquirrel<context>->pushbool(sqvm, fs::remove(savePath / fs::path(mod->m_ModDirectory).filename() / fileName));
+	return SQRESULT_NOTNULL;
+}
+
 // ok, I'm just gonna explain what the fuck is going on here because this
 // is the pinnacle of my stupidity and I do not want to touch this ever
 // again & someone will eventually have to maintain this.
