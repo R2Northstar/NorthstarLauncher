@@ -168,8 +168,9 @@ ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | S
 	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
 	if (fileStr.fail())
 	{
-		g_pSquirrel<context>->pushstring(sqvm, "");
-		return SQRESULT_NOTNULL;
+		g_pSquirrel<context>->raiseerror(
+			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
+		return SQRESULT_ERROR;
 	}
 
 	std::stringstream jsonStringStream;
