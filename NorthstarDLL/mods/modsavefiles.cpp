@@ -5,14 +5,99 @@
 #include "squirrel/squirrel.h"
 #include "util/utils.h"
 #include "mods/modmanager.h"
+#include "modsavefiles.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "config/profile.h"
 #include "rapidjson/error/en.h"
 
+SaveFileManager* g_saveFileManager;
 const int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
-fs::path savePath = fs::path(GetNorthstarPrefix()) / "save_data";
+fs::path savePath;
+
+template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
+{
+	std::mutex m = mutexMap[file];
+	std::thread writeThread(
+		[ m, file, contents]()
+		{
+			m.lock();
+
+			std::ofstream fileStr(file);
+			if (fileStr.fail())
+			{
+				spdlog::error("A file was supposed to be written to but we can't access it?!");
+				return;
+			}
+
+			fileStr.write(contents.c_str(), contents.length());
+			fileStr.close();
+
+			m.unlock();
+			// side-note: this causes a leak?
+			// when a file is added to the map, it's never removed.
+			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+			// tried to use m.try_lock(), but it's unreliable, it seems.
+		});
+
+	writeThread.detach();
+}
+
+template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path file)
+{
+	int handle = ++m_iLastRequestHandle;
+	std::mutex m = mutexMap[file];
+	std::thread readThread(
+		[m, file, handle]()
+		{
+			m.lock();
+
+			std::ifstream fileStr(file);
+			if (fileStr.fail())
+			{
+				spdlog::error("A file was supposed to be loaded but we can't access it?!");
+				// we should throw a script error here. But idk how lmao
+				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, "");
+				return;
+			}
+
+			std::stringstream stringStream;
+			while (fileStr.peek() != EOF)
+				stringStream << (char)fileStr.get();
+
+			g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, stringStream);
+
+			m.unlock();
+			// side-note: this causes a leak?
+			// when a file is added to the map, it's never removed.
+			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+			// tried to use m.try_lock(), but it's unreliable, it seems.
+		});
+
+	readThread.detach();
+	return handle;
+}
+
+template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
+{
+	// P.S. I don't like how we have to async delete calls but we do.
+	std::mutex m = mutexMap[file];
+	std::thread deleteThread(
+		[m, file]()
+		{
+			m.lock();
+			fs::remove(file);
+
+			m.unlock();
+			// side-note: this causes a leak?
+			// when a file is added to the map, it's never removed.
+			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+			// tried to use m.try_lock(), but it's unreliable, it seems.
+		});
+
+	deleteThread.detach();
+}
 
 uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
 {
@@ -74,13 +159,6 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	fs::create_directories(dir);
-	std::ofstream fileStr(dir / (fileName));
-	if (fileStr.fail())
-	{
-		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
-		return SQRESULT_ERROR;
-	}
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
 	// this ain't a cloud service.
@@ -96,14 +174,15 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 				.c_str());
 		return SQRESULT_ERROR;
 	}
-	fileStr.write(content.c_str(), content.length());
-	fileStr.close();
+
+	g_saveFileManager->SaveFileAsync<context>(dir / fileName, content);
+
 	return SQRESULT_NULL;
 }
 
 #include "scripts/scriptjson.h"
 
-ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+ADD_SQFUNC("int", NSSaveJSONFile, "string file, table data", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	if (mod == nullptr)
@@ -131,13 +210,6 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	fs::create_directories(dir);
-	std::ofstream fileStr(dir / (fileName));
-	if (fileStr.fail())
-	{
-		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
-		return SQRESULT_ERROR;
-	}
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
 	// this ain't a cloud service.
@@ -153,13 +225,13 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 				.c_str());
 		return SQRESULT_ERROR;
 	}
-	fileStr.write(content.c_str(), content.length());
-	fileStr.close();
+
+	g_saveFileManager->SaveFileAsync<context>(dir / fileName, content);
 
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	if (mod == nullptr)
@@ -175,53 +247,11 @@ ADD_SQFUNC("string", NSLoadFile, "string file", "", ScriptContext::CLIENT | Scri
 			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 
-	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
-	if (fileStr.fail())
-	{
-		g_pSquirrel<context>->pushstring(sqvm, "");
-		return SQRESULT_NOTNULL;
-	}
-
-	std::stringstream jsonStringStream;
-	while (fileStr.peek() != EOF)
-		jsonStringStream << (char)fileStr.get();
-	g_pSquirrel<context>->pushstring(sqvm, jsonStringStream.str().c_str());
+	g_saveFileManager->LoadFileAsync<context>(dir / fileName);
 
 	return SQRESULT_NOTNULL;
-}
-
-ADD_SQFUNC("table", NSLoadJSONFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
-{
-	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
-	if (mod == nullptr)
-	{
-		g_pSquirrel<context>->raiseerror(sqvm, "Has to be called from a mod function!");
-		return SQRESULT_ERROR;
-	}
-
-	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
-	{
-		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
-		return SQRESULT_ERROR;
-	}
-
-	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
-	if (fileStr.fail())
-	{
-		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("There was an error opening/creating file {} (Is the file name valid?)", fileName).c_str());
-		return SQRESULT_ERROR;
-	}
-
-	std::stringstream jsonStringStream;
-	while (fileStr.peek() != EOF)
-		jsonStringStream << (char)fileStr.get();
-
-	return DecodeJSON<context>(fileName, sqvm, jsonStringStream.str().c_str());
 }
 
 ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
@@ -236,14 +266,7 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::CLIENT | S
 		return SQRESULT_ERROR;
 	}
 
-	std::ifstream fileStr(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName));
-	if (fileStr.fail())
-	{
-		g_pSquirrel<context>->pushbool(sqvm, false);
-		return SQRESULT_NOTNULL;
-	}
-
-	g_pSquirrel<context>->pushbool(sqvm, true);
+	g_pSquirrel<context>->pushbool(sqvm, fs::exists(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName)));
 	return SQRESULT_NOTNULL;
 }
 
@@ -272,7 +295,7 @@ ADD_SQFUNC("bool", NSGetFileSize, "string file", "", ScriptContext::CLIENT | Scr
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSDeleteFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
@@ -284,7 +307,7 @@ ADD_SQFUNC("bool", NSDeleteFile, "string file", "", ScriptContext::CLIENT | Scri
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<context>->pushbool(sqvm, fs::remove(savePath / fs::path(mod->m_ModDirectory).filename() / fileName));
+	g_saveFileManager->DeleteFileAsync<context>(savePath / fs::path(mod->m_ModDirectory).filename() / fileName);
 	return SQRESULT_NOTNULL;
 }
 
@@ -327,29 +350,8 @@ template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 	return buffer.GetString();
 }
 
-template <ScriptContext context> SQRESULT DecodeJSON(std::string fileName, HSquirrelVM* sqvm, std::string content)
+ON_DLL_LOAD("engine.dll", ModSaveFiles_Init, (CModule module))
 {
-	rapidjson_document doc;
-	doc.Parse(content);
-
-	// basic parse checking shit
-	if (doc.HasParseError())
-	{
-		g_pSquirrel<context>->newtable(sqvm);
-
-		std::string sErrorString = fmt::format(
-			"Failed parsing json file: encountered parse error for file {}:\n\n\"{}\" at offset {}",
-			fileName,
-			GetParseError_En(doc.GetParseError()),
-			doc.GetErrorOffset());
-
-		// errors are fatal.
-
-		g_pSquirrel<context>->raiseerror(sqvm, sErrorString.c_str());
-		return SQRESULT_ERROR;
-	}
-
-	// let scriptjson do the rest of the work since it automatically pushes the table to the stack
-	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
-	return SQRESULT_NOTNULL;
+	savePath = fs::path(GetNorthstarPrefix()) / "save_data";
+	g_saveFileManager = new SaveFileManager;
 }
