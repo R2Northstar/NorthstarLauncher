@@ -11,7 +11,7 @@
 #include "config/profile.h"
 #include "rapidjson/error/en.h"
 
-const int MAX_FOLDER_SIZE = 52428800; // 250MB (250 * 1024 * 1024)
+const int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
 fs::path savePath = fs::path(GetNorthstarPrefix()) / "save_data";
 
 uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
