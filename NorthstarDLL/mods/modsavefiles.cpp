@@ -30,40 +30,48 @@ uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
 
 template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
 {
-	auto m = std::ref(mutexMap[file]);
+	auto mutex = std::ref(mutexMap[file]);
 	std::thread writeThread(
-		[m, file, contents]()
+		[mutex, file, contents]()
 		{
-			m.get().lock();
-
-			fs::path dir = file.root_directory();
-			// this actually allows mods to go over the limit, but not by much
-			// the limit is to prevent mods from taking gigabytes of space,
-			// this ain't a cloud service.
-			if (GetSizeOfFolderContentsMinusFile(dir, file.filename().string()) + contents.length() > MAX_FOLDER_SIZE)
+			try
 			{
-				// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
-				spdlog::error(fmt::format("Mod spamming save requests? Folder limit bypassed despite previous checks. Not saving."));
-				m.get().unlock();
-				return;
-			}
+				mutex.get().lock();
 
-			std::ofstream fileStr(file);
-			if (fileStr.fail())
+				fs::path dir = file.parent_path();
+				// this actually allows mods to go over the limit, but not by much
+				// the limit is to prevent mods from taking gigabytes of space,
+				// this ain't a cloud service.
+				if (GetSizeOfFolderContentsMinusFile(dir, file.filename().string()) + contents.length() > MAX_FOLDER_SIZE)
+				{
+					// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
+					spdlog::error(fmt::format("Mod spamming save requests? Folder limit bypassed despite previous checks. Not saving."));
+					mutex.get().unlock();
+					return;
+				}
+
+				std::ofstream fileStr(file);
+				if (fileStr.fail())
+				{
+					mutex.get().unlock();
+					return;
+				}
+
+				fileStr.write(contents.c_str(), contents.length());
+				fileStr.close();
+
+				mutex.get().unlock();
+				// side-note: this causes a leak?
+				// when a file is added to the map, it's never removed.
+				// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+				// tried to use m.try_lock(), but it's unreliable, it seems.
+			}
+			catch (std::exception ex)
 			{
-				spdlog::error("A file was supposed to be written to but we can't access it?!");
-				m.get().unlock();
-				return;
+				spdlog::error("SAVE FAILED!");
+				mutex.get().unlock();
+				spdlog::error(ex.what());
 			}
-
-			fileStr.write(contents.c_str(), contents.length());
-			fileStr.close();
-
-			m.get().unlock();
-			// side-note: this causes a leak?
-			// when a file is added to the map, it's never removed.
-			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
-			// tried to use m.try_lock(), but it's unreliable, it seems.
 		});
 
 	writeThread.detach();
@@ -72,33 +80,43 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path file)
 {
 	int handle = ++m_iLastRequestHandle;
-	auto m = std::ref(mutexMap[file]);
+	auto mutex = std::ref(mutexMap[file]);
 	std::thread readThread(
-		[m, file, handle]()
+		[mutex, file, handle]()
 		{
-			m.get().lock();
-
-			std::ifstream fileStr(file);
-			if (fileStr.fail())
+			try
 			{
-				spdlog::error("A file was supposed to be loaded but we can't access it?!");
-				// we should throw a script error here. But idk how lmao
-				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, "");
-				m.get().unlock();
-				return;
+				mutex.get().lock();
+
+				std::ifstream fileStr(file);
+				if (fileStr.fail())
+				{
+					spdlog::error("A file was supposed to be loaded but we can't access it?!");
+					// we should throw a script error here. But idk how lmao
+					g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, "");
+					mutex.get().unlock();
+					return;
+				}
+
+				std::stringstream stringStream;
+				while (fileStr.peek() != EOF)
+					stringStream << (char)fileStr.get();
+
+				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, stringStream.str());
+
+				fileStr.close();
+				mutex.get().unlock();
+				// side-note: this causes a leak?
+				// when a file is added to the map, it's never removed.
+				// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+				// tried to use m.try_lock(), but it's unreliable, it seems.
 			}
-
-			std::stringstream stringStream;
-			while (fileStr.peek() != EOF)
-				stringStream << (char)fileStr.get();
-
-			g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, stringStream.str());
-
-			m.get().unlock();
-			// side-note: this causes a leak?
-			// when a file is added to the map, it's never removed.
-			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
-			// tried to use m.try_lock(), but it's unreliable, it seems.
+			catch (std::exception ex)
+			{
+				spdlog::error("LOAD FAILED!");
+				mutex.get().unlock();
+				spdlog::error(ex.what());
+			}
 		});
 
 	readThread.detach();
@@ -108,19 +126,30 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
 {
 	// P.S. I don't like how we have to async delete calls but we do.
+	spdlog::info(fmt::format("Is {} in map? {}", file.string(), mutexMap.find(file) != mutexMap.end()));
 	auto m = std::ref(mutexMap[file]);
 	std::thread deleteThread(
 		[m, file]()
 		{
-			m.get().lock();
+			spdlog::info("DELETE:" + file.string());
+			try
+			{
+				m.get().lock();
 
-			fs::remove(file);
+				fs::remove(file);
 
-			m.get().unlock();
-			// side-note: this causes a leak?
-			// when a file is added to the map, it's never removed.
-			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
-			// tried to use m.try_lock(), but it's unreliable, it seems.
+				m.get().unlock();
+				// side-note: this causes a leak?
+				// when a file is added to the map, it's never removed.
+				// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+				// tried to use m.try_lock(), but it's unreliable, it seems.
+			}
+			catch (std::exception ex)
+			{
+				spdlog::error("DELETE FAILED!");
+				m.get().unlock();
+				spdlog::error(ex.what());
+			}
 		});
 
 	deleteThread.detach();
