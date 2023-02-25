@@ -179,8 +179,9 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 		return SQRESULT_ERROR;
 	}
 
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
+	if (CheckFileName(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -196,7 +197,6 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 		return SQRESULT_ERROR;
 	}
 
-	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	fs::create_directories(dir);
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
@@ -231,8 +231,9 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 		return SQRESULT_ERROR;
 	}
 
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
+	if (CheckFileName(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -248,7 +249,6 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 		return SQRESULT_ERROR;
 	}
 
-	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	fs::create_directories(dir);
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
@@ -280,15 +280,16 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 		g_pSquirrel<context>->raiseerror(sqvm, "Has to be called from a mod function!");
 		return SQRESULT_ERROR;
 	}
+
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
+	if (CheckFileName(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
 			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
-	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 
 	g_pSquirrel<context>->pushinteger(sqvm, g_saveFileManager->LoadFileAsync<context>(dir / fileName));
 
@@ -299,8 +300,10 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
+	if (CheckFileName(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -308,7 +311,7 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<context>->pushbool(sqvm, fs::exists(savePath / fs::path(mod->m_ModDirectory).filename() / (fileName)));
+	g_pSquirrel<context>->pushbool(sqvm, fs::exists(dir / (fileName)));
 	return SQRESULT_NOTNULL;
 }
 
@@ -316,8 +319,10 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
+	if (CheckFileName(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -328,7 +333,7 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 	{
 		g_pSquirrel<context>->pushinteger(
 			sqvm,
-			(int)(fs::file_size(savePath / fs::path(mod->m_ModDirectory).filename() / fileName) / 1024)); // throws if file does not exist
+			(int)(fs::file_size(dir / fileName) / 1024)); // throws if file does not exist
 	}
 	catch (std::filesystem::filesystem_error const& ex)
 	{
@@ -342,8 +347,10 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName))
+	if (CheckFileName(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -351,7 +358,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 		return SQRESULT_ERROR;
 	}
 
-	g_saveFileManager->DeleteFileAsync<context>(savePath / fs::path(mod->m_ModDirectory).filename() / fileName);
+	g_saveFileManager->DeleteFileAsync<context>(dir / fileName);
 	return SQRESULT_NOTNULL;
 }
 
