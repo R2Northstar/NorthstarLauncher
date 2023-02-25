@@ -10,10 +10,11 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "config/profile.h"
+#include "core/tier0.h"
 #include "rapidjson/error/en.h"
 
 SaveFileManager* g_saveFileManager;
-const int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
+int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
 fs::path savePath;
 
 uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
@@ -403,4 +404,6 @@ ON_DLL_LOAD("engine.dll", ModSaveFFiles_Init, (CModule module))
 {
 	savePath = fs::path(GetNorthstarPrefix()) / "save_data";
 	g_saveFileManager = new SaveFileManager;
+	if (Tier0::CommandLine()->FindParm("-disablehttprequests"))
+		MAX_FOLDER_SIZE = std::stoi(Tier0::CommandLine()->GetParm(Tier0::CommandLine()->FindParm("-disablehttprequests")));
 }
