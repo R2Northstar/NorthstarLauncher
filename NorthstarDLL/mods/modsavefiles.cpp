@@ -160,11 +160,13 @@ bool ContainsNonASCIIChars(std::string str)
 	// use it to circumvent the file extension suffix.
 	return std::any_of(str.begin(), str.end(), [](char c) { return c < 0 || c > 127 || c == '\0'; });
 }
-bool CheckFileName(std::string str)
+bool CheckFileName(fs::path str, fs::path dir)
 {
-	// we don't allow null characters either, even if they're ASCII characters because idk if people can
-	// use it to circumvent the file extension suffix.
-	return std::any_of(str.begin(), str.end(), [](char c) { return (c < 0 || c > 127 || c == '\0' || c == '\\' || c == '//'); });
+	auto const normRoot = fs::canonical(dir);
+	auto const normChild = fs::canonical(str);
+
+	auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
+	return itr == normChild.begin();
 }
 
 // void NSSaveFile( string file, string data )
