@@ -18,23 +18,24 @@ fs::path savePath;
 
 template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
 {
-	std::mutex m = mutexMap[file];
+	auto m = std::ref(mutexMap[file]);
 	std::thread writeThread(
-		[ m, file, contents]()
+		[m, file, contents]()
 		{
-			m.lock();
+			m.get().lock();
 
 			std::ofstream fileStr(file);
 			if (fileStr.fail())
 			{
 				spdlog::error("A file was supposed to be written to but we can't access it?!");
+				m.get().unlock();
 				return;
 			}
 
 			fileStr.write(contents.c_str(), contents.length());
 			fileStr.close();
 
-			m.unlock();
+			m.get().unlock();
 			// side-note: this causes a leak?
 			// when a file is added to the map, it's never removed.
 			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
@@ -47,11 +48,11 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path file)
 {
 	int handle = ++m_iLastRequestHandle;
-	std::mutex m = mutexMap[file];
+	auto m = std::ref(mutexMap[file]);
 	std::thread readThread(
 		[m, file, handle]()
 		{
-			m.lock();
+			m.get().lock();
 
 			std::ifstream fileStr(file);
 			if (fileStr.fail())
@@ -59,6 +60,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 				spdlog::error("A file was supposed to be loaded but we can't access it?!");
 				// we should throw a script error here. But idk how lmao
 				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, "");
+				m.get().unlock();
 				return;
 			}
 
@@ -66,9 +68,9 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 			while (fileStr.peek() != EOF)
 				stringStream << (char)fileStr.get();
 
-			g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, stringStream);
+			g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, stringStream.str());
 
-			m.unlock();
+			m.get().unlock();
 			// side-note: this causes a leak?
 			// when a file is added to the map, it's never removed.
 			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
@@ -82,14 +84,15 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
 {
 	// P.S. I don't like how we have to async delete calls but we do.
-	std::mutex m = mutexMap[file];
+	auto m = std::ref(mutexMap[file]);
 	std::thread deleteThread(
 		[m, file]()
 		{
-			m.lock();
+			m.get().lock();
+
 			fs::remove(file);
 
-			m.unlock();
+			m.get().unlock();
 			// side-note: this causes a leak?
 			// when a file is added to the map, it's never removed.
 			// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
@@ -131,7 +134,8 @@ bool CheckFileName(std::string str)
 		});
 }
 
-ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// void NSSaveFile( string file, string data )
+ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	if (mod == nullptr)
@@ -182,7 +186,8 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::CL
 
 #include "scripts/scriptjson.h"
 
-ADD_SQFUNC("int", NSSaveJSONFile, "string file, table data", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// void NSSaveJSONFile(string file, table data)
+ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	if (mod == nullptr)
@@ -231,9 +236,10 @@ ADD_SQFUNC("int", NSSaveJSONFile, "string file, table data", "", ScriptContext::
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// int NS_InternalLoadFile(string file)
+ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
-	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm, 1); // the function that called NSLoadFile :)
 	if (mod == nullptr)
 	{
 		g_pSquirrel<context>->raiseerror(sqvm, "Has to be called from a mod function!");
@@ -249,12 +255,13 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::CLIENT 
 	}
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 
-	g_saveFileManager->LoadFileAsync<context>(dir / fileName);
+	g_pSquirrel<context>->pushinteger(sqvm, g_saveFileManager->LoadFileAsync<context>(dir / fileName));
 
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// bool NSDoesFileExist(string file)
+ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
@@ -270,7 +277,8 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::CLIENT | S
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSGetFileSize, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// int NSGetFileSize(string file)
+ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
@@ -295,7 +303,8 @@ ADD_SQFUNC("bool", NSGetFileSize, "string file", "", ScriptContext::CLIENT | Scr
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// void NSDeleteFile(string file)
+ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
@@ -350,7 +359,7 @@ template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 	return buffer.GetString();
 }
 
-ON_DLL_LOAD("engine.dll", ModSaveFiles_Init, (CModule module))
+ON_DLL_LOAD("engine.dll", ModSaveFFiles_Init, (CModule module))
 {
 	savePath = fs::path(GetNorthstarPrefix()) / "save_data";
 	g_saveFileManager = new SaveFileManager;
