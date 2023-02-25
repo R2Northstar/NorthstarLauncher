@@ -126,12 +126,10 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
 {
 	// P.S. I don't like how we have to async delete calls but we do.
-	spdlog::info(fmt::format("Is {} in map? {}", file.string(), mutexMap.find(file) != mutexMap.end()));
 	auto m = std::ref(mutexMap[file]);
 	std::thread deleteThread(
 		[m, file]()
 		{
-			spdlog::info("DELETE:" + file.string());
 			try
 			{
 				m.get().lock();
