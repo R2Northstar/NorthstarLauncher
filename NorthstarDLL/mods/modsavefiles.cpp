@@ -16,6 +16,18 @@ SaveFileManager* g_saveFileManager;
 const int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
 fs::path savePath;
 
+uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
+{
+	uintmax_t result = 0;
+	for (const auto& entry : fs::directory_iterator(dir))
+	{
+		if (entry.path().filename() == file)
+			continue;
+		result += fs::file_size(entry.path());
+	}
+	return result;
+}
+
 template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
 {
 	auto m = std::ref(mutexMap[file]);
@@ -23,6 +35,18 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 		[m, file, contents]()
 		{
 			m.get().lock();
+
+			fs::path dir = file.root_directory();
+			// this actually allows mods to go over the limit, but not by much
+			// the limit is to prevent mods from taking gigabytes of space,
+			// this ain't a cloud service.
+			if (GetSizeOfFolderContentsMinusFile(dir, file.filename().string()) + contents.length() > MAX_FOLDER_SIZE)
+			{
+				// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
+				spdlog::error(fmt::format("Mod spamming save requests? Folder limit bypassed despite previous checks. Not saving."));
+				m.get().unlock();
+				return;
+			}
 
 			std::ofstream fileStr(file);
 			if (fileStr.fail())
@@ -102,17 +126,6 @@ template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path 
 	deleteThread.detach();
 }
 
-uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
-{
-	uintmax_t result = 0;
-	for (const auto& entry : fs::directory_iterator(dir))
-	{
-		if (entry.path().filename() == file)
-			continue;
-		result += fs::file_size(entry.path());
-	}
-	return result;
-}
 bool ContainsNonASCIIChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
