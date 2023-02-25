@@ -158,21 +158,13 @@ bool ContainsNonASCIIChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
-	return std::any_of(
-		str.begin(), str.end(), [](char c) { return static_cast<unsigned char>(c) > 127 || static_cast<unsigned char>(c) == '\0'; });
+	return std::any_of(str.begin(), str.end(), [](char c) { return c < 0 || c > 127 || c == '\0'; });
 }
 bool CheckFileName(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
-	return std::any_of(
-		str.begin(),
-		str.end(),
-		[](char c)
-		{
-			return static_cast<unsigned char>(c) > 127 || static_cast<unsigned char>(c) == '\0' || static_cast<unsigned char>(c) == '\\' ||
-				   static_cast<unsigned char>(c) == '//';
-		});
+	return std::any_of(str.begin(), str.end(), [](char c) { return (c < 0 || c > 127 || c == '\0' || c == '\\' || c == '//'); });
 }
 
 // void NSSaveFile( string file, string data )
