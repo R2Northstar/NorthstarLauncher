@@ -181,7 +181,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName, dir))
+	if (CheckFileName(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -233,7 +233,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName, dir))
+	if (CheckFileName(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -283,7 +283,7 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName, dir))
+	if (CheckFileName(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -303,7 +303,7 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName, dir))
+	if (CheckFileName(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -322,7 +322,7 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName, dir))
+	if (CheckFileName(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -350,7 +350,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(fileName, dir))
+	if (CheckFileName(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
