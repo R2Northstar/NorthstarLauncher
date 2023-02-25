@@ -404,6 +404,7 @@ ON_DLL_LOAD("engine.dll", ModSaveFFiles_Init, (CModule module))
 {
 	savePath = fs::path(GetNorthstarPrefix()) / "save_data";
 	g_saveFileManager = new SaveFileManager;
-	if (Tier0::CommandLine()->FindParm("-disablehttprequests"))
-		MAX_FOLDER_SIZE = std::stoi(Tier0::CommandLine()->GetParm(Tier0::CommandLine()->FindParm("-disablehttprequests")));
+	int parm = Tier0::CommandLine()->FindParm("-disablehttprequests");
+	if (parm)
+		MAX_FOLDER_SIZE = std::stoi(Tier0::CommandLine()->GetParm(parm));
 }
