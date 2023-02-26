@@ -121,7 +121,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				}
 			}
 
-			if (convarObj.HasMember("Function")) {
+			if (convarObj.HasMember("Function"))
+			{
 				convar->Callback.Function = convarObj["Function"].GetString();
 				spdlog::error("{}", convar->Callback.Function);
 			}
@@ -130,7 +131,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				convar->Callback.Function = "";
 			}
 
-			if (convarObj.HasMember("Context") && convar->Callback.Function != "") {
+			if (convarObj.HasMember("Context") && convar->Callback.Function != "")
+			{
 				convar->Callback.Context = ScriptContextFromString(convarObj["Context"].GetString());
 
 				if (convar->Callback.Context == ScriptContext::INVALID)
@@ -139,7 +141,6 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 					convar->Callback.Function = "";
 				}
 			}
-			
 
 			ConVars.push_back(convar);
 		}
@@ -384,17 +385,15 @@ template <ScriptContext context> auto ModConVarChangedCallback_Internal(std::str
 	}
 }
 
-auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldValue) {
+auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldValue)
+{
 	ModConVar* found = nullptr;
 	auto conVarName = std::string(var->m_ConCommandBase.m_pNext->m_pszName);
 
 	// Find the mod this command belongs to
 	for (auto& mod : g_pModManager->m_LoadedMods)
 	{
-		auto res = std::find_if(
-			mod.ConVars.begin(),
-			mod.ConVars.end(),
-			[&conVarName](const ModConVar* other) { return other->Name == conVarName; });
+		auto res = std::find_if(mod.ConVars.begin(), mod.ConVars.end(), [&conVarName](const ModConVar* other) { return other->Name == conVarName; });
 		if (res != mod.ConVars.end())
 		{
 			found = *res;
@@ -407,7 +406,8 @@ auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldVal
 	if (found->Callback.Function == "")
 		return;
 
-	spdlog::info("Running convar changed callback {} in {} for: {}", found->Callback.Function, GetContextName(found->Callback.Context), conVarName);
+	spdlog::info(
+		"Running convar changed callback {} in {} for: {}", found->Callback.Function, GetContextName(found->Callback.Context), conVarName);
 
 	switch (found->Callback.Context)
 	{
@@ -531,7 +531,16 @@ void ModManager::LoadMods()
 			// behaviour is for defining same convar multiple times
 			if (!R2::g_pCVar->FindVar(convar->Name.c_str()))
 			{
-				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str(), false, 0.0f, false, 0.0, ModConVarChangedCallback);
+				new ConVar(
+					convar->Name.c_str(),
+					convar->DefaultValue.c_str(),
+					convar->Flags,
+					convar->HelpString.c_str(),
+					false,
+					0.0f,
+					false,
+					0.0,
+					ModConVarChangedCallback);
 			}
 		}
 
