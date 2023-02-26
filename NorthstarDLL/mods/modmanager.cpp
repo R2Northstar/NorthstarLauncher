@@ -386,6 +386,8 @@ void ModManager::LoadMods()
 	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
 
+	this->m_invalidMods.clear();
+
 	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
 		for (fs::directory_entry dir : modIterator)
 		{
@@ -405,13 +407,7 @@ void ModManager::LoadMods()
 							"mod.json file for directory {} is located at the wrong location ({}).",
 							dir.path().generic_string().c_str(),
 							subdir.path().generic_string().c_str());
-						std::string errorMessage = std::format(
-							"The folder {} does contain a mod.json file, but not at the correct location.\n\nExpected: {}\nFound: "
-							"{}\n\nMake sure you correctly installed it.",
-							dir.path().filename().generic_string(),
-							dir.path().generic_string().append("/mod.json"),
-							subdir.path().generic_string().append("/mod.json"));
-						MessageBoxA(GetForegroundWindow(), errorMessage.c_str(), "Badly formatted mod", 0);
+						this->m_invalidMods.push_back(dir.path().generic_string().c_str());
 					}
 			}
 		}
