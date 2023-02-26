@@ -1,5 +1,5 @@
-#include "pch.h"
 #include "dedicated.h"
+#include "dedicatedlogtoclient.h"
 #include "core/tier0.h"
 #include "playlist.h"
 #include "engine/r2engine.h"
@@ -57,9 +57,6 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
-	// get tickinterval
-	ConVar* Cvar_base_tickinterval_mp = g_pCVar->FindVar("base_tickinterval_mp");
-
 	// main loop
 	double frameTitle = 0;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
@@ -67,8 +64,8 @@ void RunServer(CDedicatedExports* dedicated)
 		double frameStart = Tier0::Plat_FloatTime();
 		g_pEngine->Frame();
 
-		std::this_thread::sleep_for(std::chrono::duration<double, std::ratio<1>>(
-			Cvar_base_tickinterval_mp->GetFloat() - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
+		std::this_thread::sleep_for(
+			std::chrono::duration<double, std::ratio<1>>(g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
 
@@ -229,6 +226,9 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	// use presence reporter for console title
 	DedicatedConsoleServerPresence* presenceReporter = new DedicatedConsoleServerPresence;
 	g_pServerPresence->AddPresenceReporter(presenceReporter);
+
+	// setup dedicated printing to client
+	RegisterCustomSink(std::make_shared<DedicatedServerLogToClientSink>());
 
 	// Disable Quick Edit mode to reduce chance of user unintentionally hanging their server by selecting something.
 	if (!Tier0::CommandLine()->CheckParm("-bringbackquickedit"))

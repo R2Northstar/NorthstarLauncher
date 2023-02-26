@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "serverauthentication.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "core/convar/cvar.h"
@@ -6,7 +5,6 @@
 #include "masterserver/masterserver.h"
 #include "server/serverpresence.h"
 #include "engine/hoststate.h"
-#include "shared/maxplayers.h"
 #include "bansystem.h"
 #include "core/convar/concommand.h"
 #include "dedicated/dedicated.h"
@@ -154,7 +152,7 @@ bool ServerAuthenticationManager::IsDuplicateAccount(R2::CBaseClient* pPlayer, c
 		return false;
 
 	bool bHasUidPlayer = false;
-	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+	for (int i = 0; i < R2::g_pGlobals->m_nMaxClients; i++)
 		if (&R2::g_pClientArray[i] != pPlayer && !strcmp(pPlayerUid, R2::g_pClientArray[i].m_UID))
 			return true;
 
