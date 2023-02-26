@@ -1,5 +1,5 @@
 #pragma once
-bool ContainsNonASCIIChars(std::string str);
+bool ContainsInvalidChars(std::string str);
 
 class SaveFileManager
 {

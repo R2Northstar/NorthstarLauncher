@@ -154,11 +154,11 @@ template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path 
 	deleteThread.detach();
 }
 
-bool ContainsNonASCIIChars(std::string str)
+bool ContainsInvalidChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
-	return std::any_of(str.begin(), str.end(), [](char c) { return c < 0 || c > 127 || c == '\0'; });
+	return std::any_of(str.begin(), str.end(), [](char c) { return c == '\0'; });
 }
 bool CheckFileName(fs::path str, fs::path dir)
 {
@@ -191,7 +191,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	}
 
 	std::string content = g_pSquirrel<context>->getstring(sqvm, 2);
-	if (ContainsNonASCIIChars(content))
+	if (ContainsInvalidChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!", mod->Name).c_str());
@@ -243,7 +243,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	}
 
 	std::string content = EncodeJSON<context>(sqvm);
-	if (ContainsNonASCIIChars(content))
+	if (ContainsInvalidChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!", mod->Name).c_str());
