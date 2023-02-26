@@ -121,6 +121,26 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				}
 			}
 
+			if (convarObj.HasMember("Function")) {
+				convar->Callback.Function = convarObj["Function"].GetString();
+				spdlog::error("{}", convar->Callback.Function);
+			}
+			else
+			{
+				convar->Callback.Function = "";
+			}
+
+			if (convarObj.HasMember("Context") && convar->Callback.Function != "") {
+				convar->Callback.Context = ScriptContextFromString(convarObj["Context"].GetString());
+
+				if (convar->Callback.Context == ScriptContext::INVALID)
+				{
+					spdlog::warn("Mod ConVar callback {} has invalid context {}", convar->Name, convarObj["Context"].GetString());
+					convar->Callback.Function = "";
+				}
+			}
+			
+
 			ConVars.push_back(convar);
 		}
 	}
@@ -352,6 +372,57 @@ auto ModConCommandCallback(const CCommand& command)
 	};
 }
 
+template <ScriptContext context> auto ModConVarChangedCallback_Internal(std::string name, std::string strOldvalue, float fOldValue)
+{
+	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
+	{
+		g_pSquirrel<context>->AsyncCall(name, strOldvalue);
+	}
+	else
+	{
+		spdlog::warn("ConVar callback `{}` was called while the associated Squirrel VM `{}` was unloaded", name, GetContextName(context));
+	}
+}
+
+auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldValue) {
+	ModConVar* found = nullptr;
+	auto conVarName = std::string(var->m_ConCommandBase.m_pNext->m_pszName);
+
+	// Find the mod this command belongs to
+	for (auto& mod : g_pModManager->m_LoadedMods)
+	{
+		auto res = std::find_if(
+			mod.ConVars.begin(),
+			mod.ConVars.end(),
+			[&conVarName](const ModConVar* other) { return other->Name == conVarName; });
+		if (res != mod.ConVars.end())
+		{
+			found = *res;
+			break;
+		}
+	}
+	if (!found)
+		return;
+
+	if (found->Callback.Function == "")
+		return;
+
+	spdlog::info("Running convar changed callback {} in {} for: {}", found->Callback.Function, GetContextName(found->Callback.Context), conVarName);
+
+	switch (found->Callback.Context)
+	{
+	case ScriptContext::CLIENT:
+		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->Callback.Function, pOldValue, flOldValue);
+		break;
+	case ScriptContext::SERVER:
+		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->Callback.Function, pOldValue, flOldValue);
+		break;
+	case ScriptContext::UI:
+		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->Callback.Function, pOldValue, flOldValue);
+		break;
+	};
+}
+
 void ModManager::LoadMods()
 {
 	if (m_bHasLoadedMods)
@@ -460,7 +531,7 @@ void ModManager::LoadMods()
 			// behaviour is for defining same convar multiple times
 			if (!R2::g_pCVar->FindVar(convar->Name.c_str()))
 			{
-				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
+				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str(), false, 0.0f, false, 0.0, ModConVarChangedCallback);
 			}
 		}
 
