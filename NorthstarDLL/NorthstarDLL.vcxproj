@@ -8,7 +8,7 @@
 		<ProjectConfiguration Include="Release|x64">
 			<Configuration>Release</Configuration>
 			<Platform>x64</Platform>
-		</ProjectConfiguration>
+		</ProjectConfiguration> 
 	</ItemGroup>
 	<PropertyGroup Label="Globals">
 		<VCProjectVersion>16.0</VCProjectVersion>
