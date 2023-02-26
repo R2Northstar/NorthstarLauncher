@@ -435,7 +435,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="plugins\plugins.h" />
     <ClInclude Include="plugins\plugin_abi.h" />
-    <ClInclude Include="scriptjson.h" />
+    <ClInclude Include="scripts\scriptjson.h" />
     <ClInclude Include="scripts\scripthttprequesthandler.h" />
     <ClInclude Include="server\auth\bansystem.h" />
     <ClInclude Include="server\auth\serverauthentication.h" />

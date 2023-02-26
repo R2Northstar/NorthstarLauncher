@@ -1182,7 +1182,7 @@
     <ClInclude Include="util\utils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-		<ClInclude Include="scriptjson.h">
+		<ClInclude Include="scripts\scriptjson.h">
 			<Filter>Header Files\scripts</Filter>
 		</ClInclude>
     <ClInclude Include="dedicated\dedicatedlogtoclient.h">
