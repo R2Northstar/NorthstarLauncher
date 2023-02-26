@@ -393,7 +393,8 @@ auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldVal
 	// Find the mod this command belongs to
 	for (auto& mod : g_pModManager->m_LoadedMods)
 	{
-		auto res = std::find_if(mod.ConVars.begin(), mod.ConVars.end(), [&conVarName](const ModConVar* other) { return other->Name == conVarName; });
+		auto res = std::find_if(
+			mod.ConVars.begin(), mod.ConVars.end(), [&conVarName](const ModConVar* other) { return other->Name == conVarName; });
 		if (res != mod.ConVars.end())
 		{
 			found = *res;
