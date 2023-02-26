@@ -372,11 +372,11 @@ auto ModConCommandCallback(const CCommand& command)
 	};
 }
 
-template <ScriptContext context> auto ModConVarChangedCallback_Internal(std::string name, std::string strOldvalue, float fOldValue)
+template <ScriptContext context> auto ModConVarChangedCallback_Internal(std::string name, std::string strOldvalue, std::string strNewValue)
 {
 	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
 	{
-		g_pSquirrel<context>->AsyncCall(name, strOldvalue);
+		g_pSquirrel<context>->AsyncCall(name, strOldvalue, strNewValue);
 	}
 	else
 	{
@@ -412,13 +412,13 @@ auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldVal
 	switch (found->Callback.Context)
 	{
 	case ScriptContext::CLIENT:
-		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->Callback.Function, pOldValue, flOldValue);
+		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->Callback.Function, pOldValue, var->m_ConCommandBase.m_pszName);
 		break;
 	case ScriptContext::SERVER:
-		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->Callback.Function, pOldValue, flOldValue);
+		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->Callback.Function, pOldValue, var->m_ConCommandBase.m_pszName);
 		break;
 	case ScriptContext::UI:
-		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->Callback.Function, pOldValue, flOldValue);
+		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->Callback.Function, pOldValue, var->m_ConCommandBase.m_pszName);
 		break;
 	};
 }
