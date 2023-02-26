@@ -162,11 +162,12 @@ bool ContainsNonASCIIChars(std::string str)
 }
 bool CheckFileName(fs::path str, fs::path dir)
 {
-	auto const normRoot = fs::canonical(dir);
-	auto const normChild = fs::canonical(str);
+	auto const normRoot = fs::weakly_canonical(dir);
+	auto const normChild = fs::weakly_canonical(str);
 
 	auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
-	return itr == normChild.begin();
+	// we return if the file is NOT safe (NOT inside the directory)
+	return itr != normChild.begin();
 }
 
 // void NSSaveFile( string file, string data )
