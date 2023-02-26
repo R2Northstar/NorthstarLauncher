@@ -332,9 +332,8 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 	}
 	try
 	{
-		g_pSquirrel<context>->pushinteger(
-			sqvm,
-			(int)(fs::file_size(dir / fileName) / 1024)); // throws if file does not exist
+		g_pSquirrel<context>->pushinteger(sqvm,
+										  (int)(fs::file_size(dir / fileName) / 1024)); // throws if file does not exist
 	}
 	catch (std::filesystem::filesystem_error const& ex)
 	{
