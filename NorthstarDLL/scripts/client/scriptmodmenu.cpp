@@ -50,7 +50,8 @@ ADD_SQFUNC("void", NSSetModEnabled, "string modName, bool enabled", "", ScriptCo
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string ornull", NSGetModDescriptionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"string ornull", NSGetModDescriptionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -67,7 +68,8 @@ ADD_SQFUNC("string ornull", NSGetModDescriptionByModName, "string modName", "", 
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string ornull", NSGetModVersionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"string ornull", NSGetModVersionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
@@ -84,7 +86,8 @@ ADD_SQFUNC("string ornull", NSGetModVersionByModName, "string modName", "", Scri
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string ornull", NSGetModDownloadLinkByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"string ornull", NSGetModDownloadLinkByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
