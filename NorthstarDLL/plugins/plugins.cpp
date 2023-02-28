@@ -36,6 +36,17 @@ EXPORT void PLUGIN_LOG(LogMsg* msg)
 	logger->log(src, (spdlog::level::level_enum)msg->level, msg->msg);
 }
 
+EXPORT void* CreateObject(ObjectType type)
+{
+	switch (type)
+	{
+	case ObjectType::CONVAR:
+		return (void*)new ConVar;
+	case ObjectType::CONCOMMANDS:
+		return (void*)new ConCommand;
+	}
+}
+
 std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
 {
 
@@ -189,6 +200,7 @@ bool PluginManager::LoadPlugins()
 	PluginInitFuncs funcs {};
 	funcs.logger = PLUGIN_LOG;
 	funcs.relayInviteFunc = nullptr;
+	funcs.createObject = CreateObject;
 
 	init_plugincommunicationhandler();
 
