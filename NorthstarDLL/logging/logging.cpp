@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "logging.h"
 #include "core/convar/convar.h"
 #include "core/convar/concommand.h"
@@ -212,4 +211,12 @@ void InitialiseLogging()
 	loggers.push_back(NS::log::fs);
 	loggers.push_back(NS::log::rpak);
 	loggers.push_back(NS::log::echo);
+}
+
+void NS::log::FlushLoggers()
+{
+	for (auto& logger : loggers)
+		logger->flush();
+
+	spdlog::default_logger()->flush();
 }

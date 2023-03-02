@@ -41,6 +41,8 @@ struct ModScriptCallback
 	std::string BeforeCallback;
 	// called after the codecallback has finished executing
 	std::string AfterCallback;
+	// called right before the vm is destroyed.
+	std::string DestroyCallback;
 };
 
 struct ModScript
@@ -163,6 +165,7 @@ class ModManager
 };
 
 fs::path GetModFolderPath();
+fs::path GetRemoteModFolderPath();
 fs::path GetCompiledAssetsPath();
 
 extern ModManager* g_pModManager;
