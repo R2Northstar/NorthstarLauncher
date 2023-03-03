@@ -63,6 +63,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,6 +96,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -411,6 +413,7 @@
     <ClInclude Include="core\structs.h" />
     <ClInclude Include="core\tier0.h" />
     <ClInclude Include="dedicated\dedicated.h" />
+    <ClInclude Include="dedicated\dedicatedlogtoclient.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="engine\hoststate.h" />
     <ClInclude Include="engine\r2engine.h" />
@@ -446,6 +449,7 @@
     <ClInclude Include="squirrel\squirrelautobind.h" />
     <ClInclude Include="squirrel\squirrelclasstypes.h" />
     <ClInclude Include="squirrel\squirreldatatypes.h" />
+    <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
     <ClInclude Include="util\wininfo.h" />
   </ItemGroup>
@@ -458,6 +462,7 @@
     <ClCompile Include="client\clientauthhooks.cpp" />
     <ClCompile Include="client\clientruihooks.cpp" />
     <ClCompile Include="client\clientvideooverrides.cpp" />
+    <ClCompile Include="client\rejectconnectionfixes.cpp" />
     <ClCompile Include="client\debugoverlay.cpp" />
     <ClCompile Include="client\demofixes.cpp" />
     <ClCompile Include="client\diskvmtfixes.cpp" />
@@ -480,6 +485,7 @@
     <ClCompile Include="core\sourceinterface.cpp" />
     <ClCompile Include="core\tier0.cpp" />
     <ClCompile Include="dedicated\dedicated.cpp" />
+    <ClCompile Include="dedicated\dedicatedlogtoclient.cpp" />
     <ClCompile Include="dedicated\dedicatedmaterialsystem.cpp" />
     <ClCompile Include="dllmain.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
@@ -505,6 +511,7 @@
     <ClCompile Include="plugins\pluginbackend.cpp" />
     <ClCompile Include="plugins\plugins.cpp" />
     <ClCompile Include="scripts\client\clientchathooks.cpp" />
+    <ClCompile Include="scripts\client\cursorposition.cpp" />
     <ClCompile Include="scripts\client\scriptbrowserhooks.cpp" />
     <ClCompile Include="scripts\client\scriptmainmenupromos.cpp" />
     <ClCompile Include="scripts\client\scriptmodmenu.cpp" />
@@ -536,6 +543,7 @@
     <ClCompile Include="squirrel\squirrelautobind.cpp" />
     <ClCompile Include="util\printcommands.cpp" />
     <ClCompile Include="util\printmaps.cpp" />
+    <ClCompile Include="util\utils.cpp" />
     <ClCompile Include="util\version.cpp" />
     <ClCompile Include="util\wininfo.cpp" />
   </ItemGroup>

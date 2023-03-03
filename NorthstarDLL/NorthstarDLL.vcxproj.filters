@@ -1179,6 +1179,15 @@
     <ClInclude Include="core\macros.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
+    <ClInclude Include="util\wininfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\utils.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="dedicated\dedicatedlogtoclient.h">
+      <Filter>Header Files\dedicated</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1327,6 +1336,9 @@
     <ClCompile Include="scripts\client\clientchathooks.cpp">
       <Filter>Source Files\scripts\client</Filter>
     </ClCompile>
+    <ClCompile Include="scripts\client\cursorposition.cpp">
+      <Filter>Source Files\scripts\client</Filter>
+    </ClCompile>
     <ClCompile Include="scripts\client\scriptbrowserhooks.cpp">
       <Filter>Source Files\scripts\client</Filter>
     </ClCompile>
@@ -1426,10 +1438,22 @@
     <ClCompile Include="core\sourceinterface.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="util\wininfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="client\rejectconnectionfixes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\utils.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="dedicated\dedicatedlogtoclient.cpp">
+      <Filter>Source Files\dedicated</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\client</Filter>
     </MASM>
   </ItemGroup>
 </Project>

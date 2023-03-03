@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "plugins.h"
 #include "config/profile.h"
 

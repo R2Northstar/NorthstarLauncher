@@ -1,5 +1,5 @@
-#include "pch.h"
 #include "squirrel.h"
+#include "logging/logging.h"
 #include "core/convar/concommand.h"
 #include "mods/modmanager.h"
 #include "dedicated/dedicated.h"
@@ -212,10 +212,13 @@ void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMe
 	{
 	case ScriptContext::CLIENT:
 		g_pSquirrel<ScriptContext::CLIENT>->messageBuffer->push(message);
+		break;
 	case ScriptContext::SERVER:
 		g_pSquirrel<ScriptContext::SERVER>->messageBuffer->push(message);
+		break;
 	case ScriptContext::UI:
 		g_pSquirrel<ScriptContext::UI>->messageBuffer->push(message);
+		break;
 	}
 }
 
@@ -258,9 +261,36 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 {
+	// Call all registered mod Destroy callbacks.
+	if (g_pModManager)
+	{
+		NS::log::squirrel_logger<context>()->info("Calling Destroy callbacks for all loaded mods.");
+
+		for (const Mod& loadedMod : g_pModManager->m_LoadedMods)
+		{
+			for (const ModScript& script : loadedMod.Scripts)
+			{
+				for (const ModScriptCallback& callback : script.Callbacks)
+				{
+					if (callback.Context != context || callback.DestroyCallback.length() == 0)
+					{
+						continue;
+					}
+
+					Call(callback.DestroyCallback.c_str());
+					NS::log::squirrel_logger<context>()->info("Executed Destroy callback {}.", callback.DestroyCallback);
+				}
+			}
+		}
+	}
+
 	g_pPluginManager->InformSQVMDestroyed(context);
 
+	// Discard the previous vm and delete the message buffer.
 	m_pSQVM = nullptr;
+
+	delete g_pSquirrel<context>->messageBuffer;
+	g_pSquirrel<context>->messageBuffer = nullptr;
 }
 
 template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(const char* pCode)
@@ -331,8 +361,7 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 // hooks
 bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
 {
-	return context != ScriptContext::SERVER && g_pSquirrel<ScriptContext::UI>->m_pSQVM &&
-		   g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm == pSqvm;
+	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
 template <ScriptContext context> void* (*__fastcall sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
@@ -441,6 +470,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		// kill dedicated server if we hit this
 		if (IsDedicatedServer())
 		{
+			logger->error("Exiting dedicated server, compile error is fatal");
 			// flush the logger before we exit so debug things get saved to log file
 			logger->flush();
 			exit(EXIT_FAILURE);
@@ -595,38 +625,37 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 
 template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBuffer()
 {
-	auto maybeMessage = messageBuffer->pop();
-	if (!maybeMessage)
+	while (std::optional<SquirrelMessage> maybeMessage = messageBuffer->pop())
 	{
-		return;
-	}
+		SquirrelMessage message = maybeMessage.value();
 
-	SquirrelMessage message = maybeMessage.value();
-
-	SQObject functionobj {};
-	int result = sq_getfunction(m_pSQVM->sqvm, message.functionName.c_str(), &functionobj, 0);
-	if (result != 0) // This func returns 0 on success for some reason
-	{
-		NS::log::squirrel_logger<context>()->error(
-			"ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
-		return;
-	}
-	pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
-	pushroottable(m_pSQVM->sqvm);
-	if (message.isExternal)
-	{
-		message.externalFunc(m_pSQVM->sqvm);
-	}
-	else
-	{
-		for (auto& v : message.args)
+		SQObject functionobj {};
+		int result = sq_getfunction(m_pSQVM->sqvm, message.functionName.c_str(), &functionobj, 0);
+		if (result != 0) // This func returns 0 on success for some reason
 		{
-			// Execute lambda to push arg to stack
-			v();
+			NS::log::squirrel_logger<context>()->error(
+				"ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
+			continue;
 		}
-	}
 
-	_call(m_pSQVM->sqvm, message.args.size());
+		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
+		pushroottable(m_pSQVM->sqvm);
+
+		if (message.isExternal)
+		{
+			message.externalFunc(m_pSQVM->sqvm);
+		}
+		else
+		{
+			for (auto& v : message.args)
+			{
+				// Execute lambda to push arg to stack
+				v();
+			}
+		}
+
+		_call(m_pSQVM->sqvm, message.args.size());
+	}
 }
 
 ADD_SQFUNC(
