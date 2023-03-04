@@ -27,12 +27,6 @@ VAR_AT(client.dll + 0xB339E8, GlobalWeaponDefs**, g_ppClientWeaponDefs);
 FUNCTION_AT(client.dll + 0x3D2FB0, void,, ClientReparseWeapon, (WeaponDefinition* pWeapon));
 FUNCTION_AT(client.dll + 0x3CE270, void,, ClientReloadWeaponCallbacks, (int nWeaponIndex));
 
-/* uint16_t* g_pnServerWeaponsLoaded;
-GlobalWeaponDefs** g_ppServerWeaponDefs;
-
-void (*ServerReparseWeapon)(WeaponDefinition* pWeapon);
-void (*ServerReloadWeaponCallbacks)(int nWeaponIndex);*/
-
 // used for passing client/server funcs/data/pointers to TryReloadWeapon
 struct SidedWeaponReloadPointers
 {
@@ -83,7 +77,7 @@ bool ModManager::TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloa
 	WeaponDefinition* pWeapon = (*pReloadPointers->m_ppWeaponDefs)->m_Weapons[nWeaponIndex].pWeaponDef;
 	bool bReloadScriptFuncs = pWeapon->bReloadScriptFuncs; // this is reset after reparse
 	pReloadPointers->m_fnReparseWeapon(pWeapon);
-	if (bReloadScriptFuncs) // always false in testing?
+	if (bReloadScriptFuncs)
 		pReloadPointers->m_fnReloadWeaponCallbacks(nWeaponIndex);
 
 	m_AssetTypesToReload.setsWeaponSettings.erase(pWeaponName);

@@ -158,8 +158,10 @@ ADD_SQFUNC(
 	return SQRESULT_NOTNULL; // return empty array
 }
 
-ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSReloadMods, "bool deferredReload = false", "", ScriptContext::UI)
 {
-	g_pModManager->LoadMods();
+	const SQBool bDeferredReload = g_pSquirrel<context>->getbool(sqvm, 1);
+	g_pModManager->LoadMods(bDeferredReload);
+
 	return SQRESULT_NULL;
 }

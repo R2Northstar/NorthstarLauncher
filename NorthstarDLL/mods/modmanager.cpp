@@ -294,7 +294,7 @@ ModManager::ModManager()
 	m_LastModLoadState = nullptr;
 	m_ModLoadState = new ModLoadState;
 
-	LoadMods();
+	LoadMods(false);
 }
 
 template <ScriptContext context> auto ModConCommandCallback_Internal(std::string name, const CCommand& command)
@@ -352,7 +352,7 @@ auto ModConCommandCallback(const CCommand& command)
 
 
 
-void ModManager::LoadMods()
+void ModManager::LoadMods(bool bDeferredAssetReload)
 {
 	// reset state of all currently loaded mods, if we've loaded once already
 	if (m_bHasLoadedMods)
@@ -366,36 +366,13 @@ void ModManager::LoadMods()
 	LoadModDefinitions();
 
 	// install mods (load all files)
-	InstallMods();
+	InstallMods(bDeferredAssetReload);
 
 	// write json storing currently enabled mods
 	SaveEnabledMods();
 
-	// build modinfo obj for masterserver
-	rapidjson_document modinfoDoc;
-	auto& alloc = modinfoDoc.GetAllocator();
-	modinfoDoc.SetObject();
-	modinfoDoc.AddMember("Mods", rapidjson::kArrayType, alloc);
-
-	int currentModIndex = 0;
-	for (Mod& mod : GetMods())
-	{
-		if (!mod.m_bEnabled || !mod.RequiredOnClient) // (!mod.RequiredOnClient && !mod.Pdiff.size())
-			continue;
-
-		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
-
-		currentModIndex++;
-	}
-
-	rapidjson::StringBuffer buffer;
-	buffer.Clear();
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	modinfoDoc.Accept(writer);
-	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
+	// build public-facing mod list for masterserver
+	BuildPublicModList();
 
 	// don't need this anymore
 	delete m_LastModLoadState;
@@ -789,8 +766,12 @@ void ModManager::InstallModKeyValues(Mod& mod)
 		{
 			if (fs::is_regular_file(file))
 			{
-				std::string kvStr = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
-				mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
+				ModOverrideFile modKv;
+				modKv.m_pOwningMod = &mod;
+				modKv.m_Path = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
+				modKv.m_tLastWriteTime = fs::last_write_time(file);
+
+				m_ModLoadState->m_KeyValues[modKv.m_Path.string()].push_back(modKv);
 			}
 		}
 	}
@@ -839,7 +820,7 @@ void ModManager::InstallModFileOverrides(Mod& mod)
 				ModOverrideFile modFile;
 				modFile.m_pOwningMod = &mod;
 				modFile.m_Path = path;
-				modFile.m_tLastWriteTime = fs::last_write_time(file.path()); // need real path for this
+				modFile.m_tLastWriteTime = fs::last_write_time(file); // need real path for this
 				m_ModLoadState->m_ModFiles.insert(std::make_pair(path, modFile));
 			}
 		}
@@ -856,6 +837,7 @@ void ModManager::CheckModFilesForChanges()
 		// a) the asset was overriden previously but has changed owner
 		// b) the asset no longer has any overrides (use vanilla file)
 		// c) the asset was using vanilla file but isn't anymore
+		// d) the asset has been edited
 
 		std::vector<ModOverrideFile*> vpChangedFiles;
 
@@ -875,18 +857,18 @@ void ModManager::CheckModFilesForChanges()
 
 		for (ModOverrideFile* pChangedFile : vpChangedFiles)
 		{
-			if (IsDedicatedServer())
+			if (!IsDedicatedServer())
 			{
 				// could check localisation here? but what's the point, localisation shouldn't be in mod fs
 				// if (m_AssetTypesToReload.bLocalisation)
 
-				if (!m_AssetTypesToReload.bAimAssistSettings && !pChangedFile->m_Path.parent_path().compare("cfg/aimassist/"))
+				if (!m_AssetTypesToReload.bAimAssistSettings && pChangedFile->m_Path.parent_path().string().starts_with("cfg/aimassist/"))
 				{
 					m_AssetTypesToReload.bAimAssistSettings = true;
 					continue;
 				}
 
-				if (!m_AssetTypesToReload.bMaterials && !pChangedFile->m_Path.parent_path().compare("materials/"))
+				if (!m_AssetTypesToReload.bMaterials && pChangedFile->m_Path.parent_path().string().starts_with("materials/"))
 				{
 					m_AssetTypesToReload.bMaterials = true;
 					continue;
@@ -898,7 +880,7 @@ void ModManager::CheckModFilesForChanges()
 					// TODO: need to check whether any ui scripts have changed
 					// need to do this by calling LoadScriptsRson (client.dll+3177D0) and getting the list of scripts loaded from that maybe
 
-					if (!pChangedFile->m_Path.parent_path().compare("resource/ui/"))
+					if (pChangedFile->m_Path.parent_path().string().starts_with("resource/ui/"))
 					{
 						m_AssetTypesToReload.bUiScript = true;
 						continue;
@@ -906,35 +888,34 @@ void ModManager::CheckModFilesForChanges()
 				}
 			}
 
-			if (!m_AssetTypesToReload.bModels && !pChangedFile->m_Path.parent_path().compare("models/"))
+			if (!m_AssetTypesToReload.bModels && pChangedFile->m_Path.parent_path().string().starts_with("models/"))
 			{
 				m_AssetTypesToReload.bModels = true;
 				continue;
 			}
 
 			// could also check this but no point as it should only be changed from mod keyvalues
-			// if (!m_AssetTypesToReload.bPlaylists && !pChangedFile->m_Path.compare("playlists_v2.txt"))
 
-			if (!m_AssetTypesToReload.bPlayerSettings && !pChangedFile->m_Path.parent_path().compare("scripts/players/"))
+			if (!m_AssetTypesToReload.bPlayerSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/players/"))
 			{
 				m_AssetTypesToReload.bPlayerSettings = true;
 				continue;
 			}
 
 			// maybe also aibehaviour?
-			if (!m_AssetTypesToReload.bAiSettings && !pChangedFile->m_Path.parent_path().compare("scripts/aisettings/"))
+			if (!m_AssetTypesToReload.bAiSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/aisettings/"))
 			{
 				m_AssetTypesToReload.bAiSettings = true;
 				continue;
 			}
 
-			if (!m_AssetTypesToReload.bDamageDefs && !pChangedFile->m_Path.parent_path().compare("scripts/damage/"))
+			if (!m_AssetTypesToReload.bDamageDefs && pChangedFile->m_Path.parent_path().string().starts_with("scripts/damage/"))
 			{
 				m_AssetTypesToReload.bDamageDefs = true;
 				continue;
 			}
 
-			if (m_AssetTypesToReload.bDatatables && !pChangedFile->m_Path.parent_path().compare("scripts/datatable/"))
+			if (m_AssetTypesToReload.bDatatables && pChangedFile->m_Path.parent_path().string().starts_with("scripts/datatable/"))
 			{
 				m_AssetTypesToReload.bDatatables = true;
 				continue;
@@ -943,39 +924,86 @@ void ModManager::CheckModFilesForChanges()
 	}
 
 	// keyvalues
+	{
+		// check which file overrides have changed
+		// we need to trigger a reload of a given asset if
+		// a) the asset is being overriden by different mods than previously
+		// b) the asset has been edited
 
-	//if (!m_AssetTypesToReload.bWeaponSettings && kvStr.compare("scripts/weapons/"))
-	//{
-	//	m_AssetTypesToReload.bWeaponSettings = true;
-	//	continue;
-	//}
-	//
-	//if (!m_AssetTypesToReload.bPlayerSettings && kvStr.compare("scripts/players/"))
-	//{
-	//	m_AssetTypesToReload.bPlayerSettings = true;
-	//	continue;
-	//}
-	//
-	//// maybe also aibehaviour?
-	//if (!m_AssetTypesToReload.bAiSettings && kvStr.compare("scripts/aisettings/"))
-	//{
-	//	m_AssetTypesToReload.bAiSettings = true;
-	//	continue;
-	//}
-	//
-	//if (!m_AssetTypesToReload.bDamageDefs && kvStr.compare("scripts/damage/"))
-	//{
-	//	m_AssetTypesToReload.bDamageDefs = true;
-	//	continue;
-	//}
+		std::vector<std::string> vsChangedFiles;
+
+		// check currently loaded mods for any removed or updated files vs last load
+		for (auto& filePair : m_ModLoadState->m_KeyValues)
+		{
+			auto findFile = m_LastModLoadState->m_KeyValues.find(filePair.first);
+			if (findFile == m_LastModLoadState->m_KeyValues.end() || findFile->second.size() != filePair.second.size())
+				vsChangedFiles.push_back(filePair.first);
+			else
+			{
+				// check the actual override list to ensure it's the same files
+				// even if just file order has changed, we should still reload
+				for (int i = 0; i < filePair.second.size(); i++)
+				{
+					if (filePair.second[i].m_pOwningMod->m_ModDirectory != findFile->second[i].m_pOwningMod->m_ModDirectory)
+					{
+						vsChangedFiles.push_back(filePair.first);
+						break;
+					}
+				}
+			}
+		}
+
+		// check last load for any files removed
+		for (auto& filePair : m_LastModLoadState->m_KeyValues)
+			if (m_ModLoadState->m_KeyValues.find(filePair.first) == m_ModLoadState->m_KeyValues.end())
+				vsChangedFiles.push_back(filePair.first);
+
+		for (std::string& sChangedPath : vsChangedFiles)
+		{
+			fs::path fChangedPath(sChangedPath);
+
+			if (!m_AssetTypesToReload.bPlaylists && fChangedPath == "playlists_v2.txt")
+			{
+				m_AssetTypesToReload.bPlaylists = true;
+				continue;
+			}
+
+			if (!m_AssetTypesToReload.bPlayerSettings && fChangedPath.parent_path().string().starts_with("scripts/players/"))
+			{
+				m_AssetTypesToReload.bPlayerSettings = true;
+				continue;
+			}
+
+			if (!m_AssetTypesToReload.bAiSettings && fChangedPath.parent_path().string().starts_with("scripts/aisettings/"))
+			{
+				m_AssetTypesToReload.bAiSettings = true;
+				continue;
+			}
+
+			if (!m_AssetTypesToReload.bDamageDefs && fChangedPath.parent_path().string().starts_with("scripts/damage/"))
+			{
+				m_AssetTypesToReload.bDamageDefs = true;
+				continue;
+			}
+
+			if (!fChangedPath.parent_path().string().starts_with("scripts/weapons/"))
+			{
+				if (fChangedPath.filename() == "ammo_suck_behaviours.txt")
+					m_AssetTypesToReload.bAmmoSuckBehaviours = true;
+				else if (fChangedPath.filename() == "springs.txt")
+					m_AssetTypesToReload.bWeaponSprings = true;
+				else
+					m_AssetTypesToReload.setsWeaponSettings.insert(fChangedPath.replace_extension().string());
+
+				continue;
+			}
+		}
+	}
 }
 
-void ModManager::ReloadNecessaryModAssets()
+void ModManager::ReloadNecessaryModAssets(bool bDeferred)
 {
 	std::vector<std::string> vReloadCommands;
-
-	if (m_AssetTypesToReload.bUiScript)
-		vReloadCommands.push_back("uiscript_reset");
 
 	if (m_AssetTypesToReload.bLocalisation)
 		vReloadCommands.push_back("reload_localization");
@@ -984,25 +1012,43 @@ void ModManager::ReloadNecessaryModAssets()
 	if (m_AssetTypesToReload.bPlaylists || m_AssetTypesToReload.bLocalisation)
 		vReloadCommands.push_back("loadPlaylists");
 
+	if (m_AssetTypesToReload.bUiScript)
+		vReloadCommands.push_back("uiscript_reset");
+
 	if (m_AssetTypesToReload.bAimAssistSettings)
 		vReloadCommands.push_back("ReloadAimAssistSettings");
+
+	if (m_AssetTypesToReload.bModels)
+		spdlog::warn("Need to reload models but can't without a restart!");
 
 	if (m_AssetTypesToReload.bDatatables)
 	{
 		// TODO: clear disk datatable cache in scriptdatatables.cpp
 	}
 
+	// deferred - load files using engine functions where possible, on level load
+	if (bDeferred)
+	{
+		if (m_AssetTypesToReload.bAimAssistSettings)
+			DeferredReloadADSPulls();
+
+		if (m_AssetTypesToReload.bAmmoSuckBehaviours)
+			DeferredReloadAmmoSuckBehaviours();
+
+		if (m_AssetTypesToReload.bDamageDefs)
+			DeferredReloadDamageFlags();
+
+		if (m_AssetTypesToReload.bWeaponSprings)
+			DeferredReloadWeaponSprings();
+	}
+	else
+	{
+
+	}
+
 	// need to reimplement mat_reloadmaterials for this
 	//if (m_AssetTypesToReload.bMaterials)
 	//	R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "mat_reloadmaterials", R2::cmd_source_t::kCommandSrcCode);
-
-	//if (m_AssetTypesToReload.bWeaponSettings)
-	//if (m_AssetTypesToReload.bPlayerSettings)
-	//if (m_AssetTypesToReload.bAiSettings)
-	//if (m_AssetTypesToReload.bDamageDefs)
-
-	if (m_AssetTypesToReload.bModels)
-		spdlog::warn("Need to reload models but can't without a restart!");
 
 	for (std::string& sReloadCommand : vReloadCommands)
 	{
@@ -1019,28 +1065,33 @@ void ModManager::ReloadNecessaryModAssets()
 	m_AssetTypesToReload.bAimAssistSettings = false;
 	m_AssetTypesToReload.bDatatables = false;
 	m_AssetTypesToReload.bModels = false;
+	m_AssetTypesToReload.bAmmoSuckBehaviours = false;
+	m_AssetTypesToReload.bDamageDefs = false;
+	m_AssetTypesToReload.bWeaponSprings = false;
 }
 
-void ModManager::InstallMods()
+void ModManager::InstallMods(bool bDeferredAssetReload)
 {
 	for (Mod& mod : GetMods() | FilterEnabled)
 	{
 		InstallModCvars(mod);
 		InstallModVpks(mod);
 		InstallModRpaks(mod);
-		InstallModKeyValues(mod);
 		InstallModBinks(mod);
 		InstallModAudioOverrides(mod);
 	}
 
 	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
 	for (Mod& mod : GetMods() | FilterEnabled | std::views::reverse)
+	{
+		InstallModKeyValues(mod);
 		InstallModFileOverrides(mod);
+	}
 
 	if (m_bHasLoadedMods) // only reload assets after initial load
 	{
 		CheckModFilesForChanges();
-		ReloadNecessaryModAssets();
+		ReloadNecessaryModAssets(bDeferredAssetReload);
 	}
 }
 
@@ -1059,6 +1110,35 @@ void ModManager::SaveEnabledMods()
 	rapidjson::OStreamWrapper sWriteStreamWrapper(sWriteStream);
 	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(sWriteStreamWrapper);
 	enabledModsCfg.Accept(writer);
+}
+
+void ModManager::BuildPublicModList()
+{
+	// build modinfo obj for masterserver
+	rapidjson_document modinfoDoc;
+	auto& alloc = modinfoDoc.GetAllocator();
+	modinfoDoc.SetObject();
+	modinfoDoc.AddMember("Mods", rapidjson::kArrayType, alloc);
+
+	int currentModIndex = 0;
+	for (Mod& mod : GetMods() | FilterEnabled)
+	{
+		if (!mod.RequiredOnClient) // (!mod.RequiredOnClient && !mod.Pdiff.size())
+			continue;
+
+		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
+
+		currentModIndex++;
+	}
+
+	rapidjson::StringBuffer buffer;
+	buffer.Clear();
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	modinfoDoc.Accept(writer);
+	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
 }
 
 void ModManager::UnloadMods()
@@ -1113,12 +1193,9 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	else
 	{
 		// check if we should build keyvalues, depending on whether any of our mods have patch kvs for this file
-		for (Mod& mod : GetMods())
+		for (Mod& mod : GetMods() | FilterEnabled)
 		{
-			if (!mod.m_bEnabled)
-				continue;
-
-			if (mod.KeyValues.find(fileHash) != mod.KeyValues.end())
+			if (m_ModLoadState->m_KeyValues.find(filename) != m_ModLoadState->m_KeyValues.end())
 			{
 				TryBuildKeyValues(filename);
 				return;
@@ -1129,7 +1206,12 @@ void ModManager::CompileAssetsForFile(const char* filename)
 
 void ConCommand_mods_reload(const CCommand& args)
 {
-	g_pModManager->LoadMods();
+	g_pModManager->LoadMods(false);
+}
+
+void ConCommand_mods_reload_deferred(const CCommand& args)
+{
+	g_pModManager->LoadMods(true);
 }
 
 void ConCommand_mods_getfileowner(const CCommand& args)
@@ -1172,5 +1254,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CMod
 
 	RegisterConCommand("reload_mods", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
 	RegisterConCommand("mods_reload", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("mods_reload_deferred", ConCommand_mods_reload_deferred, "reloads mods, prefers reloading assets on level load rather than now", FCVAR_NONE);
 	RegisterConCommand("mods_getfileowner", ConCommand_mods_getfileowner, "find the mod that owns a given file", FCVAR_NONE);
 }

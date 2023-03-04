@@ -101,7 +101,6 @@ struct Mod
 	// other files:
 
 	std::vector<ModVPKEntry> Vpks;
-	std::unordered_map<size_t, std::string> KeyValues;
 	std::vector<std::string> BinkVideos;
 
 	// todo audio override struct
@@ -142,7 +141,8 @@ class ModManager
 
 	void LoadModDefinitions();
 	void SaveEnabledMods();
-	void InstallMods();
+	void BuildPublicModList();
+	void InstallMods(bool bDeferredAssetReload);
 
 	// mod installation funcs
 	void InstallModCvars(Mod& mod);
@@ -171,6 +171,8 @@ class ModManager
 		bool bPlayerSettings = false;
 		bool bAiSettings = false;
 		bool bDamageDefs = false; // damagedefs
+		bool bWeaponSprings = false;
+		bool bAmmoSuckBehaviours = false;
 		bool bDatatables = false;
 
 		// can't actually reload this atm, just print a warning (todo, could maybe restart client to ensure loaded?)
@@ -184,7 +186,7 @@ class ModManager
 	} m_AssetTypesToReload;
 
 	void CheckModFilesForChanges();
-	void ReloadNecessaryModAssets();
+	void ReloadNecessaryModAssets(bool bDeferred);
 
 
 	struct ModLoadState
@@ -192,6 +194,7 @@ class ModManager
 		std::vector<Mod> m_LoadedMods;
 		std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
 		std::unordered_map<std::string, std::string> m_DependencyConstants;
+		std::unordered_map<std::string, std::vector<ModOverrideFile>> m_KeyValues;
 	};
 
 	// unfortunately need to be ptrs, so we can copy m_ModLoadState => m_LastModLoadState
@@ -202,7 +205,7 @@ class ModManager
 
   public:
 	ModManager();
-	void LoadMods();
+	void LoadMods(bool bDeferredAssetReload);
 	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
 
@@ -226,6 +229,12 @@ class ModManager
 	void BuildScriptsRson();
 	void TryBuildKeyValues(const char* filename);
 	void BuildKBActionsList();
+
+	// deferred asset reloading funcs (i.e. set engine flags to reload later)
+	void DeferredReloadDamageFlags();
+	void DeferredReloadWeaponSprings();
+	void DeferredReloadAmmoSuckBehaviours();
+	void DeferredReloadADSPulls();
 
 	// asset reloading funcs
 	bool TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers);

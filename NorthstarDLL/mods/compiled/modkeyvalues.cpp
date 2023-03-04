@@ -24,26 +24,18 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	// copy over patch kv files, and add #bases to new file, last mods' patches should be applied first
 	// note: #include should be identical but it's actually just broken, thanks respawn
-	for (Mod& mod : GetMods() | ModManager::FilterEnabled | std::views::reverse)
+	auto findKv = m_ModLoadState->m_KeyValues.find(filename);
+	if (findKv != m_ModLoadState->m_KeyValues.end())
 	{
-		size_t fileHash = STR_HASH(normalisedPath);
-		auto modKv = mod.KeyValues.find(fileHash);
-		if (modKv != mod.KeyValues.end())
+		for (ModOverrideFile& modKv : findKv->second)
 		{
-			// should result in smth along the lines of #include "mod_patch_5_mp_weapon_car.txt"
-
-			std::string patchFilePath = "mod_patch_";
-			patchFilePath += std::to_string(patchNum++);
-			patchFilePath += "_";
-			patchFilePath += kvPath.filename().string();
-
-			newKvs += "#base \"";
-			newKvs += patchFilePath;
-			newKvs += "\"\n";
+			// should result in smth along the lines of #include "_mod_patch_5_mp_weapon_car.txt"
+			std::string patchFilePath = fmt::format("_mod_patch_{}_{}", patchNum++, kvPath.filename().string());
 
 			fs::remove(compiledDir / patchFilePath);
+			fs::copy_file(modKv.m_pOwningMod->m_ModDirectory / "keyvalues" / filename, compiledDir / patchFilePath);
 
-			fs::copy_file(mod.m_ModDirectory / "keyvalues" / filename, compiledDir / patchFilePath);
+			newKvs += fmt::format("#base \"{}\"\n", patchFilePath);
 		}
 	}
 

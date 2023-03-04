@@ -1432,6 +1432,9 @@
     <ClCompile Include="mods\reload\reloadmodweapons.cpp">
       <Filter>Source Files\mods\reload</Filter>
     </ClCompile>
+    <ClCompile Include="mods\reload\reloadmodweapons_misc.cpp">
+      <Filter>Source Files\mods\reload</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">

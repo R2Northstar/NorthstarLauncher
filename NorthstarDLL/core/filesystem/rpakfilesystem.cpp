@@ -133,11 +133,8 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	bool bHasOriginalPak = fs::exists(fs::path("r2/paks/Win64/") / *pakName);
 
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->GetMods())
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// need to get a relative path of mod to mod folder
 		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
@@ -294,12 +291,8 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 			size_t hashed = STR_HASH(starpakPath);
 
 			// loop through all loaded mods
-			for (Mod& mod : g_pModManager->GetMods())
+			for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 			{
-				// ignore non-loaded mods
-				if (!mod.m_bEnabled)
-					continue;
-
 				// loop through the stored starpak paths
 				for (size_t hash : mod.StarpakPaths)
 				{
