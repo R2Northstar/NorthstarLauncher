@@ -1,13 +1,12 @@
-#include "pch.h"
-#include "main.h"
-#include "logging.h"
-#include "crashhandler.h"
-#include "memalloc.h"
-#include "nsprefix.h"
-#include "plugin_abi.h"
-#include "plugins.h"
-#include "version.h"
-#include "pch.h"
+#include "dllmain.h"
+#include "logging/logging.h"
+#include "logging/crashhandler.h"
+#include "core/memalloc.h"
+#include "config/profile.h"
+#include "plugins/plugin_abi.h"
+#include "plugins/plugins.h"
+#include "util/version.h"
+#include "squirrel/squirrel.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -145,8 +144,15 @@ bool InitialiseNorthstar()
 
 	bInitialised = true;
 
+	// initialise the console if needed (-northstar needs this)
+	InitialiseConsole();
+	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
+	InitialiseLogging();
+
 	InitialiseNorthstarPrefix();
 	InitialiseVersion();
+
+	InitialiseSquirrelManagers();
 
 	// Fix some users' failure to connect to respawn datacenters
 	SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
@@ -154,7 +160,6 @@ bool InitialiseNorthstar()
 	curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
 
 	InitialiseCrashHandler();
-	InitialiseLogging();
 	InstallInitialHooks();
 	CreateLogFiles();
 
