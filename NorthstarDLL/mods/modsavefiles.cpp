@@ -384,6 +384,7 @@ ADD_SQFUNC("array<string>", NSGetAllFiles, "string path = \"\"", "", ScriptConte
 
 ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string path = g_pSquirrel<context>->getstring(sqvm, 1);
 	if (CheckFileName(dir / path, dir))
