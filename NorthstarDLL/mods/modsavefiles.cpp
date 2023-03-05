@@ -367,14 +367,17 @@ ADD_SQFUNC("array<string>", NSGetAllFiles, "string path = \"\"", "", ScriptConte
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
-	std::string path = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / path, dir))
+	std::string pathStr = g_pSquirrel<context>->getstring(sqvm, 1);
+	fs::path path = dir;
+	if (pathStr != "")
+		path = dir / pathStr;
+	if (CheckFileName(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", path, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
-	for (const auto& entry : fs::directory_iterator(dir / path))
+	for (const auto& entry : fs::directory_iterator(path))
 	{
 		g_pSquirrel<context>->pushstring(sqvm, entry.path().filename().string().c_str());
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
@@ -386,14 +389,17 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
-	std::string path = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / path, dir))
+	std::string pathStr = g_pSquirrel<context>->getstring(sqvm, 1);
+	fs::path path = dir;
+	if (pathStr != "")
+		path = dir / pathStr;
+	if (CheckFileName(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", path, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
-	g_pSquirrel<context>->pushbool(sqvm, fs::is_directory(dir / path));
+	g_pSquirrel<context>->pushbool(sqvm, fs::is_directory(path));
 }
 
 // ok, I'm just gonna explain what the fuck is going on here because this
