@@ -74,7 +74,7 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 					}
 					if (!g_pBanSystem->IsUIDAllowed(uid))
 					{
-						response.set_content("{\"success\":false,\"reject\":\"Banned from server.\"}", "application/json");
+						response.set_content("{\"success\":false,\"reject\":\"Banned from this server.\"}", "application/json");
 						return;
 					}
 
@@ -325,7 +325,7 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 		if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
 			pAuthenticationFailure = "Invalid name.";
 		else if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
-			pAuthenticationFailure = "Banned from server.";
+			pAuthenticationFailure = "Banned from this server.";
 		else if (!g_pServerAuthentication->CheckAuthentication(self, iNextPlayerUid, pNextPlayerToken))
 			pAuthenticationFailure = "Authentication failed.";
 	}
