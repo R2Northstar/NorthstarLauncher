@@ -363,15 +363,36 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<string>", NSGetAllFiles, "", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+ADD_SQFUNC("array<string>", NSGetAllFiles, "string path = \"\"", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
-	for (const auto& entry : fs::directory_iterator(savePath / fs::path(mod->m_ModDirectory).filename()))
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
+	std::string path = g_pSquirrel<context>->getstring(sqvm, 1);
+	if (CheckFileName(dir / path, dir))
+	{
+		g_pSquirrel<context>->raiseerror(
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", path, mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+	for (const auto& entry : fs::directory_iterator(dir / path))
 	{
 		g_pSquirrel<context>->pushstring(sqvm, entry.path().filename().string().c_str());
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
 	}
 	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
+	std::string path = g_pSquirrel<context>->getstring(sqvm, 1);
+	if (CheckFileName(dir / path, dir))
+	{
+		g_pSquirrel<context>->raiseerror(
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", path, mod->Name).c_str());
+		return SQRESULT_ERROR;
+	}
+	g_pSquirrel<context>->pushbool(sqvm, fs::is_directory(dir / path));
 }
 
 // ok, I'm just gonna explain what the fuck is going on here because this
