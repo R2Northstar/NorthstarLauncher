@@ -198,7 +198,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 		return SQRESULT_ERROR;
 	}
 
-	fs::create_directories(dir);
+	fs::create_directories((dir / fileName).parent_path());
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
 	// this ain't a cloud service.
@@ -363,7 +363,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<string>", NSGetAllFiles, "string path = \"\"", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+ADD_SQFUNC("array<string>", NSGetAllFiles, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
@@ -371,18 +371,32 @@ ADD_SQFUNC("array<string>", NSGetAllFiles, "string path = \"\"", "", ScriptConte
 	fs::path path = dir;
 	if (pathStr != "")
 		path = dir / pathStr;
+	spdlog::info(path.string());
 	if (CheckFileName(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
+			sqvm,
+			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
-	for (const auto& entry : fs::directory_iterator(path))
+	try
 	{
-		g_pSquirrel<context>->pushstring(sqvm, entry.path().filename().string().c_str());
-		g_pSquirrel<context>->arrayappend(sqvm, -2);
+		g_pSquirrel<context>->newarray(sqvm, 0);
+		for (const auto& entry : fs::directory_iterator(path))
+		{
+			g_pSquirrel<context>->pushstring(sqvm, entry.path().filename().string().c_str());
+			spdlog::info(fmt::format("Pushing {}", entry.path().filename().string()));
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			spdlog::info("Appending");
+		}
+		return SQRESULT_NOTNULL;
 	}
-	return SQRESULT_NOTNULL;
+	catch (std::exception ex)
+	{
+		spdlog::error("DIR ITERATE FAILED! Is the path valid?");
+		g_pSquirrel<context>->raiseerror(sqvm, ex.what());
+		return SQRESULT_ERROR;
+	}
 }
 
 ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
@@ -399,7 +413,18 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
-	g_pSquirrel<context>->pushbool(sqvm, fs::is_directory(path));
+	try
+	{
+		g_pSquirrel<context>->pushbool(sqvm, fs::is_directory(path));
+		return SQRESULT_NOTNULL;
+	}
+	catch (std::exception ex)
+	{
+		spdlog::error("DIR READ FAILED! Is the path valid?");
+		spdlog::info(path.string());
+		g_pSquirrel<context>->raiseerror(sqvm, ex.what());
+		return SQRESULT_ERROR;
+	}
 }
 
 // ok, I'm just gonna explain what the fuck is going on here because this
