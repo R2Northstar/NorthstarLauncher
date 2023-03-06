@@ -4,7 +4,6 @@
 size_t __fastcall ShouldAllowAlltalk()
 {
 	// this needs to return a 64 bit integer where 0 = true and 1 = false
-
 	static ConVar* Cvar_sv_alltalk = R2::g_pCVar->FindVar("sv_alltalk");
 	if (Cvar_sv_alltalk->GetBool())
 		return 0;
