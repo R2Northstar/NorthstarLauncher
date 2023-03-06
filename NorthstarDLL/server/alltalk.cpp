@@ -5,7 +5,7 @@ size_t __fastcall ShouldAllowAlltalk()
 {
 	// this needs to return a 64 bit integer where 0 = true and 1 = false
 
-z	static ConVar* Cvar_sv_alltalk = R2::g_pCVar->FindVar("sv_alltalk");
+	static ConVar* Cvar_sv_alltalk = R2::g_pCVar->FindVar("sv_alltalk");
 	if (Cvar_sv_alltalk->GetBool())
 		return 0;
 
@@ -17,7 +17,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAllTalk, ConVar, (CModule module))
 {
 	// replace strcmp function called in CClient::ProcessVoiceData with our own code that calls ShouldAllowAllTalk
 	MemoryAddress base = module.Offset(0x1085FA);
-
 
 	base.Patch("48 B8"); // mov rax, 64 bit int
 	// (uint8_t*)&ShouldAllowAlltalk doesn't work for some reason? need to make it a uint64 first
