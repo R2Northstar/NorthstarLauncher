@@ -374,7 +374,7 @@ ADD_SQFUNC("array<string>", NSGetAllFiles, "string path = \"\"", "", ScriptConte
 	if (CheckFileName(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", path, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	for (const auto& entry : fs::directory_iterator(path))
@@ -396,7 +396,7 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	if (CheckFileName(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", path, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	g_pSquirrel<context>->pushbool(sqvm, fs::is_directory(path));
