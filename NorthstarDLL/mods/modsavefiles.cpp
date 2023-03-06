@@ -185,7 +185,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -236,7 +236,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -285,7 +285,7 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -304,7 +304,7 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -322,7 +322,7 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -350,7 +350,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -371,7 +371,7 @@ ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptCon
 	if (!IsPathSafe(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", pathStr, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -403,7 +403,7 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	if (!IsPathSafe(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", pathStr, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it results in a path inside your mod's save folder.", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
