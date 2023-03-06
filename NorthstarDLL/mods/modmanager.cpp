@@ -828,7 +828,7 @@ void ModManager::InstallModFileOverrides(Mod& mod)
 }
 #pragma endregion
 
-void ModManager::CheckModFilesForChanges()
+void ModManager::CheckModFilesForChanges(ModAssetsToReload* pAssetsToReload)
 {
 	// normal mod files
 	{
@@ -860,21 +860,21 @@ void ModManager::CheckModFilesForChanges()
 			if (!IsDedicatedServer())
 			{
 				// could check localisation here? but what's the point, localisation shouldn't be in mod fs
-				// if (m_AssetTypesToReload.bLocalisation)
+				// if (pAssetsToReload->bLocalisation)
 
-				if (!m_AssetTypesToReload.bAimAssistSettings && pChangedFile->m_Path.parent_path().string().starts_with("cfg/aimassist/"))
+				if (!pAssetsToReload->bAimAssistSettings && pChangedFile->m_Path.parent_path().string().starts_with("cfg/aimassist/"))
 				{
-					m_AssetTypesToReload.bAimAssistSettings = true;
+					pAssetsToReload->bAimAssistSettings = true;
 					continue;
 				}
 
-				if (!m_AssetTypesToReload.bMaterials && pChangedFile->m_Path.parent_path().string().starts_with("materials/"))
+				if (!pAssetsToReload->bMaterials && pChangedFile->m_Path.parent_path().string().starts_with("materials/"))
 				{
-					m_AssetTypesToReload.bMaterials = true;
+					pAssetsToReload->bMaterials = true;
 					continue;
 				}
 
-				if (!m_AssetTypesToReload.bUiScript)
+				if (!pAssetsToReload->bUiScript)
 				{
 
 					// TODO: need to check whether any ui scripts have changed
@@ -882,42 +882,40 @@ void ModManager::CheckModFilesForChanges()
 
 					if (pChangedFile->m_Path.parent_path().string().starts_with("resource/ui/"))
 					{
-						m_AssetTypesToReload.bUiScript = true;
+						pAssetsToReload->bUiScript = true;
 						continue;
 					}
 				}
 			}
 
-			if (!m_AssetTypesToReload.bModels && pChangedFile->m_Path.parent_path().string().starts_with("models/"))
+			if (!pAssetsToReload->bModels && pChangedFile->m_Path.parent_path().string().starts_with("models/"))
 			{
-				m_AssetTypesToReload.bModels = true;
+				pAssetsToReload->bModels = true;
 				continue;
 			}
 
-			// could also check this but no point as it should only be changed from mod keyvalues
-
-			if (!m_AssetTypesToReload.bPlayerSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/players/"))
+			if (!pAssetsToReload->bPlayerSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/players/"))
 			{
-				m_AssetTypesToReload.bPlayerSettings = true;
+				pAssetsToReload->bPlayerSettings = true;
 				continue;
 			}
 
 			// maybe also aibehaviour?
-			if (!m_AssetTypesToReload.bAiSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/aisettings/"))
+			if (!pAssetsToReload->bAiSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/aisettings/"))
 			{
-				m_AssetTypesToReload.bAiSettings = true;
+				pAssetsToReload->bAiSettings = true;
 				continue;
 			}
 
-			if (!m_AssetTypesToReload.bDamageDefs && pChangedFile->m_Path.parent_path().string().starts_with("scripts/damage/"))
+			if (!pAssetsToReload->bDamageDefs && pChangedFile->m_Path.parent_path().string().starts_with("scripts/damage/"))
 			{
-				m_AssetTypesToReload.bDamageDefs = true;
+				pAssetsToReload->bDamageDefs = true;
 				continue;
 			}
 
-			if (m_AssetTypesToReload.bDatatables && pChangedFile->m_Path.parent_path().string().starts_with("scripts/datatable/"))
+			if (pAssetsToReload->bDatatables && pChangedFile->m_Path.parent_path().string().starts_with("scripts/datatable/"))
 			{
-				m_AssetTypesToReload.bDatatables = true;
+				pAssetsToReload->bDatatables = true;
 				continue;
 			}
 		}
@@ -962,38 +960,38 @@ void ModManager::CheckModFilesForChanges()
 		{
 			fs::path fChangedPath(sChangedPath);
 
-			if (!m_AssetTypesToReload.bPlaylists && fChangedPath == "playlists_v2.txt")
+			if (!pAssetsToReload->bPlaylists && fChangedPath == "playlists_v2.txt")
 			{
-				m_AssetTypesToReload.bPlaylists = true;
+				pAssetsToReload->bPlaylists = true;
 				continue;
 			}
 
-			if (!m_AssetTypesToReload.bPlayerSettings && fChangedPath.parent_path().string().starts_with("scripts/players/"))
+			if (!pAssetsToReload->bPlayerSettings && fChangedPath.parent_path().string().starts_with("scripts/players/"))
 			{
-				m_AssetTypesToReload.bPlayerSettings = true;
+				pAssetsToReload->bPlayerSettings = true;
 				continue;
 			}
 
-			if (!m_AssetTypesToReload.bAiSettings && fChangedPath.parent_path().string().starts_with("scripts/aisettings/"))
+			if (!pAssetsToReload->bAiSettings && fChangedPath.parent_path().string().starts_with("scripts/aisettings/"))
 			{
-				m_AssetTypesToReload.bAiSettings = true;
+				pAssetsToReload->bAiSettings = true;
 				continue;
 			}
 
-			if (!m_AssetTypesToReload.bDamageDefs && fChangedPath.parent_path().string().starts_with("scripts/damage/"))
+			if (!pAssetsToReload->bDamageDefs && fChangedPath.parent_path().string().starts_with("scripts/damage/"))
 			{
-				m_AssetTypesToReload.bDamageDefs = true;
+				pAssetsToReload->bDamageDefs = true;
 				continue;
 			}
 
 			if (!fChangedPath.parent_path().string().starts_with("scripts/weapons/"))
 			{
 				if (fChangedPath.filename() == "ammo_suck_behaviours.txt")
-					m_AssetTypesToReload.bAmmoSuckBehaviours = true;
+					pAssetsToReload->bAmmoSuckBehaviours = true;
 				else if (fChangedPath.filename() == "springs.txt")
-					m_AssetTypesToReload.bWeaponSprings = true;
+					pAssetsToReload->bWeaponSprings = true;
 				else
-					m_AssetTypesToReload.setsWeaponSettings.insert(fChangedPath.replace_extension().string());
+					pAssetsToReload->setsWeaponSettings.insert(fChangedPath.replace_extension().string());
 
 				continue;
 			}
@@ -1001,27 +999,27 @@ void ModManager::CheckModFilesForChanges()
 	}
 }
 
-void ModManager::ReloadNecessaryModAssets(bool bDeferred)
+void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReload* pAssetsToReload)
 {
 	std::vector<std::string> vReloadCommands;
 
-	if (m_AssetTypesToReload.bLocalisation)
+	if (pAssetsToReload->bLocalisation)
 		vReloadCommands.push_back("reload_localization");
 
 	// after we reload_localization, we need to loadPlaylists, to keep playlist localisation
-	if (m_AssetTypesToReload.bPlaylists || m_AssetTypesToReload.bLocalisation)
+	if (pAssetsToReload->bPlaylists || pAssetsToReload->bLocalisation)
 		vReloadCommands.push_back("loadPlaylists");
 
-	if (m_AssetTypesToReload.bUiScript)
+	if (pAssetsToReload->bUiScript)
 		vReloadCommands.push_back("uiscript_reset");
 
-	if (m_AssetTypesToReload.bAimAssistSettings)
+	if (pAssetsToReload->bAimAssistSettings)
 		vReloadCommands.push_back("ReloadAimAssistSettings");
 
-	if (m_AssetTypesToReload.bModels)
+	if (pAssetsToReload->bModels)
 		spdlog::warn("Need to reload models but can't without a restart!");
 
-	if (m_AssetTypesToReload.bDatatables)
+	if (pAssetsToReload->bDatatables)
 	{
 		// TODO: clear disk datatable cache in scriptdatatables.cpp
 	}
@@ -1029,26 +1027,26 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred)
 	// deferred - load files using engine functions where possible, on level load
 	if (bDeferred)
 	{
-		if (m_AssetTypesToReload.bAimAssistSettings)
+		if (pAssetsToReload->bAimAssistSettings)
 			DeferredReloadADSPulls();
 
-		if (m_AssetTypesToReload.bAmmoSuckBehaviours)
+		if (pAssetsToReload->bAmmoSuckBehaviours)
 			DeferredReloadAmmoSuckBehaviours();
 
-		if (m_AssetTypesToReload.bDamageDefs)
+		if (pAssetsToReload->bDamageDefs)
 			DeferredReloadDamageFlags();
 
-		if (m_AssetTypesToReload.bWeaponSprings)
+		if (pAssetsToReload->bWeaponSprings)
 			DeferredReloadWeaponSprings();
+
+		DeferredReloadWeapons(pAssetsToReload->setsWeaponSettings);
 	}
 	else
 	{
-
+		// need to reimplement mat_reloadmaterials for this
+		// if (m_AssetTypesToReload.bMaterials)
+		//	R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "mat_reloadmaterials", R2::cmd_source_t::kCommandSrcCode);
 	}
-
-	// need to reimplement mat_reloadmaterials for this
-	//if (m_AssetTypesToReload.bMaterials)
-	//	R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "mat_reloadmaterials", R2::cmd_source_t::kCommandSrcCode);
 
 	for (std::string& sReloadCommand : vReloadCommands)
 	{
@@ -1057,17 +1055,6 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred)
 	}
 
 	R2::Cbuf_Execute();
-
-	// reset everything we've already reloaded at this point
-	m_AssetTypesToReload.bUiScript = false;
-	m_AssetTypesToReload.bLocalisation = false;
-	m_AssetTypesToReload.bPlaylists = false;
-	m_AssetTypesToReload.bAimAssistSettings = false;
-	m_AssetTypesToReload.bDatatables = false;
-	m_AssetTypesToReload.bModels = false;
-	m_AssetTypesToReload.bAmmoSuckBehaviours = false;
-	m_AssetTypesToReload.bDamageDefs = false;
-	m_AssetTypesToReload.bWeaponSprings = false;
 }
 
 void ModManager::InstallMods(bool bDeferredAssetReload)
@@ -1090,8 +1077,10 @@ void ModManager::InstallMods(bool bDeferredAssetReload)
 
 	if (m_bHasLoadedMods) // only reload assets after initial load
 	{
-		CheckModFilesForChanges();
-		ReloadNecessaryModAssets(bDeferredAssetReload);
+		ModAssetsToReload assetsToReload;
+
+		CheckModFilesForChanges(&assetsToReload);
+		ReloadNecessaryModAssets(bDeferredAssetReload, &assetsToReload);
 	}
 }
 
@@ -1146,18 +1135,6 @@ void ModManager::UnloadMods()
 	// save last state so we know what we need to reload
 	m_LastModLoadState = m_ModLoadState;
 	m_ModLoadState = new ModLoadState;
-
-	// reset assets to reload
-	m_AssetTypesToReload.bUiScript = false;
-	m_AssetTypesToReload.bLocalisation = false;
-	m_AssetTypesToReload.bPlaylists = false;
-	m_AssetTypesToReload.bAimAssistSettings = false;
-	m_AssetTypesToReload.bMaterials = false;
-	m_AssetTypesToReload.bRPaks = false;
-	m_AssetTypesToReload.bPlayerSettings = false;
-	m_AssetTypesToReload.bAiSettings = false;
-	m_AssetTypesToReload.bDamageDefs = false;
-	m_AssetTypesToReload.bModels = false;
 
 	// clean up stuff from mods before we unload
 	fs::remove_all(GetCompiledAssetsPath());

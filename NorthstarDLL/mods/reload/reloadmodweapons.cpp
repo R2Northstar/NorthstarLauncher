@@ -27,12 +27,17 @@ VAR_AT(client.dll + 0xB339E8, GlobalWeaponDefs**, g_ppClientWeaponDefs);
 FUNCTION_AT(client.dll + 0x3D2FB0, void,, ClientReparseWeapon, (WeaponDefinition* pWeapon));
 FUNCTION_AT(client.dll + 0x3CE270, void,, ClientReloadWeaponCallbacks, (int nWeaponIndex));
 
+std::unordered_set<std::string> setsClientWeaponsToReload;
+std::unordered_set<std::string> setsServerWeaponsToReload;
+
 // used for passing client/server funcs/data/pointers to TryReloadWeapon
 struct SidedWeaponReloadPointers
 {
 	// data pointers
 	uint16_t* m_pnWeaponsLoaded;
 	GlobalWeaponDefs** m_ppWeaponDefs;
+
+	std::unordered_set<std::string>* m_psetsWeaponsToReload;
 
 	// funcs
 	void (*m_fnReparseWeapon)(WeaponDefinition* pWeapon);
@@ -41,15 +46,18 @@ struct SidedWeaponReloadPointers
 	SidedWeaponReloadPointers(
 		uint16_t* pnWeaponsLoaded,
 		GlobalWeaponDefs** ppWeaponDefs,
+		std::unordered_set<std::string>* psetsWeaponsToReload,
 		void (*fnReparseWeapon)(WeaponDefinition*),
 		void (*fnReloadWeaponCallbacks)(int))
 	{
 		m_pnWeaponsLoaded = pnWeaponsLoaded;
 		m_ppWeaponDefs = ppWeaponDefs;
+		m_psetsWeaponsToReload = psetsWeaponsToReload;
 		m_fnReparseWeapon = fnReparseWeapon;
 		m_fnReloadWeaponCallbacks = fnReloadWeaponCallbacks;
 	}
 };
+
 
 int WeaponIndexByName(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers)
 {
@@ -63,9 +71,19 @@ int WeaponIndexByName(const char* pWeaponName, const SidedWeaponReloadPointers* 
 	return -1;
 }
 
+void ModManager::DeferredReloadWeapons(const std::unordered_set<std::string> setsWeapons)
+{
+	// if there's still weapons that need reloading, then keep them, just reload the new stuff
+	for (const std::string& sWeapon : setsWeapons)
+	{
+		setsClientWeaponsToReload.insert(sWeapon);
+		setsServerWeaponsToReload.insert(sWeapon);
+	}
+}
+
 bool ModManager::TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers)
 {
-	if (!m_AssetTypesToReload.setsWeaponSettings.contains(pWeaponName))
+	if (!pReloadPointers->m_psetsWeaponsToReload->contains(pWeaponName))
 		return false; // don't reload
 
 	int nWeaponIndex = WeaponIndexByName(pWeaponName, pReloadPointers);
@@ -80,7 +98,7 @@ bool ModManager::TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloa
 	if (bReloadScriptFuncs)
 		pReloadPointers->m_fnReloadWeaponCallbacks(nWeaponIndex);
 
-	m_AssetTypesToReload.setsWeaponSettings.erase(pWeaponName);
+	pReloadPointers->m_psetsWeaponsToReload->erase(pWeaponName);
 	return true;
 }
 
@@ -91,7 +109,7 @@ bool, __fastcall, (void* a1, void* a2, void* a3, const char* pWeaponName))
 // clang-format on
 {
 	static SidedWeaponReloadPointers clientReloadPointers(
-		g_pnClientWeaponsLoaded, g_ppClientWeaponDefs, ClientReparseWeapon, ClientReloadWeaponCallbacks);
+		g_pnClientWeaponsLoaded, g_ppClientWeaponDefs, &setsClientWeaponsToReload, ClientReparseWeapon, ClientReloadWeaponCallbacks);
 
 	if (g_pModManager->TryReloadWeapon(pWeaponName, &clientReloadPointers))
 		return true;

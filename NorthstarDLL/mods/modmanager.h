@@ -132,7 +132,6 @@ class ModManager
 {
   private:
 	bool m_bHasLoadedMods = false;
-	bool m_bHasEnabledModsCfg;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
@@ -144,23 +143,7 @@ class ModManager
 	void BuildPublicModList();
 	void InstallMods(bool bDeferredAssetReload);
 
-	// mod installation funcs
-	void InstallModCvars(Mod& mod);
-	void InstallModVpks(Mod& mod);
-	void InstallModRpaks(Mod& mod);
-	void InstallModKeyValues(Mod& mod);
-	void InstallModBinks(Mod& mod);
-	void InstallModAudioOverrides(Mod& mod);
-
-	void InstallModFileOverrides(Mod& mod);
-
-	void UnloadMods();
-
-	std::unordered_set<ConVar*> m_RegisteredModConVars;
-	std::unordered_set<ConCommand*> m_RegisteredModConCommands;
-
-
-	struct
+	struct ModAssetsToReload
 	{
 		// assets types we need to reload completely after mods are reloaded (can't reload individually)
 		bool bUiScript = false; // also includes .menu files
@@ -181,12 +164,27 @@ class ModManager
 		bool bRPaks = false;
 
 		// assets that we can reload individually
-		std::unordered_set<std::string> setsWeaponSettings;
-		//std::vector<ModAudioOverride> vAudioOverrides
-	} m_AssetTypesToReload;
+		std::unordered_set<std::string> setsWeaponSettings = {};
+		// std::vector<ModAudioOverride> vAudioOverrides
+	};
 
-	void CheckModFilesForChanges();
-	void ReloadNecessaryModAssets(bool bDeferred);
+	// mod installation funcs
+	void InstallModCvars(Mod& mod);
+	void InstallModVpks(Mod& mod);
+	void InstallModRpaks(Mod& mod);
+	void InstallModKeyValues(Mod& mod);
+	void InstallModBinks(Mod& mod);
+	void InstallModAudioOverrides(Mod& mod);
+	void InstallModFileOverrides(Mod& mod);
+
+	void UnloadMods();
+
+	std::unordered_set<ConVar*> m_RegisteredModConVars;
+	std::unordered_set<ConCommand*> m_RegisteredModConCommands;
+
+
+	void CheckModFilesForChanges(ModAssetsToReload* pAssetsToReload);
+	void ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReload* pAssetsToReload);
 
 
 	struct ModLoadState
@@ -235,6 +233,7 @@ class ModManager
 	void DeferredReloadWeaponSprings();
 	void DeferredReloadAmmoSuckBehaviours();
 	void DeferredReloadADSPulls();
+	void DeferredReloadWeapons(const std::unordered_set<std::string> setsWeapons);
 
 	// asset reloading funcs
 	bool TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers);
