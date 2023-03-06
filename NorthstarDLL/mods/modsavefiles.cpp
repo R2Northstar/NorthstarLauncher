@@ -160,14 +160,14 @@ bool ContainsInvalidChars(std::string str)
 	// use it to circumvent the file extension suffix.
 	return std::any_of(str.begin(), str.end(), [](char c) { return c == '\0'; });
 }
-bool CheckFileName(fs::path str, fs::path dir)
+bool IsPathSafe(fs::path str, fs::path dir)
 {
 	auto const normRoot = fs::weakly_canonical(dir);
 	auto const normChild = fs::weakly_canonical(str);
 
 	auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
 	// we return if the file is NOT safe (NOT inside the directory)
-	return itr != normChild.begin();
+	return itr == normChild.begin();
 }
 
 // void NSSaveFile( string file, string data )
@@ -182,11 +182,11 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / fileName, dir))
+	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+			fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -194,7 +194,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	if (ContainsInvalidChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!", mod->Name).c_str());
+			sqvm, fmt::format("File contents may not contain NUL/\\0 characters! Make sure your strings are valid!", mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -234,11 +234,11 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / fileName, dir))
+	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+			fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -246,7 +246,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	if (ContainsInvalidChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File contents may not contain non-ASCII characters! Make sure your strings are valid!", mod->Name).c_str());
+			sqvm, fmt::format("File contents may not contain NUL/\\0 characters! Make sure your strings are valid!", mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -284,11 +284,11 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / fileName, dir))
+	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+			fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -304,11 +304,11 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / fileName, dir))
+	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+			fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -323,11 +323,11 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / fileName, dir))
+	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+			fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -352,11 +352,11 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (CheckFileName(dir / fileName, dir))
+	if (!IsPathSafe(dir / fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", fileName, mod->Name).c_str());
+			fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", fileName, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -374,10 +374,10 @@ ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptCon
 	fs::path path = dir;
 	if (pathStr != "")
 		path = dir / pathStr;
-	if (CheckFileName(path, dir))
+	if (!IsPathSafe(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -406,10 +406,10 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	fs::path path = dir;
 	if (pathStr != "")
 		path = dir / pathStr;
-	if (CheckFileName(path, dir))
+	if (!IsPathSafe(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no NUL/\\0 characters.", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
