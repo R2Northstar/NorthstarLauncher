@@ -338,8 +338,9 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 	}
 	catch (std::filesystem::filesystem_error const& ex)
 	{
-		spdlog::info(ex.what());
-		g_pSquirrel<context>->pushinteger(sqvm, -1);
+		spdlog::error("GET FILE SIZE FAILED! Is the path valid?");
+		g_pSquirrel<context>->raiseerror(sqvm, ex.what());
+		return SQRESULT_ERROR;
 	}
 	return SQRESULT_NOTNULL;
 }
@@ -363,20 +364,20 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<string>", NSGetAllFiles, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+// The param is not optional because that causes issues :)
+ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
-	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	// depth 1 because this should always get called from Northstar.Custom
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm, 1);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string pathStr = g_pSquirrel<context>->getstring(sqvm, 1);
 	fs::path path = dir;
 	if (pathStr != "")
 		path = dir / pathStr;
-	spdlog::info(path.string());
 	if (CheckFileName(path, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
+			sqvm, fmt::format("File name invalid ({})! Make sure it has no '\\', '/' or non-ASCII charcters!", pathStr, mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -385,9 +386,7 @@ ADD_SQFUNC("array<string>", NSGetAllFiles, "string path", "", ScriptContext::CLI
 		for (const auto& entry : fs::directory_iterator(path))
 		{
 			g_pSquirrel<context>->pushstring(sqvm, entry.path().filename().string().c_str());
-			spdlog::info(fmt::format("Pushing {}", entry.path().filename().string()));
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
-			spdlog::info("Appending");
 		}
 		return SQRESULT_NOTNULL;
 	}
