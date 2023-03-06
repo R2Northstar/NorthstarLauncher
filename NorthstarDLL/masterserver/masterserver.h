@@ -6,6 +6,7 @@
 #include <string>
 #include <cstring>
 #include <future>
+#include <unordered_set>
 
 extern ConVar* Cvar_ns_masterserver_hostname;
 extern ConVar* Cvar_ns_curl_log_enable;
@@ -112,6 +113,8 @@ class MasterServerManager
 
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_sMainMenuPromoData;
+
+	std::unordered_set<std::string> m_handledServerConnections;
 
   public:
 	MasterServerManager();
