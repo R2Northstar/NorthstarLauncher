@@ -1010,14 +1010,14 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReloa
 	if (pAssetsToReload->bPlaylists || pAssetsToReload->bLocalisation)
 		vReloadCommands.push_back("loadPlaylists");
 
+	if (pAssetsToReload->bDatatables)
+		vReloadCommands.push_back("ns_cleardatatablecache");
+
 	if (pAssetsToReload->bUiScript)
 		vReloadCommands.push_back("uiscript_reset");
 
 	if (pAssetsToReload->bAimAssistSettings)
 		vReloadCommands.push_back("ReloadAimAssistSettings");
-
-	if (pAssetsToReload->bDatatables)
-		vReloadCommands.push_back("ns_cleardatatablecache");
 
 	if (pAssetsToReload->bModels)
 		spdlog::warn("Need to reload models but can't without a restart!");
