@@ -12,7 +12,7 @@ using namespace R2;
 bool bReadingOriginalFile = false;
 std::string sCurrentModPath;
 
-ConVar* Cvar_ns_fs_log_reads;
+VAR_AT(filesystem_stdio.dll + 0xE5940, ConVar*, Cvar_fs_showAllReads);
 
 // use the R2 namespace for game funcs
 namespace R2
@@ -73,8 +73,6 @@ void SetNewModSearchPaths(Mod* mod)
 	{
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
-			NS::log::fs->info("Changing mod search path from {} to {}", sCurrentModPath, mod->m_ModDirectory.string());
-
 			AddSearchPath(
 				&*(*g_pFilesystem), (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
@@ -86,6 +84,9 @@ void SetNewModSearchPaths(Mod* mod)
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile)
 {
+	if (Cvar_fs_showAllReads->GetBool())
+		spdlog::info("filesystem open: {}", pPath);
+
 	if (bReadingOriginalFile)
 		return false;
 
@@ -94,8 +95,8 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 
 	// idk how efficient the lexically normal check is
 	// can't just set all /s in path to \, since some paths aren't in writeable memory
-	auto file = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
-	if (file != g_pModManager->m_ModFiles.end())
+	auto file = g_pModManager->GetModFiles().find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
+	if (file != g_pModManager->GetModFiles().end())
 	{
 		SetNewModSearchPaths(file->second.m_pOwningMod);
 		return true;
@@ -146,11 +147,8 @@ HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* 
 	NS::log::fs->info("MountVPK {}", pVpkPath);
 	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
-	for (Mod mod : g_pModManager->m_LoadedMods)
+	for (Mod mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		for (ModVPKEntry& vpkEntry : mod.Vpks)
 		{
 			// if we're autoloading, just load no matter what

@@ -2,10 +2,12 @@
 #include "core/convar/convar.h"
 #include "core/convar/concommand.h"
 #include "client/audio.h"
+#include "engine/r2engine.h"
 #include "masterserver/masterserver.h"
 #include "core/filesystem/filesystem.h"
 #include "core/filesystem/rpakfilesystem.h"
 #include "config/profile.h"
+#include "dedicated/dedicated.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
@@ -19,14 +21,15 @@
 
 ModManager* g_pModManager;
 
-Mod::Mod(fs::path modDir, char* jsonBuf)
+Mod::Mod(fs::path modDir, std::string sJson, bool bRemote)
 {
 	m_bWasReadSuccessfully = false;
 
 	m_ModDirectory = modDir;
+	m_bRemote = bRemote;
 
 	rapidjson_document modJson;
-	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
+	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(sJson);
 
 	// fail if parse error
 	if (modJson.HasParseError())
@@ -95,29 +98,27 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			if (!convarObj.IsObject() || !convarObj.HasMember("Name") || !convarObj.HasMember("DefaultValue"))
 				continue;
 
-			// have to allocate this manually, otherwise convar registration will break
-			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
-			ModConVar* convar = new ModConVar;
-			convar->Name = convarObj["Name"].GetString();
-			convar->DefaultValue = convarObj["DefaultValue"].GetString();
+			ModConVar convar;
+			convar.Name = convarObj["Name"].GetString();
+			convar.DefaultValue = convarObj["DefaultValue"].GetString();
 
 			if (convarObj.HasMember("HelpString"))
-				convar->HelpString = convarObj["HelpString"].GetString();
+				convar.HelpString = convarObj["HelpString"].GetString();
 			else
-				convar->HelpString = "";
+				convar.HelpString = "";
 
-			convar->Flags = FCVAR_NONE;
+			convar.Flags = FCVAR_NONE;
 
 			if (convarObj.HasMember("Flags"))
 			{
 				// read raw integer flags
 				if (convarObj["Flags"].IsInt())
-					convar->Flags = convarObj["Flags"].GetInt();
+					convar.Flags = convarObj["Flags"].GetInt();
 				else if (convarObj["Flags"].IsString())
 				{
 					// parse cvar flags from string
 					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-					convar->Flags |= ParseConVarFlagsString(convar->Name, convarObj["Flags"].GetString());
+					convar.Flags |= ParseConVarFlagsString(convar.Name, convarObj["Flags"].GetString());
 				}
 			}
 
@@ -125,6 +126,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
+	// mod commands
 	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
 	{
 		for (auto& concommandObj : modJson["ConCommands"].GetArray())
@@ -135,39 +137,43 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				continue;
 			}
 
-			// have to allocate this manually, otherwise concommand registration will break
-			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
-			ModConCommand* concommand = new ModConCommand;
-			concommand->Name = concommandObj["Name"].GetString();
-			concommand->Function = concommandObj["Function"].GetString();
-			concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
-			if (concommand->Context == ScriptContext::INVALID)
+			ModConCommand concommand;
+			concommand.Name = concommandObj["Name"].GetString();
+			concommand.Function = concommandObj["Function"].GetString();
+			concommand.Context = ScriptContextFromString(concommandObj["Context"].GetString());
+
+			if (concommand.Context == ScriptContext::INVALID)
 			{
-				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
+				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand.Name, concommandObj["Context"].GetString());
 				continue;
 			}
 
 			if (concommandObj.HasMember("HelpString"))
-				concommand->HelpString = concommandObj["HelpString"].GetString();
+				concommand.HelpString = concommandObj["HelpString"].GetString();
 			else
-				concommand->HelpString = "";
+				concommand.HelpString = "";
 
-			concommand->Flags = FCVAR_NONE;
+			concommand.Flags = FCVAR_NONE;
 
 			if (concommandObj.HasMember("Flags"))
 			{
 				// read raw integer flags
 				if (concommandObj["Flags"].IsInt())
-				{
-					concommand->Flags = concommandObj["Flags"].GetInt();
-				}
+					concommand.Flags = concommandObj["Flags"].GetInt();
 				else if (concommandObj["Flags"].IsString())
 				{
 					// parse cvar flags from string
 					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-					concommand->Flags |= ParseConVarFlagsString(concommand->Name, concommandObj["Flags"].GetString());
+					concommand.Flags |= ParseConVarFlagsString(concommand.Name, concommandObj["Flags"].GetString());
 				}
 			}
+
+			// for commands, client should always be FCVAR_CLIENTDLL, and server should always be FCVAR_GAMEDLL
+			if (concommand.Context == ScriptContext::CLIENT)
+				concommand.Flags |= FCVAR_CLIENTDLL;
+			else if (concommand.Context == ScriptContext::SERVER)
+				concommand.Flags |= FCVAR_GAMEDLL;
+
 
 			ConCommands.push_back(concommand);
 		}
@@ -285,148 +291,186 @@ ModManager::ModManager()
 	);
 	m_hKBActHash = STR_HASH("scripts\\kb_act.lst");
 
-	LoadMods();
-}
+	m_LastModLoadState = nullptr;
+	m_ModLoadState = new ModLoadState;
 
-struct Test
-{
-	std::string funcName;
-	ScriptContext context;
-};
+	LoadMods(false, false);
+}
 
 template <ScriptContext context> auto ModConCommandCallback_Internal(std::string name, const CCommand& command)
 {
-	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
+	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM->sqvm)
 	{
-		std::vector<std::string> args;
-		args.reserve(command.ArgC());
+		std::vector<std::string> vArgs;
+		vArgs.reserve(command.ArgC());
 		for (int i = 1; i < command.ArgC(); i++)
-			args.push_back(command.Arg(i));
-		g_pSquirrel<context>->AsyncCall(name, args);
+			vArgs.push_back(command.Arg(i));
+
+		g_pSquirrel<context>->AsyncCall(name, vArgs);
 	}
 	else
-	{
-		spdlog::warn("ConCommand `{}` was called while the associated Squirrel VM `{}` was unloaded", name, GetContextName(context));
-	}
+		spdlog::warn("ConCommand \"{}\" was called while the associated Squirrel VM \"{}\" was unloaded", name, GetContextName(context));
 }
 
 auto ModConCommandCallback(const CCommand& command)
 {
-	ModConCommand* found = nullptr;
-	auto commandString = std::string(command.GetCommandString());
-
-	// Finding the first space to remove the command's name
-	auto firstSpace = commandString.find(' ');
-	if (firstSpace)
-	{
-		commandString = commandString.substr(0, firstSpace);
-	}
+	ModConCommand* pFoundCommand = nullptr;
+	std::string sCommandName = command.Arg(0);
 
 	// Find the mod this command belongs to
-	for (auto& mod : g_pModManager->m_LoadedMods)
+	for (Mod& mod : g_pModManager->GetMods() | ModManager::FilterEnabled)
 	{
 		auto res = std::find_if(
 			mod.ConCommands.begin(),
 			mod.ConCommands.end(),
-			[&commandString](const ModConCommand* other) { return other->Name == commandString; });
+			[&sCommandName](const ModConCommand& other) { return other.Name == sCommandName; });
+
 		if (res != mod.ConCommands.end())
 		{
-			found = *res;
+			pFoundCommand = &*res;
 			break;
 		}
 	}
-	if (!found)
+
+	if (!pFoundCommand)
 		return;
 
-	switch (found->Context)
+	switch (pFoundCommand->Context)
 	{
 	case ScriptContext::CLIENT:
-		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
+		ModConCommandCallback_Internal<ScriptContext::CLIENT>(pFoundCommand->Function, command);
 		break;
 	case ScriptContext::SERVER:
-		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
+		ModConCommandCallback_Internal<ScriptContext::SERVER>(pFoundCommand->Function, command);
 		break;
 	case ScriptContext::UI:
-		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
+		ModConCommandCallback_Internal<ScriptContext::UI>(pFoundCommand->Function, command);
 		break;
 	};
 }
 
-void ModManager::LoadMods()
+
+
+
+void ModManager::LoadMods(bool bReloadAssets, bool bDeferredAssetReload)
 {
+	// reset state of all currently loaded mods, if we've loaded once already
 	if (m_bHasLoadedMods)
 		UnloadMods();
 
-	std::vector<fs::path> modDirs;
-
 	// ensure dirs exist
-	fs::remove_all(GetCompiledAssetsPath());
 	fs::create_directories(GetModFolderPath());
 	fs::create_directories(GetRemoteModFolderPath());
 
-	m_DependencyConstants.clear();
+	// load definitions (mod.json files)
+	LoadModDefinitions();
+
+	// install mods (load all files)
+	InstallMods(bReloadAssets, bDeferredAssetReload);
+
+	// write json storing currently enabled mods
+	SaveEnabledMods();
+
+	// build public-facing mod list for masterserver
+	BuildPublicModList();
+
+	// don't need this anymore
+	delete m_LastModLoadState;
+	m_LastModLoadState = nullptr;
+
+	m_bHasLoadedMods = true;
+}
+
+void ModManager::LoadModDefinitions()
+{
+	bool bHasEnabledModsCfg = false;
+	rapidjson_document enabledModsCfg;
 
 	// read enabled mods cfg
-	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/enabledmods.json");
-	std::stringstream enabledModsStringStream;
-
-	if (!enabledModsStream.fail())
 	{
-		while (enabledModsStream.peek() != EOF)
-			enabledModsStringStream << (char)enabledModsStream.get();
+		std::ifstream enabledModsStream(GetNorthstarPrefix() / "enabledmods.json");
+		std::stringstream enabledModsStringStream;
 
-		enabledModsStream.close();
-		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-			enabledModsStringStream.str().c_str());
+		if (!enabledModsStream.fail())
+		{
+			while (enabledModsStream.peek() != EOF)
+				enabledModsStringStream << (char)enabledModsStream.get();
 
-		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
+			enabledModsStream.close();
+			enabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+				enabledModsStringStream.str().c_str());
+
+			bHasEnabledModsCfg = enabledModsCfg.IsObject();
+		}
 	}
 
-	// get mod directories
-	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
-	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
+	// get mod directories for both local and remote mods
+	std::vector<std::tuple<fs::path, bool>> vModDirs;
+	for (fs::directory_entry dir : fs::directory_iterator(GetModFolderPath()))
+		if (fs::exists(dir.path() / "mod.json"))
+			vModDirs.push_back({dir.path(), false});
 
-	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
-		for (fs::directory_entry dir : modIterator)
-			if (fs::exists(dir.path() / "mod.json"))
-				modDirs.push_back(dir.path());
+	for (fs::directory_entry dir : fs::directory_iterator(GetRemoteModFolderPath()))
+		if (fs::exists(dir.path() / "mod.json"))
+			vModDirs.push_back({dir.path(), true});
 
-	for (fs::path modDir : modDirs)
+	for (auto remoteOrLocalModDir : vModDirs)
 	{
-		// read mod json file
-		std::ifstream jsonStream(modDir / "mod.json");
-		std::stringstream jsonStringStream;
+		fs::path modDir = std::get<0>(remoteOrLocalModDir);
+		bool bRemote = std::get<1>(remoteOrLocalModDir);
 
-		// fail if no mod json
-		if (jsonStream.fail())
+		std::string sJsonString;
+
+		// read mod json file
 		{
-			spdlog::warn("Mod {} has a directory but no mod.json", modDir.string());
-			continue;
+			std::stringstream jsonStringStream;
+			std::ifstream jsonStream(modDir / "mod.json");
+
+			// fail if no mod json
+			if (jsonStream.fail())
+			{
+				spdlog::warn("Mod {} has a directory but no mod.json", modDir.string());
+				continue;
+			}
+
+			while (jsonStream.peek() != EOF)
+				jsonStringStream << (char)jsonStream.get();
+
+			jsonStream.close();
+			sJsonString = jsonStringStream.str();
 		}
 
-		while (jsonStream.peek() != EOF)
-			jsonStringStream << (char)jsonStream.get();
+		// read mod
+		Mod mod(modDir, sJsonString, bRemote);
 
-		jsonStream.close();
-
-		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
-
+		// maybe this should be in InstallMods()? unsure
 		for (auto& pair : mod.DependencyConstants)
 		{
-			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
+			if (m_ModLoadState->m_DependencyConstants.find(pair.first) != m_ModLoadState->m_DependencyConstants.end() &&
+				m_ModLoadState->m_DependencyConstants[pair.first] != pair.second)
 			{
 				spdlog::error("Constant {} in mod {} already exists in another mod.", pair.first, mod.Name);
 				mod.m_bWasReadSuccessfully = false;
 				break;
 			}
-			if (m_DependencyConstants.find(pair.first) == m_DependencyConstants.end())
-				m_DependencyConstants.emplace(pair);
+
+			if (m_ModLoadState->m_DependencyConstants.find(pair.first) == m_ModLoadState->m_DependencyConstants.end())
+				m_ModLoadState->m_DependencyConstants.emplace(pair);
 		}
 
-		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
+		if (!bRemote)
+		{
+			if (bHasEnabledModsCfg && enabledModsCfg.HasMember(mod.Name.c_str()))
+				mod.m_bEnabled = enabledModsCfg[mod.Name.c_str()].IsTrue();
+			else
+				mod.m_bEnabled = true;
+		}
 		else
-			mod.m_bEnabled = true;
+		{
+			// todo: need custom logic for deciding whether to enable remote mods, but should be off by default
+			// in the future, remote mods should only be enabled explicitly at runtime, never based on any file or persistent state
+			mod.m_bEnabled = false;
+		}
 
 		if (mod.m_bWasReadSuccessfully)
 		{
@@ -436,272 +480,645 @@ void ModManager::LoadMods()
 			else
 				spdlog::info("Mod {} is disabled", mod.Name);
 
-			m_LoadedMods.push_back(mod);
+			m_ModLoadState->m_LoadedMods.push_back(mod);
 		}
 		else
 			spdlog::warn("Skipping loading mod file {}", (modDir / "mod.json").string());
 	}
 
 	// sort by load prio, lowest-highest
-	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
+	std::sort(
+		m_ModLoadState->m_LoadedMods.begin(),
+		m_ModLoadState->m_LoadedMods.end(),
+		[](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
+}
 
-	for (Mod& mod : m_LoadedMods)
+#pragma region Mod asset installation funcs
+void ModManager::InstallModCvars(Mod& mod)
+{
+	// register convars
+	for (ModConVar convar : mod.ConVars)
 	{
-		if (!mod.m_bEnabled)
-			continue;
+		ConVar* pVar = R2::g_pCVar->FindVar(convar.Name.c_str());
 
-		// register convars
-		// for reloads, this is sorta barebones, when we have a good findconvar method, we could probably reset flags and stuff on
-		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
-		// causes us to leak memory on reload, but not much, potentially find a way to not do this at some point
-		for (ModConVar* convar : mod.ConVars)
+		// make sure convar isn't registered yet, if it is then modify its flags, helpstring etc
+		if (!pVar)
 		{
-			// make sure convar isn't registered yet, unsure if necessary but idk what
-			// behaviour is for defining same convar multiple times
-			if (!R2::g_pCVar->FindVar(convar->Name.c_str()))
+			// allocate there here, we can delete later if needed
+			int nNameSize = convar.Name.size();
+			char* pName = new char[nNameSize + 1];
+			strncpy_s(pName, nNameSize + 1, convar.Name.c_str(), convar.Name.size());
+
+			int nDefaultValueSize = convar.DefaultValue.size();
+			char* pDefaultValue = new char[nDefaultValueSize + 1];
+			strncpy_s(pDefaultValue, nDefaultValueSize + 1, convar.DefaultValue.c_str(), convar.DefaultValue.size());
+
+			int nHelpSize = convar.HelpString.size();
+			char* pHelpString = new char[nHelpSize + 1];
+			strncpy_s(pHelpString, nHelpSize + 1, convar.HelpString.c_str(), convar.HelpString.size());
+
+			pVar = new ConVar(pName, pDefaultValue, convar.Flags, pHelpString);
+			m_RegisteredModConVars.insert(pVar);
+		}
+		else
+		{
+			// not a mod cvar, don't let us edit it!
+			if (!m_RegisteredModConVars.contains(pVar))
 			{
-				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
+				spdlog::warn("Mod {} tried to create ConVar {} that was already defined in native code!", mod.Name, convar.Name);
+				continue;
+			}
+
+			pVar->m_ConCommandBase.m_nFlags = convar.Flags;
+
+			if (convar.HelpString.compare(pVar->GetHelpText()))
+			{
+				int nHelpSize = convar.HelpString.size();
+				char* pNewHelpString = new char[nHelpSize + 1];
+				strncpy_s(pNewHelpString, nHelpSize + 1, convar.HelpString.c_str(), convar.HelpString.size());
+
+				// delete old, assign new
+				delete pVar->m_ConCommandBase.m_pszHelpString;
+				pVar->m_ConCommandBase.m_pszHelpString = pNewHelpString;
+			}
+
+			if (convar.DefaultValue.compare(pVar->m_pszDefaultValue))
+			{
+				bool bIsDefaultValue = !strcmp(pVar->GetString(), pVar->m_pszDefaultValue);
+
+				int nDefaultValueSize = convar.DefaultValue.size();
+				char* pNewDefaultValue = new char[nDefaultValueSize + 1];
+				strncpy_s(pNewDefaultValue, nDefaultValueSize + 1, convar.DefaultValue.c_str(), convar.DefaultValue.size());
+
+				// delete old, assign new
+				delete pVar->m_pszDefaultValue;
+				pVar->m_pszDefaultValue = pNewDefaultValue;
+
+				if (bIsDefaultValue) // only set value if it's currently default value, if changed then don't
+					pVar->SetValue(pNewDefaultValue);
+			}
+		}
+	}
+
+	// register command
+	for (ModConCommand command : mod.ConCommands)
+	{
+		// make sure command isnt't registered multiple times.
+		ConCommand* pCommand = R2::g_pCVar->FindCommand(command.Name.c_str());
+
+		if (!pCommand)
+		{
+			// allocate there here, we can delete later if needed
+			int nNameSize = command.Name.size();
+			char* pName = new char[nNameSize + 1];
+			strncpy_s(pName, nNameSize + 1, command.Name.c_str(), command.Name.size());
+
+			int nHelpSize = command.HelpString.size();
+			char* pHelpString = new char[nHelpSize + 1];
+			strncpy_s(pHelpString, nHelpSize + 1, command.HelpString.c_str(), command.HelpString.size());
+
+			pCommand = RegisterConCommand(pName, ModConCommandCallback, pHelpString, command.Flags);
+			m_RegisteredModConCommands.insert(pCommand);
+		}
+		else
+		{
+			if (!m_RegisteredModConCommands.contains(pCommand))
+			{
+				spdlog::warn("Mod {} tried to create ConCommand {} that was already defined in native code!", mod.Name, command.Name);
+				continue;
+			}
+
+			pCommand->m_nFlags = command.Flags;
+
+			if (command.HelpString.compare(pCommand->GetHelpText()))
+			{
+				int nHelpSize = command.HelpString.size();
+				char* pNewHelpString = new char[nHelpSize + 1];
+				strncpy_s(pNewHelpString, nHelpSize + 1, command.HelpString.c_str(), command.HelpString.size());
+
+				// delete old, assign new
+				delete pCommand->m_pszHelpString;
+				pCommand->m_pszHelpString = pNewHelpString;
+			}
+		}
+	}
+}
+
+void ModManager::InstallModVpks(Mod& mod)
+{
+	// read vpk paths
+	if (fs::exists(mod.m_ModDirectory / "vpk"))
+	{
+		// read vpk cfg
+		std::ifstream vpkJsonStream(mod.m_ModDirectory / "vpk/vpk.json");
+		std::stringstream vpkJsonStringStream;
+
+		bool bUseVPKJson = false;
+		rapidjson::Document dVpkJson;
+
+		if (!vpkJsonStream.fail())
+		{
+			while (vpkJsonStream.peek() != EOF)
+				vpkJsonStringStream << (char)vpkJsonStream.get();
+
+			vpkJsonStream.close();
+			dVpkJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+				vpkJsonStringStream.str().c_str());
+
+			bUseVPKJson = !dVpkJson.HasParseError() && dVpkJson.IsObject();
+		}
+
+		for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "vpk"))
+		{
+			// a bunch of checks to make sure we're only adding dir vpks and their paths are good
+			// note: the game will literally only load vpks with the english prefix
+			if (fs::is_regular_file(file) && file.path().extension() == ".vpk" &&
+				file.path().string().find("english") != std::string::npos &&
+				file.path().string().find(".bsp.pak000_dir") != std::string::npos)
+			{
+				std::string formattedPath = file.path().filename().string();
+
+				// this really fucking sucks but it'll work
+				std::string vpkName = formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3);
+
+				ModVPKEntry& modVpk = mod.Vpks.emplace_back();
+				modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
+													  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
+				modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
+
+				if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
+					(*R2::g_pFilesystem)->m_vtable->MountVPK(*R2::g_pFilesystem, vpkName.c_str());
+			}
+		}
+	}
+}
+
+void ModManager::InstallModRpaks(Mod& mod)
+{
+	// read rpak paths
+	if (fs::exists(mod.m_ModDirectory / "paks"))
+	{
+		// read rpak cfg
+		std::ifstream rpakJsonStream(mod.m_ModDirectory / "paks/rpak.json");
+		std::stringstream rpakJsonStringStream;
+
+		bool bUseRpakJson = false;
+		rapidjson::Document dRpakJson;
+
+		if (!rpakJsonStream.fail())
+		{
+			while (rpakJsonStream.peek() != EOF)
+				rpakJsonStringStream << (char)rpakJsonStream.get();
+
+			rpakJsonStream.close();
+			dRpakJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+				rpakJsonStringStream.str().c_str());
+
+			bUseRpakJson = !dRpakJson.HasParseError() && dRpakJson.IsObject();
+		}
+
+		// read pak aliases
+		if (bUseRpakJson && dRpakJson.HasMember("Aliases") && dRpakJson["Aliases"].IsObject())
+		{
+			for (rapidjson::Value::ConstMemberIterator iterator = dRpakJson["Aliases"].MemberBegin();
+				 iterator != dRpakJson["Aliases"].MemberEnd();
+				 iterator++)
+			{
+				if (!iterator->name.IsString() || !iterator->value.IsString())
+					continue;
+
+				mod.RpakAliases.insert(std::make_pair(iterator->name.GetString(), iterator->value.GetString()));
 			}
 		}
 
-		for (ModConCommand* command : mod.ConCommands)
+		for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "paks"))
 		{
-			// make sure command isnt't registered multiple times.
-			if (!R2::g_pCVar->FindCommand(command->Name.c_str()))
+			// ensure we're only loading rpaks
+			if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
 			{
-				ConCommand* newCommand = new ConCommand();
-				std::string funcName = command->Function;
-				RegisterConCommand(command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
-			}
-		}
+				std::string pakName(file.path().filename().string());
 
-		// read vpk paths
-		if (fs::exists(mod.m_ModDirectory / "vpk"))
-		{
-			// read vpk cfg
-			std::ifstream vpkJsonStream(mod.m_ModDirectory / "vpk/vpk.json");
-			std::stringstream vpkJsonStringStream;
+				ModRpakEntry& modPak = mod.Rpaks.emplace_back();
+				modPak.m_bAutoLoad = !bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
+													   dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
 
-			bool bUseVPKJson = false;
-			rapidjson::Document dVpkJson;
+				// postload things
+				if (!bUseRpakJson ||
+					(dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName)))
+					modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
 
-			if (!vpkJsonStream.fail())
-			{
-				while (vpkJsonStream.peek() != EOF)
-					vpkJsonStringStream << (char)vpkJsonStream.get();
+				modPak.m_sPakName = pakName;
 
-				vpkJsonStream.close();
-				dVpkJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-					vpkJsonStringStream.str().c_str());
+				// read header of file and get the starpak paths
+				// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
+				// and there is seemingly no good way to tell which rpak is causing the load of a starpak :/
 
-				bUseVPKJson = !dVpkJson.HasParseError() && dVpkJson.IsObject();
-			}
+				std::ifstream rpakStream(file.path(), std::ios::binary);
 
-			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "vpk"))
-			{
-				// a bunch of checks to make sure we're only adding dir vpks and their paths are good
-				// note: the game will literally only load vpks with the english prefix
-				if (fs::is_regular_file(file) && file.path().extension() == ".vpk" &&
-					file.path().string().find("english") != std::string::npos &&
-					file.path().string().find(".bsp.pak000_dir") != std::string::npos)
+				// seek to the point in the header where the starpak reference size is
+				rpakStream.seekg(0x38, std::ios::beg);
+				int starpaksSize = 0;
+				rpakStream.read((char*)&starpaksSize, 2);
+
+				// seek to just after the header
+				rpakStream.seekg(0x58, std::ios::beg);
+				// read the starpak reference(s)
+				std::vector<char> buf(starpaksSize);
+				rpakStream.read(buf.data(), starpaksSize);
+
+				rpakStream.close();
+
+				// split the starpak reference(s) into strings to hash
+				std::string str = "";
+				for (int i = 0; i < starpaksSize; i++)
 				{
-					std::string formattedPath = file.path().filename().string();
-
-					// this really fucking sucks but it'll work
-					std::string vpkName = formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3);
-
-					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
-					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
-														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
-					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
-
-					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
-						(*R2::g_pFilesystem)->m_vtable->MountVPK(*R2::g_pFilesystem, vpkName.c_str());
-				}
-			}
-		}
-
-		// read rpak paths
-		if (fs::exists(mod.m_ModDirectory / "paks"))
-		{
-			// read rpak cfg
-			std::ifstream rpakJsonStream(mod.m_ModDirectory / "paks/rpak.json");
-			std::stringstream rpakJsonStringStream;
-
-			bool bUseRpakJson = false;
-			rapidjson::Document dRpakJson;
-
-			if (!rpakJsonStream.fail())
-			{
-				while (rpakJsonStream.peek() != EOF)
-					rpakJsonStringStream << (char)rpakJsonStream.get();
-
-				rpakJsonStream.close();
-				dRpakJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-					rpakJsonStringStream.str().c_str());
-
-				bUseRpakJson = !dRpakJson.HasParseError() && dRpakJson.IsObject();
-			}
-
-			// read pak aliases
-			if (bUseRpakJson && dRpakJson.HasMember("Aliases") && dRpakJson["Aliases"].IsObject())
-			{
-				for (rapidjson::Value::ConstMemberIterator iterator = dRpakJson["Aliases"].MemberBegin();
-					 iterator != dRpakJson["Aliases"].MemberEnd();
-					 iterator++)
-				{
-					if (!iterator->name.IsString() || !iterator->value.IsString())
-						continue;
-
-					mod.RpakAliases.insert(std::make_pair(iterator->name.GetString(), iterator->value.GetString()));
-				}
-			}
-
-			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "paks"))
-			{
-				// ensure we're only loading rpaks
-				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
-				{
-					std::string pakName(file.path().filename().string());
-
-					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
-					modPak.m_bAutoLoad =
-						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
-										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
-
-					// postload things
-					if (!bUseRpakJson ||
-						(dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName)))
-						modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
-
-					modPak.m_sPakName = pakName;
-
-					// read header of file and get the starpak paths
-					// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
-					// and there is seemingly no good way to tell which rpak is causing the load of a starpak :/
-
-					std::ifstream rpakStream(file.path(), std::ios::binary);
-
-					// seek to the point in the header where the starpak reference size is
-					rpakStream.seekg(0x38, std::ios::beg);
-					int starpaksSize = 0;
-					rpakStream.read((char*)&starpaksSize, 2);
-
-					// seek to just after the header
-					rpakStream.seekg(0x58, std::ios::beg);
-					// read the starpak reference(s)
-					std::vector<char> buf(starpaksSize);
-					rpakStream.read(buf.data(), starpaksSize);
-
-					rpakStream.close();
-
-					// split the starpak reference(s) into strings to hash
-					std::string str = "";
-					for (int i = 0; i < starpaksSize; i++)
+					// if the current char is null, that signals the end of the current starpak path
+					if (buf[i] != 0x00)
 					{
-						// if the current char is null, that signals the end of the current starpak path
-						if (buf[i] != 0x00)
+						str += buf[i];
+					}
+					else
+					{
+						// only add the string we are making if it isnt empty
+						if (!str.empty())
 						{
-							str += buf[i];
-						}
-						else
-						{
-							// only add the string we are making if it isnt empty
-							if (!str.empty())
-							{
-								mod.StarpakPaths.push_back(STR_HASH(str));
-								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
-								str = "";
-							}
+							mod.StarpakPaths.push_back(STR_HASH(str));
+							spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
+							str = "";
 						}
 					}
+				}
 
-					// not using atm because we need to resolve path to rpak
-					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
-					//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
+				// not using atm because we need to resolve path to rpak
+				// if (m_hasLoadedMods && modPak.m_bAutoLoad)
+				//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
+			}
+		}
+	}
+}
+
+void ModManager::InstallModKeyValues(Mod& mod)
+{
+	// read keyvalues paths
+	if (fs::exists(mod.m_ModDirectory / "keyvalues"))
+	{
+		for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / "keyvalues"))
+		{
+			if (fs::is_regular_file(file))
+			{
+				ModOverrideFile modKv;
+				modKv.m_pOwningMod = &mod;
+				modKv.m_Path = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
+				modKv.m_tLastWriteTime = fs::last_write_time(file);
+
+				m_ModLoadState->m_KeyValues[modKv.m_Path.string()].push_back(modKv);
+			}
+		}
+	}
+}
+
+void ModManager::InstallModBinks(Mod& mod)
+{
+	// read bink video paths
+	if (fs::exists(mod.m_ModDirectory / "media"))
+	{
+		for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / "media"))
+			if (fs::is_regular_file(file) && file.path().extension() == ".bik")
+				mod.BinkVideos.push_back(file.path().filename().string());
+	}
+}
+
+void ModManager::InstallModAudioOverrides(Mod& mod)
+{
+	// try to load audio
+	if (fs::exists(mod.m_ModDirectory / "audio"))
+	{
+		for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "audio"))
+		{
+			if (fs::is_regular_file(file) && file.path().extension().string() == ".json")
+			{
+				if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
+				{
+					spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+					continue;
 				}
 			}
 		}
+	}
+}
 
-		// read keyvalues paths
-		if (fs::exists(mod.m_ModDirectory / "keyvalues"))
+void ModManager::InstallModFileOverrides(Mod& mod)
+{
+	// install all "normal" file overrides (source/vpk filesystem) e.g. files in Northstar.CustomServers/mod
+	if (fs::exists(mod.m_ModDirectory / MOD_OVERRIDE_DIR))
+	{
+		for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / MOD_OVERRIDE_DIR))
 		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / "keyvalues"))
+			std::string path = g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / MOD_OVERRIDE_DIR));
+			if (file.is_regular_file() && m_ModLoadState->m_ModFiles.find(path) == m_ModLoadState->m_ModFiles.end())
 			{
-				if (fs::is_regular_file(file))
+				ModOverrideFile modFile;
+				modFile.m_pOwningMod = &mod;
+				modFile.m_Path = path;
+				modFile.m_tLastWriteTime = fs::last_write_time(file); // need real path for this
+				m_ModLoadState->m_ModFiles.insert(std::make_pair(path, modFile));
+			}
+		}
+	}
+}
+#pragma endregion
+
+void ModManager::CheckModFilesForChanges(ModAssetsToReload* pAssetsToReload)
+{
+	// normal mod files
+	{
+		// check which file overrides have changed
+		// we need to trigger a reload of a given asset if
+		// a) the asset was overriden previously but has changed owner
+		// b) the asset no longer has any overrides (use vanilla file)
+		// c) the asset was using vanilla file but isn't anymore
+		// d) the asset has been edited
+
+		std::vector<ModOverrideFile*> vpChangedFiles;
+
+		// check currently loaded mods for any removed or updated files vs last load
+		for (auto& filePair : m_ModLoadState->m_ModFiles)
+		{
+			auto findFile = m_LastModLoadState->m_ModFiles.find(filePair.first);
+			if (findFile == m_LastModLoadState->m_ModFiles.end() || findFile->second.m_tLastWriteTime != filePair.second.m_tLastWriteTime)
+				vpChangedFiles.push_back(&filePair.second);
+		}
+
+		// check last load for any files removed
+		for (auto& filePair : m_LastModLoadState->m_ModFiles)
+			if (filePair.second.m_pOwningMod != nullptr &&
+				m_ModLoadState->m_ModFiles.find(filePair.first) == m_ModLoadState->m_ModFiles.end())
+				vpChangedFiles.push_back(&filePair.second);
+
+		for (ModOverrideFile* pChangedFile : vpChangedFiles)
+		{
+			if (!IsDedicatedServer())
+			{
+				// could check localisation here? but what's the point, localisation shouldn't be in mod fs
+				// if (pAssetsToReload->bLocalisation)
+
+				if (!pAssetsToReload->bAimAssistSettings && pChangedFile->m_Path.parent_path().string().starts_with("cfg/aimassist/"))
 				{
-					std::string kvStr =
-						g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / "keyvalues"));
-					mod.KeyValues.emplace(STR_HASH(kvStr), kvStr);
+					pAssetsToReload->bAimAssistSettings = true;
+					continue;
 				}
-			}
-		}
 
-		// read pdiff
-		if (fs::exists(mod.m_ModDirectory / "mod.pdiff"))
-		{
-			std::ifstream pdiffStream(mod.m_ModDirectory / "mod.pdiff");
-
-			if (!pdiffStream.fail())
-			{
-				std::stringstream pdiffStringStream;
-				while (pdiffStream.peek() != EOF)
-					pdiffStringStream << (char)pdiffStream.get();
-
-				pdiffStream.close();
-
-				mod.Pdiff = pdiffStringStream.str();
-			}
-		}
-
-		// read bink video paths
-		if (fs::exists(mod.m_ModDirectory / "media"))
-		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / "media"))
-				if (fs::is_regular_file(file) && file.path().extension() == ".bik")
-					mod.BinkVideos.push_back(file.path().filename().string());
-		}
-
-		// try to load audio
-		if (fs::exists(mod.m_ModDirectory / "audio"))
-		{
-			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "audio"))
-			{
-				if (fs::is_regular_file(file) && file.path().extension().string() == ".json")
+				if (!pAssetsToReload->bMaterials && pChangedFile->m_Path.parent_path().string().starts_with("materials/"))
 				{
-					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
+					pAssetsToReload->bMaterials = true;
+					continue;
+				}
+
+				if (!pAssetsToReload->bUiScript)
+				{
+
+					// TODO: need to check whether any ui scripts have changed
+					// need to do this by calling LoadScriptsRson (client.dll+3177D0) and getting the list of scripts loaded from that maybe
+
+					if (pChangedFile->m_Path.parent_path().string().starts_with("resource/ui/"))
 					{
-						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+						pAssetsToReload->bUiScript = true;
 						continue;
 					}
 				}
 			}
+
+			if (!pAssetsToReload->bModels && pChangedFile->m_Path.parent_path().string().starts_with("models/"))
+			{
+				pAssetsToReload->bModels = true;
+				continue;
+			}
+
+			if (!pAssetsToReload->bPlayerSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/players/"))
+			{
+				pAssetsToReload->bPlayerSettings = true;
+				continue;
+			}
+
+			// maybe also aibehaviour?
+			if (!pAssetsToReload->bAiSettings && pChangedFile->m_Path.parent_path().string().starts_with("scripts/aisettings/"))
+			{
+				pAssetsToReload->bAiSettings = true;
+				continue;
+			}
+
+			if (!pAssetsToReload->bDamageDefs && pChangedFile->m_Path.parent_path().string().starts_with("scripts/damage/"))
+			{
+				pAssetsToReload->bDamageDefs = true;
+				continue;
+			}
+
+			if (pAssetsToReload->bDatatables && pChangedFile->m_Path.parent_path().string().starts_with("scripts/datatable/"))
+			{
+				pAssetsToReload->bDatatables = true;
+				continue;
+			}
 		}
+	}
+
+	// keyvalues
+	{
+		// check which file overrides have changed
+		// we need to trigger a reload of a given asset if
+		// a) the asset is being overriden by different mods than previously
+		// b) the asset has been edited
+
+		std::vector<std::string> vsChangedFiles;
+
+		// check currently loaded mods for any removed or updated files vs last load
+		for (auto& filePair : m_ModLoadState->m_KeyValues)
+		{
+			auto findFile = m_LastModLoadState->m_KeyValues.find(filePair.first);
+			if (findFile == m_LastModLoadState->m_KeyValues.end() || findFile->second.size() != filePair.second.size())
+				vsChangedFiles.push_back(filePair.first);
+			else
+			{
+				// check the actual override list to ensure it's the same files
+				// even if just file order has changed, we should still reload
+				for (int i = 0; i < filePair.second.size(); i++)
+				{
+					if (filePair.second[i].m_pOwningMod->m_ModDirectory != findFile->second[i].m_pOwningMod->m_ModDirectory)
+					{
+						vsChangedFiles.push_back(filePair.first);
+						break;
+					}
+				}
+			}
+		}
+
+		// check last load for any files removed
+		for (auto& filePair : m_LastModLoadState->m_KeyValues)
+			if (m_ModLoadState->m_KeyValues.find(filePair.first) == m_ModLoadState->m_KeyValues.end())
+				vsChangedFiles.push_back(filePair.first);
+
+		for (std::string& sChangedPath : vsChangedFiles)
+		{
+			fs::path fChangedPath(sChangedPath);
+
+			if (!pAssetsToReload->bPlaylists && fChangedPath == "playlists_v2.txt")
+			{
+				pAssetsToReload->bPlaylists = true;
+				continue;
+			}
+
+			if (!pAssetsToReload->bPlayerSettings && fChangedPath.parent_path().string().starts_with("scripts/players/"))
+			{
+				pAssetsToReload->bPlayerSettings = true;
+				continue;
+			}
+
+			if (!pAssetsToReload->bAiSettings && fChangedPath.parent_path().string().starts_with("scripts/aisettings/"))
+			{
+				pAssetsToReload->bAiSettings = true;
+				continue;
+			}
+
+			if (!pAssetsToReload->bDamageDefs && fChangedPath.parent_path().string().starts_with("scripts/damage/"))
+			{
+				pAssetsToReload->bDamageDefs = true;
+				continue;
+			}
+
+			if (!fChangedPath.parent_path().string().starts_with("scripts/weapons/"))
+			{
+				if (fChangedPath.filename() == "ammo_suck_behaviours.txt")
+					pAssetsToReload->bAmmoSuckBehaviours = true;
+				else if (fChangedPath.filename() == "springs.txt")
+					pAssetsToReload->bWeaponSprings = true;
+				else
+					pAssetsToReload->setsWeaponSettings.insert(fChangedPath.replace_extension().string());
+
+				continue;
+			}
+		}
+	}
+}
+
+void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReload* pAssetsToReload)
+{
+	std::vector<std::string> vReloadCommands;
+
+	if (pAssetsToReload->bLocalisation)
+		vReloadCommands.push_back("reload_localization");
+
+	// after we reload_localization, we need to loadPlaylists, to keep playlist localisation
+	if (pAssetsToReload->bPlaylists || pAssetsToReload->bLocalisation)
+		vReloadCommands.push_back("loadPlaylists");
+
+	if (pAssetsToReload->bDatatables)
+		vReloadCommands.push_back("ns_cleardatatablecache");
+
+	if (pAssetsToReload->bUiScript)
+		vReloadCommands.push_back("uiscript_reset");
+
+	if (pAssetsToReload->bAimAssistSettings)
+		vReloadCommands.push_back("ReloadAimAssistSettings");
+
+	if (pAssetsToReload->bModels)
+		spdlog::warn("Need to reload models but can't without a restart!");
+
+	// deferred - load files using engine functions where possible, on level load
+	if (bDeferred)
+	{
+		if (pAssetsToReload->bAimAssistSettings)
+			DeferredReloadADSPulls();
+
+		if (pAssetsToReload->bAmmoSuckBehaviours)
+			DeferredReloadAmmoSuckBehaviours();
+
+		if (pAssetsToReload->bDamageDefs)
+			DeferredReloadDamageFlags();
+
+		if (pAssetsToReload->bWeaponSprings)
+			DeferredReloadWeaponSprings();
+
+		DeferredReloadWeapons(pAssetsToReload->setsWeaponSettings);
+
+		// player/ai/turret settings and aibehaviors automatically reload themselves on level change already, don't need to reload here
+	}
+	else
+	{
+		if (pAssetsToReload->bAimAssistSettings)
+			TryImmediateReloadADSPulls();
+
+		if (pAssetsToReload->bAmmoSuckBehaviours)
+			TryImmediateReloadAmmoSuckBehaviours();
+
+		if (pAssetsToReload->bDamageDefs)
+			TryImmediateReloadDamageFlags();
+
+		if (pAssetsToReload->bWeaponSprings)
+			TryImmediateReloadWeaponSprings();
+
+		TryImmediateReloadWeapons(pAssetsToReload->setsWeaponSettings);
+
+		// TODO player/ai/turret settings and aibehavior
+
+		// need to reimplement mat_reloadmaterials for this
+		// if (m_AssetTypesToReload.bMaterials)
+		//	R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "mat_reloadmaterials", R2::cmd_source_t::kCommandSrcCode);
+	}
+
+	for (std::string& sReloadCommand : vReloadCommands)
+	{
+		spdlog::info("Executing command {} for asset reload", sReloadCommand);
+		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), sReloadCommand.c_str(), R2::cmd_source_t::kCommandSrcCode);
+	}
+
+	R2::Cbuf_Execute();
+}
+
+void ModManager::InstallMods(bool bReloadAssets, bool bDeferredAssetReload)
+{
+	for (Mod& mod : GetMods() | FilterEnabled)
+	{
+		InstallModCvars(mod);
+		InstallModVpks(mod);
+		InstallModRpaks(mod);
+		InstallModBinks(mod);
+		InstallModAudioOverrides(mod);
 	}
 
 	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
-	for (int64_t i = m_LoadedMods.size() - 1; i > -1; i--)
+	for (Mod& mod : GetMods() | FilterEnabled | std::views::reverse)
 	{
-		if (!m_LoadedMods[i].m_bEnabled)
-			continue;
-
-		if (fs::exists(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR))
-		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR))
-			{
-				std::string path =
-					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR));
-				if (file.is_regular_file() && m_ModFiles.find(path) == m_ModFiles.end())
-				{
-					ModOverrideFile modFile;
-					modFile.m_pOwningMod = &m_LoadedMods[i];
-					modFile.m_Path = path;
-					m_ModFiles.insert(std::make_pair(path, modFile));
-				}
-			}
-		}
+		InstallModKeyValues(mod);
+		InstallModFileOverrides(mod);
 	}
 
+	if (m_bHasLoadedMods && bReloadAssets) // only reload assets after initial load
+	{
+		ModAssetsToReload assetsToReload;
+
+		CheckModFilesForChanges(&assetsToReload);
+		ReloadNecessaryModAssets(bDeferredAssetReload, &assetsToReload);
+	}
+}
+
+void ModManager::SaveEnabledMods()
+{
+	// write from scratch every time, don't include unnecessary mods
+	rapidjson_document enabledModsCfg;
+	enabledModsCfg.SetObject();
+
+	// add values
+	for (Mod& mod : GetMods() | FilterLocal)
+		enabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), mod.m_bEnabled, enabledModsCfg.GetAllocator());
+
+	// write
+	std::ofstream sWriteStream(GetNorthstarPrefix() / "enabledmods.json");
+	rapidjson::OStreamWrapper sWriteStreamWrapper(sWriteStream);
+	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(sWriteStreamWrapper);
+	enabledModsCfg.Accept(writer);
+}
+
+void ModManager::BuildPublicModList()
+{
 	// build modinfo obj for masterserver
 	rapidjson_document modinfoDoc;
 	auto& alloc = modinfoDoc.GetAllocator();
@@ -709,16 +1126,15 @@ void ModManager::LoadMods()
 	modinfoDoc.AddMember("Mods", rapidjson::kArrayType, alloc);
 
 	int currentModIndex = 0;
-	for (Mod& mod : m_LoadedMods)
+	for (Mod& mod : GetMods() | FilterEnabled)
 	{
-		if (!mod.m_bEnabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
+		if (!mod.RequiredOnClient) // (!mod.RequiredOnClient && !mod.Pdiff.size())
 			continue;
 
 		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
 		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
 		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
 		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
 
 		currentModIndex++;
 	}
@@ -728,46 +1144,19 @@ void ModManager::LoadMods()
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	modinfoDoc.Accept(writer);
 	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
-
-	m_bHasLoadedMods = true;
 }
 
 void ModManager::UnloadMods()
 {
+	// save last state so we know what we need to reload
+	m_LastModLoadState = m_ModLoadState;
+	m_ModLoadState = new ModLoadState;
+
 	// clean up stuff from mods before we unload
-	m_ModFiles.clear();
 	fs::remove_all(GetCompiledAssetsPath());
 
-	g_CustomAudioManager.ClearAudioOverrides();
-
-	if (!m_bHasEnabledModsCfg)
-		m_EnabledModsCfg.SetObject();
-
-	for (Mod& mod : m_LoadedMods)
-	{
-		// remove all built kvs
-		for (std::pair<size_t, std::string> kvPaths : mod.KeyValues)
-			fs::remove(GetCompiledAssetsPath() / fs::path(kvPaths.second).lexically_relative(mod.m_ModDirectory));
-
-		mod.KeyValues.clear();
-
-		// write to m_enabledModsCfg
-		// should we be doing this here or should scripts be doing this manually?
-		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
-		// what we wanna do
-		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
-
-		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
-	}
-
-	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
-	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
-	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
-	m_EnabledModsCfg.Accept(writer);
-
-	// do we need to dealloc individual entries in m_loadedMods? idk, rework
-	m_LoadedMods.clear();
+	// TODO: remove, should only reload required overrides, and don't do it here
+	g_CustomAudioManager.ClearAudioOverrides(); 
 }
 
 std::string ModManager::NormaliseModFilePath(const fs::path path)
@@ -788,19 +1177,18 @@ void ModManager::CompileAssetsForFile(const char* filename)
 
 	if (fileHash == m_hScriptsRsonHash)
 		BuildScriptsRson();
-	else if (fileHash == m_hPdefHash)
-		BuildPdef();
+	//else if (fileHash == m_hPdefHash)
+	//{
+	//	// BuildPdef(); todo
+	//}
 	else if (fileHash == m_hKBActHash)
 		BuildKBActionsList();
 	else
 	{
 		// check if we should build keyvalues, depending on whether any of our mods have patch kvs for this file
-		for (Mod& mod : m_LoadedMods)
+		for (Mod& mod : GetMods() | FilterEnabled)
 		{
-			if (!mod.m_bEnabled)
-				continue;
-
-			if (mod.KeyValues.find(fileHash) != mod.KeyValues.end())
+			if (m_ModLoadState->m_KeyValues.find(filename) != m_ModLoadState->m_KeyValues.end())
 			{
 				TryBuildKeyValues(filename);
 				return;
@@ -809,27 +1197,65 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ConCommand_reload_mods(const CCommand& args)
+void ConCommand_mods_reload(const CCommand& args)
 {
-	g_pModManager->LoadMods();
+	// reload assets now
+	g_pModManager->LoadMods(true, false);
+}
+
+void ConCommand_mods_reload_deferred(const CCommand& args)
+{
+	// reload assets later
+	g_pModManager->LoadMods(true, true);
+}
+
+void ConCommand_mods_no_asset_reload(const CCommand& args)
+{
+	// reload assets never
+	g_pModManager->LoadMods(false, false);
+}
+
+void ConCommand_mods_getfileowner(const CCommand& args)
+{
+	if (args.ArgC() < 2)
+	{
+		spdlog::warn("usage: mods_getfileowner path/to/file.mdl");
+		return;
+	}
+
+	auto findFile = g_pModManager->GetModFiles().find(g_pModManager->NormaliseModFilePath(args.Arg(1)));
+	if (findFile != g_pModManager->GetModFiles().end())
+	{
+		// this can be null if asset is compiled!
+		if (findFile->second.m_pOwningMod != nullptr)
+			spdlog::info("file \"{}\" is owned by mod {}", args.Arg(1), findFile->second.m_pOwningMod->Name);
+		else
+			spdlog::info("file \"{}\" is overriden by a runtime compiled asset", args.Arg(1));
+	}
+	else
+		spdlog::warn("file not override not found");
 }
 
 fs::path GetModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
+	return GetNorthstarPrefix() / MOD_FOLDER_SUFFIX;
 }
 fs::path GetRemoteModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + REMOTE_MOD_FOLDER_SUFFIX);
+	return GetNorthstarPrefix() / REMOTE_MOD_FOLDER_SUFFIX;
 }
 fs::path GetCompiledAssetsPath()
 {
-	return fs::path(GetNorthstarPrefix() + COMPILED_ASSETS_SUFFIX);
+	return GetNorthstarPrefix() / COMPILED_ASSETS_SUFFIX;
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CModule module))
 {
 	g_pModManager = new ModManager;
 
-	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("reload_mods", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("mods_reload", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
+	RegisterConCommand("mods_reload_deferred", ConCommand_mods_reload_deferred, "reloads mods, prefers reloading assets on level load rather than now", FCVAR_NONE);
+	RegisterConCommand("mods_reload_no_asset_reload", ConCommand_mods_no_asset_reload, "reloads mods without trying to reload assets", FCVAR_NONE);
+	RegisterConCommand("mods_getfileowner", ConCommand_mods_getfileowner, "find the mod that owns a given file", FCVAR_NONE);
 }

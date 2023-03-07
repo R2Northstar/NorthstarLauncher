@@ -97,7 +97,6 @@ class ConCommandBase
 	bool IsCommand(void) const;
 	bool IsRegistered(void) const;
 	bool IsFlagSet(int nFlags) const;
-	static bool IsFlagSet(ConCommandBase* pCommandBase, int nFlags); // For hooking to engine's implementation.
 
 	int GetFlags(void) const;
 	ConCommandBase* GetNext(void) const;
@@ -135,6 +134,6 @@ class ConCommand : public ConCommandBase
 	int unk1; // 0x005C
 }; // Size: 0x0060
 
-void RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags);
-void RegisterConCommand(
+ConCommand* RegisterConCommand(const char* name, void (*callback)(const CCommand&), const char* helpString, int flags);
+ConCommand* RegisterConCommand(
 	const char* name, void (*callback)(const CCommand&), const char* helpString, int flags, FnCommandCompletionCallback completionCallback);

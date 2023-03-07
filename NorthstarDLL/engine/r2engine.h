@@ -245,7 +245,7 @@ namespace R2
 
 		FIELDS(0x3C,
 			// Simulation ticks - does not increase when game is paused
-			uint32_t m_nTickCount; // this is weird and doesn't seem to increase once per frame?
+			DWORD m_nTickCount; // this is weird and doesn't seem to increase once per frame?
 
 			// Simulation tick interval
 			float m_flTickInterval;

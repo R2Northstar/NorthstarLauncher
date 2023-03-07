@@ -239,17 +239,15 @@ class SquirrelManagerBase
 	{
 		SQStackInfos stackInfo {};
 		if (1 + depth >= sqvm->_callstacksize)
-		{
 			return nullptr;
-		}
+
 		sq_stackinfos(sqvm, 1 + depth, stackInfo);
 		std::string sourceName = stackInfo._sourceName;
 		std::replace(sourceName.begin(), sourceName.end(), '/', '\\');
 		std::string filename = "scripts\\vscripts\\" + sourceName;
-		if (auto res = g_pModManager->m_ModFiles.find(filename); res != g_pModManager->m_ModFiles.end())
-		{
+		if (auto res = g_pModManager->GetModFiles().find(filename); res != g_pModManager->GetModFiles().end())
 			return res->second.m_pOwningMod;
-		}
+
 		return nullptr;
 	}
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)

@@ -264,6 +264,8 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 
 bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath)
 {
+	return true;
+
 	if (IsDedicatedServer())
 		return true; // silently fail
 

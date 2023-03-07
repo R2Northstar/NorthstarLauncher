@@ -181,6 +181,9 @@
     <Filter Include="Header Files\shared\exploit_fixes">
       <UniqueIdentifier>{1a377c09-bd3d-4757-b3bc-9cd0a1e6ac0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\mods\reload">
+      <UniqueIdentifier>{f7aff0ef-a51c-4053-866a-4e5e3db71fce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\httplib.h">
@@ -1243,9 +1246,6 @@
     <ClCompile Include="mods\compiled\modkeyvalues.cpp">
       <Filter>Source Files\mods\compiled</Filter>
     </ClCompile>
-    <ClCompile Include="mods\compiled\modpdef.cpp">
-      <Filter>Source Files\mods\compiled</Filter>
-    </ClCompile>
     <ClCompile Include="mods\compiled\modscriptsrson.cpp">
       <Filter>Source Files\mods\compiled</Filter>
     </ClCompile>
@@ -1434,6 +1434,15 @@
     </ClCompile>
     <ClCompile Include="dedicated\dedicatedlogtoclient.cpp">
       <Filter>Source Files\dedicated</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\reload\reloadmodweapons.cpp">
+      <Filter>Source Files\mods\reload</Filter>
+    </ClCompile>
+    <ClCompile Include="mods\reload\reloadmodweapons_misc.cpp">
+      <Filter>Source Files\mods\reload</Filter>
+    </ClCompile>
+    <ClCompile Include="reloadturrets.cpp">
+      <Filter>Source Files\mods\reload</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

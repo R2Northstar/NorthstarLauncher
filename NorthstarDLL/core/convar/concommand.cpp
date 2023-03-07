@@ -124,16 +124,18 @@ typedef void (*ConCommandConstructorType)(
 	ConCommand* newCommand, const char* name, FnCommandCallback_t callback, const char* helpString, int flags, void* parent);
 ConCommandConstructorType ConCommandConstructor;
 
-void RegisterConCommand(const char* name, FnCommandCallback_t callback, const char* helpString, int flags)
+ConCommand* RegisterConCommand(const char* name, FnCommandCallback_t callback, const char* helpString, int flags)
 {
 	spdlog::info("Registering ConCommand {}", name);
 
 	// no need to free this ever really, it should exist as long as game does
 	ConCommand* newCommand = new ConCommand;
 	ConCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
+
+	return newCommand;
 }
 
-void RegisterConCommand(
+ConCommand* RegisterConCommand(
 	const char* name, FnCommandCallback_t callback, const char* helpString, int flags, FnCommandCompletionCallback completionCallback)
 {
 	spdlog::info("Registering ConCommand {}", name);
@@ -142,6 +144,8 @@ void RegisterConCommand(
 	ConCommand* newCommand = new ConCommand;
 	ConCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
 	newCommand->m_pCompletionCallback = completionCallback;
+
+	return newCommand;
 }
 
 ON_DLL_LOAD("engine.dll", ConCommand, (CModule module))

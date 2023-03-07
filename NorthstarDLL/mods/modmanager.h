@@ -7,15 +7,15 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <unordered_set>
 
-const std::string MOD_FOLDER_SUFFIX = "/mods";
-const std::string REMOTE_MOD_FOLDER_SUFFIX = "/runtime/remote/mods";
+const std::string MOD_FOLDER_SUFFIX = "mods";
+const std::string REMOTE_MOD_FOLDER_SUFFIX = "runtime/remote/mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
-const std::string COMPILED_ASSETS_SUFFIX = "/runtime/compiled";
+const std::string COMPILED_ASSETS_SUFFIX = "runtime/compiled";
 
 struct ModConVar
 {
-  public:
 	std::string Name;
 	std::string DefaultValue;
 	std::string HelpString;
@@ -24,7 +24,6 @@ struct ModConVar
 
 struct ModConCommand
 {
-  public:
 	std::string Name;
 	std::string Function;
 	std::string HelpString;
@@ -34,7 +33,6 @@ struct ModConCommand
 
 struct ModScriptCallback
 {
-  public:
 	ScriptContext Context;
 
 	// called before the codecallback is executed
@@ -47,7 +45,6 @@ struct ModScriptCallback
 
 struct ModScript
 {
-  public:
 	std::string Path;
 	std::string RunOn;
 
@@ -57,27 +54,24 @@ struct ModScript
 // these are pretty much identical, could refactor to use the same stuff?
 struct ModVPKEntry
 {
-  public:
 	bool m_bAutoLoad;
 	std::string m_sVpkPath;
 };
 
 struct ModRpakEntry
 {
-  public:
 	bool m_bAutoLoad;
 	std::string m_sPakName;
 	std::string m_sLoadAfterPak;
 };
 
-class Mod
+struct Mod
 {
-  public:
 	// runtime stuff
 	bool m_bEnabled = true;
 	bool m_bWasReadSuccessfully = false;
 	fs::path m_ModDirectory;
-	// bool m_bIsRemote;
+	bool m_bRemote; // whether the mod was automatically downloaded
 
 	// mod.json stuff:
 
@@ -98,18 +92,18 @@ class Mod
 	// custom scripts used by the mod
 	std::vector<ModScript> Scripts;
 	// convars created by the mod
-	std::vector<ModConVar*> ConVars;
+	std::vector<ModConVar> ConVars;
 	// concommands created by the mod
-	std::vector<ModConCommand*> ConCommands;
+	std::vector<ModConCommand> ConCommands;
 	// custom localisation files created by the mod
 	std::vector<std::string> LocalisationFiles;
 
 	// other files:
 
 	std::vector<ModVPKEntry> Vpks;
-	std::unordered_map<size_t, std::string> KeyValues;
 	std::vector<std::string> BinkVideos;
-	std::string Pdiff; // only need one per mod
+
+	// todo audio override struct
 
 	std::vector<ModRpakEntry> Rpaks;
 	std::unordered_map<std::string, std::string>
@@ -121,45 +115,141 @@ class Mod
 	std::unordered_map<std::string, std::string> DependencyConstants;
 
   public:
-	Mod(fs::path modPath, char* jsonBuf);
+	Mod(fs::path modPath, std::string sJson, bool bRemote);
 };
 
 struct ModOverrideFile
 {
-  public:
-	Mod* m_pOwningMod;
+	Mod* m_pOwningMod; // don't need to explicitly clean this up
 	fs::path m_Path;
+	fs::file_time_type m_tLastWriteTime;
 };
+
+// defined in reloadmodweapons.cpp
+extern struct SidedWeaponReloadPointers;
 
 class ModManager
 {
   private:
 	bool m_bHasLoadedMods = false;
-	bool m_bHasEnabledModsCfg;
-	rapidjson_document m_EnabledModsCfg;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
 	size_t m_hPdefHash;
 	size_t m_hKBActHash;
 
-  public:
-	std::vector<Mod> m_LoadedMods;
-	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
-	std::unordered_map<std::string, std::string> m_DependencyConstants;
+	void LoadModDefinitions();
+	void SaveEnabledMods();
+	void BuildPublicModList();
+	void InstallMods(bool bReloadAssets, bool bDeferredAssetReload);
+
+	struct ModAssetsToReload
+	{
+		// assets types we need to reload completely after mods are reloaded (can't reload individually)
+		bool bUiScript = false; // also includes .menu files
+		bool bLocalisation = false;
+		bool bPlaylists = false;
+		bool bAimAssistSettings = false;
+		bool bMaterials = false; // vmts
+		bool bPlayerSettings = false;
+		bool bAiSettings = false;
+		bool bTurretSettings = false;
+		bool bDamageDefs = false; // damagedefs
+		bool bWeaponSprings = false;
+		bool bAmmoSuckBehaviours = false;
+		bool bDatatables = false;
+
+		// can't actually reload this atm, just print a warning (todo, could maybe restart client to ensure loaded?)
+		bool bModels = false;
+
+		bool bRPaks = false;
+
+		// assets that we can reload individually
+		std::unordered_set<std::string> setsWeaponSettings = {};
+		// std::vector<ModAudioOverride> vAudioOverrides
+	};
+
+	// mod installation funcs
+	void InstallModCvars(Mod& mod);
+	void InstallModVpks(Mod& mod);
+	void InstallModRpaks(Mod& mod);
+	void InstallModKeyValues(Mod& mod);
+	void InstallModBinks(Mod& mod);
+	void InstallModAudioOverrides(Mod& mod);
+	void InstallModFileOverrides(Mod& mod);
+
+	void UnloadMods();
+
+	std::unordered_set<ConVar*> m_RegisteredModConVars;
+	std::unordered_set<ConCommand*> m_RegisteredModConCommands;
+
+
+	void CheckModFilesForChanges(ModAssetsToReload* pAssetsToReload);
+	void ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReload* pAssetsToReload);
+
+
+	struct ModLoadState
+	{
+		std::vector<Mod> m_LoadedMods;
+		std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
+		std::unordered_map<std::string, std::string> m_DependencyConstants;
+		std::unordered_map<std::string, std::vector<ModOverrideFile>> m_KeyValues;
+	};
+
+	// unfortunately need to be ptrs, so we can copy m_ModLoadState => m_LastModLoadState
+	// without ptrs to any elements (only ModOverrideFile::m_pOwningMod atm) decaying
+	// unfortunately means we need to manually manage memory of them, but oh well
+	ModLoadState* m_LastModLoadState;
+	ModLoadState* m_ModLoadState;
 
   public:
 	ModManager();
-	void LoadMods();
-	void UnloadMods();
+	void LoadMods(bool bReloadAssets, bool bDeferredAssetReload);
 	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
+
+	// getters
+	inline std::vector<Mod>& GetMods()
+	{
+		return m_ModLoadState->m_LoadedMods;
+	};
+
+	inline std::unordered_map<std::string, ModOverrideFile>& GetModFiles()
+	{
+		return m_ModLoadState->m_ModFiles;
+	};
+
+	inline std::unordered_map<std::string, std::string>& GetDependencyConstants()
+	{
+		return m_ModLoadState->m_DependencyConstants;
+	};
 
 	// compile asset type stuff, these are done in files under runtime/compiled/
 	void BuildScriptsRson();
 	void TryBuildKeyValues(const char* filename);
-	void BuildPdef();
 	void BuildKBActionsList();
+
+	// deferred asset reloading funcs (i.e. set engine flags to reload later)
+	void DeferredReloadDamageFlags();
+	void DeferredReloadWeaponSprings();
+	void DeferredReloadAmmoSuckBehaviours();
+	void DeferredReloadADSPulls();
+	void DeferredReloadWeapons(const std::unordered_set<std::string> setsWeapons);
+
+	// hybrid asset reloading funcs (i.e. try reload on both client and server immediately, defer sides that aren't currently possible)
+	void TryImmediateReloadDamageFlags();
+	void TryImmediateReloadWeaponSprings();
+	void TryImmediateReloadAmmoSuckBehaviours();
+	void TryImmediateReloadADSPulls();
+	void TryImmediateReloadWeapons(const std::unordered_set<std::string> setsWeapons);
+
+	// individual asset reloading funcs
+	bool TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers);
+
+	// for std::views::filter, e.g. for (Mod& mod : g_pModManager::GetMods() | ModManager::FilterEnabled)
+	static inline constexpr auto FilterEnabled = std::views::filter([](Mod& mod) { return mod.m_bEnabled; });
+	static inline constexpr auto FilterRemote = std::views::filter([](Mod& mod) { return mod.m_bRemote; });
+	static inline constexpr auto FilterLocal = std::views::filter([](Mod& mod) { return !mod.m_bRemote; });
 };
 
 fs::path GetModFolderPath();
