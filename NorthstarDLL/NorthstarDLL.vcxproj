@@ -509,6 +509,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="plugins\plugins.cpp" />
+    <ClCompile Include="reloadturrets.cpp" />
     <ClCompile Include="scripts\client\clientchathooks.cpp" />
     <ClCompile Include="scripts\client\cursorposition.cpp" />
     <ClCompile Include="scripts\client\scriptbrowserhooks.cpp" />

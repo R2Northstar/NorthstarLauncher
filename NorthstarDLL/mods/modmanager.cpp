@@ -1040,6 +1040,8 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReloa
 			DeferredReloadWeaponSprings();
 
 		DeferredReloadWeapons(pAssetsToReload->setsWeaponSettings);
+
+		// player/ai/turret settings and aibehaviors automatically reload themselves on level change already, don't need to reload here
 	}
 	else
 	{
@@ -1057,6 +1059,7 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReloa
 
 		TryImmediateReloadWeapons(pAssetsToReload->setsWeaponSettings);
 
+		// TODO player/ai/turret settings and aibehavior
 
 		// need to reimplement mat_reloadmaterials for this
 		// if (m_AssetTypesToReload.bMaterials)

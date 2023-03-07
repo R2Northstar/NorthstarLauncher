@@ -153,6 +153,7 @@ class ModManager
 		bool bMaterials = false; // vmts
 		bool bPlayerSettings = false;
 		bool bAiSettings = false;
+		bool bTurretSettings = false;
 		bool bDamageDefs = false; // damagedefs
 		bool bWeaponSprings = false;
 		bool bAmmoSuckBehaviours = false;
