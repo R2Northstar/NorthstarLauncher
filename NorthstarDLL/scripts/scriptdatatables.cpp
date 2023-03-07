@@ -885,6 +885,11 @@ void ConCommand_dump_datatables(const CCommand& args)
 		DumpDatatable(datatable);
 }
 
+void ConCommand_ns_cleardatatablecache(const CCommand& args)
+{
+	CSVCache.clear();
+}
+
 ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CModule module))
 {
 	SQ_GetDatatableInternal<ScriptContext::SERVER> = module.Offset(0x1250f0).As<Datatable* (*)(HSquirrelVM*)>();
@@ -906,4 +911,5 @@ ON_DLL_LOAD_RELIESON("engine.dll", SharedScriptDataTables, ConVar, (CModule modu
 
 	RegisterConCommand("dump_datatables", ConCommand_dump_datatables, "dumps all datatables from a hardcoded list", FCVAR_NONE);
 	RegisterConCommand("dump_datatable", ConCommand_dump_datatable, "dump a datatable", FCVAR_NONE);
+	RegisterConCommand("ns_cleardatatablecache", ConCommand_ns_cleardatatablecache, "clears script datatable cache", FCVAR_NONE);
 }

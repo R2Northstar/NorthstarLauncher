@@ -1016,13 +1016,11 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReloa
 	if (pAssetsToReload->bAimAssistSettings)
 		vReloadCommands.push_back("ReloadAimAssistSettings");
 
+	if (pAssetsToReload->bDatatables)
+		vReloadCommands.push_back("ns_cleardatatablecache");
+
 	if (pAssetsToReload->bModels)
 		spdlog::warn("Need to reload models but can't without a restart!");
-
-	if (pAssetsToReload->bDatatables)
-	{
-		// TODO: clear disk datatable cache in scriptdatatables.cpp
-	}
 
 	// deferred - load files using engine functions where possible, on level load
 	if (bDeferred)
