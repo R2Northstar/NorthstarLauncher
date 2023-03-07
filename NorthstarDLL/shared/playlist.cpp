@@ -11,10 +11,10 @@ AUTOHOOK_INIT()
 // use the R2 namespace for game funcs
 namespace R2
 {
-	FUNCTION_AT(engine.dll + 0x18C640, const char*, , GetCurrentPlaylistName, ());
-	FUNCTION_AT(engine.dll + 0x18EB20, void, , SetCurrentPlaylist, (const char* pPlaylistName));
-	FUNCTION_AT(engine.dll + 0x18ED00, void, , SetPlaylistVarOverride, (const char* pVarName, const char* pValue));
-	FUNCTION_AT(engine.dll + 0x18C680, const char*, , GetCurrentPlaylistVar, (const char* pVarName, bool bUseOverrides));
+	DEFINED_VAR_AT(engine.dll + 0x18C640, GetCurrentPlaylistName);
+	DEFINED_VAR_AT(engine.dll + 0x18EB20, SetCurrentPlaylist);
+	DEFINED_VAR_AT(engine.dll + 0x18ED00, SetPlaylistVarOverride);
+	DEFINED_VAR_AT(engine.dll + 0x18C680, GetCurrentPlaylistVar);
 } // namespace R2
 
 ConVar* Cvar_ns_use_clc_SetPlaylistVarOverride;

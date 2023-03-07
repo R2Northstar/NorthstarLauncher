@@ -1182,6 +1182,9 @@
     <ClInclude Include="util\utils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="dedicated\dedicatedlogtoclient.h">
+      <Filter>Header Files\dedicated</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst">
@@ -1429,6 +1432,9 @@
     <ClCompile Include="util\utils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
+    <ClCompile Include="dedicated\dedicatedlogtoclient.cpp">
+      <Filter>Source Files\dedicated</Filter>
+    </ClCompile>
     <ClCompile Include="mods\reload\reloadmodweapons.cpp">
       <Filter>Source Files\mods\reload</Filter>
     </ClCompile>
@@ -1438,7 +1444,7 @@
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\client</Filter>
     </MASM>
   </ItemGroup>
 </Project>
