@@ -294,7 +294,7 @@ ModManager::ModManager()
 	m_LastModLoadState = nullptr;
 	m_ModLoadState = new ModLoadState;
 
-	LoadMods(false);
+	LoadMods(false, false);
 }
 
 template <ScriptContext context> auto ModConCommandCallback_Internal(std::string name, const CCommand& command)
@@ -352,7 +352,7 @@ auto ModConCommandCallback(const CCommand& command)
 
 
 
-void ModManager::LoadMods(bool bDeferredAssetReload)
+void ModManager::LoadMods(bool bReloadAssets, bool bDeferredAssetReload)
 {
 	// reset state of all currently loaded mods, if we've loaded once already
 	if (m_bHasLoadedMods)
@@ -366,7 +366,7 @@ void ModManager::LoadMods(bool bDeferredAssetReload)
 	LoadModDefinitions();
 
 	// install mods (load all files)
-	InstallMods(bDeferredAssetReload);
+	InstallMods(bReloadAssets, bDeferredAssetReload);
 
 	// write json storing currently enabled mods
 	SaveEnabledMods();
@@ -1043,6 +1043,21 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReloa
 	}
 	else
 	{
+		if (pAssetsToReload->bAimAssistSettings)
+			TryImmediateReloadADSPulls();
+
+		if (pAssetsToReload->bAmmoSuckBehaviours)
+			TryImmediateReloadAmmoSuckBehaviours();
+
+		if (pAssetsToReload->bDamageDefs)
+			TryImmediateReloadDamageFlags();
+
+		if (pAssetsToReload->bWeaponSprings)
+			TryImmediateReloadWeaponSprings();
+
+		TryImmediateReloadWeapons(pAssetsToReload->setsWeaponSettings);
+
+
 		// need to reimplement mat_reloadmaterials for this
 		// if (m_AssetTypesToReload.bMaterials)
 		//	R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "mat_reloadmaterials", R2::cmd_source_t::kCommandSrcCode);
@@ -1057,7 +1072,7 @@ void ModManager::ReloadNecessaryModAssets(bool bDeferred, const ModAssetsToReloa
 	R2::Cbuf_Execute();
 }
 
-void ModManager::InstallMods(bool bDeferredAssetReload)
+void ModManager::InstallMods(bool bReloadAssets, bool bDeferredAssetReload)
 {
 	for (Mod& mod : GetMods() | FilterEnabled)
 	{
@@ -1075,7 +1090,7 @@ void ModManager::InstallMods(bool bDeferredAssetReload)
 		InstallModFileOverrides(mod);
 	}
 
-	if (m_bHasLoadedMods) // only reload assets after initial load
+	if (m_bHasLoadedMods && bReloadAssets) // only reload assets after initial load
 	{
 		ModAssetsToReload assetsToReload;
 
@@ -1183,12 +1198,20 @@ void ModManager::CompileAssetsForFile(const char* filename)
 
 void ConCommand_mods_reload(const CCommand& args)
 {
-	g_pModManager->LoadMods(false);
+	// reload assets now
+	g_pModManager->LoadMods(true, false);
 }
 
 void ConCommand_mods_reload_deferred(const CCommand& args)
 {
-	g_pModManager->LoadMods(true);
+	// reload assets later
+	g_pModManager->LoadMods(true, true);
+}
+
+void ConCommand_mods_no_asset_reload(const CCommand& args)
+{
+	// reload assets never
+	g_pModManager->LoadMods(false, false);
 }
 
 void ConCommand_mods_getfileowner(const CCommand& args)
@@ -1232,5 +1255,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CMod
 	RegisterConCommand("reload_mods", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
 	RegisterConCommand("mods_reload", ConCommand_mods_reload, "reloads mods", FCVAR_NONE);
 	RegisterConCommand("mods_reload_deferred", ConCommand_mods_reload_deferred, "reloads mods, prefers reloading assets on level load rather than now", FCVAR_NONE);
+	RegisterConCommand("mods_reload_no_asset_reload", ConCommand_mods_no_asset_reload, "reloads mods without trying to reload assets", FCVAR_NONE);
 	RegisterConCommand("mods_getfileowner", ConCommand_mods_getfileowner, "find the mod that owns a given file", FCVAR_NONE);
 }

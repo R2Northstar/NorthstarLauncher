@@ -12,7 +12,7 @@ using namespace R2;
 bool bReadingOriginalFile = false;
 std::string sCurrentModPath;
 
-ConVar* Cvar_ns_fs_log_reads;
+VAR_AT(filesystem_stdio.dll + 0xE5940, ConVar*, Cvar_fs_showAllReads);
 
 // use the R2 namespace for game funcs
 namespace R2
@@ -84,6 +84,9 @@ void SetNewModSearchPaths(Mod* mod)
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile)
 {
+	if (Cvar_fs_showAllReads->GetBool())
+		spdlog::info("filesystem open: {}", pPath);
+
 	if (bReadingOriginalFile)
 		return false;
 

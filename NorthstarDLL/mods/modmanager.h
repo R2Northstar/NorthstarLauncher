@@ -141,7 +141,7 @@ class ModManager
 	void LoadModDefinitions();
 	void SaveEnabledMods();
 	void BuildPublicModList();
-	void InstallMods(bool bDeferredAssetReload);
+	void InstallMods(bool bReloadAssets, bool bDeferredAssetReload);
 
 	struct ModAssetsToReload
 	{
@@ -203,7 +203,7 @@ class ModManager
 
   public:
 	ModManager();
-	void LoadMods(bool bDeferredAssetReload);
+	void LoadMods(bool bReloadAssets, bool bDeferredAssetReload);
 	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
 
@@ -235,7 +235,14 @@ class ModManager
 	void DeferredReloadADSPulls();
 	void DeferredReloadWeapons(const std::unordered_set<std::string> setsWeapons);
 
-	// asset reloading funcs
+	// hybrid asset reloading funcs (i.e. try reload on both client and server immediately, defer sides that aren't currently possible)
+	void TryImmediateReloadDamageFlags();
+	void TryImmediateReloadWeaponSprings();
+	void TryImmediateReloadAmmoSuckBehaviours();
+	void TryImmediateReloadADSPulls();
+	void TryImmediateReloadWeapons(const std::unordered_set<std::string> setsWeapons);
+
+	// individual asset reloading funcs
 	bool TryReloadWeapon(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers);
 
 	// for std::views::filter, e.g. for (Mod& mod : g_pModManager::GetMods() | ModManager::FilterEnabled)

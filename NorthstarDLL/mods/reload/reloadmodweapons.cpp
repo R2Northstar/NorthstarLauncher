@@ -1,4 +1,6 @@
 #include "mods/modmanager.h"
+#include "dedicated/dedicated.h"
+#include "engine/r2engine.h"
 
 AUTOHOOK_INIT()
 
@@ -23,9 +25,13 @@ OFFSET_STRUCT(GlobalWeaponDefs)
 
 VAR_AT(client.dll + 0xB33A02, uint16_t*, g_pnClientWeaponsLoaded);
 VAR_AT(client.dll + 0xB339E8, GlobalWeaponDefs**, g_ppClientWeaponDefs);
+VAR_AT(server.dll + 0xBB57C2, uint16_t*, g_pnServerWeaponsLoaded);
+VAR_AT(server.dll + 0xBB57A8, GlobalWeaponDefs**, g_ppServerWeaponDefs);
 
 FUNCTION_AT(client.dll + 0x3D2FB0, void,, ClientReparseWeapon, (WeaponDefinition* pWeapon));
 FUNCTION_AT(client.dll + 0x3CE270, void,, ClientReloadWeaponCallbacks, (int nWeaponIndex));
+FUNCTION_AT(client.dll + 0x6D1170, void,, ServerReparseWeapon, (WeaponDefinition * pWeapon));
+FUNCTION_AT(client.dll + 0x6CCE80, void, , ServerReloadWeaponCallbacks, (int nWeaponIndex));
 
 std::unordered_set<std::string> setsClientWeaponsToReload;
 std::unordered_set<std::string> setsServerWeaponsToReload;
@@ -43,6 +49,7 @@ struct SidedWeaponReloadPointers
 	void (*m_fnReparseWeapon)(WeaponDefinition* pWeapon);
 	void (*m_fnReloadWeaponCallbacks)(int nWeaponIndex);
 
+	SidedWeaponReloadPointers() {} // don't use
 	SidedWeaponReloadPointers(
 		uint16_t* pnWeaponsLoaded,
 		GlobalWeaponDefs** ppWeaponDefs,
@@ -56,8 +63,7 @@ struct SidedWeaponReloadPointers
 		m_fnReparseWeapon = fnReparseWeapon;
 		m_fnReloadWeaponCallbacks = fnReloadWeaponCallbacks;
 	}
-};
-
+} clientReloadPointers, serverReloadPointers;
 
 int WeaponIndexByName(const char* pWeaponName, const SidedWeaponReloadPointers* pReloadPointers)
 {
@@ -78,6 +84,24 @@ void ModManager::DeferredReloadWeapons(const std::unordered_set<std::string> set
 	{
 		setsClientWeaponsToReload.insert(sWeapon);
 		setsServerWeaponsToReload.insert(sWeapon);
+	}
+}
+
+void ModManager::TryImmediateReloadWeapons(const std::unordered_set<std::string> setsWeapons)
+{
+	// try to reload all weapons on client and server, if we can't reload for any reason
+	// (either due to either side being inactive, or just failure to reload)
+	for (const std::string& sWeapon : setsWeapons)
+	{
+		if (!IsDedicatedServer())
+		{
+			setsClientWeaponsToReload.insert(sWeapon);
+			// if this fails, the weapon will still be there for deferred reload
+			TryReloadWeapon(sWeapon.c_str(), &clientReloadPointers);
+		}
+
+		setsServerWeaponsToReload.insert(sWeapon);
+		TryReloadWeapon(sWeapon.c_str(), &serverReloadPointers);
 	}
 }
 
@@ -108,9 +132,6 @@ AUTOHOOK(ClientPrecacheWeaponFromStringtable, client.dll + 0x195A60,
 bool, __fastcall, (void* a1, void* a2, void* a3, const char* pWeaponName))
 // clang-format on
 {
-	static SidedWeaponReloadPointers clientReloadPointers(
-		g_pnClientWeaponsLoaded, g_ppClientWeaponDefs, &setsClientWeaponsToReload, ClientReparseWeapon, ClientReloadWeaponCallbacks);
-
 	if (g_pModManager->TryReloadWeapon(pWeaponName, &clientReloadPointers))
 		return true;
 
@@ -120,5 +141,16 @@ bool, __fastcall, (void* a1, void* a2, void* a3, const char* pWeaponName))
 
 ON_DLL_LOAD_CLIENT("client.dll", ModReloadWeaponsClient, (CModule module))
 {
+	AUTOHOOK_DISPATCH_MODULE(client.dll)
+
+	clientReloadPointers = SidedWeaponReloadPointers(
+		g_pnClientWeaponsLoaded, g_ppClientWeaponDefs, &setsClientWeaponsToReload, ClientReparseWeapon, ClientReloadWeaponCallbacks);
+}
+
+ON_DLL_LOAD_CLIENT("server.dll", ModReloadWeaponsServer, (CModule module))
+{
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
+
+	serverReloadPointers = SidedWeaponReloadPointers(
+		g_pnServerWeaponsLoaded, g_ppServerWeaponDefs, &setsServerWeaponsToReload, ServerReparseWeapon, ServerReloadWeaponCallbacks);
 }
