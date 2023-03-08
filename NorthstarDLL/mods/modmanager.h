@@ -226,11 +226,13 @@ class ModManager
 		m_setsAllowedRemoteMods = setsAllowedRemoteMods;
 	}
 
-	void ClearAllowedRemoteMods(void)
+	inline void ClearAllowedRemoteMods(void)
 	{
 		m_setsAllowedRemoteMods.clear();
 	}
 
+	bool IsUsingRemoteMods();
+		
 	// compile asset type stuff, these are done in files under runtime/compiled/
 	void BuildScriptsRson();
 	void TryBuildKeyValues(const char* filename);

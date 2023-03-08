@@ -135,7 +135,6 @@ bool, __fastcall, (void* a1, void* a2, void* a3, const char* pWeaponName))
 	if (g_pModManager->TryReloadWeapon(pWeaponName, &clientReloadPointers))
 		return true;
 
-	spdlog::info("PrecacheWeaponFromStringtable: {}", pWeaponName);
 	return ClientPrecacheWeaponFromStringtable(a1, a2, a3, pWeaponName);
 }
 
@@ -147,7 +146,7 @@ ON_DLL_LOAD_CLIENT("client.dll", ModReloadWeaponsClient, (CModule module))
 		g_pnClientWeaponsLoaded, g_ppClientWeaponDefs, &setsClientWeaponsToReload, ClientReparseWeapon, ClientReloadWeaponCallbacks);
 }
 
-ON_DLL_LOAD_CLIENT("server.dll", ModReloadWeaponsServer, (CModule module))
+ON_DLL_LOAD("server.dll", ModReloadWeaponsServer, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 

@@ -164,6 +164,17 @@ void, __fastcall, (CHostState* self))
 
 		sLastMode.clear();
 	}
+
+	// TODO: this does work, but will also be called in places it shouldn't be (e.g. immediately after reloading mods before we actually join a server, so all remote mods are lost)
+	// exclusively for reload after leave though, this does work!
+	/*
+	* 	if (g_pModManager->IsUsingRemoteMods())
+	*	{
+	*	g_pModManager->ClearAllowedRemoteMods();
+	*	g_pModManager->LoadMods(true, true);
+	*	}
+	*/
+
 }
 
 // clang-format off

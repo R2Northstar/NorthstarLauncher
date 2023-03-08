@@ -987,7 +987,7 @@ void ModManager::CheckModFilesForChanges(ModAssetsToReload* pAssetsToReload)
 				else if (fChangedPath.filename() == "springs.txt")
 					pAssetsToReload->bWeaponSprings = true;
 				else
-					pAssetsToReload->setsWeaponSettings.insert(fChangedPath.replace_extension().string());
+					pAssetsToReload->setsWeaponSettings.insert(fChangedPath.filename().replace_extension().string());
 
 				continue;
 			}
@@ -1169,7 +1169,8 @@ std::string ModManager::NormaliseModFilePath(const fs::path path)
 
 void ModManager::CompileAssetsForFile(const char* filename)
 {
-	size_t fileHash = STR_HASH(NormaliseModFilePath(fs::path(filename)));
+	std::string sNormalisedFilePath = NormaliseModFilePath(fs::path(filename));
+	size_t fileHash = STR_HASH(sNormalisedFilePath);
 
 	if (fileHash == hScriptsRsonHash)
 		BuildScriptsRson();
@@ -1182,15 +1183,21 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	else
 	{
 		// check if we should build keyvalues, depending on whether any of our mods have patch kvs for this file
-		for (Mod& mod : GetMods() | FilterEnabled)
+		if (m_ModLoadState->m_KeyValues.find(sNormalisedFilePath) != m_ModLoadState->m_KeyValues.end())
 		{
-			if (m_ModLoadState->m_KeyValues.find(filename) != m_ModLoadState->m_KeyValues.end())
-			{
-				TryBuildKeyValues(filename);
-				return;
-			}
+			TryBuildKeyValues(sNormalisedFilePath.c_str());
+			return;
 		}
 	}
+}
+
+bool ModManager::IsUsingRemoteMods()
+{
+	// if we hit any mods that are enabled and remote, return true
+	for (Mod& mod : GetMods() | FilterEnabled | FilterRemote)
+		return true;
+
+	return false;
 }
 
 void ConCommand_mods_reload(const CCommand& args)
@@ -1232,6 +1239,12 @@ void ConCommand_mods_getfileowner(const CCommand& args)
 		spdlog::warn("file not override not found");
 }
 
+void ConCommand_mods_test_setallowedremotemod(const CCommand& args)
+{
+	if (args.ArgC() >= 2)
+		g_pModManager->SetAllowedRemoteMods({args.Arg(1)});
+}
+
 fs::path GetModFolderPath()
 {
 	return GetNorthstarPrefix() / MOD_FOLDER_SUFFIX;
@@ -1254,4 +1267,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CMod
 	RegisterConCommand("mods_reload_deferred", ConCommand_mods_reload_deferred, "reloads mods, prefers reloading assets on level load rather than now", FCVAR_NONE);
 	RegisterConCommand("mods_reload_no_asset_reload", ConCommand_mods_no_asset_reload, "reloads mods without trying to reload assets", FCVAR_NONE);
 	RegisterConCommand("mods_getfileowner", ConCommand_mods_getfileowner, "find the mod that owns a given file", FCVAR_NONE);
+
+	RegisterConCommand("mods_test_setallowedremotemod", ConCommand_mods_test_setallowedremotemod, "", FCVAR_NONE);
 }

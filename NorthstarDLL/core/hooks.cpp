@@ -76,6 +76,10 @@ void __fileAutohook::DispatchForModule(const char* pModuleName)
 {
 	const int iModuleNameLen = strlen(pModuleName);
 
+	for (__autovar* var : vars)
+		if (!strncmp(pModuleName, var->m_pAddrString, iModuleNameLen))
+			var->Dispatch();
+
 	for (__autohook* hook : hooks)
 		if ((hook->iAddressResolutionMode == __autohook::OFFSET_STRING && !strncmp(pModuleName, hook->pAddrString, iModuleNameLen)) ||
 			(hook->iAddressResolutionMode == __autohook::PROCADDRESS && !strcmp(pModuleName, hook->pModuleName)))
