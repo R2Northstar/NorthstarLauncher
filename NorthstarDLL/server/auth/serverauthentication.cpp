@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "serverauthentication.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "core/convar/cvar.h"
@@ -6,7 +5,6 @@
 #include "masterserver/masterserver.h"
 #include "server/serverpresence.h"
 #include "engine/hoststate.h"
-#include "shared/maxplayers.h"
 #include "bansystem.h"
 #include "core/convar/concommand.h"
 #include "dedicated/dedicated.h"
@@ -61,6 +59,22 @@ void ServerAuthenticationManager::StartPlayerAuthServer()
 						strcmp(g_pMasterServerManager->m_sOwnServerAuthToken, request.get_param_value("serverAuthToken").c_str()))
 					{
 						response.set_content("{\"success\":false}", "application/json");
+						return;
+					}
+
+					uint64_t uid;
+					try
+					{
+						uid = std::strtoull(request.get_param_value("id").c_str(), nullptr, 10);
+					}
+					catch (std::exception const& ex)
+					{
+						response.set_content("{\"success\":false}", "application/json");
+						return;
+					}
+					if (!g_pBanSystem->IsUIDAllowed(uid))
+					{
+						response.set_content("{\"success\":false,\"reject\":\"Banned from this server.\"}", "application/json");
 						return;
 					}
 
@@ -154,7 +168,7 @@ bool ServerAuthenticationManager::IsDuplicateAccount(R2::CBaseClient* pPlayer, c
 		return false;
 
 	bool bHasUidPlayer = false;
-	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+	for (int i = 0; i < R2::g_pGlobals->m_nMaxClients; i++)
 		if (&R2::g_pClientArray[i] != pPlayer && !strcmp(pPlayerUid, R2::g_pClientArray[i].m_UID))
 			return true;
 
@@ -309,11 +323,11 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 	if (!bFakePlayer)
 	{
 		if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
-			pAuthenticationFailure = "Invalid Name.";
+			pAuthenticationFailure = "Invalid name.";
 		else if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
-			pAuthenticationFailure = "Banned From server.";
+			pAuthenticationFailure = "Banned from this server.";
 		else if (!g_pServerAuthentication->CheckAuthentication(self, iNextPlayerUid, pNextPlayerToken))
-			pAuthenticationFailure = "Authentication Failed.";
+			pAuthenticationFailure = "Authentication failed.";
 	}
 	else // need to copy name for bots still
 		strncpy_s(pVerifiedName, pName, 63);

@@ -64,6 +64,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)include\libzip\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -97,6 +98,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -418,6 +420,7 @@
     <ClInclude Include="core\structs.h" />
     <ClInclude Include="core\tier0.h" />
     <ClInclude Include="dedicated\dedicated.h" />
+    <ClInclude Include="dedicated\dedicatedlogtoclient.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="engine\hoststate.h" />
     <ClInclude Include="engine\r2engine.h" />
@@ -456,7 +459,7 @@
     <ClInclude Include="squirrel\squirreldatatypes.h" />
     <ClInclude Include="util\utils.h" />
     <ClInclude Include="util\version.h" />
-		<ClInclude Include="util\wininfo.h" />
+    <ClInclude Include="util\wininfo.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\spdlog\fmt\bundled\LICENSE.rst" />
@@ -490,6 +493,7 @@
     <ClCompile Include="core\sourceinterface.cpp" />
     <ClCompile Include="core\tier0.cpp" />
     <ClCompile Include="dedicated\dedicated.cpp" />
+    <ClCompile Include="dedicated\dedicatedlogtoclient.cpp" />
     <ClCompile Include="dedicated\dedicatedmaterialsystem.cpp" />
     <ClCompile Include="dllmain.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
@@ -530,6 +534,7 @@
     <ClCompile Include="scripts\server\miscserverfixes.cpp" />
     <ClCompile Include="scripts\server\miscserverscript.cpp" />
     <ClCompile Include="scripts\server\scriptuserinfo.cpp" />
+    <ClCompile Include="server\alltalk.cpp" />
     <ClCompile Include="server\auth\bansystem.cpp" />
     <ClCompile Include="server\auth\serverauthentication.cpp" />
     <ClCompile Include="server\buildainfile.cpp" />
@@ -550,7 +555,7 @@
     <ClCompile Include="util\printmaps.cpp" />
     <ClCompile Include="util\utils.cpp" />
     <ClCompile Include="util\version.cpp" />
-		<ClCompile Include="util\wininfo.cpp" />
+    <ClCompile Include="util\wininfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="audio_asm.asm" />

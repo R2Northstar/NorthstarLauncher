@@ -1,8 +1,6 @@
 #pragma once
-#include "pch.h"
 #include "bansystem.h"
 #include "serverauthentication.h"
-#include "shared/maxplayers.h"
 #include "core/convar/concommand.h"
 #include "server/r2server.h"
 #include "engine/r2engine.h"
@@ -184,7 +182,7 @@ void ConCommand_ban(const CCommand& args)
 	if (args.ArgC() < 2)
 		return;
 
-	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+	for (int i = 0; i < R2::g_pGlobals->m_nMaxClients; i++)
 	{
 		R2::CBaseClient* player = &R2::g_pClientArray[i];
 
