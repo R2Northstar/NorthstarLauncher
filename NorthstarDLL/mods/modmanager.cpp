@@ -19,6 +19,12 @@
 #include <sstream>
 #include <vector>
 
+// precaculated string hashes
+// note: use backslashes for these, since we use lexically_normal for file paths which uses them
+const size_t hScriptsRsonHash = STR_HASH("scripts\\vscripts\\scripts.rson");
+const size_t hPdefHash = STR_HASH("cfg\\server\\persistent_player_data_version_231.pdef"); // this can have multiple versions, but we use 231 so that's what we hash
+const size_t hKBActHash = STR_HASH("scripts\\kb_act.lst");
+
 ModManager* g_pModManager;
 
 Mod::Mod(fs::path modDir, std::string sJson, bool bRemote)
@@ -283,14 +289,6 @@ Mod::Mod(fs::path modDir, std::string sJson, bool bRemote)
 
 ModManager::ModManager()
 {
-	// precaculated string hashes
-	// note: use backslashes for these, since we use lexically_normal for file paths which uses them
-	m_hScriptsRsonHash = STR_HASH("scripts\\vscripts\\scripts.rson");
-	m_hPdefHash = STR_HASH(
-		"cfg\\server\\persistent_player_data_version_231.pdef" // this can have multiple versions, but we use 231 so that's what we hash
-	);
-	m_hKBActHash = STR_HASH("scripts\\kb_act.lst");
-
 	m_LastModLoadState = nullptr;
 	m_ModLoadState = new ModLoadState;
 
@@ -348,7 +346,6 @@ auto ModConCommandCallback(const CCommand& command)
 		break;
 	};
 }
-
 
 
 
@@ -467,9 +464,8 @@ void ModManager::LoadModDefinitions()
 		}
 		else
 		{
-			// todo: need custom logic for deciding whether to enable remote mods, but should be off by default
-			// in the future, remote mods should only be enabled explicitly at runtime, never based on any file or persistent state
-			mod.m_bEnabled = false;
+			// remote mods should only be enabled explicitly at runtime, never based on any file or persistent state
+			mod.m_bEnabled = m_setsAllowedRemoteMods.find(mod.Name) != m_setsAllowedRemoteMods.end();
 		}
 
 		if (mod.m_bWasReadSuccessfully)
@@ -1175,13 +1171,13 @@ void ModManager::CompileAssetsForFile(const char* filename)
 {
 	size_t fileHash = STR_HASH(NormaliseModFilePath(fs::path(filename)));
 
-	if (fileHash == m_hScriptsRsonHash)
+	if (fileHash == hScriptsRsonHash)
 		BuildScriptsRson();
 	//else if (fileHash == m_hPdefHash)
 	//{
 	//	// BuildPdef(); todo
 	//}
-	else if (fileHash == m_hKBActHash)
+	else if (fileHash == hKBActHash)
 		BuildKBActionsList();
 	else
 	{

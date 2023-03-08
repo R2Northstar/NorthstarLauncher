@@ -1441,7 +1441,7 @@
     <ClCompile Include="mods\reload\reloadmodweapons_misc.cpp">
       <Filter>Source Files\mods\reload</Filter>
     </ClCompile>
-    <ClCompile Include="reloadturrets.cpp">
+    <ClCompile Include="reloadmodturrets.cpp">
       <Filter>Source Files\mods\reload</Filter>
     </ClCompile>
   </ItemGroup>

@@ -133,10 +133,7 @@ class ModManager
   private:
 	bool m_bHasLoadedMods = false;
 
-	// precalculated hashes
-	size_t m_hScriptsRsonHash;
-	size_t m_hPdefHash;
-	size_t m_hKBActHash;
+	std::unordered_set<std::string> m_setsAllowedRemoteMods {};
 
 	void LoadModDefinitions();
 	void SaveEnabledMods();
@@ -208,21 +205,31 @@ class ModManager
 	std::string NormaliseModFilePath(const fs::path path);
 	void CompileAssetsForFile(const char* filename);
 
-	// getters
+	// getters and setters
 	inline std::vector<Mod>& GetMods()
 	{
 		return m_ModLoadState->m_LoadedMods;
-	};
+	}
 
 	inline std::unordered_map<std::string, ModOverrideFile>& GetModFiles()
 	{
 		return m_ModLoadState->m_ModFiles;
-	};
+	}
 
 	inline std::unordered_map<std::string, std::string>& GetDependencyConstants()
 	{
 		return m_ModLoadState->m_DependencyConstants;
-	};
+	}
+
+	inline void SetAllowedRemoteMods(const std::unordered_set<std::string> setsAllowedRemoteMods)
+	{
+		m_setsAllowedRemoteMods = setsAllowedRemoteMods;
+	}
+
+	void ClearAllowedRemoteMods(void)
+	{
+		m_setsAllowedRemoteMods.clear();
+	}
 
 	// compile asset type stuff, these are done in files under runtime/compiled/
 	void BuildScriptsRson();
