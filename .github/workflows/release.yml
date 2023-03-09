@@ -68,7 +68,7 @@ jobs:
           zip --recurse-paths --quiet launcher-debug-files.zip launcher-debug-files/*
       - name: Upload files to release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/v') && !contains(env.NORTHSTAR_VERSION, '-rc')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           body: ":warning: These are development files! If you want to download Northstar, [go here instead](https://github.com/R2Northstar/Northstar/releases) :warning:"
           draft: false
