@@ -93,7 +93,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 				if (fileStr.fail())
 				{
 					spdlog::error("A file was supposed to be loaded but we can't access it?!");
-					
+
 					g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
 					mutex.get().unlock();
 					return;
