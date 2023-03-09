@@ -49,6 +49,7 @@ jobs:
             x64/Release/*.pdb
 
   upload-launcher-to-release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build-launcher
     runs-on: ubuntu-22.04
     steps:
@@ -68,7 +69,6 @@ jobs:
           zip --recurse-paths --quiet launcher-debug-files.zip launcher-debug-files/*
       - name: Upload files to release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
           body: ":warning: These are development files! If you want to download Northstar, [go here instead](https://github.com/R2Northstar/Northstar/releases) :warning:"
           draft: false
