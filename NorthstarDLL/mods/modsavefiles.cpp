@@ -94,7 +94,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 				{
 					spdlog::error("A file was supposed to be loaded but we can't access it?!");
 					// we should throw a script error here. But idk how lmao
-					g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, "");
+					g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
 					mutex.get().unlock();
 					return;
 				}
@@ -103,7 +103,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 				while (fileStr.peek() != EOF)
 					stringStream << (char)fileStr.get();
 
-				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, stringStream.str());
+				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, true, stringStream.str());
 
 				fileStr.close();
 				mutex.get().unlock();
