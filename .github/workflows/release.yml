@@ -64,7 +64,6 @@ jobs:
           path: launcher-debug-files
       - name: Create zip to upload
         run: |
-          ls -alh
           zip --recurse-paths --quiet northstar-launcher.zip northstar-launcher/*
           zip --recurse-paths --quiet launcher-debug-files.zip launcher-debug-files/*
       - name: Upload files to release
