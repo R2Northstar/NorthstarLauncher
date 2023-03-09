@@ -164,10 +164,12 @@ bool IsPathSafe(fs::path str, fs::path dir)
 {
 	auto const normRoot = fs::weakly_canonical(dir);
 	auto const normChild = fs::weakly_canonical(str);
+	const std::string normChildStr = normChild.string();
 
 	auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
-	// we return if the file is NOT safe (NOT inside the directory)
-	return itr == normChild.begin();
+	// we return if the file is safe (inside the directory) and uses only ASCII chars in the path.
+	return itr == normChild.begin() &&
+		   !std::any_of(normChildStr.begin(), normChildStr.end(), [](char c) { return static_cast<unsigned char>(c) > 127; });
 }
 
 // void NSSaveFile( string file, string data )
