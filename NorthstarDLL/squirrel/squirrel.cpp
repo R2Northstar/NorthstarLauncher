@@ -252,11 +252,11 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 				break;
 			}
 		}
-		removeFromStack(m_pSQVM->sqvm);
 
 		if (!bWasFound)
 			defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
+	removeFromStack(m_pSQVM->sqvm);
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 }
 
