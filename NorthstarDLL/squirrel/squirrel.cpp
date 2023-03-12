@@ -233,9 +233,6 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 				else
 					semver.push_back(-1);
 
-				last = 0;
-				next = 0;
-
 				pushstring(m_pSQVM->sqvm, pair.first.c_str());
 				newtable(m_pSQVM->sqvm);
 				pushstring(m_pSQVM->sqvm, "major");
@@ -246,6 +243,9 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 				newslot(m_pSQVM->sqvm, -3, 0);
 				pushstring(m_pSQVM->sqvm, "patch");
 				pushinteger(m_pSQVM->sqvm, 2 < semver.size() ? semver[2] : -1);
+				newslot(m_pSQVM->sqvm, -3, 0);
+				pushstring(m_pSQVM->sqvm, "version");
+				pushstring(m_pSQVM->sqvm, dependency.Version.c_str());
 				newslot(m_pSQVM->sqvm, -3, 0);
 				newslot(m_pSQVM->sqvm, -3, 0);
 				bWasFound = true;
