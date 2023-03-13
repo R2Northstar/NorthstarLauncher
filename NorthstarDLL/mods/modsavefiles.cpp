@@ -12,6 +12,7 @@
 #include "config/profile.h"
 #include "core/tier0.h"
 #include "rapidjson/error/en.h"
+#include "scripts/scriptjson.h"
 
 SaveFileManager* g_saveFileManager;
 int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
@@ -230,8 +231,6 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 
 	return SQRESULT_NULL;
 }
-
-#include "scripts/scriptjson.h"
 
 // void NSSaveJSONFile(string file, table data)
 ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
