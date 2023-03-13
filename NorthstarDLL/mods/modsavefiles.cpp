@@ -163,12 +163,10 @@ bool ContainsInvalidChars(std::string str)
 // I don't know why I have to pass the string path as a separate parameter
 // I don't want to know why I have to pass the string path as a separate parameter
 // but if I don't ASCII check fails. So here we are.
-bool IsPathSafe(fs::path str, fs::path dir, const std::string param)
+bool IsPathSafe(const std::string param, fs::path dir)
 {
 	auto const normRoot = fs::weakly_canonical(dir);
-	auto const normChild = fs::weakly_canonical(str);
-	auto const paramPath = fs::path(param);
-	const std::string normChildStr = normChild.string();
+	auto const normChild = fs::weakly_canonical(dir / param);
 
 	auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
 	// we return if the file is safe (inside the directory) and uses only ASCII chars in the path.
@@ -193,7 +191,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (!IsPathSafe(dir / fileName, dir, fileName))
+	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -246,7 +244,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (!IsPathSafe(dir / fileName, dir, fileName))
+	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -297,7 +295,7 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (!IsPathSafe(dir / fileName, dir, fileName))
+	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -318,7 +316,7 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (!IsPathSafe(dir / fileName, dir, fileName))
+	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -338,7 +336,7 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (!IsPathSafe(dir / fileName, dir, fileName))
+	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -368,7 +366,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
 	std::string fileName = g_pSquirrel<context>->getstring(sqvm, 1);
-	if (!IsPathSafe(dir / fileName, dir, fileName))
+	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -391,7 +389,7 @@ ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptCon
 	fs::path path = dir;
 	if (pathStr != "")
 		path = dir / pathStr;
-	if (!IsPathSafe(path, dir, pathStr))
+	if (!IsPathSafe(pathStr, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -425,7 +423,7 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	fs::path path = dir;
 	if (pathStr != "")
 		path = dir / pathStr;
-	if (!IsPathSafe(path, dir, pathStr))
+	if (!IsPathSafe(pathStr, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
