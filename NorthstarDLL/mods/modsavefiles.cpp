@@ -197,7 +197,11 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", fileName, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				fileName,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -248,7 +252,11 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", fileName, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				fileName,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -299,7 +307,11 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", fileName, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				fileName,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -320,7 +332,11 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", fileName, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				fileName,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -340,7 +356,11 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", fileName, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				fileName,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -370,7 +390,11 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", fileName, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				fileName,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -393,7 +417,11 @@ ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptCon
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", pathStr, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				pathStr,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
@@ -427,7 +455,11 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
-			fmt::format("File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's save folder.", pathStr, mod->Name)
+			fmt::format(
+				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+				"save folder.",
+				pathStr,
+				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
 	}
