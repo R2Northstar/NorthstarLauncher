@@ -296,49 +296,49 @@ class SquirrelManagerBase
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQChar* value, bool isAsset = false)
+	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQChar* value, bool isAsset = false, SQInteger idx = -3)
 	{
 		pushstring(sqvm, key);
 		if (isAsset)
 			pushasset(sqvm, value);
 		else
 			pushstring(sqvm, value);
-		return newslot(sqvm, -3, false);
+		return newslot(sqvm, idx, false);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQInteger value)
+	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQInteger value, SQInteger idx = -3)
 	{
 		pushstring(sqvm, key);
 		pushinteger(sqvm, value);
-		return newslot(sqvm, -3, false);
+		return newslot(sqvm, idx, false);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQFloat value)
+	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQFloat value, SQInteger idx = -3)
 	{
 		pushstring(sqvm, key);
 		pushfloat(sqvm, value);
-		return newslot(sqvm, -3, false);
+		return newslot(sqvm, idx, false);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQBool value)
+	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQBool value, SQInteger idx = -3)
 	{
 		pushstring(sqvm, key);
 		pushbool(sqvm, value);
-		return newslot(sqvm, -3, false);
+		return newslot(sqvm, idx, false);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const Vector3 value)
+	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const Vector3 value, SQInteger idx = -3)
 	{
 		pushstring(sqvm, key);
 		pushvector(sqvm, value);
-		return newslot(sqvm, -3, false);
+		return newslot(sqvm, idx, false);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, SQObject* value)
+	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, SQObject* value, SQInteger idx = -3)
 	{
 		pushstring(sqvm, key);
 		pushobject(sqvm, value);
-		return newslot(sqvm, -3, false);
+		return newslot(sqvm, idx, false);
 	}
 #pragma endregion
 };
