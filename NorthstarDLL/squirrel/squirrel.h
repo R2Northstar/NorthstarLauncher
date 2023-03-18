@@ -303,42 +303,42 @@ class SquirrelManagerBase
 			pushasset(sqvm, value);
 		else
 			pushstring(sqvm, value);
-		newslot(sqvm, -3, false);
+		return newslot(sqvm, -3, false);
 	}
 
 	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQInteger value)
 	{
 		pushstring(sqvm, key);
 		pushinteger(sqvm, value);
-		newslot(sqvm, -3, false);
+		return newslot(sqvm, -3, false);
 	}
 
 	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQFloat value)
 	{
 		pushstring(sqvm, key);
 		pushfloat(sqvm, value);
-		newslot(sqvm, -3, false);
+		return newslot(sqvm, -3, false);
 	}
 
 	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQBool value)
 	{
 		pushstring(sqvm, key);
 		pushbool(sqvm, value);
-		newslot(sqvm, -3, false);
+		return newslot(sqvm, -3, false);
 	}
 
 	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const Vector3 value)
 	{
 		pushstring(sqvm, key);
 		pushvector(sqvm, value);
-		newslot(sqvm, -3, false);
+		return newslot(sqvm, -3, false);
 	}
 
 	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, SQObject* value)
 	{
 		pushstring(sqvm, key);
 		pushobject(sqvm, value);
-		newslot(sqvm, -3, false);
+		return newslot(sqvm, -3, false);
 	}
 #pragma endregion
 };
