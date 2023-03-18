@@ -203,7 +203,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 			if (dependency.Name == pair.second)
 			{
 				std::string v = dependency.Version;
-				std::vector<int> semver;
+				std::vector<SQInteger> semver;
 				size_t last = 0;
 				size_t next = 0;
 
@@ -235,18 +235,10 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 				pushstring(m_pSQVM->sqvm, pair.first.c_str());
 				newtable(m_pSQVM->sqvm);
-				pushstring(m_pSQVM->sqvm, "major");
-				pushinteger(m_pSQVM->sqvm, 0 < semver.size() ? semver[0] : -1);
-				newslot(m_pSQVM->sqvm, -3, 0);
-				pushstring(m_pSQVM->sqvm, "minor");
-				pushinteger(m_pSQVM->sqvm, 1 < semver.size() ? semver[1] : -1);
-				newslot(m_pSQVM->sqvm, -3, 0);
-				pushstring(m_pSQVM->sqvm, "patch");
-				pushinteger(m_pSQVM->sqvm, 2 < semver.size() ? semver[2] : -1);
-				newslot(m_pSQVM->sqvm, -3, 0);
-				pushstring(m_pSQVM->sqvm, "version");
-				pushstring(m_pSQVM->sqvm, dependency.Version.c_str());
-				newslot(m_pSQVM->sqvm, -3, 0);
+				createslot(m_pSQVM->sqvm, "major", 0 < semver.size() ? semver[0] : -1);
+				createslot(m_pSQVM->sqvm, "minor", 1 < semver.size() ? semver[1] : -1);
+				createslot(m_pSQVM->sqvm, "patch", 2 < semver.size() ? semver[2] : -1);
+				createslot(m_pSQVM->sqvm, "version", dependency.Version.c_str());
 				newslot(m_pSQVM->sqvm, -3, 0);
 				bWasFound = true;
 				break;
