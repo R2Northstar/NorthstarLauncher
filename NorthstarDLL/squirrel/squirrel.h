@@ -296,49 +296,43 @@ class SquirrelManagerBase
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQChar* value, bool isAsset = false, SQInteger idx = -3)
+	inline void pushvar(HSquirrelVM* sqvm, const SQChar* v)
 	{
-		pushstring(sqvm, key);
-		if (isAsset)
-			pushasset(sqvm, value);
-		else
-			pushstring(sqvm, value);
-		return newslot(sqvm, idx, false);
+		pushstring(sqvm, v);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQInteger value, SQInteger idx = -3)
+	inline void pushvar(HSquirrelVM* sqvm, const SQInteger v)
 	{
-		pushstring(sqvm, key);
-		pushinteger(sqvm, value);
-		return newslot(sqvm, idx, false);
+		pushinteger(sqvm, v);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQFloat value, SQInteger idx = -3)
+	inline void pushvar(HSquirrelVM* sqvm, const SQFloat v)
 	{
-		pushstring(sqvm, key);
-		pushfloat(sqvm, value);
-		return newslot(sqvm, idx, false);
+		pushfloat(sqvm, v);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const SQBool value, SQInteger idx = -3)
+	inline void pushvar(HSquirrelVM* sqvm, const SQBool v)
 	{
-		pushstring(sqvm, key);
-		pushbool(sqvm, value);
-		return newslot(sqvm, idx, false);
+		pushbool(sqvm, v);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, const Vector3 value, SQInteger idx = -3)
+	inline void pushvar(HSquirrelVM* sqvm, const Vector3 v)
 	{
-		pushstring(sqvm, key);
-		pushvector(sqvm, value);
-		return newslot(sqvm, idx, false);
+		pushvector(sqvm, v);
 	}
 
-	inline SQRESULT createslot(HSquirrelVM* sqvm, const SQChar* key, SQObject* value, SQInteger idx = -3)
+	inline void pushvar(HSquirrelVM* sqvm, SQObject* v)
 	{
-		pushstring(sqvm, key);
-		pushobject(sqvm, value);
-		return newslot(sqvm, idx, false);
+		pushobject(sqvm, v);
+	}
+
+	// It's not possible to add slots that contain assets with this atm
+	template <typename KEY, typename VALUE>
+	SQRESULT createslot(HSquirrelVM* sqvm, KEY key, VALUE value, SQInteger idx = -3, bool bstatic = false)
+	{
+		pushvar(sqvm, key);
+		pushvar(sqvm, value);
+		return newslot(sqvm, idx, bstatic);
 	}
 #pragma endregion
 };
