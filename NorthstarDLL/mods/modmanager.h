@@ -20,9 +20,9 @@ struct ModConVar
 	std::string Name;
 	std::string DefaultValue;
 	std::string HelpString;
-	std::string UICallback;
-	std::string ClientCallback;
-	std::string ServerCallback;
+	std::string UIChangeCallback;
+	std::string ClientChangeCallback;
+	std::string ServerChangeCallback;
 	int Flags;
 };
 

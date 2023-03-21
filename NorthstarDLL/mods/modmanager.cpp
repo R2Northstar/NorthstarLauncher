@@ -123,17 +123,17 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 			if (convarObj.HasMember("UIChangeCallback"))
 			{
-				convar->UICallback = convarObj["UIChangeCallback"].GetString();
+				convar->UIChangeCallback = convarObj["UIChangeCallback"].GetString();
 			}
 
 			if (convarObj.HasMember("ClientChangeCallback"))
 			{
-				convar->ClientCallback = convarObj["ClientChangeCallback"].GetString();
+				convar->ClientChangeCallback = convarObj["ClientChangeCallback"].GetString();
 			}
 
 			if (convarObj.HasMember("ServerChangeCallback"))
 			{
-				convar->ServerCallback = convarObj["ServerChangeCallback"].GetString();
+				convar->ServerChangeCallback = convarObj["ServerChangeCallback"].GetString();
 			}
 
 			ConVars.push_back(convar);
@@ -395,22 +395,23 @@ auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldVal
 			break;
 		}
 	}
+
 	if (!found)
 		return;
 
-	if (found->UICallback != "")
+	if (found->UIChangeCallback != "")
 	{
-		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->UICallback, pOldValue, var->m_ConCommandBase.m_pszName);
+		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->UIChangeCallback, pOldValue, var->m_ConCommandBase.m_pszName);
 	}
 
-	if (found->ClientCallback != "")
+	if (found->ClientChangeCallback != "")
 	{
-		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->ClientCallback, pOldValue, var->m_ConCommandBase.m_pszName);
+		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->ClientChangeCallback, pOldValue, var->m_ConCommandBase.m_pszName);
 	}
 
-	if (found->ServerCallback != "")
+	if (found->ServerChangeCallback != "")
 	{
-		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->ServerCallback, pOldValue, var->m_ConCommandBase.m_pszName);
+		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->ServerChangeCallback, pOldValue, var->m_ConCommandBase.m_pszName);
 	}
 }
 
