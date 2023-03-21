@@ -121,25 +121,19 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				}
 			}
 
-			if (convarObj.HasMember("Function"))
+			if (convarObj.HasMember("UICallback"))
 			{
-				convar->Callback.Function = convarObj["Function"].GetString();
-				spdlog::error("{}", convar->Callback.Function);
-			}
-			else
-			{
-				convar->Callback.Function = "";
+				convar->UICallback = convarObj["UICallback"].GetString();
 			}
 
-			if (convarObj.HasMember("Context") && convar->Callback.Function != "")
+			if (convarObj.HasMember("ClientCallback"))
 			{
-				convar->Callback.Context = ScriptContextFromString(convarObj["Context"].GetString());
+				convar->ClientCallback = convarObj["ClientCallback"].GetString();
+			}
 
-				if (convar->Callback.Context == ScriptContext::INVALID)
-				{
-					spdlog::warn("Mod ConVar callback {} has invalid context {}", convar->Name, convarObj["Context"].GetString());
-					convar->Callback.Function = "";
-				}
+			if (convarObj.HasMember("ServerCallback"))
+			{
+				convar->ServerCallback = convarObj["ServerCallback"].GetString();
 			}
 
 			ConVars.push_back(convar);
@@ -404,24 +398,20 @@ auto ModConVarChangedCallback(ConVar* var, const char* pOldValue, float flOldVal
 	if (!found)
 		return;
 
-	if (found->Callback.Function == "")
-		return;
-
-	spdlog::info(
-		"Running convar changed callback {} in {} for: {}", found->Callback.Function, GetContextName(found->Callback.Context), conVarName);
-
-	switch (found->Callback.Context)
+	if (found->UICallback != "")
 	{
-	case ScriptContext::CLIENT:
-		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->Callback.Function, pOldValue, var->m_ConCommandBase.m_pszName);
-		break;
-	case ScriptContext::SERVER:
-		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->Callback.Function, pOldValue, var->m_ConCommandBase.m_pszName);
-		break;
-	case ScriptContext::UI:
-		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->Callback.Function, pOldValue, var->m_ConCommandBase.m_pszName);
-		break;
-	};
+		ModConVarChangedCallback_Internal<ScriptContext::UI>(found->UICallback, pOldValue, var->m_ConCommandBase.m_pszName);
+	}
+
+	if (found->ClientCallback != "")
+	{
+		ModConVarChangedCallback_Internal<ScriptContext::CLIENT>(found->ClientCallback, pOldValue, var->m_ConCommandBase.m_pszName);
+	}
+
+	if (found->ServerCallback != "")
+	{
+		ModConVarChangedCallback_Internal<ScriptContext::SERVER>(found->ServerCallback, pOldValue, var->m_ConCommandBase.m_pszName);
+	}
 }
 
 void ModManager::LoadMods()

@@ -13,11 +13,6 @@ const std::string REMOTE_MOD_FOLDER_SUFFIX = "/runtime/remote/mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
 const std::string COMPILED_ASSETS_SUFFIX = "/runtime/compiled";
 
-struct ModConVarCallback
-{
-	std::string Function;
-	ScriptContext Context;
-};
 
 struct ModConVar
 {
@@ -25,7 +20,9 @@ struct ModConVar
 	std::string Name;
 	std::string DefaultValue;
 	std::string HelpString;
-	ModConVarCallback Callback;
+	std::string UICallback;
+	std::string ClientCallback;
+	std::string ServerCallback;
 	int Flags;
 };
 
