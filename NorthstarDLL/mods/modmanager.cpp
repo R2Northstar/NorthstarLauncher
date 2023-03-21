@@ -121,19 +121,19 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				}
 			}
 
-			if (convarObj.HasMember("UICallback"))
+			if (convarObj.HasMember("UIChangeCallback"))
 			{
-				convar->UICallback = convarObj["UICallback"].GetString();
+				convar->UICallback = convarObj["UIChangeCallback"].GetString();
 			}
 
-			if (convarObj.HasMember("ClientCallback"))
+			if (convarObj.HasMember("ClientChangeCallback"))
 			{
-				convar->ClientCallback = convarObj["ClientCallback"].GetString();
+				convar->ClientCallback = convarObj["ClientChangeCallback"].GetString();
 			}
 
-			if (convarObj.HasMember("ServerCallback"))
+			if (convarObj.HasMember("ServerChangeCallback"))
 			{
-				convar->ServerCallback = convarObj["ServerCallback"].GetString();
+				convar->ServerCallback = convarObj["ServerChangeCallback"].GetString();
 			}
 
 			ConVars.push_back(convar);
