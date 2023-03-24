@@ -143,8 +143,6 @@ int, __fastcall, (const char const* cmdname, const char const* partial, char com
 	return numMaps;
 }
 
-
-
 ADD_SQFUNC(
 	"array<string>",
 	NSGetLoadedMapNames,
@@ -157,7 +155,7 @@ ADD_SQFUNC(
 
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
-	for (MapVPKInfo &map : vMapList)
+	for (MapVPKInfo& map : vMapList)
 	{
 		g_pSquirrel<context>->pushstring(sqvm, map.name.c_str());
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
