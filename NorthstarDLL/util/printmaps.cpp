@@ -55,12 +55,12 @@ void RefreshMapList()
 			"englishclient_frontend.bsp.pak000_dir.vpk"}; // don't include mp_common here as it contains mp_lobby
 
 		// matches directory vpks, and captures their map name in the first group
-		static const std::regex rVpkMapRegex("englishclient_([a-zA-Z_]+)\\.bsp\\.pak000_dir\\.vpk", std::regex::icase);
+		static const std::regex rVpkMapRegex("englishclient_([a-zA-Z0-9_]+)\\.bsp\\.pak000_dir\\.vpk", std::regex::icase);
 
 		for (fs::directory_entry file : fs::directory_iterator("./vpk"))
 		{
 			std::string pathString = file.path().filename().string();
-
+			
 			bool bIsValidMapVpk = true;
 			for (int i = 0; i < iNumRetailNonMapVpks; i++)
 			{
