@@ -61,7 +61,7 @@ void RefreshMapList()
 		for (fs::directory_entry file : fs::directory_iterator("./vpk"))
 		{
 			std::string pathString = file.path().filename().string();
-			
+
 			bool bIsValidMapVpk = true;
 			for (int i = 0; i < iNumRetailNonMapVpks; i++)
 			{
@@ -145,7 +145,12 @@ int, __fastcall, (const char const* cmdname, const char const* partial, char com
 
 
 
-ADD_SQFUNC("array<string>", NSGetLoadedMapNames, "", "Returns a string array of loaded map file names", ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+ADD_SQFUNC(
+	"array<string>",
+	NSGetLoadedMapNames,
+	"",
+	"Returns a string array of loaded map file names",
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	// Maybe we should call this on mods reload instead
 	RefreshMapList();
