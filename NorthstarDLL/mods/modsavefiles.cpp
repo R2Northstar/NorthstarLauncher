@@ -14,7 +14,7 @@
 #include "rapidjson/error/en.h"
 #include "scripts/scriptjson.h"
 
-SaveFileManager* g_saveFileManager;
+SaveFileManager* g_pSaveFileManager;
 int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
 fs::path savePath;
 
@@ -231,7 +231,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 		return SQRESULT_ERROR;
 	}
 
-	g_saveFileManager->SaveFileAsync<context>(dir / fileName, content);
+	g_pSaveFileManager->SaveFileAsync<context>(dir / fileName, content);
 
 	return SQRESULT_NULL;
 }
@@ -286,7 +286,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 		return SQRESULT_ERROR;
 	}
 
-	g_saveFileManager->SaveFileAsync<context>(dir / fileName, content);
+	g_pSaveFileManager->SaveFileAsync<context>(dir / fileName, content);
 
 	return SQRESULT_NULL;
 }
@@ -316,7 +316,7 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 		return SQRESULT_ERROR;
 	}
 
-	g_pSquirrel<context>->pushinteger(sqvm, g_saveFileManager->LoadFileAsync<context>(dir / fileName));
+	g_pSquirrel<context>->pushinteger(sqvm, g_pSaveFileManager->LoadFileAsync<context>(dir / fileName));
 
 	return SQRESULT_NOTNULL;
 }
@@ -399,7 +399,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 		return SQRESULT_ERROR;
 	}
 
-	g_saveFileManager->DeleteFileAsync<context>(dir / fileName);
+	g_pSaveFileManager->DeleteFileAsync<context>(dir / fileName);
 	return SQRESULT_NOTNULL;
 }
 
@@ -508,7 +508,7 @@ template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 ON_DLL_LOAD("engine.dll", ModSaveFFiles_Init, (CModule module))
 {
 	savePath = fs::path(GetNorthstarPrefix()) / "save_data";
-	g_saveFileManager = new SaveFileManager;
+	g_pSaveFileManager = new SaveFileManager;
 	int parm = Tier0::CommandLine()->FindParm("-maxfoldersize");
 	if (parm)
 		MAX_FOLDER_SIZE = std::stoi(Tier0::CommandLine()->GetParm(parm));
