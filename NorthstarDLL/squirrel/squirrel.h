@@ -336,13 +336,15 @@ class SquirrelManagerBase
 		bool valueIsAsset = false)
 	{
 		if (keyIsAsset)
-			pushasset(sqvm, key);
+			pushasset(sqvm, (SQChar*)key); // need to cast because msvc considers every codepath to be valid even if they're impossible to reach
 		else
 			pushvar(sqvm, key);
+
 		if (valueIsAsset)
-			pushasset(sqvm, value);
+			pushasset(sqvm, (SQChar*)value);
 		else
 			pushvar(sqvm, value);
+
 		return newslot(sqvm, tableIndex, bstatic);
 	}
 #pragma endregion
