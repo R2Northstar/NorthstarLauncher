@@ -326,13 +326,24 @@ class SquirrelManagerBase
 		pushobject(sqvm, v);
 	}
 
-	// It's not possible to add slots that contain assets with this atm
-	template <typename KEY, typename VALUE>
-	SQRESULT createslot(HSquirrelVM* sqvm, KEY key, VALUE value, SQInteger idx = -3, bool bstatic = false)
+	template <typename KEY, typename VALUE> SQRESULT createslot(
+		HSquirrelVM* sqvm,
+		KEY key,
+		VALUE value,
+		SQInteger tableIndex = -3,
+		bool bstatic = false,
+		bool keyIsAsset = false,
+		bool valueIsAsset = false)
 	{
-		pushvar(sqvm, key);
-		pushvar(sqvm, value);
-		return newslot(sqvm, idx, bstatic);
+		if (keyIsAsset)
+			pushasset(sqvm, key);
+		else
+			pushvar(sqvm, key);
+		if (valueIsAsset)
+			pushasset(sqvm, value);
+		else
+			pushvar(sqvm, value);
+		return newslot(sqvm, tableIndex, bstatic);
 	}
 #pragma endregion
 };
