@@ -336,7 +336,8 @@ class SquirrelManagerBase
 		bool valueIsAsset = false)
 	{
 		if (keyIsAsset)
-			pushasset(sqvm, (SQChar*)key); // need to cast because msvc considers every codepath to be valid even if they're impossible to reach
+			// need to cast because msvc considers every codepath to be valid even if they're impossible to reach
+			pushasset(sqvm, (SQChar*)key);
 		else
 			pushvar(sqvm, key);
 
