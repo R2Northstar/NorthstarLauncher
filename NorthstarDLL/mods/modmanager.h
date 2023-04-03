@@ -147,7 +147,7 @@ class ModManager
 	std::vector<Mod> m_LoadedMods;
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
-	std::vector<std::string> m_invalidMods;
+	std::vector<std::shared_ptr<Mod>> m_invalidMods;
 
   public:
 	ModManager();

@@ -401,14 +401,28 @@ void ModManager::LoadMods()
 					continue;
 
 				for (fs::directory_entry subdir : fs::recursive_directory_iterator(dir.path()))
-					if (fs::exists(subdir.path() / "mod.json"))
+				{
+					fs::path modPath = subdir.path() / "mod.json";
+					if (fs::exists(modPath))
 					{
 						spdlog::warn(
 							"mod.json file for directory {} is located at the wrong location ({}).",
 							dir.path().generic_string().c_str(),
 							subdir.path().generic_string().c_str());
-						this->m_invalidMods.push_back(dir.path().generic_string().c_str());
+
+						// read mod json file
+						std::ifstream jsonStream(modPath);
+						std::stringstream jsonStringStream;
+
+						while (jsonStream.peek() != EOF)
+							jsonStringStream << (char)jsonStream.get();
+
+						jsonStream.close();
+						std::shared_ptr<Mod> mod = std::shared_ptr<Mod>(new Mod(subdir, (char*)jsonStringStream.str().c_str()));
+
+						this->m_invalidMods.push_back(mod);
 					}
+				}
 			}
 		}
 

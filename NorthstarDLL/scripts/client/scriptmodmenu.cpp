@@ -168,13 +168,21 @@ ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("array<string>", NSGetInvalidMods, "", "", ScriptContext::UI)
+ADD_SQFUNC("array< table<string, string> >", NSGetInvalidMods, "", "", ScriptContext::UI)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
-	for (std::string path : g_pModManager->m_invalidMods)
+	for (std::shared_ptr<Mod> mod : g_pModManager->m_invalidMods)
 	{
-		g_pSquirrel<context>->pushstring(sqvm, path.c_str());
+		g_pSquirrel<context>->newtable(sqvm);
+		// path slot
+		g_pSquirrel<context>->pushstring(sqvm, "path");
+		g_pSquirrel<context>->pushstring(sqvm, mod->m_ModDirectory.generic_string().c_str());
+		g_pSquirrel<context>->newslot(sqvm, -3, false);
+		// invalid mod name slot
+		g_pSquirrel<context>->pushstring(sqvm, "name");
+		g_pSquirrel<context>->pushstring(sqvm, mod->Name.c_str());
+		g_pSquirrel<context>->newslot(sqvm, -3, false);
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
 	}
 
