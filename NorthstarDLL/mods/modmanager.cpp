@@ -146,7 +146,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 		ConVars.push_back(convar);
 
-		spdlog::info("Registered ConVar '{}' for mod '{}'", convar->Name, Name);
+		spdlog::info("'{}' registered ConVar '{}'", Name, convar->Name);
 	}
 CONVARS_END:
 
@@ -219,7 +219,7 @@ CONVARS_END:
 
 		ConCommands.push_back(concommand);
 
-		spdlog::info("Registered ConCommand '{}' for mod '{}'", concommand->Name, Name);
+		spdlog::info("'{}' registered ConCommand '{}'", Name, concommand->Name);
 	}
 CONCOMMANDS_END:
 
@@ -378,7 +378,7 @@ CONCOMMANDS_END:
 
 		Scripts.push_back(script);
 
-		spdlog::info("Registered Script '{}' for mod '{}'", script.Path, Name);
+		spdlog::info("'{}' registered Script '{}'", Name, script.Path);
 	}
 SCRIPTS_END:
 
