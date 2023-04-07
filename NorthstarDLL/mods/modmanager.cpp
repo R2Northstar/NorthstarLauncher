@@ -218,6 +218,8 @@ CONVARS_END:
 		}
 
 		ConCommands.push_back(concommand);
+
+		spdlog::info("Registered ConCommand '{}' for mod '{}'", concommand->Name, Name);
 	}
 CONCOMMANDS_END:
 
