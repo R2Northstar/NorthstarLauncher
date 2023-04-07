@@ -161,8 +161,19 @@ CONVARS_END:
 
 	for (auto& concommandObj : modJson["ConCommands"].GetArray())
 	{
-		if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") ||
-			!concommandObj.HasMember("Context"))
+		if (!concommandObj.IsObject())
+		{
+			continue;
+		}
+		if (!concommandObj.HasMember("Name"))
+		{
+			continue;
+		}
+		if (!concommandObj.HasMember("Function"))
+		{
+			continue;
+		}
+		if (!concommandObj.HasMember("Context"))
 		{
 			continue;
 		}
