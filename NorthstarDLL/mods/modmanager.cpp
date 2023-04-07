@@ -94,7 +94,10 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		goto CONVARS_END;
 
 	if (!modJson["ConVars"].IsArray())
+	{
+		spdlog::warn("'ConVars' field is not an array, skipping...");
 		goto CONVARS_END;
+	}
 
 	for (auto& convarObj : modJson["ConVars"].GetArray())
 	{
