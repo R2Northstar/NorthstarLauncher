@@ -145,6 +145,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 
 		ConVars.push_back(convar);
+
+		spdlog::info("Registered ConVar '{}' for mod '{}'", convar->Name, Name);
 	}
 	CONVARS_END:
 
