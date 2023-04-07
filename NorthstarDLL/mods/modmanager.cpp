@@ -148,7 +148,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 		spdlog::info("Registered ConVar '{}' for mod '{}'", convar->Name, Name);
 	}
-	CONVARS_END:
+CONVARS_END:
 
 	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
 	{
