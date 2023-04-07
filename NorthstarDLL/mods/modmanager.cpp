@@ -259,55 +259,121 @@ CONCOMMANDS_END:
 		script.Path = scriptObj["Path"].GetString();
 		script.RunOn = scriptObj["RunOn"].GetString();
 
-		if (scriptObj.HasMember("ServerCallback") && scriptObj["ServerCallback"].IsObject())
+		if (scriptObj.HasMember("ServerCallback"))
 		{
-			ModScriptCallback callback;
-			callback.Context = ScriptContext::SERVER;
+			if (scriptObj["ServerCallback"].IsObject())
+			{
+				ModScriptCallback callback;
+				callback.Context = ScriptContext::SERVER;
 
-			if (scriptObj["ServerCallback"].HasMember("Before") && scriptObj["ServerCallback"]["Before"].IsString())
-				callback.BeforeCallback = scriptObj["ServerCallback"]["Before"].GetString();
+				if (scriptObj["ServerCallback"].HasMember("Before"))
+				{
+					if (scriptObj["ServerCallback"]["Before"].IsString())
+						callback.BeforeCallback = scriptObj["ServerCallback"]["Before"].GetString();
+					else
+						spdlog::warn("'Before' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			if (scriptObj["ServerCallback"].HasMember("After") && scriptObj["ServerCallback"]["After"].IsString())
-				callback.AfterCallback = scriptObj["ServerCallback"]["After"].GetString();
+				if (scriptObj["ServerCallback"].HasMember("After"))
+				{
+					if (scriptObj["ServerCallback"]["After"].IsString())
+						callback.AfterCallback = scriptObj["ServerCallback"]["After"].GetString();
+					else
+						spdlog::warn("'After' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			if (scriptObj["ServerCallback"].HasMember("Destroy") && scriptObj["ServerCallback"]["Destroy"].IsString())
-				callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
+				if (scriptObj["ServerCallback"].HasMember("Destroy"))
+				{
+					if (scriptObj["ServerCallback"]["Destroy"].IsString())
+						callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
+					else
+						spdlog::warn("'Destroy' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			script.Callbacks.push_back(callback);
+				script.Callbacks.push_back(callback);
+			}
+			else
+			{
+				spdlog::warn("ServerCallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+			}
 		}
 
-		if (scriptObj.HasMember("ClientCallback") && scriptObj["ClientCallback"].IsObject())
+		if (scriptObj.HasMember("ClientCallback"))
 		{
-			ModScriptCallback callback;
-			callback.Context = ScriptContext::CLIENT;
+			if (scriptObj["ClientCallback"].IsObject())
+				{
+				ModScriptCallback callback;
+				callback.Context = ScriptContext::CLIENT;
 
-			if (scriptObj["ClientCallback"].HasMember("Before") && scriptObj["ClientCallback"]["Before"].IsString())
-				callback.BeforeCallback = scriptObj["ClientCallback"]["Before"].GetString();
+				if (scriptObj["ClientCallback"].HasMember("Before"))
+				{
+					if (scriptObj["ClientCallback"]["Before"].IsString())
+						callback.BeforeCallback = scriptObj["ClientCallback"]["Before"].GetString();
+					else
+						spdlog::warn("'Before' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			if (scriptObj["ClientCallback"].HasMember("After") && scriptObj["ClientCallback"]["After"].IsString())
-				callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
+				if (scriptObj["ClientCallback"].HasMember("After"))
+				{
+					if (scriptObj["ClientCallback"]["After"].IsString())
+						callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
+					else
+						spdlog::warn("'After' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			if (scriptObj["ClientCallback"].HasMember("Destroy") && scriptObj["ClientCallback"]["Destroy"].IsString())
-				callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
+				if (scriptObj["ClientCallback"].HasMember("Destroy"))
+				{
+					if (scriptObj["ClientCallback"]["Destroy"].IsString())
+						callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
+					else
+						spdlog::warn("'Destroy' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			script.Callbacks.push_back(callback);
+				script.Callbacks.push_back(callback);
+			}
+			else
+			{
+				spdlog::warn("ClientCallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+			}
 		}
 
-		if (scriptObj.HasMember("UICallback") && scriptObj["UICallback"].IsObject())
+		if (scriptObj.HasMember("UICallback"))
 		{
-			ModScriptCallback callback;
-			callback.Context = ScriptContext::UI;
+			if (scriptObj["UICallback"].IsObject())
+			{
+				ModScriptCallback callback;
+				callback.Context = ScriptContext::UI;
 
-			if (scriptObj["UICallback"].HasMember("Before") && scriptObj["UICallback"]["Before"].IsString())
-				callback.BeforeCallback = scriptObj["UICallback"]["Before"].GetString();
+				if (scriptObj["UICallback"].HasMember("Before"))
+				{
+					if (scriptObj["UICallback"]["Before"].IsString())
+						callback.BeforeCallback = scriptObj["UICallback"]["Before"].GetString();
+					else
+						spdlog::warn("'Before' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			if (scriptObj["UICallback"].HasMember("After") && scriptObj["UICallback"]["After"].IsString())
-				callback.AfterCallback = scriptObj["UICallback"]["After"].GetString();
+				if (scriptObj["UICallback"].HasMember("After"))
+				{
+					if (scriptObj["UICallback"]["After"].IsString())
+						callback.AfterCallback = scriptObj["UICallback"]["After"].GetString();
+					else
+						spdlog::warn("'After' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			if (scriptObj["UICallback"].HasMember("Destroy") && scriptObj["UICallback"]["Destroy"].IsString())
-				callback.DestroyCallback = scriptObj["UICallback"]["Destroy"].GetString();
+				if (scriptObj["UICallback"].HasMember("Destroy"))
+				{
+					if (scriptObj["UICallback"]["Destroy"].IsString())
+						callback.DestroyCallback = scriptObj["UICallback"]["Destroy"].GetString();
+					else
+						spdlog::warn("'Destroy' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+				}
 
-			script.Callbacks.push_back(callback);
+				script.Callbacks.push_back(callback);
+			}
+			else
+			{
+				spdlog::warn("UICallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+			}
 		}
 
 		Scripts.push_back(script);
