@@ -93,43 +93,43 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	if (!modJson.HasMember("ConVars"))
 		goto CONVARS_END;
 
-	if (modJson["ConVars"].IsArray())
+	if (!modJson["ConVars"].IsArray())
+		goto CONVARS_END;
+
+	for (auto& convarObj : modJson["ConVars"].GetArray())
 	{
-		for (auto& convarObj : modJson["ConVars"].GetArray())
+		if (!convarObj.IsObject() || !convarObj.HasMember("Name") || !convarObj.HasMember("DefaultValue"))
+			continue;
+
+		// have to allocate this manually, otherwise convar registration will break
+		// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
+		ModConVar* convar = new ModConVar;
+		convar->Name = convarObj["Name"].GetString();
+		convar->DefaultValue = convarObj["DefaultValue"].GetString();
+
+		if (convarObj.HasMember("HelpString"))
+			convar->HelpString = convarObj["HelpString"].GetString();
+		else
+			convar->HelpString = "";
+
+		convar->Flags = FCVAR_NONE;
+
+		if (convarObj.HasMember("Flags"))
 		{
-			if (!convarObj.IsObject() || !convarObj.HasMember("Name") || !convarObj.HasMember("DefaultValue"))
-				continue;
-
-			// have to allocate this manually, otherwise convar registration will break
-			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
-			ModConVar* convar = new ModConVar;
-			convar->Name = convarObj["Name"].GetString();
-			convar->DefaultValue = convarObj["DefaultValue"].GetString();
-
-			if (convarObj.HasMember("HelpString"))
-				convar->HelpString = convarObj["HelpString"].GetString();
-			else
-				convar->HelpString = "";
-
-			convar->Flags = FCVAR_NONE;
-
-			if (convarObj.HasMember("Flags"))
+			// read raw integer flags
+			if (convarObj["Flags"].IsInt())
+				convar->Flags = convarObj["Flags"].GetInt();
+			else if (convarObj["Flags"].IsString())
 			{
-				// read raw integer flags
-				if (convarObj["Flags"].IsInt())
-					convar->Flags = convarObj["Flags"].GetInt();
-				else if (convarObj["Flags"].IsString())
-				{
-					// parse cvar flags from string
-					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-					convar->Flags |= ParseConVarFlagsString(convar->Name, convarObj["Flags"].GetString());
-				}
+				// parse cvar flags from string
+				// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
+				convar->Flags |= ParseConVarFlagsString(convar->Name, convarObj["Flags"].GetString());
 			}
-
-			ConVars.push_back(convar);
 		}
+
+		ConVars.push_back(convar);
 	}
-CONVARS_END:
+	CONVARS_END:
 
 	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
 	{
