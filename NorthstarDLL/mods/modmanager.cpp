@@ -163,18 +163,23 @@ CONVARS_END:
 	{
 		if (!concommandObj.IsObject())
 		{
+			spdlog::warn("ConCommand is not an object, skipping...");
 			continue;
 		}
 		if (!concommandObj.HasMember("Name"))
 		{
+			spdlog::warn("ConCommand does not have a Name, skipping...");
 			continue;
 		}
+		// from here on, the ConCommand can be referenced by name in logs
 		if (!concommandObj.HasMember("Function"))
 		{
+			spdlog::warn("ConCommand '{}' does not have a Function, skipping...", concommandObj["Name"].GetString());
 			continue;
 		}
 		if (!concommandObj.HasMember("Context"))
 		{
+			spdlog::warn("ConCommand '{}' does not have a Context, skipping...", concommandObj["Name"].GetString());
 			continue;
 		}
 
