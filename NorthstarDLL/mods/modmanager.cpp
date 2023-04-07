@@ -191,7 +191,7 @@ CONVARS_END:
 		concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
 		if (concommand->Context == ScriptContext::INVALID)
 		{
-			spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
+			spdlog::warn("ConCommand '{}' has invalid context '{}', skipping...", concommand->Name, concommandObj["Context"].GetString());
 			continue;
 		}
 
