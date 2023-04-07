@@ -235,7 +235,11 @@ CONCOMMANDS_END:
 
 	for (auto& scriptObj : modJson["Scripts"].GetArray())
 	{
-		if (!scriptObj.IsObject() || !scriptObj.HasMember("Path") || !scriptObj.HasMember("RunOn"))
+		if (!scriptObj.IsObject())
+			continue;
+		if (!scriptObj.HasMember("Path"))
+			continue;
+		if (!scriptObj.HasMember("RunOn"))
 			continue;
 
 		ModScript script;
