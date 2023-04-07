@@ -224,8 +224,14 @@ CONVARS_END:
 CONCOMMANDS_END:
 
 	// mod scripts
-	if (!modJson.HasMember("Scripts") || !modJson["Scripts"].IsArray())
+	if (!modJson.HasMember("Scripts"))
 		goto SCRIPTS_END;
+
+	if (!modJson["Scripts"].IsArray())
+	{
+		spdlog::warn("'Scripts' field is not an array, skipping...");
+		goto SCRIPTS_END;
+	}
 
 	for (auto& scriptObj : modJson["Scripts"].GetArray())
 	{
