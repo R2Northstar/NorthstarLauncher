@@ -150,8 +150,14 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	}
 CONVARS_END:
 
-	if (!modJson.HasMember("ConCommands") || !modJson["ConCommands"].IsArray())
+	if (!modJson.HasMember("ConCommands"))
 		goto CONCOMMANDS_END;
+
+	if (!modJson["ConCommands"].IsArray())
+	{
+		spdlog::warn("'ConCommands' field is not an array, skipping...");
+		goto CONCOMMANDS_END;
+	}
 
 	for (auto& concommandObj : modJson["ConCommands"].GetArray())
 	{
