@@ -101,8 +101,22 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	for (auto& convarObj : modJson["ConVars"].GetArray())
 	{
-		if (!convarObj.IsObject() || !convarObj.HasMember("Name") || !convarObj.HasMember("DefaultValue"))
+		if (!convarObj.IsObject())
+		{
+			spdlog::warn("ConVar is not an object, skipping...");
 			continue;
+		}
+		if (!convarObj.HasMember("Name"))
+		{
+			spdlog::warn("ConVar does not have a Name, skipping...");
+			continue;
+		}
+		// from here on, the ConVar can be referenced by name in logs
+		if (!convarObj.HasMember("DefaultValue"))
+		{
+			spdlog::warn("ConVar '{}' does not have a DefaultValue, skipping...", convarObj["Name"].GetString());
+			continue;
+		}
 
 		// have to allocate this manually, otherwise convar registration will break
 		// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
