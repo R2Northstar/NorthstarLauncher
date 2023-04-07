@@ -224,72 +224,73 @@ CONVARS_END:
 CONCOMMANDS_END:
 
 	// mod scripts
-	if (modJson.HasMember("Scripts") && modJson["Scripts"].IsArray())
+	if (!modJson.HasMember("Scripts") || !modJson["Scripts"].IsArray())
+		goto SCRIPTS_END;
+
+	for (auto& scriptObj : modJson["Scripts"].GetArray())
 	{
-		for (auto& scriptObj : modJson["Scripts"].GetArray())
+		if (!scriptObj.IsObject() || !scriptObj.HasMember("Path") || !scriptObj.HasMember("RunOn"))
+			continue;
+
+		ModScript script;
+
+		script.Path = scriptObj["Path"].GetString();
+		script.RunOn = scriptObj["RunOn"].GetString();
+
+		if (scriptObj.HasMember("ServerCallback") && scriptObj["ServerCallback"].IsObject())
 		{
-			if (!scriptObj.IsObject() || !scriptObj.HasMember("Path") || !scriptObj.HasMember("RunOn"))
-				continue;
+			ModScriptCallback callback;
+			callback.Context = ScriptContext::SERVER;
 
-			ModScript script;
+			if (scriptObj["ServerCallback"].HasMember("Before") && scriptObj["ServerCallback"]["Before"].IsString())
+				callback.BeforeCallback = scriptObj["ServerCallback"]["Before"].GetString();
 
-			script.Path = scriptObj["Path"].GetString();
-			script.RunOn = scriptObj["RunOn"].GetString();
+			if (scriptObj["ServerCallback"].HasMember("After") && scriptObj["ServerCallback"]["After"].IsString())
+				callback.AfterCallback = scriptObj["ServerCallback"]["After"].GetString();
 
-			if (scriptObj.HasMember("ServerCallback") && scriptObj["ServerCallback"].IsObject())
-			{
-				ModScriptCallback callback;
-				callback.Context = ScriptContext::SERVER;
+			if (scriptObj["ServerCallback"].HasMember("Destroy") && scriptObj["ServerCallback"]["Destroy"].IsString())
+				callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
 
-				if (scriptObj["ServerCallback"].HasMember("Before") && scriptObj["ServerCallback"]["Before"].IsString())
-					callback.BeforeCallback = scriptObj["ServerCallback"]["Before"].GetString();
-
-				if (scriptObj["ServerCallback"].HasMember("After") && scriptObj["ServerCallback"]["After"].IsString())
-					callback.AfterCallback = scriptObj["ServerCallback"]["After"].GetString();
-
-				if (scriptObj["ServerCallback"].HasMember("Destroy") && scriptObj["ServerCallback"]["Destroy"].IsString())
-					callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
-
-				script.Callbacks.push_back(callback);
-			}
-
-			if (scriptObj.HasMember("ClientCallback") && scriptObj["ClientCallback"].IsObject())
-			{
-				ModScriptCallback callback;
-				callback.Context = ScriptContext::CLIENT;
-
-				if (scriptObj["ClientCallback"].HasMember("Before") && scriptObj["ClientCallback"]["Before"].IsString())
-					callback.BeforeCallback = scriptObj["ClientCallback"]["Before"].GetString();
-
-				if (scriptObj["ClientCallback"].HasMember("After") && scriptObj["ClientCallback"]["After"].IsString())
-					callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
-
-				if (scriptObj["ClientCallback"].HasMember("Destroy") && scriptObj["ClientCallback"]["Destroy"].IsString())
-					callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
-
-				script.Callbacks.push_back(callback);
-			}
-
-			if (scriptObj.HasMember("UICallback") && scriptObj["UICallback"].IsObject())
-			{
-				ModScriptCallback callback;
-				callback.Context = ScriptContext::UI;
-
-				if (scriptObj["UICallback"].HasMember("Before") && scriptObj["UICallback"]["Before"].IsString())
-					callback.BeforeCallback = scriptObj["UICallback"]["Before"].GetString();
-
-				if (scriptObj["UICallback"].HasMember("After") && scriptObj["UICallback"]["After"].IsString())
-					callback.AfterCallback = scriptObj["UICallback"]["After"].GetString();
-
-				if (scriptObj["UICallback"].HasMember("Destroy") && scriptObj["UICallback"]["Destroy"].IsString())
-					callback.DestroyCallback = scriptObj["UICallback"]["Destroy"].GetString();
-
-				script.Callbacks.push_back(callback);
-			}
-
-			Scripts.push_back(script);
+			script.Callbacks.push_back(callback);
 		}
+
+		if (scriptObj.HasMember("ClientCallback") && scriptObj["ClientCallback"].IsObject())
+		{
+			ModScriptCallback callback;
+			callback.Context = ScriptContext::CLIENT;
+
+			if (scriptObj["ClientCallback"].HasMember("Before") && scriptObj["ClientCallback"]["Before"].IsString())
+				callback.BeforeCallback = scriptObj["ClientCallback"]["Before"].GetString();
+
+			if (scriptObj["ClientCallback"].HasMember("After") && scriptObj["ClientCallback"]["After"].IsString())
+				callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
+
+			if (scriptObj["ClientCallback"].HasMember("Destroy") && scriptObj["ClientCallback"]["Destroy"].IsString())
+				callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
+
+			script.Callbacks.push_back(callback);
+		}
+
+		if (scriptObj.HasMember("UICallback") && scriptObj["UICallback"].IsObject())
+		{
+			ModScriptCallback callback;
+			callback.Context = ScriptContext::UI;
+
+			if (scriptObj["UICallback"].HasMember("Before") && scriptObj["UICallback"]["Before"].IsString())
+				callback.BeforeCallback = scriptObj["UICallback"]["Before"].GetString();
+
+			if (scriptObj["UICallback"].HasMember("After") && scriptObj["UICallback"]["After"].IsString())
+				callback.AfterCallback = scriptObj["UICallback"]["After"].GetString();
+
+			if (scriptObj["UICallback"].HasMember("Destroy") && scriptObj["UICallback"]["Destroy"].IsString())
+				callback.DestroyCallback = scriptObj["UICallback"]["Destroy"].GetString();
+
+			script.Callbacks.push_back(callback);
+		}
+
+		Scripts.push_back(script);
 	}
+SCRIPTS_END:
 
 	if (modJson.HasMember("Localisation") && modJson["Localisation"].IsArray())
 	{
