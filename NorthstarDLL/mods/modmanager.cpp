@@ -377,6 +377,8 @@ CONCOMMANDS_END:
 		}
 
 		Scripts.push_back(script);
+
+		spdlog::info("Registered Script '{}' for mod '{}'", script.Path, Name);
 	}
 SCRIPTS_END:
 
