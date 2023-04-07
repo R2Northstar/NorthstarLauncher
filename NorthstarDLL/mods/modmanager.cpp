@@ -150,53 +150,54 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	}
 CONVARS_END:
 
-	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
+	if (!modJson.HasMember("ConCommands") || !modJson["ConCommands"].IsArray())
+		goto CONCOMMANDS_END;
+
+	for (auto& concommandObj : modJson["ConCommands"].GetArray())
 	{
-		for (auto& concommandObj : modJson["ConCommands"].GetArray())
+		if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") ||
+			!concommandObj.HasMember("Context"))
 		{
-			if (!concommandObj.IsObject() || !concommandObj.HasMember("Name") || !concommandObj.HasMember("Function") ||
-				!concommandObj.HasMember("Context"))
-			{
-				continue;
-			}
-
-			// have to allocate this manually, otherwise concommand registration will break
-			// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
-			ModConCommand* concommand = new ModConCommand;
-			concommand->Name = concommandObj["Name"].GetString();
-			concommand->Function = concommandObj["Function"].GetString();
-			concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
-			if (concommand->Context == ScriptContext::INVALID)
-			{
-				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
-				continue;
-			}
-
-			if (concommandObj.HasMember("HelpString"))
-				concommand->HelpString = concommandObj["HelpString"].GetString();
-			else
-				concommand->HelpString = "";
-
-			concommand->Flags = FCVAR_NONE;
-
-			if (concommandObj.HasMember("Flags"))
-			{
-				// read raw integer flags
-				if (concommandObj["Flags"].IsInt())
-				{
-					concommand->Flags = concommandObj["Flags"].GetInt();
-				}
-				else if (concommandObj["Flags"].IsString())
-				{
-					// parse cvar flags from string
-					// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-					concommand->Flags |= ParseConVarFlagsString(concommand->Name, concommandObj["Flags"].GetString());
-				}
-			}
-
-			ConCommands.push_back(concommand);
+			continue;
 		}
+
+		// have to allocate this manually, otherwise concommand registration will break
+		// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
+		ModConCommand* concommand = new ModConCommand;
+		concommand->Name = concommandObj["Name"].GetString();
+		concommand->Function = concommandObj["Function"].GetString();
+		concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
+		if (concommand->Context == ScriptContext::INVALID)
+		{
+			spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
+			continue;
+		}
+
+		if (concommandObj.HasMember("HelpString"))
+			concommand->HelpString = concommandObj["HelpString"].GetString();
+		else
+			concommand->HelpString = "";
+
+		concommand->Flags = FCVAR_NONE;
+
+		if (concommandObj.HasMember("Flags"))
+		{
+			// read raw integer flags
+			if (concommandObj["Flags"].IsInt())
+			{
+				concommand->Flags = concommandObj["Flags"].GetInt();
+			}
+			else if (concommandObj["Flags"].IsString())
+			{
+				// parse cvar flags from string
+				// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
+				concommand->Flags |= ParseConVarFlagsString(concommand->Name, concommandObj["Flags"].GetString());
+			}
+		}
+
+		ConCommands.push_back(concommand);
 	}
+CONCOMMANDS_END:
 
 	// mod scripts
 	if (modJson.HasMember("Scripts") && modJson["Scripts"].IsArray())
