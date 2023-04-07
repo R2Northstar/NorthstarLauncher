@@ -236,11 +236,23 @@ CONCOMMANDS_END:
 	for (auto& scriptObj : modJson["Scripts"].GetArray())
 	{
 		if (!scriptObj.IsObject())
+		{
+			spdlog::warn("Script is not an object, skipping...");
 			continue;
+		}
 		if (!scriptObj.HasMember("Path"))
+		{
+			spdlog::warn("Script does not have a Path, skipping...");
 			continue;
+		}
+		// from here on, the Path for a script is used as it's name in logs
 		if (!scriptObj.HasMember("RunOn"))
+		{
+			// "a RunOn" sounds dumb but anything else doesn't match the format of the warnings...
+			// this is the best i could think of within 20 seconds
+			spdlog::warn("Script '{}' does not have a RunOn field, skipping...", scriptObj["Path"].GetString());
 			continue;
+		}
 
 		ModScript script;
 
