@@ -287,7 +287,8 @@ CONCOMMANDS_END:
 					if (scriptObj["ServerCallback"]["Destroy"].IsString())
 						callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
 					else
-						spdlog::warn("'Destroy' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn(
+							"'Destroy' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
 				}
 
 				script.Callbacks.push_back(callback);
@@ -301,7 +302,7 @@ CONCOMMANDS_END:
 		if (scriptObj.HasMember("ClientCallback"))
 		{
 			if (scriptObj["ClientCallback"].IsObject())
-				{
+			{
 				ModScriptCallback callback;
 				callback.Context = ScriptContext::CLIENT;
 
@@ -326,7 +327,8 @@ CONCOMMANDS_END:
 					if (scriptObj["ClientCallback"]["Destroy"].IsString())
 						callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
 					else
-						spdlog::warn("'Destroy' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn(
+							"'Destroy' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
 				}
 
 				script.Callbacks.push_back(callback);
