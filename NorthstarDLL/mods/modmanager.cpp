@@ -90,7 +90,10 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	}
 
 	// mod convars
-	if (modJson.HasMember("ConVars") && modJson["ConVars"].IsArray())
+	if (!modJson.HasMember("ConVars"))
+		goto CONVARS_END;
+
+	if (modJson["ConVars"].IsArray())
 	{
 		for (auto& convarObj : modJson["ConVars"].GetArray())
 		{
@@ -126,6 +129,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			ConVars.push_back(convar);
 		}
 	}
+CONVARS_END:
 
 	if (modJson.HasMember("ConCommands") && modJson["ConCommands"].IsArray())
 	{
