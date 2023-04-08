@@ -437,7 +437,8 @@ LOCALISATION_END:
 		{
 			// this is fatal because otherwise the mod will probably try to use functions that dont exist,
 			// which will cause errors further down the line that are harder to debug
-			spdlog::error("'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
+			spdlog::error(
+				"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
 				"Change the constant name.",
 				Name,
 				v->name.GetString(),
@@ -581,7 +582,8 @@ void ModManager::LoadMods()
 		// fail if no mod json
 		if (jsonStream.fail())
 		{
-			spdlog::warn("Mod file at '{}' does not exist or could not be read, is it installed correctly?", (modDir / "mod.json").string());
+			spdlog::warn(
+				"Mod file at '{}' does not exist or could not be read, is it installed correctly?", (modDir / "mod.json").string());
 			continue;
 		}
 
