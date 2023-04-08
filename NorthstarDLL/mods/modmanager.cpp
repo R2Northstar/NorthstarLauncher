@@ -594,7 +594,13 @@ void ModManager::LoadMods()
 		{
 			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
 			{
-				spdlog::error("Constant {} in mod {} already exists in another mod.", pair.first, mod.Name);
+				spdlog::error(
+					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
+					"Change the constant name.",
+					mod.Name,
+					pair.first,
+					pair.second,
+					m_DependencyConstants[pair.first]);
 				mod.m_bWasReadSuccessfully = false;
 				break;
 			}
