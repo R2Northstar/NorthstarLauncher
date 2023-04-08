@@ -408,25 +408,48 @@ SCRIPTS_END:
 	}
 LOCALISATION_END:
 
-	if (modJson.HasMember("Dependencies") && modJson["Dependencies"].IsObject())
+	if (!modJson.HasMember("Dependencies"))
+		goto DEPENDENCIES_END;
+
+	if (!modJson["Dependencies"].IsObject())
 	{
-		for (auto v = modJson["Dependencies"].MemberBegin(); v != modJson["Dependencies"].MemberEnd(); v++)
-		{
-			if (!v->name.IsString() || !v->value.IsString())
-				continue;
-
-			spdlog::info("Constant {} defined by {} for mod {}", v->name.GetString(), Name, v->value.GetString());
-			if (DependencyConstants.find(v->name.GetString()) != DependencyConstants.end() &&
-				v->value.GetString() != DependencyConstants[v->name.GetString()])
-			{
-				spdlog::error("A dependency constant with the same name already exists for another mod. Change the constant name.");
-				return;
-			}
-
-			if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
-				DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
-		}
+		spdlog::warn("'Dependencies' field is not an object, skipping...");
+		goto DEPENDENCIES_END;
 	}
+
+	for (auto v = modJson["Dependencies"].MemberBegin(); v != modJson["Dependencies"].MemberEnd(); v++)
+	{
+		if (!v->name.IsString())
+		{
+			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->name.GetString());
+			continue;
+		}
+		if (!v->value.IsString())
+		{
+			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->value.GetString());
+			continue;
+		}
+
+		if (DependencyConstants.find(v->name.GetString()) != DependencyConstants.end() &&
+			v->value.GetString() != DependencyConstants[v->name.GetString()])
+		{
+			// this is fatal because otherwise the mod will probably try to use functions that dont exist,
+			// which will cause errors further down the line that are harder to debug
+			spdlog::error("'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
+				"Change the constant name.",
+				Name,
+				v->name.GetString(),
+				v->value.GetString(),
+				DependencyConstants[v->name.GetString()]);
+			return;
+		}
+
+		if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
+			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
+
+		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
+	}
+DEPENDENCIES_END:
 
 	m_bWasReadSuccessfully = true;
 }
