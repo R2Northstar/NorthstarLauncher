@@ -28,7 +28,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	rapidjson_document modJson;
 	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
 
-	spdlog::info("Loading mod file at path '{}'", modDir);
+	spdlog::info("Loading mod file at path '{}'", modDir.string());
 
 	// fail if parse error
 	if (modJson.HasParseError())
