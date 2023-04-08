@@ -579,7 +579,7 @@ void ModManager::LoadMods()
 		// fail if no mod json
 		if (jsonStream.fail())
 		{
-			spdlog::warn("Mod {} has a directory but no mod.json", modDir.string());
+			spdlog::warn("Mod file at '{}' does not exist or could not be read, is it installed correctly?", (modDir / "mod.json").string());
 			continue;
 		}
 
@@ -609,16 +609,15 @@ void ModManager::LoadMods()
 
 		if (mod.m_bWasReadSuccessfully)
 		{
-			spdlog::info("Loaded mod {} successfully", mod.Name);
 			if (mod.m_bEnabled)
-				spdlog::info("Mod {} is enabled", mod.Name);
+				spdlog::info("'{}' loaded successfully", mod.Name);
 			else
-				spdlog::info("Mod {} is disabled", mod.Name);
+				spdlog::info("'{}' loaded successfully (DISABLED)", mod.Name);
 
 			m_LoadedMods.push_back(mod);
 		}
 		else
-			spdlog::warn("Skipping loading mod file {}", (modDir / "mod.json").string());
+			spdlog::warn("Mod file at '{}' failed to load", (modDir / "mod.json").string());
 	}
 
 	// sort by load prio, lowest-highest
