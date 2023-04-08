@@ -384,16 +384,29 @@ CONCOMMANDS_END:
 	}
 SCRIPTS_END:
 
-	if (modJson.HasMember("Localisation") && modJson["Localisation"].IsArray())
-	{
-		for (auto& localisationStr : modJson["Localisation"].GetArray())
-		{
-			if (!localisationStr.IsString())
-				continue;
+	if (!modJson.HasMember("Localisation"))
+		goto LOCALISATION_END;
 
-			LocalisationFiles.push_back(localisationStr.GetString());
-		}
+	if (!modJson["Localisation"].IsArray())
+	{
+		spdlog::warn("'Localisation' field is not an array, skipping...");
+		goto LOCALISATION_END;
 	}
+
+	for (auto& localisationStr : modJson["Localisation"].GetArray())
+	{
+		if (!localisationStr.IsString())
+		{
+			// not a string but we still GetString() to log it :trol:
+			spdlog::warn("Localisation '{}' is not a string, skipping...", localisationStr.GetString());
+			continue;
+		}
+
+		LocalisationFiles.push_back(localisationStr.GetString());
+
+		spdlog::info("'{}' registered Localisation '{}'", Name, localisationStr.GetString());
+	}
+LOCALISATION_END:
 
 	if (modJson.HasMember("Dependencies") && modJson["Dependencies"].IsObject())
 	{
