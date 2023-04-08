@@ -58,7 +58,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	Name = modJson["Name"].GetString();
 
-	spdlog::info("Loading mod: {}", Name);
+	spdlog::info("Loading mod '{}'", Name);
 
 	if (modJson.HasMember("Description"))
 		Description = modJson["Description"].GetString();
