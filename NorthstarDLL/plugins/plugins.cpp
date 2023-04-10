@@ -42,6 +42,8 @@ EXPORT void* CreateObject(ObjectType type)
 		return (void*)new ConVar;
 	case ObjectType::CONCOMMANDS:
 		return (void*)new ConCommand;
+	default:
+		return NULL;
 	}
 }
 
@@ -60,7 +62,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
-	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(101), MAKEINTRESOURCEW(RT_RCDATA));
+	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(IDR_RCDATA1), MAKEINTRESOURCEW(RT_RCDATA));
 
 	if (manifestResource == NULL)
 	{

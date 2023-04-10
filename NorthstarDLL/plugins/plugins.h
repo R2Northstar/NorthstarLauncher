@@ -1,6 +1,8 @@
 #pragma once
 #include "plugin_abi.h"
 
+const int IDR_RCDATA1 = 101;
+
 class Plugin
 {
   public:

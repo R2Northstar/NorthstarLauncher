@@ -55,7 +55,7 @@ class ServerPresenceReporter
 
 class ServerPresenceManager
 {
-  public:
+  private:
 	ServerPresence m_ServerPresence;
 
 	bool m_bHasPresence = false;
@@ -84,8 +84,6 @@ class ServerPresenceManager
 
 	void SetPort(const int iPort);
 	void SetAuthPort(const int iPort);
-
-	void SetId(const std::string sServerId);
 
 	void SetName(const std::string sServerNameUnicode);
 	void SetDescription(const std::string sServerDescUnicode);
