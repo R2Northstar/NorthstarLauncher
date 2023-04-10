@@ -123,23 +123,23 @@ struct PluginGameStatePresence
 	const char* description;
 	const char* password;
 
-	bool is_server;
-	bool is_local;
+	bool isServer;
+	bool isLocal;
 	GameState state;
 
 	const char* map;
-	const char* map_displayname;
+	const char* mapDisplayname;
 	const char* playlist;
-	const char* playlist_displayname;
+	const char* playlistDisplayname;
 
-	int current_players;
-	int max_players;
+	int currentPlayers;
+	int maxPlayers;
 
-	int own_score;
-	int other_highest_score; // NOTE: The highest score OR the second highest score if we have the highest
-	int max_score;
+	int ownScore;
+	int otherHighestScore; // NOTE: The highest score OR the second highest score if we have the highest
+	int maxScore;
 
-	int timestamp_end;
+	int timestampEnd;
 };
 
 /// <summary> Async communication within the plugin system
