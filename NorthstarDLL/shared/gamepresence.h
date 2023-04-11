@@ -16,27 +16,27 @@ class GameStatePresence
 	std::string description;
 	std::string password; // NOTE: May be empty
 
-	bool is_server;
-	bool is_local = false;
-	bool is_loading;
-	bool is_lobby;
-	std::string loading_level;
+	bool isServer;
+	bool isLocal = false;
+	bool isLoading;
+	bool isLobby;
+	std::string loadingLevel;
 
-	std::string ui_map;
+	std::string uiMap;
 
 	std::string map;
-	std::string map_displayname;
+	std::string mapDisplayname;
 	std::string playlist;
-	std::string playlist_displayname;
+	std::string playlistDisplayname;
 
-	int current_players;
-	int max_players;
+	int currentPlayers;
+	int maxPlayers;
 
-	int own_score;
-	int other_highest_score; // NOTE: The highest score OR the second highest score if we have the highest
-	int max_score;
+	int ownScore;
+	int otherHighestScore; // NOTE: The highest score OR the second highest score if we have the highest
+	int maxScore;
 
-	int timestamp_end;
+	int timestampEnd;
 
 	GameStatePresence();
 	void RunFrame();

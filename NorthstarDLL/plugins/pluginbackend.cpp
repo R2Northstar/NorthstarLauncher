@@ -52,29 +52,29 @@ void PluginCommunicationHandler::GeneratePresenceObjects()
 	presence.description = g_pGameStatePresence->description.c_str();
 	presence.password = g_pGameStatePresence->password.c_str();
 
-	presence.is_server = g_pGameStatePresence->is_server;
-	presence.is_local = g_pGameStatePresence->is_local;
+	presence.isServer = g_pGameStatePresence->isServer;
+	presence.isLocal = g_pGameStatePresence->isLocal;
 
-	if (g_pGameStatePresence->is_loading)
+	if (g_pGameStatePresence->isLoading)
 		presence.state = GameState::LOADING;
-	else if (g_pGameStatePresence->ui_map == "")
+	else if (g_pGameStatePresence->uiMap == "")
 		presence.state = GameState::MAINMENU;
-	else if (g_pGameStatePresence->map == "mp_lobby" && g_pGameStatePresence->is_local && g_pGameStatePresence->is_lobby)
+	else if (g_pGameStatePresence->map == "mp_lobby" && g_pGameStatePresence->isLocal && g_pGameStatePresence->isLobby)
 		presence.state = GameState::LOBBY;
 	else
 		presence.state = GameState::INGAME;
 
 	presence.map = g_pGameStatePresence->map.c_str();
-	presence.map_displayname = g_pGameStatePresence->map_displayname.c_str();
+	presence.mapDisplayname = g_pGameStatePresence->mapDisplayname.c_str();
 	presence.playlist = g_pGameStatePresence->playlist.c_str();
-	presence.playlist_displayname = g_pGameStatePresence->playlist_displayname.c_str();
+	presence.playlistDisplayname = g_pGameStatePresence->playlistDisplayname.c_str();
 
-	presence.current_players = g_pGameStatePresence->current_players;
-	presence.max_players = g_pGameStatePresence->max_players;
-	presence.own_score = g_pGameStatePresence->own_score;
-	presence.other_highest_score = g_pGameStatePresence->other_highest_score;
-	presence.max_score = g_pGameStatePresence->max_score;
-	presence.timestamp_end = g_pGameStatePresence->timestamp_end;
+	presence.currentPlayers = g_pGameStatePresence->currentPlayers;
+	presence.maxPlayers = g_pGameStatePresence->maxPlayers;
+	presence.ownScore = g_pGameStatePresence->ownScore;
+	presence.otherHighestScore = g_pGameStatePresence->otherHighestScore;
+	presence.maxScore = g_pGameStatePresence->maxScore;
+	presence.timestampEnd = g_pGameStatePresence->timestampEnd;
 	g_pPluginManager->PushPresence(&presence);
 }
 

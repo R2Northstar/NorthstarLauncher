@@ -24,10 +24,10 @@ void GameStateServerPresenceReporter::RunFrame(double flCurrentTime, const Serve
 
 	g_pGameStatePresence->map = pServerPresence->m_MapName;
 	g_pGameStatePresence->playlist = pServerPresence->m_PlaylistName;
-	g_pGameStatePresence->current_players = pServerPresence->m_iPlayerCount;
-	g_pGameStatePresence->max_players = pServerPresence->m_iMaxPlayers;
+	g_pGameStatePresence->currentPlayers = pServerPresence->m_iPlayerCount;
+	g_pGameStatePresence->maxPlayers = pServerPresence->m_iMaxPlayers;
 
-	g_pGameStatePresence->is_local = !IsDedicatedServer();
+	g_pGameStatePresence->isLocal = !IsDedicatedServer();
 }
 
 void GameStatePresence::RunFrame()
@@ -46,16 +46,16 @@ ADD_SQFUNC("void", NSPushGameStateData, "GameStateStruct gamestate", "", ScriptC
 {
 	SQStructInstance* structInst = g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm->_stackOfCurrentFunction[1]._VAL.asStructInstance;
 	g_pGameStatePresence->map = structInst->data[0]._VAL.asString->_val;
-	g_pGameStatePresence->map_displayname = structInst->data[1]._VAL.asString->_val;
+	g_pGameStatePresence->mapDisplayname = structInst->data[1]._VAL.asString->_val;
 	g_pGameStatePresence->playlist = structInst->data[2]._VAL.asString->_val;
-	g_pGameStatePresence->playlist_displayname = structInst->data[3]._VAL.asString->_val;
+	g_pGameStatePresence->playlistDisplayname = structInst->data[3]._VAL.asString->_val;
 
-	g_pGameStatePresence->current_players = structInst->data[4]._VAL.asInteger;
-	g_pGameStatePresence->max_players = structInst->data[5]._VAL.asInteger;
-	g_pGameStatePresence->own_score = structInst->data[6]._VAL.asInteger;
-	g_pGameStatePresence->other_highest_score = structInst->data[7]._VAL.asInteger;
-	g_pGameStatePresence->max_score = structInst->data[8]._VAL.asInteger;
-	g_pGameStatePresence->timestamp_end = ceil(structInst->data[9]._VAL.asFloat);
+	g_pGameStatePresence->currentPlayers = structInst->data[4]._VAL.asInteger;
+	g_pGameStatePresence->maxPlayers = structInst->data[5]._VAL.asInteger;
+	g_pGameStatePresence->ownScore = structInst->data[6]._VAL.asInteger;
+	g_pGameStatePresence->otherHighestScore = structInst->data[7]._VAL.asInteger;
+	g_pGameStatePresence->maxScore = structInst->data[8]._VAL.asInteger;
+	g_pGameStatePresence->timestampEnd = ceil(structInst->data[9]._VAL.asFloat);
 
 	if (g_pMasterServerManager->m_currentServer)
 	{
@@ -72,10 +72,10 @@ ADD_SQFUNC("void", NSPushUIPresence, "UIPresenceStruct presence", "", ScriptCont
 {
 	SQStructInstance* structInst = g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm->_stackOfCurrentFunction[1]._VAL.asStructInstance;
 
-	g_pGameStatePresence->is_loading = structInst->data[0]._VAL.asInteger;
-	g_pGameStatePresence->is_lobby = structInst->data[1]._VAL.asInteger;
-	g_pGameStatePresence->loading_level = structInst->data[2]._VAL.asString->_val;
-	g_pGameStatePresence->ui_map = structInst->data[3]._VAL.asString->_val;
+	g_pGameStatePresence->isLoading = structInst->data[0]._VAL.asInteger;
+	g_pGameStatePresence->isLobby = structInst->data[1]._VAL.asInteger;
+	g_pGameStatePresence->loadingLevel = structInst->data[2]._VAL.asString->_val;
+	g_pGameStatePresence->uiMap = structInst->data[3]._VAL.asString->_val;
 
 	return SQRESULT_NOTNULL;
 }
