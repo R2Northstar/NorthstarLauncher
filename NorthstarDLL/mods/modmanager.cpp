@@ -58,6 +58,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	Name = modJson["Name"].GetString();
 
+	spdlog::info("Loading mod '{}'", Name);
+
 	if (modJson.HasMember("Description"))
 		Description = modJson["Description"].GetString();
 	else
@@ -157,7 +159,7 @@ void Mod::ParseConVars(rapidjson_document& json)
 
 		ConVars.push_back(convar);
 
-		spdlog::info("'{}' registered ConVar '{}'", Name, convar->Name);
+		spdlog::info("'{}' contains ConVar '{}'", Name, convar->Name);
 	}
 }
 
