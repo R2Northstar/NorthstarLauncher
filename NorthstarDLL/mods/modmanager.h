@@ -121,7 +121,7 @@ public:
 	std::unordered_map<std::string, std::string> DependencyConstants;
 
 public:
-	Mod(fs::path modPath, char* jsonBuf, rapidjson_document& enabledList);
+	Mod(fs::path modPath, char* jsonBuf);
 
 private:
 	void ParseConVars(rapidjson_document& json);

@@ -19,7 +19,7 @@
 
 ModManager* g_pModManager;
 
-Mod::Mod(fs::path modDir, char* jsonBuf, rapidjson_document& enabledList)
+Mod::Mod(fs::path modDir, char* jsonBuf)
 {
 	m_bWasReadSuccessfully = false;
 
@@ -57,17 +57,6 @@ Mod::Mod(fs::path modDir, char* jsonBuf, rapidjson_document& enabledList)
 	}
 
 	Name = modJson["Name"].GetString();
-
-	spdlog::info("Loading mod '{}'", Name);
-
-	if (enabledList.IsObject() && enabledList.HasMember(Name.c_str()))
-		m_bEnabled = enabledList[Name.c_str()].IsTrue();
-
-	if (!m_bEnabled)
-	{
-		spdlog::info("Mod '{}' is disabled, skipping", Name);
-		return;
-	}
 
 	if (modJson.HasMember("Description"))
 		Description = modJson["Description"].GetString();
@@ -616,7 +605,7 @@ void ModManager::LoadMods()
 
 		jsonStream.close();
 
-		Mod mod(modDir, (char*)jsonStringStream.str().c_str(), m_EnabledModsCfg);
+		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
 		if (!mod.m_bEnabled)
 			continue;
@@ -639,9 +628,17 @@ void ModManager::LoadMods()
 				m_DependencyConstants.emplace(pair);
 		}
 
+		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
+		else
+			mod.m_bEnabled = false;
+		
 		if (mod.m_bWasReadSuccessfully)
 		{
-			spdlog::info("'{}' loaded successfully", mod.Name);
+			if (mod.m_bEnabled)
+				spdlog::info("'{}' loaded successfully", mod.Name);
+			else
+				spdlog::info("'{}' loaded successfully (DISABLED)", mod.Name);
 
 			m_LoadedMods.push_back(mod);
 		}
