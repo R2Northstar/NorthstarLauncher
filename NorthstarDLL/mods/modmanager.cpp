@@ -19,7 +19,7 @@
 
 ModManager* g_pModManager;
 
-Mod::Mod(fs::path modDir, char* jsonBuf)
+Mod::Mod(fs::path modDir, char* jsonBuf, rapidjson_document& enabledList)
 {
 	m_bWasReadSuccessfully = false;
 
@@ -60,6 +60,15 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	spdlog::info("Loading mod '{}'", Name);
 
+	if (enabledList.IsObject() && enabledList.HasMember(Name.c_str()))
+		m_bEnabled = enabledList[Name.c_str()].IsTrue();
+
+	if (!m_bEnabled)
+	{
+		spdlog::info("Mod '{}' is disabled, skipping", Name);
+		return;
+	}
+
 	if (modJson.HasMember("Description"))
 		Description = modJson["Description"].GetString();
 	else
@@ -91,17 +100,28 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		LoadPriority = 0;
 	}
 
-	// mod convars
-	if (!modJson.HasMember("ConVars"))
-		goto CONVARS_END;
+	// Parse all array fields
+	ParseConVars(modJson);
+	ParseConCommands(modJson);
+	ParseScripts(modJson);
+	ParseLocalization(modJson);
+	ParseDependencies(modJson);
 
-	if (!modJson["ConVars"].IsArray())
+	m_bWasReadSuccessfully = true;
+}
+
+void Mod::ParseConVars(rapidjson_document& json)
+{
+	if (!json.HasMember("ConVars"))
+		return;
+
+	if (!json["ConVars"].IsArray())
 	{
 		spdlog::warn("'ConVars' field is not an array, skipping...");
-		goto CONVARS_END;
+		return;
 	}
 
-	for (auto& convarObj : modJson["ConVars"].GetArray())
+	for (auto& convarObj : json["ConVars"].GetArray())
 	{
 		if (!convarObj.IsObject())
 		{
@@ -150,18 +170,20 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 		spdlog::info("'{}' registered ConVar '{}'", Name, convar->Name);
 	}
-CONVARS_END:
+}
 
-	if (!modJson.HasMember("ConCommands"))
-		goto CONCOMMANDS_END;
+void Mod::ParseConCommands(rapidjson_document& json)
+{
+	if (!json.HasMember("ConCommands"))
+		return;
 
-	if (!modJson["ConCommands"].IsArray())
+	if (!json["ConCommands"].IsArray())
 	{
 		spdlog::warn("'ConCommands' field is not an array, skipping...");
-		goto CONCOMMANDS_END;
+		return;
 	}
 
-	for (auto& concommandObj : modJson["ConCommands"].GetArray())
+	for (auto& concommandObj : json["ConCommands"].GetArray())
 	{
 		if (!concommandObj.IsObject())
 		{
@@ -223,19 +245,20 @@ CONVARS_END:
 
 		spdlog::info("'{}' registered ConCommand '{}'", Name, concommand->Name);
 	}
-CONCOMMANDS_END:
+}
 
-	// mod scripts
-	if (!modJson.HasMember("Scripts"))
-		goto SCRIPTS_END;
+void Mod::ParseScripts(rapidjson_document& json)
+{
+	if (!json.HasMember("Scripts"))
+		return;
 
-	if (!modJson["Scripts"].IsArray())
+	if (!json["Scripts"].IsArray())
 	{
 		spdlog::warn("'Scripts' field is not an array, skipping...");
-		goto SCRIPTS_END;
+		return;
 	}
 
-	for (auto& scriptObj : modJson["Scripts"].GetArray())
+	for (auto& scriptObj : json["Scripts"].GetArray())
 	{
 		if (!scriptObj.IsObject())
 		{
@@ -384,18 +407,20 @@ CONCOMMANDS_END:
 
 		spdlog::info("'{}' registered Script '{}'", Name, script.Path);
 	}
-SCRIPTS_END:
+}
 
-	if (!modJson.HasMember("Localisation"))
-		goto LOCALISATION_END;
+void Mod::ParseLocalization(rapidjson_document& json)
+{
+	if (!json.HasMember("Localisation"))
+		return;
 
-	if (!modJson["Localisation"].IsArray())
+	if (!json["Localisation"].IsArray())
 	{
 		spdlog::warn("'Localisation' field is not an array, skipping...");
-		goto LOCALISATION_END;
+		return;
 	}
 
-	for (auto& localisationStr : modJson["Localisation"].GetArray())
+	for (auto& localisationStr : json["Localisation"].GetArray())
 	{
 		if (!localisationStr.IsString())
 		{
@@ -408,18 +433,20 @@ SCRIPTS_END:
 
 		spdlog::info("'{}' registered Localisation '{}'", Name, localisationStr.GetString());
 	}
-LOCALISATION_END:
+}
 
-	if (!modJson.HasMember("Dependencies"))
-		goto DEPENDENCIES_END;
+void Mod::ParseDependencies(rapidjson_document& json)
+{
+	if (!json.HasMember("Dependencies"))
+		return;
 
-	if (!modJson["Dependencies"].IsObject())
+	if (!json["Dependencies"].IsObject())
 	{
 		spdlog::warn("'Dependencies' field is not an object, skipping...");
-		goto DEPENDENCIES_END;
+		return;
 	}
 
-	for (auto v = modJson["Dependencies"].MemberBegin(); v != modJson["Dependencies"].MemberEnd(); v++)
+	for (auto v = json["Dependencies"].MemberBegin(); v != json["Dependencies"].MemberEnd(); v++)
 	{
 		if (!v->name.IsString())
 		{
@@ -452,9 +479,6 @@ LOCALISATION_END:
 
 		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
 	}
-DEPENDENCIES_END:
-
-	m_bWasReadSuccessfully = true;
 }
 
 ModManager::ModManager()
@@ -592,7 +616,10 @@ void ModManager::LoadMods()
 
 		jsonStream.close();
 
-		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
+		Mod mod(modDir, (char*)jsonStringStream.str().c_str(), m_EnabledModsCfg);
+
+		if (!mod.m_bEnabled)
+			continue;
 
 		for (auto& pair : mod.DependencyConstants)
 		{
@@ -612,17 +639,9 @@ void ModManager::LoadMods()
 				m_DependencyConstants.emplace(pair);
 		}
 
-		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
-		else
-			mod.m_bEnabled = true;
-
 		if (mod.m_bWasReadSuccessfully)
 		{
-			if (mod.m_bEnabled)
-				spdlog::info("'{}' loaded successfully", mod.Name);
-			else
-				spdlog::info("'{}' loaded successfully (DISABLED)", mod.Name);
+			spdlog::info("'{}' loaded successfully", mod.Name);
 
 			m_LoadedMods.push_back(mod);
 		}
@@ -700,7 +719,7 @@ void ModManager::LoadMods()
 
 					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
 					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
-														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
+						dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
 					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
 
 					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
@@ -735,8 +754,8 @@ void ModManager::LoadMods()
 			if (bUseRpakJson && dRpakJson.HasMember("Aliases") && dRpakJson["Aliases"].IsObject())
 			{
 				for (rapidjson::Value::ConstMemberIterator iterator = dRpakJson["Aliases"].MemberBegin();
-					 iterator != dRpakJson["Aliases"].MemberEnd();
-					 iterator++)
+					iterator != dRpakJson["Aliases"].MemberEnd();
+					iterator++)
 				{
 					if (!iterator->name.IsString() || !iterator->value.IsString())
 						continue;
@@ -755,7 +774,7 @@ void ModManager::LoadMods()
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
 					modPak.m_bAutoLoad =
 						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
-										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+							dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
 
 					// postload things
 					if (!bUseRpakJson ||
