@@ -634,7 +634,7 @@ void ModManager::LoadMods()
 			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
 		else
 			mod.m_bEnabled = false;
-		
+
 		if (mod.m_bWasReadSuccessfully)
 		{
 			if (mod.m_bEnabled)
@@ -718,7 +718,7 @@ void ModManager::LoadMods()
 
 					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
 					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
-						dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
+																							dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
 					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
 
 					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
@@ -753,8 +753,8 @@ void ModManager::LoadMods()
 			if (bUseRpakJson && dRpakJson.HasMember("Aliases") && dRpakJson["Aliases"].IsObject())
 			{
 				for (rapidjson::Value::ConstMemberIterator iterator = dRpakJson["Aliases"].MemberBegin();
-					iterator != dRpakJson["Aliases"].MemberEnd();
-					iterator++)
+					 iterator != dRpakJson["Aliases"].MemberEnd();
+					 iterator++)
 				{
 					if (!iterator->name.IsString() || !iterator->value.IsString())
 						continue;
@@ -773,7 +773,7 @@ void ModManager::LoadMods()
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
 					modPak.m_bAutoLoad =
 						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
-							dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+														dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
 
 					// postload things
 					if (!bUseRpakJson ||
