@@ -220,7 +220,7 @@ typedef SQBool (*sq_getboolType)(HSquirrelVM*, SQInteger iStackpos);
 typedef SQRESULT (*sq_getType)(HSquirrelVM* sqvm, SQInteger iStackpos);
 typedef SQRESULT (*sq_getassetType)(HSquirrelVM* sqvm, SQInteger iStackpos, const char** pResult);
 typedef SQRESULT (*sq_getuserdataType)(HSquirrelVM* sqvm, SQInteger iStackpos, void** pData, uint64_t* pTypeId);
-typedef long long* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger iStackpos);
+typedef SQFloat* (*sq_getvectorType)(HSquirrelVM* sqvm, SQInteger iStackpos);
 typedef SQBool (*sq_getthisentityType)(HSquirrelVM*, void** ppEntity);
 typedef void (*sq_getobjectType)(HSquirrelVM*, SQInteger iStackPos, SQObject* pOutObj);
 
