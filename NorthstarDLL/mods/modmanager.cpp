@@ -609,9 +609,6 @@ void ModManager::LoadMods()
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
-		if (!mod.m_bEnabled)
-			continue;
-
 		for (auto& pair : mod.DependencyConstants)
 		{
 			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
