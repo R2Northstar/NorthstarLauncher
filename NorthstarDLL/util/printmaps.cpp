@@ -33,6 +33,15 @@ std::vector<MapVPKInfo> vMapList;
 
 void RefreshMapList()
 {
+	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs
+	static double fLastRefresh = -999;
+
+	if (fLastRefresh + 10.0 < R2::g_pGlobals->m_flRealTime)
+		fLastRefresh = R2::g_pGlobals->m_flRealTime;
+	else
+		return;
+
+	// Rebuild map list
 	vMapList.clear();
 
 	// get modded maps
@@ -112,14 +121,7 @@ AUTOHOOK(_Host_Map_f_CompletionFunc, engine.dll + 0x161AE0,
 int, __fastcall, (const char const* cmdname, const char const* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]))
 // clang-format on
 {
-	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs
-	static double flLastAutocompleteRefresh = -999;
-
-	if (flLastAutocompleteRefresh + 10.0 < R2::g_pGlobals->m_flRealTime)
-	{
-		RefreshMapList();
-		flLastAutocompleteRefresh = R2::g_pGlobals->m_flRealTime;
-	}
+	RefreshMapList();
 
 	// use a custom autocomplete func for all map loading commands
 	const int cmdLength = strlen(cmdname);
