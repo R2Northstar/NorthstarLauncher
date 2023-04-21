@@ -307,10 +307,10 @@ bool LoadNorthstar()
 		}
 
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
+		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
+
 		if (!fs::exists(fs::path(buffer)))
 			swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
-		else
-			swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
 
 		std::wcout << L"[*] Using: " << buffer << std::endl;
 
