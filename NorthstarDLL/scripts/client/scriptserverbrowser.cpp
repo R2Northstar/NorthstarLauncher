@@ -13,65 +13,65 @@ ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
 	{
 		RemoteServerInfo remoteServer = g_pMasterServerManager->m_vRemoteServers[i];
 
-		g_pSquirrel<context>->__sq_pushnewstructinstance(sqvm, 11);
+		g_pSquirrel<context>->pushnewstructinstance(sqvm, 11);
 
 		// index
 		g_pSquirrel<context>->pushinteger(sqvm, i);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 0);
+		g_pSquirrel<context>->sealstructslot(sqvm, 0);
 
 		// id
 		g_pSquirrel<context>->pushstring(sqvm, remoteServer.id, -1);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 1);
 
 		// name
 		g_pSquirrel<context>->pushstring(sqvm, remoteServer.name, -1);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 2);
+		g_pSquirrel<context>->sealstructslot(sqvm, 2);
 
 		// description
 		g_pSquirrel<context>->pushstring(sqvm, remoteServer.description.c_str(), -1);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 3);
+		g_pSquirrel<context>->sealstructslot(sqvm, 3);
 
 		// map
 		g_pSquirrel<context>->pushstring(sqvm, remoteServer.map, -1);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 4);
+		g_pSquirrel<context>->sealstructslot(sqvm, 4);
 
 		// playlist
 		g_pSquirrel<context>->pushstring(sqvm, remoteServer.playlist, -1);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 5);
+		g_pSquirrel<context>->sealstructslot(sqvm, 5);
 
 		// playerCount
 		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.playerCount);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 6);
+		g_pSquirrel<context>->sealstructslot(sqvm, 6);
 
 		// maxPlayerCount
 		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.maxPlayers);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 7);
+		g_pSquirrel<context>->sealstructslot(sqvm, 7);
 
 		// requiresPassword
 		g_pSquirrel<context>->pushbool(sqvm, remoteServer.requiresPassword);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 8);
+		g_pSquirrel<context>->sealstructslot(sqvm, 8);
 
 		// region
 		g_pSquirrel<context>->pushstring(sqvm, remoteServer.region, -1);
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 9);
+		g_pSquirrel<context>->sealstructslot(sqvm, 9);
 
 		// requiredMods
 		g_pSquirrel<context>->newarray(sqvm);
 		for (auto mod : remoteServer.requiredMods)
 		{
-			g_pSquirrel<context>->__sq_pushnewstructinstance(sqvm, 2);
+			g_pSquirrel<context>->pushnewstructinstance(sqvm, 2);
 
 			// name
 			g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
-			g_pSquirrel<context>->__sq_sealstructslot(sqvm, 0);
+			g_pSquirrel<context>->sealstructslot(sqvm, 0);
 
 			// version
 			g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str(), -1);
-			g_pSquirrel<context>->__sq_sealstructslot(sqvm, 1);
+			g_pSquirrel<context>->sealstructslot(sqvm, 1);
 
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 		}
-		g_pSquirrel<context>->__sq_sealstructslot(sqvm, 10);
+		g_pSquirrel<context>->sealstructslot(sqvm, 10);
 
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
 	}
