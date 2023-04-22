@@ -6,6 +6,7 @@
 #include <string>
 #include <cstring>
 #include <future>
+#include <unordered_set>
 
 extern ConVar* Cvar_ns_masterserver_hostname;
 extern ConVar* Cvar_ns_curl_log_enable;
@@ -116,6 +117,8 @@ class MasterServerManager
 	std::optional<RemoteServerInfo> m_currentServer;
 	std::string m_sCurrentServerPassword;
 
+	std::unordered_set<std::string> m_handledServerConnections;
+
   public:
 	MasterServerManager();
 
@@ -126,6 +129,7 @@ class MasterServerManager
 	void AuthenticateWithOwnServer(const char* uid, const char* playerToken);
 	void AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password);
 	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
+	void ProcessConnectionlessPacketSigreq1(std::string req);
 };
 
 extern MasterServerManager* g_pMasterServerManager;
