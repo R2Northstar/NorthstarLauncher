@@ -237,6 +237,8 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		RegisterSquirrelFunc(m_pSQVM, funcReg, 1);
 	}
 
+	getConstants(m_pSQVM->sqvm);
+
 	for (auto& pair : g_pModManager->m_DependencyConstants)
 	{
 		bool bWasFound = false;
@@ -248,13 +250,53 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 			if (dependency.Name == pair.second)
 			{
+				std::string v = dependency.Version;
+				std::vector<SQInteger> semver;
+				size_t last = 0;
+				size_t next = 0;
+
+				size_t rc = v.find('-');
+				if (rc != std::string::npos)
+				{
+					v = v.substr(0, rc);
+				}
+
+				while ((next = v.find('.', last)) != std::string::npos)
+				{
+					std::string sub = v.substr(last, next - last);
+					if (std::all_of(sub.begin(), sub.end(), ::isdigit))
+						semver.push_back(stoi(sub));
+					else
+						semver.push_back(-1);
+					last = next + 1;
+				}
+				if (last < v.size())
+				{
+					std::string sub = v.substr(last);
+					if (std::all_of(sub.begin(), sub.end(), ::isdigit))
+						semver.push_back(stoi(sub));
+					else
+						semver.push_back(-1);
+				}
+				else
+					semver.push_back(-1);
+
+				pushstring(m_pSQVM->sqvm, pair.first.c_str());
+				newtable(m_pSQVM->sqvm);
+				createslot<const SQChar*, const SQInteger>(m_pSQVM->sqvm, "major", 0 < semver.size() ? semver[0] : -1);
+				createslot<const SQChar*, const SQInteger>(m_pSQVM->sqvm, "minor", 1 < semver.size() ? semver[1] : -1);
+				createslot<const SQChar*, const SQInteger>(m_pSQVM->sqvm, "patch", 2 < semver.size() ? semver[2] : -1);
+				createslot<const SQChar*, const SQChar*>(m_pSQVM->sqvm, "version", dependency.Version.c_str());
+				newslot(m_pSQVM->sqvm, -3, 0);
 				bWasFound = true;
 				break;
 			}
 		}
 
-		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
+		if (!bWasFound)
+			defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
+	removeFromStack(m_pSQVM->sqvm);
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 	g_pPluginManager->InformSQVMCreated(context, newSqvm);
 }
@@ -773,6 +815,11 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 		g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity;
 	g_pSquirrel<ScriptContext::UI>->__sq_getentityfrominstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance;
 
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_getconstantstable = module.Offset(0x5940).As<sq_getconstantstableType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_getconstantstable = g_pSquirrel<ScriptContext::CLIENT>->__sq_getconstantstable;
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_removefromstack = module.Offset(0x7030).As<sq_removefromstackType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_removefromstack = g_pSquirrel<ScriptContext::CLIENT>->__sq_removefromstack;
+
 	// Message buffer stuff
 	g_pSquirrel<ScriptContext::UI>->messageBuffer = g_pSquirrel<ScriptContext::CLIENT>->messageBuffer;
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x572FB0).As<sq_getfunctionType>();
@@ -863,6 +910,9 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x418AF0).As<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getentityfrominstance = module.Offset(0x1E920).As<sq_getentityfrominstanceType>();
+
+	g_pSquirrel<ScriptContext::SERVER>->__sq_getconstantstable = module.Offset(0x5920).As<sq_getconstantstableType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_removefromstack = module.Offset(0x7000).As<sq_removefromstackType>();
 
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff

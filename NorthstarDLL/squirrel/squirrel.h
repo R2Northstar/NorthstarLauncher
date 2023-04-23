@@ -103,6 +103,8 @@ class SquirrelManagerBase
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
 	sq_getfunctionType __sq_getfunction;
+	sq_getconstantstableType __sq_getconstantstable;
+	sq_removefromstackType __sq_removefromstack;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
@@ -258,6 +260,17 @@ class SquirrelManagerBase
 		}
 		return nullptr;
 	}
+
+	inline SQTable* getConstants(HSquirrelVM* sqvm)
+	{
+		return __sq_getconstantstable(sqvm);
+	}
+
+	inline __int64 removeFromStack(HSquirrelVM* sqvm)
+	{
+		return __sq_removefromstack(sqvm);
+	}
+
 	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
 	{
 		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
@@ -287,6 +300,59 @@ class SquirrelManagerBase
 
 		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
+	}
+
+	inline void pushvar(HSquirrelVM* sqvm, const SQChar* v)
+	{
+		pushstring(sqvm, v);
+	}
+
+	inline void pushvar(HSquirrelVM* sqvm, const SQInteger v)
+	{
+		pushinteger(sqvm, v);
+	}
+
+	inline void pushvar(HSquirrelVM* sqvm, const SQFloat v)
+	{
+		pushfloat(sqvm, v);
+	}
+
+	inline void pushvar(HSquirrelVM* sqvm, const SQBool v)
+	{
+		pushbool(sqvm, v);
+	}
+
+	inline void pushvar(HSquirrelVM* sqvm, const Vector3 v)
+	{
+		pushvector(sqvm, v);
+	}
+
+	inline void pushvar(HSquirrelVM* sqvm, SQObject* v)
+	{
+		pushobject(sqvm, v);
+	}
+
+	template <typename KEY, typename VALUE> SQRESULT createslot(
+		HSquirrelVM* sqvm,
+		KEY key,
+		VALUE value,
+		SQInteger tableIndex = -3,
+		bool bstatic = false,
+		bool keyIsAsset = false,
+		bool valueIsAsset = false)
+	{
+		if (keyIsAsset)
+			// need to cast because msvc considers every codepath to be valid even if they're impossible to reach
+			pushasset(sqvm, (SQChar*)key);
+		else
+			pushvar(sqvm, key);
+
+		if (valueIsAsset)
+			pushasset(sqvm, (SQChar*)value);
+		else
+			pushvar(sqvm, value);
+
+		return newslot(sqvm, tableIndex, bstatic);
 	}
 #pragma endregion
 };
