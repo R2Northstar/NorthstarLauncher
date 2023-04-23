@@ -269,11 +269,24 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 				v->value.GetString() != DependencyConstants[v->name.GetString()])
 			{
 				spdlog::error("A dependency constant with the same name already exists for another mod. Change the constant name.");
-				return;
+				break;
 			}
 
 			if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
 				DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
+		}
+	}
+
+	if (modJson.HasMember("PluginDependencies") && modJson["PluginDependencies"].IsArray())
+	{
+		for (auto& name : modJson["PluginDependencies"].GetArray())
+		{
+			if (!name.IsString())
+				continue;
+
+			spdlog::info("Plugin Constant {} defined by {}", name.GetString(), Name);
+
+			PluginDependencyConstants.push_back(name.GetString());
 		}
 	}
 
@@ -433,6 +446,11 @@ void ModManager::LoadMods()
 			}
 			if (m_DependencyConstants.find(pair.first) == m_DependencyConstants.end())
 				m_DependencyConstants.emplace(pair);
+		}
+
+		for (std::string& dependency : mod.PluginDependencyConstants)
+		{
+			m_PluginDependencyConstants.insert(dependency);
 		}
 
 		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
