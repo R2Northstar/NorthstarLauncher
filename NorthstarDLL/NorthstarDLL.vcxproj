@@ -69,7 +69,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;Ws2_32.lib;Crypt32.lib;Cryptui.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;Bcrypt.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -104,7 +104,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)include\MinHook.x64.lib;$(SolutionDir)include\libcurl\lib\libcurl_a.lib;Ws2_32.lib;Crypt32.lib;Cryptui.lib;dbghelp.lib;Wldap32.lib;Normaliz.lib;Bcrypt.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>
       </ForceSymbolReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -118,7 +118,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\httplib.h" />
     <ClInclude Include="..\include\libcurl\include\curl\curl.h" />
     <ClInclude Include="..\include\libcurl\include\curl\curlver.h" />
     <ClInclude Include="..\include\libcurl\include\curl\easy.h" />
@@ -430,8 +429,8 @@
     <ClInclude Include="logging\sourceconsole.h" />
     <ClInclude Include="masterserver\masterserver.h" />
     <ClInclude Include="mods\modmanager.h" />
-    <ClInclude Include="ns_version.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="plugins\pluginbackend.h" />
     <ClInclude Include="plugins\plugins.h" />
     <ClInclude Include="plugins\plugin_abi.h" />
     <ClInclude Include="scripts\scripthttprequesthandler.h" />
@@ -440,6 +439,7 @@
     <ClInclude Include="server\r2server.h" />
     <ClInclude Include="server\serverchathooks.h" />
     <ClInclude Include="server\serverpresence.h" />
+    <ClInclude Include="shared\gamepresence.h" />
     <ClInclude Include="shared\keyvalues.h" />
     <ClInclude Include="shared\maxplayers.h" />
     <ClInclude Include="shared\misccommands.h" />
@@ -507,6 +507,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="plugins\pluginbackend.cpp" />
     <ClCompile Include="plugins\plugins.cpp" />
     <ClCompile Include="scripts\client\clientchathooks.cpp" />
     <ClCompile Include="scripts\client\cursorposition.cpp" />
@@ -528,11 +529,13 @@
     <ClCompile Include="server\buildainfile.cpp" />
     <ClCompile Include="server\r2server.cpp" />
     <ClCompile Include="server\serverchathooks.cpp" />
+    <ClCompile Include="server\servernethooks.cpp" />
     <ClCompile Include="server\serverpresence.cpp" />
     <ClCompile Include="shared\exploit_fixes\exploitfixes.cpp" />
     <ClCompile Include="shared\exploit_fixes\exploitfixes_lzss.cpp" />
     <ClCompile Include="shared\exploit_fixes\exploitfixes_utf8parser.cpp" />
     <ClCompile Include="shared\exploit_fixes\ns_limits.cpp" />
+    <ClCompile Include="shared\gamepresence.cpp" />
     <ClCompile Include="shared\keyvalues.cpp" />
     <ClCompile Include="shared\maxplayers.cpp" />
     <ClCompile Include="shared\misccommands.cpp" />
