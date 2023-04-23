@@ -97,6 +97,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	ParseScripts(modJson);
 	ParseLocalization(modJson);
 	ParseDependencies(modJson);
+	ParseInitScript(modJson);
 
 	m_bWasReadSuccessfully = true;
 }
@@ -234,7 +235,7 @@ void Mod::ParseConCommands(rapidjson_document& json)
 
 		ConCommands.push_back(concommand);
 
-		spdlog::info("'{}' registered ConCommand '{}'", Name, concommand->Name);
+		spdlog::info("'{}' contains ConCommand '{}'", Name, concommand->Name);
 	}
 }
 
@@ -396,7 +397,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 
 		Scripts.push_back(script);
 
-		spdlog::info("'{}' registered Script '{}'", Name, script.Path);
+		spdlog::info("'{}' contains Script '{}'", Name, script.Path);
 	}
 }
 
@@ -404,11 +405,6 @@ void Mod::ParseLocalization(rapidjson_document& json)
 {
 	if (!json.HasMember("Localisation"))
 		return;
-  
-	if (modJson.HasMember("InitScript") && modJson["InitScript"].IsString())
-	{
-		initScript = modJson["InitScript"].GetString();
-	}
 
 	if (!json["Localisation"].IsArray())
 	{
@@ -475,6 +471,20 @@ void Mod::ParseDependencies(rapidjson_document& json)
 
 		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
 	}
+}
+
+void Mod::ParseInitScript(rapidjson_document& json)
+{
+	if (!json.HasMember("InitScript"))
+		return;
+
+	if (!json["InitScript"].IsString())
+	{
+		spdlog::warn("'InitScript' field is not a string, skipping...");
+		return;
+	}
+
+	initScript = json["InitScript"].GetString();
 }
 
 ModManager::ModManager()
