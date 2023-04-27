@@ -11,7 +11,7 @@ ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
 	g_pSquirrel<context>->newarray(sqvm, 0);
 	for (size_t i = 0; i < g_pMasterServerManager->m_vRemoteServers.size(); i++)
 	{
-		RemoteServerInfo remoteServer = g_pMasterServerManager->m_vRemoteServers[i];
+		const RemoteServerInfo& remoteServer = g_pMasterServerManager->m_vRemoteServers[i];
 
 		g_pSquirrel<context>->pushnewstructinstance(sqvm, 11);
 
@@ -57,7 +57,7 @@ ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
 
 		// requiredMods
 		g_pSquirrel<context>->newarray(sqvm);
-		for (auto mod : remoteServer.requiredMods)
+		for (const RemoteModInfo& mod : remoteServer.requiredMods)
 		{
 			g_pSquirrel<context>->pushnewstructinstance(sqvm, 2);
 
