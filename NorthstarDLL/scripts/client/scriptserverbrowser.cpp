@@ -6,78 +6,6 @@
 
 // functions for viewing server browser
 
-ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
-{
-	g_pSquirrel<context>->newarray(sqvm, 0);
-	for (size_t i = 0; i < g_pMasterServerManager->m_vRemoteServers.size(); i++)
-	{
-		const RemoteServerInfo& remoteServer = g_pMasterServerManager->m_vRemoteServers[i];
-
-		g_pSquirrel<context>->pushnewstructinstance(sqvm, 11);
-
-		// index
-		g_pSquirrel<context>->pushinteger(sqvm, i);
-		g_pSquirrel<context>->sealstructslot(sqvm, 0);
-
-		// id
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.id, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 1);
-
-		// name
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.name, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 2);
-
-		// description
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.description.c_str(), -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 3);
-
-		// map
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.map, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 4);
-
-		// playlist
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.playlist, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 5);
-
-		// playerCount
-		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.playerCount);
-		g_pSquirrel<context>->sealstructslot(sqvm, 6);
-
-		// maxPlayerCount
-		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.maxPlayers);
-		g_pSquirrel<context>->sealstructslot(sqvm, 7);
-
-		// requiresPassword
-		g_pSquirrel<context>->pushbool(sqvm, remoteServer.requiresPassword);
-		g_pSquirrel<context>->sealstructslot(sqvm, 8);
-
-		// region
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.region, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 9);
-
-		// requiredMods
-		g_pSquirrel<context>->newarray(sqvm);
-		for (const RemoteModInfo& mod : remoteServer.requiredMods)
-		{
-			g_pSquirrel<context>->pushnewstructinstance(sqvm, 2);
-
-			// name
-			g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
-			g_pSquirrel<context>->sealstructslot(sqvm, 0);
-
-			// version
-			g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str(), -1);
-			g_pSquirrel<context>->sealstructslot(sqvm, 1);
-
-			g_pSquirrel<context>->arrayappend(sqvm, -2);
-		}
-		g_pSquirrel<context>->sealstructslot(sqvm, 10);
-
-		g_pSquirrel<context>->arrayappend(sqvm, -2);
-	}
-	return SQRESULT_NOTNULL;
-}
-
 ADD_SQFUNC("bool", NSIsMasterServerAuthenticated, "", "", ScriptContext::UI)
 {
 	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bOriginAuthWithMasterServerDone);
@@ -211,5 +139,77 @@ ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext::UI)
 ADD_SQFUNC("string", NSGetAuthFailReason, "", "", ScriptContext::UI)
 {
 	g_pSquirrel<context>->pushstring(sqvm, g_pMasterServerManager->m_sAuthFailureReason.c_str(), -1);
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
+{
+	g_pSquirrel<context>->newarray(sqvm, 0);
+	for (size_t i = 0; i < g_pMasterServerManager->m_vRemoteServers.size(); i++)
+	{
+		const RemoteServerInfo& remoteServer = g_pMasterServerManager->m_vRemoteServers[i];
+
+		g_pSquirrel<context>->pushnewstructinstance(sqvm, 11);
+
+		// index
+		g_pSquirrel<context>->pushinteger(sqvm, i);
+		g_pSquirrel<context>->sealstructslot(sqvm, 0);
+
+		// id
+		g_pSquirrel<context>->pushstring(sqvm, remoteServer.id, -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 1);
+
+		// name
+		g_pSquirrel<context>->pushstring(sqvm, remoteServer.name, -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 2);
+
+		// description
+		g_pSquirrel<context>->pushstring(sqvm, remoteServer.description.c_str(), -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 3);
+
+		// map
+		g_pSquirrel<context>->pushstring(sqvm, remoteServer.map, -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 4);
+
+		// playlist
+		g_pSquirrel<context>->pushstring(sqvm, remoteServer.playlist, -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 5);
+
+		// playerCount
+		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.playerCount);
+		g_pSquirrel<context>->sealstructslot(sqvm, 6);
+
+		// maxPlayerCount
+		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.maxPlayers);
+		g_pSquirrel<context>->sealstructslot(sqvm, 7);
+
+		// requiresPassword
+		g_pSquirrel<context>->pushbool(sqvm, remoteServer.requiresPassword);
+		g_pSquirrel<context>->sealstructslot(sqvm, 8);
+
+		// region
+		g_pSquirrel<context>->pushstring(sqvm, remoteServer.region, -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 9);
+
+		// requiredMods
+		g_pSquirrel<context>->newarray(sqvm);
+		for (const RemoteModInfo& mod : remoteServer.requiredMods)
+		{
+			g_pSquirrel<context>->pushnewstructinstance(sqvm, 2);
+
+			// name
+			g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
+			g_pSquirrel<context>->sealstructslot(sqvm, 0);
+
+			// version
+			g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str(), -1);
+			g_pSquirrel<context>->sealstructslot(sqvm, 1);
+
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+		}
+		g_pSquirrel<context>->sealstructslot(sqvm, 10);
+
+		g_pSquirrel<context>->arrayappend(sqvm, -2);
+	}
 	return SQRESULT_NOTNULL;
 }
