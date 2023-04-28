@@ -33,13 +33,14 @@ std::vector<MapVPKInfo> vMapList;
 
 void RefreshMapList()
 {
-	// don't update our map list often from this func, only refresh every 10 seconds so we avoid constantly reading fs
+	// Only update the maps list every 10 seconds max to we avoid constantly reading fs
 	static double fLastRefresh = -999;
 
-	if (fLastRefresh + 10.0 < R2::g_pGlobals->m_flRealTime)
-		fLastRefresh = R2::g_pGlobals->m_flRealTime;
-	else
+	if (fLastRefresh + 10.0 > R2::g_pGlobals->m_flRealTime)
 		return;
+
+	fLastRefresh = R2::g_pGlobals->m_flRealTime;
+
 
 	// Rebuild map list
 	vMapList.clear();
