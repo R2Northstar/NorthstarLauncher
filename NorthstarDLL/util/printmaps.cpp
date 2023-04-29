@@ -41,7 +41,6 @@ void RefreshMapList()
 
 	fLastRefresh = R2::g_pGlobals->m_flRealTime;
 
-
 	// Rebuild map list
 	vMapList.clear();
 
