@@ -241,11 +241,6 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
-	if (modJson.HasMember("InitScript") && modJson["InitScript"].IsString())
-	{
-		initScript = modJson["InitScript"].GetString();
-	}
-
 	if (modJson.HasMember("Localisation") && modJson["Localisation"].IsArray())
 	{
 		for (auto& localisationStr : modJson["Localisation"].GetArray())

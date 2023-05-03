@@ -71,7 +71,7 @@ std::string UnescapeUnicode(const std::string& str)
 	return result;
 }
 
-void ServerPresenceManager::CreateConVars()
+ServerPresenceManager::ServerPresenceManager()
 {
 	// clang-format off
 	// register convars
@@ -223,6 +223,7 @@ void ServerPresenceManager::SetPlayerCount(const int iPlayerCount)
 
 ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (CModule module))
 {
-	g_pServerPresence->CreateConVars();
+	g_pServerPresence = new ServerPresenceManager;
+
 	Cvar_hostname = module.Offset(0x1315BAE8).Deref().As<ConVar*>();
 }

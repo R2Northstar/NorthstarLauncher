@@ -127,7 +127,7 @@ class MasterServerManager
 	void RequestMainMenuPromos();
 	void AuthenticateOriginWithMasterServer(const char* uid, const char* originToken);
 	void AuthenticateWithOwnServer(const char* uid, const char* playerToken);
-	void AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password);
+	void AuthenticateWithServer(const char* uid, const char* playerToken, const char* serverId, const char* password);
 	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
 	void ProcessConnectionlessPacketSigreq1(std::string req);
 };

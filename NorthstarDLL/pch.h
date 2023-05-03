@@ -20,11 +20,6 @@
 
 namespace fs = std::filesystem;
 
-#define EXPORT extern "C" __declspec(dllexport)
-
-typedef void (*callable)();
-typedef void (*callable_v)(void* v);
-
 // clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on
@@ -33,7 +28,6 @@ typedef void (*callable_v)(void* v);
 
 #include "core/structs.h"
 #include "core/math/color.h"
-
 #include "spdlog/spdlog.h"
 #include "logging/logging.h"
 #include "MinHook.h"

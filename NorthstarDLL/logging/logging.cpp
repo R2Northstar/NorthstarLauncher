@@ -28,7 +28,6 @@ namespace NS::log
 	std::shared_ptr<ColoredLogger> echo;
 
 	std::shared_ptr<ColoredLogger> NORTHSTAR;
-	std::shared_ptr<ColoredLogger> PLUGINSYS;
 }; // namespace NS::log
 
 // This needs to be called after hooks are loaded so we can access the command line args
@@ -149,11 +148,6 @@ void InitialiseConsole()
 	}
 }
 
-void RegisterLogger(std::shared_ptr<ColoredLogger> logger)
-{
-	loggers.push_back(logger);
-}
-
 void RegisterCustomSink(std::shared_ptr<CustomSink> sink)
 {
 	for (auto& logger : loggers)
@@ -195,8 +189,6 @@ void InitialiseLogging()
 	NS::log::rpak = std::make_shared<ColoredLogger>("RPAK_FSYS", NS::Colors::RPAK);
 	NS::log::echo = std::make_shared<ColoredLogger>("ECHO", NS::Colors::ECHO);
 
-	NS::log::PLUGINSYS = std::make_shared<ColoredLogger>("PLUGINSYS", NS::Colors::PLUGINSYS);
-
 	loggers.push_back(NS::log::SCRIPT_UI);
 	loggers.push_back(NS::log::SCRIPT_CL);
 	loggers.push_back(NS::log::SCRIPT_SV);
@@ -205,8 +197,6 @@ void InitialiseLogging()
 	loggers.push_back(NS::log::NATIVE_CL);
 	loggers.push_back(NS::log::NATIVE_SV);
 	loggers.push_back(NS::log::NATIVE_EN);
-
-	loggers.push_back(NS::log::PLUGINSYS);
 
 	loggers.push_back(NS::log::fs);
 	loggers.push_back(NS::log::rpak);

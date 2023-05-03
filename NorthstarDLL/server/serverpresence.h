@@ -3,10 +3,7 @@
 
 struct ServerPresence
 {
-  public:
 	int m_iPort;
-
-	std::string m_sServerId;
 
 	std::string m_sServerName;
 	std::string m_sServerDesc;
@@ -27,8 +24,6 @@ struct ServerPresence
 	ServerPresence(const ServerPresence* obj)
 	{
 		m_iPort = obj->m_iPort;
-
-		m_sServerId = obj->m_sServerId;
 
 		m_sServerName = obj->m_sServerName;
 		m_sServerDesc = obj->m_sServerDesc;
@@ -72,9 +67,9 @@ class ServerPresenceManager
 	ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
   public:
-	void AddPresenceReporter(ServerPresenceReporter* reporter);
+	ServerPresenceManager();
 
-	void CreateConVars();
+	void AddPresenceReporter(ServerPresenceReporter* reporter);
 
 	void CreatePresence();
 	void DestroyPresence();
