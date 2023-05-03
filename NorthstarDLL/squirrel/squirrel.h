@@ -219,7 +219,8 @@ class SquirrelManagerBase
 
 	inline Vector3 getvector(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
-		return *(Vector3*)__sq_getvector(sqvm, stackpos);
+		float* pRet = __sq_getvector(sqvm, stackpos);
+		return *(Vector3*)&pRet;
 	}
 
 	inline int sq_getfunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature)
