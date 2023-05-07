@@ -101,16 +101,3 @@ ADD_SQFUNC("array<Mod>", NSGetMods, "", "Get all installed mods", ScriptContext:
 
 	return SQRESULT_NOTNULL;
 }
-
-ADD_SQFUNC("array<string>", NSGetInvalidMods, "", "", ScriptContext::UI)
-{
-	g_pSquirrel<context>->newarray(sqvm, 0);
-
-	for (std::string path : g_pModManager->m_invalidMods)
-	{
-		g_pSquirrel<context>->pushstring(sqvm, path.c_str());
-		g_pSquirrel<context>->arrayappend(sqvm, -2);
-	}
-
-	return SQRESULT_NOTNULL;
-}
