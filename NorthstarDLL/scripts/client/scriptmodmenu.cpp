@@ -75,7 +75,12 @@ ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::SERVER | ScriptContext::
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("array<Mod>", NSGetInvalidMods, "", "Get all mods that are installed in a subfolder", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"array<Mod>",
+	NSGetInvalidMods,
+	"",
+	"Get all mods that are installed in a subfolder",
+	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
