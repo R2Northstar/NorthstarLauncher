@@ -18,6 +18,10 @@ SaveFileManager* g_pSaveFileManager;
 int MAX_FOLDER_SIZE = 52428800; // 50MB (50 * 1024 * 1024)
 fs::path savePath;
 
+/// <summary></summary>
+/// <param name="dir">The directory we want the size of.</param>
+/// <param name="file">The file we're excluding from the calculation.</param>
+/// <returns>The size of the contents of the current directory, excluding a specific file.</returns>
 uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
 {
 	uintmax_t result = 0;
@@ -25,11 +29,24 @@ uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
 	{
 		if (entry.path().filename() == file)
 			continue;
-		result += fs::file_size(entry.path());
+		// fs::file_size may not work on directories - but does in some cases.
+		// per cppreference.com, it's "implementation-defined".
+		try
+		{
+			result += fs::file_size(entry.path());
+		}
+		catch (fs::filesystem_error& e)
+		{
+			if (entry.is_directory())
+			{
+				result += GetSizeOfFolderContentsMinusFile(entry.path(), "");
+			}
+		}
 	}
 	return result;
 }
 
+// Saves a file asynchronously.
 template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
 {
 	auto mutex = std::ref(mutexMap[file]);
@@ -43,7 +60,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 				fs::path dir = file.parent_path();
 				// this actually allows mods to go over the limit, but not by much
 				// the limit is to prevent mods from taking gigabytes of space,
-				// this ain't a cloud service.
+				// we don't need to be particularly strict.
 				if (GetSizeOfFolderContentsMinusFile(dir, file.filename().string()) + contents.length() > MAX_FOLDER_SIZE)
 				{
 					// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
@@ -79,6 +96,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 	writeThread.detach();
 }
 
+// Loads a file asynchronously.
 template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path file)
 {
 	int handle = ++m_iLastRequestHandle;
@@ -125,6 +143,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 	return handle;
 }
 
+// Deletes a file asynchronously.
 template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
 {
 	// P.S. I don't like how we have to async delete calls but we do.
@@ -155,15 +174,16 @@ template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path 
 	deleteThread.detach();
 }
 
+// Checks if a file contains null characters.
 bool ContainsInvalidChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
 	return std::any_of(str.begin(), str.end(), [](char c) { return c == '\0'; });
 }
-// I don't know why I have to pass the string path as a separate parameter
-// I don't want to know why I have to pass the string path as a separate parameter
-// but if I don't ASCII check fails. So here we are.
+
+// Checks if the relative path (param) remains inside the mod directory (dir).
+// Paths are restricted to ASCII because encoding is fucked and we decided we won't bother.
 bool IsPathSafe(const std::string param, fs::path dir)
 {
 	auto const normRoot = fs::weakly_canonical(dir);
@@ -220,12 +240,11 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	// this ain't a cloud service.
 	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
 	{
-		// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
 			fmt::format(
-				"Congrats, {}!\nYou have reached the maximum folder size!\n\n... please delete something. Or make your file shorter. "
-				"Either works.",
+				"The mod {} has reached the maximum folder size.\n\nAsk the mod developer to optimize their data usage,"
+				"or increase the maximum folder size using the -maxfoldersize launch parameter.",
 				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
@@ -261,6 +280,8 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 		return SQRESULT_ERROR;
 	}
 
+	// Note - this cannot be done in the async func since the table may get garbage collected.
+	// This means that especially large tables may still clog up the system.
 	std::string content = EncodeJSON<context>(sqvm);
 	if (ContainsInvalidChars(content))
 	{
@@ -275,12 +296,11 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	// this ain't a cloud service.
 	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
 	{
-		// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
 			fmt::format(
-				"Congrats, {}!\nYou have reached the maximum folder size!\n\n... please delete something. Or make your file shorter. "
-				"Either works.",
+				"The mod {} has reached the maximum folder size.\n\nAsk the mod developer to optimize their data usage,"
+				"or increase the maximum folder size using the -maxfoldersize launch parameter.",
 				mod->Name)
 				.c_str());
 		return SQRESULT_ERROR;
@@ -479,10 +499,7 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 
 // ok, I'm just gonna explain what the fuck is going on here because this
 // is the pinnacle of my stupidity and I do not want to touch this ever
-// again & someone will eventually have to maintain this.
-
-// P.S. if you don't want me to do the entire table -> JSON -> string thing...
-// Fix it in scriptjson first k thx bye
+// again, yet someone will eventually have to maintain this.
 template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 {
 	// new rapidjson
