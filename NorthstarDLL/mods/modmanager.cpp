@@ -256,6 +256,11 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		}
 	}
 
+	if (modJson.HasMember("InitScript") && modJson["InitScript"].IsString())
+	{
+		initScript = modJson["InitScript"].GetString();
+	}
+
 	if (modJson.HasMember("Localisation") && modJson["Localisation"].IsArray())
 	{
 		for (auto& localisationStr : modJson["Localisation"].GetArray())
@@ -313,11 +318,18 @@ template <ScriptContext context> auto ModConCommandCallback_Internal(std::string
 {
 	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
 	{
-		std::vector<std::string> args;
-		args.reserve(command.ArgC());
-		for (int i = 1; i < command.ArgC(); i++)
-			args.push_back(command.Arg(i));
-		g_pSquirrel<context>->AsyncCall(name, args);
+		if (command.ArgC() == 1)
+		{
+			g_pSquirrel<context>->AsyncCall(name);
+		}
+		else
+		{
+			std::vector<std::string> args;
+			args.reserve(command.ArgC());
+			for (int i = 1; i < command.ArgC(); i++)
+				args.push_back(command.Arg(i));
+			g_pSquirrel<context>->AsyncCall(name, args);
+		}
 	}
 	else
 	{
