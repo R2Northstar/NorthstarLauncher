@@ -2,7 +2,7 @@
 #include <string>
 #include "squirrel/squirrelclasstypes.h"
 
-#define ABI_VERSION 2
+#define ABI_VERSION 3
 
 enum GameState
 {
