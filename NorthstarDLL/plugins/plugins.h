@@ -32,6 +32,8 @@ class Plugin
 
 	PLUGIN_PUSH_PRESENCE_TYPE push_presence;
 	PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
+
+	PLUGIN_RUNFRAME run_frame;
 };
 
 class PluginManager
@@ -49,6 +51,8 @@ class PluginManager
 	void PushPresence(PluginGameStatePresence* data);
 
 	void InformDLLLoad(PluginLoadDLL dll, void* data);
+
+	void RunFrame();
 
   private:
 	std::string pluginPath;
