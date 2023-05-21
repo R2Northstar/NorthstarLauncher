@@ -658,19 +658,50 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 	}
 }
 
-// Initialize a function on the CLIENT and UI or SERVER, depending on context
+/*
+	Initialize a function on the CLIENT and UI or SERVER, depending on context
+	The member __needs__ to be a member of the manager passed. Otherwise you will write to random memory!
+	Undefined Behaviour ahead!
+*/
 template <ScriptContext context, typename T>
 void SetSharedMember(SquirrelManager<context>* manager, T* member, const CModule module, const int clOffset, const int svOffset)
 {
 	switch (context)
 	{
 	case ScriptContext::CLIENT:
+	case ScriptContext::UI:
 	{
-		*member = module.Offset(clOffset).As<T>(); // Set the member for the CLIENT vm
-		*(T*)((char*)g_pSquirrel<ScriptContext::UI> + (int64_t)member - (int64_t)manager) = *member; // Set the member for the UI vm
+		/*
+			The CLIENT & UI VM share the same squirrel functions in the client.dll.
+			Because of this we only need an offset for the SERVER and the CLIENT.
+			This branch sets the member for __both__ the CLIENT and UI SquirrelManager.
+		*/
+
+		// Initialize the member passed. It's assumed that the 'member' parameter is a member of the 'manager' parameter.
+		*member = module.Offset(clOffset).As<T>();
+
+		// If the context of this function is CLIENT, initialize the same member on the UI SquirrelManager,
+		// otherwise initialize the member of the CLIENT manager
+		*(T*)((char*)g_pSquirrel < context == ScriptContext::UI ? ScriptContext::CLIENT : ScriptContext::UI > +(int64_t)member - (int64_t)manager) =
+			*member;
+		/*
+			The calculation for the member to set can be simplified like this:
+
+			```
+			int64_t managerAddress = (int64_t)manager; // Same size as a pointer
+			int64_t memberAddress = (int64_t)member;
+			int64_t memberOffset = memberAddress - managerAddress // This is the offset of the manager from the base address from the manager class instance
+
+			int64_t otherManagerMemberAddres = (int64_t)g_pSquirrel<otherContext> + memberOffset;
+			T* otherManagerMember = (T*)otherManagerMemberAddress;
+			```
+
+			It basically only calculates the offset from the member of the class and adds it to the address of another SquirrelManager to get the same member on a different instance.
+		*/
 		break;
 	}
 	case ScriptContext::SERVER:
+		// The SERVER context is the only vm using these so we don't need to initialize another SquirrelManager
 		*member = module.Offset(svOffset).As<T>();
 	}
 }
