@@ -690,13 +690,15 @@ void SetSharedMember(SquirrelManager<context>* manager, T* member, const CModule
 			```
 			int64_t managerAddress = (int64_t)manager; // Same size as a pointer
 			int64_t memberAddress = (int64_t)member;
-			int64_t memberOffset = memberAddress - managerAddress // This is the offset of the manager from the base address from the manager class instance
+			int64_t memberOffset = memberAddress - managerAddress // This is the offset of the manager from the base address from the
+		   manager class instance
 
 			int64_t otherManagerMemberAddres = (int64_t)g_pSquirrel<otherContext> + memberOffset;
 			T* otherManagerMember = (T*)otherManagerMemberAddress;
 			```
 
-			It basically only calculates the offset from the member of the class and adds it to the address of another SquirrelManager to get the same member on a different instance.
+			It basically only calculates the offset from the member of the class and adds it to the address of another SquirrelManager to
+		   get the same member on a different instance.
 		*/
 		break;
 	}
