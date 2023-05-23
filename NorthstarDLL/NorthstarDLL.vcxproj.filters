@@ -189,9 +189,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\httplib.h">
-      <Filter>Header Files\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\MinHook.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
@@ -1038,9 +1035,6 @@
     <ClInclude Include="mods\modmanager.h">
       <Filter>Header Files\mods</Filter>
     </ClInclude>
-    <ClInclude Include="plugins\plugin_abi.h">
-      <Filter>Header Files\plugins</Filter>
-    </ClInclude>
     <ClInclude Include="plugins\plugins.h">
       <Filter>Header Files\plugins</Filter>
     </ClInclude>
@@ -1084,9 +1078,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\libzip\include\zlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ns_version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
@@ -1181,6 +1172,18 @@
     </ClInclude>
     <ClInclude Include="scripts\scripthttprequesthandler.h">
       <Filter>Header Files\scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="plugins\plugin_abi.h">
+      <Filter>Header Files\plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="plugins\pluginbackend.h">
+      <Filter>Header Files\plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="shared\gamepresence.h">
+      <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="util\wininfo.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="shared\maxplayers.h">
       <Filter>Header Files\shared</Filter>
@@ -1447,6 +1450,15 @@
     <ClCompile Include="scripts\scripthttprequesthandler.cpp">
       <Filter>Source Files\scripts</Filter>
     </ClCompile>
+    <ClCompile Include="plugins\pluginbackend.cpp">
+      <Filter>Source Files\plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="shared\gamepresence.cpp">
+      <Filter>Source Files\shared</Filter>
+    </ClCompile>
+    <ClCompile Include="util\wininfo.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
     <ClCompile Include="core\sourceinterface.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
@@ -1472,6 +1484,9 @@
       <Filter>Source Files\dedicated</Filter>
     </ClCompile>
     <ClCompile Include="server\alltalk.cpp">
+      <Filter>Source Files\server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\servernethooks.cpp">
       <Filter>Source Files\server</Filter>
     </ClCompile>
   </ItemGroup>
