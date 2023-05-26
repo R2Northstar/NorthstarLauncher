@@ -321,7 +321,6 @@ void DownloadMod(char* modName, char* modVersion)
 				spdlog::info("    => {}", fileName);
 				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / fileName;
 
-
 				// From time to time, file entries appear before directory containing
 				// them, so we need to create the latter before extracting the file.
 				// e.g.:
@@ -339,7 +338,6 @@ void DownloadMod(char* modName, char* modVersion)
 						goto REQUEST_END_CLEANUP;
 					}
 				}
-
 
 				if (fileName.back() == '/')
 				{
