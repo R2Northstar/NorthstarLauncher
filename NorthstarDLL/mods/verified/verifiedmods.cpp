@@ -321,6 +321,26 @@ void DownloadMod(char* modName, char* modVersion)
 				spdlog::info("    => {}", fileName);
 				std::filesystem::path destination = std::filesystem::path(GetNorthstarPrefix()) / fileName;
 
+
+				// From time to time, file entries appear before directory containing
+				// them, so we need to create the latter before extracting the file.
+				// e.g.:
+				//     * archive.zip/icon.png
+				//     * archive.zip/manifest.json
+				//     * archive.zip/mods/firstMod/mod.json		<== firstMod directory is mentioned in mod.json's path...
+				//     * archive.zip/mods/firstMod/				<== ... while it should be created here.
+				if (!std::filesystem::exists(destination.parent_path()))
+				{
+					spdlog::warn("Parent directory does not exist for file {}, creating it.", destination.generic_string());
+					if (!std::filesystem::create_directories(destination.parent_path(), ec))
+					{
+						spdlog::error("Parent directory ({}) creation failed.", destination.parent_path().generic_string());
+						modDownloadAndExtractionResult = ec.value() == ENOSPC ? NO_DISK_SPACE_AVAILABLE : FAILED_WRITING_TO_DISK;
+						goto REQUEST_END_CLEANUP;
+					}
+				}
+
+
 				if (fileName.back() == '/')
 				{
 					// Create directory
