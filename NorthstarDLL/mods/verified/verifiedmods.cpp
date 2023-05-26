@@ -50,22 +50,10 @@ std::vector<float> currentDownloadStats(6);
 // Test string used to test branch without masterserver
 const char* modsTestString =
 	"{"
-	"\"Fifty.mp_frostbite\": {"
-	"\"DependencyPrefix\": \"Fifty-Frostbite\","
+	"\"Odd.s2space\": {"
+	"\"DependencyPrefix\": \"odds-s2space\","
 	"\"Versions\" : ["
-	"{ \"Version\": \"0.0.1\", \"Checksum\": \"8cf111c9ac2ab1521677769702e10be4db8d47c0eca16bda197aceb895cf2b5c\" }"
-	"]},"
-
-	"\"Dinorush.Brute4\": {"
-	"\"DependencyPrefix\": \"Dinorush-DinorushBrute4\","
-	"\"Versions\" : ["
-	"{ \"Version\": \"1.7.2\", \"Checksum\": \"e5b752006e893061fb908c3671a5984093f5f6600da2f861dab30ab5f50f56a2\" }"
-	"]},"
-
-	"\"Zircon Spitfire\": {"
-	"\"DependencyPrefix\": \"Juicys_Emporium-Zircon_Spitfire\","
-	"\"Versions\" : ["
-	"{ \"Version\": \"1.0.0\", \"Checksum\": \"b742d09832a97bdbbd6b9184884712ef4093e3b4ba29eae40b40db26308ba42e\" }"
+	"{ \"Version\": \"0.0.4\", \"Checksum\": \"4083d0257948766d1c8eaf121395047f5de2c67be49aca937ec43d603b6c1f97\" }"
 	"]}"
 	"}";
 
