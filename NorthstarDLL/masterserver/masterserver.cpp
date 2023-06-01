@@ -1004,6 +1004,8 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 			return;
 		}
 
+		// don't try if we are in a (non private_match) lobby, it wouldn't show on the server browser
+		// even if it was successful anyway and the errors for normal users can be misleading
 		if (strstr(pServerPresence->m_MapName, "mp_lobby") && !strstr(pServerPresence->m_PlaylistName,"private_match"))
 		{
 			return;
