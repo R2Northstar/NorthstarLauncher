@@ -1004,6 +1004,11 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 			return;
 		}
 
+		if (strstr(pServerPresence->m_MapName, "mp_lobby") && !strstr(pServerPresence->m_PlaylistName,"private_match"))
+		{
+			return;
+		}
+
 		// If we're not running any InternalAddServer() attempt in the background.
 		if (!addServerFuture.valid())
 		{
