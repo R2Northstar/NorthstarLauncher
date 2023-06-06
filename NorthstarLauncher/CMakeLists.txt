@@ -1,10 +1,14 @@
 # NorthstarLauncher
 
-add_executable(NorthstarLauncher "main.cpp" resources.rc)
+add_executable(NorthstarLauncher
+               "main.cpp"
+			   "resources.rc"
+)
 
 target_compile_definitions(NorthstarLauncher PRIVATE
 						   UNICODE
-						   _UNICODE)
+						   _UNICODE
+)
 
 target_link_libraries(NorthstarLauncher PRIVATE
                       shlwapi.lib
@@ -21,9 +25,9 @@ target_link_libraries(NorthstarLauncher PRIVATE
                       odbc32.lib
                       odbccp32.lib
                       Ws2_32.lib
-                      )
+)
 
 set_target_properties(NorthstarLauncher PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game
 					  LINK_FLAGS "/STACK:8000000"
-                      )
+)

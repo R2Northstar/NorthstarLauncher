@@ -142,7 +142,8 @@ add_library(NorthstarDLL SHARED
 			"audio_asm.asm"
 			"dllmain.cpp"
 			"dllmain.h"
-			"ns_version.h")
+			"ns_version.h"
+)
 
 target_link_libraries(NorthstarDLL PRIVATE
                       ${CMAKE_SOURCE_DIR}/include/MinHook.x64.lib
@@ -155,12 +156,12 @@ target_link_libraries(NorthstarDLL PRIVATE
 					  Normaliz.lib
 					  Bcrypt.lib
 					  version.lib
-                      )
+)
 
 target_include_directories(NorthstarDLL PRIVATE
                            ${CMAKE_SOURCE_DIR}/NorthstarDLL
                            ${CMAKE_SOURCE_DIR}/include
-                           )
+)
 
 target_precompile_headers(NorthstarDLL PRIVATE pch.h)
 
@@ -168,9 +169,9 @@ target_compile_definitions(NorthstarDLL PRIVATE
                            UNICODE
                            _UNICODE
                            CURL_STATICLIB
-                           )
+)
 
 set_target_properties(NorthstarDLL PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game
 					  OUTPUT_NAME Northstar
-                      )
+)

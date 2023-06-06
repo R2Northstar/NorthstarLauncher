@@ -1,14 +1,14 @@
 # loader_wsock32_proxy
 
 add_library(loader_wsock32_proxy SHARED
-            dllmain.cpp
-            loader.cpp
-            loader.h
-            pch.cpp
-            pch.h
-            wsock32.asm
-            wsock32.def)
-
+            "dllmain.cpp"
+            "loader.cpp"
+            "loader.h"
+            "pch.cpp"
+            "pch.h"
+            "wsock32.asm"
+            "wsock32.def"
+)
 
 target_link_libraries(loader_wsock32_proxy PRIVATE
                       ${CMAKE_CURRENT_SOURCE_DIR}/include/MinHook.x64.lib
@@ -28,18 +28,21 @@ target_link_libraries(loader_wsock32_proxy PRIVATE
 					  oleaut32.lib
 					  uuid.lib
 					  odbc32.lib
-					  odbccp32.lib)
-
+					  odbccp32.lib
+)
 
 target_include_directories(loader_wsock32_proxy PRIVATE
-                           include)
+                           include
+)
 
 target_precompile_headers(loader_wsock32_proxy PRIVATE pch.h)
 
 target_compile_definitions(loader_wsock32_proxy PRIVATE
                            UNICODE
-                           _UNICODE)
+                           _UNICODE
+)
 
 set_target_properties(loader_wsock32_proxy PROPERTIES
 					  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game/bin/x64_retail
-                      OUTPUT_NAME wsock32)
+                      OUTPUT_NAME wsock32
+)
