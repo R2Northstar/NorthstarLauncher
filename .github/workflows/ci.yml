@@ -10,10 +10,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1
+      - name: Setup msvc
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Configure cmake
-        run: cmake -G "Ninja" -DCMAKE_BUILD_TYPE:STRING="${{ env.BUILD_PROFILE }}" -DCMAKE_CXX_COMPILER="cl.exe"
+        run: cmake -G "Ninja" -DCMAKE_BUILD_TYPE:STRING="${{ env.BUILD_PROFILE }}"
       - name: Build
         run: cmake --build .
       - name: Extract Short Commit Hash
