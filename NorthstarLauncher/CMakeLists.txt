@@ -2,12 +2,12 @@
 
 add_executable(NorthstarLauncher
                "main.cpp"
-			   "resources.rc"
+               "resources.rc"
 )
 
 target_compile_definitions(NorthstarLauncher PRIVATE
-						   UNICODE
-						   _UNICODE
+                           UNICODE
+                           _UNICODE
 )
 
 target_link_libraries(NorthstarLauncher PRIVATE
@@ -29,5 +29,5 @@ target_link_libraries(NorthstarLauncher PRIVATE
 
 set_target_properties(NorthstarLauncher PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game
-					  LINK_FLAGS "/MANIFEST:NO /STACK:8000000"
+                      LINK_FLAGS "/MANIFEST:NO /STACK:8000000"
 )
