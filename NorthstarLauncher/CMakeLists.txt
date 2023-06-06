@@ -1,8 +1,5 @@
 # NorthstarLauncher
 
-# Needed as we launch titanfall inside ourselves
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8000000")
-
 add_executable(NorthstarLauncher "main.cpp" resources.rc)
 
 target_compile_definitions(NorthstarLauncher PRIVATE
@@ -24,4 +21,9 @@ target_link_libraries(NorthstarLauncher PRIVATE
                       odbc32.lib
                       odbccp32.lib
                       Ws2_32.lib
+                      )
+
+set_target_properties(NorthstarLauncher PROPERTIES
+                      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game
+					  LINK_FLAGS "/STACK:8000000"
                       )
