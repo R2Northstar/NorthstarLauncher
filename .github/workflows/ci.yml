@@ -13,7 +13,7 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.1
       - name: Configure cmake
-        run: cmake -G "Ninja" -DCMAKE_BUILD_TYPE:STRING="${{ env.BUILD_PROFILE }}"
+        run: cmake -G "Ninja" -DCMAKE_BUILD_TYPE:STRING="${{ env.BUILD_PROFILE }}" -DCMAKE_CXX_COMPILER="cl.exe"
       - name: Build
         run: cmake --build .
       - name: Extract Short Commit Hash
