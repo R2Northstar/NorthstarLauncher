@@ -29,5 +29,5 @@ target_link_libraries(NorthstarLauncher PRIVATE
 
 set_target_properties(NorthstarLauncher PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game
-					  LINK_FLAGS "/STACK:8000000"
+					  LINK_FLAGS "/MANIFEST:NO /STACK:8000000"
 )
