@@ -50,7 +50,7 @@ class PluginManager
 	void InformSQVMDestroyed(ScriptContext context);
 	void PushPresence(PluginGameStatePresence* data);
 
-	void InformDLLLoad(PluginLoadDLL dll, void* data);
+	void InformDLLLoad(PluginLoadDLL dll, void* data, void* dllPtr);
 
 	void RunFrame();
 

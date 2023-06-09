@@ -162,4 +162,4 @@ typedef void (*PLUGIN_RUNFRAME)();
 
 // Northstar -> Plugin
 typedef void (*PLUGIN_PUSH_PRESENCE_TYPE)(PluginGameStatePresence* data);
-typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data);
+typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data, void* dllPtr);

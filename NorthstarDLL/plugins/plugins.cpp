@@ -282,13 +282,13 @@ void PluginManager::PushPresence(PluginGameStatePresence* data)
 	}
 }
 
-void PluginManager::InformDLLLoad(PluginLoadDLL dll, void* data)
+void PluginManager::InformDLLLoad(PluginLoadDLL dll, void* data, void* dllPtr)
 {
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (plugin.inform_dll_load != NULL)
 		{
-			plugin.inform_dll_load(dll, data);
+			plugin.inform_dll_load(dll, data, dllPtr);
 		}
 	}
 }
