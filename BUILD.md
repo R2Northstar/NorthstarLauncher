@@ -14,7 +14,7 @@ The following steps will allow you to compile your own NorthstarLauncher executa
 
 6. **Open the NorthstarLauncher folder** you unzipped with Visual Studio.
 
-7. You may be prompted by visual studio to generate the cmake cache. To do this open the root `CMakeLists.txt` and click **Generate**. Once you do this you should be able to build teh project.
+7. You may be prompted by visual studio to generate the cmake cache. To do this open the root `CMakeLists.txt` and click **Generate**. Once you do this you should be able to build the project.
 
 ![Generate CMake Cache Prompt](https://github.com/R2Northstar/NorthstarLauncher/assets/64418963/2d825acb-3118-4cf0-84d2-cbc9174dece5)
 
