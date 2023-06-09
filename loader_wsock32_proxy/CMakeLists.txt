@@ -43,7 +43,7 @@ target_compile_definitions(loader_wsock32_proxy PRIVATE
 )
 
 set_target_properties(loader_wsock32_proxy PROPERTIES
-                      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game/bin/x64_retail
+                      RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR}/bin/x64_retail
                       OUTPUT_NAME wsock32
                       LINK_FLAGS "/MANIFEST:NO /DEBUG"
 )

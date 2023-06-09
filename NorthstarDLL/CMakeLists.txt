@@ -172,7 +172,7 @@ target_compile_definitions(NorthstarDLL PRIVATE
 )
 
 set_target_properties(NorthstarDLL PROPERTIES
-                      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/game
+                      RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR}
                       OUTPUT_NAME Northstar
                       LINK_FLAGS "/MANIFEST:NO /DEBUG"
 )
