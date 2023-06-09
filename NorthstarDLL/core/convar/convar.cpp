@@ -44,6 +44,7 @@ ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 	g_pPluginCommunicationhandler->m_sEngineData.conVarRegister = conVarRegister;
 	g_pPluginCommunicationhandler->m_sEngineData.ConVar_Vtable = g_pConVar_Vtable;
 	g_pPluginCommunicationhandler->m_sEngineData.IConVar_Vtable = g_pIConVar_Vtable;
+	g_pPluginCommunicationhandler->m_sEngineData.g_pCVar = R2::g_pCVar;
 }
 
 //-----------------------------------------------------------------------------

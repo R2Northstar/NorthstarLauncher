@@ -114,6 +114,7 @@ struct PluginEngineData
 	void* conVarRegister;
 	void* ConVar_Vtable;
 	void* IConVar_Vtable;
+	void* g_pCVar;
 };
 
 struct PluginGameStatePresence
