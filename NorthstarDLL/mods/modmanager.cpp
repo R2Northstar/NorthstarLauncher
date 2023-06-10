@@ -421,16 +421,14 @@ void ModManager::LoadMods()
 							"mod.json file for directory {} is located at the wrong location ({}).",
 							dir.path().generic_string().c_str(),
 							subdir.path().generic_string().c_str());
+
 						// read mod json file
 						std::ifstream jsonStream(modPath);
 						std::stringstream jsonStringStream;
-
-						while (jsonStream.peek() != EOF)
-							jsonStringStream << (char)jsonStream.get();
-
+						jsonStringStream << jsonStream.rdbuf();
 						jsonStream.close();
-						std::shared_ptr<Mod> mod = std::shared_ptr<Mod>(new Mod(subdir, (char*)jsonStringStream.str().c_str()));
 
+						std::shared_ptr<Mod> mod = std::shared_ptr<Mod>(new Mod(subdir, (char*)jsonStringStream.str().c_str()));
 						this->m_invalidMods.push_back(mod);
 					}
 				}
