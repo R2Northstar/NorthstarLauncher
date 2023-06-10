@@ -46,10 +46,32 @@ uintmax_t GetSizeOfFolderContentsMinusFile(fs::path dir, std::string file)
 	return result;
 }
 
+uintmax_t GetSizeOfFolder(fs::path dir)
+{
+	uintmax_t result = 0;
+	for (const auto& entry : fs::directory_iterator(dir))
+	{
+		// fs::file_size may not work on directories - but does in some cases.
+		// per cppreference.com, it's "implementation-defined".
+		try
+		{
+			result += fs::file_size(entry.path());
+		}
+		catch (fs::filesystem_error& e)
+		{
+			if (entry.is_directory())
+			{
+				result += GetSizeOfFolderContentsMinusFile(entry.path(), "");
+			}
+		}
+	}
+	return result;
+}
+
 // Saves a file asynchronously.
 template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
 {
-	auto mutex = std::ref(mutexMap[file]);
+	auto mutex = std::ref(fileMutex);
 	std::thread writeThread(
 		[mutex, file, contents]()
 		{
@@ -100,7 +122,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path file)
 {
 	int handle = ++m_iLastRequestHandle;
-	auto mutex = std::ref(mutexMap[file]);
+	auto mutex = std::ref(fileMutex);
 	std::thread readThread(
 		[mutex, file, handle]()
 		{
@@ -119,8 +141,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 				}
 
 				std::stringstream stringStream;
-				while (fileStr.peek() != EOF)
-					stringStream << (char)fileStr.get();
+				stringStream << fileStr.rdbuf();
 
 				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, true, stringStream.str());
 
@@ -134,6 +155,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 			catch (std::exception ex)
 			{
 				spdlog::error("LOAD FAILED!");
+				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
 				mutex.get().unlock();
 				spdlog::error(ex.what());
 			}
@@ -147,7 +169,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
 {
 	// P.S. I don't like how we have to async delete calls but we do.
-	auto m = std::ref(mutexMap[file]);
+	auto m = std::ref(fileMutex);
 	std::thread deleteThread(
 		[m, file]()
 		{
@@ -234,7 +256,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 		return SQRESULT_ERROR;
 	}
 
-	fs::create_directories((dir / fileName).parent_path());
+	fs::create_directories(dir);
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
 	// this ain't a cloud service.
@@ -497,6 +519,15 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	}
 }
 
+// side note, expensive.
+ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
+{
+	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
+	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
+	g_pSquirrel<context>->pushinteger(sqvm, (MAX_FOLDER_SIZE - GetSizeOfFolder(dir)) / 1024);
+	return SQRESULT_NOTNULL;
+}
+
 // ok, I'm just gonna explain what the fuck is going on here because this
 // is the pinnacle of my stupidity and I do not want to touch this ever
 // again, yet someone will eventually have to maintain this.
@@ -506,10 +537,8 @@ template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 	rapidjson_document doc;
 	doc.SetObject();
 
-	HSquirrelVM* vm = (HSquirrelVM*)sqvm;
-
 	// get the SECOND param
-	SQTable* table = vm->_stackOfCurrentFunction[2]._VAL.asTable;
+	SQTable* table = sqvm->_stackOfCurrentFunction[2]._VAL.asTable;
 	// take the table and copy it's contents over into the rapidjson_document
 	EncodeJSONTable<context>(table, &doc, doc.GetAllocator());
 
@@ -529,4 +558,9 @@ ON_DLL_LOAD("engine.dll", ModSaveFFiles_Init, (CModule module))
 	int parm = Tier0::CommandLine()->FindParm("-maxfoldersize");
 	if (parm)
 		MAX_FOLDER_SIZE = std::stoi(Tier0::CommandLine()->GetParm(parm));
+}
+
+int GetMaxSaveFolderSize()
+{
+	return MAX_FOLDER_SIZE;
 }
