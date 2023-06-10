@@ -177,6 +177,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 		REQUEST_END_CLEANUP:
 			m_bOriginAuthWithMasterServerInProgress = false;
 			m_bOriginAuthWithMasterServerDone = true;
+
 			curl_easy_cleanup(curl);
 		});
 
