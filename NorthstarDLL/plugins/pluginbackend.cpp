@@ -80,7 +80,8 @@ void PluginCommunicationHandler::GeneratePresenceObjects()
 
 ON_DLL_LOAD_RELIESON("engine.dll", PluginBackendEngine, ConCommand, (CModule module))
 {
-	g_pPluginManager->InformDLLLoad(PluginLoadDLL::ENGINE, &g_pPluginCommunicationhandler->m_sEngineData, reinterpret_cast<void*>( module.m_nAddress ));
+	g_pPluginManager->InformDLLLoad(
+		PluginLoadDLL::ENGINE, &g_pPluginCommunicationhandler->m_sEngineData, reinterpret_cast<void*>(module.m_nAddress));
 }
 
 ON_DLL_LOAD_RELIESON("client.dll", PluginBackendClient, ConCommand, (CModule module))
