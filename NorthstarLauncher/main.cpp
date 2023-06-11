@@ -255,12 +255,6 @@ void PrependPath()
 bool ShouldLoadNorthstar(int argc, char* argv[])
 {
 	bool loadNorthstar = true;
-	for (int i = 0; i < argc; i++)
-		if (!strcmp(argv[i], "-vanilla"))
-			loadNorthstar = false;
-
-	if (!loadNorthstar)
-		return loadNorthstar;
 
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
