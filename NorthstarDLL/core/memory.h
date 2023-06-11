@@ -1,30 +1,30 @@
 #pragma once
 
-class MemoryAddress
+class CMemory
 {
   public:
 	uintptr_t m_nAddress;
 
   public:
-	MemoryAddress();
-	MemoryAddress(const uintptr_t nAddress);
-	MemoryAddress(const void* pAddress);
+	CMemory();
+	CMemory(const uintptr_t nAddress);
+	CMemory(const void* pAddress);
 
 	// operators
 	operator uintptr_t() const;
 	operator void*() const;
 	operator bool() const;
 
-	bool operator==(const MemoryAddress& other) const;
-	bool operator!=(const MemoryAddress& other) const;
+	bool operator==(const CMemory& other) const;
+	bool operator!=(const CMemory& other) const;
 	bool operator==(const uintptr_t& addr) const;
 	bool operator!=(const uintptr_t& addr) const;
 
-	MemoryAddress operator+(const MemoryAddress& other) const;
-	MemoryAddress operator-(const MemoryAddress& other) const;
-	MemoryAddress operator+(const uintptr_t& other) const;
-	MemoryAddress operator-(const uintptr_t& other) const;
-	MemoryAddress operator*() const;
+	CMemory operator+(const CMemory& other) const;
+	CMemory operator-(const CMemory& other) const;
+	CMemory operator+(const uintptr_t& other) const;
+	CMemory operator-(const uintptr_t& other) const;
+	CMemory operator*() const;
 
 	template <typename T> T As()
 	{
@@ -32,8 +32,8 @@ class MemoryAddress
 	}
 
 	// traversal
-	MemoryAddress Offset(const uintptr_t nOffset) const;
-	MemoryAddress Deref(const int nNumDerefs = 1) const;
+	CMemory Offset(const uintptr_t nOffset) const;
+	CMemory Deref(const int nNumDerefs = 1) const;
 
 	// patching
 	void Patch(const uint8_t* pBytes, const size_t nSize);
@@ -45,7 +45,7 @@ class MemoryAddress
 };
 
 // based on https://github.com/Mauler125/r5sdk/blob/master/r5dev/public/include/module.h
-class CModule : public MemoryAddress
+class CModule : public CMemory
 {
   public:
 	struct ModuleSections_t
@@ -84,7 +84,7 @@ class CModule : public MemoryAddress
 	CModule(const HMODULE pModule);
 	CModule(const char* pModuleName);
 
-	MemoryAddress GetExport(const char* pExportName);
-	MemoryAddress FindPattern(const uint8_t* pPattern, const char* pMask);
-	MemoryAddress FindPattern(const char* pPattern);
+	CMemory GetExport(const char* pExportName);
+	CMemory FindPattern(const uint8_t* pPattern, const char* pMask);
+	CMemory FindPattern(const char* pPattern);
 };
