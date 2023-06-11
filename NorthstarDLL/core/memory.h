@@ -26,7 +26,7 @@ class CMemory
 	CMemory operator-(const uintptr_t& other) const;
 	CMemory operator*() const;
 
-	template <typename T> T As()
+	template <typename T> T RCast()
 	{
 		return reinterpret_cast<T>(m_nAddress);
 	}

@@ -203,7 +203,7 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	dedicatedExports->Sys_Printf = Sys_Printf;
 	dedicatedExports->RunServer = RunServer;
 
-	*module.Offset(0x13F0B668).As<CDedicatedExports**>() = dedicatedExports;
+	*module.Offset(0x13F0B668).RCast<CDedicatedExports**>() = dedicatedExports;
 
 	// extra potential patches:
 	// nop engine.dll+1c67d1 and +1c67d8 to skip videomode creategamewindow
