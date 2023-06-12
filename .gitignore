@@ -29,6 +29,11 @@ CopyOfCMakeCache.txt
 .ninja_log
 build.ninja
 
+# Visual studio build files
+*.vcxproj
+*.vcxproj.filters
+*.sln
+
 # Build results
 # These ignore *.lib and *.exp in the specified
 loader_wsock32_proxy/wsock32.*
