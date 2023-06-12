@@ -173,8 +173,6 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	plugin.inform_sqvm_created = (PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
 	plugin.inform_sqvm_destroyed = (PLUGIN_INFORM_SQVM_DESTROYED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_DESTROYED");
 
-	plugin.push_presence = (PLUGIN_PUSH_PRESENCE_TYPE)GetProcAddress(pluginLib, "PLUGIN_RECEIVE_PRESENCE");
-
 	plugin.inform_dll_load = (PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_DLL_LOAD");
 
 	plugin.run_frame = (PLUGIN_RUNFRAME)GetProcAddress(pluginLib, "PLUGIN_RUNFRAME");
@@ -267,17 +265,6 @@ void PluginManager::InformSQVMDestroyed(ScriptContext context)
 		if (plugin.inform_sqvm_destroyed != NULL)
 		{
 			plugin.inform_sqvm_destroyed(context);
-		}
-	}
-}
-
-void PluginManager::PushPresence(PluginGameStatePresence* data)
-{
-	for (auto plugin : m_vLoadedPlugins)
-	{
-		if (plugin.push_presence != NULL)
-		{
-			plugin.push_presence(data);
 		}
 	}
 }

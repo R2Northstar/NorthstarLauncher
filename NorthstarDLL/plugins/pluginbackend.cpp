@@ -43,41 +43,6 @@ void PluginCommunicationHandler::PushRequest(PluginDataRequestType type, PluginR
 	requestQueue.push(PluginDataRequest {type, func});
 }
 
-void PluginCommunicationHandler::GeneratePresenceObjects()
-{
-	PluginGameStatePresence presence {};
-
-	presence.id = g_pGameStatePresence->id.c_str();
-	presence.name = g_pGameStatePresence->name.c_str();
-	presence.description = g_pGameStatePresence->description.c_str();
-	presence.password = g_pGameStatePresence->password.c_str();
-
-	presence.isServer = g_pGameStatePresence->isServer;
-	presence.isLocal = g_pGameStatePresence->isLocal;
-
-	if (g_pGameStatePresence->isLoading)
-		presence.state = GameState::LOADING;
-	else if (g_pGameStatePresence->uiMap == "")
-		presence.state = GameState::MAINMENU;
-	else if (g_pGameStatePresence->map == "mp_lobby" && g_pGameStatePresence->isLocal && g_pGameStatePresence->isLobby)
-		presence.state = GameState::LOBBY;
-	else
-		presence.state = GameState::INGAME;
-
-	presence.map = g_pGameStatePresence->map.c_str();
-	presence.mapDisplayname = g_pGameStatePresence->mapDisplayname.c_str();
-	presence.playlist = g_pGameStatePresence->playlist.c_str();
-	presence.playlistDisplayname = g_pGameStatePresence->playlistDisplayname.c_str();
-
-	presence.currentPlayers = g_pGameStatePresence->currentPlayers;
-	presence.maxPlayers = g_pGameStatePresence->maxPlayers;
-	presence.ownScore = g_pGameStatePresence->ownScore;
-	presence.otherHighestScore = g_pGameStatePresence->otherHighestScore;
-	presence.maxScore = g_pGameStatePresence->maxScore;
-	presence.timestampEnd = g_pGameStatePresence->timestampEnd;
-	g_pPluginManager->PushPresence(&presence);
-}
-
 ON_DLL_LOAD_RELIESON("engine.dll", PluginBackendEngine, ConCommand, (CModule module))
 {
 	g_pPluginManager->InformDLLLoad(

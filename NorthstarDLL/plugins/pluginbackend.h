@@ -31,8 +31,6 @@ class PluginCommunicationHandler
 	void RunFrame();
 	void PushRequest(PluginDataRequestType type, PluginRespondDataCallable func);
 
-	void GeneratePresenceObjects();
-
   public:
 	std::queue<PluginDataRequest> requestQueue;
 	std::mutex requestMutex;

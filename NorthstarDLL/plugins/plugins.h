@@ -30,7 +30,6 @@ class Plugin
 	PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
 	PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
 
-	PLUGIN_PUSH_PRESENCE_TYPE push_presence;
 	PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
 
 	PLUGIN_RUNFRAME run_frame;
@@ -48,7 +47,6 @@ class PluginManager
 	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
 	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
 	void InformSQVMDestroyed(ScriptContext context);
-	void PushPresence(PluginGameStatePresence* data);
 
 	void InformDLLLoad(PluginLoadDLL dll, void* data, void* dllPtr);
 
