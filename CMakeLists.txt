@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VS_PLATFORM_TOOLSET v143)
 
 # This determines the real binary root directory
-set(NS_BINARY_DIR ${CMAKE_SOURCE_DIR}/game)
+set(NS_BINARY_DIR ${CMAKE_BINARY_DIR}/game)
 
 # Targets
 add_subdirectory(loader_wsock32_proxy)
