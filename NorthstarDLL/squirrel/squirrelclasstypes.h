@@ -117,7 +117,8 @@ concept is_iterable = requires(std::ranges::range_value_t<T> x)
 // clang-format on
 
 typedef int (*SquirrelMessage_External_Pop)(HSquirrelVM* sqvm, void* userdata);
-typedef void (*sq_schedule_call_externalType)(ScriptContext context, const char* funcname, SquirrelMessage_External_Pop function);
+typedef void (*sq_schedule_call_externalType)(
+	ScriptContext context, const char* funcname, SquirrelMessage_External_Pop function, void* userdata);
 
 class SquirrelMessage
 {

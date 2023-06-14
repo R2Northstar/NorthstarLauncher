@@ -33,6 +33,7 @@ struct SquirrelFunctions
 	sq_compilebufferType __sq_compilebuffer;
 	sq_callType __sq_call;
 	sq_raiseerrorType __sq_raiseerror;
+	sq_compilefileType __sq_compilefile;
 
 	sq_newarrayType __sq_newarray;
 	sq_arrayappendType __sq_arrayappend;
@@ -48,10 +49,6 @@ struct SquirrelFunctions
 	sq_pushassetType __sq_pushasset;
 	sq_pushvectorType __sq_pushvector;
 	sq_pushobjectType __sq_pushobject;
-	sq_getthisentityType __sq_getthisentity;
-	sq_getobjectType __sq_getobject;
-
-	sq_stackinfosType __sq_stackinfos;
 
 	sq_getstringType __sq_getstring;
 	sq_getintegerType __sq_getinteger;
@@ -61,14 +58,22 @@ struct SquirrelFunctions
 	sq_getassetType __sq_getasset;
 	sq_getuserdataType __sq_getuserdata;
 	sq_getvectorType __sq_getvector;
+	sq_getthisentityType __sq_getthisentity;
+	sq_getobjectType __sq_getobject;
+
+	sq_stackinfosType __sq_stackinfos;
 
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
 	sq_getfunctionType __sq_getfunction;
 
 	sq_schedule_call_externalType __sq_schedule_call_external;
+
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
+
+	sq_pushnewstructinstanceType __sq_pushnewstructinstance;
+	sq_sealstructslotType __sq_sealstructslot;
 };
 
 struct MessageSource
