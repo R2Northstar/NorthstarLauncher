@@ -4,14 +4,6 @@
 
 #define ABI_VERSION 3
 
-enum GameState
-{
-	LOADING = 0,
-	MAINMENU = 1,
-	LOBBY = 2,
-	INGAME = 3
-};
-
 enum PluginLoadDLL
 {
 	ENGINE = 0,
@@ -122,32 +114,6 @@ struct PluginEngineData
 	void* g_pCVar;
 };
 
-struct PluginGameStatePresence
-{
-	const char* id;
-	const char* name;
-	const char* description;
-	const char* password;
-
-	bool isServer;
-	bool isLocal;
-	GameState state;
-
-	const char* map;
-	const char* mapDisplayname;
-	const char* playlist;
-	const char* playlistDisplayname;
-
-	int currentPlayers;
-	int maxPlayers;
-
-	int ownScore;
-	int otherHighestScore; // NOTE: The highest score OR the second highest score if we have the highest
-	int maxScore;
-
-	int timestampEnd;
-};
-
 /// <summary> Async communication within the plugin system
 /// Due to the asynchronous nature of plugins, combined with the limitations of multi-compiler support
 /// and the custom memory allocator used by r2, is it difficult to safely get data across DLL boundaries
@@ -162,9 +128,8 @@ typedef void (*PLUGIN_INIT_TYPE)(PluginInitFuncs* funcs, PluginNorthstarData* da
 typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);
 typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
+
+typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data, void* dllPtr);
 typedef void (*PLUGIN_RUNFRAME)();
 
 // Async Communication types
-
-// Northstar -> Plugin
-typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data, void* dllPtr);
