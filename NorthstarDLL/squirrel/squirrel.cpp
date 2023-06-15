@@ -201,8 +201,8 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_getentityfrominstance = __sq_getentityfrominstance;
 	s->__sq_GetEntityConstant_CBaseEntity = __sq_GetEntityConstant_CBaseEntity;
 
-	s->sq_pushnewstructinstanceType = __sq_pushnewstructinstance;
-	s->sq_sealstructslotType = __sq_sealstructslot;
+	s->__sq_pushnewstructinstance = __sq_pushnewstructinstance;
+	s->__sq_sealstructslot = __sq_sealstructslot;
 }
 
 // Allows for generating squirrelmessages from plugins.
