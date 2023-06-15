@@ -1158,9 +1158,6 @@
     <ClInclude Include="plugins\pluginbackend.h">
       <Filter>Header Files\plugins</Filter>
     </ClInclude>
-    <ClInclude Include="shared\gamepresence.h">
-      <Filter>Header Files\shared</Filter>
-    </ClInclude>
     <ClInclude Include="util\wininfo.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -1425,9 +1422,6 @@
     </ClCompile>
     <ClCompile Include="plugins\pluginbackend.cpp">
       <Filter>Source Files\plugins</Filter>
-    </ClCompile>
-    <ClCompile Include="shared\gamepresence.cpp">
-      <Filter>Source Files\shared</Filter>
     </ClCompile>
     <ClCompile Include="util\wininfo.cpp">
       <Filter>Source Files\util</Filter>
