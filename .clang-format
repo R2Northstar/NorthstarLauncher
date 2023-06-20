@@ -27,7 +27,7 @@ SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: true
 UseTab: Always
-ColumnLimit: 140
+ColumnLimit: 0
 BreakBeforeBraces: Allman
 AlignAfterOpenBracket: AlwaysBreak
 IndentExternBlock: Indent
