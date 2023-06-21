@@ -5,11 +5,11 @@
 // use the R2 namespace for game funcs
 namespace R2
 {
-	// server entity stuff
-	class CBaseEntity;
-	extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
+    // server entity stuff
+    class CBaseEntity;
+    extern CBaseEntity* ( *Server_GetEntityByIndex )( int index );
 
-	// clang-format off
+    // clang-format off
 	OFFSET_STRUCT(CBasePlayer)
 	{
 		FIELD(0x58, uint32_t m_nPlayerIndex)
@@ -104,7 +104,7 @@ namespace R2
 		FIELD(0xA04, int32_t m_camoIndex)
 		FIELD(0xA08, int32_t m_decalIndex)
 	};
-	// clang-format on
+    // clang-format on
 
-	extern CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
+    extern CBasePlayer*( __fastcall* UTIL_PlayerByIndex )( int playerIndex );
 } // namespace R2

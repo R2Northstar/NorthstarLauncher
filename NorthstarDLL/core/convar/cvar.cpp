@@ -7,24 +7,24 @@
 //-----------------------------------------------------------------------------
 std::unordered_map<std::string, ConCommandBase*> CCvar::DumpToMap()
 {
-	std::stringstream ss;
-	CCVarIteratorInternal* itint = FactoryInternalIterator(); // Allocate new InternalIterator.
+    std::stringstream ss;
+    CCVarIteratorInternal* itint = FactoryInternalIterator(); // Allocate new InternalIterator.
 
-	std::unordered_map<std::string, ConCommandBase*> allConVars;
+    std::unordered_map<std::string, ConCommandBase*> allConVars;
 
-	for (itint->SetFirst(); itint->IsValid(); itint->Next()) // Loop through all instances.
-	{
-		ConCommandBase* pCommand = itint->Get();
-		const char* pszCommandName = pCommand->m_pszName;
-		allConVars[pszCommandName] = pCommand;
-	}
+    for( itint->SetFirst(); itint->IsValid(); itint->Next() ) // Loop through all instances.
+    {
+        ConCommandBase* pCommand = itint->Get();
+        const char* pszCommandName = pCommand->m_pszName;
+        allConVars[pszCommandName] = pCommand;
+    }
 
-	return allConVars;
+    return allConVars;
 }
 
 // use the R2 namespace for game funcs
 namespace R2
 {
-	SourceInterface<CCvar>* g_pCVarInterface;
-	CCvar* g_pCVar;
+    SourceInterface<CCvar>* g_pCVarInterface;
+    CCvar* g_pCVar;
 } // namespace R2

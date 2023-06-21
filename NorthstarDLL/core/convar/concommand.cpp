@@ -10,27 +10,27 @@
 // Purpose: Returns true if this is a command
 // Output : bool
 //-----------------------------------------------------------------------------
-bool ConCommand::IsCommand(void) const
+bool ConCommand::IsCommand( void ) const
 {
-	return true;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if this is a command
 // Output : bool
 //-----------------------------------------------------------------------------
-bool ConCommandBase::IsCommand(void) const
+bool ConCommandBase::IsCommand( void ) const
 {
-	return true;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Has this cvar been registered
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
-bool ConCommandBase::IsRegistered(void) const
+bool ConCommandBase::IsRegistered( void ) const
 {
-	return m_bRegistered;
+    return m_bRegistered;
 }
 
 //-----------------------------------------------------------------------------
@@ -38,9 +38,9 @@ bool ConCommandBase::IsRegistered(void) const
 // Input  : *pCommandBase - nFlags
 // Output : False if execution is permitted, true if not.
 //-----------------------------------------------------------------------------
-bool ConCommandBase::IsFlagSet(int nFlags) const
+bool ConCommandBase::IsFlagSet( int nFlags ) const
 {
-	return m_nFlags & nFlags;
+    return m_nFlags & nFlags;
 }
 
 //-----------------------------------------------------------------------------
@@ -48,54 +48,54 @@ bool ConCommandBase::IsFlagSet(int nFlags) const
 // Input  : nFlags -
 // Output : True if ConCommand has nFlags.
 //-----------------------------------------------------------------------------
-bool ConCommandBase::HasFlags(int nFlags)
+bool ConCommandBase::HasFlags( int nFlags )
 {
-	return m_nFlags & nFlags;
+    return m_nFlags & nFlags;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Add's flags to ConCommand.
 // Input  : nFlags -
 //-----------------------------------------------------------------------------
-void ConCommandBase::AddFlags(int nFlags)
+void ConCommandBase::AddFlags( int nFlags )
 {
-	m_nFlags |= nFlags;
+    m_nFlags |= nFlags;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Removes flags from ConCommand.
 // Input  : nFlags -
 //-----------------------------------------------------------------------------
-void ConCommandBase::RemoveFlags(int nFlags)
+void ConCommandBase::RemoveFlags( int nFlags )
 {
-	m_nFlags &= ~nFlags;
+    m_nFlags &= ~nFlags;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns current flags.
 // Output : int
 //-----------------------------------------------------------------------------
-int ConCommandBase::GetFlags(void) const
+int ConCommandBase::GetFlags( void ) const
 {
-	return m_nFlags;
+    return m_nFlags;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 // Output : const ConCommandBase
 //-----------------------------------------------------------------------------
-ConCommandBase* ConCommandBase::GetNext(void) const
+ConCommandBase* ConCommandBase::GetNext( void ) const
 {
-	return m_pNext;
+    return m_pNext;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns the ConCommandBase help text.
 // Output : const char*
 //-----------------------------------------------------------------------------
-const char* ConCommandBase::GetHelpText(void) const
+const char* ConCommandBase::GetHelpText( void ) const
 {
-	return m_pszHelpString;
+    return m_pszHelpString;
 }
 
 //-----------------------------------------------------------------------------
@@ -103,53 +103,53 @@ const char* ConCommandBase::GetHelpText(void) const
 // Input  : *szFrom -
 // Output : char
 //-----------------------------------------------------------------------------
-char* ConCommandBase::CopyString(const char* szFrom) const
+char* ConCommandBase::CopyString( const char* szFrom ) const
 {
-	size_t nLen;
-	char* szTo;
+    size_t nLen;
+    char* szTo;
 
-	nLen = strlen(szFrom);
-	if (nLen <= 0)
-	{
-		szTo = new char[1];
-		szTo[0] = 0;
-	}
-	else
-	{
-		szTo = new char[nLen + 1];
-		memmove(szTo, szFrom, nLen + 1);
-	}
-	return szTo;
+    nLen = strlen( szFrom );
+    if( nLen <= 0 )
+    {
+        szTo = new char[1];
+        szTo[0] = 0;
+    }
+    else
+    {
+        szTo = new char[nLen + 1];
+        memmove( szTo, szFrom, nLen + 1 );
+    }
+    return szTo;
 }
 
-typedef void (*ConCommandConstructorType)(
-	ConCommand* newCommand, const char* name, FnCommandCallback_t callback, const char* helpString, int flags, void* parent);
+typedef void ( *ConCommandConstructorType )(
+    ConCommand* newCommand, const char* name, FnCommandCallback_t callback, const char* helpString, int flags, void* parent );
 ConCommandConstructorType ConCommandConstructor;
 
-void RegisterConCommand(const char* name, FnCommandCallback_t callback, const char* helpString, int flags)
+void RegisterConCommand( const char* name, FnCommandCallback_t callback, const char* helpString, int flags )
 {
-	spdlog::info("Registering ConCommand {}", name);
+    spdlog::info( "Registering ConCommand {}", name );
 
-	// no need to free this ever really, it should exist as long as game does
-	ConCommand* newCommand = new ConCommand;
-	ConCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
+    // no need to free this ever really, it should exist as long as game does
+    ConCommand* newCommand = new ConCommand;
+    ConCommandConstructor( newCommand, name, callback, helpString, flags, nullptr );
 }
 
 void RegisterConCommand(
-	const char* name, FnCommandCallback_t callback, const char* helpString, int flags, FnCommandCompletionCallback completionCallback)
+    const char* name, FnCommandCallback_t callback, const char* helpString, int flags, FnCommandCompletionCallback completionCallback )
 {
-	spdlog::info("Registering ConCommand {}", name);
+    spdlog::info( "Registering ConCommand {}", name );
 
-	// no need to free this ever really, it should exist as long as game does
-	ConCommand* newCommand = new ConCommand;
-	ConCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
-	newCommand->m_pCompletionCallback = completionCallback;
+    // no need to free this ever really, it should exist as long as game does
+    ConCommand* newCommand = new ConCommand;
+    ConCommandConstructor( newCommand, name, callback, helpString, flags, nullptr );
+    newCommand->m_pCompletionCallback = completionCallback;
 }
 
-ON_DLL_LOAD("engine.dll", ConCommand, (CModule module))
+ON_DLL_LOAD( "engine.dll", ConCommand, ( CModule module ) )
 {
-	ConCommandConstructor = module.Offset(0x415F60).As<ConCommandConstructorType>();
-	AddMiscConCommands();
+    ConCommandConstructor = module.Offset( 0x415F60 ).As<ConCommandConstructorType>();
+    AddMiscConCommands();
 
-	g_pPluginCommunicationhandler->m_sEngineData.ConCommandConstructor = ConCommandConstructor;
+    g_pPluginCommunicationhandler->m_sEngineData.ConCommandConstructor = ConCommandConstructor;
 }
