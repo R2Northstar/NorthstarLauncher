@@ -1,5 +1,5 @@
 #pragma once
-//clang-format off
+// clang-format off
 // About this file:
 // This file contains several macros used to define reversed structs
 // The reason we use these macros is to make it easier to update existing structs
@@ -59,4 +59,4 @@ OFFSET_STRUCT(Name)
 #define FIELD( offset, signature ) IIF( IS_0( offset ) )( STRUCT_FIELD_NOOFFSET, STRUCT_FIELD_OFFSET )( offset, signature )
 #define FIELDS FIELD
 
-//clang-format on
+// clang-format on

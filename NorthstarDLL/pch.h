@@ -27,7 +27,7 @@ typedef void ( *callable_v )( void* v );
 
 // clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
-//clang-format on
+// clang-format on
 
 #include "core/macros.h"
 
