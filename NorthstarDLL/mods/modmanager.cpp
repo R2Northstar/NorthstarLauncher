@@ -57,8 +57,8 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	Name = modJson["Name"].GetString();
 
 	// Don't load blacklisted mods
-	// TODO [Fifty]: Make this better and possibly add a launch arg to disable this check
-	if (Name == "Mod Settings")
+	// TODO [Fifty]: Add a launch arg to skip this check
+	if (std::find(MODS_BLACKLIST.begin(), MODS_BLACKLIST.end(), Name) != std::end(MODS_BLACKLIST))
 	{
 		spdlog::warn("Skipping blacklisted mod \"{}\"!", Name);
 		return;
