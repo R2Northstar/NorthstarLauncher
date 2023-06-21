@@ -56,6 +56,14 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	Name = modJson["Name"].GetString();
 
+	// Don't load blacklisted mods
+	// TODO [Fifty]: Make this better and possibly add a launch arg to disable this check
+	if (Name == "Mod Settings")
+	{
+		spdlog::warn("Skipping blacklisted mod \"{}\"!", Name);
+		return;
+	}
+
 	if (modJson.HasMember("Description"))
 		Description = modJson["Description"].GetString();
 	else
