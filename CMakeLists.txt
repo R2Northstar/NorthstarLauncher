@@ -19,6 +19,7 @@ set(NS_BINARY_DIR ${CMAKE_BINARY_DIR}/game)
 message("NS: Building to ${NS_BINARY_DIR}")
 
 # Targets
+add_subdirectory(CrashMessage)
 add_subdirectory(loader_wsock32_proxy)
 add_subdirectory(NorthstarDLL)
 add_subdirectory(NorthstarLauncher)
