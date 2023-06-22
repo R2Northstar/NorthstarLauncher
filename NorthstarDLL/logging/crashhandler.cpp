@@ -1,4 +1,5 @@
 #include "crashhandler.h"
+#include "config/profile.h"
 #include "dedicated/dedicated.h"
 #include "util/version.h"
 #include "mods/modmanager.h"
@@ -134,12 +135,19 @@ void CCrashHandler::ShowPopUpMessage() const
 {
 	if (!IsDedicatedServer())
 	{
-		// TODO [Fifty]: Get northstar prefix so we show the correct path
-		MessageBoxA(
-			NULL,
-			"Northstar has crashed! Crash info can be found in R2Northstar/logs",
-			"Northstar has crashed!",
-			MB_ICONERROR | MB_OK | MB_SYSTEMMODAL);
+		// Create Crash Message dialog
+		STARTUPINFOA si {0};
+		PROCESS_INFORMATION pi {0};
+
+		std::string strCommandLine = "bin/CrashMsg.exe";
+		strCommandLine += " " + GetNorthstarPrefix();
+		strCommandLine += " " + std::string(GetExceptionString());
+
+		if (CreateProcessA(NULL, (LPSTR)strCommandLine.c_str(), NULL, FALSE, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+		{
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
 	}
 }
 
