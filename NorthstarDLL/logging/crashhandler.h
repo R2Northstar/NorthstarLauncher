@@ -1,26 +1,47 @@
 #pragma once
 
-void InitialiseCrashHandler();
-void RemoveCrashHandler();
+#include <mutex>
 
-struct BacktraceModule
+//-----------------------------------------------------------------------------
+// Purpose: Exception handling
+//-----------------------------------------------------------------------------
+class CCrashHandler
 {
-	std::string name;
-	std::string relativeAddress;
-	std::string address;
+  public:
+	CCrashHandler();
+	~CCrashHandler();
+
+	void Init();
+	void Shutdown();
+
+	void Lock()
+	{
+		m_Mutex.lock();
+	}
+
+	void Unlock()
+	{
+		m_Mutex.unlock();
+	}
+
+	//-----------------------------------------------------------------------------
+	// Exception helpers
+	//-----------------------------------------------------------------------------
+	void SetExceptionInfos(EXCEPTION_POINTERS* pExceptionPointers);
+
+	const CHAR* GetExceptionString() const;
+	const CHAR* GetExceptionString(DWORD dwExceptionCode) const;
+
+	//-----------------------------------------------------------------------------
+	// Formatting
+	//-----------------------------------------------------------------------------
+	void ShowPopUpMessage() const;
+
+  private:
+	PVOID m_hExceptionFilter;
+	EXCEPTION_POINTERS* m_pExceptionInfos;
+
+	std::mutex m_Mutex;
 };
 
-struct ExceptionLog
-{
-	std::string cause;
-	HMODULE crashedModule;
-	EXCEPTION_RECORD exceptionRecord;
-	CONTEXT contextRecord;
-	std::vector<BacktraceModule> trace;
-	std::vector<std::string> registerDump;
-
-	std::string runtimeInfo;
-
-	int longestModuleNameLength;
-	int longestRelativeAddressLength;
-};
+extern CCrashHandler* g_pCrashHandler;

@@ -49,7 +49,7 @@ bool InitialiseNorthstar()
 	InitialiseVersion();
 	CreateLogFiles();
 
-	InitialiseCrashHandler();
+	g_pCrashHandler = new CCrashHandler();
 
 	// Write launcher version to log
 	spdlog::info("NorthstarLauncher version: {}", version);
