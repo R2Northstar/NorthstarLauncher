@@ -61,8 +61,8 @@ jobs:
           path: launcher-debug-files
       - name: Create zip to upload
         run: |
-          zip --quiet --junk-paths northstar-launcher.zip northstar-launcher/
-          zip --recurse-paths --quiet --junk-paths launcher-debug-files.zip launcher-debug-files/
+          zip northstar-launcher.zip northstar-launcher/
+          zip launcher-debug-files.zip launcher-debug-files/
       - name: Upload files to release
         uses: softprops/action-gh-release@v1
         with:
