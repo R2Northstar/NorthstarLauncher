@@ -29,6 +29,8 @@ class CCrashHandler
 	//-----------------------------------------------------------------------------
 	void SetExceptionInfos(EXCEPTION_POINTERS* pExceptionPointers);
 
+	void SetCrashedModule();
+
 	const CHAR* GetExceptionString() const;
 	const CHAR* GetExceptionString(DWORD dwExceptionCode) const;
 
@@ -40,6 +42,9 @@ class CCrashHandler
   private:
 	PVOID m_hExceptionFilter;
 	EXCEPTION_POINTERS* m_pExceptionInfos;
+
+	std::string m_strCrashedModule;
+	std::string m_strCrashedOffset;
 
 	std::mutex m_Mutex;
 };

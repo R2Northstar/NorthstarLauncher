@@ -29,6 +29,8 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 
+	g_pCrashHandler->SetCrashedModule();
+
 	// Format
 
 	// Flush
@@ -82,6 +84,29 @@ void CCrashHandler::Shutdown()
 void CCrashHandler::SetExceptionInfos(EXCEPTION_POINTERS* pExceptionPointers)
 {
 	m_pExceptionInfos = pExceptionPointers;
+}
+
+void CCrashHandler::SetCrashedModule()
+{
+	PVOID pCrashAddress = m_pExceptionInfos->ExceptionRecord->ExceptionAddress;
+	HMODULE hCrashedModule;
+	if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(pCrashAddress), &hCrashedModule))
+	{
+		m_strCrashedModule = "UNKNOWN_MODULE";
+		return;
+	}
+
+	// Get module filename
+	CHAR szCrashedModulePath[MAX_PATH];
+	GetModuleFileNameExA(GetCurrentProcess(), hCrashedModule, szCrashedModulePath, sizeof(szCrashedModulePath));
+
+	const CHAR* pszCrashedModuleFileName = strrchr(szCrashedModulePath, '\\') + 1;
+
+	// Get relative address
+	DWORD64 pModuleBase = reinterpret_cast<DWORD64>(pCrashAddress) - reinterpret_cast<DWORD64>(hCrashedModule);
+
+	m_strCrashedModule = pszCrashedModuleFileName;
+	m_strCrashedOffset = fmt::format("{:#x}", pModuleBase);
 }
 
 //-----------------------------------------------------------------------------
@@ -143,11 +168,10 @@ void CCrashHandler::ShowPopUpMessage() const
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		std::string strCommandLine = "bin/CrashMsg.exe";
-		strCommandLine += " " + GetNorthstarPrefix();
-		strCommandLine += " " + std::string(GetExceptionString());
+		std::string strCmdLine =
+			fmt::format("bin/CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
 
-		if (CreateProcessA(NULL, (LPSTR)strCommandLine.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+		if (CreateProcessA(NULL, (LPSTR)strCmdLine.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
 		{
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
