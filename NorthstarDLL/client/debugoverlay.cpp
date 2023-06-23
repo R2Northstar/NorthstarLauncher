@@ -67,13 +67,46 @@ struct OverlayBox_t : public OverlayBase_t
 	int a;
 };
 
-static LPCRITICAL_SECTION s_OverlayMutex;
+//-----------------------------------------------------------------------------
+// engine.dll
 
-typedef void (*RenderLineType)(Vector3 v1, Vector3 v2, Color c, bool bZBuffer);
+// Overlay mutex
+LPCRITICAL_SECTION s_OverlayMutex;
+
+// Render Line
+typedef void (*RenderLineType)( const Vector3& v1, const Vector3& v2, Color c, bool bZBuffer );
 static RenderLineType RenderLine;
-typedef void (*RenderBoxType)(Vector3 vOrigin, QAngle angles, Vector3 vMins, Vector3 vMaxs, Color c, bool bZBuffer, bool bInsideOut);
+
+// Render box
+typedef void (*RenderBoxType)(
+	const Vector3& vOrigin, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer, bool bInsideOut);
 static RenderBoxType RenderBox;
+
+// Render wireframe box
 static RenderBoxType RenderWireframeBox;
+
+// Render swept box
+typedef void (*RenderWireframeSweptBoxType)(
+	const Vector3& vStart, const Vector3& vEnd, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer);
+RenderWireframeSweptBoxType RenderWireframeSweptBox;
+
+// Render Triangle
+typedef void (*RenderTriangleType)(const Vector3& p1, const Vector3& p2, const Vector3& p3, Color c, bool bZBuffer);
+static RenderTriangleType RenderTriangle;
+
+// Render Axis
+typedef void (*RenderAxisType)(const Vector3& vOrigin, float flScale, bool bZBuffer);
+static RenderAxisType RenderAxis;
+
+// I dont know
+typedef void (*RenderUnknownType)(const Vector3& vOrigin, float flScale, bool bZBuffer);
+static RenderUnknownType RenderUnknown;
+
+// Render Sphere
+typedef void (*RenderSphereType)(const Vector3& vCenter, float flRadius, int nTheta, int nPhi, Color c, bool bZBuffer);
+static RenderSphereType RenderSphere;
+
+//-----------------------------------------------------------------------------
 
 // clang-format off
 AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
@@ -119,6 +152,41 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	break;
 	}
 	LeaveCriticalSection(s_OverlayMutex);
+
+
+	spdlog::info("UNK: {:d}", (int)pOverlay->m_Type);
+}
+// clang-format off
+AUTOHOOK(DrawAllOverlays, engine.dll + 0xAB780,
+void, __fastcall, (char a1))
+// clang-format on
+{
+	// TODO [Fifty]: Check enable_debug_overlays here
+	DrawAllOverlays(a1);
+
+	// Testing
+	//RenderLine(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(120, 0, 20, 200), false);
+	
+	/*RenderBox(
+		Vector3(0.0f, 0.0f, 0.0f),
+		QAngle(),
+		Vector3(-64.0f, -64.0f, -64.0f),
+		Vector3(64.0f, 64.0f, 64.0f),
+		Color(0, 255, 255, 100),
+		false,
+		false);*/
+	//RenderTriangle(Vector3(0.0f, 255.0f, 0.0f), Vector3(255.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(0,0,255), false);
+	//RenderUnknown(Vector3(0.0f, 0.0f, 255.0f), 30.0, false);
+	//RenderSphere(Vector3(0.0f, 0.0f, 0.0f), 50.0f, 12, 12, Color(200, 0, 200), false);
+
+	/* RenderWireframeSweptBox(
+		Vector3(-32.0f, -32.0f, 0.0f),
+		Vector3(0.0f, 32.0f, 32.0f),
+		QAngle(),
+		Vector3(-50.0f, -50.0f, 0.0f),
+		Vector3(0.0f, 50.0f, 50.0f),
+		Color(255, 20, 0),
+		false);*/
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
@@ -128,6 +196,12 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module)
 	RenderLine = module.Offset(0x192A70).As<RenderLineType>();
 	RenderBox = module.Offset(0x192520).As<RenderBoxType>();
 	RenderWireframeBox = module.Offset(0x193DA0).As<RenderBoxType>();
+	RenderWireframeSweptBox = module.Offset(0x1945A0).As<RenderWireframeSweptBoxType>();
+	RenderTriangle = module.Offset(0x193940).As<RenderTriangleType>();
+	RenderAxis = module.Offset(0x1924D0).As<RenderAxisType>();
+	RenderSphere = module.Offset(0x194170).As<RenderSphereType>();
+
+	RenderUnknown = module.Offset(0x1924E0).As<RenderUnknownType>();
 
 	s_OverlayMutex = module.Offset(0x10DB0A38).As<LPCRITICAL_SECTION>();
 
