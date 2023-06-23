@@ -216,6 +216,8 @@ void CCrashHandler::FormatException()
 		else
 			spdlog::error("\tUnknown access violation at: {:#x}", uExceptionInfo1);
 	}
+
+	spdlog::error("\tAt: {} + {}", m_strCrashedModule, m_strCrashedOffset);
 }
 
 //-----------------------------------------------------------------------------
