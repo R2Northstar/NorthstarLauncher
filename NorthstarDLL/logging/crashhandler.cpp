@@ -3,6 +3,7 @@
 #include "dedicated/dedicated.h"
 #include "util/version.h"
 #include "mods/modmanager.h"
+#include "plugins/plugins.h"
 
 #include <minidumpapiset.h>
 
@@ -39,6 +40,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	g_pCrashHandler->FormatCallstack();
 	g_pCrashHandler->FormatRegisters();
 	g_pCrashHandler->FormatLoadedMods();
+	g_pCrashHandler->FormatLoadedPlugins();
 
 	// Flush
 	NS::log::FlushLoggers();
@@ -331,7 +333,8 @@ void CCrashHandler::FormatRegisters()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CCrashHandler::FormatLoadedMods() {
+void CCrashHandler::FormatLoadedMods()
+{
 	if (g_pModManager)
 	{
 		spdlog::error("Enabled mods:");
@@ -350,6 +353,21 @@ void CCrashHandler::FormatLoadedMods() {
 				continue;
 
 			spdlog::error("\t{}", mod.Name);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatLoadedPlugins()
+{
+	if (g_pPluginManager)
+	{
+		spdlog::error("Loaded Plugins:");
+		for (const Plugin& plugin : g_pPluginManager->m_vLoadedPlugins)
+		{
+			spdlog::error("\t{}", plugin.name);
 		}
 	}
 }
