@@ -8,36 +8,36 @@
 
 enum PluginDataRequestType
 {
-    END = 0,
+	END = 0,
 };
 
 union PluginRespondDataCallable
 {
-    // Empty for now
-    void* UNUSED;
+	// Empty for now
+	void* UNUSED;
 };
 
 class PluginDataRequest
 {
   public:
-    PluginDataRequestType type;
-    PluginRespondDataCallable func;
-    PluginDataRequest( PluginDataRequestType type, PluginRespondDataCallable func ) : type( type ), func( func ) {}
+	PluginDataRequestType type;
+	PluginRespondDataCallable func;
+	PluginDataRequest(PluginDataRequestType type, PluginRespondDataCallable func) : type(type), func(func) {}
 };
 
 class PluginCommunicationHandler
 {
   public:
-    void RunFrame();
-    void PushRequest( PluginDataRequestType type, PluginRespondDataCallable func );
+	void RunFrame();
+	void PushRequest(PluginDataRequestType type, PluginRespondDataCallable func);
 
-    void GeneratePresenceObjects();
+	void GeneratePresenceObjects();
 
   public:
-    std::queue<PluginDataRequest> requestQueue;
-    std::mutex requestMutex;
+	std::queue<PluginDataRequest> requestQueue;
+	std::mutex requestMutex;
 
-    PluginEngineData m_sEngineData {};
+	PluginEngineData m_sEngineData {};
 };
 
 void init_plugincommunicationhandler();
