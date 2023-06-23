@@ -56,7 +56,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CCrashHandler::CCrashHandler() : m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr)
+CCrashHandler::CCrashHandler() : m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasShownCrashMsg(false)
 {
 	Init();
 }
@@ -169,8 +169,13 @@ const CHAR* CCrashHandler::GetExceptionString(DWORD dwExceptionCode) const
 //-----------------------------------------------------------------------------
 // Purpose: Shows a message box
 //-----------------------------------------------------------------------------
-void CCrashHandler::ShowPopUpMessage() const
+void CCrashHandler::ShowPopUpMessage()
 {
+	if (m_bHasShownCrashMsg)
+		return;
+
+	m_bHasShownCrashMsg = true;
+
 	if (!IsDedicatedServer())
 	{
 		// Create Crash Message dialog
@@ -181,8 +186,8 @@ void CCrashHandler::ShowPopUpMessage() const
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		std::string strCmdLine =
-			fmt::format("bin\\CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
+		std::string strCmdLine = fmt::format(
+			"bin\\CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
 
 		if (CreateProcessA(NULL, (LPSTR)strCmdLine.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
 		{

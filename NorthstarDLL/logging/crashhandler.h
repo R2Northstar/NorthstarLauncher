@@ -37,7 +37,7 @@ class CCrashHandler
 	//-----------------------------------------------------------------------------
 	// Formatting
 	//-----------------------------------------------------------------------------
-	void ShowPopUpMessage() const;
+	void ShowPopUpMessage();
 
 	void FormatException();
 	void FormatCallstack();
@@ -52,6 +52,8 @@ class CCrashHandler
   private:
 	PVOID m_hExceptionFilter;
 	EXCEPTION_POINTERS* m_pExceptionInfos;
+
+	bool m_bHasShownCrashMsg;
 
 	std::string m_strCrashedModule;
 	std::string m_strCrashedOffset;
