@@ -295,6 +295,8 @@ void CCrashHandler::FormatRegisters()
 
 	PCONTEXT pContext = m_pExceptionInfos->ContextRecord;
 
+	FormatIntReg("Flags:", pContext->ContextFlags);
+
 	FormatIntReg("Rax", pContext->Rax);
 	FormatIntReg("Rcx", pContext->Rcx);
 	FormatIntReg("Rdx", pContext->Rdx);
