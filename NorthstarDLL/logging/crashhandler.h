@@ -41,6 +41,9 @@ class CCrashHandler
 
 	void FormatException();
 	void FormatCallstack();
+	void FormatIntReg(const CHAR* pszRegister, DWORD64 nValue);
+	void FormatFloatReg(const CHAR* pszRegister, M128A nValue);
+	void FormatRegisters();
 
   private:
 	PVOID m_hExceptionFilter;

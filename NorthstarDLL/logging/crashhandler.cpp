@@ -37,6 +37,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	// Format
 	g_pCrashHandler->FormatException();
 	g_pCrashHandler->FormatCallstack();
+	g_pCrashHandler->FormatRegisters();
 
 	// Flush
 	NS::log::FlushLoggers();
@@ -188,7 +189,7 @@ void CCrashHandler::ShowPopUpMessage() const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatException()
 {
@@ -247,6 +248,83 @@ void CCrashHandler::FormatCallstack()
 		// Log module + offset
 		spdlog::error("\t{} + {:#x}", pszModuleFileName, reinterpret_cast<DWORD64>(pModuleBase));
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatIntReg(const CHAR* pszRegister, DWORD64 nValue)
+{
+	spdlog::error("\t{}: {:#x}", pszRegister, nValue);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatFloatReg(const CHAR* pszRegister, M128A nValue)
+{
+	DWORD nVec[4] = {
+		static_cast<DWORD>(nValue.Low & UINT_MAX),
+		static_cast<DWORD>(nValue.Low >> 32),
+		static_cast<DWORD>(nValue.High & UINT_MAX),
+		static_cast<DWORD>(nValue.High >> 32)};
+
+	spdlog::error(
+		"\t{}: [ {:G}, {:G}, {:G}, {:G} ]; [ {:#x}, {:#x}, {:#x}, {:#x} ]",
+		pszRegister,
+		static_cast<float>(nVec[0]),
+		static_cast<float>(nVec[1]),
+		static_cast<float>(nVec[2]),
+		static_cast<float>(nVec[3]),
+		nVec[0],
+		nVec[1],
+		nVec[2],
+		nVec[3]);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatRegisters()
+{
+	spdlog::error("Registers:");
+
+	PCONTEXT pContext = m_pExceptionInfos->ContextRecord;
+
+	FormatIntReg("Rax", pContext->Rax);
+	FormatIntReg("Rcx", pContext->Rcx);
+	FormatIntReg("Rdx", pContext->Rdx);
+	FormatIntReg("Rbx", pContext->Rbx);
+	FormatIntReg("Rsp", pContext->Rsp);
+	FormatIntReg("Rbp", pContext->Rbp);
+	FormatIntReg("Rsi", pContext->Rsi);
+	FormatIntReg("Rdi", pContext->Rdi);
+	FormatIntReg("R8 ", pContext->R8);
+	FormatIntReg("R9 ", pContext->R9);
+	FormatIntReg("R10", pContext->R10);
+	FormatIntReg("R11", pContext->R11);
+	FormatIntReg("R12", pContext->R12);
+	FormatIntReg("R13", pContext->R13);
+	FormatIntReg("R14", pContext->R14);
+	FormatIntReg("R15", pContext->R15);
+	FormatIntReg("Rip", pContext->Rip);
+
+	FormatFloatReg("Xmm0 ", pContext->Xmm0);
+	FormatFloatReg("Xmm1 ", pContext->Xmm1);
+	FormatFloatReg("Xmm2 ", pContext->Xmm2);
+	FormatFloatReg("Xmm3 ", pContext->Xmm3);
+	FormatFloatReg("Xmm4 ", pContext->Xmm4);
+	FormatFloatReg("Xmm5 ", pContext->Xmm5);
+	FormatFloatReg("Xmm6 ", pContext->Xmm6);
+	FormatFloatReg("Xmm7 ", pContext->Xmm7);
+	FormatFloatReg("Xmm8 ", pContext->Xmm8);
+	FormatFloatReg("Xmm9 ", pContext->Xmm9);
+	FormatFloatReg("Xmm10", pContext->Xmm10);
+	FormatFloatReg("Xmm11", pContext->Xmm11);
+	FormatFloatReg("Xmm12", pContext->Xmm12);
+	FormatFloatReg("Xmm13", pContext->Xmm13);
+	FormatFloatReg("Xmm14", pContext->Xmm14);
+	FormatFloatReg("Xmm15", pContext->Xmm15);
 }
 
 //-----------------------------------------------------------------------------
