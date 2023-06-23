@@ -82,8 +82,6 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
 
-	void* pMaterialSystem = *(void**)((char*)sEngineModule + 0x14C675B0);
-
 	switch (pOverlay->m_Type)
 	{
 	case OVERLAY_LINE:
