@@ -18,61 +18,61 @@
 #include <string.h>
 #include <filesystem>
 
-BOOL APIENTRY DllMain( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-    switch( ul_reason_for_call )
-    {
-        case DLL_PROCESS_ATTACH:
-        case DLL_THREAD_ATTACH:
-        case DLL_THREAD_DETACH:
-        case DLL_PROCESS_DETACH:
-            break;
-    }
+	switch (ul_reason_for_call)
+	{
+		case DLL_PROCESS_ATTACH:
+		case DLL_THREAD_ATTACH:
+		case DLL_THREAD_DETACH:
+		case DLL_PROCESS_DETACH:
+			break;
+	}
 
-    return TRUE;
+	return TRUE;
 }
 
 bool InitialiseNorthstar()
 {
-    static bool bInitialised = false;
-    if( bInitialised )
-        return false;
+	static bool bInitialised = false;
+	if (bInitialised)
+		return false;
 
-    bInitialised = true;
+	bInitialised = true;
 
-    InitialiseNorthstarPrefix();
+	InitialiseNorthstarPrefix();
 
-    // initialise the console if needed (-northstar needs this)
-    InitialiseConsole();
-    // initialise logging before most other things so that they can use spdlog and it have the proper formatting
-    InitialiseLogging();
-    InitialiseVersion();
-    CreateLogFiles();
+	// initialise the console if needed (-northstar needs this)
+	InitialiseConsole();
+	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
+	InitialiseLogging();
+	InitialiseVersion();
+	CreateLogFiles();
 
-    InitialiseCrashHandler();
+	InitialiseCrashHandler();
 
-    // Write launcher version to log
-    spdlog::info( "NorthstarLauncher version: {}", version );
-    spdlog::info( "Command line: {}", GetCommandLineA() );
-    spdlog::info( "Using profile: {}", GetNorthstarPrefix() );
+	// Write launcher version to log
+	spdlog::info("NorthstarLauncher version: {}", version);
+	spdlog::info("Command line: {}", GetCommandLineA());
+	spdlog::info("Using profile: {}", GetNorthstarPrefix());
 
-    InstallInitialHooks();
+	InstallInitialHooks();
 
-    g_pServerPresence = new ServerPresenceManager();
+	g_pServerPresence = new ServerPresenceManager();
 
-    g_pGameStatePresence = new GameStatePresence();
-    g_pPluginManager = new PluginManager();
-    g_pPluginManager->LoadPlugins();
+	g_pGameStatePresence = new GameStatePresence();
+	g_pPluginManager = new PluginManager();
+	g_pPluginManager->LoadPlugins();
 
-    InitialiseSquirrelManagers();
+	InitialiseSquirrelManagers();
 
-    // Fix some users' failure to connect to respawn datacenters
-    SetEnvironmentVariableA( "OPENSSL_ia32cap", "~0x200000200000000" );
+	// Fix some users' failure to connect to respawn datacenters
+	SetEnvironmentVariableA("OPENSSL_ia32cap", "~0x200000200000000");
 
-    curl_global_init_mem( CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base );
+	curl_global_init_mem(CURL_GLOBAL_DEFAULT, _malloc_base, _free_base, _realloc_base, _strdup_base, _calloc_base);
 
-    // run callbacks for any libraries that are already loaded by now
-    CallAllPendingDLLLoadCallbacks();
+	// run callbacks for any libraries that are already loaded by now
+	CallAllPendingDLLLoadCallbacks();
 
-    return true;
+	return true;
 }

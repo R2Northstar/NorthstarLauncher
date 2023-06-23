@@ -10,13 +10,13 @@ AUTOHOOK_PROCADDRESS(ClientCreateInterface, client.dll, CreateInterface,
 void*, __fastcall, (const char* pName, const int* pReturnCode))
 // clang-format on
 {
-    void* ret = ClientCreateInterface( pName, pReturnCode );
-    spdlog::info( "CreateInterface CLIENT {}", pName );
+	void* ret = ClientCreateInterface(pName, pReturnCode);
+	spdlog::info("CreateInterface CLIENT {}", pName);
 
-    if( !strcmp( pName, "GameClientExports001" ) )
-        InitialiseConsoleOnInterfaceCreation();
+	if (!strcmp(pName, "GameClientExports001"))
+		InitialiseConsoleOnInterfaceCreation();
 
-    return ret;
+	return ret;
 }
 
 // clang-format off
@@ -24,10 +24,10 @@ AUTOHOOK_PROCADDRESS(ServerCreateInterface, server.dll, CreateInterface,
 void*, __fastcall, (const char* pName, const int* pReturnCode))
 // clang-format on
 {
-    void* ret = ServerCreateInterface( pName, pReturnCode );
-    spdlog::info( "CreateInterface SERVER {}", pName );
+	void* ret = ServerCreateInterface(pName, pReturnCode);
+	spdlog::info("CreateInterface SERVER {}", pName);
 
-    return ret;
+	return ret;
 }
 
 // clang-format off
@@ -35,10 +35,10 @@ AUTOHOOK_PROCADDRESS(EngineCreateInterface, engine.dll, CreateInterface,
 void*, __fastcall, (const char* pName, const int* pReturnCode))
 // clang-format on
 {
-    void* ret = EngineCreateInterface( pName, pReturnCode );
-    spdlog::info( "CreateInterface ENGINE {}", pName );
+	void* ret = EngineCreateInterface(pName, pReturnCode);
+	spdlog::info("CreateInterface ENGINE {}", pName);
 
-    return ret;
+	return ret;
 }
 
 // clang-format off

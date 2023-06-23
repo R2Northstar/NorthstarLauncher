@@ -9,7 +9,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
 IndentCaseLabels: true
 SpacesInSquareBrackets: false
-SpacesInParentheses: true
+SpacesInParentheses: false
 SpaceAfterCStyleCast: false
 SpaceInEmptyParentheses: false
 SpaceAfterLogicalNot: false
@@ -17,9 +17,9 @@ SpaceBeforeAssignmentOperators: true
 SpaceBeforeCpp11BracedList: true
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
-SpaceBeforeParens: Never
+SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: true
-UseTab: Never
+UseTab: Always
 ColumnLimit: 0
 BreakBeforeBraces: Allman
 IndentExternBlock: Indent
