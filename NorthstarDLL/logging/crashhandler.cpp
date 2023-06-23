@@ -136,14 +136,18 @@ void CCrashHandler::ShowPopUpMessage() const
 	if (!IsDedicatedServer())
 	{
 		// Create Crash Message dialog
-		STARTUPINFOA si {0};
-		PROCESS_INFORMATION pi {0};
+		STARTUPINFOA si;
+		PROCESS_INFORMATION pi;
+
+		ZeroMemory(&si, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
 
 		std::string strCommandLine = "bin/CrashMsg.exe";
 		strCommandLine += " " + GetNorthstarPrefix();
 		strCommandLine += " " + std::string(GetExceptionString());
 
-		if (CreateProcessA(NULL, (LPSTR)strCommandLine.c_str(), NULL, FALSE, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+		if (CreateProcessA(NULL, (LPSTR)strCommandLine.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
 		{
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
