@@ -38,12 +38,12 @@ EXPORT void* CreateObject(ObjectType type)
 {
 	switch (type)
 	{
-		case ObjectType::CONVAR:
-			return (void*)new ConVar;
-		case ObjectType::CONCOMMANDS:
-			return (void*)new ConCommand;
-		default:
-			return NULL;
+	case ObjectType::CONVAR:
+		return (void*)new ConVar;
+	case ObjectType::CONCOMMANDS:
+		return (void*)new ConCommand;
+	default:
+		return NULL;
 	}
 }
 

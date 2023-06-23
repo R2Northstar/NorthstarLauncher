@@ -7,7 +7,6 @@ AlignTrailingComments: false
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
-IndentCaseLabels: true
 SpacesInSquareBrackets: false
 SpacesInParentheses: false
 SpaceAfterCStyleCast: false

@@ -602,20 +602,20 @@ int KeyValues::GetInt(const char* pszKeyName, int iDefaultValue)
 	{
 		switch (pKey->m_iDataType)
 		{
-			case TYPE_STRING:
-				return atoi(pKey->m_sValue);
-			case TYPE_WSTRING:
-				return _wtoi(pKey->m_wsValue);
-			case TYPE_FLOAT:
-				return static_cast<int>(pKey->m_flValue);
-			case TYPE_UINT64:
-				// can't convert, since it would lose data
-				assert(0);
-				return 0;
-			case TYPE_INT:
-			case TYPE_PTR:
-			default:
-				return pKey->m_iValue;
+		case TYPE_STRING:
+			return atoi(pKey->m_sValue);
+		case TYPE_WSTRING:
+			return _wtoi(pKey->m_wsValue);
+		case TYPE_FLOAT:
+			return static_cast<int>(pKey->m_flValue);
+		case TYPE_UINT64:
+			// can't convert, since it would lose data
+			assert(0);
+			return 0;
+		case TYPE_INT:
+		case TYPE_PTR:
+		default:
+			return pKey->m_iValue;
 		};
 	}
 	return iDefaultValue;
@@ -635,27 +635,27 @@ uint64_t KeyValues::GetUint64(const char* pszKeyName, uint64_t nDefaultValue)
 	{
 		switch (pKey->m_iDataType)
 		{
-			case TYPE_STRING:
-			{
-				uint64_t uiResult = 0ull;
-				sscanf(pKey->m_sValue, "%lld", &uiResult);
-				return uiResult;
-			}
-			case TYPE_WSTRING:
-			{
-				uint64_t uiResult = 0ull;
-				swscanf(pKey->m_wsValue, L"%lld", &uiResult);
-				return uiResult;
-			}
-			case TYPE_FLOAT:
-				return static_cast<int>(pKey->m_flValue);
-			case TYPE_UINT64:
-				return *reinterpret_cast<uint64_t*>(pKey->m_sValue);
-			case TYPE_PTR:
-				return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pKey->m_pValue));
-			case TYPE_INT:
-			default:
-				return pKey->m_iValue;
+		case TYPE_STRING:
+		{
+			uint64_t uiResult = 0ull;
+			sscanf(pKey->m_sValue, "%lld", &uiResult);
+			return uiResult;
+		}
+		case TYPE_WSTRING:
+		{
+			uint64_t uiResult = 0ull;
+			swscanf(pKey->m_wsValue, L"%lld", &uiResult);
+			return uiResult;
+		}
+		case TYPE_FLOAT:
+			return static_cast<int>(pKey->m_flValue);
+		case TYPE_UINT64:
+			return *reinterpret_cast<uint64_t*>(pKey->m_sValue);
+		case TYPE_PTR:
+			return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pKey->m_pValue));
+		case TYPE_INT:
+		default:
+			return pKey->m_iValue;
 		};
 	}
 	return nDefaultValue;
@@ -675,16 +675,16 @@ void* KeyValues::GetPtr(const char* pszKeyName, void* pDefaultValue)
 	{
 		switch (pKey->m_iDataType)
 		{
-			case TYPE_PTR:
-				return pKey->m_pValue;
+		case TYPE_PTR:
+			return pKey->m_pValue;
 
-			case TYPE_WSTRING:
-			case TYPE_STRING:
-			case TYPE_FLOAT:
-			case TYPE_INT:
-			case TYPE_UINT64:
-			default:
-				return nullptr;
+		case TYPE_WSTRING:
+		case TYPE_STRING:
+		case TYPE_FLOAT:
+		case TYPE_INT:
+		case TYPE_UINT64:
+		default:
+			return nullptr;
 		};
 	}
 	return pDefaultValue;
@@ -704,19 +704,19 @@ float KeyValues::GetFloat(const char* pszKeyName, float flDefaultValue)
 	{
 		switch (pKey->m_iDataType)
 		{
-			case TYPE_STRING:
-				return static_cast<float>(atof(pKey->m_sValue));
-			case TYPE_WSTRING:
-				return static_cast<float>(_wtof(pKey->m_wsValue)); // no wtof
-			case TYPE_FLOAT:
-				return pKey->m_flValue;
-			case TYPE_INT:
-				return static_cast<float>(pKey->m_iValue);
-			case TYPE_UINT64:
-				return static_cast<float>((*(reinterpret_cast<uint64_t*>(pKey->m_sValue))));
-			case TYPE_PTR:
-			default:
-				return 0.0f;
+		case TYPE_STRING:
+			return static_cast<float>(atof(pKey->m_sValue));
+		case TYPE_WSTRING:
+			return static_cast<float>(_wtof(pKey->m_wsValue)); // no wtof
+		case TYPE_FLOAT:
+			return pKey->m_flValue;
+		case TYPE_INT:
+			return static_cast<float>(pKey->m_iValue);
+		case TYPE_UINT64:
+			return static_cast<float>((*(reinterpret_cast<uint64_t*>(pKey->m_sValue))));
+		case TYPE_PTR:
+		default:
+			return 0.0f;
 		};
 	}
 	return flDefaultValue;
@@ -738,47 +738,47 @@ const char* KeyValues::GetString(const char* pszKeyName, const char* pszDefaultV
 		char buf[64];
 		switch (pKey->m_iDataType)
 		{
-			case TYPE_FLOAT:
-				snprintf(buf, sizeof(buf), "%f", pKey->m_flValue);
-				SetString(pszKeyName, buf);
-				break;
-			case TYPE_PTR:
-				snprintf(buf, sizeof(buf), "%lld", reinterpret_cast<uint64_t>(pKey->m_pValue));
-				SetString(pszKeyName, buf);
-				break;
-			case TYPE_INT:
-				snprintf(buf, sizeof(buf), "%d", pKey->m_iValue);
-				SetString(pszKeyName, buf);
-				break;
-			case TYPE_UINT64:
-				snprintf(buf, sizeof(buf), "%lld", *(reinterpret_cast<uint64_t*>(pKey->m_sValue)));
-				SetString(pszKeyName, buf);
-				break;
-			case TYPE_COLOR:
-				snprintf(buf, sizeof(buf), "%d %d %d %d", pKey->m_Color[0], pKey->m_Color[1], pKey->m_Color[2], pKey->m_Color[3]);
-				SetString(pszKeyName, buf);
-				break;
+		case TYPE_FLOAT:
+			snprintf(buf, sizeof(buf), "%f", pKey->m_flValue);
+			SetString(pszKeyName, buf);
+			break;
+		case TYPE_PTR:
+			snprintf(buf, sizeof(buf), "%lld", reinterpret_cast<uint64_t>(pKey->m_pValue));
+			SetString(pszKeyName, buf);
+			break;
+		case TYPE_INT:
+			snprintf(buf, sizeof(buf), "%d", pKey->m_iValue);
+			SetString(pszKeyName, buf);
+			break;
+		case TYPE_UINT64:
+			snprintf(buf, sizeof(buf), "%lld", *(reinterpret_cast<uint64_t*>(pKey->m_sValue)));
+			SetString(pszKeyName, buf);
+			break;
+		case TYPE_COLOR:
+			snprintf(buf, sizeof(buf), "%d %d %d %d", pKey->m_Color[0], pKey->m_Color[1], pKey->m_Color[2], pKey->m_Color[3]);
+			SetString(pszKeyName, buf);
+			break;
 
-			case TYPE_WSTRING:
+		case TYPE_WSTRING:
+		{
+			// convert the string to char *, set it for future use, and return it
+			char wideBuf[512];
+			int result = V_UnicodeToUTF8(pKey->m_wsValue, wideBuf, 512);
+			if (result)
 			{
-				// convert the string to char *, set it for future use, and return it
-				char wideBuf[512];
-				int result = V_UnicodeToUTF8(pKey->m_wsValue, wideBuf, 512);
-				if (result)
-				{
-					// note: this will copy wideBuf
-					SetString(pszKeyName, wideBuf);
-				}
-				else
-				{
-					return pszDefaultValue;
-				}
-				break;
+				// note: this will copy wideBuf
+				SetString(pszKeyName, wideBuf);
 			}
-			case TYPE_STRING:
-				break;
-			default:
+			else
+			{
 				return pszDefaultValue;
+			}
+			break;
+		}
+		case TYPE_STRING:
+			break;
+		default:
+			return pszDefaultValue;
 		};
 
 		return pKey->m_sValue;
@@ -801,51 +801,51 @@ const wchar_t* KeyValues::GetWString(const char* pszKeyName, const wchar_t* pwsz
 		wchar_t wbuf[64];
 		switch (pKey->m_iDataType)
 		{
-			case TYPE_FLOAT:
-				swprintf(wbuf, ARRAYSIZE(wbuf), L"%f", pKey->m_flValue);
-				SetWString(pszKeyName, wbuf);
-				break;
-			case TYPE_PTR:
-				swprintf(wbuf, ARRAYSIZE(wbuf), L"%lld", static_cast<int64_t>(reinterpret_cast<size_t>(pKey->m_pValue)));
-				SetWString(pszKeyName, wbuf);
-				break;
-			case TYPE_INT:
-				swprintf(wbuf, ARRAYSIZE(wbuf), L"%d", pKey->m_iValue);
-				SetWString(pszKeyName, wbuf);
-				break;
-			case TYPE_UINT64:
-			{
-				swprintf(wbuf, ARRAYSIZE(wbuf), L"%lld", *(reinterpret_cast<uint64_t*>(pKey->m_sValue)));
-				SetWString(pszKeyName, wbuf);
-			}
+		case TYPE_FLOAT:
+			swprintf(wbuf, ARRAYSIZE(wbuf), L"%f", pKey->m_flValue);
+			SetWString(pszKeyName, wbuf);
 			break;
-			case TYPE_COLOR:
-				swprintf(wbuf, ARRAYSIZE(wbuf), L"%d %d %d %d", pKey->m_Color[0], pKey->m_Color[1], pKey->m_Color[2], pKey->m_Color[3]);
-				SetWString(pszKeyName, wbuf);
-				break;
+		case TYPE_PTR:
+			swprintf(wbuf, ARRAYSIZE(wbuf), L"%lld", static_cast<int64_t>(reinterpret_cast<size_t>(pKey->m_pValue)));
+			SetWString(pszKeyName, wbuf);
+			break;
+		case TYPE_INT:
+			swprintf(wbuf, ARRAYSIZE(wbuf), L"%d", pKey->m_iValue);
+			SetWString(pszKeyName, wbuf);
+			break;
+		case TYPE_UINT64:
+		{
+			swprintf(wbuf, ARRAYSIZE(wbuf), L"%lld", *(reinterpret_cast<uint64_t*>(pKey->m_sValue)));
+			SetWString(pszKeyName, wbuf);
+		}
+		break;
+		case TYPE_COLOR:
+			swprintf(wbuf, ARRAYSIZE(wbuf), L"%d %d %d %d", pKey->m_Color[0], pKey->m_Color[1], pKey->m_Color[2], pKey->m_Color[3]);
+			SetWString(pszKeyName, wbuf);
+			break;
 
-			case TYPE_WSTRING:
-				break;
-			case TYPE_STRING:
+		case TYPE_WSTRING:
+			break;
+		case TYPE_STRING:
+		{
+			size_t bufSize = strlen(pKey->m_sValue) + 1;
+			wchar_t* pWBuf = new wchar_t[bufSize];
+			int result = V_UTF8ToUnicode(pKey->m_sValue, pWBuf, static_cast<int>(bufSize * sizeof(wchar_t)));
+			if (result >= 0) // may be a zero length string
 			{
-				size_t bufSize = strlen(pKey->m_sValue) + 1;
-				wchar_t* pWBuf = new wchar_t[bufSize];
-				int result = V_UTF8ToUnicode(pKey->m_sValue, pWBuf, static_cast<int>(bufSize * sizeof(wchar_t)));
-				if (result >= 0) // may be a zero length string
-				{
-					SetWString(pszKeyName, pWBuf);
-					delete[] pWBuf;
-				}
-				else
-				{
-					delete[] pWBuf;
-					return pwszDefaultValue;
-				}
-
-				break;
+				SetWString(pszKeyName, pWBuf);
+				delete[] pWBuf;
 			}
-			default:
+			else
+			{
+				delete[] pWBuf;
 				return pwszDefaultValue;
+			}
+
+			break;
+		}
+		default:
+			return pwszDefaultValue;
 		};
 
 		return reinterpret_cast<const wchar_t*>(pKey->m_wsValue);
@@ -1112,60 +1112,60 @@ void KeyValues::RecursiveCopyKeyValues(KeyValues& src)
 		char buf[256];
 		switch (src.m_iDataType)
 		{
-			case TYPE_NONE:
-				break;
-			case TYPE_STRING:
-				if (src.m_sValue)
-				{
-					size_t len = strlen(src.m_sValue) + 1;
-					m_sValue = new char[len];
-					strncpy(m_sValue, src.m_sValue, len);
-				}
-				break;
-			case TYPE_INT:
+		case TYPE_NONE:
+			break;
+		case TYPE_STRING:
+			if (src.m_sValue)
 			{
-				m_iValue = src.m_iValue;
-				snprintf(buf, sizeof(buf), "%d", m_iValue);
-				size_t len = strlen(buf) + 1;
+				size_t len = strlen(src.m_sValue) + 1;
 				m_sValue = new char[len];
-				strncpy(m_sValue, buf, len);
+				strncpy(m_sValue, src.m_sValue, len);
 			}
 			break;
-			case TYPE_FLOAT:
-			{
-				m_flValue = src.m_flValue;
-				snprintf(buf, sizeof(buf), "%f", m_flValue);
-				size_t len = strlen(buf) + 1;
-				m_sValue = new char[len];
-				strncpy(m_sValue, buf, len);
-			}
-			break;
-			case TYPE_PTR:
-			{
-				m_pValue = src.m_pValue;
-			}
-			break;
-			case TYPE_UINT64:
-			{
-				m_sValue = new char[sizeof(uint64_t)];
-				memcpy(m_sValue, src.m_sValue, sizeof(uint64_t));
-			}
-			break;
-			case TYPE_COLOR:
-			{
-				m_Color[0] = src.m_Color[0];
-				m_Color[1] = src.m_Color[1];
-				m_Color[2] = src.m_Color[2];
-				m_Color[3] = src.m_Color[3];
-			}
-			break;
+		case TYPE_INT:
+		{
+			m_iValue = src.m_iValue;
+			snprintf(buf, sizeof(buf), "%d", m_iValue);
+			size_t len = strlen(buf) + 1;
+			m_sValue = new char[len];
+			strncpy(m_sValue, buf, len);
+		}
+		break;
+		case TYPE_FLOAT:
+		{
+			m_flValue = src.m_flValue;
+			snprintf(buf, sizeof(buf), "%f", m_flValue);
+			size_t len = strlen(buf) + 1;
+			m_sValue = new char[len];
+			strncpy(m_sValue, buf, len);
+		}
+		break;
+		case TYPE_PTR:
+		{
+			m_pValue = src.m_pValue;
+		}
+		break;
+		case TYPE_UINT64:
+		{
+			m_sValue = new char[sizeof(uint64_t)];
+			memcpy(m_sValue, src.m_sValue, sizeof(uint64_t));
+		}
+		break;
+		case TYPE_COLOR:
+		{
+			m_Color[0] = src.m_Color[0];
+			m_Color[1] = src.m_Color[1];
+			m_Color[2] = src.m_Color[2];
+			m_Color[3] = src.m_Color[3];
+		}
+		break;
 
-			default:
-			{
-				// do nothing . .what the heck is this?
-				assert(0);
-			}
-			break;
+		default:
+		{
+			// do nothing . .what the heck is this?
+			assert(0);
+		}
+		break;
 		}
 	}
 
@@ -1235,51 +1235,51 @@ KeyValues* KeyValues::MakeCopy(void) const
 	pNewKeyValue->m_iDataType = m_iDataType;
 	switch (m_iDataType)
 	{
-		case TYPE_STRING:
+	case TYPE_STRING:
+	{
+		if (m_sValue)
 		{
-			if (m_sValue)
-			{
-				size_t len = strlen(m_sValue);
-				assert(!pNewKeyValue->m_sValue);
-				pNewKeyValue->m_sValue = new char[len + 1];
-				memcpy(pNewKeyValue->m_sValue, m_sValue, len + 1);
-			}
+			size_t len = strlen(m_sValue);
+			assert(!pNewKeyValue->m_sValue);
+			pNewKeyValue->m_sValue = new char[len + 1];
+			memcpy(pNewKeyValue->m_sValue, m_sValue, len + 1);
 		}
-		break;
-		case TYPE_WSTRING:
+	}
+	break;
+	case TYPE_WSTRING:
+	{
+		if (m_wsValue)
 		{
-			if (m_wsValue)
-			{
-				size_t len = wcslen(m_wsValue);
-				pNewKeyValue->m_wsValue = new wchar_t[len + 1];
-				memcpy(pNewKeyValue->m_wsValue, m_wsValue, len + 1 * sizeof(wchar_t));
-			}
+			size_t len = wcslen(m_wsValue);
+			pNewKeyValue->m_wsValue = new wchar_t[len + 1];
+			memcpy(pNewKeyValue->m_wsValue, m_wsValue, len + 1 * sizeof(wchar_t));
 		}
+	}
+	break;
+
+	case TYPE_INT:
+		pNewKeyValue->m_iValue = m_iValue;
 		break;
 
-		case TYPE_INT:
-			pNewKeyValue->m_iValue = m_iValue;
-			break;
+	case TYPE_FLOAT:
+		pNewKeyValue->m_flValue = m_flValue;
+		break;
 
-		case TYPE_FLOAT:
-			pNewKeyValue->m_flValue = m_flValue;
-			break;
+	case TYPE_PTR:
+		pNewKeyValue->m_pValue = m_pValue;
+		break;
 
-		case TYPE_PTR:
-			pNewKeyValue->m_pValue = m_pValue;
-			break;
+	case TYPE_COLOR:
+		pNewKeyValue->m_Color[0] = m_Color[0];
+		pNewKeyValue->m_Color[1] = m_Color[1];
+		pNewKeyValue->m_Color[2] = m_Color[2];
+		pNewKeyValue->m_Color[3] = m_Color[3];
+		break;
 
-		case TYPE_COLOR:
-			pNewKeyValue->m_Color[0] = m_Color[0];
-			pNewKeyValue->m_Color[1] = m_Color[1];
-			pNewKeyValue->m_Color[2] = m_Color[2];
-			pNewKeyValue->m_Color[3] = m_Color[3];
-			break;
-
-		case TYPE_UINT64:
-			pNewKeyValue->m_sValue = new char[sizeof(uint64_t)];
-			memcpy(pNewKeyValue->m_sValue, m_sValue, sizeof(uint64_t));
-			break;
+	case TYPE_UINT64:
+		pNewKeyValue->m_sValue = new char[sizeof(uint64_t)];
+		memcpy(pNewKeyValue->m_sValue, m_sValue, sizeof(uint64_t));
+		break;
 	};
 
 	// recursively copy subkeys

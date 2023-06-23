@@ -364,12 +364,12 @@ BOOL WINAPI ConsoleHandlerRoutine(DWORD eventCode)
 {
 	switch (eventCode)
 	{
-		case CTRL_CLOSE_EVENT:
-			// User closed console, shut everything down
-			spdlog::info("Exiting due to console close...");
-			RemoveCrashHandler();
-			exit(EXIT_SUCCESS);
-			return FALSE;
+	case CTRL_CLOSE_EVENT:
+		// User closed console, shut everything down
+		spdlog::info("Exiting due to console close...");
+		RemoveCrashHandler();
+		exit(EXIT_SUCCESS);
+		return FALSE;
 	}
 
 	return TRUE;

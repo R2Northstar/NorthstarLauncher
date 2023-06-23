@@ -746,38 +746,38 @@ std::string DataTableToString(Datatable* datatable)
 			const void* pUntypedVal = datatable->data + column.offset + row * datatable->rowInfo;
 			switch (column.type)
 			{
-				case DatatableType::BOOL:
-				{
-					sCSVString += *(bool*)pUntypedVal ? '1' : '0';
-					break;
-				}
+			case DatatableType::BOOL:
+			{
+				sCSVString += *(bool*)pUntypedVal ? '1' : '0';
+				break;
+			}
 
-				case DatatableType::INT:
-				{
-					sCSVString += std::to_string(*(int*)pUntypedVal);
-					break;
-				}
+			case DatatableType::INT:
+			{
+				sCSVString += std::to_string(*(int*)pUntypedVal);
+				break;
+			}
 
-				case DatatableType::FLOAT:
-				{
-					sCSVString += std::to_string(*(float*)pUntypedVal);
-					break;
-				}
+			case DatatableType::FLOAT:
+			{
+				sCSVString += std::to_string(*(float*)pUntypedVal);
+				break;
+			}
 
-				case DatatableType::VECTOR:
-				{
-					Vector3 pVector((float*)pUntypedVal);
-					sCSVString += fmt::format("<{},{},{}>", pVector.x, pVector.y, pVector.z);
-					break;
-				}
+			case DatatableType::VECTOR:
+			{
+				Vector3 pVector((float*)pUntypedVal);
+				sCSVString += fmt::format("<{},{},{}>", pVector.x, pVector.y, pVector.z);
+				break;
+			}
 
-				case DatatableType::STRING:
-				case DatatableType::ASSET:
-				case DatatableType::UNK_STRING:
-				{
-					sCSVString += fmt::format("\"{}\"", *(char**)pUntypedVal);
-					break;
-				}
+			case DatatableType::STRING:
+			case DatatableType::ASSET:
+			case DatatableType::UNK_STRING:
+			{
+				sCSVString += fmt::format("\"{}\"", *(char**)pUntypedVal);
+				break;
+			}
 			}
 		}
 	}

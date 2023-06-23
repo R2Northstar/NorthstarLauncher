@@ -85,21 +85,21 @@ void,, (BFRead* msg))
 
 	switch (msg_dest)
 	{
-		case TextMsgPrintType_t::HUD_PRINTCENTER:
-			pInternalCenterPrint->Print(text);
-			break;
+	case TextMsgPrintType_t::HUD_PRINTCENTER:
+		pInternalCenterPrint->Print(text);
+		break;
 
-		default:
-			spdlog::warn("Unimplemented TextMsg type {}! printing to console", msg_dest);
-			[[fallthrough]];
+	default:
+		spdlog::warn("Unimplemented TextMsg type {}! printing to console", msg_dest);
+		[[fallthrough]];
 
-		case TextMsgPrintType_t::HUD_PRINTCONSOLE:
-			auto endpos = strlen(text);
-			if (text[endpos - 1] == '\n')
-				text[endpos - 1] = '\0'; // cut off repeated newline
+	case TextMsgPrintType_t::HUD_PRINTCONSOLE:
+		auto endpos = strlen(text);
+		if (text[endpos - 1] == '\n')
+			text[endpos - 1] = '\0'; // cut off repeated newline
 
-			spdlog::info(text);
-			break;
+		spdlog::info(text);
+		break;
 	}
 }
 
@@ -155,45 +155,45 @@ void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_
 		{
 			switch (format[i + 1])
 			{
-				// this is fucking awful lol
-				case 'd':
-				case 'i':
-				case 'u':
-				case 'x':
-				case 'X':
-				case 'f':
-				case 'F':
-				case 'g':
-				case 'G':
-				case 'a':
-				case 'A':
-				case 'c':
-				case 's':
-				case 'p':
-				case 'n':
-				case '%':
-				case '-':
-				case '+':
-				case ' ':
-				case '#':
-				case '*':
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					break;
+			// this is fucking awful lol
+			case 'd':
+			case 'i':
+			case 'u':
+			case 'x':
+			case 'X':
+			case 'f':
+			case 'F':
+			case 'g':
+			case 'G':
+			case 'a':
+			case 'A':
+			case 'c':
+			case 's':
+			case 'p':
+			case 'n':
+			case '%':
+			case '-':
+			case '+':
+			case ' ':
+			case '#':
+			case '*':
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				break;
 
-				default:
-				{
-					bShouldFormat = false;
-					break;
-				}
+			default:
+			{
+				bShouldFormat = false;
+				break;
+			}
 			}
 		}
 	}

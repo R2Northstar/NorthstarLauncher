@@ -16,15 +16,15 @@ std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context)
 {
 	switch (context)
 	{
-		case ScriptContext::UI:
-			return NS::log::SCRIPT_UI;
-		case ScriptContext::CLIENT:
-			return NS::log::SCRIPT_CL;
-		case ScriptContext::SERVER:
-			return NS::log::SCRIPT_SV;
-		default:
-			throw std::runtime_error("getSquirrelLoggerByContext called with invalid context");
-			return nullptr;
+	case ScriptContext::UI:
+		return NS::log::SCRIPT_UI;
+	case ScriptContext::CLIENT:
+		return NS::log::SCRIPT_CL;
+	case ScriptContext::SERVER:
+		return NS::log::SCRIPT_SV;
+	default:
+		throw std::runtime_error("getSquirrelLoggerByContext called with invalid context");
+		return nullptr;
 	}
 }
 
@@ -46,14 +46,14 @@ const char* GetContextName(ScriptContext context)
 {
 	switch (context)
 	{
-		case ScriptContext::CLIENT:
-			return "CLIENT";
-		case ScriptContext::SERVER:
-			return "SERVER";
-		case ScriptContext::UI:
-			return "UI";
-		default:
-			return "UNKNOWN";
+	case ScriptContext::CLIENT:
+		return "CLIENT";
+	case ScriptContext::SERVER:
+		return "SERVER";
+	case ScriptContext::UI:
+		return "UI";
+	default:
+		return "UNKNOWN";
 	}
 }
 
@@ -61,14 +61,14 @@ const char* GetContextName_Short(ScriptContext context)
 {
 	switch (context)
 	{
-		case ScriptContext::CLIENT:
-			return "CL";
-		case ScriptContext::SERVER:
-			return "SV";
-		case ScriptContext::UI:
-			return "UI";
-		default:
-			return "??";
+	case ScriptContext::CLIENT:
+		return "CL";
+	case ScriptContext::SERVER:
+		return "SV";
+	case ScriptContext::UI:
+		return "UI";
+	default:
+		return "??";
 	}
 }
 
@@ -107,50 +107,50 @@ const char* SQTypeNameFromID(int type)
 {
 	switch (type)
 	{
-		case OT_ASSET:
-			return "asset";
-		case OT_INTEGER:
-			return "int";
-		case OT_BOOL:
-			return "bool";
-		case SQOBJECT_NUMERIC:
-			return "float or int";
-		case OT_NULL:
-			return "null";
-		case OT_VECTOR:
-			return "vector";
-		case 0:
-			return "var";
-		case OT_USERDATA:
-			return "userdata";
-		case OT_FLOAT:
-			return "float";
-		case OT_STRING:
-			return "string";
-		case OT_ARRAY:
-			return "array";
-		case 0x8000200:
-			return "function";
-		case 0x8100000:
-			return "structdef";
-		case OT_THREAD:
-			return "thread";
-		case OT_FUNCPROTO:
-			return "function";
-		case OT_CLAAS:
-			return "class";
-		case OT_WEAKREF:
-			return "weakref";
-		case 0x8080000:
-			return "unimplemented function";
-		case 0x8200000:
-			return "struct instance";
-		case OT_TABLE:
-			return "table";
-		case 0xA008000:
-			return "instance";
-		case OT_ENTITY:
-			return "entity";
+	case OT_ASSET:
+		return "asset";
+	case OT_INTEGER:
+		return "int";
+	case OT_BOOL:
+		return "bool";
+	case SQOBJECT_NUMERIC:
+		return "float or int";
+	case OT_NULL:
+		return "null";
+	case OT_VECTOR:
+		return "vector";
+	case 0:
+		return "var";
+	case OT_USERDATA:
+		return "userdata";
+	case OT_FLOAT:
+		return "float";
+	case OT_STRING:
+		return "string";
+	case OT_ARRAY:
+		return "array";
+	case 0x8000200:
+		return "function";
+	case 0x8100000:
+		return "structdef";
+	case OT_THREAD:
+		return "thread";
+	case OT_FUNCPROTO:
+		return "function";
+	case OT_CLAAS:
+		return "class";
+	case OT_WEAKREF:
+		return "weakref";
+	case 0x8080000:
+		return "unimplemented function";
+	case 0x8200000:
+		return "struct instance";
+	case OT_TABLE:
+		return "table";
+	case 0xA008000:
+		return "instance";
+	case OT_ENTITY:
+		return "entity";
 	}
 	return "";
 }
@@ -212,15 +212,15 @@ void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMe
 	message.externalFunc = function;
 	switch (context)
 	{
-		case ScriptContext::CLIENT:
-			g_pSquirrel<ScriptContext::CLIENT>->messageBuffer->push(message);
-			break;
-		case ScriptContext::SERVER:
-			g_pSquirrel<ScriptContext::SERVER>->messageBuffer->push(message);
-			break;
-		case ScriptContext::UI:
-			g_pSquirrel<ScriptContext::UI>->messageBuffer->push(message);
-			break;
+	case ScriptContext::CLIENT:
+		g_pSquirrel<ScriptContext::CLIENT>->messageBuffer->push(message);
+		break;
+	case ScriptContext::SERVER:
+		g_pSquirrel<ScriptContext::SERVER>->messageBuffer->push(message);
+		break;
+	case ScriptContext::UI:
+		g_pSquirrel<ScriptContext::UI>->messageBuffer->push(message);
+		break;
 	}
 }
 

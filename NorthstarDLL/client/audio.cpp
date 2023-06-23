@@ -450,15 +450,15 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 
 		switch (overrideData->Strategy)
 		{
-			case AudioSelectionStrategy::RANDOM:
-				dat = &*select_randomly(overrideData->Samples.begin(), overrideData->Samples.end());
-				break;
-			case AudioSelectionStrategy::SEQUENTIAL:
-			default:
-				dat = &overrideData->Samples[overrideData->CurrentIndex++];
-				if (overrideData->CurrentIndex >= overrideData->Samples.size())
-					overrideData->CurrentIndex = 0; // reset back to the first sample entry
-				break;
+		case AudioSelectionStrategy::RANDOM:
+			dat = &*select_randomly(overrideData->Samples.begin(), overrideData->Samples.end());
+			break;
+		case AudioSelectionStrategy::SEQUENTIAL:
+		default:
+			dat = &overrideData->Samples[overrideData->CurrentIndex++];
+			if (overrideData->CurrentIndex >= overrideData->Samples.size())
+				overrideData->CurrentIndex = 0; // reset back to the first sample entry
+			break;
 		}
 
 		if (!dat)

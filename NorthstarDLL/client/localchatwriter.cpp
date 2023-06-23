@@ -108,24 +108,24 @@ class AnsiEscapeParser
 	{
 		switch (m_next)
 		{
-			case Next::ControlType:
-				m_next = HandleControlType(val);
-				break;
-			case Next::ForegroundType:
-				m_next = HandleForegroundType(val);
-				break;
-			case Next::Foreground8Bit:
-				m_next = HandleForeground8Bit(val);
-				break;
-			case Next::ForegroundR:
-				m_next = HandleForegroundR(val);
-				break;
-			case Next::ForegroundG:
-				m_next = HandleForegroundG(val);
-				break;
-			case Next::ForegroundB:
-				m_next = HandleForegroundB(val);
-				break;
+		case Next::ControlType:
+			m_next = HandleControlType(val);
+			break;
+		case Next::ForegroundType:
+			m_next = HandleForegroundType(val);
+			break;
+		case Next::Foreground8Bit:
+			m_next = HandleForeground8Bit(val);
+			break;
+		case Next::ForegroundR:
+			m_next = HandleForegroundR(val);
+			break;
+		case Next::ForegroundG:
+			m_next = HandleForegroundG(val);
+			break;
+		case Next::ForegroundB:
+			m_next = HandleForegroundB(val);
+			break;
 		}
 	}
 
@@ -360,17 +360,17 @@ static Color GetHudSwatchColor(CHudChat* hud, LocalChatWriter::SwatchColor swatc
 {
 	switch (swatchColor)
 	{
-		case LocalChatWriter::MainTextColor:
-			return hud->m_mainTextColor;
+	case LocalChatWriter::MainTextColor:
+		return hud->m_mainTextColor;
 
-		case LocalChatWriter::SameTeamNameColor:
-			return hud->m_sameTeamColor;
+	case LocalChatWriter::SameTeamNameColor:
+		return hud->m_sameTeamColor;
 
-		case LocalChatWriter::EnemyTeamNameColor:
-			return hud->m_enemyTeamColor;
+	case LocalChatWriter::EnemyTeamNameColor:
+		return hud->m_enemyTeamColor;
 
-		case LocalChatWriter::NetworkNameColor:
-			return hud->m_networkNameColor;
+	case LocalChatWriter::NetworkNameColor:
+		return hud->m_networkNameColor;
 	}
 
 	return Color(0, 0, 0, 0);

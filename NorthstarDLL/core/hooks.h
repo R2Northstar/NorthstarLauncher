@@ -183,23 +183,23 @@ class __autohook
 		// determine the address of the function we're hooking
 		switch (iAddressResolutionMode)
 		{
-			case ABSOLUTE_ADDR:
-			{
-				targetAddr = iAbsoluteAddress;
-				break;
-			}
+		case ABSOLUTE_ADDR:
+		{
+			targetAddr = iAbsoluteAddress;
+			break;
+		}
 
-			case OFFSET_STRING:
-			{
-				targetAddr = (LPVOID)ParseDLLOffsetString(pAddrString);
-				break;
-			}
+		case OFFSET_STRING:
+		{
+			targetAddr = (LPVOID)ParseDLLOffsetString(pAddrString);
+			break;
+		}
 
-			case PROCADDRESS:
-			{
-				targetAddr = GetProcAddress(GetModuleHandleA(pModuleName), pProcName);
-				break;
-			}
+		case PROCADDRESS:
+		{
+			targetAddr = GetProcAddress(GetModuleHandleA(pModuleName), pProcName);
+			break;
+		}
 		}
 
 		if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)

@@ -264,18 +264,18 @@ class BFRead : public BitBufferBase
 
 		switch (ret & (16 | 32))
 		{
-			case 16:
-				ret = (ret & 15) | (ReadUBitLong(4) << 4);
-				// Assert(ret >= 16);
-				break;
-			case 32:
-				ret = (ret & 15) | (ReadUBitLong(8) << 4);
-				// Assert(ret >= 256);
-				break;
-			case 48:
-				ret = (ret & 15) | (ReadUBitLong(32 - 4) << 4);
-				// Assert(ret >= 4096);
-				break;
+		case 16:
+			ret = (ret & 15) | (ReadUBitLong(4) << 4);
+			// Assert(ret >= 16);
+			break;
+		case 32:
+			ret = (ret & 15) | (ReadUBitLong(8) << 4);
+			// Assert(ret >= 256);
+			break;
+		case 48:
+			ret = (ret & 15) | (ReadUBitLong(32 - 4) << 4);
+			// Assert(ret >= 4096);
+			break;
 		}
 
 		return ret;

@@ -1078,32 +1078,32 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 
 		switch (resultData.result)
 		{
-			case MasterServerReportPresenceResult::Success:
-				// Copy over the server id and auth token granted by the MS.
-				strncpy_s(
-					g_pMasterServerManager->m_sOwnServerId,
-					sizeof(g_pMasterServerManager->m_sOwnServerId),
-					resultData.id.value().c_str(),
-					sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
-				strncpy_s(
-					g_pMasterServerManager->m_sOwnServerAuthToken,
-					sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
-					resultData.serverAuthToken.value().c_str(),
-					sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
-				break;
-			case MasterServerReportPresenceResult::FailedNoRetry:
-			case MasterServerReportPresenceResult::FailedNoConnect:
-				// If we failed to connect to the master server, or failed with no retry, stop trying.
-				m_nNumRegistrationAttempts = MAX_REGISTRATION_ATTEMPTS;
-				break;
-			case MasterServerReportPresenceResult::Failed:
-				++m_nNumRegistrationAttempts;
-				break;
-			case MasterServerReportPresenceResult::FailedDuplicateServer:
-				++m_nNumRegistrationAttempts;
-				// Wait at least twenty seconds until we re-attempt to add the server.
-				m_fNextAddServerAttemptTime = Tier0::Plat_FloatTime() + 20.0f;
-				break;
+		case MasterServerReportPresenceResult::Success:
+			// Copy over the server id and auth token granted by the MS.
+			strncpy_s(
+				g_pMasterServerManager->m_sOwnServerId,
+				sizeof(g_pMasterServerManager->m_sOwnServerId),
+				resultData.id.value().c_str(),
+				sizeof(g_pMasterServerManager->m_sOwnServerId) - 1);
+			strncpy_s(
+				g_pMasterServerManager->m_sOwnServerAuthToken,
+				sizeof(g_pMasterServerManager->m_sOwnServerAuthToken),
+				resultData.serverAuthToken.value().c_str(),
+				sizeof(g_pMasterServerManager->m_sOwnServerAuthToken) - 1);
+			break;
+		case MasterServerReportPresenceResult::FailedNoRetry:
+		case MasterServerReportPresenceResult::FailedNoConnect:
+			// If we failed to connect to the master server, or failed with no retry, stop trying.
+			m_nNumRegistrationAttempts = MAX_REGISTRATION_ATTEMPTS;
+			break;
+		case MasterServerReportPresenceResult::Failed:
+			++m_nNumRegistrationAttempts;
+			break;
+		case MasterServerReportPresenceResult::FailedDuplicateServer:
+			++m_nNumRegistrationAttempts;
+			// Wait at least twenty seconds until we re-attempt to add the server.
+			m_fNextAddServerAttemptTime = Tier0::Plat_FloatTime() + 20.0f;
+			break;
 		}
 
 		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)

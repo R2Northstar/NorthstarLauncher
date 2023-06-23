@@ -43,23 +43,23 @@ __dllLoadCallback::__dllLoadCallback(
 
 	switch (side)
 	{
-		case eDllLoadCallbackSide::UNSIDED:
-		{
-			AddDllLoadCallback(dllName, callback, uniqueStr, reliesOnArray);
-			break;
-		}
+	case eDllLoadCallbackSide::UNSIDED:
+	{
+		AddDllLoadCallback(dllName, callback, uniqueStr, reliesOnArray);
+		break;
+	}
 
-		case eDllLoadCallbackSide::CLIENT:
-		{
-			AddDllLoadCallbackForClient(dllName, callback, uniqueStr, reliesOnArray);
-			break;
-		}
+	case eDllLoadCallbackSide::CLIENT:
+	{
+		AddDllLoadCallbackForClient(dllName, callback, uniqueStr, reliesOnArray);
+		break;
+	}
 
-		case eDllLoadCallbackSide::DEDICATED_SERVER:
-		{
-			AddDllLoadCallbackForDedicatedServer(dllName, callback, uniqueStr, reliesOnArray);
-			break;
-		}
+	case eDllLoadCallbackSide::DEDICATED_SERVER:
+	{
+		AddDllLoadCallbackForDedicatedServer(dllName, callback, uniqueStr, reliesOnArray);
+		break;
+	}
 	}
 }
 

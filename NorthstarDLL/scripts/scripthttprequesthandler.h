@@ -25,22 +25,22 @@ namespace HttpRequestMethod
 	{
 		switch (method)
 		{
-			case HttpRequestMethod::HRM_GET:
-				return "GET";
-			case HttpRequestMethod::HRM_POST:
-				return "POST";
-			case HttpRequestMethod::HRM_HEAD:
-				return "HEAD";
-			case HttpRequestMethod::HRM_PUT:
-				return "PUT";
-			case HttpRequestMethod::HRM_DELETE:
-				return "DELETE";
-			case HttpRequestMethod::HRM_PATCH:
-				return "PATCH";
-			case HttpRequestMethod::HRM_OPTIONS:
-				return "OPTIONS";
-			default:
-				return "INVALID";
+		case HttpRequestMethod::HRM_GET:
+			return "GET";
+		case HttpRequestMethod::HRM_POST:
+			return "POST";
+		case HttpRequestMethod::HRM_HEAD:
+			return "HEAD";
+		case HttpRequestMethod::HRM_PUT:
+			return "PUT";
+		case HttpRequestMethod::HRM_DELETE:
+			return "DELETE";
+		case HttpRequestMethod::HRM_PATCH:
+			return "PATCH";
+		case HttpRequestMethod::HRM_OPTIONS:
+			return "OPTIONS";
+		default:
+			return "INVALID";
 		}
 	}
 
@@ -49,13 +49,13 @@ namespace HttpRequestMethod
 	{
 		switch (method)
 		{
-			case HttpRequestMethod::HRM_POST:
-			case HttpRequestMethod::HRM_PUT:
-			case HttpRequestMethod::HRM_DELETE:
-			case HttpRequestMethod::HRM_PATCH:
-				return true;
-			default:
-				return false;
+		case HttpRequestMethod::HRM_POST:
+		case HttpRequestMethod::HRM_PUT:
+		case HttpRequestMethod::HRM_DELETE:
+		case HttpRequestMethod::HRM_PATCH:
+			return true;
+		default:
+			return false;
 		}
 	}
 

@@ -18,30 +18,30 @@ void DecodeJsonArray(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<
 	{
 		switch (itr.GetType())
 		{
-			case rapidjson::kObjectType:
-				DecodeJsonTable<context>(sqvm, &itr);
-				g_pSquirrel<context>->arrayappend(sqvm, -2);
-				break;
-			case rapidjson::kArrayType:
-				DecodeJsonArray<context>(sqvm, &itr);
-				g_pSquirrel<context>->arrayappend(sqvm, -2);
-				break;
-			case rapidjson::kStringType:
-				g_pSquirrel<context>->pushstring(sqvm, itr.GetString(), -1);
-				g_pSquirrel<context>->arrayappend(sqvm, -2);
-				break;
-			case rapidjson::kTrueType:
-			case rapidjson::kFalseType:
-				g_pSquirrel<context>->pushbool(sqvm, itr.GetBool());
-				g_pSquirrel<context>->arrayappend(sqvm, -2);
-				break;
-			case rapidjson::kNumberType:
-				if (itr.IsDouble() || itr.IsFloat())
-					g_pSquirrel<context>->pushfloat(sqvm, itr.GetFloat());
-				else
-					g_pSquirrel<context>->pushinteger(sqvm, itr.GetInt());
-				g_pSquirrel<context>->arrayappend(sqvm, -2);
-				break;
+		case rapidjson::kObjectType:
+			DecodeJsonTable<context>(sqvm, &itr);
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			break;
+		case rapidjson::kArrayType:
+			DecodeJsonArray<context>(sqvm, &itr);
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			break;
+		case rapidjson::kStringType:
+			g_pSquirrel<context>->pushstring(sqvm, itr.GetString(), -1);
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			break;
+		case rapidjson::kTrueType:
+		case rapidjson::kFalseType:
+			g_pSquirrel<context>->pushbool(sqvm, itr.GetBool());
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			break;
+		case rapidjson::kNumberType:
+			if (itr.IsDouble() || itr.IsFloat())
+				g_pSquirrel<context>->pushfloat(sqvm, itr.GetFloat());
+			else
+				g_pSquirrel<context>->pushinteger(sqvm, itr.GetInt());
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			break;
 		}
 	}
 }
@@ -55,43 +55,43 @@ void DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<
 	{
 		switch (itr->value.GetType())
 		{
-			case rapidjson::kObjectType:
-				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-				DecodeJsonTable<context>(
-					sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
-				g_pSquirrel<context>->newslot(sqvm, -3, false);
-				break;
-			case rapidjson::kArrayType:
-				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-				DecodeJsonArray<context>(
-					sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
-				g_pSquirrel<context>->newslot(sqvm, -3, false);
-				break;
-			case rapidjson::kStringType:
-				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-				g_pSquirrel<context>->pushstring(sqvm, itr->value.GetString(), -1);
+		case rapidjson::kObjectType:
+			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
+			DecodeJsonTable<context>(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
+			g_pSquirrel<context>->newslot(sqvm, -3, false);
+			break;
+		case rapidjson::kArrayType:
+			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
+			DecodeJsonArray<context>(
+				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
+			g_pSquirrel<context>->newslot(sqvm, -3, false);
+			break;
+		case rapidjson::kStringType:
+			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
+			g_pSquirrel<context>->pushstring(sqvm, itr->value.GetString(), -1);
 
-				g_pSquirrel<context>->newslot(sqvm, -3, false);
-				break;
-			case rapidjson::kTrueType:
-			case rapidjson::kFalseType:
+			g_pSquirrel<context>->newslot(sqvm, -3, false);
+			break;
+		case rapidjson::kTrueType:
+		case rapidjson::kFalseType:
+			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
+			g_pSquirrel<context>->pushbool(sqvm, itr->value.GetBool());
+			g_pSquirrel<context>->newslot(sqvm, -3, false);
+			break;
+		case rapidjson::kNumberType:
+			if (itr->value.IsDouble() || itr->value.IsFloat())
+			{
 				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-				g_pSquirrel<context>->pushbool(sqvm, itr->value.GetBool());
-				g_pSquirrel<context>->newslot(sqvm, -3, false);
-				break;
-			case rapidjson::kNumberType:
-				if (itr->value.IsDouble() || itr->value.IsFloat())
-				{
-					g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-					g_pSquirrel<context>->pushfloat(sqvm, itr->value.GetFloat());
-				}
-				else
-				{
-					g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-					g_pSquirrel<context>->pushinteger(sqvm, itr->value.GetInt());
-				}
-				g_pSquirrel<context>->newslot(sqvm, -3, false);
-				break;
+				g_pSquirrel<context>->pushfloat(sqvm, itr->value.GetFloat());
+			}
+			else
+			{
+				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
+				g_pSquirrel<context>->pushinteger(sqvm, itr->value.GetInt());
+			}
+			g_pSquirrel<context>->newslot(sqvm, -3, false);
+			break;
 		}
 	}
 }
@@ -112,37 +112,37 @@ void EncodeJSONTable(
 
 			switch (node->val._Type)
 			{
-				case OT_STRING:
-					obj->AddMember(
-						rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::StringRef(node->val._VAL.asString->_val), allocator);
-					break;
-				case OT_INTEGER:
-					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asInteger, allocator);
-					break;
-				case OT_FLOAT:
-					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asFloat, allocator);
-					break;
-				case OT_BOOL:
-					if (node->val._VAL.asInteger)
-					{
-						obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), true, allocator);
-					}
-					else
-					{
-						obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), false, allocator);
-					}
-					break;
-				case OT_TABLE:
-					EncodeJSONTable<context>(node->val._VAL.asTable, &newObj, allocator);
-					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newObj, allocator);
-					break;
-				case OT_ARRAY:
-					EncodeJSONArray<context>(node->val._VAL.asArray, &newArray, allocator);
-					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newArray, allocator);
-					break;
-				default:
-					spdlog::warn("SQ_EncodeJSON: squirrel type {} not supported", SQTypeNameFromID(node->val._Type));
-					break;
+			case OT_STRING:
+				obj->AddMember(
+					rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::StringRef(node->val._VAL.asString->_val), allocator);
+				break;
+			case OT_INTEGER:
+				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asInteger, allocator);
+				break;
+			case OT_FLOAT:
+				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asFloat, allocator);
+				break;
+			case OT_BOOL:
+				if (node->val._VAL.asInteger)
+				{
+					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), true, allocator);
+				}
+				else
+				{
+					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), false, allocator);
+				}
+				break;
+			case OT_TABLE:
+				EncodeJSONTable<context>(node->val._VAL.asTable, &newObj, allocator);
+				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newObj, allocator);
+				break;
+			case OT_ARRAY:
+				EncodeJSONArray<context>(node->val._VAL.asArray, &newArray, allocator);
+				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newArray, allocator);
+				break;
+			default:
+				spdlog::warn("SQ_EncodeJSON: squirrel type {} not supported", SQTypeNameFromID(node->val._Type));
+				break;
 			}
 		}
 	}
@@ -163,31 +163,31 @@ void EncodeJSONArray(
 
 		switch (node->_Type)
 		{
-			case OT_STRING:
-				obj->PushBack(rapidjson::StringRef(node->_VAL.asString->_val), allocator);
-				break;
-			case OT_INTEGER:
-				obj->PushBack(node->_VAL.asInteger, allocator);
-				break;
-			case OT_FLOAT:
-				obj->PushBack(node->_VAL.asFloat, allocator);
-				break;
-			case OT_BOOL:
-				if (node->_VAL.asInteger)
-					obj->PushBack(rapidjson::StringRef("true"), allocator);
-				else
-					obj->PushBack(rapidjson::StringRef("false"), allocator);
-				break;
-			case OT_TABLE:
-				EncodeJSONTable<context>(node->_VAL.asTable, &newObj, allocator);
-				obj->PushBack(newObj, allocator);
-				break;
-			case OT_ARRAY:
-				EncodeJSONArray<context>(node->_VAL.asArray, &newArray, allocator);
-				obj->PushBack(newArray, allocator);
-				break;
-			default:
-				spdlog::info("SQ encode Json type {} not supported", SQTypeNameFromID(node->_Type));
+		case OT_STRING:
+			obj->PushBack(rapidjson::StringRef(node->_VAL.asString->_val), allocator);
+			break;
+		case OT_INTEGER:
+			obj->PushBack(node->_VAL.asInteger, allocator);
+			break;
+		case OT_FLOAT:
+			obj->PushBack(node->_VAL.asFloat, allocator);
+			break;
+		case OT_BOOL:
+			if (node->_VAL.asInteger)
+				obj->PushBack(rapidjson::StringRef("true"), allocator);
+			else
+				obj->PushBack(rapidjson::StringRef("false"), allocator);
+			break;
+		case OT_TABLE:
+			EncodeJSONTable<context>(node->_VAL.asTable, &newObj, allocator);
+			obj->PushBack(newObj, allocator);
+			break;
+		case OT_ARRAY:
+			EncodeJSONArray<context>(node->_VAL.asArray, &newArray, allocator);
+			obj->PushBack(newArray, allocator);
+			break;
+		default:
+			spdlog::info("SQ encode Json type {} not supported", SQTypeNameFromID(node->_Type));
 		}
 	}
 }

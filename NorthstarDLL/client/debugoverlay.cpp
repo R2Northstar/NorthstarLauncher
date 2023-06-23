@@ -86,39 +86,39 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 
 	switch (pOverlay->m_Type)
 	{
-		case OVERLAY_LINE:
+	case OVERLAY_LINE:
+	{
+		OverlayLine_t* pLine = static_cast<OverlayLine_t*>(pOverlay);
+		RenderLine(pLine->origin, pLine->dest, Color(pLine->r, pLine->g, pLine->b, pLine->a), pLine->noDepthTest);
+	}
+	break;
+	case OVERLAY_BOX:
+	{
+		OverlayBox_t* pCurrBox = static_cast<OverlayBox_t*>(pOverlay);
+		if (pCurrBox->a > 0)
 		{
-			OverlayLine_t* pLine = static_cast<OverlayLine_t*>(pOverlay);
-			RenderLine(pLine->origin, pLine->dest, Color(pLine->r, pLine->g, pLine->b, pLine->a), pLine->noDepthTest);
+			RenderBox(
+				pCurrBox->origin,
+				pCurrBox->angles,
+				pCurrBox->mins,
+				pCurrBox->maxs,
+				Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, pCurrBox->a),
+				false,
+				false);
 		}
-		break;
-		case OVERLAY_BOX:
+		if (pCurrBox->a < 255)
 		{
-			OverlayBox_t* pCurrBox = static_cast<OverlayBox_t*>(pOverlay);
-			if (pCurrBox->a > 0)
-			{
-				RenderBox(
-					pCurrBox->origin,
-					pCurrBox->angles,
-					pCurrBox->mins,
-					pCurrBox->maxs,
-					Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, pCurrBox->a),
-					false,
-					false);
-			}
-			if (pCurrBox->a < 255)
-			{
-				RenderWireframeBox(
-					pCurrBox->origin,
-					pCurrBox->angles,
-					pCurrBox->mins,
-					pCurrBox->maxs,
-					Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, 255),
-					false,
-					false);
-			}
+			RenderWireframeBox(
+				pCurrBox->origin,
+				pCurrBox->angles,
+				pCurrBox->mins,
+				pCurrBox->maxs,
+				Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, 255),
+				false,
+				false);
 		}
-		break;
+	}
+	break;
 	}
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }

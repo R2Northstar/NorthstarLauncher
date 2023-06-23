@@ -354,15 +354,15 @@ auto ModConCommandCallback(const CCommand& command)
 
 	switch (found->Context)
 	{
-		case ScriptContext::CLIENT:
-			ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
-			break;
-		case ScriptContext::SERVER:
-			ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
-			break;
-		case ScriptContext::UI:
-			ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
-			break;
+	case ScriptContext::CLIENT:
+		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
+		break;
+	case ScriptContext::SERVER:
+		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
+		break;
+	case ScriptContext::UI:
+		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
+		break;
 	};
 }
 
