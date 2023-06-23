@@ -39,6 +39,9 @@ class CCrashHandler
 	//-----------------------------------------------------------------------------
 	void ShowPopUpMessage() const;
 
+	void FormatException();
+	void FormatCallstack();
+
   private:
 	PVOID m_hExceptionFilter;
 	EXCEPTION_POINTERS* m_pExceptionInfos;

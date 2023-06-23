@@ -6,6 +6,8 @@
 
 #include <minidumpapiset.h>
 
+#define CRASHHANDLER_MAX_FRAMES 32
+
 //-----------------------------------------------------------------------------
 // Purpose: Vectored exception callback
 //-----------------------------------------------------------------------------
@@ -23,15 +25,18 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	}
 
 	// Don't run if a debbuger is attached
-	/*if (IsDebuggerPresent())
+	if (IsDebuggerPresent())
 	{
 		g_pCrashHandler->Unlock();
 		return EXCEPTION_CONTINUE_SEARCH;
-	}*/
+	}
 
+	// Needs to be called first as we use the members this sets later on
 	g_pCrashHandler->SetCrashedModule();
 
 	// Format
+	g_pCrashHandler->FormatException();
+	g_pCrashHandler->FormatCallstack();
 
 	// Flush
 	NS::log::FlushLoggers();
@@ -86,7 +91,9 @@ void CCrashHandler::SetExceptionInfos(EXCEPTION_POINTERS* pExceptionPointers)
 {
 	m_pExceptionInfos = pExceptionPointers;
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: Sets the exception stirngs for message box
+//-----------------------------------------------------------------------------
 void CCrashHandler::SetCrashedModule()
 {
 	LPCSTR pCrashAddress = static_cast<LPCSTR>(m_pExceptionInfos->ExceptionRecord->ExceptionAddress);
@@ -177,6 +184,68 @@ void CCrashHandler::ShowPopUpMessage() const
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
 		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatException()
+{
+	spdlog::error("-------------------------------------------");
+	spdlog::error("Northstar has crashed!");
+	spdlog::error("{}", GetExceptionString());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatCallstack()
+{
+	spdlog::error("Callstack:");
+
+	PVOID pFrames[CRASHHANDLER_MAX_FRAMES];
+
+	int iFrames = RtlCaptureStackBackTrace(0, CRASHHANDLER_MAX_FRAMES, pFrames, NULL);
+
+	// Whether we should skip the frame as it was called after the exception occured
+	bool bSkipExceptionHandlingFrames = true;
+
+	for (int i = 0; i < iFrames; i++)
+	{
+		const CHAR* pszModuleFileName;
+
+		LPCSTR pAddress = static_cast<LPCSTR>(pFrames[i]);
+		HMODULE hModule;
+		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, pAddress, &hModule))
+		{
+			pszModuleFileName = "UNKNOWN_MODULE";
+		}
+		else
+		{
+			CHAR szModulePath[MAX_PATH];
+			GetModuleFileNameExA(GetCurrentProcess(), hModule, szModulePath, sizeof(szModulePath));
+			pszModuleFileName = strrchr(szModulePath, '\\') + 1;
+		}
+
+		// Get relative address
+		LPCSTR pModuleBase = reinterpret_cast<LPCSTR>(pAddress - reinterpret_cast<LPCSTR>(hModule));
+
+		// Should we log this frame
+		if (bSkipExceptionHandlingFrames)
+		{
+			if (m_strCrashedModule == pszModuleFileName)
+			{
+				bSkipExceptionHandlingFrames = false;
+			}
+			else
+			{
+				continue;
+			}
+		}
+
+		// Log module + offset
+		spdlog::error("\t{} + {:#x}", pszModuleFileName, reinterpret_cast<DWORD64>(pModuleBase));
 	}
 }
 
