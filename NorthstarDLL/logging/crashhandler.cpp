@@ -23,17 +23,18 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	}
 
 	// Don't run if a debbuger is attached
-	if (IsDebuggerPresent())
+	/*if (IsDebuggerPresent())
 	{
 		g_pCrashHandler->Unlock();
 		return EXCEPTION_CONTINUE_SEARCH;
-	}
+	}*/
 
 	g_pCrashHandler->SetCrashedModule();
 
 	// Format
 
 	// Flush
+	NS::log::FlushLoggers();
 
 	// Show message box
 	g_pCrashHandler->ShowPopUpMessage();
@@ -88,9 +89,9 @@ void CCrashHandler::SetExceptionInfos(EXCEPTION_POINTERS* pExceptionPointers)
 
 void CCrashHandler::SetCrashedModule()
 {
-	PVOID pCrashAddress = m_pExceptionInfos->ExceptionRecord->ExceptionAddress;
+	LPCSTR pCrashAddress = static_cast<LPCSTR>(m_pExceptionInfos->ExceptionRecord->ExceptionAddress);
 	HMODULE hCrashedModule;
-	if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, static_cast<LPCSTR>(pCrashAddress), &hCrashedModule))
+	if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, pCrashAddress, &hCrashedModule))
 	{
 		m_strCrashedModule = "UNKNOWN_MODULE";
 		return;
@@ -103,10 +104,10 @@ void CCrashHandler::SetCrashedModule()
 	const CHAR* pszCrashedModuleFileName = strrchr(szCrashedModulePath, '\\') + 1;
 
 	// Get relative address
-	DWORD64 pModuleBase = reinterpret_cast<DWORD64>(pCrashAddress) - reinterpret_cast<DWORD64>(hCrashedModule);
+	LPCSTR pModuleBase = reinterpret_cast<LPCSTR>(pCrashAddress - reinterpret_cast<LPCSTR>(hCrashedModule));
 
 	m_strCrashedModule = pszCrashedModuleFileName;
-	m_strCrashedOffset = fmt::format("{:#x}", pModuleBase);
+	m_strCrashedOffset = fmt::format("{:#x}", reinterpret_cast<DWORD64>(pModuleBase));
 }
 
 //-----------------------------------------------------------------------------
@@ -171,7 +172,7 @@ void CCrashHandler::ShowPopUpMessage() const
 		std::string strCmdLine =
 			fmt::format("bin/CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
 
-		if (CreateProcessA(NULL, (LPSTR)strCmdLine.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+		if (CreateProcessA(NULL, (LPSTR)strCmdLine.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
 		{
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
