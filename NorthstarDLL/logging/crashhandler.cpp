@@ -41,6 +41,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	g_pCrashHandler->FormatRegisters();
 	g_pCrashHandler->FormatLoadedMods();
 	g_pCrashHandler->FormatLoadedPlugins();
+	g_pCrashHandler->FormatModules();
 
 	// Flush
 	NS::log::FlushLoggers();
@@ -368,6 +369,29 @@ void CCrashHandler::FormatLoadedPlugins()
 		for (const Plugin& plugin : g_pPluginManager->m_vLoadedPlugins)
 		{
 			spdlog::error("\t{}", plugin.name);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatModules()
+{
+	spdlog::error("Loaded modules:");
+	HMODULE hModules[1024];
+	DWORD cbNeeded;
+
+	if (EnumProcessModules(GetCurrentProcess(), hModules, sizeof(hModules), &cbNeeded))
+	{
+		for (DWORD i = 0; i < (cbNeeded / sizeof(HMODULE)); i++)
+		{
+			CHAR szModulePath[MAX_PATH];
+			if (GetModuleFileNameExA(GetCurrentProcess(), hModules[i], szModulePath, sizeof(szModulePath)))
+			{
+				const CHAR* pszModuleFileName = strrchr(szModulePath, '\\') + 1;
+				spdlog::error("\t{}", pszModuleFileName);
+			}
 		}
 	}
 }

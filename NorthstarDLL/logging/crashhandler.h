@@ -46,6 +46,7 @@ class CCrashHandler
 	void FormatRegisters();
 	void FormatLoadedMods();
 	void FormatLoadedPlugins();
+	void FormatModules();
 
   private:
 	PVOID m_hExceptionFilter;
