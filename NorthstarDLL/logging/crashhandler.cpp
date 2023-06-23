@@ -182,7 +182,7 @@ void CCrashHandler::ShowPopUpMessage() const
 		ZeroMemory(&pi, sizeof(pi));
 
 		std::string strCmdLine =
-			fmt::format("bin/CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
+			fmt::format("bin\\CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
 
 		if (CreateProcessA(NULL, (LPSTR)strCmdLine.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
 		{
