@@ -38,6 +38,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	g_pCrashHandler->FormatException();
 	g_pCrashHandler->FormatCallstack();
 	g_pCrashHandler->FormatRegisters();
+	g_pCrashHandler->FormatLoadedMods();
 
 	// Flush
 	NS::log::FlushLoggers();
@@ -325,6 +326,32 @@ void CCrashHandler::FormatRegisters()
 	FormatFloatReg("Xmm13", pContext->Xmm13);
 	FormatFloatReg("Xmm14", pContext->Xmm14);
 	FormatFloatReg("Xmm15", pContext->Xmm15);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CCrashHandler::FormatLoadedMods() {
+	if (g_pModManager)
+	{
+		spdlog::error("Enabled mods:");
+		for (const Mod& mod : g_pModManager->m_LoadedMods)
+		{
+			if (!mod.m_bEnabled)
+				continue;
+
+			spdlog::error("\t{}", mod.Name);
+		}
+
+		spdlog::error("Disabled mods:");
+		for (const Mod& mod : g_pModManager->m_LoadedMods)
+		{
+			if (mod.m_bEnabled)
+				continue;
+
+			spdlog::error("\t{}", mod.Name);
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
