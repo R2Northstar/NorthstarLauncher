@@ -67,7 +67,7 @@ struct OverlayBox_t : public OverlayBase_t
 	int a;
 };
 
-static HMODULE sEngineModule;
+static LPCRITICAL_SECTION s_OverlayMutex;
 
 typedef void (*RenderLineType)(Vector3 v1, Vector3 v2, Color c, bool bZBuffer);
 static RenderLineType RenderLine;
@@ -80,7 +80,7 @@ AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0,
 void, __fastcall, (OverlayBase_t * pOverlay))
 // clang-format on
 {
-	EnterCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38)); // s_OverlayMutex
+	EnterCriticalSection(s_OverlayMutex);
 
 	switch (pOverlay->m_Type)
 	{
@@ -118,7 +118,7 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	}
 	break;
 	}
-	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
+	LeaveCriticalSection(s_OverlayMutex);
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
@@ -128,7 +128,8 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module)
 	RenderLine = module.Offset(0x192A70).As<RenderLineType>();
 	RenderBox = module.Offset(0x192520).As<RenderBoxType>();
 	RenderWireframeBox = module.Offset(0x193DA0).As<RenderBoxType>();
-	sEngineModule = reinterpret_cast<HMODULE>(module.m_nAddress);
+
+	s_OverlayMutex = module.Offset(0x10DB0A38).As<LPCRITICAL_SECTION>();
 
 	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory
 	ConVar* Cvar_enable_debug_overlays = module.Offset(0x10DB0990).As<ConVar*>();
