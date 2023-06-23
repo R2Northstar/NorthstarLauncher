@@ -14,9 +14,6 @@
 //-----------------------------------------------------------------------------
 LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 {
-	if (!g_pCrashHandler)
-		return;
-
 	g_pCrashHandler->Lock();
 
 	g_pCrashHandler->SetExceptionInfos(pExceptionInfo);
@@ -73,6 +70,8 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 //-----------------------------------------------------------------------------
 BOOL WINAPI ConsoleCtrlRoutine(DWORD dwCtrlType)
 {
+	// NOTE [Fifty]: When closing the process by closing the console we don't want
+	//               to trigger the crash handler so we remove it
 	switch (dwCtrlType)
 	{
 	case CTRL_CLOSE_EVENT:
