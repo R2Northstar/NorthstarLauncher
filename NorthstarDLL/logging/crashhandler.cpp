@@ -14,6 +14,9 @@
 //-----------------------------------------------------------------------------
 LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 {
+	if (!g_pCrashHandler)
+		return;
+
 	g_pCrashHandler->Lock();
 
 	g_pCrashHandler->SetExceptionInfos(pExceptionInfo);
@@ -66,9 +69,28 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: console control signal handler
+//-----------------------------------------------------------------------------
+BOOL WINAPI ConsoleCtrlRoutine(DWORD dwCtrlType)
+{
+	switch (dwCtrlType)
+	{
+	case CTRL_CLOSE_EVENT:
+		spdlog::info("Exiting due to console close...");
+		delete g_pCrashHandler;
+		g_pCrashHandler = nullptr;
+		std::exit(EXIT_SUCCESS);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CCrashHandler::CCrashHandler() : m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasShownCrashMsg(false), m_bState(false)
+CCrashHandler::CCrashHandler()
+	: m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasSetConsolehandler(false), m_bHasShownCrashMsg(false), m_bState(false)
 {
 	Init();
 }
@@ -87,6 +109,7 @@ CCrashHandler::~CCrashHandler()
 void CCrashHandler::Init()
 {
 	m_hExceptionFilter = AddVectoredExceptionHandler(TRUE, ExceptionFilter);
+	m_bHasSetConsolehandler = SetConsoleCtrlHandler(ConsoleCtrlRoutine, TRUE);
 }
 
 //-----------------------------------------------------------------------------
@@ -98,6 +121,11 @@ void CCrashHandler::Shutdown()
 	{
 		RemoveVectoredExceptionHandler(m_hExceptionFilter);
 		m_hExceptionFilter = nullptr;
+	}
+
+	if (m_bHasSetConsolehandler)
+	{
+		SetConsoleCtrlHandler(ConsoleCtrlRoutine, FALSE);
 	}
 }
 
