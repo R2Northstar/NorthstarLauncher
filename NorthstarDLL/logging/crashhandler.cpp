@@ -32,6 +32,15 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 
+	// Prevent recursive calls
+	if (g_pCrashHandler->GetState())
+	{
+		NS::log::FlushLoggers();
+		ExitProcess(1);
+	}
+
+	g_pCrashHandler->SetState(true);
+
 	// Needs to be called first as we use the members this sets later on
 	g_pCrashHandler->SetCrashedModule();
 
@@ -56,7 +65,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CCrashHandler::CCrashHandler() : m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasShownCrashMsg(false)
+CCrashHandler::CCrashHandler() : m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasShownCrashMsg(false), m_bState(false)
 {
 	Init();
 }
