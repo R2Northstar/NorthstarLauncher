@@ -257,6 +257,14 @@ void CCrashHandler::FormatCallstack()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+void CCrashHandler::FormatFlags(const CHAR* pszRegister, DWORD nValue)
+{
+	spdlog::error("\t{}: {:#b}", pszRegister, nValue);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CCrashHandler::FormatIntReg(const CHAR* pszRegister, DWORD64 nValue)
 {
 	spdlog::error("\t{}: {:#x}", pszRegister, nValue);
@@ -295,7 +303,7 @@ void CCrashHandler::FormatRegisters()
 
 	PCONTEXT pContext = m_pExceptionInfos->ContextRecord;
 
-	FormatIntReg("Flags:", pContext->ContextFlags);
+	FormatFlags("Flags:", pContext->ContextFlags);
 
 	FormatIntReg("Rax", pContext->Rax);
 	FormatIntReg("Rcx", pContext->Rcx);

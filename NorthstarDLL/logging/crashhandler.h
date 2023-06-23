@@ -41,6 +41,7 @@ class CCrashHandler
 
 	void FormatException();
 	void FormatCallstack();
+	void FormatFlags(const CHAR* pszRegister, DWORD nValue);
 	void FormatIntReg(const CHAR* pszRegister, DWORD64 nValue);
 	void FormatFloatReg(const CHAR* pszRegister, M128A nValue);
 	void FormatRegisters();
