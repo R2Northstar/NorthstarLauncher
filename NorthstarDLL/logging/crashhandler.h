@@ -59,6 +59,11 @@ class CCrashHandler
 	void FormatLoadedPlugins();
 	void FormatModules();
 
+	//-----------------------------------------------------------------------------
+	// Minidump
+	//-----------------------------------------------------------------------------
+	void WriteMinidump();
+
   private:
 	PVOID m_hExceptionFilter;
 	EXCEPTION_POINTERS* m_pExceptionInfos;
