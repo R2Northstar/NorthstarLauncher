@@ -199,7 +199,23 @@ void CCrashHandler::FormatException()
 {
 	spdlog::error("-------------------------------------------");
 	spdlog::error("Northstar has crashed!");
-	spdlog::error("{}", GetExceptionString());
+	spdlog::error("\t{}", GetExceptionString());
+
+	DWORD dwExceptionCode = m_pExceptionInfos->ExceptionRecord->ExceptionCode;
+	if (dwExceptionCode == EXCEPTION_ACCESS_VIOLATION || dwExceptionCode == EXCEPTION_IN_PAGE_ERROR)
+	{
+		ULONG_PTR uExceptionInfo0 = m_pExceptionInfos->ExceptionRecord->ExceptionInformation[0];
+		ULONG_PTR uExceptionInfo1 = m_pExceptionInfos->ExceptionRecord->ExceptionInformation[1];
+
+		if (!uExceptionInfo0)
+			spdlog::error("\tAttempted to read from: {:#x}", uExceptionInfo1);
+		else if (uExceptionInfo0 == 1)
+			spdlog::error("\tAttempted to write to: {:#x}", uExceptionInfo1);
+		else if (uExceptionInfo0 == 8)
+			spdlog::error("\tData Execution Prevention (DEP) at: {:#x}", uExceptionInfo1);
+		else
+			spdlog::error("\tUnknown access violation at: {:#x}", uExceptionInfo1);
+	}
 }
 
 //-----------------------------------------------------------------------------
