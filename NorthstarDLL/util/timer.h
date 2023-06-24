@@ -9,14 +9,14 @@ class CTimer
 {
   public:
 	void Start(void);
-	int GetDuration(void) const;
+	long long GetDuration(void) const;
 
   private:
 	std::chrono::time_point<std::chrono::steady_clock> m_Clock;
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 inline void CTimer::Start(void)
 {
@@ -26,7 +26,7 @@ inline void CTimer::Start(void)
 //-----------------------------------------------------------------------------
 // Purpose: Returns time passed since Start was called in milliseconds
 //-----------------------------------------------------------------------------
-inline int CTimer::GetDuration(void) const
+inline long long CTimer::GetDuration(void) const
 {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - m_Clock).count();
 }
