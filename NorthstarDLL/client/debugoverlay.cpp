@@ -74,7 +74,7 @@ struct OverlayBox_t : public OverlayBase_t
 LPCRITICAL_SECTION s_OverlayMutex;
 
 // Render Line
-typedef void (*RenderLineType)( const Vector3& v1, const Vector3& v2, Color c, bool bZBuffer );
+typedef void (*RenderLineType)(const Vector3& v1, const Vector3& v2, Color c, bool bZBuffer);
 static RenderLineType RenderLine;
 
 // Render box
@@ -152,9 +152,6 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	break;
 	}
 	LeaveCriticalSection(s_OverlayMutex);
-
-
-	spdlog::info("UNK: {:d}", (int)pOverlay->m_Type);
 }
 // clang-format off
 AUTOHOOK(DrawAllOverlays, engine.dll + 0xAB780,
@@ -165,8 +162,8 @@ void, __fastcall, (char a1))
 	DrawAllOverlays(a1);
 
 	// Testing
-	//RenderLine(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(120, 0, 20, 200), false);
-	
+	// RenderLine(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(120, 0, 20, 200), false);
+
 	/*RenderBox(
 		Vector3(0.0f, 0.0f, 0.0f),
 		QAngle(),
@@ -175,9 +172,9 @@ void, __fastcall, (char a1))
 		Color(0, 255, 255, 100),
 		false,
 		false);*/
-	//RenderTriangle(Vector3(0.0f, 255.0f, 0.0f), Vector3(255.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(0,0,255), false);
-	//RenderUnknown(Vector3(0.0f, 0.0f, 255.0f), 30.0, false);
-	//RenderSphere(Vector3(0.0f, 0.0f, 0.0f), 50.0f, 12, 12, Color(200, 0, 200), false);
+	// RenderTriangle(Vector3(0.0f, 255.0f, 0.0f), Vector3(255.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(0,0,255), false);
+	// RenderUnknown(Vector3(0.0f, 0.0f, 255.0f), 30.0, false);
+	// RenderSphere(Vector3(0.0f, 0.0f, 0.0f), 50.0f, 12, 12, Color(200, 0, 200), false);
 
 	/* RenderWireframeSweptBox(
 		Vector3(-32.0f, -32.0f, 0.0f),
