@@ -295,7 +295,7 @@ class SquirrelManagerBase
 
 	template <typename T> inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
 	{
-		return __sq_getentity(sqvm, (void**)ppEntity);
+		return __sq_getthisentity(sqvm, (void**)ppEntity);
 	}
 
 	template <typename T> inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
