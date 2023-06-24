@@ -313,7 +313,9 @@ void MasterServerManager::RequestServerList()
 					m_vRemoteServers.begin(),
 					m_vRemoteServers.end(),
 					[](RemoteServerInfo& a, RemoteServerInfo& b)
-					{ return a.playerCount > b.playerCount; });
+					{
+						return a.playerCount > b.playerCount;
+					});
 			}
 			else
 			{

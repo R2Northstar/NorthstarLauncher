@@ -18,19 +18,16 @@
 #define FCVAR_HIDDEN (1 << 4) // Hidden. Doesn't appear in find or auto complete. Like DEVELOPMENTONLY, but can't be compiled out.
 
 // ConVar only
-#define FCVAR_PROTECTED \
-	(1 << 5) // It's a server cvar, but we don't send the data since it's a password, etc.  Sends 1 if it's not bland/zero, 0 otherwise as
-			 // value.
+#define FCVAR_PROTECTED (1 << 5) // It's a server cvar, but we don't send the data since it's a password, etc.  Sends 1 if it's not bland/zero, 0 otherwise as value.
 #define FCVAR_SPONLY (1 << 6) // This cvar cannot be changed by clients connected to a multiplayer server.
 #define FCVAR_ARCHIVE (1 << 7) // set to cause it to be saved to vars.rc
 #define FCVAR_NOTIFY (1 << 8) // notifies players when changed
 #define FCVAR_USERINFO (1 << 9) // changes the client's info string
 
 #define FCVAR_PRINTABLEONLY (1 << 10) // This cvar's string cannot contain unprintable characters ( e.g., used for player name etc ).
-#define FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS \
-	(1 << 10) // When on concommands this allows remote clients to execute this cmd on the server.
-			  // We are changing the default behavior of concommands to disallow execution by remote clients without
-			  // this flag due to the number existing concommands that can lag or crash the server when clients abuse them.
+#define FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS (1 << 10) // When on concommands this allows remote clients to execute this cmd on the server.
+												   // We are changing the default behavior of concommands to disallow execution by remote clients without
+												   // this flag due to the number existing concommands that can lag or crash the server when clients abuse them.
 
 #define FCVAR_UNLOGGED (1 << 11) // If this is a FCVAR_SERVER, don't log changes to the log file / console if we are creating a log
 #define FCVAR_NEVER_AS_STRING (1 << 12) // never try to print that cvar
@@ -53,18 +50,15 @@
 #define FCVAR_MATERIAL_SYSTEM_THREAD (1 << 23) // Indicates this cvar is read from the material system thread
 #define FCVAR_ARCHIVE_PLAYERPROFILE (1 << 24) // respawn-defined flag, same as FCVAR_ARCHIVE but writes to profile.cfg
 
-#define FCVAR_SERVER_CAN_EXECUTE \
-	(1 << 28) // the server is allowed to execute this command on clients via
-			  // ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd.
-#define FCVAR_SERVER_CANNOT_QUERY \
-	(1 << 29) // If this is set, then the server is not allowed to query this cvar's value (via IServerPluginHelpers::StartQueryCvarValue).
+#define FCVAR_SERVER_CAN_EXECUTE (1 << 28) // the server is allowed to execute this command on clients via
+										   // ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd.
+#define FCVAR_SERVER_CANNOT_QUERY (1 << 29) // If this is set, then the server is not allowed to query this cvar's value (via IServerPluginHelpers::StartQueryCvarValue).
 
 // !!!NOTE!!! : this is likely incorrect, there are multiple concommands that the vanilla game registers with this flag that 100% should not
 // be remotely executable i.e. multiple commands that only exist on client (screenshot, joystick_initialize) we now use
 // FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS in all places this flag was previously used
-#define FCVAR_CLIENTCMD_CAN_EXECUTE \
-	(1 << 30) // IVEngineClient::ClientCmd is allowed to execute this command.
-			  // Note: IVEngineClient::ClientCmd_Unrestricted can run any client command.
+#define FCVAR_CLIENTCMD_CAN_EXECUTE (1 << 30) // IVEngineClient::ClientCmd is allowed to execute this command.
+											  // Note: IVEngineClient::ClientCmd_Unrestricted can run any client command.
 
 #define FCVAR_ACCESSIBLE_FROM_THREADS (1 << 25) // used as a debugging tool necessary to check material system thread convars
 
