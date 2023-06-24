@@ -99,7 +99,7 @@ typedef void (*RenderAxisType)(const Vector3& vOrigin, float flScale, bool bZBuf
 static RenderAxisType RenderAxis;
 
 // I dont know
-typedef void (*RenderUnknownType)(const Vector3& vOrigin, float flScale, bool bZBuffer);
+typedef void (*RenderUnknownType)(const Vector3& vUnk, float flUnk, bool bUnk);
 static RenderUnknownType RenderUnknown;
 
 // Render Sphere
