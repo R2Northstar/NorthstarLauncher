@@ -41,7 +41,7 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 
 		SetCurrentDirectoryW(exePath);
 
-		if (!ProvisionNorthstar()) // does not call InitialiseNorthstar yet, will do it on LauncherMain hook
+		if (!ProvisionNorthstar()) // does not call Northstar_Init yet, will do it on LauncherMain hook
 			return true;
 
 		// copy the original library for system to our local directory, with changed name so that we can load it

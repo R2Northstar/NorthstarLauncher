@@ -281,7 +281,7 @@ bool LoadNorthstar()
 		swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
 		hHookModule = LoadLibraryExW(buffer, 0, 8u);
 		if (hHookModule)
-			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
+			Hook_Init = GetProcAddress(hHookModule, "Northstar_Init");
 		if (!hHookModule || Hook_Init == nullptr)
 		{
 			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
