@@ -1,7 +1,10 @@
 #include <ctype.h>
 #include "utils.h"
 
-bool skip_valid_ansi_csi_sgr(char*& str)
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool SkipValidANSICsiSgr(char*& str)
 {
 	if (*str++ != '\x1B')
 		return false;
@@ -20,6 +23,9 @@ bool skip_valid_ansi_csi_sgr(char*& str)
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 {
 	for (char *pc = str, c = *pc; c = *pc; pc++)
@@ -74,7 +80,7 @@ void RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 		}
 
 		if (c == '\x1B') // separate handling for this escape sequence...
-			if (allow_color_codes && skip_valid_ansi_csi_sgr(pc)) // ...which we allow for color codes...
+			if (allow_color_codes && SkipValidANSICsiSgr(pc)) // ...which we allow for color codes...
 				pc--;
 			else // ...but remove it otherwise
 				*pc = ' ';
