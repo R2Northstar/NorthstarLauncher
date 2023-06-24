@@ -1,6 +1,6 @@
 #include "masterserver/masterserver.h"
 #include "core/convar/concommand.h"
-#include "playlist.h"
+#include "shared/playlist.h"
 #include "server/auth/serverauthentication.h"
 #include "core/tier0.h"
 #include "engine/r2engine.h"
