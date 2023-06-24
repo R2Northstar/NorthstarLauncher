@@ -26,6 +26,14 @@ bool PathIsRelative(const fs::path& filePath)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Creates a directory, returns true if created
+//-----------------------------------------------------------------------------
+bool CreateDirectory(const fs::path& directory)
+{
+	return fs::create_directory(directory);
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Formats a string using C style formatting, va_list version
 //-----------------------------------------------------------------------------
 std::string FormatV(const char* pszFormat, va_list vArgs)
@@ -38,7 +46,7 @@ std::string FormatV(const char* pszFormat, va_list vArgs)
 	const int iSize = std::vsnprintf(NULL, 0, pszFormat, vArgsCopy);
 
 	std::string result;
-	
+
 	if (iSize > 0)
 	{
 		result.resize(iSize);
