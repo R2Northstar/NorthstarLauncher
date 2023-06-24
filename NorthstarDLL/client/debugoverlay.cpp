@@ -160,30 +160,6 @@ void, __fastcall, (char a1))
 {
 	// TODO [Fifty]: Check enable_debug_overlays here
 	DrawAllOverlays(a1);
-
-	// Testing
-	// RenderLine(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(120, 0, 20, 200), false);
-
-	/*RenderBox(
-		Vector3(0.0f, 0.0f, 0.0f),
-		QAngle(),
-		Vector3(-64.0f, -64.0f, -64.0f),
-		Vector3(64.0f, 64.0f, 64.0f),
-		Color(0, 255, 255, 100),
-		false,
-		false);*/
-	// RenderTriangle(Vector3(0.0f, 255.0f, 0.0f), Vector3(255.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 255.0f), Color(0,0,255), false);
-	// RenderUnknown(Vector3(0.0f, 0.0f, 255.0f), 30.0, false);
-	// RenderSphere(Vector3(0.0f, 0.0f, 0.0f), 50.0f, 12, 12, Color(200, 0, 200), false);
-
-	/* RenderWireframeSweptBox(
-		Vector3(-32.0f, -32.0f, 0.0f),
-		Vector3(0.0f, 32.0f, 32.0f),
-		QAngle(),
-		Vector3(-50.0f, -50.0f, 0.0f),
-		Vector3(0.0f, 50.0f, 50.0f),
-		Color(255, 20, 0),
-		false);*/
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
