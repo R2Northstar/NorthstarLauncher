@@ -243,6 +243,7 @@ void CCrashHandler::FormatException()
 {
 	spdlog::error("-------------------------------------------");
 	spdlog::error("Northstar has crashed!");
+	spdlog::error("\tVersion: {}", version);
 	spdlog::error("\t{}", GetExceptionString());
 
 	DWORD dwExceptionCode = m_pExceptionInfos->ExceptionRecord->ExceptionCode;
