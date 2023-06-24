@@ -321,7 +321,7 @@ void ConVar::SetValue(const char* pszValue)
 	{
 		// Not a color, do the standard thing
 		float flNewValue = (float)atof(pszValue);
-		if (!isfinite(flNewValue))
+		if (!std::isfinite(flNewValue))
 		{
 			spdlog::warn("Warning: ConVar '{}' = '{}' is infinite, clamping value.\n", GetBaseName(), pszValue);
 			flNewValue = FLT_MAX;
