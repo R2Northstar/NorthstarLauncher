@@ -276,7 +276,8 @@ void CCrashHandler::FormatCallstack()
 
 	int iFrames = RtlCaptureStackBackTrace(0, CRASHHANDLER_MAX_FRAMES, pFrames, NULL);
 
-	// Whether we should skip the frame as it was called after the exception occured
+	// Above call gives us frames after the crash occured, we only want to print the ones starting from where
+	// the exception was called
 	bool bSkipExceptionHandlingFrames = true;
 
 	for (int i = 0; i < iFrames; i++)
@@ -297,12 +298,13 @@ void CCrashHandler::FormatCallstack()
 		}
 
 		// Get relative address
-		LPCSTR pModuleBase = reinterpret_cast<LPCSTR>(pAddress - reinterpret_cast<LPCSTR>(hModule));
+		LPCSTR pCrashOffset = reinterpret_cast<LPCSTR>(pAddress - reinterpret_cast<LPCSTR>(hModule));
+		std::string strCrashOffset = fmt::format("{:#x}", reinterpret_cast<DWORD64>(pCrashOffset));
 
 		// Should we log this frame
 		if (bSkipExceptionHandlingFrames)
 		{
-			if (m_strCrashedModule == pszModuleFileName)
+			if (m_strCrashedModule == pszModuleFileName && m_strCrashedOffset == strCrashOffset)
 			{
 				bSkipExceptionHandlingFrames = false;
 			}
@@ -313,7 +315,7 @@ void CCrashHandler::FormatCallstack()
 		}
 
 		// Log module + offset
-		spdlog::error("\t{} + {:#x}", pszModuleFileName, reinterpret_cast<DWORD64>(pModuleBase));
+		spdlog::error("\t{} + {:#x}", pszModuleFileName, reinterpret_cast<DWORD64>(pCrashOffset));
 	}
 }
 
