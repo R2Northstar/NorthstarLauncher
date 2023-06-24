@@ -40,7 +40,7 @@ AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessage, server.dll + 0x1595C0,
 void, __fastcall, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
 // clang-format on
 {
-	NS::Utils::RemoveAsciiControlSequences(const_cast<char*>(text), true);
+	RemoveAsciiControlSequences(const_cast<char*>(text), true);
 
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
 	// To allow bypassing the hook, isSkippingHook can be set.
