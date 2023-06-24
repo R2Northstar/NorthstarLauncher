@@ -11,11 +11,9 @@
 	required to function
 */
 
-template <ScriptContext context, typename T>
-inline void SqRecurseArgs(FunctionVector& v, T& arg);
+template <ScriptContext context, typename T> inline void SqRecurseArgs(FunctionVector& v, T& arg);
 
-template <ScriptContext context, typename T, typename... Args>
-inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
+template <ScriptContext context, typename T, typename... Args> inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
 
 /*
 	sanity below
