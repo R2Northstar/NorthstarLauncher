@@ -40,10 +40,10 @@ ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 	R2::g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	R2::g_pCVar = *R2::g_pCVarInterface;
 
-	g_pPluginCommunicationhandler->m_sEngineData.conVarMalloc = conVarMalloc;
-	g_pPluginCommunicationhandler->m_sEngineData.conVarRegister = conVarRegister;
-	g_pPluginCommunicationhandler->m_sEngineData.ConVar_Vtable = g_pConVar_Vtable;
-	g_pPluginCommunicationhandler->m_sEngineData.IConVar_Vtable = g_pIConVar_Vtable;
+	g_pPluginCommunicationhandler->m_sEngineData.conVarMalloc = (void*)conVarMalloc;
+	g_pPluginCommunicationhandler->m_sEngineData.conVarRegister = (void*)conVarRegister;
+	g_pPluginCommunicationhandler->m_sEngineData.ConVar_Vtable = (void*)g_pConVar_Vtable;
+	g_pPluginCommunicationhandler->m_sEngineData.IConVar_Vtable = (void*)g_pIConVar_Vtable;
 }
 
 //-----------------------------------------------------------------------------
@@ -80,7 +80,7 @@ ConVar::ConVar(
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
 
 	conVarMalloc(&this->m_pMalloc, 0, 0); // Allocate new memory for ConVar.
-	conVarRegister(this, pszName, pszDefaultValue, nFlags, pszHelpString, bMin, fMin, bMax, fMax, pCallback);
+	conVarRegister(this, pszName, pszDefaultValue, nFlags, pszHelpString, bMin, fMin, bMax, fMax, (void*)pCallback);
 }
 
 //-----------------------------------------------------------------------------

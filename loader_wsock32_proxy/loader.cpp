@@ -94,8 +94,8 @@ bool ProvisionNorthstar()
 		return false;
 	}
 
-	LPVOID pTarget = GetProcAddress(launcherHandle, "LauncherMain");
-	if (MH_CreateHook(pTarget, &LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
+	LPVOID pTarget = (LPVOID)GetProcAddress(launcherHandle, "LauncherMain");
+	if (MH_CreateHook(pTarget, (LPVOID)&LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
 		MH_EnableHook(pTarget) != MH_OK)
 		MessageBoxA(GetForegroundWindow(), "Hook creation failed for function LauncherMain.", "Northstar Wsock32 Proxy Error", 0);
 
