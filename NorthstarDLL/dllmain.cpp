@@ -18,6 +18,8 @@
 #include <string.h>
 #include <filesystem>
 
+#include "util/utils.h"
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	switch (ul_reason_for_call)
@@ -73,6 +75,8 @@ bool InitialiseNorthstar()
 
 	// run callbacks for any libraries that are already loaded by now
 	CallAllPendingDLLLoadCallbacks();
+
+	spdlog::info("TEST: {}", Format("%s, %d, %3.1f", "Hi", 590, 5.2134523f));
 
 	return true;
 }

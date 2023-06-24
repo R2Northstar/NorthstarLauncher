@@ -2,6 +2,30 @@
 #include "utils.h"
 
 //-----------------------------------------------------------------------------
+// Purpose: returns whether the passed in file path exists
+//-----------------------------------------------------------------------------
+bool FileExists(const fs::path& filePath)
+{
+	return fs::exists(filePath);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: returns whether the passed in file path is absolute
+//-----------------------------------------------------------------------------
+bool PathIsAbsolute(const fs::path& filePath)
+{
+	return filePath.is_absolute();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: returns whether the passed in file path is relative
+//-----------------------------------------------------------------------------
+bool PathIsRelative(const fs::path& filePath)
+{
+	return filePath.is_relative();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Formats a string using C style formatting, va_list version
 //-----------------------------------------------------------------------------
 std::string FormatV(const char* pszFormat, va_list vArgs)
