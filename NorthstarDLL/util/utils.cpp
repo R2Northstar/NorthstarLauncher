@@ -2,7 +2,45 @@
 #include "utils.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Formats a string using C style formatting, va_list version
+//-----------------------------------------------------------------------------
+std::string FormatV(const char* pszFormat, va_list vArgs)
+{
+	// We need to copy the va_list as we run vsnprintf twice
+	va_list vArgsCopy;
+	va_copy(vArgsCopy, vArgs);
+
+	// Get the size of the final string
+	const int iSize = std::vsnprintf(NULL, 0, pszFormat, vArgsCopy);
+
+	std::string result;
+	
+	if (iSize > 0)
+	{
+		result.resize(iSize);
+		std::vsnprintf(result.data(), iSize + sizeof(char), pszFormat, vArgs);
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Formats a string using C style formatting
+//-----------------------------------------------------------------------------
+std::string Format(const char* pszFormat, ...)
+{
+	std::string result;
+
+	va_list list;
+	va_start(list, pszFormat);
+	result = FormatV(pszFormat, list);
+	va_end(list);
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 bool SkipValidANSICsiSgr(char*& str)
 {
