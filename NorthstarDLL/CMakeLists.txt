@@ -143,6 +143,7 @@ add_library(NorthstarDLL SHARED
             "dllmain.cpp"
             "dllmain.h"
             "ns_version.h"
+            "util/timer.h"
 )
 
 target_link_libraries(NorthstarDLL PRIVATE
