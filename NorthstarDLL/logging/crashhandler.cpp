@@ -8,6 +8,7 @@
 #include <minidumpapiset.h>
 
 #define CRASHHANDLER_MAX_FRAMES 32
+#define CRASHHANDLER_GETMODULEHANDLE_FAIL "GetModuleHandleExA failed!"
 
 //-----------------------------------------------------------------------------
 // Purpose: Vectored exception callback
@@ -144,7 +145,16 @@ void CCrashHandler::SetCrashedModule()
 	HMODULE hCrashedModule;
 	if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, pCrashAddress, &hCrashedModule))
 	{
-		m_strCrashedModule = "UNKNOWN_MODULE";
+		m_strCrashedModule = CRASHHANDLER_GETMODULEHANDLE_FAIL;
+		m_strCrashedOffset = "";
+
+		wchar_t wszError[256];
+		// NOTE [Fifty]: MAKELANGID is deprecated
+		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wszError, 255, NULL);
+		wprintf(L"%s\n", wszError);
+
+		m_wstrError = wszError;
+
 		return;
 	}
 
@@ -244,6 +254,11 @@ void CCrashHandler::FormatException()
 	spdlog::error("-------------------------------------------");
 	spdlog::error("Northstar has crashed!");
 	spdlog::error("\tVersion: {}", version);
+	if (!m_wstrError.empty())
+	{
+		spdlog::info("\tEncountered an error when gathering crash information!");
+		spdlog::info(L"\tWinApi Error: {}", m_wstrError.c_str());
+	}
 	spdlog::error("\t{}", GetExceptionString());
 
 	DWORD dwExceptionCode = m_pExceptionInfos->ExceptionRecord->ExceptionCode;
@@ -280,6 +295,10 @@ void CCrashHandler::FormatCallstack()
 	// the exception was called
 	bool bSkipExceptionHandlingFrames = true;
 
+	// We ran into an error when getting the offset, just print all frames
+	if (m_strCrashedOffset.empty())
+		bSkipExceptionHandlingFrames = false;
+
 	for (int i = 0; i < iFrames; i++)
 	{
 		const CHAR* pszModuleFileName;
@@ -288,7 +307,8 @@ void CCrashHandler::FormatCallstack()
 		HMODULE hModule;
 		if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, pAddress, &hModule))
 		{
-			pszModuleFileName = "UNKNOWN_MODULE";
+			pszModuleFileName = CRASHHANDLER_GETMODULEHANDLE_FAIL;
+			// If we fail here it's too late to do any damage control
 		}
 		else
 		{
