@@ -73,10 +73,10 @@ class CCrashHandler
 	bool m_bHasShownCrashMsg;
 	bool m_bState;
 
-	std::string m_strCrashedModule;
-	std::string m_strCrashedOffset;
+	std::string m_svCrashedModule;
+	std::string m_svCrashedOffset;
 
-	std::wstring m_wstrError;
+	std::wstring m_wsvError;
 
 	std::mutex m_Mutex;
 };

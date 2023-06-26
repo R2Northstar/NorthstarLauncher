@@ -145,15 +145,15 @@ void CCrashHandler::SetCrashedModule()
 	HMODULE hCrashedModule;
 	if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, pCrashAddress, &hCrashedModule))
 	{
-		m_strCrashedModule = CRASHHANDLER_GETMODULEHANDLE_FAIL;
-		m_strCrashedOffset = "";
+		m_svCrashedModule = CRASHHANDLER_GETMODULEHANDLE_FAIL;
+		m_svCrashedOffset = "";
 
 		wchar_t wszError[256];
 		// NOTE [Fifty]: MAKELANGID is deprecated
 		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wszError, 255, NULL);
 		wprintf(L"%s\n", wszError);
 
-		m_wstrError = wszError;
+		m_wsvError = wszError;
 
 		return;
 	}
@@ -167,8 +167,8 @@ void CCrashHandler::SetCrashedModule()
 	// Get relative address
 	LPCSTR pModuleBase = reinterpret_cast<LPCSTR>(pCrashAddress - reinterpret_cast<LPCSTR>(hCrashedModule));
 
-	m_strCrashedModule = pszCrashedModuleFileName;
-	m_strCrashedOffset = fmt::format("{:#x}", reinterpret_cast<DWORD64>(pModuleBase));
+	m_svCrashedModule = pszCrashedModuleFileName;
+	m_svCrashedOffset = fmt::format("{:#x}", reinterpret_cast<DWORD64>(pModuleBase));
 }
 
 //-----------------------------------------------------------------------------
@@ -235,10 +235,10 @@ void CCrashHandler::ShowPopUpMessage()
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		std::string strCmdLine = fmt::format(
-			"bin\\CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_strCrashedModule, m_strCrashedOffset);
+		std::string svCmdLine = fmt::format(
+			"bin\\CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_svCrashedModule, m_svCrashedOffset);
 
-		if (CreateProcessA(NULL, (LPSTR)strCmdLine.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+		if (CreateProcessA(NULL, (LPSTR)svCmdLine.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
 		{
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
@@ -254,10 +254,10 @@ void CCrashHandler::FormatException()
 	spdlog::error("-------------------------------------------");
 	spdlog::error("Northstar has crashed!");
 	spdlog::error("\tVersion: {}", version);
-	if (!m_wstrError.empty())
+	if (!m_wsvError.empty())
 	{
 		spdlog::info("\tEncountered an error when gathering crash information!");
-		spdlog::info(L"\tWinApi Error: {}", m_wstrError.c_str());
+		spdlog::info(L"\tWinApi Error: {}", m_wsvError.c_str());
 	}
 	spdlog::error("\t{}", GetExceptionString());
 
@@ -277,7 +277,7 @@ void CCrashHandler::FormatException()
 			spdlog::error("\tUnknown access violation at: {:#x}", uExceptionInfo1);
 	}
 
-	spdlog::error("\tAt: {} + {}", m_strCrashedModule, m_strCrashedOffset);
+	spdlog::error("\tAt: {} + {}", m_svCrashedModule, m_svCrashedOffset);
 }
 
 //-----------------------------------------------------------------------------
@@ -296,7 +296,7 @@ void CCrashHandler::FormatCallstack()
 	bool bSkipExceptionHandlingFrames = true;
 
 	// We ran into an error when getting the offset, just print all frames
-	if (m_strCrashedOffset.empty())
+	if (m_svCrashedOffset.empty())
 		bSkipExceptionHandlingFrames = false;
 
 	for (int i = 0; i < iFrames; i++)
@@ -319,12 +319,12 @@ void CCrashHandler::FormatCallstack()
 
 		// Get relative address
 		LPCSTR pCrashOffset = reinterpret_cast<LPCSTR>(pAddress - reinterpret_cast<LPCSTR>(hModule));
-		std::string strCrashOffset = fmt::format("{:#x}", reinterpret_cast<DWORD64>(pCrashOffset));
+		std::string svCrashOffset = fmt::format("{:#x}", reinterpret_cast<DWORD64>(pCrashOffset));
 
 		// Should we log this frame
 		if (bSkipExceptionHandlingFrames)
 		{
-			if (m_strCrashedModule == pszModuleFileName && m_strCrashedOffset == strCrashOffset)
+			if (m_svCrashedModule == pszModuleFileName && m_svCrashedOffset == svCrashOffset)
 			{
 				bSkipExceptionHandlingFrames = false;
 			}
