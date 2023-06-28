@@ -107,6 +107,9 @@ class SquirrelManagerBase
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
 
+	sq_pushnewstructinstanceType __sq_pushnewstructinstance;
+	sq_sealstructslotType __sq_sealstructslot;
+
 #pragma endregion
 
 #pragma region SQVM func wrappers
@@ -223,8 +226,7 @@ class SquirrelManagerBase
 
 	inline Vector3 getvector(HSquirrelVM* sqvm, const SQInteger stackpos)
 	{
-		float* pRet = __sq_getvector(sqvm, stackpos);
-		return *(Vector3*)&pRet;
+		return *(Vector3*)__sq_getvector(sqvm, stackpos);
 	}
 
 	inline int sq_getfunction(HSquirrelVM* sqvm, const char* name, SQObject* returnObj, const char* signature)
@@ -288,6 +290,16 @@ class SquirrelManagerBase
 
 		// there are entity constants for other types, but seemingly CBaseEntity's is the only one needed
 		return (T*)__sq_getentityfrominstance(m_pSQVM, &obj, __sq_GetEntityConstant_CBaseEntity());
+	}
+
+	inline SQRESULT pushnewstructinstance(HSquirrelVM* sqvm, const int fieldCount)
+	{
+		return __sq_pushnewstructinstance(sqvm, fieldCount);
+	}
+
+	inline SQRESULT sealstructslot(HSquirrelVM* sqvm, const int fieldIndex)
+	{
+		return __sq_sealstructslot(sqvm, fieldIndex);
 	}
 #pragma endregion
 };
