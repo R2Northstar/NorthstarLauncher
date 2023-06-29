@@ -11,7 +11,7 @@ add_library(loader_wsock32_proxy SHARED
 )
 
 target_link_libraries(loader_wsock32_proxy PRIVATE
-                      ${CMAKE_SOURCE_DIR}/thirdparty/MinHook.x64.lib
+                      ${CMAKE_SOURCE_DIR}/thirdparty/minhook/MinHook.x64.lib
                       mswsock.lib
                       ws2_32.lib
                       ShLwApi.lib
