@@ -13,7 +13,7 @@ const std::string REMOTE_MOD_FOLDER_SUFFIX = "/runtime/remote/mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
 const std::string COMPILED_ASSETS_SUFFIX = "/runtime/compiled";
 
-const std::vector<std::string> MODS_BLACKLIST = {"Mod Settings"};
+const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
 
 struct ModConVar
 {
