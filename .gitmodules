@@ -1,0 +1,6 @@
+[submodule "thirdparty/libcurl"]
+	path = thirdparty/libcurl
+	url = https://github.com/curl/curl
+[submodule "thirdparty/minhook"]
+	path = thirdparty/minhook
+	url = https://github.com/TsudaKageyu/minhook
