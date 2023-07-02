@@ -18,6 +18,8 @@ set(NS_BINARY_DIR ${CMAKE_BINARY_DIR}/game)
 
 message("NS: Building to ${NS_BINARY_DIR}")
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # Targets
 add_subdirectory(loader_wsock32_proxy)
 add_subdirectory(NorthstarDLL)

@@ -1,0 +1,6 @@
+
+if(NOT minhook_FOUND)
+	add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/minhook minhook)
+	set(minhook_FOUND 1 PARENT_SCOPE)
+endif()
+
