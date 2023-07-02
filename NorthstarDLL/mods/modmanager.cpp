@@ -57,8 +57,14 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	}
 
 	Name = modJson["Name"].GetString();
-
 	spdlog::info("Loading mod '{}'", Name);
+
+	// Don't load blacklisted mods
+	if (!strstr(GetCommandLineA(), "-nomodblacklist") && MODS_BLACKLIST.find(Name) != std::end(MODS_BLACKLIST))
+	{
+		spdlog::warn("Skipping blacklisted mod \"{}\"!", Name);
+		return;
+	}
 
 	if (modJson.HasMember("Description"))
 		Description = modJson["Description"].GetString();
