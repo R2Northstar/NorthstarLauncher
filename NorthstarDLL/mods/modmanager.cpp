@@ -413,7 +413,7 @@ void ModManager::LoadMods()
 				modDirs.push_back(dir.path());
 
 	// Special case for Thunderstore mods dir
-	// for (fs::directory_entry dir : thunderstoreModsDir) // TODO: Use this 
+	// for (fs::directory_entry dir : thunderstoreModsDir) // TODO: Use this
 	for (fs::directory_entry dir : fs::recursive_directory_iterator(GetThunderstoreModFolderPath())) // TODO: remove me, temp
 		if (fs::exists(dir.path() / "mod.json"))
 			modDirs.push_back(dir.path());
