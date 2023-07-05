@@ -405,7 +405,6 @@ void ModManager::LoadMods()
 	// get mod directories
 	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
-	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
 
 	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
 		for (fs::directory_entry dir : modIterator)
@@ -413,6 +412,7 @@ void ModManager::LoadMods()
 				modDirs.push_back(dir.path());
 
 	// Special case for Thunderstore mods dir
+	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
 	for (fs::directory_entry dir : thunderstoreModsDir) {
 		fs::path modsDir = dir.path() / "mods"; // Check for mods folder in the Thunderstore mod
 		if (fs::exists(modsDir) && fs::is_directory(modsDir)) {
