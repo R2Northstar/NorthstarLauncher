@@ -413,11 +413,15 @@ void ModManager::LoadMods()
 
 	// Special case for Thunderstore mods dir
 	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
-	for (fs::directory_entry dir : thunderstoreModsDir) {
+	for (fs::directory_entry dir : thunderstoreModsDir)
+	{
 		fs::path modsDir = dir.path() / "mods"; // Check for mods folder in the Thunderstore mod
-		if (fs::exists(modsDir) && fs::is_directory(modsDir)) {
-			for (fs::directory_entry subDir : fs::directory_iterator(modsDir)) {
-				if (fs::exists(subDir.path() / "mod.json")) {
+		if (fs::exists(modsDir) && fs::is_directory(modsDir))
+		{
+			for (fs::directory_entry subDir : fs::directory_iterator(modsDir))
+			{
+				if (fs::exists(subDir.path() / "mod.json"))
+				{
 					modDirs.push_back(subDir.path());
 				}
 			}
