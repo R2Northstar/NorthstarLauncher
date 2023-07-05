@@ -3,6 +3,7 @@
 #include "core/convar/concommand.h"
 #include "config/profile.h"
 #include "core/tier0.h"
+#include "util/version.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
 #include <iomanip>
@@ -219,4 +220,11 @@ void NS::log::FlushLoggers()
 		logger->flush();
 
 	spdlog::default_logger()->flush();
+}
+
+void StartupLog()
+{
+	spdlog::info("NorthstarLauncher version: {}", version);
+	spdlog::info("Command line: {}", GetCommandLineA());
+	spdlog::info("Using profile: {}", GetNorthstarPrefix());
 }
