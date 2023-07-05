@@ -413,9 +413,16 @@ void ModManager::LoadMods()
 
 	// Special case for Thunderstore mods dir
 	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
+	// Set up regex for `AUTHOR-MOD-VERSION` pattern
+	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
 	for (fs::directory_entry dir : thunderstoreModsDir)
 	{
 		fs::path modsDir = dir.path() / "mods"; // Check for mods folder in the Thunderstore mod
+		// Use regex to match `AUTHOR-MOD-VERSION` pattern
+		if (!std::regex_match(dir.path().string(), pattern)) {
+			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION' {}", modsDir.string());
+			continue; // skip loading mod that doesn't match
+		}
 		if (fs::exists(modsDir) && fs::is_directory(modsDir))
 		{
 			for (fs::directory_entry subDir : fs::directory_iterator(modsDir))
