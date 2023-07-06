@@ -1,6 +1,8 @@
 
 
 if (NOT libcurl_FOUND)
+	check_init_submodule(${PROJECT_SOURCE_DIR}/thirdparty/libcurl)
+
 	set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 	set(BUILD_CURL_EXE OFF CACHE BOOL "Build curl EXE")
 	set(HTTP_ONLY ON CACHE BOOL "Only build HTTP and HTTPS")
