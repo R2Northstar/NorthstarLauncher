@@ -61,14 +61,15 @@ char*, __fastcall, ())
 	{
 		if (!CheckLangAudioExists((char*)forcedLanguage))
 		{
-			spdlog::info(
-				"User tried to force the language (-language) to \"{}\", but audio for this language doesn't exist and the game is bound "
-				"to error, falling back to next option...",
+			Warning(
+				eLog::NS,
+				"User tried to force the language (-language) to \"%s\", but audio for this language doesn't exist and the game is bound "
+				"to error, falling back to next option...\n",
 				forcedLanguage);
 		}
 		else
 		{
-			spdlog::info("User forcing the language (-language) to: {}", forcedLanguage);
+			DevMsg(eLog::NS, "User forcing the language (-language) to: %s\n", forcedLanguage);
 			strncpy(ingameLang1, forcedLanguage, 256);
 			return ingameLang1;
 		}
@@ -81,12 +82,13 @@ char*, __fastcall, ())
 		{
 			if (strcmp(lang, "russian") !=
 				0) // don't log for "russian" since it's the default and that means Origin detection just didn't change it most likely
-				spdlog::info(
-					"Origin detected language \"{}\", but we do not have audio for it installed, falling back to the next option", lang);
+				DevMsg(
+					eLog::NS,
+					"Origin detected language \"%s\", but we do not have audio for it installed, falling back to the next option\n", lang);
 		}
 		else
 		{
-			spdlog::info("Origin detected language: {}", lang);
+			DevMsg(eLog::NS, "Origin detected language: %s\n", lang);
 			return lang;
 		}
 	}
@@ -95,13 +97,14 @@ char*, __fastcall, ())
 									   // defaulting to Russian
 	canOriginDictateLang = false; // Origin has no say anymore, we will fallback to user's system setup language
 	auto lang = GetGameLanguage();
-	spdlog::info("Detected system language: {}", lang);
+	DevMsg(eLog::NS, "Detected system language: %s\n", lang);
 	if (!CheckLangAudioExists(lang))
 	{
-		spdlog::warn("Caution, audio for this language does NOT exist. You might want to override your game language with -language "
-					 "command line option.");
+		Warning(
+			eLog::NS,
+			"Caution, audio for this language does NOT exist. You might want to override your game language with -language command line option.\n");
 		auto lang = GetAnyInstalledAudioLanguage();
-		spdlog::warn("Falling back to the first installed audio language: {}", lang.c_str());
+		Warning(eLog::NS, "Falling back to the first installed audio language: %s\n", lang.c_str());
 		strncpy(ingameLang1, lang.c_str(), 256);
 		return ingameLang1;
 	}

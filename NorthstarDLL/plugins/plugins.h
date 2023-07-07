@@ -18,7 +18,7 @@ class Plugin
 	// Maybe a bit shit but it works
 	int handle;
 
-	std::shared_ptr<ColoredLogger> logger;
+	std::shared_ptr<spdlog::logger> logger;
 
 	bool run_on_client = false;
 	bool run_on_server = false;

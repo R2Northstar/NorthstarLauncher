@@ -205,12 +205,12 @@ class __autohook
 		if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
 		{
 			if (MH_EnableHook(targetAddr) == MH_OK)
-				spdlog::info("Enabling hook {}", pFuncName);
+				DevMsg(eLog::NS, "Enabling hook %s\n", pFuncName);
 			else
-				spdlog::error("MH_EnableHook failed for function {}", pFuncName);
+				Error(eLog::NS, NO_ERROR, "MH_EnableHook failed for function %s\n", pFuncName);
 		}
 		else
-			spdlog::error("MH_CreateHook failed for function {}", pFuncName);
+			Error(eLog::NS, NO_ERROR, "MH_CreateHook failed for function %s\n", pFuncName);
 	}
 };
 

@@ -32,12 +32,12 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, (CModule module))
 			reinterpret_cast<void (*)()>(reinterpret_cast<void*>(GetProcAddress(pLfxModule, "winelfx_WaitAndBeginFrame")));
 	else
 	{
-		spdlog::info("Unable to load LatencyFleX library, LatencyFleX disabled.");
+		Warning(eLog::NS, "Unable to load LatencyFleX library, LatencyFleX disabled.\n");
 		return;
 	}
 
 	AUTOHOOK_DISPATCH()
 
-	spdlog::info("LatencyFleX initialized.");
+	DevMsg(eLog::NS, "LatencyFleX initialized.\n");
 	Cvar_r_latencyflex = new ConVar("r_latencyflex", "1", FCVAR_ARCHIVE, "Whether or not to use LatencyFleX input latency reduction.");
 }

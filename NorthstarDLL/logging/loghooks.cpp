@@ -90,7 +90,7 @@ void,, (BFRead* msg))
 		break;
 
 	default:
-		spdlog::warn("Unimplemented TextMsg type {}! printing to console", msg_dest);
+		Warning(eLog::CLIENT, "Unimplemented TextMsg type %i! printing to console\n", msg_dest);
 		[[fallthrough]];
 
 	case TextMsgPrintType_t::HUD_PRINTCONSOLE:
@@ -98,7 +98,7 @@ void,, (BFRead* msg))
 		if (text[endpos - 1] == '\n')
 			text[endpos - 1] = '\0'; // cut off repeated newline
 
-		spdlog::info(text);
+		DevMsg(eLog::CLIENT, "%s\n", text);
 		break;
 	}
 }
@@ -227,7 +227,7 @@ void,, (const char* text, ...))
 	if (formatted[endpos - 1] == '\n')
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
-	spdlog::info(formatted);
+	DevMsg(eLog::ENGINE, "%s\n", formatted);
 }
 
 // clang-format off
@@ -241,7 +241,7 @@ bool,, (void* thisptr, uintptr_t msg))
 	if (text[endpos - 1] == '\n')
 		text[endpos - 1] = '\0'; // cut off repeated newline
 
-	spdlog::info(text);
+	DevMsg(eLog::ENGINE, "%s\n", text);
 	return true;
 }
 

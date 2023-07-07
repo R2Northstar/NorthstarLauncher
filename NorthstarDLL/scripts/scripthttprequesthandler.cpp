@@ -35,24 +35,24 @@ void HttpRequestHandler::StartHttpRequestHandler()
 {
 	if (IsRunning())
 	{
-		spdlog::warn("%s was called while IsRunning() is true!", __FUNCTION__);
+		Warning(eLog::NS, "%s was called while IsRunning() is true!\n", __FUNCTION__);
 		return;
 	}
 
 	m_bIsHttpRequestHandlerRunning = true;
-	spdlog::info("HttpRequestHandler started.");
+	DevMsg(eLog::NS, "HttpRequestHandler started.\n");
 }
 
 void HttpRequestHandler::StopHttpRequestHandler()
 {
 	if (!IsRunning())
 	{
-		spdlog::warn("%s was called while IsRunning() is false", __FUNCTION__);
+		Warning(eLog::NS, "%s was called while IsRunning() is false\n", __FUNCTION__);
 		return;
 	}
 
 	m_bIsHttpRequestHandlerRunning = false;
-	spdlog::info("HttpRequestHandler stopped.");
+	DevMsg(eLog::NS, "HttpRequestHandler stopped.\n");
 }
 
 bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostname, std::string& outAddress, std::string& outPort)
@@ -60,13 +60,13 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	CURLU* url = curl_url();
 	if (!url)
 	{
-		spdlog::error("Failed to call curl_url() for http request.");
+		Error(eLog::NS, NO_ERROR, "Failed to call curl_url() for http request.\n");
 		return false;
 	}
 
 	if (curl_url_set(url, CURLUPART_URL, host.c_str(), CURLU_DEFAULT_SCHEME) != CURLUE_OK)
 	{
-		spdlog::error("Failed to parse destination URL for http request.");
+		Error(eLog::NS, NO_ERROR, "Failed to parse destination URL for http request.\n");
 
 		curl_url_cleanup(url);
 		return false;
@@ -75,7 +75,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	char* urlHostname = nullptr;
 	if (curl_url_get(url, CURLUPART_HOST, &urlHostname, 0) != CURLUE_OK)
 	{
-		spdlog::error("Failed to parse hostname from destination URL for http request.");
+		Error(eLog::NS, NO_ERROR, "Failed to parse hostname from destination URL for http request.\n");
 
 		curl_url_cleanup(url);
 		return false;
@@ -84,7 +84,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	char* urlScheme = nullptr;
 	if (curl_url_get(url, CURLUPART_SCHEME, &urlScheme, CURLU_DEFAULT_SCHEME) != CURLUE_OK)
 	{
-		spdlog::error("Failed to parse scheme from destination URL for http request.");
+		Error(eLog::NS, NO_ERROR, "Failed to parse scheme from destination URL for http request.\n");
 
 		curl_url_cleanup(url);
 		curl_free(urlHostname);
@@ -94,7 +94,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	char* urlPort = nullptr;
 	if (curl_url_get(url, CURLUPART_PORT, &urlPort, CURLU_DEFAULT_PORT) != CURLUE_OK)
 	{
-		spdlog::error("Failed to parse port from destination URL for http request.");
+		Error(eLog::NS, NO_ERROR, "Failed to parse port from destination URL for http request.\n");
 
 		curl_url_cleanup(url);
 		curl_free(urlHostname);
@@ -110,7 +110,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 
 	if (getaddrinfo(urlHostname, urlScheme, &hints, &result) != 0)
 	{
-		spdlog::error("Failed to resolve http request destination {} using getaddrinfo().", urlHostname);
+		Error(eLog::NS, NO_ERROR, "Failed to resolve http request destination %s using getaddrinfo().\n", urlHostname);
 
 		curl_url_cleanup(url);
 		curl_free(urlHostname);
@@ -136,11 +136,14 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	{
 		if (bFoundIPv6)
 		{
-			spdlog::error("Only IPv4 destinations are supported for HTTP requests. To allow IPv6, launch the game using -allowlocalhttp.");
+			Error(
+				eLog::NS,
+				NO_ERROR,
+				"Only IPv4 destinations are supported for HTTP requests. To allow IPv6, launch the game using -allowlocalhttp.\n");
 		}
 		else
 		{
-			spdlog::error("Failed to resolve http request destination {} into a valid IPv4 address.", urlHostname);
+			Error(eLog::NS, NO_ERROR, "Failed to resolve http request destination %s into a valid IPv4 address.\n", urlHostname);
 		}
 
 		curl_free(urlHostname);
@@ -213,14 +216,16 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 {
 	if (!IsRunning())
 	{
-		spdlog::warn("%s was called while IsRunning() is false!", __FUNCTION__);
+		Warning(eLog::NS, "%s was called while IsRunning() is false!\n", __FUNCTION__);
 		return -1;
 	}
 
 	if (IsHttpDisabled())
 	{
-		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
-					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
+		Warning(
+			eLog::NS,
+			"NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
+			" Please check if requests are allowed using NSIsHttpEnabled() first.\n");
 		return -1;
 	}
 
@@ -238,9 +243,10 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 			{
 				if (!IsHttpDestinationHostAllowed(requestParameters.baseUrl, hostname, resolvedAddress, resolvedPort))
 				{
-					spdlog::warn(
+					Warning(
+						eLog::NS,
 						"HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed when "
-						"running the game with -allowlocalhttp.");
+						"running the game with -allowlocalhttp.\n");
 					g_pSquirrel<context>->AsyncCall(
 						"NSHandleFailedHttpRequest",
 						handle,
@@ -254,7 +260,7 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 			CURL* curl = curl_easy_init();
 			if (!curl)
 			{
-				spdlog::error("HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.");
+				Error(eLog::NS, NO_ERROR, "HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.\n");
 				g_pSquirrel<context>->AsyncCall(
 					"NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));
 				return;
@@ -423,15 +429,21 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 				else
 				{
 					// Pass CURL result code & error.
-					spdlog::error(
-						"curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
+					Error(
+						eLog::NS,
+						NO_ERROR,
+						"curl_easy_perform() failed with code %i, error: %s\n",
+						static_cast<int>(result),
+						curl_easy_strerror(result));
 
 					// If it's an SSL issue, tell the user they may disable SSL checks using -disablehttpssl.
 					if (result == CURLE_PEER_FAILED_VERIFICATION || result == CURLE_SSL_CERTPROBLEM ||
 						result == CURLE_SSL_INVALIDCERTSTATUS)
 					{
-						spdlog::error("You can try disabling SSL verifications for this issue using the -disablehttpssl launch argument. "
-									  "Keep in mind this is potentially dangerous!");
+						Warning(
+							eLog::NS,
+							"You can try disabling SSL verifications for this issue using the -disablehttpssl launch argument. "
+							"Keep in mind this is potentially dangerous!\n");
 					}
 
 					g_pSquirrel<context>->AsyncCall(
@@ -454,15 +466,17 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 {
 	if (!g_httpRequestHandler || !g_httpRequestHandler->IsRunning())
 	{
-		spdlog::warn("NS_InternalMakeHttpRequest called while the http request handler isn't running.");
+		Warning(eLog::NS, "NS_InternalMakeHttpRequest called while the http request handler isn't running.\n");
 		g_pSquirrel<context>->pushinteger(sqvm, -1);
 		return SQRESULT_NOTNULL;
 	}
 
 	if (IsHttpDisabled())
 	{
-		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
-					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
+		Warning(
+			eLog::NS,
+			"NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
+			" Please check if requests are allowed using NSIsHttpEnabled() first.\n");
 		g_pSquirrel<context>->pushinteger(sqvm, -1);
 		return SQRESULT_NOTNULL;
 	}

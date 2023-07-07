@@ -31,9 +31,10 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	// fail if parse error
 	if (modJson.HasParseError())
 	{
-		spdlog::error(
-			"Failed reading mod file {}: encountered parse error \"{}\" at offset {}",
-			(modDir / "mod.json").string(),
+		Error(
+			eLog::MODSYS, NO_ERROR,
+			"Failed reading mod file %s: encountered parse error \"%s\" at offset %li\n",
+			(modDir / "mod.json").string().c_str(),
 			GetParseError_En(modJson.GetParseError()),
 			modJson.GetErrorOffset());
 		return;
@@ -42,7 +43,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	// fail if it's not a json obj (could be an array, string, etc)
 	if (!modJson.IsObject())
 	{
-		spdlog::error("Failed reading mod file {}: file is not a JSON object", (modDir / "mod.json").string());
+		Error(eLog::MODSYS, NO_ERROR, "Failed reading mod file %s: file is not a JSON object\n", (modDir / "mod.json").string().c_str());
 		return;
 	}
 
@@ -50,7 +51,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	// name is required
 	if (!modJson.HasMember("Name"))
 	{
-		spdlog::error("Failed reading mod file {}: missing required member \"Name\"", (modDir / "mod.json").string());
+		Error(eLog::MODSYS, NO_ERROR, "Failed reading mod file %s: missing required member \"Name\"\n", (modDir / "mod.json").string().c_str());
 		return;
 	}
 
@@ -66,7 +67,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	else
 	{
 		Version = "0.0.0";
-		spdlog::warn("Mod file {} is missing a version, consider adding a version", (modDir / "mod.json").string());
+		Warning(eLog::MS, "Mod file %s is missing a version, consider adding a version\n", (modDir / "mod.json").string().c_str());
 	}
 
 	if (modJson.HasMember("DownloadLink"))
@@ -83,7 +84,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		LoadPriority = modJson["LoadPriority"].GetInt();
 	else
 	{
-		spdlog::info("Mod file {} is missing a LoadPriority, consider adding one", (modDir / "mod.json").string());
+		Warning(eLog::MS, "Mod file %s is missing a LoadPriority, consider adding one\n", (modDir / "mod.json").string().c_str());
 		LoadPriority = 0;
 	}
 
@@ -143,7 +144,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
 			if (concommand->Context == ScriptContext::INVALID)
 			{
-				spdlog::warn("Mod ConCommand {} has invalid context {}", concommand->Name, concommandObj["Context"].GetString());
+				Warning(eLog::MODSYS, "Mod ConCommand %s has invalid context %s\n", concommand->Name.c_str(), concommandObj["Context"].GetString());
 				continue;
 			}
 
@@ -264,11 +265,11 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 			if (!v->name.IsString() || !v->value.IsString())
 				continue;
 
-			spdlog::info("Constant {} defined by {} for mod {}", v->name.GetString(), Name, v->value.GetString());
+			DevMsg(eLog::MODSYS, "Constant %s defined by %s for mod %s\n", v->name.GetString(), Name.c_str(), v->value.GetString());
 			if (DependencyConstants.find(v->name.GetString()) != DependencyConstants.end() &&
 				v->value.GetString() != DependencyConstants[v->name.GetString()])
 			{
-				spdlog::error("A dependency constant with the same name already exists for another mod. Change the constant name.");
+				Error(eLog::MODSYS, NO_ERROR, "A dependency constant with the same name already exists for another mod. Change the constant name.\n");
 				return;
 			}
 
@@ -318,7 +319,7 @@ template <ScriptContext context> auto ModConCommandCallback_Internal(std::string
 	}
 	else
 	{
-		spdlog::warn("ConCommand `{}` was called while the associated Squirrel VM `{}` was unloaded", name, GetContextName(context));
+		Warning(eLog::MODSYS, "ConCommand `%s` was called while the associated Squirrel VM `%s` was unloaded\n", name.c_str(), GetContextName(context));
 	}
 }
 
@@ -412,7 +413,7 @@ void ModManager::LoadMods()
 		// fail if no mod json
 		if (jsonStream.fail())
 		{
-			spdlog::warn("Mod {} has a directory but no mod.json", modDir.string());
+			Warning(eLog::MODSYS, "Mod %s has a directory but no mod.json\n", modDir.string().c_str());
 			continue;
 		}
 
@@ -427,7 +428,7 @@ void ModManager::LoadMods()
 		{
 			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
 			{
-				spdlog::error("Constant {} in mod {} already exists in another mod.", pair.first, mod.Name);
+				Error(eLog::MODSYS, NO_ERROR, "Constant %s in mod %s already exists in another mod.\n", pair.first.c_str(), mod.Name.c_str());
 				mod.m_bWasReadSuccessfully = false;
 				break;
 			}
@@ -442,16 +443,16 @@ void ModManager::LoadMods()
 
 		if (mod.m_bWasReadSuccessfully)
 		{
-			spdlog::info("Loaded mod {} successfully", mod.Name);
+			DevMsg(eLog::MODSYS, "Loaded mod %s successfully\n", mod.Name.c_str());
 			if (mod.m_bEnabled)
-				spdlog::info("Mod {} is enabled", mod.Name);
+				DevMsg(eLog::MODSYS, "Mod %s is enabled\n", mod.Name.c_str());
 			else
-				spdlog::info("Mod {} is disabled", mod.Name);
+				DevMsg(eLog::MODSYS, "Mod %s is disabled\n", mod.Name.c_str());
 
 			m_LoadedMods.push_back(mod);
 		}
 		else
-			spdlog::warn("Skipping loading mod file {}", (modDir / "mod.json").string());
+			Warning(eLog::MODSYS, "Skipping loading mod file %s\n", (modDir / "mod.json").string().c_str());
 	}
 
 	// sort by load prio, lowest-highest
@@ -622,7 +623,7 @@ void ModManager::LoadMods()
 							if (!str.empty())
 							{
 								mod.StarpakPaths.push_back(STR_HASH(str));
-								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
+								DevMsg(eLog::MODSYS, "Mod %s registered starpak '%s'\n", mod.Name.c_str(), str.c_str());
 								str = "";
 							}
 						}
@@ -683,7 +684,7 @@ void ModManager::LoadMods()
 				{
 					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
 					{
-						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+						Warning(eLog::MODSYS, "Mod %s has an invalid audio def %s\n", mod.Name.c_str(), file.path().filename().string().c_str());
 						continue;
 					}
 				}

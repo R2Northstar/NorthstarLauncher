@@ -98,7 +98,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 	std::thread requestThread(
 		[this, uidStr, tokenStr]()
 		{
-			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
+			DevMsg(eLog::MS, "Trying to authenticate with northstar masterserver for user %s\n", uidStr.c_str());
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -122,15 +122,15 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 
 				if (originAuthInfo.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading origin auth info response: encountered parse error \"{}\"",
+					Error(eLog::MS, NO_ERROR,
+						"Failed reading origin auth info response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (!originAuthInfo.IsObject() || !originAuthInfo.HasMember("success"))
 				{
-					spdlog::error("Failed reading origin auth info response: malformed response object {}", readBuffer);
+					Error(eLog::MS, NO_ERROR, "Failed reading origin auth info response: malformed response object %s\n", readBuffer.c_str());
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -141,14 +141,14 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 						sizeof(m_sOwnClientAuthToken),
 						originAuthInfo["token"].GetString(),
 						sizeof(m_sOwnClientAuthToken) - 1);
-					spdlog::info("Northstar origin authentication completed successfully!");
+					DevMsg(eLog::MS, "Northstar origin authentication completed successfully!\n");
 				}
 				else
-					spdlog::error("Northstar origin authentication failed");
+					Error(eLog::MS, NO_ERROR, "Northstar origin authentication failed\n");
 			}
 			else
 			{
-				spdlog::error("Failed performing northstar origin auth: error {}", curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "Failed performing northstar origin auth: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 			}
 
@@ -178,7 +178,7 @@ void MasterServerManager::RequestServerList()
 			m_bRequestingServerList = true;
 			m_bScriptRequestingServerList = true;
 
-			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->GetString());
+			DevMsg(eLog::MS, "Requesting server list from %s\n", Cvar_ns_masterserver_hostname->GetString());
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -200,34 +200,34 @@ void MasterServerManager::RequestServerList()
 
 				if (serverInfoJson.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading masterserver response: encountered parse error \"{}\"",
+					Error(eLog::MS, NO_ERROR,
+						"Failed reading masterserver response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(serverInfoJson.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (serverInfoJson.IsObject() && serverInfoJson.HasMember("error"))
 				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (!serverInfoJson.IsArray())
 				{
-					spdlog::error("Failed reading masterserver response: root object is not an array");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: root object is not an array\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
 				rapidjson::GenericArray<false, rapidjson_document::GenericValue> serverArray = serverInfoJson.GetArray();
 
-				spdlog::info("Got {} servers", serverArray.Size());
+				DevMsg(eLog::MS, "Got %li servers\n", serverArray.Size());
 
 				for (auto& serverObj : serverArray)
 				{
 					if (!serverObj.IsObject())
 					{
-						spdlog::error("Failed reading masterserver response: member of server array is not an object");
+						Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: member of server array is not an object\n");
 						goto REQUEST_END_CLEANUP;
 					}
 
@@ -240,7 +240,7 @@ void MasterServerManager::RequestServerList()
 						!serverObj["hasPassword"].IsBool() || !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") ||
 						!serverObj["modInfo"]["Mods"].IsArray())
 					{
-						spdlog::error("Failed reading masterserver response: malformed server object");
+						Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: malformed server object\n");
 						continue;
 					};
 
@@ -316,7 +316,7 @@ void MasterServerManager::RequestServerList()
 			}
 			else
 			{
-				spdlog::error("Failed requesting servers: error {}", curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "Failed requesting servers: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 			}
 
@@ -361,22 +361,24 @@ void MasterServerManager::RequestMainMenuPromos()
 
 				if (mainMenuPromoJson.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading masterserver main menu promos response: encountered parse error \"{}\"",
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"Failed reading masterserver main menu promos response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(mainMenuPromoJson.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (!mainMenuPromoJson.IsObject())
 				{
-					spdlog::error("Failed reading masterserver main menu promos response: root object is not an object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver main menu promos response: root object is not an object\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (mainMenuPromoJson.HasMember("error"))
 				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -404,7 +406,7 @@ void MasterServerManager::RequestMainMenuPromos()
 					!mainMenuPromoJson["smallButton2"].HasMember("ImageIndex") ||
 					!mainMenuPromoJson["smallButton2"]["ImageIndex"].IsNumber())
 				{
-					spdlog::error("Failed reading masterserver main menu promos response: malformed json object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver main menu promos response: malformed json object\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -429,7 +431,7 @@ void MasterServerManager::RequestMainMenuPromos()
 			}
 			else
 			{
-				spdlog::error("Failed requesting main menu promos: error {}", curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "Failed requesting main menu promos: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 			}
 
@@ -482,22 +484,24 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 
 				if (authInfoJson.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(authInfoJson.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (!authInfoJson.IsObject())
 				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (authInfoJson.HasMember("error"))
 				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer);
 
 					if (authInfoJson["error"].HasMember("msg"))
 						m_sAuthFailureReason = authInfoJson["error"]["msg"].GetString();
@@ -511,7 +515,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 
 				if (!authInfoJson["success"].IsTrue())
 				{
-					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
+					Error(eLog::MS, NO_ERROR, "Authentication with masterserver failed: \"success\" is not true\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -519,7 +523,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					!authInfoJson.HasMember("authToken") || !authInfoJson["authToken"].IsString() ||
 					!authInfoJson.HasMember("persistentData") || !authInfoJson["persistentData"].IsArray())
 				{
-					spdlog::error("Failed reading masterserver authentication response: malformed json object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: malformed json object\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -537,7 +541,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 				{
 					if (!byte.IsUint() || byte.GetUint() > 255)
 					{
-						spdlog::error("Failed reading masterserver authentication response: malformed json object");
+						Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: malformed json object\n");
 						goto REQUEST_END_CLEANUP;
 					}
 
@@ -553,7 +557,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 			}
 			else
 			{
-				spdlog::error("Failed authenticating with own server: error {}", curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "Failed authenticating with own server: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 				m_bSuccessfullyAuthenticatedWithGameServer = false;
 				m_bScriptAuthenticatingWithGameServer = false;
@@ -599,7 +603,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			while (m_bSavingPersistentData)
 				Sleep(100);
 
-			spdlog::info("Attempting authentication with server of id \"{}\"", serverIdStr);
+			DevMsg(eLog::MS, "Attempting authentication with server of id \"%s\"\n", serverIdStr.c_str());
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -638,22 +642,24 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 
 				if (connectionInfoJson.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (!connectionInfoJson.IsObject())
 				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
 				if (connectionInfoJson.HasMember("error"))
 				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer);
 
 					if (connectionInfoJson["error"].HasMember("msg"))
 						m_sAuthFailureReason = connectionInfoJson["error"]["msg"].GetString();
@@ -667,7 +673,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 
 				if (!connectionInfoJson["success"].IsTrue())
 				{
-					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
+					Error(eLog::MS, NO_ERROR, "Authentication with masterserver failed: \"success\" is not true\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -676,7 +682,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 					!connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") ||
 					!connectionInfoJson["authToken"].IsString())
 				{
-					spdlog::error("Failed reading masterserver authentication response: malformed json object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: malformed json object\n");
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -697,7 +703,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			}
 			else
 			{
-				spdlog::error("Failed authenticating with server: error {}", curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "Failed authenticating with server: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 				m_bSuccessfullyAuthenticatedWithGameServer = false;
 				m_bScriptAuthenticatingWithGameServer = false;
@@ -718,7 +724,7 @@ void MasterServerManager::WritePlayerPersistentData(const char* playerId, const 
 	m_bSavingPersistentData = true;
 	if (!pdataSize)
 	{
-		spdlog::warn("attempted to write pdata of size 0!");
+		Warning(eLog::MS, "attempted to write pdata of size 0!");
 		return;
 	}
 
@@ -778,13 +784,13 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 	if (obj.HasParseError())
 	{
 		// note: it's okay to print the data as-is since we've already checked that it actually came from Atlas
-		spdlog::error("invalid Atlas connectionless packet request ({}): {}", data, GetParseError_En(obj.GetParseError()));
+		Error(eLog::MS, NO_ERROR, "invalid Atlas connectionless packet request (%s): %i\n", data.c_str(), GetParseError_En(obj.GetParseError()));
 		return;
 	}
 
 	if (!obj.HasMember("type") || !obj["type"].IsString())
 	{
-		spdlog::error("invalid Atlas connectionless packet request ({}): missing type", data);
+		Error(eLog::MS, NO_ERROR, "invalid Atlas connectionless packet request (%s): missing type\n", data);
 		return;
 	}
 
@@ -794,7 +800,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 	{
 		if (!obj.HasMember("token") || !obj["token"].IsString())
 		{
-			spdlog::error("failed to handle Atlas connect request: missing or invalid connection token field");
+			Error(eLog::MS, NO_ERROR, "failed to handle Atlas connect request: missing or invalid connection token field\n");
 			return;
 		}
 		std::string token = obj["token"].GetString();
@@ -804,11 +810,11 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		else
 			return; // already handled
 
-		spdlog::info("handling Atlas connect request {}", data);
+		DevMsg(eLog::MS, "handling Atlas connect request %s\n", data.c_str());
 
 		if (!obj.HasMember("uid") || !obj["uid"].IsUint64())
 		{
-			spdlog::error("failed to handle Atlas connect request {}: missing or invalid uid field", token);
+			Error(eLog::MS, NO_ERROR, "failed to handle Atlas connect request %s: missing or invalid uid field\n", token.c_str());
 			return;
 		}
 		uint64_t uid = obj["uid"].GetUint64();
@@ -824,7 +830,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		std::string pdata;
 		if (reject == "")
 		{
-			spdlog::info("getting pdata for connection {} (uid={} username={})", token, uid, username);
+			DevMsg(eLog::MS, "getting pdata for connection %s (uid=%i username=%s)\n", token.c_str(), uid, username.c_str());
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -841,7 +847,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			CURLcode result = curl_easy_perform(curl);
 			if (result != CURLcode::CURLE_OK)
 			{
-				spdlog::error("failed to make Atlas connect pdata request {}: {}", token, curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "failed to make Atlas connect pdata request %s: %s\n", token.c_str(), curl_easy_strerror(result));
 				curl_easy_cleanup(curl);
 				return;
 			}
@@ -857,28 +863,32 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 				obj.Parse(pdata.c_str());
 
 				if (!obj.HasParseError() && obj.HasMember("error") && obj["error"].IsObject())
-					spdlog::error(
-						"failed to make Atlas connect pdata request {}: response status {}, error: {} ({})",
-						token,
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"failed to make Atlas connect pdata request %s: response status %li, error: %s (%s)\n",
+						token.c_str(),
 						respStatus,
 						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
 						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
 				else
-					spdlog::error("failed to make Atlas connect pdata request {}: response status {}", token, respStatus);
+					Error(eLog::MS, NO_ERROR, "failed to make Atlas connect pdata request %s: response status %li\n", token.c_str(), respStatus);
 				return;
 			}
 
 			if (!pdata.length())
 			{
-				spdlog::error("failed to make Atlas connect pdata request {}: pdata response is empty", token);
+				Error(eLog::MS, NO_ERROR, "failed to make Atlas connect pdata request %s: pdata response is empty\n", token.c_str());
 				return;
 			}
 
 			if (pdata.length() > R2::PERSISTENCE_MAX_SIZE)
 			{
-				spdlog::error(
-					"failed to make Atlas connect pdata request {}: pdata is too large (max={} len={})",
-					token,
+				Error(
+					eLog::MS,
+					NO_ERROR,
+					"failed to make Atlas connect pdata request %s: pdata is too large (max=%i len=%i)\n",
+					token.c_str(),
 					R2::PERSISTENCE_MAX_SIZE,
 					pdata.length());
 				return;
@@ -886,9 +896,21 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		}
 
 		if (reject == "")
-			spdlog::info("accepting connection {} (uid={} username={}) with {} bytes of pdata", token, uid, username, pdata.length());
+			DevMsg(
+				eLog::MS,
+				"accepting connection %s (uid=%li username=%s) with %li bytes of pdata\n",
+				token.c_str(),
+				uid,
+				username.c_str(),
+				pdata.length());
 		else
-			spdlog::info("rejecting connection {} (uid={} username={}) with reason \"{}\"", token, uid, username, reject);
+			DevMsg(
+				eLog::MS,
+				"rejecting connection %s (uid=%li username=%s) with reason \"%s\"\n",
+				token.c_str(),
+				uid,
+				username.c_str(),
+				reject.c_str());
 
 		if (reject == "")
 			g_pServerAuthentication->AddRemotePlayer(token, uid, username, pdata);
@@ -900,7 +922,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			char* rejectEnc = curl_easy_escape(curl, reject.c_str(), reject.length());
 			if (!rejectEnc)
 			{
-				spdlog::error("failed to handle Atlas connect request {}: failed to escape reject", token);
+				Error(eLog::MS, NO_ERROR, "failed to handle Atlas connect request %s: failed to escape reject\n", token.c_str());
 				return;
 			}
 			curl_easy_setopt(
@@ -925,7 +947,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			CURLcode result = curl_easy_perform(curl);
 			if (result != CURLcode::CURLE_OK)
 			{
-				spdlog::error("failed to respond to Atlas connect request {}: {}", token, curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "failed to respond to Atlas connect request %s: %s\n", token.c_str(), curl_easy_strerror(result));
 				curl_easy_cleanup(curl);
 				return;
 			}
@@ -941,14 +963,16 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 				obj.Parse(buf.c_str());
 
 				if (!obj.HasParseError() && obj.HasMember("error") && obj["error"].IsObject())
-					spdlog::error(
-						"failed to respond to Atlas connect request {}: response status {}, error: {} ({})",
-						token,
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"failed to respond to Atlas connect request %s: response status %li, error: %s (%s)\n",
+						token.c_str(),
 						respStatus,
 						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
 						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
 				else
-					spdlog::error("failed to respond to Atlas connect request {}: response status {}", token, respStatus);
+					Error(eLog::MS, NO_ERROR, "failed to respond to Atlas connect request %s: response status %li\n", token.c_str(), respStatus);
 				return;
 			}
 		}
@@ -956,7 +980,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		return;
 	}
 
-	spdlog::error("invalid Atlas connectionless packet request: unknown type {}", type);
+	Error(eLog::MS, NO_ERROR, "invalid Atlas connectionless packet request: unknown type %s\n", type.c_str());
 }
 
 void ConCommand_ns_fetchservers(const CCommand& args)
@@ -1107,7 +1131,7 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 
 		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)
 		{
-			spdlog::error("Reached max ms server registration attempts.");
+			Error(eLog::MS, NO_ERROR, "Reached max ms server registration attempts.\n");
 		}
 	}
 	else if (updateServerFuture.valid())
@@ -1156,7 +1180,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 	std::string modInfo = g_pMasterServerManager->m_sOwnModInfoJson;
 	std::string hostname = Cvar_ns_masterserver_hostname->GetString();
 
-	spdlog::info("Attempting to register the local server to the master server.");
+	DevMsg(eLog::MS, "Attempting to register the local server to the master server.\n");
 
 	addServerFuture = std::async(
 		std::launch::async,
@@ -1237,22 +1261,24 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				// No retry.
 				if (serverAddedJson.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (!serverAddedJson.IsObject())
 				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (serverAddedJson.HasMember("error"))
 				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer);
 
 					// If this is DUPLICATE_SERVER, we'll retry adding the server every 20 seconds.
 					// The master server will only update its internal server list and clean up dead servers on certain events.
@@ -1261,7 +1287,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					if (serverAddedJson["error"].HasMember("enum") &&
 						strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER") == 0)
 					{
-						spdlog::error("Cooling down while the master server cleans the dead server entry, if any.");
+						Error(eLog::MS, NO_ERROR, "Cooling down while the master server cleans the dead server entry, if any.\n");
 						return ReturnCleanup(MasterServerReportPresenceResult::FailedDuplicateServer);
 					}
 
@@ -1271,18 +1297,18 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 				if (!serverAddedJson["success"].IsTrue())
 				{
-					spdlog::error("Adding server to masterserver failed: \"success\" is not true");
+					Error(eLog::MS, NO_ERROR, "Adding server to masterserver failed: \"success\" is not true\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
 					!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
 				{
-					spdlog::error("Failed reading masterserver response: malformed json object");
+					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: malformed json object\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
-				spdlog::info("Successfully registered the local server to the master server.");
+				DevMsg(eLog::MS, "Successfully registered the local server to the master server.\n");
 				return ReturnCleanup(
 					MasterServerReportPresenceResult::Success,
 					serverAddedJson["id"].GetString(),
@@ -1290,7 +1316,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 			}
 			else
 			{
-				spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
+				Error(eLog::MS, NO_ERROR, "Failed adding self to server list: error %s\n", curl_easy_strerror(result));
 				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoConnect);
 			}
 		});
@@ -1413,7 +1439,7 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 			}
 			else
 			{
-				spdlog::warn("Heartbeat failed with error {}", curl_easy_strerror(result));
+				Warning(eLog::MS, "Heartbeat failed with error %s\n", curl_easy_strerror(result));
 				return ReturnCleanup(MasterServerReportPresenceResult::Failed);
 			}
 		});

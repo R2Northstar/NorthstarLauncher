@@ -37,13 +37,13 @@ struct CDedicatedExports
 
 void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
 {
-	spdlog::info("[DEDICATED SERVER] {}", msg);
+	DevMsg(eLog::NS, "[DEDICATED SERVER] %s\n", msg);
 }
 
 void RunServer(CDedicatedExports* dedicated)
 {
-	spdlog::info("CDedicatedExports::RunServer(): starting");
-	spdlog::info(Tier0::CommandLine()->GetCmdLine());
+	DevMsg(eLog::NS, "CDedicatedExports::RunServer(): starting\n");
+	DevMsg(eLog::NS, "%s\n", Tier0::CommandLine()->GetCmdLine());
 
 	// initialise engine
 	g_pEngine->Frame();
@@ -95,7 +95,7 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 	FILE* fp = nullptr;
 	freopen_s(&fp, "CONIN$", "r", stdin);
 
-	spdlog::info("Ready to receive console commands.");
+	DevMsg(eLog::NS, "Ready to receive console commands.\n");
 
 	{
 		// Process console input
@@ -121,7 +121,7 @@ bool,, ())
 
 ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModule module))
 {
-	spdlog::info("InitialiseDedicated");
+	DevMsg(eLog::NS, "InitialiseDedicated\n");
 
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
@@ -250,13 +250,13 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 		}
 	}
 	else
-		spdlog::info("Quick Edit enabled by user request");
+		DevMsg(eLog::NS, "Quick Edit enabled by user request\n");
 
 	// create console input thread
 	if (!Tier0::CommandLine()->CheckParm("-noconsoleinput"))
 		consoleInputThreadHandle = CreateThread(0, 0, ConsoleInputThread, 0, 0, NULL);
 	else
-		spdlog::info("Console input disabled by user request");
+		DevMsg(eLog::NS, "Console input disabled by user request\n");
 }
 
 ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (CModule module))
