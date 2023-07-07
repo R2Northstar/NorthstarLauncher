@@ -148,12 +148,25 @@ void CCrashHandler::SetCrashedModule()
 		m_svCrashedModule = CRASHHANDLER_GETMODULEHANDLE_FAIL;
 		m_svCrashedOffset = "";
 
-		wchar_t wszError[256];
-		// NOTE [Fifty]: MAKELANGID is deprecated
-		FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), wszError, 255, NULL);
-		wprintf(L"%s\n", wszError);
+		DWORD dwErrorID = GetLastError();
+		if (dwErrorID != 0)
+		{
+			LPSTR pszBuffer;
+			DWORD dwSize = FormatMessageA(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL,
+				dwErrorID,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPSTR)&pszBuffer,
+				0,
+				NULL);
 
-		m_wsvError = wszError;
+			if (dwSize > 0)
+			{
+				m_svError = pszBuffer;
+				LocalFree(pszBuffer);
+			}
+		}
 
 		return;
 	}
@@ -254,10 +267,10 @@ void CCrashHandler::FormatException()
 	spdlog::error("-------------------------------------------");
 	spdlog::error("Northstar has crashed!");
 	spdlog::error("\tVersion: {}", version);
-	if (!m_wsvError.empty())
+	if (!m_svError.empty())
 	{
 		spdlog::info("\tEncountered an error when gathering crash information!");
-		spdlog::info(L"\tWinApi Error: {}", m_wsvError.c_str());
+		spdlog::info("\tWinApi Error: {}", m_svError.c_str());
 	}
 	spdlog::error("\t{}", GetExceptionString());
 

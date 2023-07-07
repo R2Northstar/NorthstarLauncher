@@ -76,7 +76,7 @@ class CCrashHandler
 	std::string m_svCrashedModule;
 	std::string m_svCrashedOffset;
 
-	std::wstring m_wsvError;
+	std::string m_svError;
 
 	std::mutex m_Mutex;
 };
