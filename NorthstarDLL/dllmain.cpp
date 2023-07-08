@@ -42,10 +42,13 @@ bool InitialiseNorthstar()
 
 	InitialiseNorthstarPrefix();
 
+	// Checks if we can write into install directory
 	SpdLog_PreInit();
 
+	Console_Init();
+
 	// initialise the console if needed (-northstar needs this)
-	InitialiseConsole();
+	//InitialiseConsole();
 	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
 	InitialiseLogging();
 	InitialiseVersion();

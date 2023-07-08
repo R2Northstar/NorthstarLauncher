@@ -52,6 +52,36 @@ void SpdLog_PreInit()
 	TerminateProcess(GetCurrentProcess(), -1);
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void Console_Init()
+{
+	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL;
+
+	if (bShow)
+	{
+		(void)AllocConsole();
+
+		FILE* pDummy;
+		freopen_s(&pDummy, "CONIN$", "r", stdin);
+		freopen_s(&pDummy, "CONOUT$", "w", stdout);
+		freopen_s(&pDummy, "CONOUT$", "w", stderr);
+	}
+	else
+	{
+		// TODO [Fifty]: Only close console once gamewindow is created
+		HWND hConsole = GetConsoleWindow();
+		(void)FreeConsole();
+		(void)PostMessageA(hConsole, WM_CLOSE, 0, 0);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void Console_Shutdown() {}
+
 AUTOHOOK_INIT()
 
 std::vector<std::shared_ptr<ColoredLogger>> loggers {};

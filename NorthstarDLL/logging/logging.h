@@ -7,6 +7,9 @@
 
 void SpdLog_PreInit();
 
+// TODO [Fifty]: Possibly move into it's own file
+void Console_Init();
+void Console_Shutdown();
 
 void CreateLogFiles();
 void InitialiseLogging();
