@@ -10,7 +10,9 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* fmt,
 {
 	std::string svMessage;
 	svMessage = NS::Utils::FormatV(fmt, vArgs);
-	if (g_bEngineVguiInitilazed)
+
+	// TODO [Fifty]: Use "VEngineCvar007" interface to print instead of this fuckery
+	if (g_bEngineVguiInitilazed && (*g_pSourceGameConsole)->m_pConsole)
 	{
 		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(svMessage.c_str());
 	}
