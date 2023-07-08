@@ -35,28 +35,20 @@ OFFSET_STRUCT(Name)
 // Special case for a 0-offset field
 #define STRUCT_FIELD_NOOFFSET(offset, signature) signature;
 
-// Based on: https://stackoverflow.com/questions/11632219/c-preprocessor-macro-specialisation-based-on-an-argument
-// Yes, this is hacky, but it works quite well actually
-// This basically makes sure that when the offset is 0x0, no padding field gets generated
-#define OFFSET_0x0 ()
+#define FX(f, x) f x
 
-#define IIF(c) CONCAT2(IIF_, c)
-#define IIF_0(t, ...) __VA_ARGS__
-#define IIF_1(t, ...) t
+// MSVC does no preprocessing of integer literals.
+// On other compilers `0x0` gets processed into `0`
+#define TEST_0 ,
+#define TEST_0x0 ,
 
-#define PROBE(x) x, 1
-#define MSVC_VA_ARGS_WORKAROUND(define, args) define args
-#define CHECK(...) MSVC_VA_ARGS_WORKAROUND(CHECK_N, (__VA_ARGS__, 0))
-#define DO_PROBE(offset) PROBE_PROXY(OFFSET_##offset) // concatenate prefix with offset
-#define PROBE_PROXY(...) PROBE_PRIMITIVE(__VA_ARGS__) // expand arguments
-#define PROBE_PRIMITIVE(x) PROBE_COMBINE_##x // merge
-#define PROBE_COMBINE_(...) PROBE(~) // if merge successful, expand to probe
+#define ZERO_P_I(a, b, c, ...) a##c
+#define IF_ZERO(m) FX(ZERO_P_I, (NIF_, CONCAT2(TEST_, m), 1))
 
-#define CHECK_N(x, n, ...) n
+#define NIF_(t, ...) t
+#define NIF_1(t, ...) __VA_ARGS__
 
-#define IS_0(offset) CHECK(DO_PROBE(offset))
-
-#define FIELD(offset, signature) IIF(IS_0(offset))(STRUCT_FIELD_NOOFFSET, STRUCT_FIELD_OFFSET)(offset, signature)
+#define FIELD(offset, signature) IF_ZERO(offset)(STRUCT_FIELD_NOOFFSET, STRUCT_FIELD_OFFSET)(offset, signature)
 #define FIELDS FIELD
 
 //clang-format on
