@@ -217,7 +217,7 @@ ADD_SQFUNC(
 			return SQRESULT_ERROR;
 		}
 
-		spdlog::warn(sErrorString);
+		Warning(eLog::NS, "%s\n", sErrorString.c_str());
 		return SQRESULT_NOTNULL;
 	}
 

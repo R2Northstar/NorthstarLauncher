@@ -182,27 +182,22 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writePath += ".ain";
 
 	// dump from memory
-	spdlog::info("writing ain file {}", writePath.string());
-	spdlog::info("");
-	spdlog::info("");
-	spdlog::info("");
-	spdlog::info("");
-	spdlog::info("");
+	DevMsg(eLog::NS, "writing ain file %s\n", writePath.string().c_str());
 
 	std::ofstream writeStream(writePath, std::ofstream::binary);
-	spdlog::info("writing ainet version: {}", AINET_VERSION_NUMBER);
+	DevMsg(eLog::NS, "writing ainet version: %i\n", AINET_VERSION_NUMBER);
 	writeStream.write((char*)&AINET_VERSION_NUMBER, sizeof(int));
 
 	int mapVersion = R2::g_pGlobals->m_nMapVersion;
-	spdlog::info("writing map version: {}", mapVersion);
+	DevMsg(eLog::NS, "writing map version: %i\n", mapVersion);
 	writeStream.write((char*)&mapVersion, sizeof(int));
-	spdlog::info("writing placeholder crc: {}", PLACEHOLDER_CRC);
+	DevMsg(eLog::NS, "writing placeholder crc: %i\n", PLACEHOLDER_CRC);
 	writeStream.write((char*)&PLACEHOLDER_CRC, sizeof(int));
 
 	int calculatedLinkcount = 0;
 
 	// path nodes
-	spdlog::info("writing nodecount: {}", aiNetwork->nodecount);
+	DevMsg(eLog::NS, "writing nodecount: %i\n", aiNetwork->nodecount);
 	writeStream.write((char*)&aiNetwork->nodecount, sizeof(int));
 
 	for (int i = 0; i < aiNetwork->nodecount; i++)
@@ -220,7 +215,7 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 		for (int j = 0; j < MAX_HULLS; j++)
 		{
 			diskNode.unk2[j] = (short)aiNetwork->nodes[i]->unk2[j];
-			spdlog::info((short)aiNetwork->nodes[i]->unk2[j]);
+			DevMsg(eLog::NS, "%i\n",(short)aiNetwork->nodes[i]->unk2[j]);
 		}
 
 		memcpy(diskNode.unk3, aiNetwork->nodes[i]->unk3, sizeof(diskNode.unk3));
@@ -229,26 +224,26 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 			-1; // aiNetwork->nodes[i]->unk8; // this field is wrong, however, it's always -1 in vanilla navmeshes anyway, so no biggie
 		memcpy(diskNode.unk6, aiNetwork->nodes[i]->unk10, sizeof(diskNode.unk6));
 
-		spdlog::info("writing node {} from {} to {:x}", aiNetwork->nodes[i]->index, (void*)aiNetwork->nodes[i], writeStream.tellp());
+		DevMsg(eLog::NS, "writing node %i from %li to 0x%p\n", aiNetwork->nodes[i]->index, (void*)aiNetwork->nodes[i], writeStream.tellp());
 		writeStream.write((char*)&diskNode, sizeof(CAI_NodeDisk));
 
 		calculatedLinkcount += aiNetwork->nodes[i]->linkcount;
 	}
 
 	// links
-	spdlog::info("linkcount: {}", aiNetwork->linkcount);
-	spdlog::info("calculated total linkcount: {}", calculatedLinkcount);
+	DevMsg(eLog::NS, "linkcount: %i\n", aiNetwork->linkcount);
+	DevMsg(eLog::NS, "calculated total linkcount: %i\n", calculatedLinkcount);
 
 	calculatedLinkcount /= 2;
 	if (Cvar_ns_ai_dumpAINfileFromLoad->GetBool())
 	{
 		if (aiNetwork->linkcount == calculatedLinkcount)
-			spdlog::info("caculated linkcount is normal!");
+			DevMsg(eLog::NS, "caculated linkcount is normal!\n");
 		else
-			spdlog::warn("calculated linkcount has weird value! this is expected on build!");
+			Warning(eLog::NS, "calculated linkcount has weird value! this is expected on build!\n");
 	}
 
-	spdlog::info("writing linkcount: {}", calculatedLinkcount);
+	DevMsg(eLog::NS, "writing linkcount: %i\n", calculatedLinkcount);
 	writeStream.write((char*)&calculatedLinkcount, sizeof(int));
 
 	for (int i = 0; i < aiNetwork->nodecount; i++)
@@ -265,13 +260,13 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 			diskLink.unk0 = aiNetwork->nodes[i]->links[j]->unk1;
 			memcpy(diskLink.hulls, aiNetwork->nodes[i]->links[j]->hulls, sizeof(diskLink.hulls));
 
-			spdlog::info("writing link {} => {} to {:x}", diskLink.srcId, diskLink.destId, writeStream.tellp());
+			DevMsg(eLog::NS, "writing link %i => %i to 0x%p\n", diskLink.srcId, diskLink.destId, writeStream.tellp());
 			writeStream.write((char*)&diskLink, sizeof(CAI_NodeLinkDisk));
 		}
 	}
 
 	// don't know what this is, it's likely a block from tf1 that got deprecated? should just be 1 int per node
-	spdlog::info("writing {:x} bytes for unknown block at {:x}", aiNetwork->nodecount * sizeof(uint32_t), writeStream.tellp());
+	DevMsg(eLog::NS, "writing %x bytes for unknown block at 0x%p\n", aiNetwork->nodecount * sizeof(uint32_t), writeStream.tellp());
 	uint32_t* unkNodeBlock = new uint32_t[aiNetwork->nodecount];
 	memset(unkNodeBlock, 0, aiNetwork->nodecount * sizeof(uint32_t));
 	writeStream.write((char*)unkNodeBlock, aiNetwork->nodecount * sizeof(uint32_t));
@@ -279,24 +274,24 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 
 	// TODO: this is traverse nodes i think? these aren't used in tf2 ains so we can get away with just writing count=0 and skipping
 	// but ideally should actually dump these
-	spdlog::info("writing {} traversal nodes at {:x}...", 0, writeStream.tellp());
+	DevMsg(eLog::NS, "writing 0x%p traversal nodes at {:x}...\n", 0, writeStream.tellp());
 	short traverseNodeCount = 0;
 	writeStream.write((char*)&traverseNodeCount, sizeof(short));
 	// only write count since count=0 means we don't have to actually do anything here
 
 	// TODO: ideally these should be actually dumped, but they're always 0 in tf2 from what i can tell
-	spdlog::info("writing {} bytes for unknown hull block at {:x}", MAX_HULLS * 8, writeStream.tellp());
+	DevMsg(eLog::NS, "writing %i bytes for unknown hull block at 0x%p\n", MAX_HULLS * 8, writeStream.tellp());
 	char* unkHullBlock = new char[MAX_HULLS * 8];
 	memset(unkHullBlock, 0, MAX_HULLS * 8);
 	writeStream.write(unkHullBlock, MAX_HULLS * 8);
 	delete[] unkHullBlock;
 
 	// unknown struct that's seemingly node-related
-	spdlog::info("writing {} unknown node structs at {:x}", *pUnkStruct0Count, writeStream.tellp());
+	DevMsg(eLog::NS, "writing %i unknown node structs at 0x%p\n", *pUnkStruct0Count, writeStream.tellp());
 	writeStream.write((char*)pUnkStruct0Count, sizeof(*pUnkStruct0Count));
 	for (int i = 0; i < *pUnkStruct0Count; i++)
 	{
-		spdlog::info("writing unknown node struct {} at {:x}", i, writeStream.tellp());
+		DevMsg(eLog::NS, "writing unknown node struct %i at 0x%p\n", i, writeStream.tellp());
 		UnkNodeStruct0* nodeStruct = (*pppUnkNodeStruct0s)[i];
 
 		writeStream.write((char*)&nodeStruct->index, sizeof(nodeStruct->index));
@@ -324,12 +319,12 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	}
 
 	// unknown struct that's seemingly link-related
-	spdlog::info("writing {} unknown link structs at {:x}", *pUnkLinkStruct1Count, writeStream.tellp());
+	DevMsg(eLog::NS, "writing %i unknown link structs at 0x%p\n", *pUnkLinkStruct1Count, writeStream.tellp());
 	writeStream.write((char*)pUnkLinkStruct1Count, sizeof(*pUnkLinkStruct1Count));
 	for (int i = 0; i < *pUnkLinkStruct1Count; i++)
 	{
 		// disk and memory structs are literally identical here so just directly write
-		spdlog::info("writing unknown link struct {} at {:x}", i, writeStream.tellp());
+		DevMsg(eLog::NS, "writing unknown link struct %i at 0x%p\n", i, writeStream.tellp());
 		writeStream.write((char*)(*pppUnkStruct1s)[i], sizeof(*(*pppUnkStruct1s)[i]));
 	}
 
@@ -337,20 +332,20 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writeStream.write((char*)&aiNetwork->unk5, sizeof(aiNetwork->unk5));
 
 	// tf2-exclusive stuff past this point, i.e. ain v57 only
-	spdlog::info("writing {} script nodes at {:x}", aiNetwork->scriptnodecount, writeStream.tellp());
+	DevMsg(eLog::NS, "writing %i script nodes at 0x%p\n", aiNetwork->scriptnodecount, writeStream.tellp());
 	writeStream.write((char*)&aiNetwork->scriptnodecount, sizeof(aiNetwork->scriptnodecount));
 	for (int i = 0; i < aiNetwork->scriptnodecount; i++)
 	{
 		// disk and memory structs are literally identical here so just directly write
-		spdlog::info("writing script node {} at {:x}", i, writeStream.tellp());
+		DevMsg(eLog::NS, "writing script node %i at 0x%p\n", i, writeStream.tellp());
 		writeStream.write((char*)&aiNetwork->scriptnodes[i], sizeof(aiNetwork->scriptnodes[i]));
 	}
 
-	spdlog::info("writing {} hints at {:x}", aiNetwork->hintcount, writeStream.tellp());
+	DevMsg(eLog::NS, "writing %i hints at 0x%p\n", aiNetwork->hintcount, writeStream.tellp());
 	writeStream.write((char*)&aiNetwork->hintcount, sizeof(aiNetwork->hintcount));
 	for (int i = 0; i < aiNetwork->hintcount; i++)
 	{
-		spdlog::info("writing hint data {} at {:x}", i, writeStream.tellp());
+		DevMsg(eLog::NS, "writing hint data %i at 0x%p\n", i, writeStream.tellp());
 		writeStream.write((char*)&aiNetwork->hints[i], sizeof(aiNetwork->hints[i]));
 	}
 
@@ -376,7 +371,7 @@ void, __fastcall, (void* aimanager, void* buf, const char* filename))
 
 	if (Cvar_ns_ai_dumpAINfileFromLoad->GetBool())
 	{
-		spdlog::info("running DumpAINInfo for loaded file {}", filename);
+		DevMsg(eLog::NS, "running DumpAINInfo for loaded file %s\n", filename);
 		DumpAINInfo(*(CAI_Network**)((char*)aimanager + 2536));
 	}
 }

@@ -53,14 +53,6 @@ const std::unordered_map<SpewType_t, const char*> PrintSpewTypes = {
 	{SpewType_t::SPEW_ERROR, "SPEW_ERROR"},
 	{SpewType_t::SPEW_LOG, "SPEW_LOG"}};
 
-// these are used to define the base text colour for these things
-const std::unordered_map<SpewType_t, spdlog::level::level_enum> PrintSpewLevels = {
-	{SpewType_t::SPEW_MESSAGE, spdlog::level::level_enum::info},
-	{SpewType_t::SPEW_WARNING, spdlog::level::level_enum::warn},
-	{SpewType_t::SPEW_ASSERT, spdlog::level::level_enum::err},
-	{SpewType_t::SPEW_ERROR, spdlog::level::level_enum::err},
-	{SpewType_t::SPEW_LOG, spdlog::level::level_enum::info}};
-
 const std::unordered_map<SpewType_t, const char> PrintSpewTypes_Short = {
 	{SpewType_t::SPEW_MESSAGE, 'M'},
 	{SpewType_t::SPEW_WARNING, 'W'},
@@ -118,7 +110,7 @@ int,, (void* const stream, const char* const format, ...))
 	{
 		if (buf[charsWritten - 1] == '\n')
 			buf[charsWritten - 1] = '\0';
-		NS::log::NATIVE_EN->info("{}", buf);
+		DevMsg(eLog::ENGINE, "%s\n", buf);
 	}
 
 	va_end(va);
@@ -131,7 +123,7 @@ void,, (const CCommand& arg))
 // clang-format on
 {
 	if (arg.ArgC() >= 2)
-		NS::log::echo->info("{}", arg.ArgS());
+		DevMsg(eLog::ENGINE, "%s\n", arg.ArgS());
 }
 
 // clang-format off
@@ -201,13 +193,23 @@ void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_
 	if (bShouldFormat)
 		vsnprintf(formatted, sizeof(formatted), format, args);
 	else
-		spdlog::warn("Failed to format {} \"{}\"", typeStr, format);
+		Warning(eLog::NS, "Failed to format %s \"%s\"\n", typeStr, format);
 
 	auto endpos = strlen(formatted);
 	if (formatted[endpos - 1] == '\n')
 		formatted[endpos - 1] = '\0'; // cut off repeated newline
 
-	NS::log::NATIVE_SV->log(PrintSpewLevels.at(type), "{}", formatted);
+	switch (type)
+	{
+	case SpewType_t::SPEW_MESSAGE:
+	case SpewType_t::SPEW_LOG:
+		DevMsg(eLog::ENGINE, "%s\n", formatted);
+	case SpewType_t::SPEW_WARNING:
+		Warning(eLog::ENGINE, "%s\n", formatted);
+	case SpewType_t::SPEW_ASSERT:
+	case SpewType_t::SPEW_ERROR:
+		Error(eLog::ENGINE, NO_ERROR, "%s\n", formatted);
+	}
 }
 
 // used for printing the output of status
