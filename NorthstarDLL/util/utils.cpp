@@ -80,3 +80,37 @@ void NS::Utils::RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 				*pc = ' ';
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+std::string NS::Utils::FormatV(const char* fmt, va_list vArgs) {
+	va_list vArgsCopy;
+	va_copy(vArgsCopy, vArgs);
+	int iLen = std::vsnprintf(NULL, 0, fmt, vArgsCopy);
+	va_end(vArgsCopy);
+
+	std::string svResult;
+
+	if (iLen > 0)
+	{
+		svResult.resize(iLen);
+		std::vsnprintf(svResult.data(), iLen + 1, fmt, vArgs);
+	}
+
+	return svResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+std::string NS::Utils::Format(const char* fmt, ...) {
+	std::string svResult;
+
+	va_list vArgs;
+	va_start(vArgs, fmt);
+	svResult = FormatV(fmt, vArgs);
+	va_end(vArgs);
+
+	return svResult;
+}

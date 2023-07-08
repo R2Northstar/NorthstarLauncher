@@ -41,6 +41,8 @@ void, __fastcall, (void* self))
 {
 	CEngineVGui__Init(self); // this loads r1_english, valve_english, dev_english
 
+	g_bEngineVguiInitilazed = true;
+
 	// previously we did this in CLocalize::AddFile, but for some reason it won't properly overwrite localization from
 	// files loaded previously if done there, very weird but this works so whatever
 	for (Mod mod : g_pModManager->m_LoadedMods)

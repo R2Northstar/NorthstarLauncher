@@ -1,5 +1,8 @@
 #pragma once
 
+// We can only print to gameconsole when CEngineVgui is initilazed
+inline bool g_bEngineVguiInitilazed = false;
+
 //-----------------------------------------------------------------------------
 // Log context
 enum class eLogLevel : int

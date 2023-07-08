@@ -4,6 +4,7 @@
 #include "config/profile.h"
 #include "core/tier0.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/stdout_sinks.h"
 
 #include <iomanip>
 #include <sstream>
@@ -12,7 +13,7 @@
 //-----------------------------------------------------------------------------
 // Purpose: Checks if install folder is writable, exits if it is not
 //-----------------------------------------------------------------------------
-void SpdLog_PreInit()
+void SpdLog_PreInit(void)
 {
 	// This is called before SpdLog_Init so we can't use any logging helpers
 
@@ -55,7 +56,18 @@ void SpdLog_PreInit()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void Console_Init()
+void SpdLog_Init(void) {
+	g_WinLogger = spdlog::stdout_logger_mt("win_console");
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void SpdLog_Shutdown(void) {}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void Console_Init(void)
 {
 	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL;
 
@@ -80,7 +92,7 @@ void Console_Init()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void Console_Shutdown() {}
+void Console_Shutdown(void) {}
 
 AUTOHOOK_INIT()
 
