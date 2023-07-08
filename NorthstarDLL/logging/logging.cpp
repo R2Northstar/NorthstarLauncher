@@ -58,6 +58,10 @@ void SpdLog_PreInit(void)
 //-----------------------------------------------------------------------------
 void SpdLog_Init(void) {
 	g_WinLogger = spdlog::stdout_logger_mt("win_console");
+	spdlog::set_default_logger(g_WinLogger);
+	g_WinLogger->set_level(spdlog::level::trace);
+
+	g_WinLogger->set_pattern("[0.000] %v");
 }
 
 //-----------------------------------------------------------------------------
