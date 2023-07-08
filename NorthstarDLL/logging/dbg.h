@@ -45,15 +45,39 @@ enum class eLog : int
 	//-----------------------------------------------------------------------------
 	// Custom systems
 	//-----------------------------------------------------------------------------
-	MS = 14,      // Masterserver
-	MODSYS = 15,  // Mod system
+	MS = 14, // Masterserver
+	MODSYS = 15, // Mod system
 	PLUGSYS = 16, // Plugin system
 
 	//-----------------------------------------------------------------------------
 	// Misc
 	//-----------------------------------------------------------------------------
-	CHAT = 17     // Chat
+	CHAT = 17 // Chat
 };
+
+// clang-format off
+constexpr const char* sLogString[18] =
+{
+	"",
+	"NORTHSTAR",
+	"SCRIPT SV",
+	"SCRIPT CL",
+	"SCRIPT UI",
+	"NATIVE SV",
+	"NATIVE CL",
+	"NATIVE UI",
+	"NATIVE EN",
+	"RTECH SYS",
+	"FILESYSTM",
+	"MATERIAL ",
+	"AUDIO SYS",
+	"VIDEO SYS",
+	"MASTERSVR",
+	"MODSYSTEM",
+	"PLUGSYSTM",
+	"CHATSYSTM"
+};
+// clang-format on
 
 void DevMsg(eLog eContext, const char* fmt, ...);
 void Warning(eLog eContext, const char* fmt, ...);
@@ -67,4 +91,4 @@ namespace NS
 	{
 		inline void FlushLoggers() {};
 	}
-}
+} // namespace NS
