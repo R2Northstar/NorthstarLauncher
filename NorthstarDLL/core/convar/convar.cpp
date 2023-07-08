@@ -51,7 +51,7 @@ ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 //-----------------------------------------------------------------------------
 ConVar::ConVar(const char* pszName, const char* pszDefaultValue, int nFlags, const char* pszHelpString)
 {
-	DevMsg(eLog::NS, "Registering Convar {}", pszName);
+	DevMsg(eLog::ENGINE, "Registering Convar %s\n", pszName);
 
 	this->m_ConCommandBase.m_pConCommandBaseVTable = g_pConVar_Vtable;
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
@@ -74,7 +74,7 @@ ConVar::ConVar(
 	float fMax,
 	FnChangeCallback_t pCallback)
 {
-	DevMsg(eLog::NS, "Registering Convar {}", pszName);
+	DevMsg(eLog::ENGINE, "Registering Convar %s\n", pszName);
 
 	this->m_ConCommandBase.m_pConCommandBaseVTable = g_pConVar_Vtable;
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
