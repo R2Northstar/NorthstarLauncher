@@ -48,11 +48,11 @@ bool InitialiseNorthstar()
 	SpdLog_Init();
 
 	// initialise the console if needed (-northstar needs this)
-	//InitialiseConsole();
+	// InitialiseConsole();
 	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
 	InitialiseLogging();
 	InitialiseVersion();
-	//CreateLogFiles();
+	// CreateLogFiles();
 
 	InitialiseCrashHandler();
 

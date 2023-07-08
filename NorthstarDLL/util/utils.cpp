@@ -84,7 +84,8 @@ void NS::Utils::RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-std::string NS::Utils::FormatV(const char* fmt, va_list vArgs) {
+std::string NS::Utils::FormatV(const char* fmt, va_list vArgs)
+{
 	va_list vArgsCopy;
 	va_copy(vArgsCopy, vArgs);
 	int iLen = std::vsnprintf(NULL, 0, fmt, vArgsCopy);
@@ -104,7 +105,8 @@ std::string NS::Utils::FormatV(const char* fmt, va_list vArgs) {
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-std::string NS::Utils::Format(const char* fmt, ...) {
+std::string NS::Utils::Format(const char* fmt, ...)
+{
 	std::string svResult;
 
 	va_list vArgs;

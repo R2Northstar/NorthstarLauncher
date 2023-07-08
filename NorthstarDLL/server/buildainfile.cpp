@@ -215,7 +215,7 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 		for (int j = 0; j < MAX_HULLS; j++)
 		{
 			diskNode.unk2[j] = (short)aiNetwork->nodes[i]->unk2[j];
-			DevMsg(eLog::NS, "%i\n",(short)aiNetwork->nodes[i]->unk2[j]);
+			DevMsg(eLog::NS, "%i\n", (short)aiNetwork->nodes[i]->unk2[j]);
 		}
 
 		memcpy(diskNode.unk3, aiNetwork->nodes[i]->unk3, sizeof(diskNode.unk3));

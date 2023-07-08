@@ -47,7 +47,8 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		Error(
 			eLog::AUDIO,
 			NO_ERROR,
-			"Failed reading audio override file %s: samples folder doesn't exist; should be named the same as the definition file without JSON extension.\n",
+			"Failed reading audio override file %s: samples folder doesn't exist; should be named the same as the definition file without "
+			"JSON extension.\n",
 			path.string().c_str());
 		return;
 	}
@@ -58,7 +59,9 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	// fail if parse error
 	if (dataJson.HasParseError())
 	{
-		Error(eLog::AUDIO, NO_ERROR,
+		Error(
+			eLog::AUDIO,
+			NO_ERROR,
 			"Failed reading audio override file %s: encountered parse error \"%s\" at offset %i\n",
 			path.string().c_str(),
 			GetParseError_En(dataJson.GetParseError()),
@@ -77,7 +80,10 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	if (!dataJson.HasMember("EventId"))
 	{
 		Error(
-			eLog::AUDIO, NO_ERROR, "Failed reading audio override file %s: JSON object does not have the EventId property\n", path.string().c_str());
+			eLog::AUDIO,
+			NO_ERROR,
+			"Failed reading audio override file %s: JSON object does not have the EventId property\n",
+			path.string().c_str());
 		return;
 	}
 
@@ -90,8 +96,9 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 			{
 				Error(
 					eLog::AUDIO,
-					NO_ERROR, 
-					"Failed reading audio override file %s: EventId array has a value of invalid type, all must be strings\n", path.string().c_str());
+					NO_ERROR,
+					"Failed reading audio override file %s: EventId array has a value of invalid type, all must be strings\n",
+					path.string().c_str());
 				return;
 			}
 
@@ -108,7 +115,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	{
 		Error(
 			eLog::AUDIO,
-			NO_ERROR, 
+			NO_ERROR,
 			"Failed reading audio override file %s: EventId property is of invalid type (must be a string or an array of strings)\n",
 			path.string().c_str());
 		return;
@@ -125,7 +132,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 				{
 					Error(
 						eLog::AUDIO,
-						NO_ERROR, 
+						NO_ERROR,
 						"Failed reading audio override file %s: EventIdRegex array has a value of invalid type, all must be strings\n",
 						path.string().c_str());
 					return;
@@ -139,7 +146,8 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 				}
 				catch (...)
 				{
-					Error(eLog::AUDIO, NO_ERROR, "Malformed regex \"%s\" in audio override file %s\n", regex.c_str(), path.string().c_str());
+					Error(
+						eLog::AUDIO, NO_ERROR, "Malformed regex \"%s\" in audio override file %s\n", regex.c_str(), path.string().c_str());
 					return;
 				}
 			}
@@ -163,8 +171,9 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		{
 			Error(
 				eLog::AUDIO,
-				NO_ERROR, 
-				"Failed reading audio override file %s: EventIdRegex property is of invalid type (must be a string or an array of strings)\n",
+				NO_ERROR,
+				"Failed reading audio override file %s: EventIdRegex property is of invalid type (must be a string or an array of "
+				"strings)\n",
 				path.string().c_str());
 			return;
 		}
@@ -196,7 +205,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		{
 			Error(
 				eLog::AUDIO,
-				NO_ERROR, 
+				NO_ERROR,
 				"Failed reading audio override file %s: AudioSelectionStrategy string must be either \"sequential\" or \"random\"\n",
 				path.string().c_str());
 			return;

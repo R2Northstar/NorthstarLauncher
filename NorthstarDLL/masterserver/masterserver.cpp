@@ -122,7 +122,9 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 
 				if (originAuthInfo.HasParseError())
 				{
-					Error(eLog::MS, NO_ERROR,
+					Error(
+						eLog::MS,
+						NO_ERROR,
 						"Failed reading origin auth info response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
 					goto REQUEST_END_CLEANUP;
@@ -130,7 +132,8 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 
 				if (!originAuthInfo.IsObject() || !originAuthInfo.HasMember("success"))
 				{
-					Error(eLog::MS, NO_ERROR, "Failed reading origin auth info response: malformed response object %s\n", readBuffer.c_str());
+					Error(
+						eLog::MS, NO_ERROR, "Failed reading origin auth info response: malformed response object %s\n", readBuffer.c_str());
 					goto REQUEST_END_CLEANUP;
 				}
 
@@ -200,7 +203,9 @@ void MasterServerManager::RequestServerList()
 
 				if (serverInfoJson.HasParseError())
 				{
-					Error(eLog::MS, NO_ERROR,
+					Error(
+						eLog::MS,
+						NO_ERROR,
 						"Failed reading masterserver response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(serverInfoJson.GetParseError()));
 					goto REQUEST_END_CLEANUP;
@@ -784,7 +789,12 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 	if (obj.HasParseError())
 	{
 		// note: it's okay to print the data as-is since we've already checked that it actually came from Atlas
-		Error(eLog::MS, NO_ERROR, "invalid Atlas connectionless packet request (%s): %i\n", data.c_str(), GetParseError_En(obj.GetParseError()));
+		Error(
+			eLog::MS,
+			NO_ERROR,
+			"invalid Atlas connectionless packet request (%s): %i\n",
+			data.c_str(),
+			GetParseError_En(obj.GetParseError()));
 		return;
 	}
 
@@ -872,7 +882,12 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
 						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
 				else
-					Error(eLog::MS, NO_ERROR, "failed to make Atlas connect pdata request %s: response status %li\n", token.c_str(), respStatus);
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"failed to make Atlas connect pdata request %s: response status %li\n",
+						token.c_str(),
+						respStatus);
 				return;
 			}
 
@@ -972,7 +987,12 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
 						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
 				else
-					Error(eLog::MS, NO_ERROR, "failed to respond to Atlas connect request %s: response status %li\n", token.c_str(), respStatus);
+					Error(
+						eLog::MS,
+						NO_ERROR,
+						"failed to respond to Atlas connect request %s: response status %li\n",
+						token.c_str(),
+						respStatus);
 				return;
 			}
 		}

@@ -84,7 +84,8 @@ char*, __fastcall, ())
 				0) // don't log for "russian" since it's the default and that means Origin detection just didn't change it most likely
 				DevMsg(
 					eLog::NS,
-					"Origin detected language \"%s\", but we do not have audio for it installed, falling back to the next option\n", lang);
+					"Origin detected language \"%s\", but we do not have audio for it installed, falling back to the next option\n",
+					lang);
 		}
 		else
 		{
@@ -102,7 +103,8 @@ char*, __fastcall, ())
 	{
 		Warning(
 			eLog::NS,
-			"Caution, audio for this language does NOT exist. You might want to override your game language with -language command line option.\n");
+			"Caution, audio for this language does NOT exist. You might want to override your game language with -language command line "
+			"option.\n");
 		auto lang = GetAnyInstalledAudioLanguage();
 		Warning(eLog::NS, "Falling back to the first installed audio language: %s\n", lang.c_str());
 		strncpy(ingameLang1, lang.c_str(), 256);

@@ -146,7 +146,12 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
 	if (pluginLib == NULL)
 	{
-		Error(eLog::PLUGSYS, NO_ERROR, "Failed to load library '%s': %s\n", pathstring.c_str(), std::system_category().message(GetLastError()).c_str());
+		Error(
+			eLog::PLUGSYS,
+			NO_ERROR,
+			"Failed to load library '%s': %s\n",
+			pathstring.c_str(),
+			std::system_category().message(GetLastError()).c_str());
 		return std::nullopt;
 	}
 	plugin.init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
@@ -189,7 +194,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	plugin.handle = m_vLoadedPlugins.size();
 	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName.c_str(), NS::Colors::PLUGIN);
-	//RegisterLogger(plugin.logger);
+	// RegisterLogger(plugin.logger);
 	DevMsg(eLog::PLUGSYS, "Loading plugin %s version %s\n", plugin.displayName.c_str(), plugin.version.c_str());
 	m_vLoadedPlugins.push_back(plugin);
 
