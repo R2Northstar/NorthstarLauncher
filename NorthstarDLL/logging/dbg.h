@@ -55,3 +55,13 @@ enum class eLog : int
 void DevMsg(eLog eContext, const char* fmt, ...);
 void Warning(eLog eContext, const char* fmt, ...);
 void Error(eLog eContext, int nCode, const char* fmt, ...);
+
+// Stubs so i can compile
+namespace NS
+{
+	namespace log
+
+	{
+		inline void FlushLoggers() {};
+	}
+}

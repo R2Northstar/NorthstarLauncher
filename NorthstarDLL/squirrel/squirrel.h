@@ -256,7 +256,6 @@ class SquirrelManagerBase
 	{
 		return __sq_stackinfos(sqvm, level, &out, sqvm->_callstacksize);
 	}
-
 	inline Mod* getcallingmod(HSquirrelVM* sqvm, int depth = 0)
 	{
 		SQStackInfos stackInfo {};
