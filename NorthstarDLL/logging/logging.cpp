@@ -7,6 +7,50 @@
 
 #include <iomanip>
 #include <sstream>
+#include <shellapi.h>
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks if install folder is writable, exits if it is not
+//-----------------------------------------------------------------------------
+void SpdLog_PreInit()
+{
+	// This is called before SpdLog_Init so we can't use any logging helpers
+
+	// NOTE [Fifty]: Instead of checking every reason as to why we might not be able to write to a directory
+	//               it is easier to just try to create a file
+	FILE* pFile = fopen(".nstemp", "w");
+	if (pFile)
+	{
+		fclose(pFile);
+		remove(".nstemp");
+		return;
+	}
+
+	// Show message box
+	int iAction = MessageBoxA(
+		NULL,
+		"The current directory isn't writable!\n"
+		"Please move the game into a writable directory to be able to continue\n\n"
+		"Click \"OK\" to open the wiki in your browser",
+		"Northstar Error",
+		MB_ICONERROR | MB_OKCANCEL);
+
+	// User chose to open the troubleshooting wiki page
+	if (iAction == IDOK)
+	{
+		ShellExecuteA(
+			NULL,
+			NULL,
+			"https://r2northstar.gitbook.io/r2northstar-wiki/installing-northstar/"
+			"troubleshooting#cannot-write-log-file-when-using-northstar-on-ea-app",
+			NULL,
+			NULL,
+			SW_NORMAL);
+	}
+
+	// Gracefully close
+	TerminateProcess(GetCurrentProcess(), -1);
+}
 
 AUTOHOOK_INIT()
 

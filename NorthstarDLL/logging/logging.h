@@ -4,6 +4,10 @@
 #include "squirrel/squirrel.h"
 #include "core/math/color.h"
 
+
+void SpdLog_PreInit();
+
+
 void CreateLogFiles();
 void InitialiseLogging();
 void InitialiseConsole();
