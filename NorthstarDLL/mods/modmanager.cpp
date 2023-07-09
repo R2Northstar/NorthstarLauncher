@@ -462,7 +462,7 @@ void Mod::ParseLocalization(rapidjson_document& json)
 
 		LocalisationFiles.push_back(localisationStr.GetString());
 
-		DevMsg(eLog::MODSYS, "'%s' registered Localisation '%s'", Name.c_str(), localisationStr.GetString());
+		DevMsg(eLog::MODSYS, "'%s' registered Localisation '%s'\n", Name.c_str(), localisationStr.GetString());
 	}
 }
 
@@ -713,7 +713,7 @@ void ModManager::LoadMods()
 			if (mod.m_bEnabled)
 				DevMsg(eLog::MODSYS, "'%s' loaded successfully\n", mod.Name.c_str());
 			else
-				DevMsg(eLog::MODSYS, "'%s' loaded successfully (DISABLED)", mod.Name.c_str());
+				DevMsg(eLog::MODSYS, "'%s' loaded successfully (DISABLED)\n", mod.Name.c_str());
 
 			m_LoadedMods.push_back(mod);
 		}
