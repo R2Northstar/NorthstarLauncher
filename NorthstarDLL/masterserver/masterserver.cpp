@@ -506,7 +506,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 				if (authInfoJson.HasMember("error"))
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
-					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer);
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
 
 					if (authInfoJson["error"].HasMember("msg"))
 						m_sAuthFailureReason = authInfoJson["error"]["msg"].GetString();
@@ -664,7 +664,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 				if (connectionInfoJson.HasMember("error"))
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
-					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer);
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
 
 					if (connectionInfoJson["error"].HasMember("msg"))
 						m_sAuthFailureReason = connectionInfoJson["error"]["msg"].GetString();
@@ -1298,7 +1298,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				if (serverAddedJson.HasMember("error"))
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
-					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer);
+					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
 
 					// If this is DUPLICATE_SERVER, we'll retry adding the server every 20 seconds.
 					// The master server will only update its internal server list and clean up dead servers on certain events.
