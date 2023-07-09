@@ -8,6 +8,8 @@ inline std::string g_LogDirectory;
 
 inline std::shared_ptr<spdlog::logger> g_WinLogger;
 
+inline bool g_bSpdLog_UseAnsiColor = false;
+
 void SpdLog_PreInit(void);
 void SpdLog_Init(void);
 void SpdLog_Shutdown(void);

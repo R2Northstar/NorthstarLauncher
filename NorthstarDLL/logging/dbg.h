@@ -77,6 +77,7 @@ constexpr const char* sLogString[18] =
 	"PLUGSYSTM",
 	"CHATSYSTM"
 };
+
 // clang-format on
 
 void DevMsg(eLog eContext, const char* fmt, ...);

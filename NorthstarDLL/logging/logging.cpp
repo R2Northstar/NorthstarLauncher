@@ -63,7 +63,10 @@ void SpdLog_Init(void)
 	spdlog::set_default_logger(g_WinLogger);
 	g_WinLogger->set_level(spdlog::level::trace);
 
-	g_WinLogger->set_pattern("%v");
+	if (g_bSpdLog_UseAnsiColor)
+		g_WinLogger->set_pattern("%v\u001b[0m");
+	else
+		g_WinLogger->set_pattern("%v");
 }
 
 //-----------------------------------------------------------------------------
@@ -78,6 +81,8 @@ void SpdLog_Shutdown(void)
 //-----------------------------------------------------------------------------
 void Console_Init(void)
 {
+	g_bSpdLog_UseAnsiColor = strstr(GetCommandLineA(), "-noansicolor") == NULL;
+
 	// Always show console when we're a dedicated server
 	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL || IsDedicatedServer();
 
@@ -89,6 +94,20 @@ void Console_Init(void)
 		freopen_s(&pDummy, "CONIN$", "r", stdin);
 		freopen_s(&pDummy, "CONOUT$", "w", stdout);
 		freopen_s(&pDummy, "CONOUT$", "w", stderr);
+
+		if (g_bSpdLog_UseAnsiColor)
+		{
+			DWORD dwMode = 0;
+			HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+
+			GetConsoleMode(hOutput, &dwMode);
+			dwMode |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+			if (!SetConsoleMode(hOutput, dwMode))
+			{
+				g_bSpdLog_UseAnsiColor = false;
+			}
+		}
 	}
 	else
 	{

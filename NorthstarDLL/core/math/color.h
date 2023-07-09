@@ -159,8 +159,8 @@ class Color
 		std::string out = "\033[38;2;";
 		out += std::to_string(_color[0]) + ";";
 		out += std::to_string(_color[1]) + ";";
-		out += std::to_string(_color[2]) + ";";
-		out += "49m";
+		out += std::to_string(_color[2]);
+		out += "m";
 		return out;
 	}
 
