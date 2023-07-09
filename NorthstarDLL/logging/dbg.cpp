@@ -22,14 +22,14 @@ const char* Log_GetContextString(eLog eContext)
 Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 {
 	if (eLevel == eLogLevel::LOG_WARN)
-		return Color(255,255,0);
+		return Color(255, 255, 0);
 	if (eLevel == eLogLevel::LOG_ERROR)
-		return Color(255,50,50);
+		return Color(255, 50, 50);
 
 	switch (eContext)
 	{
 	case eLog::NS:
-		return Color(66,72,128);
+		return Color(66, 72, 128);
 	case eLog::SCRIPT_SERVER:
 		return Color(90, 80, 50);
 	case eLog::SCRIPT_CLIENT:

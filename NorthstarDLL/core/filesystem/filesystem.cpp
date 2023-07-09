@@ -74,7 +74,7 @@ void SetNewModSearchPaths(Mod* mod)
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
 			// NOTE [Fifty]: Possibly put this behind some check
-			//DevMsg(eLog::FS, "Changing mod search path from %s to %s\n", sCurrentModPath.c_str(), mod->m_ModDirectory.string().c_str());
+			// DevMsg(eLog::FS, "Changing mod search path from %s to %s\n", sCurrentModPath.c_str(), mod->m_ModDirectory.string().c_str());
 
 			AddSearchPath(
 				&*(*g_pFilesystem), (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
