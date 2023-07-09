@@ -130,6 +130,12 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 		(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->ColorPrint(Log_GetColor(eContext, eLevel).ToSourceColor(), svMessage.c_str());
 		//(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(svMessage.c_str());
 	}
+
+	if (iCode)
+	{
+		MessageBoxA(NULL, svMessage.c_str(), "Northstar Error", MB_ICONERROR | MB_OK);
+		TerminateProcess(GetCurrentProcess(), iCode);
+	}
 }
 
 //-----------------------------------------------------------------------------
