@@ -232,7 +232,7 @@ typedef const char*(CDECL* wine_get_build_id_type)(void);
 wine_get_build_id_type wine_get_build_id;
 
 // Not exported Winapi methods
-typedef NTSTATUS (WINAPI* RtlGetVersion_type)(PRTL_OSVERSIONINFOW);
+typedef NTSTATUS(WINAPI* RtlGetVersion_type)(PRTL_OSVERSIONINFOW);
 RtlGetVersion_type RtlGetVersion;
 
 void StartupLog()
