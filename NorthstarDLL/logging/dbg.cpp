@@ -134,7 +134,8 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	//-----------------------------------
 	// Log to file
 	std::shared_ptr<spdlog::logger> fLogger = Log_GetLogger(eLevel);
-	fLogger->info("{:s}", svMessage);
+	if (fLogger.get()) // "-nologfiles" or programmer error can cause this to fail
+		fLogger->info("{:s}", svMessage);
 
 	//-----------------------------------
 	// Log to clients if enabled

@@ -80,7 +80,12 @@ void SpdLog_Init(void)
 //-----------------------------------------------------------------------------
 void SpdLog_CreateLoggers(void)
 {
+	g_bSpdLog_CreateLogFiles = strstr(GetCommandLineA(), "-nologfiles") == NULL;
+
 	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), NS::Utils::CreateTimeStamp());
+
+	if (!g_bSpdLog_CreateLogFiles)
+		return;
 
 	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
 		"northstar(info)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "message.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)

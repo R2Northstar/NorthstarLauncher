@@ -12,6 +12,7 @@ inline std::shared_ptr<spdlog::logger> g_WinLogger;
 
 // Settings
 inline bool g_bSpdLog_UseAnsiColor = false;
+inline bool g_bSpdLog_CreateLogFiles = true;
 
 // Log file settings
 constexpr int SPDLOG_MAX_LOG_SIZE = 10 * 1024 * 1024; // 10 MB max
