@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <sstream>
 #include <shellapi.h>
+#include <dedicated/dedicated.h>
 
 //-----------------------------------------------------------------------------
 // Purpose: Checks if install folder is writable, exits if it is not
@@ -77,7 +78,8 @@ void SpdLog_Shutdown(void)
 //-----------------------------------------------------------------------------
 void Console_Init(void)
 {
-	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL;
+	// Always show console when we're a dedicated server
+	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL || IsDedicatedServer();
 
 	if (bShow)
 	{
