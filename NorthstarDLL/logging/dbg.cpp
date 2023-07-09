@@ -7,10 +7,10 @@
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* fmt, va_list vArgs)
+void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszName, const char* fmt, va_list vArgs)
 {
 	std::string svMessage;
-	svMessage += NS::Utils::Format("[%s] ", sLogString[(int)eContext]);
+	svMessage += NS::Utils::Format("[%s] ", pszName);
 	svMessage += NS::Utils::FormatV(fmt, vArgs);
 
 	g_WinLogger->debug("{}", svMessage);
@@ -25,11 +25,11 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* fmt,
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CoreMsg(eLog eContext, eLogLevel eLevel, const int iCode, const char* fmt, ...)
+void CoreMsg(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszName, const char* fmt, ...)
 {
 	va_list vArgs;
 	va_start(vArgs, fmt);
-	CoreMsg(eContext, eLevel, iCode, fmt, vArgs);
+	CoreMsgV(eContext, eLevel, iCode, pszName, fmt, vArgs);
 	va_end(vArgs);
 }
 
@@ -40,7 +40,7 @@ void DevMsg(eLog eContext, const char* fmt, ...)
 {
 	va_list vArgs;
 	va_start(vArgs, fmt);
-	CoreMsgV(eContext, eLogLevel::LOG_INFO, 0, fmt, vArgs);
+	CoreMsgV(eContext, eLogLevel::LOG_INFO, 0, sLogString[(int)eContext], fmt, vArgs);
 	va_end(vArgs);
 }
 
@@ -51,7 +51,7 @@ void Warning(eLog eContext, const char* fmt, ...)
 {
 	va_list vArgs;
 	va_start(vArgs, fmt);
-	CoreMsgV(eContext, eLogLevel::LOG_WARN, 0, fmt, vArgs);
+	CoreMsgV(eContext, eLogLevel::LOG_WARN, 0, sLogString[(int)eContext], fmt, vArgs);
 	va_end(vArgs);
 }
 
@@ -62,6 +62,17 @@ void Error(eLog eContext, int nCode, const char* fmt, ...)
 {
 	va_list vArgs;
 	va_start(vArgs, fmt);
-	CoreMsgV(eContext, eLogLevel::LOG_ERROR, nCode, fmt, vArgs);
+	CoreMsgV(eContext, eLogLevel::LOG_ERROR, nCode, sLogString[(int)eContext], fmt, vArgs);
+	va_end(vArgs);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void PluginMsg(eLogLevel eLevel, const char* pszName, const char* fmt, ...)
+{
+	va_list vArgs;
+	va_start(vArgs, fmt);
+	CoreMsgV(eLog::NONE, eLevel, 0, pszName, fmt, vArgs);
 	va_end(vArgs);
 }

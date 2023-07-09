@@ -26,12 +26,32 @@ void freeLibrary(HMODULE hLib)
 
 EXPORT void PLUGIN_LOG(LogMsg* msg)
 {
-	spdlog::source_loc src {};
-	src.filename = msg->source.file;
-	src.funcname = msg->source.func;
-	src.line = msg->source.line;
-	auto&& logger = g_pPluginManager->m_vLoadedPlugins[msg->pluginHandle].logger;
-	logger->log(src, (spdlog::level::level_enum)msg->level, msg->msg);
+	eLogLevel eLevel = eLogLevel::LOG_INFO;
+
+	switch (msg->level)
+	{
+	case spdlog::level::level_enum::debug:
+	case spdlog::level::level_enum::info:
+		eLevel = eLogLevel::LOG_INFO;
+	case spdlog::level::level_enum::off:
+	case spdlog::level::level_enum::trace:
+	case spdlog::level::level_enum::warn:
+		eLevel = eLogLevel::LOG_WARN;
+	case spdlog::level::level_enum::critical:
+	case spdlog::level::level_enum::err:
+		eLevel = eLogLevel::LOG_ERROR;
+	}
+
+	int hPlugin = msg->pluginHandle;
+	if (hPlugin < g_pPluginManager->m_vLoadedPlugins.size() && hPlugin >= 0)
+	{
+		const char* pszName = g_pPluginManager->m_vLoadedPlugins[hPlugin].name.c_str();
+		PluginMsg(eLevel, pszName, "%s\n", msg->msg);
+	}
+	else
+	{
+		DevMsg(eLog::PLUGSYS, "Invalid plugin handle: %i\n", hPlugin);
+	}
 }
 
 EXPORT void* CreateObject(ObjectType type)
@@ -193,8 +213,6 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	plugin.inform_dll_load = (PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_DLL_LOAD");
 
 	plugin.handle = m_vLoadedPlugins.size();
-	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName.c_str(), NS::Colors::PLUGIN);
-	// RegisterLogger(plugin.logger);
 	DevMsg(eLog::PLUGSYS, "Loading plugin %s version %s\n", plugin.displayName.c_str(), plugin.version.c_str());
 	m_vLoadedPlugins.push_back(plugin);
 

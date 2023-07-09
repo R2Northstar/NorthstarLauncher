@@ -83,6 +83,8 @@ void DevMsg(eLog eContext, const char* fmt, ...);
 void Warning(eLog eContext, const char* fmt, ...);
 void Error(eLog eContext, int nCode, const char* fmt, ...);
 
+void PluginMsg(eLogLevel eLevel, const char* pszName, const char* fmt, ...);
+
 // Stubs so i can compile
 namespace NS
 {
