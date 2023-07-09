@@ -27,28 +27,28 @@ const char* Log_GetContextString(eLog eContext)
 Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 {
 	if (eLevel == eLogLevel::LOG_WARN)
-		return Color(255, 255, 0);
+		return Color(200, 200, 50);
 	if (eLevel == eLogLevel::LOG_ERROR)
-		return Color(255, 50, 50);
+		return Color(220, 50, 50);
 
 	switch (eContext)
 	{
 	case eLog::NS:
-		return Color(66, 72, 128);
+		return Color(50, 110, 170);
 	case eLog::SCRIPT_SERVER:
-		return Color(90, 80, 50);
+		return Color(120, 110, 50);
 	case eLog::SCRIPT_CLIENT:
-		return Color(60, 90, 40);
+		return Color(90, 110, 40);
 	case eLog::SCRIPT_UI:
-		return Color(40, 80, 90);
+		return Color(70, 110, 90);
 	case eLog::SERVER:
-		return Color(170, 130, 80);
+		return Color(200, 160, 80);
 	case eLog::CLIENT:
-		return Color(140, 170, 80);
+		return Color(170, 200, 80);
 	case eLog::UI:
-		return Color(80, 170, 150);
+		return Color(110, 200, 150);
 	case eLog::ENGINE:
-		return Color(80, 90, 180);
+		return Color(110, 180, 150);
 	case eLog::RTECH:
 		return Color(220, 160, 40);
 	case eLog::FS:
@@ -56,17 +56,17 @@ Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 	case eLog::MAT:
 		return Color(40, 230, 120);
 	case eLog::AUDIO:
-		return Color(40, 40, 220);
+		return Color(130, 130, 220);
 	case eLog::VIDEO:
-		return Color(220, 40, 170);
+		return Color(200, 130, 200);
 	case eLog::MS:
 		return Color(40, 110, 220);
 	case eLog::MODSYS:
 		return Color(20, 100, 150);
 	case eLog::PLUGSYS:
-		return Color(140, 110, 20);
+		return Color(190, 190, 90);
 	case eLog::PLUGIN:
-		return Color(140, 150, 70);
+		return Color(190, 140, 90);
 	case eLog::CHAT:
 		return Color(220, 180, 70);
 	}
