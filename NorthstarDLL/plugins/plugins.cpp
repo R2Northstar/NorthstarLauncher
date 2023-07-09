@@ -33,13 +33,16 @@ EXPORT void PLUGIN_LOG(LogMsg* msg)
 	case spdlog::level::level_enum::debug:
 	case spdlog::level::level_enum::info:
 		eLevel = eLogLevel::LOG_INFO;
+		break;
 	case spdlog::level::level_enum::off:
 	case spdlog::level::level_enum::trace:
 	case spdlog::level::level_enum::warn:
 		eLevel = eLogLevel::LOG_WARN;
+		break;
 	case spdlog::level::level_enum::critical:
 	case spdlog::level::level_enum::err:
 		eLevel = eLogLevel::LOG_ERROR;
+		break;
 	}
 
 	int hPlugin = msg->pluginHandle;
