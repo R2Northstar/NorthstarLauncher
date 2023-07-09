@@ -69,7 +69,7 @@ void SpdLog_Init(void)
 	//               Seems to fix logs not flushing properly, still needs testing
 	spdlog::flush_on(spdlog::level::trace);
 
-	if (g_bSpdLog_UseAnsiColor)
+	if (g_bConsole_UseAnsiColor)
 		g_WinLogger->set_pattern("%v\u001b[0m");
 	else
 		g_WinLogger->set_pattern("%v");
@@ -110,7 +110,7 @@ void SpdLog_Shutdown(void)
 //-----------------------------------------------------------------------------
 void Console_Init(void)
 {
-	g_bSpdLog_UseAnsiColor = strstr(GetCommandLineA(), "-noansicolor") == NULL;
+	g_bConsole_UseAnsiColor = strstr(GetCommandLineA(), "-noansicolor") == NULL;
 
 	// Always show console when we're a dedicated server
 	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL || IsDedicatedServer();
@@ -124,7 +124,7 @@ void Console_Init(void)
 		freopen_s(&pDummy, "CONOUT$", "w", stdout);
 		freopen_s(&pDummy, "CONOUT$", "w", stderr);
 
-		if (g_bSpdLog_UseAnsiColor)
+		if (g_bConsole_UseAnsiColor)
 		{
 			DWORD dwMode = 0;
 			HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -134,7 +134,7 @@ void Console_Init(void)
 
 			if (!SetConsoleMode(hOutput, dwMode))
 			{
-				g_bSpdLog_UseAnsiColor = false;
+				g_bConsole_UseAnsiColor = false;
 			}
 		}
 	}

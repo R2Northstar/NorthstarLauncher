@@ -11,7 +11,7 @@ inline std::string g_svLogDirectory;
 inline std::shared_ptr<spdlog::logger> g_WinLogger;
 
 // Settings
-inline bool g_bSpdLog_UseAnsiColor = false;
+inline bool g_bConsole_UseAnsiColor = false;
 inline bool g_bSpdLog_CreateLogFiles = true;
 
 // Log file settings
