@@ -57,7 +57,7 @@ void SpdLog_PreInit(void)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Initilases spdlog + windows console logger
 //-----------------------------------------------------------------------------
 void SpdLog_Init(void)
 {
@@ -76,7 +76,7 @@ void SpdLog_Init(void)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Creates all loggers we use
 //-----------------------------------------------------------------------------
 void SpdLog_CreateLoggers(void)
 {
@@ -94,14 +94,14 @@ void SpdLog_CreateLoggers(void)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Shutdowns spdlog
 //-----------------------------------------------------------------------------
 void SpdLog_Shutdown(void)
 {
 	spdlog::shutdown();
 }
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Initilazes the windows console, closes it if wanted
 //-----------------------------------------------------------------------------
 void Console_Init(void)
 {
