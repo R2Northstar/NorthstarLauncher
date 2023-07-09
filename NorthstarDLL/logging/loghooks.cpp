@@ -204,11 +204,14 @@ void, __fastcall, (void* pEngineServer, SpewType_t type, const char* format, va_
 	case SpewType_t::SPEW_MESSAGE:
 	case SpewType_t::SPEW_LOG:
 		DevMsg(eLog::ENGINE, "%s\n", formatted);
+		break;
 	case SpewType_t::SPEW_WARNING:
 		Warning(eLog::ENGINE, "%s\n", formatted);
+		break;
 	case SpewType_t::SPEW_ASSERT:
 	case SpewType_t::SPEW_ERROR:
 		Error(eLog::ENGINE, NO_ERROR, "%s\n", formatted);
+		break;
 	}
 }
 
