@@ -9,7 +9,9 @@
 const std::regex AnsiRegex("\\\033\\[.*?m");
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Get the log context string
+// Input  : eContext -
+// Output : Zero terminated string
 //-----------------------------------------------------------------------------
 const char* Log_GetContextString(eLog eContext)
 {
@@ -17,7 +19,10 @@ const char* Log_GetContextString(eLog eContext)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Get the color for a given context and level combination
+// Input  : eContext -
+//          eLevel -
+// Output : The color
 //-----------------------------------------------------------------------------
 Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 {
@@ -67,7 +72,9 @@ Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Get logger based on the log level
+// Input  : eLevel -
+// Output : Smart pointer to the logger
 //-----------------------------------------------------------------------------
 std::shared_ptr<spdlog::logger> Log_GetLogger(eLogLevel eLevel)
 {
@@ -90,7 +97,13 @@ std::shared_ptr<spdlog::logger> Log_GetLogger(eLogLevel eLevel)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Prints to all outputs based on parameters, va_list version
+// Input  : eContext -
+//          eLevel -
+//          iCode -
+//          *pszName -
+//          *fmt -
+//          vArgs -
 //-----------------------------------------------------------------------------
 void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszName, const char* fmt, va_list vArgs)
 {
@@ -98,7 +111,6 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 
 	//-----------------------------------
 	// Format header
-	//-----------------------------------
 	if (g_bSpdLog_UseAnsiColor)
 	{
 		std::string pszAnsiString = Log_GetColor(eContext, eLevel).ToANSIColor();
@@ -112,18 +124,24 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	// Add the message itself
 	svMessage += NS::Utils::FormatV(fmt, vArgs);
 
+	//-----------------------------------
 	// Log to windows console
 	g_WinLogger->debug("{}", svMessage);
 
 	// Remove ansi escape sequences
 	svMessage = std::regex_replace(svMessage, AnsiRegex, "");
 
+	//-----------------------------------
+	// Log to file
 	std::shared_ptr<spdlog::logger> fLogger = Log_GetLogger(eLevel);
 	fLogger->info("{:s}", svMessage);
 
-	// Log to client if enabled
+	//-----------------------------------
+	// Log to clients if enabled
 	DediClientMsg(svMessage.c_str());
 
+	//-----------------------------------
+	// Log to game console
 	// TODO [Fifty]: Use "VEngineCvar007" interface to print instead of this fuckery
 	if (g_bEngineVguiInitilazed && (*g_pSourceGameConsole)->m_pConsole)
 	{
@@ -131,6 +149,8 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 		//(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(svMessage.c_str());
 	}
 
+	//-----------------------------------
+	// Terminate process if needed
 	if (iCode)
 	{
 		MessageBoxA(NULL, svMessage.c_str(), "Northstar Error", MB_ICONERROR | MB_OK);
@@ -139,7 +159,13 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Prints to all outputs based on parameters
+// Input  : eContext -
+//          eLevel -
+//          iCode -
+//          *pszName -
+//          *fmt -
+//          ... -
 //-----------------------------------------------------------------------------
 void CoreMsg(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszName, const char* fmt, ...)
 {
@@ -150,7 +176,10 @@ void CoreMsg(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszNa
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Prints a LOG_INFO level message
+// Input  : eContext -
+//          *fmt -
+//          ... -
 //-----------------------------------------------------------------------------
 void DevMsg(eLog eContext, const char* fmt, ...)
 {
@@ -163,7 +192,10 @@ void DevMsg(eLog eContext, const char* fmt, ...)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Prints a LOG_WARNING level message
+// Input  : eContext -
+//          *fmt -
+//          ... -
 //-----------------------------------------------------------------------------
 void Warning(eLog eContext, const char* fmt, ...)
 {
@@ -176,7 +208,11 @@ void Warning(eLog eContext, const char* fmt, ...)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Prints a LOG_ERROR level message
+// Input  : eContext -
+//          nCode - The code to terminate with, 0 means we don't teminate
+//          *fmt -
+//          ... -
 //-----------------------------------------------------------------------------
 void Error(eLog eContext, int nCode, const char* fmt, ...)
 {
@@ -189,7 +225,11 @@ void Error(eLog eContext, int nCode, const char* fmt, ...)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Prints a message with a custom header, ONLY USE FOR PLUGINS OR RENAME
+// Input  : eLevel -
+//          *pszName -
+//          *fmt -
+//          ... -
 //-----------------------------------------------------------------------------
 void PluginMsg(eLogLevel eLevel, const char* pszName, const char* fmt, ...)
 {
