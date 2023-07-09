@@ -48,7 +48,7 @@ EXPORT void PLUGIN_LOG(LogMsg* msg)
 	int hPlugin = msg->pluginHandle;
 	if (hPlugin < g_pPluginManager->m_vLoadedPlugins.size() && hPlugin >= 0)
 	{
-		const char* pszName = g_pPluginManager->m_vLoadedPlugins[hPlugin].name.c_str();
+		const char* pszName = g_pPluginManager->m_vLoadedPlugins[hPlugin].displayName.c_str();
 		PluginMsg(eLevel, pszName, "%s\n", msg->msg);
 	}
 	else
