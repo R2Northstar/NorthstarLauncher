@@ -6,6 +6,7 @@
 #include "util/version.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
+#include <winternl.h>
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
@@ -230,6 +231,10 @@ wine_get_host_version_type wine_get_host_version;
 typedef const char*(CDECL* wine_get_build_id_type)(void);
 wine_get_build_id_type wine_get_build_id;
 
+// Not exported Winapi methods
+typedef NTSTATUS (WINAPI* RtlGetVersion_type)(PRTL_OSVERSIONINFOW);
+RtlGetVersion_type RtlGetVersion;
+
 void StartupLog()
 {
 	spdlog::info("NorthstarLauncher version: {}", version);
@@ -269,15 +274,19 @@ void StartupLog()
 		// We are real Windows (hopefully)
 		const char* win_ver = "Unknown";
 
-		OSVERSIONINFO osvi;
-		BOOL bIsWindowsXPorLater;
+		RTL_OSVERSIONINFOW osvi;
+		osvi.dwOSVersionInfoSize = sizeof(osvi);
 
-		ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		GetVersionEx(&osvi);
-
-		// a reference table can be found in the OSVERSIONINFOA documentation
-		// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoa#remarks
-		spdlog::info("Operating System: Windows (NT{}.{})", osvi.dwMajorVersion, osvi.dwMinorVersion);
+		RtlGetVersion = (RtlGetVersion_type)GetProcAddress(ntdll, "RtlGetVersion");
+		if (RtlGetVersion && !RtlGetVersion(&osvi))
+		{
+			// Version reference table
+			// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoa#remarks
+			spdlog::info("Operating System: Windows (NT{}.{})", osvi.dwMajorVersion, osvi.dwMinorVersion);
+		}
+		else
+		{
+			spdlog::info("Operating System: Windows");
+		}
 	}
 }
