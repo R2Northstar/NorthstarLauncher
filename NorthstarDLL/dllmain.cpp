@@ -46,6 +46,7 @@ bool InitialiseNorthstar()
 	Console_Init();
 
 	SpdLog_Init();
+	SpdLog_CreateLoggers();
 
 	// initialise the console if needed (-northstar needs this)
 	// InitialiseConsole();

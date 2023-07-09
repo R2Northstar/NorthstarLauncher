@@ -69,6 +69,29 @@ Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+std::shared_ptr<spdlog::logger> Log_GetLogger(eLogLevel eLevel)
+{
+	std::string svName;
+
+	switch (eLevel)
+	{
+	case eLogLevel::LOG_INFO:
+		svName = "northstar(info)";
+		break;
+	case eLogLevel::LOG_WARN:
+		svName = "northstar(warning)";
+		break;
+	case eLogLevel::LOG_ERROR:
+		svName = "northstar(error)";
+		break;
+	}
+
+	return spdlog::get(svName);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszName, const char* fmt, va_list vArgs)
 {
 	std::string svMessage;
@@ -94,6 +117,9 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 
 	// Remove ansi escape sequences
 	svMessage = std::regex_replace(svMessage, AnsiRegex, "");
+
+	std::shared_ptr<spdlog::logger> fLogger = Log_GetLogger(eLevel);
+	fLogger->info("{:s}", svMessage);
 
 	// Log to client if enabled
 	DediClientMsg(svMessage.c_str());

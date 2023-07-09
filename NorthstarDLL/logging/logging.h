@@ -9,9 +9,15 @@ inline std::string g_LogDirectory;
 inline std::shared_ptr<spdlog::logger> g_WinLogger;
 
 inline bool g_bSpdLog_UseAnsiColor = false;
+inline std::string g_svLogDirectory;
+
+constexpr int SPDLOG_MAX_LOG_SIZE = 10 * 1024 * 1024; // 10 MB max
+constexpr int SPDLOG_MAX_FILES = 512;
 
 void SpdLog_PreInit(void);
 void SpdLog_Init(void);
+
+void SpdLog_CreateLoggers(void);
 void SpdLog_Shutdown(void);
 
 // TODO [Fifty]: Possibly move into it's own file

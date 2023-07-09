@@ -5,11 +5,13 @@
 #include "core/tier0.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/sinks/rotating_file_sink.h"
 
 #include <iomanip>
 #include <sstream>
 #include <shellapi.h>
 #include <dedicated/dedicated.h>
+#include <util/utils.h>
 
 //-----------------------------------------------------------------------------
 // Purpose: Checks if install folder is writable, exits if it is not
@@ -61,12 +63,34 @@ void SpdLog_Init(void)
 {
 	g_WinLogger = spdlog::stdout_logger_mt("win_console");
 	spdlog::set_default_logger(g_WinLogger);
-	g_WinLogger->set_level(spdlog::level::trace);
+	spdlog::set_level(spdlog::level::trace);
+
+	// NOTE [Fifty]: This may be bad as it writes to disk for every message?
+	//               Seems to fix logs not flushing properly, still needs testing
+	spdlog::flush_on(spdlog::level::trace);
 
 	if (g_bSpdLog_UseAnsiColor)
 		g_WinLogger->set_pattern("%v\u001b[0m");
 	else
 		g_WinLogger->set_pattern("%v");
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void SpdLog_CreateLoggers(void)
+{
+	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), NS::Utils::CreateTimeStamp());
+
+	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
+		"northstar(info)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "message.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)
+		->set_pattern("[%Y-%m-%d %H:%M:%S.%e] %v");
+	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
+		"northstar(warning)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "warning.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)
+		->set_pattern("[%Y-%m-%d %H:%M:%S.%e] %v");
+	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
+		"northstar(error)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "error.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)
+		->set_pattern("[%Y-%m-%d %H:%M:%S.%e] %v");
 }
 
 //-----------------------------------------------------------------------------
