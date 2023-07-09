@@ -65,6 +65,8 @@ Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 		return Color(20, 100, 150);
 	case eLog::PLUGSYS:
 		return Color(140, 110, 20);
+	case eLog::PLUGIN:
+		return Color(140, 150, 70);
 	case eLog::CHAT:
 		return Color(220, 180, 70);
 	}
@@ -236,6 +238,6 @@ void PluginMsg(eLogLevel eLevel, const char* pszName, const char* fmt, ...)
 {
 	va_list vArgs;
 	va_start(vArgs, fmt);
-	CoreMsgV(eLog::NONE, eLevel, 0, pszName, fmt, vArgs);
+	CoreMsgV(eLog::PLUGIN, eLevel, 0, pszName, fmt, vArgs);
 	va_end(vArgs);
 }

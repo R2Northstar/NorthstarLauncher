@@ -48,15 +48,16 @@ enum class eLog : int
 	MS = 14, // Masterserver
 	MODSYS = 15, // Mod system
 	PLUGSYS = 16, // Plugin system
+	PLUGIN = 17,
 
 	//-----------------------------------------------------------------------------
 	// Misc
 	//-----------------------------------------------------------------------------
-	CHAT = 17 // Chat
+	CHAT = 18 // Chat
 };
 
 // clang-format off
-constexpr const char* sLogString[18] =
+constexpr const char* sLogString[19] =
 {
 	"",
 	"NORTHSTAR",
@@ -75,6 +76,7 @@ constexpr const char* sLogString[18] =
 	"MASTERSVR",
 	"MODSYSTEM",
 	"PLUGSYSTM",
+	"PLUGIN", // This is replaced in PLUGIN_LOG
 	"CHATSYSTM"
 };
 
