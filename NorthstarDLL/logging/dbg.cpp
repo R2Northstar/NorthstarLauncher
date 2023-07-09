@@ -3,6 +3,7 @@
 #include "util/utils.h"
 #include "logging/sourceconsole.h"
 #include "logging/logging.h"
+#include <dedicated/dedicatedlogtoclient.h>
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -14,6 +15,8 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	svMessage += NS::Utils::FormatV(fmt, vArgs);
 
 	g_WinLogger->debug("{}", svMessage);
+
+	DediClientMsg(svMessage.c_str());
 
 	// TODO [Fifty]: Use "VEngineCvar007" interface to print instead of this fuckery
 	if (g_bEngineVguiInitilazed && (*g_pSourceGameConsole)->m_pConsole)

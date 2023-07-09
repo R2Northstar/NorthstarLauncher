@@ -1,11 +1,16 @@
-#include "pch.h"
 #include "dedicatedlogtoclient.h"
+
+#include "core/convar/convar.h"
 #include "engine/r2engine.h"
+#include "logging/logging.h"
 
 void (*CGameClient__ClientPrintf)(R2::CBaseClient* pClient, const char* fmt, ...);
 
-void DedicatedServerLogToClientSink::custom_sink_it_(const custom_log_msg& msg)
+void DediClientMsg(const char* pszMessage)
 {
+	if (R2::g_pServerState == NULL || R2::g_pCVar == NULL)
+		return;
+
 	if (*R2::g_pServerState == R2::server_state_t::ss_dead)
 		return;
 
@@ -21,7 +26,7 @@ void DedicatedServerLogToClientSink::custom_sink_it_(const custom_log_msg& msg)
 	if (eSendPrints == eSendPrintsToClient::NONE)
 		return;
 
-	std::string sLogMessage = fmt::format("[DEDICATED SERVER] [{}] {}", level_names[msg.level], msg.payload);
+	std::string sLogMessage = fmt::format("{}", pszMessage);
 	for (int i = 0; i < R2::g_pGlobals->m_nMaxClients; i++)
 	{
 		R2::CBaseClient* pClient = &R2::g_pClientArray[i];
@@ -35,13 +40,6 @@ void DedicatedServerLogToClientSink::custom_sink_it_(const custom_log_msg& msg)
 		}
 	}
 }
-
-void DedicatedServerLogToClientSink::sink_it_(const spdlog::details::log_msg& msg)
-{
-	throw std::runtime_error("sink_it_ called on DedicatedServerLogToClientSink with pure log_msg. This is an error!");
-}
-
-void DedicatedServerLogToClientSink::flush_() {}
 
 ON_DLL_LOAD_DEDI("engine.dll", DedicatedServerLogToClient, (CModule module))
 {
