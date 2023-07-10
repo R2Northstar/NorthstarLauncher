@@ -6,7 +6,8 @@
 #include "plugins/plugin_abi.h"
 #include "mods/modmanager.h"
 
-eLog SQ_GetLogContext(ScriptContext nSqContext);
+eLog SQ_GetLogContextScript(ScriptContext nSqContext);
+eLog SQ_GetLogContextNative(ScriptContext nSqContext);
 
 /*
 	definitions from hell
@@ -349,7 +350,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		{
 			// TODO [Fifty]: Potentially make this fatal?
 			Error(
-				SQ_GetLogContext(context),
+				SQ_GetLogContextNative(context),
 				NO_ERROR,
 				"%s was called on context %s while VM was not initialized. This will crash\n",
 				__FUNCTION__,
@@ -360,7 +361,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
-			Error(SQ_GetLogContext(context), NO_ERROR, "Call was unable to find function with name '%s'. Is it global?\n", funcname);
+			Error(SQ_GetLogContextNative(context), NO_ERROR, "Call was unable to find function with name '%s'. Is it global?\n", funcname);
 			return SQRESULT_ERROR;
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
@@ -378,7 +379,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		{
 			// TODO [Fifty]: Potentially make this fatal?
 			Error(
-				SQ_GetLogContext(context),
+				SQ_GetLogContextNative(context),
 				NO_ERROR,
 				"%s was called on context %s while VM was not initialized. This will crash\n",
 				__FUNCTION__,
@@ -388,7 +389,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
-			Error(SQ_GetLogContext(context), NO_ERROR, "Call was unable to find function with name '%s'. Is it global?\n", funcname);
+			Error(SQ_GetLogContextNative(context), NO_ERROR, "Call was unable to find function with name '%s'. Is it global?\n", funcname);
 			return SQRESULT_ERROR;
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object

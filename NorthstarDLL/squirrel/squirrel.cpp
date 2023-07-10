@@ -13,9 +13,9 @@
 AUTOHOOK_INIT()
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Returns script log context based on Script context
 //-----------------------------------------------------------------------------
-eLog SQ_GetLogContext(ScriptContext nSqContext)
+eLog SQ_GetLogContextScript(ScriptContext nSqContext)
 {
 	switch (nSqContext)
 	{
@@ -25,6 +25,24 @@ eLog SQ_GetLogContext(ScriptContext nSqContext)
 		return eLog::SCRIPT_CLIENT;
 	case ScriptContext::UI:
 		return eLog::SCRIPT_UI;
+	}
+
+	return eLog::NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:Returns native log context based on Script context
+//-----------------------------------------------------------------------------
+eLog SQ_GetLogContextNative(ScriptContext nSqContext)
+{
+	switch (nSqContext)
+	{
+	case ScriptContext::SERVER:
+		return eLog::SERVER;
+	case ScriptContext::CLIENT:
+		return eLog::CLIENT;
+	case ScriptContext::UI:
+		return eLog::UI;
 	}
 
 	return eLog::NONE;
@@ -222,7 +240,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 	for (SQFuncRegistration* funcReg : m_funcRegistrations)
 	{
-		DevMsg(SQ_GetLogContext(context), "Registering %s function %s\n", GetContextName(context), funcReg->squirrelFuncName);
+		DevMsg(SQ_GetLogContextNative(context), "Registering %s function %s\n", GetContextName(context), funcReg->squirrelFuncName);
 		RegisterSquirrelFunc(m_pSQVM, funcReg, 1);
 	}
 
@@ -253,7 +271,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 	// Call all registered mod Destroy callbacks.
 	if (g_pModManager)
 	{
-		DevMsg(SQ_GetLogContext(context), "Calling Destroy callbacks for all loaded mods.\n");
+		DevMsg(SQ_GetLogContextNative(context), "Calling Destroy callbacks for all loaded mods.\n");
 
 		for (const Mod& loadedMod : g_pModManager->m_LoadedMods)
 		{
@@ -267,7 +285,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 					}
 
 					Call(callback.DestroyCallback.c_str());
-					DevMsg(SQ_GetLogContext(context), "Executed Destroy callback %s.\n", callback.DestroyCallback.c_str());
+					DevMsg(SQ_GetLogContextNative(context), "Executed Destroy callback %s.\n", callback.DestroyCallback.c_str());
 				}
 			}
 		}
@@ -286,23 +304,23 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 {
 	if (!m_pSQVM || !m_pSQVM->sqvm)
 	{
-		Error(SQ_GetLogContext(context), NO_ERROR, "Cannot execute code, %s squirrel vm is not initialised\n", GetContextName(context));
+		Error(SQ_GetLogContextNative(context), NO_ERROR, "Cannot execute code, %s squirrel vm is not initialised\n", GetContextName(context));
 		return;
 	}
 
-	DevMsg(SQ_GetLogContext(context), "Executing %s script code %s\n", GetContextName(context), pCode);
+	DevMsg(SQ_GetLogContextNative(context), "Executing %s script code %s\n", GetContextName(context), pCode);
 
 	std::string strCode(pCode);
 	CompileBufferState bufferState = CompileBufferState(strCode);
 
 	SQRESULT compileResult = compilebuffer(&bufferState, "console");
-	DevMsg(SQ_GetLogContext(context), "sq_compilebuffer returned %s\n", PrintSQRESULT.at(compileResult));
+	DevMsg(SQ_GetLogContextNative(context), "sq_compilebuffer returned %s\n", PrintSQRESULT.at(compileResult));
 
 	if (compileResult != SQRESULT_ERROR)
 	{
 		pushroottable(m_pSQVM->sqvm);
 		SQRESULT callResult = _call(m_pSQVM->sqvm, 0);
-		DevMsg(SQ_GetLogContext(context), "sq_call returned %s\n", PrintSQRESULT.at(callResult));
+		DevMsg(SQ_GetLogContextNative(context), "sq_call returned %s\n", PrintSQRESULT.at(callResult));
 	}
 }
 
@@ -378,7 +396,7 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 	{
 		if (buf[charsWritten - 1] == '\n')
 			buf[charsWritten - 1] = '\0';
-		DevMsg(SQ_GetLogContext(context), "%s\n", buf);
+		DevMsg(SQ_GetLogContextScript(context), "%s\n", buf);
 	}
 
 	va_end(va);
@@ -394,7 +412,7 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	else
 		g_pSquirrel<context>->VMCreated(sqvm);
 
-	DevMsg(SQ_GetLogContext(context), "CreateNewVM %s %p\n", GetContextName(realContext), (void*)sqvm);
+	DevMsg(SQ_GetLogContextNative(context), "CreateNewVM %s %p\n", GetContextName(realContext), (void*)sqvm);
 	return sqvm;
 }
 
@@ -431,7 +449,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirr
 		DestroyVM<context>(a1, sqvm);
 	}
 
-	DevMsg(SQ_GetLogContext(context), "DestroyVM %s %p\n", GetContextName(realContext), (void*)sqvm);
+	DevMsg(SQ_GetLogContextNative(context), "DestroyVM %s %p\n", GetContextName(realContext), (void*)sqvm);
 }
 
 template <ScriptContext context>
@@ -447,7 +465,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		bIsFatalError = g_pSquirrel<ScriptContext::UI>->m_bFatalCompilationErrors;
 	}
 
-	eLog eContext = SQ_GetLogContext(context);
+	eLog eContext = SQ_GetLogContextNative(context);
 
 	Error(eContext, NO_ERROR, "COMPILE ERROR %s\n", error);
 	Error(eContext, NO_ERROR, "%s line [%i] column [%i]\n", file, line, column);
@@ -491,7 +509,7 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 		{
 			g_pSquirrel<ScriptContext::UI>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
 			funcReg->funcPtr = g_pSquirrel<ScriptContext::UI>->m_funcOverrides[funcReg->squirrelFuncName];
-			DevMsg(SQ_GetLogContext(context), "Replacing %s in UI\n", funcReg->squirrelFuncName);
+			DevMsg(SQ_GetLogContextNative(context), "Replacing %s in UI\n", funcReg->squirrelFuncName);
 		}
 
 		return g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
@@ -501,7 +519,7 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 	{
 		g_pSquirrel<context>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
 		funcReg->funcPtr = g_pSquirrel<context>->m_funcOverrides[funcReg->squirrelFuncName];
-		DevMsg(SQ_GetLogContext(context), "Replacing %s in Client\n", funcReg->squirrelFuncName);
+		DevMsg(SQ_GetLogContextNative(context), "Replacing %s in Client\n", funcReg->squirrelFuncName);
 	}
 
 	return g_pSquirrel<context>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
@@ -537,7 +555,7 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 					if (modCallback.Context == realContext && modCallback.BeforeCallback.length())
 					{
 						DevMsg(
-							SQ_GetLogContext(context),
+							SQ_GetLogContextNative(context),
 							"Running custom %s script callback \"%s\"\n",
 							GetContextName(realContext),
 							modCallback.BeforeCallback.c_str());
@@ -548,9 +566,9 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 		}
 	}
 
-	DevMsg(SQ_GetLogContext(context), "%s CodeCallback %s called\n", GetContextName(realContext), callback);
+	DevMsg(SQ_GetLogContextNative(context), "%s CodeCallback %s called\n", GetContextName(realContext), callback);
 	if (!bShouldCallCustomCallbacks)
-		DevMsg(SQ_GetLogContext(context), "Not executing custom callbacks for CodeCallback %s\n", callback);
+		DevMsg(SQ_GetLogContextNative(context), "Not executing custom callbacks for CodeCallback %s\n", callback);
 	bool ret = CallScriptInitCallback<context>(sqvm, callback);
 
 	// run after callbacks
@@ -568,7 +586,7 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 					if (modCallback.Context == realContext && modCallback.AfterCallback.length())
 					{
 						DevMsg(
-							SQ_GetLogContext(context),
+							SQ_GetLogContextNative(context),
 							"Running custom %s script callback \"%s\"\n",
 							GetContextName(realContext),
 							modCallback.AfterCallback.c_str());
@@ -600,7 +618,7 @@ template <size_t N> struct TemplateStringLiteral
 
 template <ScriptContext context, TemplateStringLiteral funcName> SQRESULT SQ_StubbedFunc(HSquirrelVM* sqvm)
 {
-	DevMsg(SQ_GetLogContext(context), "Blocking call to stubbed function %s in %s\n", funcName.value, GetContextName(context));
+	DevMsg(SQ_GetLogContextNative(context), "Blocking call to stubbed function %s in %s\n", funcName.value, GetContextName(context));
 	return SQRESULT_NULL;
 }
 
@@ -628,7 +646,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			Error(
-				SQ_GetLogContext(context),
+				SQ_GetLogContextNative(context),
 				NO_ERROR,
 				"ProcessMessageBuffer was unable to find function with name '%s'. Is it global?\n",
 				message.functionName.c_str());
