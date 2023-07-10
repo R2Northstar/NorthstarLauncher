@@ -290,7 +290,7 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 		return;
 	}
 
-	DevMsg(SQ_GetLogContext(context), "Executing %s script code %i\n", GetContextName(context), pCode);
+	DevMsg(SQ_GetLogContext(context), "Executing %s script code %s\n", GetContextName(context), pCode);
 
 	std::string strCode(pCode);
 	CompileBufferState bufferState = CompileBufferState(strCode);
