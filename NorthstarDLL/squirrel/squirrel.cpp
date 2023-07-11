@@ -304,7 +304,8 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 {
 	if (!m_pSQVM || !m_pSQVM->sqvm)
 	{
-		Error(SQ_GetLogContextNative(context), NO_ERROR, "Cannot execute code, %s squirrel vm is not initialised\n", GetContextName(context));
+		Error(
+			SQ_GetLogContextNative(context), NO_ERROR, "Cannot execute code, %s squirrel vm is not initialised\n", GetContextName(context));
 		return;
 	}
 
