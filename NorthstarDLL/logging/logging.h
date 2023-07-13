@@ -26,4 +26,5 @@ void SpdLog_Shutdown(void);
 
 // TODO [Fifty]: Possibly move into it's own file
 void Console_Init(void);
+void Console_PostInit(void);
 void Console_Shutdown(void);

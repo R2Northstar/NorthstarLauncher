@@ -13,6 +13,8 @@
 #include <dedicated/dedicated.h>
 #include <util/utils.h>
 
+AUTOHOOK_INIT()
+
 //-----------------------------------------------------------------------------
 // Purpose: Checks if install folder is writable, exits if it is not
 //-----------------------------------------------------------------------------
@@ -106,48 +108,70 @@ void SpdLog_Shutdown(void)
 	spdlog::shutdown();
 }
 //-----------------------------------------------------------------------------
-// Purpose: Initilazes the windows console, closes it if wanted
+// Purpose: Initilazes the windows console
 //-----------------------------------------------------------------------------
 void Console_Init(void)
 {
 	g_bConsole_UseAnsiColor = strstr(GetCommandLineA(), "-noansicolor") == NULL;
 
-	// Always show console when we're a dedicated server
-	bool bShow = strstr(GetCommandLineA(), "-wconsole") != NULL || IsDedicatedServer();
+	// Always show the console when starting-up.
+	(void)AllocConsole();
 
-	if (bShow)
+	FILE* pDummy;
+	freopen_s(&pDummy, "CONIN$", "r", stdin);
+	freopen_s(&pDummy, "CONOUT$", "w", stdout);
+	freopen_s(&pDummy, "CONOUT$", "w", stderr);
+
+	if (g_bConsole_UseAnsiColor)
 	{
-		(void)AllocConsole();
+		DWORD dwMode = 0;
+		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		FILE* pDummy;
-		freopen_s(&pDummy, "CONIN$", "r", stdin);
-		freopen_s(&pDummy, "CONOUT$", "w", stdout);
-		freopen_s(&pDummy, "CONOUT$", "w", stderr);
+		GetConsoleMode(hOutput, &dwMode);
+		dwMode |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
-		if (g_bConsole_UseAnsiColor)
+		if (!SetConsoleMode(hOutput, dwMode))
 		{
-			DWORD dwMode = 0;
-			HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-
-			GetConsoleMode(hOutput, &dwMode);
-			dwMode |= ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-			if (!SetConsoleMode(hOutput, dwMode))
-			{
-				g_bConsole_UseAnsiColor = false;
-			}
+			g_bConsole_UseAnsiColor = false;
 		}
 	}
-	else
-	{
-		// TODO [Fifty]: Only close console once gamewindow is created
-		HWND hConsole = GetConsoleWindow();
-		(void)FreeConsole();
-		(void)PostMessageA(hConsole, WM_CLOSE, 0, 0);
-	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Closes the console window if wanted
+//-----------------------------------------------------------------------------
+void Console_PostInit(void)
+{
+	// Hide the console if user wants to
+	bool bHide = strstr(GetCommandLineA(), "-wconsole") == NULL && !IsDedicatedServer();
+
+	if (!bHide)
+		return;
+
+	HWND hConsole = GetConsoleWindow();
+	(void)FreeConsole();
+	(void)PostMessageA(hConsole, WM_CLOSE, 0, 0);
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void Console_Shutdown(void) {}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+// clang-format off
+AUTOHOOK(Respawn_CreateWindow, engine.dll + 0x1CD0E0, bool, __fastcall,
+	(void* a1))
+// clang-format on
+{
+	Console_PostInit();
+	return Respawn_CreateWindow(a1);
+}
+
+//-----------------------------------------------------------------------------
+ON_DLL_LOAD_CLIENT("engine.dll", CreateWindowLog, (CModule module))
+{
+	AUTOHOOK_DISPATCH()
+}
