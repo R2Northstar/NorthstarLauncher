@@ -62,14 +62,14 @@ char*, __fastcall, ())
 		if (!CheckLangAudioExists((char*)forcedLanguage))
 		{
 			Warning(
-				eLog::NS,
+				eLog::AUDIO,
 				"User tried to force the language (-language) to \"%s\", but audio for this language doesn't exist and the game is bound "
 				"to error, falling back to next option...\n",
 				forcedLanguage);
 		}
 		else
 		{
-			DevMsg(eLog::NS, "User forcing the language (-language) to: %s\n", forcedLanguage);
+			DevMsg(eLog::AUDIO, "User forcing the language (-language) to: %s\n", forcedLanguage);
 			strncpy(ingameLang1, forcedLanguage, 256);
 			return ingameLang1;
 		}
@@ -83,13 +83,13 @@ char*, __fastcall, ())
 			if (strcmp(lang, "russian") !=
 				0) // don't log for "russian" since it's the default and that means Origin detection just didn't change it most likely
 				DevMsg(
-					eLog::NS,
+					eLog::AUDIO,
 					"Origin detected language \"%s\", but we do not have audio for it installed, falling back to the next option\n",
 					lang);
 		}
 		else
 		{
-			DevMsg(eLog::NS, "Origin detected language: %s\n", lang);
+			DevMsg(eLog::AUDIO, "Origin detected language: %s\n", lang);
 			return lang;
 		}
 	}
@@ -98,15 +98,15 @@ char*, __fastcall, ())
 									   // defaulting to Russian
 	canOriginDictateLang = false; // Origin has no say anymore, we will fallback to user's system setup language
 	auto lang = GetGameLanguage();
-	DevMsg(eLog::NS, "Detected system language: %s\n", lang);
+	DevMsg(eLog::AUDIO, "Detected system language: %s\n", lang);
 	if (!CheckLangAudioExists(lang))
 	{
 		Warning(
-			eLog::NS,
+			eLog::AUDIO,
 			"Caution, audio for this language does NOT exist. You might want to override your game language with -language command line "
 			"option.\n");
 		auto lang = GetAnyInstalledAudioLanguage();
-		Warning(eLog::NS, "Falling back to the first installed audio language: %s\n", lang.c_str());
+		Warning(eLog::AUDIO, "Falling back to the first installed audio language: %s\n", lang.c_str());
 		strncpy(ingameLang1, lang.c_str(), 256);
 		return ingameLang1;
 	}

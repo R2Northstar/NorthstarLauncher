@@ -14,7 +14,7 @@ bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, bo
 
 	bool ret = CLocalize__AddFile(pVguiLocalize, path, pathId, bIncludeFallbackSearchPaths);
 	if (ret)
-		DevMsg(eLog::NS, "Loaded localisation file %s successfully\n", path);
+		DevMsg(eLog::MODSYS, "Loaded localisation file %s successfully\n", path);
 
 	return true;
 }
@@ -30,7 +30,7 @@ void, __fastcall, (void* pVguiLocalize))
 			for (std::string& localisationFile : mod.LocalisationFiles)
 				CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 
-	DevMsg(eLog::NS, "reloading localization...\n");
+	DevMsg(eLog::MODSYS, "reloading localization...\n");
 	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
 }
 

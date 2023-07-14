@@ -128,7 +128,7 @@ ConCommandConstructorType ConCommandConstructor;
 
 void RegisterConCommand(const char* name, FnCommandCallback_t callback, const char* helpString, int flags)
 {
-	DevMsg(eLog::NS, "Registering ConCommand %s\n", name);
+	DevMsg(eLog::ENGINE, "Registering ConCommand %s\n", name);
 
 	// no need to free this ever really, it should exist as long as game does
 	ConCommand* newCommand = new ConCommand;
@@ -138,7 +138,7 @@ void RegisterConCommand(const char* name, FnCommandCallback_t callback, const ch
 void RegisterConCommand(
 	const char* name, FnCommandCallback_t callback, const char* helpString, int flags, FnCommandCompletionCallback completionCallback)
 {
-	DevMsg(eLog::NS, "Registering ConCommand %s\n", name);
+	DevMsg(eLog::ENGINE, "Registering ConCommand %s\n", name);
 
 	// no need to free this ever really, it should exist as long as game does
 	ConCommand* newCommand = new ConCommand;

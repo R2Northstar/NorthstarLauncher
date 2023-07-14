@@ -37,13 +37,13 @@ struct CDedicatedExports
 
 void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
 {
-	DevMsg(eLog::NS, "[DEDICATED SERVER] %s\n", msg);
+	DevMsg(eLog::ENGINE, "[DEDICATED SERVER] %s\n", msg);
 }
 
 void RunServer(CDedicatedExports* dedicated)
 {
-	DevMsg(eLog::NS, "CDedicatedExports::RunServer(): starting\n");
-	DevMsg(eLog::NS, "%s\n", Tier0::CommandLine()->GetCmdLine());
+	DevMsg(eLog::ENGINE, "CDedicatedExports::RunServer(): starting\n");
+	DevMsg(eLog::ENGINE, "%s\n", Tier0::CommandLine()->GetCmdLine());
 
 	// initialise engine
 	g_pEngine->Frame();
