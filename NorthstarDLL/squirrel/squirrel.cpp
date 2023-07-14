@@ -466,7 +466,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		bIsFatalError = g_pSquirrel<ScriptContext::UI>->m_bFatalCompilationErrors;
 	}
 
-	eLog eContext = SQ_GetLogContextNative(context);
+	eLog eContext = SQ_GetLogContextNative(realContext);
 
 	Error(eContext, NO_ERROR, "COMPILE ERROR %s\n", error);
 	Error(eContext, NO_ERROR, "%s line [%i] column [%i]\n", file, line, column);
