@@ -801,7 +801,7 @@ void DumpDatatable(const char* pDatatablePath)
 	outputStream.write(sDatatableContents.c_str(), sDatatableContents.size());
 	outputStream.close();
 
-	DevMsg(eLog::NS, "dumped datatable {} {} to {}\n", pDatatablePath, (void*)pDatatable, sOutputPath);
+	DevMsg(eLog::NS, "dumped datatable %s %p to %s\n", pDatatablePath, (void*)pDatatable, sOutputPath.c_str());
 }
 
 void ConCommand_dump_datatable(const CCommand& args)
