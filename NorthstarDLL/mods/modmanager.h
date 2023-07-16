@@ -13,6 +13,8 @@ const std::string REMOTE_MOD_FOLDER_SUFFIX = "/runtime/remote/mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
 const std::string COMPILED_ASSETS_SUFFIX = "/runtime/compiled";
 
+const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
+
 struct ModConVar
 {
   public:
@@ -124,6 +126,14 @@ class Mod
 
   public:
 	Mod(fs::path modPath, char* jsonBuf);
+
+  private:
+	void ParseConVars(rapidjson_document& json);
+	void ParseConCommands(rapidjson_document& json);
+	void ParseScripts(rapidjson_document& json);
+	void ParseLocalization(rapidjson_document& json);
+	void ParseDependencies(rapidjson_document& json);
+	void ParseInitScript(rapidjson_document& json);
 };
 
 struct ModOverrideFile
