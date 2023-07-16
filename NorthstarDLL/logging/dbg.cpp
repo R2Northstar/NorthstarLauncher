@@ -139,9 +139,9 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	svMessage = std::regex_replace(svMessage, AnsiRegex, "");
 
 	// Log to file
-	std::shared_ptr<spdlog::logger> fLogger = Log_GetLogger(eLevel);
-	if (fLogger.get()) // "-nologfiles" or programmer error can cause this to fail
-		fLogger->info("{:s}", svMessage);
+	std::shared_ptr<spdlog::logger> pLogger = Log_GetLogger(eLevel);
+	if (pLogger.get()) // "-nologfiles" or programmer error can cause this to fail
+		pLogger->info("{:s}", svMessage);
 
 	// Log to clients if enabled
 	DediClientMsg(svMessage.c_str());
