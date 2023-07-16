@@ -1,5 +1,7 @@
 #pragma once
 
+extern std::mutex g_LogMutex;
+
 // We can only print to gameconsole when CEngineVgui is initilazed
 inline bool g_bEngineVguiInitilazed = false;
 

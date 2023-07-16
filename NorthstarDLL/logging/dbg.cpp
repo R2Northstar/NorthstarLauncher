@@ -7,6 +7,7 @@
 #include <regex>
 
 const std::regex AnsiRegex("\\\033\\[.*?m");
+std::mutex g_LogMutex;
 
 //-----------------------------------------------------------------------------
 // Purpose: Get the log context string
@@ -127,23 +128,23 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	svMessage += NS::Utils::FormatV(fmt, vArgs);
 
 	//-----------------------------------
-	// Log to windows console
+	// Emit to all loggers
+	//-----------------------------------
+	std::lock_guard<std::mutex> lock(g_LogMutex);
+
 	g_WinLogger->debug("{}", svMessage);
 
 	// Remove ansi escape sequences
 	svMessage = std::regex_replace(svMessage, AnsiRegex, "");
 
-	//-----------------------------------
 	// Log to file
 	std::shared_ptr<spdlog::logger> fLogger = Log_GetLogger(eLevel);
 	if (fLogger.get()) // "-nologfiles" or programmer error can cause this to fail
 		fLogger->info("{:s}", svMessage);
 
-	//-----------------------------------
 	// Log to clients if enabled
 	DediClientMsg(svMessage.c_str());
 
-	//-----------------------------------
 	// Log to game console
 	// TODO [Fifty]: Use "VEngineCvar007" interface to print instead of this fuckery
 	if (g_bEngineVguiInitilazed && (*g_pSourceGameConsole)->m_pConsole)
@@ -154,6 +155,7 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 
 	//-----------------------------------
 	// Terminate process if needed
+	//-----------------------------------
 	if (iCode)
 	{
 		MessageBoxA(NULL, svMessage.c_str(), "Northstar Error", MB_ICONERROR | MB_OK);
