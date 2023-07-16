@@ -5,6 +5,7 @@
 #include "logging/logging.h"
 #include <dedicated/dedicatedlogtoclient.h>
 #include <regex>
+#include "dedicated/dedicated.h"
 
 const std::regex AnsiRegex("\\\033\\[.*?m");
 std::mutex g_LogMutex;
@@ -158,7 +159,9 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	//-----------------------------------
 	if (iCode)
 	{
-		MessageBoxA(NULL, svMessage.c_str(), "Northstar Error", MB_ICONERROR | MB_OK);
+		if (!IsDedicatedServer())
+			MessageBoxA(NULL, svMessage.c_str(), "Northstar Error", MB_ICONERROR | MB_OK);
+
 		TerminateProcess(GetCurrentProcess(), iCode);
 	}
 }
