@@ -115,8 +115,8 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	// Format header
 	if (g_bConsole_UseAnsiColor)
 	{
-		std::string pszAnsiString = Log_GetColor(eContext, eLevel).ToANSIColor();
-		svMessage += NS::Utils::Format("%s[%s] ", pszAnsiString.c_str(), pszName);
+		std::string svAnsiString = Log_GetColor(eContext, eLevel).ToANSIColor();
+		svMessage += NS::Utils::Format("%s[%s] ", svAnsiString.c_str(), pszName);
 	}
 	else
 	{
