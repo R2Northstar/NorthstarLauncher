@@ -39,29 +39,28 @@ bool InitialiseNorthstar()
 
 	bInitialised = true;
 
+	// Initilaze working profile directory
 	InitialiseNorthstarPrefix();
 
+	// Initilaze log directory
 	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), NS::Utils::CreateTimeStamp());
 
 	// Checks if we can write into install directory
 	SpdLog_PreInit();
 
+	// Make sure we have a console window
 	Console_Init();
 
+	// Init logging
 	SpdLog_Init();
 	SpdLog_CreateLoggers();
-
-	// initialise the console if needed (-northstar needs this)
-	// InitialiseConsole();
-	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
-	// InitialiseLogging();
-	InitialiseVersion();
-	// CreateLogFiles();
 
 	InitialiseCrashHandler();
 
 	// Write launcher version to log
 	Sys_PrintOSVer();
+
+	InitialiseVersion();
 
 	InstallInitialHooks();
 
