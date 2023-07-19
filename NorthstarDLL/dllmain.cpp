@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <filesystem>
+#include <util/utils.h>
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
 {
@@ -39,6 +40,8 @@ bool InitialiseNorthstar()
 	bInitialised = true;
 
 	InitialiseNorthstarPrefix();
+
+	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), NS::Utils::CreateTimeStamp());
 
 	// Checks if we can write into install directory
 	SpdLog_PreInit();

@@ -87,8 +87,6 @@ void SpdLog_CreateLoggers(void)
 {
 	g_bSpdLog_CreateLogFiles = strstr(GetCommandLineA(), "-nologfiles") == NULL;
 
-	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), NS::Utils::CreateTimeStamp());
-
 	if (!g_bSpdLog_CreateLogFiles)
 		return;
 
