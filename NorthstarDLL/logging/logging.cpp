@@ -162,23 +162,6 @@ void Console_PostInit(void)
 void Console_Shutdown(void) {}
 
 //-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-// clang-format off
-AUTOHOOK(Respawn_CreateWindow, engine.dll + 0x1CD0E0, bool, __fastcall,
-	(void* a1))
-// clang-format on
-{
-	Console_PostInit();
-	return Respawn_CreateWindow(a1);
-}
-
-//-----------------------------------------------------------------------------
-ON_DLL_LOAD_CLIENT("engine.dll", CreateWindowLog, (CModule module))
-{
-	AUTOHOOK_DISPATCH()
-}
-
 // Wine specific functions
 typedef const char*(CDECL* wine_get_host_version_type)(const char**, const char**);
 wine_get_host_version_type wine_get_host_version;
@@ -186,23 +169,22 @@ wine_get_host_version_type wine_get_host_version;
 typedef const char*(CDECL* wine_get_build_id_type)(void);
 wine_get_build_id_type wine_get_build_id;
 
+//-----------------------------------------------------------------------------
 // Not exported Winapi methods
 typedef NTSTATUS(WINAPI* RtlGetVersion_type)(PRTL_OSVERSIONINFOW);
 RtlGetVersion_type RtlGetVersion;
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void StartupLog()
 {
-	spdlog::info("NorthstarLauncher version: {}", version);
-	spdlog::info("Command line: {}", GetCommandLineA());
-	spdlog::info("Using profile: {}", GetNorthstarPrefix());
+	DevMsg(eLog::NS, "NorthstarLauncher version: %s\n", version);
+	DevMsg(eLog::NS, "Command line: %s\n", GetCommandLineA());
+	DevMsg(eLog::NS, "Using profile: %s\n", GetNorthstarPrefix().c_str());
 
+	// ntdll is always loaded
 	HMODULE ntdll = GetModuleHandleA("ntdll.dll");
-	if (!ntdll)
-	{
-		// How did we get here
-		spdlog::info("Operating System: Unknown");
-		return;
-	}
 
 	wine_get_host_version = (wine_get_host_version_type)GetProcAddress(ntdll, "wine_get_host_version");
 	if (wine_get_host_version)
@@ -213,15 +195,15 @@ void StartupLog()
 		const char* sysname;
 		wine_get_host_version(&sysname, NULL);
 
-		spdlog::info("Operating System: {} (Wine)", sysname);
-		spdlog::info("Wine build: {}", wine_get_build_id());
+		DevMsg(eLog::NS, "Operating System: %s (Wine)\n", sysname);
+		DevMsg(eLog::NS, "Wine build: %s\n", wine_get_build_id());
 
 		char* compatToolPtr = std::getenv("STEAM_COMPAT_TOOL_PATHS");
 		if (compatToolPtr)
 		{
 			std::string compatToolPath(compatToolPtr);
 
-			spdlog::info("Proton build: {}", compatToolPath.substr(compatToolPath.rfind("/") + 1));
+			DevMsg(eLog::NS, "Proton build: %s\n", compatToolPath.substr(compatToolPath.rfind("/") + 1).c_str());
 		}
 	}
 	else
@@ -237,11 +219,29 @@ void StartupLog()
 		{
 			// Version reference table
 			// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoa#remarks
-			spdlog::info("Operating System: Windows (NT{}.{})", osvi.dwMajorVersion, osvi.dwMinorVersion);
+			DevMsg(eLog::NS, "Operating System: Windows (NT%i.%i)\n", osvi.dwMajorVersion, osvi.dwMinorVersion);
 		}
 		else
 		{
-			spdlog::info("Operating System: Windows");
+			DevMsg(eLog::NS, "Operating System: Windows\n");
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+// clang-format off
+AUTOHOOK(Respawn_CreateWindow, engine.dll + 0x1CD0E0, bool, __fastcall,
+	(void* a1))
+// clang-format on
+{
+	Console_PostInit();
+	return Respawn_CreateWindow(a1);
+}
+
+//-----------------------------------------------------------------------------
+ON_DLL_LOAD_CLIENT("engine.dll", CreateWindowLog, (CModule module))
+{
+	AUTOHOOK_DISPATCH()
 }
