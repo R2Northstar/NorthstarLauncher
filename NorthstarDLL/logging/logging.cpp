@@ -183,6 +183,11 @@ void Sys_PrintOSVer()
 
 	// ntdll is always loaded
 	HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+	if (!ntdll)
+	{
+		DevMsg(eLog::NS, "Operating System: Unknown\n");
+		return;
+	}
 
 	wine_get_host_version = (wine_get_host_version_type)GetProcAddress(ntdll, "wine_get_host_version");
 	if (wine_get_host_version)
