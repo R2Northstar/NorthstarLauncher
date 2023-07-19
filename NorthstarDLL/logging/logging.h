@@ -28,3 +28,4 @@ void SpdLog_Shutdown(void);
 void Console_Init(void);
 void Console_PostInit(void);
 void Console_Shutdown(void);
+void StartupLog();
