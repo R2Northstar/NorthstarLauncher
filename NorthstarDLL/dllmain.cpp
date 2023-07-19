@@ -58,7 +58,7 @@ bool InitialiseNorthstar()
 	InitialiseCrashHandler();
 
 	// Write launcher version to log
-	StartupLog();
+	Sys_PrintOSVer();
 
 	InstallInitialHooks();
 

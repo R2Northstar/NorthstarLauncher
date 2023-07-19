@@ -175,9 +175,9 @@ typedef NTSTATUS(WINAPI* RtlGetVersion_type)(PRTL_OSVERSIONINFOW);
 RtlGetVersion_type RtlGetVersion;
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Print Operating System information
 //-----------------------------------------------------------------------------
-void StartupLog()
+void Sys_PrintOSVer()
 {
 	DevMsg(eLog::NS, "NorthstarLauncher version: %s\n", version);
 	DevMsg(eLog::NS, "Command line: %s\n", GetCommandLineA());
