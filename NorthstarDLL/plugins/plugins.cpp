@@ -190,6 +190,12 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 bool PluginManager::LoadPlugins()
 {
+	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	{
+		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
+		return false;
+	}
+
 	std::vector<fs::path> paths;
 
 	pluginPath = GetNorthstarPrefix() + "/plugins";
@@ -207,28 +213,45 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
-	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	if (fs::exists(pluginPath) && fs::is_directory(pluginPath))
 	{
-		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
-		return false;
+		// ensure dirs exist
+		fs::recursive_directory_iterator iterator(pluginPath);
+		if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
+		{
+			for (auto const& entry : iterator)
+			{
+				if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+					paths.emplace_back(entry.path());
+			}
+		}
 	}
-	if (!fs::exists(pluginPath))
+
+	// Special case for Thunderstore plugin dirs
+
+	for (fs::directory_entry dir : fs::directory_iterator(GetThunderstoreModFolderPath()))
 	{
-		NS::log::PLUGINSYS->warn("Could not find a plugins directory. Skipped loading plugins");
-		return false;
+		fs::path pluginDir = dir.path() / "plugins";
+		if (fs::exists(pluginDir) && fs::is_directory(pluginDir))
+		{
+			fs::recursive_directory_iterator iterator(pluginDir);
+			if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
+			{
+				for (auto const& entry : iterator)
+				{
+					if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+						paths.emplace_back(entry.path());
+				}
+			}
+		}
 	}
-	// ensure dirs exist
-	fs::recursive_directory_iterator iterator(pluginPath);
-	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
+
+	if (paths.empty())
 	{
 		NS::log::PLUGINSYS->warn("Could not find any plugins. Skipped loading plugins");
 		return false;
 	}
-	for (auto const& entry : iterator)
-	{
-		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-			paths.emplace_back(entry.path());
-	}
+
 	for (fs::path path : paths)
 	{
 		if (LoadPlugin(path, &funcs, &data))
