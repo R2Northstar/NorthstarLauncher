@@ -208,19 +208,26 @@ bool ContainsInvalidChars(std::string str)
 // Paths are restricted to ASCII because encoding is fucked and we decided we won't bother.
 bool IsPathSafe(const std::string param, fs::path dir)
 {
-	auto const normRoot = fs::weakly_canonical(dir);
-	auto const normChild = fs::weakly_canonical(dir / param);
+	try
+	{
+		auto const normRoot = fs::weakly_canonical(dir);
+		auto const normChild = fs::weakly_canonical(dir / param);
 
-	auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
-	// we return if the file is safe (inside the directory) and uses only ASCII chars in the path.
-	return itr == normChild.begin() && std::none_of(
-										   param.begin(),
-										   param.end(),
-										   [](char c)
-										   {
-											   unsigned char unsignedC = static_cast<unsigned char>(c);
-											   return unsignedC > 127 || unsignedC < 0;
-										   });
+		auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
+		// we return if the file is safe (inside the directory) and uses only ASCII chars in the path.
+		return itr == normChild.begin() && std::none_of(
+											   param.begin(),
+											   param.end(),
+											   [](char c)
+											   {
+												   unsigned char unsignedC = static_cast<unsigned char>(c);
+												   return unsignedC > 127 || unsignedC < 0;
+											   });
+	}
+	catch (fs::filesystem_error err)
+	{
+		return false;
+	}
 }
 
 // void NSSaveFile( string file, string data )
