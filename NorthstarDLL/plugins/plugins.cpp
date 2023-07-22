@@ -62,7 +62,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
-	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(IDR_RCDATA1), MAKEINTRESOURCEW(RT_RCDATA));
+	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(IDR_RCDATA1), RT_RCDATA);
 
 	if (manifestResource == NULL)
 	{
@@ -207,6 +207,11 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
+	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	{
+		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
+		return false;
+	}
 	if (!fs::exists(pluginPath))
 	{
 		NS::log::PLUGINSYS->warn("Could not find a plugins directory. Skipped loading plugins");
