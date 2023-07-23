@@ -188,6 +188,23 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	return plugin;
 }
 
+inline void findPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
+{
+	if (fs::exists(pluginPath) && fs::is_directory(pluginPath))
+	{
+		// ensure dirs exist
+		fs::recursive_directory_iterator iterator(pluginPath);
+		if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
+		{
+			for (auto const& entry : iterator)
+			{
+				if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+					paths.emplace_back(entry.path());
+			}
+		}
+	}
+}
+
 bool PluginManager::LoadPlugins()
 {
 	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
@@ -213,37 +230,14 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
-	if (fs::exists(pluginPath) && fs::is_directory(pluginPath))
-	{
-		// ensure dirs exist
-		fs::recursive_directory_iterator iterator(pluginPath);
-		if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
-		{
-			for (auto const& entry : iterator)
-			{
-				if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-					paths.emplace_back(entry.path());
-			}
-		}
-	}
+	findPlugins(pluginPath, paths);
 
 	// Special case for Thunderstore plugin dirs
 
 	for (fs::directory_entry dir : fs::directory_iterator(GetThunderstoreModFolderPath()))
 	{
 		fs::path pluginDir = dir.path() / "plugins";
-		if (fs::exists(pluginDir) && fs::is_directory(pluginDir))
-		{
-			fs::recursive_directory_iterator iterator(pluginDir);
-			if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
-			{
-				for (auto const& entry : iterator)
-				{
-					if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-						paths.emplace_back(entry.path());
-				}
-			}
-		}
+		findPlugins(pluginDir, paths);
 	}
 
 	if (paths.empty())
