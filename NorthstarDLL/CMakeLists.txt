@@ -1,5 +1,8 @@
 # NorthstarDLL
 
+find_package(minhook REQUIRED)
+find_package(libcurl REQUIRED)
+
 add_library(NorthstarDLL SHARED
             "client/audio.cpp"
             "client/audio.h"
@@ -75,6 +78,8 @@ add_library(NorthstarDLL SHARED
             "mods/compiled/modscriptsrson.cpp"
             "mods/modmanager.cpp"
             "mods/modmanager.h"
+            "mods/modsavefiles.cpp"
+            "mods/modsavefiles.h"
             "plugins/plugin_abi.h"
             "plugins/pluginbackend.cpp"
             "plugins/pluginbackend.h"
@@ -94,6 +99,7 @@ add_library(NorthstarDLL SHARED
             "scripts/scripthttprequesthandler.cpp"
             "scripts/scripthttprequesthandler.h"
             "scripts/scriptjson.cpp"
+            "scripts/scriptjson.h"
             "scripts/scriptutility.cpp"
             "server/auth/bansystem.cpp"
             "server/auth/bansystem.h"
@@ -146,8 +152,8 @@ add_library(NorthstarDLL SHARED
 )
 
 target_link_libraries(NorthstarDLL PRIVATE
-                      ${CMAKE_SOURCE_DIR}/include/MinHook.x64.lib
-                      ${CMAKE_SOURCE_DIR}/include/libcurl/lib/libcurl_a.lib
+                      minhook
+                      libcurl
                       WS2_32.lib
                       Crypt32.lib
                       Cryptui.lib
@@ -160,7 +166,7 @@ target_link_libraries(NorthstarDLL PRIVATE
 
 target_include_directories(NorthstarDLL PRIVATE
                            ${CMAKE_SOURCE_DIR}/NorthstarDLL
-                           ${CMAKE_SOURCE_DIR}/include
+                           ${CMAKE_SOURCE_DIR}/thirdparty
 )
 
 target_precompile_headers(NorthstarDLL PRIVATE pch.h)
