@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 #include "squirrel/squirrelclasstypes.h"
 
 #define ABI_VERSION 3
