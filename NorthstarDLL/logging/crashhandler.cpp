@@ -20,6 +20,8 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	g_pCrashHandler->SetExceptionInfos(pExceptionInfo);
 
 	// Check if we should handle this
+	// NOTE [Fifty]: This gets called before even a try{} catch() {} can handle an exception
+	//               we don't handle these unless "-crash_handle_all" is passed as a launch arg
 	if (!g_pCrashHandler->IsExceptionFatal() && !g_pCrashHandler->GetAllFatal())
 	{
 		g_pCrashHandler->Unlock();
