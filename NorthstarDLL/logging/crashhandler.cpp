@@ -212,6 +212,7 @@ const CHAR* CCrashHandler::GetExceptionString(DWORD dwExceptionCode) const
 	case EXCEPTION_INVALID_DISPOSITION:      return "EXCEPTION_INVALID_DISPOSITION";
 	case EXCEPTION_GUARD_PAGE:               return "EXCEPTION_GUARD_PAGE";
 	case EXCEPTION_INVALID_HANDLE:           return "EXCEPTION_INVALID_HANDLE";
+	case 3765269347:                         return "RUNTIME_EXCEPTION";
 	}
 	// clang-format on
 	return "UNKNOWN_EXCEPTION";
