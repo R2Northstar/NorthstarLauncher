@@ -69,7 +69,8 @@ uintmax_t GetSizeOfFolder(fs::path dir)
 }
 
 // Saves a file asynchronously.
-template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
+template <ScriptContext context>
+void SaveFileManager::SaveFileAsync(fs::path file, std::string contents)
 {
 	auto mutex = std::ref(fileMutex);
 	std::thread writeThread(
@@ -119,7 +120,8 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 }
 
 // Loads a file asynchronously.
-template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path file)
+template <ScriptContext context>
+int SaveFileManager::LoadFileAsync(fs::path file)
 {
 	int handle = ++m_iLastRequestHandle;
 	auto mutex = std::ref(fileMutex);
@@ -166,7 +168,8 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 }
 
 // Deletes a file asynchronously.
-template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path file)
+template <ScriptContext context>
+void SaveFileManager::DeleteFileAsync(fs::path file)
 {
 	// P.S. I don't like how we have to async delete calls but we do.
 	auto m = std::ref(fileMutex);
@@ -201,7 +204,8 @@ bool ContainsInvalidChars(std::string str)
 {
 	// we don't allow null characters either, even if they're ASCII characters because idk if people can
 	// use it to circumvent the file extension suffix.
-	return std::any_of(str.begin(), str.end(), [](char c) { return c == '\0'; });
+	return std::any_of(str.begin(), str.end(), [](char c)
+					   { return c == '\0'; });
 }
 
 // Checks if the relative path (param) remains inside the mod directory (dir).
@@ -538,7 +542,8 @@ ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | Scri
 // ok, I'm just gonna explain what the fuck is going on here because this
 // is the pinnacle of my stupidity and I do not want to touch this ever
 // again, yet someone will eventually have to maintain this.
-template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
+template <ScriptContext context>
+std::string EncodeJSON(HSquirrelVM* sqvm)
 {
 	// new rapidjson
 	rapidjson_document doc;
