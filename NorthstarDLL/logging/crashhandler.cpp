@@ -68,7 +68,8 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 
 	// We showed the "Northstar has crashed" message box
 	// make sure we terminate
-	ExitProcess(1);
+	if (!g_pCrashHandler->IsExceptionFatal())
+		ExitProcess(1);
 
 	return EXCEPTION_EXECUTE_HANDLER;
 }
