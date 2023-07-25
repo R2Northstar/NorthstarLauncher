@@ -19,12 +19,28 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 
 	g_pCrashHandler->SetExceptionInfos(pExceptionInfo);
 
+	// Check if we should handle this
+	if (!g_pCrashHandler->IsExceptionFatal() && !g_pCrashHandler->GetAllFatal())
+	{
+		g_pCrashHandler->Unlock();
+		return EXCEPTION_CONTINUE_SEARCH;
+	}
+
 	// Don't run if a debbuger is attached
 	if (IsDebuggerPresent())
 	{
 		g_pCrashHandler->Unlock();
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
+
+	// Prevent recursive calls
+	if (g_pCrashHandler->GetState())
+	{
+		g_pCrashHandler->Unlock();
+		ExitProcess(1);
+	}
+
+	g_pCrashHandler->SetState(true);
 
 	// Needs to be called first as we use the members this sets later on
 	g_pCrashHandler->SetCrashedModule();
@@ -79,7 +95,8 @@ BOOL WINAPI ConsoleCtrlRoutine(DWORD dwCtrlType)
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CCrashHandler::CCrashHandler()
-	: m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasSetConsolehandler(false), m_bHasShownCrashMsg(false)
+	: m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasSetConsolehandler(false), m_bAllExceptionsFatal(false),
+	  m_bHasShownCrashMsg(false), m_bState(false)
 {
 	Init();
 }
@@ -216,6 +233,50 @@ const CHAR* CCrashHandler::GetExceptionString(DWORD dwExceptionCode) const
 	}
 	// clang-format on
 	return "UNKNOWN_EXCEPTION";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if exception is known
+//-----------------------------------------------------------------------------
+bool CCrashHandler::IsExceptionFatal() const
+{
+	return IsExceptionFatal(m_pExceptionInfos->ExceptionRecord->ExceptionCode);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if exception is known
+//-----------------------------------------------------------------------------
+bool CCrashHandler::IsExceptionFatal(DWORD dwExceptionCode) const
+{
+	// clang-format off
+	switch (dwExceptionCode)
+	{
+	case EXCEPTION_ACCESS_VIOLATION:
+	case EXCEPTION_DATATYPE_MISALIGNMENT:
+	case EXCEPTION_BREAKPOINT:
+	case EXCEPTION_SINGLE_STEP:
+	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+	case EXCEPTION_FLT_DENORMAL_OPERAND:
+	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+	case EXCEPTION_FLT_INEXACT_RESULT:
+	case EXCEPTION_FLT_INVALID_OPERATION:
+	case EXCEPTION_FLT_OVERFLOW:
+	case EXCEPTION_FLT_STACK_CHECK:
+	case EXCEPTION_FLT_UNDERFLOW:
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:
+	case EXCEPTION_INT_OVERFLOW:
+	case EXCEPTION_PRIV_INSTRUCTION:
+	case EXCEPTION_IN_PAGE_ERROR:
+	case EXCEPTION_ILLEGAL_INSTRUCTION:
+	case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+	case EXCEPTION_STACK_OVERFLOW:
+	case EXCEPTION_INVALID_DISPOSITION:
+	case EXCEPTION_GUARD_PAGE:
+	case EXCEPTION_INVALID_HANDLE:
+		return true;
+	}
+	// clang-format on
+	return false;
 }
 
 //-----------------------------------------------------------------------------

@@ -24,6 +24,26 @@ class CCrashHandler
 		m_Mutex.unlock();
 	}
 
+	void SetState(bool bState)
+	{
+		m_bState = bState;
+	}
+
+	bool GetState() const
+	{
+		return m_bState;
+	}
+
+	void SetAllFatal(bool bState)
+	{
+		m_bAllExceptionsFatal = bState;
+	}
+
+	bool GetAllFatal() const
+	{
+		return m_bAllExceptionsFatal;
+	}
+
 	//-----------------------------------------------------------------------------
 	// Exception helpers
 	//-----------------------------------------------------------------------------
@@ -33,6 +53,9 @@ class CCrashHandler
 
 	const CHAR* GetExceptionString() const;
 	const CHAR* GetExceptionString(DWORD dwExceptionCode) const;
+
+	bool IsExceptionFatal() const;
+	bool IsExceptionFatal(DWORD dwExceptionCode) const;
 
 	//-----------------------------------------------------------------------------
 	// Formatting
@@ -59,8 +82,9 @@ class CCrashHandler
 	EXCEPTION_POINTERS* m_pExceptionInfos;
 
 	bool m_bHasSetConsolehandler;
-
+	bool m_bAllExceptionsFatal;
 	bool m_bHasShownCrashMsg;
+	bool m_bState;
 
 	std::string m_svCrashedModule;
 	std::string m_svCrashedOffset;
