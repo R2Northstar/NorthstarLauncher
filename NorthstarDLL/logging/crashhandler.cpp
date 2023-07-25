@@ -19,28 +19,12 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 
 	g_pCrashHandler->SetExceptionInfos(pExceptionInfo);
 
-	// Don't run if we don't recognize the exception
-	if (g_pCrashHandler->GetExceptionString() == g_pCrashHandler->GetExceptionString(0xFFFFFFFF))
-	{
-		g_pCrashHandler->Unlock();
-		return EXCEPTION_CONTINUE_SEARCH;
-	}
-
 	// Don't run if a debbuger is attached
 	if (IsDebuggerPresent())
 	{
 		g_pCrashHandler->Unlock();
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
-
-	// Prevent recursive calls
-	if (g_pCrashHandler->GetState())
-	{
-		NS::log::FlushLoggers();
-		ExitProcess(1);
-	}
-
-	g_pCrashHandler->SetState(true);
 
 	// Needs to be called first as we use the members this sets later on
 	g_pCrashHandler->SetCrashedModule();
@@ -63,6 +47,11 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pExceptionInfo)
 	g_pCrashHandler->ShowPopUpMessage();
 
 	g_pCrashHandler->Unlock();
+
+	// We showed the "Northstar has crashed" message box
+	// make sure we terminate
+	ExitProcess(1);
+
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -90,7 +79,7 @@ BOOL WINAPI ConsoleCtrlRoutine(DWORD dwCtrlType)
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CCrashHandler::CCrashHandler()
-	: m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasSetConsolehandler(false), m_bHasShownCrashMsg(false), m_bState(false)
+	: m_hExceptionFilter(nullptr), m_pExceptionInfos(nullptr), m_bHasSetConsolehandler(false), m_bHasShownCrashMsg(false)
 {
 	Init();
 }

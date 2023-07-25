@@ -24,16 +24,6 @@ class CCrashHandler
 		m_Mutex.unlock();
 	}
 
-	void SetState(bool bState)
-	{
-		m_bState = bState;
-	}
-
-	bool GetState() const
-	{
-		return m_bState;
-	}
-
 	//-----------------------------------------------------------------------------
 	// Exception helpers
 	//-----------------------------------------------------------------------------
@@ -71,7 +61,6 @@ class CCrashHandler
 	bool m_bHasSetConsolehandler;
 
 	bool m_bHasShownCrashMsg;
-	bool m_bState;
 
 	std::string m_svCrashedModule;
 	std::string m_svCrashedOffset;
