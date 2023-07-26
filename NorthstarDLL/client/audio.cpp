@@ -16,7 +16,6 @@ extern "C"
 	extern void* __fastcall Audio_GetParentEvent();
 }
 
-
 ConVar* Cvar_mileslog_enable;
 ConVar* Cvar_ns_print_played_sounds;
 
