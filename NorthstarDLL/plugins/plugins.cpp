@@ -190,18 +190,23 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 inline void findPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
 {
-	if (fs::exists(pluginPath) && fs::is_directory(pluginPath))
+	// ensure dirs exist
+	if (!fs::exists(pluginPath) || !fs::is_directory(pluginPath))
 	{
-		// ensure dirs exist
-		fs::recursive_directory_iterator iterator(pluginPath);
-		if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
-		{
-			for (auto const& entry : iterator)
-			{
-				if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-					paths.emplace_back(entry.path());
-			}
-		}
+		return;
+	}
+
+	fs::recursive_directory_iterator iterator(pluginPath);
+	// ensure iterator is not empty
+	if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
+	{
+		return;
+	}
+
+	for (auto const& entry : iterator)
+	{
+		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+			paths.emplace_back(entry.path());
 	}
 }
 
