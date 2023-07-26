@@ -1,5 +1,6 @@
 #pragma once
-#include "memory.h"
+#include "silver-bun/memaddr.h"
+#include "silver-bun/module.h"
 
 #include <string>
 #include <iostream>
