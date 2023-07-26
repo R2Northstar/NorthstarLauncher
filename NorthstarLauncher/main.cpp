@@ -388,6 +388,7 @@ int main(int argc, char* argv[])
 	{
 		PrependPath();
 
+		// NOTE [Fifty]: Functionality removed in https://github.com/R2Northstar/NorthstarLauncher/pull/517
 		if (fs::exists("ns_startup_args.txt"))
 		{
 			std::cout << "[*] WARNING: 'ns_startup_args.txt' is no longer supported!" << std::endl;
