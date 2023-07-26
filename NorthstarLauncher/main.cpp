@@ -388,19 +388,13 @@ int main(int argc, char* argv[])
 	{
 		PrependPath();
 
-		if (!fs::exists("ns_startup_args.txt"))
+		if (fs::exists("ns_startup_args.txt"))
 		{
-			std::ofstream file("ns_startup_args.txt");
-			std::string defaultArgs = "-multiple";
-			file.write(defaultArgs.c_str(), defaultArgs.length());
-			file.close();
+			std::cout << "[*] WARNING: 'ns_startup_args.txt' is no longer supported!" << std::endl;
 		}
-		if (!fs::exists("ns_startup_args_dedi.txt"))
+		if (fs::exists("ns_startup_args_dedi.txt"))
 		{
-			std::ofstream file("ns_startup_args_dedi.txt");
-			std::string defaultArgs = "+setplaylist private_match";
-			file.write(defaultArgs.c_str(), defaultArgs.length());
-			file.close();
+			std::cout << "[*] WARNING: 'ns_startup_args_dedi.txt' is no longer supported!" << std::endl;
 		}
 
 		std::cout << "[*] Loading tier0.dll" << std::endl;
