@@ -188,7 +188,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	return plugin;
 }
 
-inline void findPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
+inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
 {
 	// ensure dirs exist
 	if (!fs::exists(pluginPath) || !fs::is_directory(pluginPath))
@@ -235,14 +235,14 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
-	findPlugins(pluginPath, paths);
+	FindPlugins(pluginPath, paths);
 
 	// Special case for Thunderstore plugin dirs
 
 	for (fs::directory_entry dir : fs::directory_iterator(GetThunderstoreModFolderPath()))
 	{
 		fs::path pluginDir = dir.path() / "plugins";
-		findPlugins(pluginDir, paths);
+		FindPlugins(pluginDir, paths);
 	}
 
 	if (paths.empty())
