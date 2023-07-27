@@ -126,6 +126,11 @@ public:
 	}
 
 	bool CheckOpCodes(const std::vector<uint8_t>& vOpcodeArray) const;
+	bool IsMemoryReadable(const size_t nSize) const;
+
+	void NOP(const size_t nSize) const;
+	void Patch(const char* pszOpcodes) const;
+	void Patch(const uint8_t* pOpcodeArray, const size_t nSize) const;
 	void Patch(const std::vector<uint8_t>& vOpcodeArray) const;
 	void PatchString(const char* szString) const;
 

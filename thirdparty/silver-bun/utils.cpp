@@ -2,6 +2,22 @@
 
 namespace Utils
 {
+	//----------------------------------------------------------------------------------------
+	// Purpose: For converting a string pattern to an array of bytes. Doesnt support wildcards
+	//----------------------------------------------------------------------------------------
+	std::vector<uint8_t> StringPatternToBytes(const char* szInput)
+	{
+		const char* pszPatternStart = const_cast<char*>(szInput);
+		const char* pszPatternEnd = pszPatternStart + strlen(szInput);
+		std::vector<uint8_t> vBytes;
+
+		for (const char* pszCurrentByte = pszPatternStart; pszCurrentByte < pszPatternEnd; ++pszCurrentByte)
+		{
+			vBytes.push_back(strtoul(pszCurrentByte, const_cast<char**>(&pszCurrentByte), 16));
+		}
+		return vBytes;
+	};
+
     //----------------------------------------------------------------------------------------
     // Purpose: For converting a string pattern with wildcards to an array of bytes.
     //----------------------------------------------------------------------------------------

@@ -130,7 +130,7 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module)
 	RenderLine = module.Offset(0x192A70).RCast<RenderLineType>();
 	RenderBox = module.Offset(0x192520).RCast<RenderBoxType>();
 	RenderWireframeBox = module.Offset(0x193DA0).RCast<RenderBoxType>();
-	sEngineModule = reinterpret_cast<HMODULE>(module.m_nAddress);
+	sEngineModule = reinterpret_cast<HMODULE>(module.GetModuleBase());
 
 	// not in g_pCVar->FindVar by this point for whatever reason, so have to get from memory
 	ConVar* Cvar_enable_debug_overlays = module.Offset(0x10DB0990).RCast<ConVar*>();

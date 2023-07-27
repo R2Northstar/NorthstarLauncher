@@ -390,14 +390,14 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, (LPVOID)LoadLibraryExA,
 HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 // clang-format on
 {
-	HMODULE moduleAddress;
+	HMODULE hModule;
 
 	// replace xinput dll with one that has ASLR
 	if (!strncmp(lpLibFileName, "XInput1_3.dll", 14))
 	{
-		moduleAddress = _LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
+		hModule = _LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
 
-		if (!moduleAddress)
+		if (!hModule)
 		{
 			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
 			exit(EXIT_FAILURE);
@@ -406,12 +406,15 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 		}
 	}
 	else
-		moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
+		hModule = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
-	if (moduleAddress)
-		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
+	bool bShouldRunCalbacks =
+		hModule != 0 && !(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
 
-	return moduleAddress;
+	if (bShouldRunCalbacks)
+		CallLoadLibraryACallbacks(lpLibFileName, hModule);
+
+	return hModule;
 }
 
 // clang-format off
@@ -419,12 +422,12 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, (LPVOID)LoadLibraryA,
 HMODULE, WINAPI, (LPCSTR lpLibFileName))
 // clang-format on
 {
-	HMODULE moduleAddress = _LoadLibraryA(lpLibFileName);
+	HMODULE hModule = _LoadLibraryA(lpLibFileName);
 
-	if (moduleAddress)
-		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
+	if (hModule)
+		CallLoadLibraryACallbacks(lpLibFileName, hModule);
 
-	return moduleAddress;
+	return hModule;
 }
 
 // clang-format off
@@ -432,12 +435,15 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, (LPVOID)LoadLibraryExW,
 HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 // clang-format on
 {
-	HMODULE moduleAddress = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
+	HMODULE hModule = _LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
-	if (moduleAddress)
-		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
+	bool bShouldRunCalbacks =
+		hModule != 0 && !(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
 
-	return moduleAddress;
+	if (bShouldRunCalbacks)
+		CallLoadLibraryWCallbacks(lpLibFileName, hModule);
+
+	return hModule;
 }
 
 // clang-format off
@@ -445,12 +451,12 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, (LPVOID)LoadLibraryW,
 HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 // clang-format on
 {
-	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
+	HMODULE hModule = _LoadLibraryW(lpLibFileName);
 
-	if (moduleAddress)
-		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
+	if (hModule)
+		CallLoadLibraryWCallbacks(lpLibFileName, hModule);
 
-	return moduleAddress;
+	return hModule;
 }
 
 void InstallInitialHooks()

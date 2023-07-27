@@ -29,6 +29,56 @@ bool CMemory::CheckOpCodes(const std::vector<uint8_t>& vOpcodeArray) const
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Checx if memory is readable
+// Input  : nSize -
+//-----------------------------------------------------------------------------
+bool CMemory::IsMemoryReadable(const size_t nSize) const
+{
+	static SYSTEM_INFO sysInfo;
+	if (!sysInfo.dwPageSize)
+		GetSystemInfo(&sysInfo);
+
+	MEMORY_BASIC_INFORMATION memInfo;
+	if (!VirtualQuery(reinterpret_cast<LPCVOID>(GetPtr()), &memInfo, sizeof(memInfo)))
+		return false;
+
+	return memInfo.RegionSize >= nSize && memInfo.State & MEM_COMMIT && !(memInfo.Protect & PAGE_NOACCESS);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: patch size with nop opcodes
+// Input  : nSize -
+//-----------------------------------------------------------------------------
+void CMemory::NOP(const size_t nSize) const
+{
+	std::vector<uint8_t> vOpcodeArray;
+	vOpcodeArray.resize(nSize);
+	memset(vOpcodeArray.data(), 0x90, nSize);
+	Patch(vOpcodeArray);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: patch array of opcodes
+// Input  : *pszOpcodes -
+//-----------------------------------------------------------------------------
+void CMemory::Patch(const char* pszOpcodes) const
+{
+	const std::vector<uint8_t> vOpcodeArray = Utils::StringPatternToBytes(pszOpcodes);
+	Patch(vOpcodeArray);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: patch array of opcodes starting from current address
+// Input  : *pOpcodeArray -
+//          nSize -
+//-----------------------------------------------------------------------------
+void CMemory::Patch(const uint8_t* pOpcodeArray, const size_t nSize) const
+{
+	const std::vector<uint8_t> vOpcodeArray(pOpcodeArray, pOpcodeArray + nSize * sizeof(uint8_t));
+	Patch(vOpcodeArray);
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: patch array of opcodes starting from current address
 // Input  : &vOpcodeArray - 
 //-----------------------------------------------------------------------------

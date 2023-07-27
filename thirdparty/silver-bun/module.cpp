@@ -14,6 +14,18 @@
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor
+// Input  : *szModuleName -
+//-----------------------------------------------------------------------------
+CModule::CModule(HMODULE hModule)
+{
+	m_pModuleBase = reinterpret_cast<uintptr_t>(hModule);
+
+	Init();
+	LoadSections();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: constructor
 // Input  : *szModuleName - 
 //-----------------------------------------------------------------------------
 CModule::CModule(const char* szModuleName)
@@ -66,6 +78,16 @@ void CModule::LoadSections()
 	m_ExceptionTable = GetSectionByName(".pdata");
 	m_RunTimeData    = GetSectionByName(".data");
 	m_ReadOnlyData   = GetSectionByName(".rdata");
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Gets memory at relative offset
+// Input  : nOffset -
+// Output : CMemory
+//-----------------------------------------------------------------------------
+CMemory CModule::Offset(const uintptr_t nOffset) const
+{
+	return CMemory(m_pModuleBase + nOffset);
 }
 
 //-----------------------------------------------------------------------------

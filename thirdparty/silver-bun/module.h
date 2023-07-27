@@ -30,11 +30,14 @@ public:
 	};
 
 	CModule(void) = default;
+	CModule(HMODULE hModule);
 	CModule(const char* szModuleName);
 	CModule(const char* szModuleName, const uintptr_t nModuleBase);
 
 	void Init();
 	void LoadSections();
+
+	CMemory Offset(const uintptr_t nOffset) const;
 
 	CMemory FindPatternSIMD(const char* szPattern, const ModuleSections_t* moduleSection = nullptr) const;
 	CMemory FindString(const char* szString, const ptrdiff_t occurrence = 1, bool nullTerminator = false) const;
