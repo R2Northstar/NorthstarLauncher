@@ -255,11 +255,21 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
 // tbh this actually might be for memory mapped files or something, would make sense i think
+// rtech_game.dll + 0x1e20
 // clang-format off
 HOOK(ReadFileAsyncHook, ReadFileAsync, 
 void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
+	// NOTE [Fifty]: For some reason some users are getting pPath as null when
+	//               loading a server, ReadFileAsync uses CreateFileA and checks
+	//               its return value so this is completely safe
+	if (pPath == NULL || pCallback == NULL)
+	{
+		NS::log::rpak->warn("ReadFileAsync: pPath or pCallback were NULL, returning!");
+		return ReadFileAsync(pPath, pCallback);
+	}
+
 	fs::path path(pPath);
 	std::string newPath = "";
 	fs::path filename = path.filename();
