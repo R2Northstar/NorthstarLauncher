@@ -35,7 +35,6 @@ public:
 	CModule(void) = default;
 	CModule(HMODULE hModule);
 	CModule(const char* szModuleName);
-	CModule(const char* szModuleName, const uintptr_t nModuleBase);
 
 	void Init();
 	void LoadSections();

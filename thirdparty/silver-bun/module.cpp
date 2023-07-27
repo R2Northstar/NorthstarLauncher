@@ -17,6 +17,11 @@ CModule::CModule(HMODULE hModule)
 {
 	m_pModuleBase = reinterpret_cast<uintptr_t>(hModule);
 
+	CHAR szModuleName[MAX_PATH];
+	DWORD dwSize = GetModuleFileNameA(hModule, szModuleName, sizeof(szModuleName));
+	m_ModuleName = strrchr(szModuleName, '\\') + 1;
+
+
 	Init();
 	LoadSections();
 }
@@ -26,23 +31,10 @@ CModule::CModule(HMODULE hModule)
 // Input  : *szModuleName - 
 //-----------------------------------------------------------------------------
 CModule::CModule(const char* szModuleName)
-	: m_ModuleName(szModuleName)
 {
 	m_pModuleBase = reinterpret_cast<uintptr_t>(GetModuleHandleA(szModuleName));
+	m_ModuleName = szModuleName;
 
-	Init();
-	LoadSections();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: constructor
-// Input  : *szModuleName - 
-//			nModuleBase   - 
-//-----------------------------------------------------------------------------
-CModule::CModule(const char* szModuleName, const uintptr_t nModuleBase)
-	: m_ModuleName(szModuleName)
-	, m_pModuleBase(nModuleBase)
-{
 	Init();
 	LoadSections();
 }
