@@ -4,7 +4,6 @@ add_library(silver-bun STATIC
 			"memaddr.h"
 			"module.cpp"
 			"module.h"
-			"tebpeb64.h"
 			"utils.cpp"
 			"utils.h"
 )
