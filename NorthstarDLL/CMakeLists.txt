@@ -153,7 +153,7 @@ add_library(NorthstarDLL SHARED
 target_link_libraries(NorthstarDLL PRIVATE
                       minhook
                       libcurl
-					  silver-bun
+                      silver-bun
                       WS2_32.lib
                       Crypt32.lib
                       Cryptui.lib
