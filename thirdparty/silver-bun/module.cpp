@@ -2,7 +2,10 @@
 //
 // Purpose: Implementation of the CModule class.
 //
+// Original commit: https://github.com/IcePixelx/silver-bun/commit/72c74b455bf4d02b424096ad2f30cd65535f814c
+//
 //===========================================================================//
+
 #include "module.h"
 #include "utils.h"
 
