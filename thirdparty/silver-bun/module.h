@@ -1,6 +1,5 @@
 #pragma once
 
-#ifndef USE_PRECOMPILED_HEADERS
 #include "memaddr.h"
 #include <iostream>
 #include <string>
@@ -9,9 +8,6 @@
 #include <psapi.h>
 #include <intrin.h>
 #include <algorithm>
-#else
-#pragma message("ADD PRECOMPILED HEADERS TO SILVER-BUN.")
-#endif // !USE_PRECOMPILED_HEADERS
 
 class CModule
 {
