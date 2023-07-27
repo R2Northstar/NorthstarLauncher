@@ -73,8 +73,6 @@ void SetNewModSearchPaths(Mod* mod)
 	{
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
-			NS::log::fs->info("Changing mod search path from {} to {}", sCurrentModPath, mod->m_ModDirectory.string());
-
 			AddSearchPath(
 				&*(*g_pFilesystem), (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
@@ -179,7 +177,7 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 
 	R2::g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
-	AddSearchPathHook.Dispatch((*g_pFilesystem)->m_vtable->AddSearchPath);
-	ReadFromCacheHook.Dispatch((*g_pFilesystem)->m_vtable->ReadFromCache);
-	MountVPKHook.Dispatch((*g_pFilesystem)->m_vtable->MountVPK);
+	AddSearchPathHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->AddSearchPath);
+	ReadFromCacheHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->ReadFromCache);
+	MountVPKHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->MountVPK);
 }
