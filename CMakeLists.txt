@@ -28,7 +28,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(utils)
 
 # Targets
-add_subdirectory(CrashMessage)
 add_subdirectory(loader_wsock32_proxy)
 add_subdirectory(NorthstarDLL)
 add_subdirectory(NorthstarLauncher)

@@ -294,22 +294,14 @@ void CCrashHandler::ShowPopUpMessage()
 
 	if (!IsDedicatedServer())
 	{
-		// Create Crash Message dialog
-		STARTUPINFOA si;
-		PROCESS_INFORMATION pi;
+		std::string svMessage = fmt::format(
+			"Northstar has crashed! Crash info can be found at {}/logs!\n\n{}\n{} + {}",
+			GetNorthstarPrefix(),
+			GetExceptionString(),
+			m_svCrashedModule,
+			m_svCrashedOffset);
 
-		ZeroMemory(&si, sizeof(si));
-		si.cb = sizeof(si);
-		ZeroMemory(&pi, sizeof(pi));
-
-		std::string svCmdLine =
-			fmt::format("bin\\CrashMsg.exe {} {} {} {}", GetNorthstarPrefix(), GetExceptionString(), m_svCrashedModule, m_svCrashedOffset);
-
-		if (CreateProcessA(NULL, (LPSTR)svCmdLine.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
-		{
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
-		}
+		MessageBoxA(GetForegroundWindow(), svMessage.c_str(), "Northstar has crashed!", MB_ICONERROR | MB_OK);
 	}
 }
 
