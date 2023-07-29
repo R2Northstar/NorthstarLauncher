@@ -243,7 +243,7 @@ bool PluginManager::LoadPlugins()
 		// Use regex to match `AUTHOR-MOD-VERSION` pattern
 		if (!std::regex_match(dir.path().string(), pattern))
 		{
-			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", modsDir.string());
+			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", dir.path().string());
 			continue; // skip loading package that doesn't match
 		}
 		FindPlugins(pluginsDir, paths);
