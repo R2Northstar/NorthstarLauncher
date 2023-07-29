@@ -216,7 +216,7 @@ bool PluginManager::LoadPlugins()
 
 	std::vector<fs::path> paths;
 
-	pluginPath = GetNorthstarPrefix() + "/plugins";
+	pluginPath = GetNorthstarPrefix() + "\\plugins";
 
 	PluginNorthstarData data {};
 	std::string ns_version {version};
