@@ -246,7 +246,7 @@ bool PluginManager::LoadPlugins()
 			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", modsDir.string());
 			continue; // skip loading package that doesn't match
 		}
-		FindPlugins(pluginDir, paths);
+		FindPlugins(pluginsDir, paths);
 	}
 
 	if (paths.empty())
