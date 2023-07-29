@@ -224,8 +224,31 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	return plugin;
 }
 
+inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
+{
+	// ensure dirs exist
+	if (!fs::exists(pluginPath) || !fs::is_directory(pluginPath))
+	{
+		return;
+	}
+
+	for (const fs::directory_entry& entry : fs::recursive_directory_iterator(pluginPath))
+	{
+		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+			paths.emplace_back(entry.path());
+	}
+}
+
 bool PluginManager::LoadPlugins()
 {
+	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	{
+		Warning(eLog::PLUGSYS, "-noplugins detected; skipping loading plugins\n");
+		return false;
+	}
+
+	fs::create_directories(GetThunderstoreModFolderPath());
+
 	std::vector<fs::path> paths;
 
 	pluginPath = GetNorthstarPrefix() + "/plugins";
@@ -243,28 +266,22 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
-	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	FindPlugins(pluginPath, paths);
+
+	// Special case for Thunderstore plugin dirs
+
+	for (fs::directory_entry dir : fs::directory_iterator(GetThunderstoreModFolderPath()))
 	{
-		Warning(eLog::PLUGSYS, "-noplugins detected; skipping loading plugins\n");
-		return false;
+		fs::path pluginDir = dir.path() / "plugins";
+		FindPlugins(pluginDir, paths);
 	}
-	if (!fs::exists(pluginPath))
-	{
-		Warning(eLog::PLUGSYS, "Could not find a plugins directory. Skipped loading plugins\n");
-		return false;
-	}
-	// ensure dirs exist
-	fs::recursive_directory_iterator iterator(pluginPath);
-	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
+
+	if (paths.empty())
 	{
 		Warning(eLog::PLUGSYS, "Could not find any plugins. Skipped loading plugins\n");
 		return false;
 	}
-	for (auto const& entry : iterator)
-	{
-		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-			paths.emplace_back(entry.path());
-	}
+
 	for (fs::path path : paths)
 	{
 		if (LoadPlugin(path, &funcs, &data))
