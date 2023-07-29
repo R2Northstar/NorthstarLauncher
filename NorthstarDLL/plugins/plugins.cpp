@@ -232,11 +232,19 @@ bool PluginManager::LoadPlugins()
 
 	FindPlugins(pluginPath, paths);
 
-	// Special case for Thunderstore plugin dirs
-
-	for (fs::directory_entry dir : fs::directory_iterator(GetThunderstoreModFolderPath()))
+	// Special case for Thunderstore mods dir
+	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
+	// Set up regex for `AUTHOR-MOD-VERSION` pattern
+	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
+	for (fs::directory_entry dir : thunderstoreModsDir)
 	{
-		fs::path pluginDir = dir.path() / "plugins";
+		fs::path pluginsDir = dir.path() / "plugins";
+		// Use regex to match `AUTHOR-MOD-VERSION` pattern
+		if (!std::regex_match(dir.path().string(), pattern))
+		{
+			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", modsDir.string());
+			continue; // skip loading package that doesn't match
+		}
 		FindPlugins(pluginDir, paths);
 	}
 
