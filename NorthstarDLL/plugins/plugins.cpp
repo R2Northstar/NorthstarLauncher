@@ -7,6 +7,7 @@
 #include "core/convar/convar.h"
 #include "server/serverpresence.h"
 #include <optional>
+#include <regex>
 
 #include "util/version.h"
 #include "pluginbackend.h"
