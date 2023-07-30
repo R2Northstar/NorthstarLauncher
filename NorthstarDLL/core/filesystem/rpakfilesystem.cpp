@@ -264,9 +264,8 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 	// NOTE [Fifty]: For some reason some users are getting pPath as null when
 	//               loading a server, ReadFileAsync uses CreateFileA and checks
 	//               its return value so this is completely safe
-	if (pPath == NULL || pCallback == NULL)
+	if (pPath == NULL)
 	{
-		NS::log::rpak->warn("ReadFileAsync: pPath or pCallback were NULL, returning!");
 		return ReadFileAsync(pPath, pCallback);
 	}
 
