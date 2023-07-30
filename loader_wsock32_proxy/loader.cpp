@@ -4,6 +4,9 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <iostream>
+
+namespace fs = std::filesystem;
 
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
@@ -72,6 +75,8 @@ bool LoadNorthstar()
 			strProfile = "R2Northstar";
 		}
 
+		wchar_t buffer[8192];
+
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
 		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
 
@@ -80,7 +85,7 @@ bool LoadNorthstar()
 
 		std::wcout << L"[*] Using: " << buffer << std::endl;
 
-		hHookModule = LoadLibraryExW(buffer, 0, 8u);
+		HMODULE hHookModule = LoadLibraryExW(buffer, 0, 8u);
 		if (hHookModule)
 			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
 		if (!hHookModule || Hook_Init == nullptr)
