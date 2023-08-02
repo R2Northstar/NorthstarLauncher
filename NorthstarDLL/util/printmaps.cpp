@@ -188,6 +188,8 @@ void ConCommand_map(const CCommand& args)
 {
 	if (args.ArgC() > 1)
 	{
+		RefreshMapList();
+
 		const char* arg = args.Arg(1);
 		auto f = [&](MapVPKInfo map) -> bool { return map.name == arg; };
 		if (std::find_if(vMapList.begin(), vMapList.end(), f) == vMapList.end())
