@@ -7,6 +7,7 @@
 #include "core/convar/convar.h"
 #include "server/serverpresence.h"
 #include <optional>
+#include <regex>
 
 #include "util/version.h"
 #include "pluginbackend.h"
@@ -196,14 +197,7 @@ inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
 		return;
 	}
 
-	fs::recursive_directory_iterator iterator(pluginPath);
-	// ensure iterator is not empty
-	if (std::filesystem::begin(iterator) != std::filesystem::end(iterator))
-	{
-		return;
-	}
-
-	for (auto const& entry : iterator)
+	for (const fs::directory_entry& entry : fs::recursive_directory_iterator(pluginPath))
 	{
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path());
@@ -218,9 +212,11 @@ bool PluginManager::LoadPlugins()
 		return false;
 	}
 
+	fs::create_directories(GetThunderstoreModFolderPath());
+
 	std::vector<fs::path> paths;
 
-	pluginPath = GetNorthstarPrefix() + "/plugins";
+	pluginPath = GetNorthstarPrefix() + "\\plugins";
 
 	PluginNorthstarData data {};
 	std::string ns_version {version};
@@ -237,12 +233,20 @@ bool PluginManager::LoadPlugins()
 
 	FindPlugins(pluginPath, paths);
 
-	// Special case for Thunderstore plugin dirs
-
-	for (fs::directory_entry dir : fs::directory_iterator(GetThunderstoreModFolderPath()))
+	// Special case for Thunderstore mods dir
+	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
+	// Set up regex for `AUTHOR-MOD-VERSION` pattern
+	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
+	for (fs::directory_entry dir : thunderstoreModsDir)
 	{
-		fs::path pluginDir = dir.path() / "plugins";
-		FindPlugins(pluginDir, paths);
+		fs::path pluginsDir = dir.path() / "plugins";
+		// Use regex to match `AUTHOR-MOD-VERSION` pattern
+		if (!std::regex_match(dir.path().string(), pattern))
+		{
+			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", dir.path().string());
+			continue; // skip loading package that doesn't match
+		}
+		FindPlugins(pluginsDir, paths);
 	}
 
 	if (paths.empty())
