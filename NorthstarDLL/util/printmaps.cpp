@@ -31,6 +31,8 @@ struct MapVPKInfo
 // our current list of maps in the game
 std::vector<MapVPKInfo> vMapList;
 
+FnCommandCallback_t OrignalMapCommand = NULL;
+
 void RefreshMapList()
 {
 	// Only update the maps list every 10 seconds max to we avoid constantly reading fs
@@ -182,10 +184,30 @@ void ConCommand_maps(const CCommand& args)
 			spdlog::info("({}) {}", PrintMapSource.at(map.source), map.name);
 }
 
+void ConCommand_map(const CCommand& args)
+{
+	if (args.ArgC() > 1)
+	{
+		const char* arg = args.Arg(1);
+		auto f = [&](MapVPKInfo map) -> bool { return map.name == arg; };
+		if (std::find_if(vMapList.begin(), vMapList.end(), f) == vMapList.end())
+		{
+			spdlog::info("Invalid map found");
+			return;
+		}
+	}
+
+	OrignalMapCommand(args);
+}
+
 void InitialiseMapsPrint()
 {
 	AUTOHOOK_DISPATCH()
 
 	ConCommand* mapsCommand = R2::g_pCVar->FindCommand("maps");
 	mapsCommand->m_pCommandCallback = ConCommand_maps;
+
+	ConCommand* mapCommand = R2::g_pCVar->FindCommand("map");
+	OrignalMapCommand = mapCommand->m_pCommandCallback;
+	mapCommand->m_pCommandCallback = ConCommand_map;
 }
