@@ -38,4 +38,6 @@ class PluginCommunicationHandler
 
 void init_plugincommunicationhandler();
 
+void InformPluginsDLLLoad(const char* dllPath, void* address);
+
 extern PluginCommunicationHandler* g_pPluginCommunicationhandler;

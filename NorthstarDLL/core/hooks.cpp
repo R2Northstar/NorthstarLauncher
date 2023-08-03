@@ -1,4 +1,5 @@
 #include "dedicated/dedicated.h"
+#include "plugins/pluginbackend.h"
 
 #include <iostream>
 #include <wchar.h>
@@ -8,6 +9,7 @@
 #include <sstream>
 #include <filesystem>
 #include <Psapi.h>
+
 
 AUTOHOOK_INIT()
 
@@ -409,7 +411,10 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 		moduleAddress = _LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 
 	if (moduleAddress)
+	{
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
+		InformPluginsDLLLoad(lpLibFileName, moduleAddress);
+	}
 
 	return moduleAddress;
 }

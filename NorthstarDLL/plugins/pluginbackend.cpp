@@ -7,6 +7,8 @@
 
 #include "core/convar/concommand.h"
 
+#include <filesystem>
+
 #define EXPORT extern "C" __declspec(dllexport)
 
 AUTOHOOK_INIT()
@@ -42,18 +44,13 @@ void PluginCommunicationHandler::PushRequest(PluginDataRequestType type, PluginR
 	requestQueue.push(PluginDataRequest {type, func});
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", PluginBackendEngine, ConCommand, (CModule module))
+void InformPluginsDLLLoad(const char* dllPath, void* address)
 {
-	g_pPluginManager->InformDLLLoad(
-		PluginLoadDLL::ENGINE, &g_pPluginCommunicationhandler->m_sEngineData, reinterpret_cast<void*>(module.m_nAddress));
-}
+	std::string dllName = fs::path(dllPath).filename().string();
 
-ON_DLL_LOAD_RELIESON("client.dll", PluginBackendClient, ConCommand, (CModule module))
-{
-	g_pPluginManager->InformDLLLoad(PluginLoadDLL::CLIENT, nullptr, reinterpret_cast<void*>(module.m_nAddress));
-}
+	void* data = NULL;
+	if (strncmp(dllName.c_str(), "engine.dll", 10) == 0)
+		data = &g_pPluginCommunicationhandler->m_sEngineData;
 
-ON_DLL_LOAD_RELIESON("server.dll", PluginBackendServer, ConCommand, (CModule module))
-{
-	g_pPluginManager->InformDLLLoad(PluginLoadDLL::SERVER, nullptr, reinterpret_cast<void*>(module.m_nAddress));
+	g_pPluginManager->InformDLLLoad(dllName.c_str(), data, address);
 }

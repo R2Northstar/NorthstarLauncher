@@ -128,7 +128,7 @@ typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);
 typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
 
-typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(PluginLoadDLL dll, void* data, void* dllPtr);
+typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(const char* dll, void* data, void* dllPtr);
 typedef void (*PLUGIN_RUNFRAME)();
 
 // Async Communication types

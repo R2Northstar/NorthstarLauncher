@@ -300,7 +300,7 @@ void PluginManager::InformSQVMDestroyed(ScriptContext context)
 	}
 }
 
-void PluginManager::InformDLLLoad(PluginLoadDLL dll, void* data, void* dllPtr)
+void PluginManager::InformDLLLoad(const char* dll, void* data, void* dllPtr)
 {
 	for (auto plugin : m_vLoadedPlugins)
 	{

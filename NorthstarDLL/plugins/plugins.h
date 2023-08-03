@@ -48,7 +48,7 @@ class PluginManager
 	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
 	void InformSQVMDestroyed(ScriptContext context);
 
-	void InformDLLLoad(PluginLoadDLL dll, void* data, void* dllPtr);
+	void InformDLLLoad(const char* dll, void* data, void* dllPtr);
 
 	void RunFrame();
 
