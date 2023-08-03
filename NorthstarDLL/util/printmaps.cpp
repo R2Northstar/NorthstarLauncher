@@ -31,7 +31,7 @@ struct MapVPKInfo
 // our current list of maps in the game
 std::vector<MapVPKInfo> vMapList;
 
-FnCommandCallback_t OrignalMapCommand = NULL;
+FnCommandCallback_t OriginalMapCommand = NULL;
 
 void RefreshMapList()
 {
@@ -186,20 +186,16 @@ void ConCommand_maps(const CCommand& args)
 
 void ConCommand_map(const CCommand& args)
 {
-	if (args.ArgC() > 1)
-	{
-		RefreshMapList();
+	RefreshMapList();
 
-		const char* arg = args.Arg(1);
-		auto f = [&](MapVPKInfo map) -> bool { return map.name == arg; };
-		if (std::find_if(vMapList.begin(), vMapList.end(), f) == vMapList.end())
-		{
-			spdlog::info("Invalid map found");
-			return;
-		}
+	if (args.ArgC() > 1 &&
+		std::find_if(vMapList.begin(), vMapList.end(), [&](MapVPKInfo map) -> bool { return map.name == args.Arg(1); }) == vMapList.end())
+	{
+		spdlog::warn("Map load failed: {} not found or invalid", args.Arg(1));
+		return;
 	}
 
-	OrignalMapCommand(args);
+	OriginalMapCommand(args);
 }
 
 void InitialiseMapsPrint()
@@ -210,6 +206,6 @@ void InitialiseMapsPrint()
 	mapsCommand->m_pCommandCallback = ConCommand_maps;
 
 	ConCommand* mapCommand = R2::g_pCVar->FindCommand("map");
-	OrignalMapCommand = mapCommand->m_pCommandCallback;
+	OriginalMapCommand = mapCommand->m_pCommandCallback;
 	mapCommand->m_pCommandCallback = ConCommand_map;
 }
