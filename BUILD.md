@@ -2,7 +2,7 @@
 The following steps will allow you to compile your own NorthstarLauncher executable from the code in this repository. If you still have questions, you may ask in the [Discord Server](https://discord.gg/northstar)
 
 *This guide assumes you have already installed Northstar as shown in [this page](https://r2northstar.gitbook.io/r2northstar-wiki/installing-northstar/basic-setup)*
-
+## Windows
 ### Steps
 1. **Install Git** from [this link](https://git-scm.com)
 2. **Clone** the [R2Northstar/NorthstarLauncher](https://github.com/R2Northstar/NorthstarLauncher) repo with submodules using this command `git clone --recurse-submodules https://github.com/R2Northstar/NorthstarLauncher.git`
@@ -39,3 +39,13 @@ Developers who can work a command line may be interested in using [Visual Studio
 - Run `cmake . -G "Ninja"` to generate build files.
 
 - Run `cmake --build .` to build the project.
+  
+## Linux
+### Steps
+1. Download the [Dockerfile.txt](https://github.com/R2Northstar/NorthstarLauncher/files/11956764/Dockerfile.txt) file. Rename it to just `Dockerfile` (GitHub wouldn't allow uploading otherwise).
+  
+2. Run the following command:
+* `docker build --rm -t test-fedora`
+3. Go to the `NorthstarLauncher` folder and run the following commands:
+*  `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build test-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja"`
+*  `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build test-fedora cmake --build .`
