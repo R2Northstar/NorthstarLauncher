@@ -194,6 +194,10 @@ void ConCommand_map(const CCommand& args)
 		spdlog::warn("Map load failed: {} not found or invalid", args.Arg(1));
 		return;
 	}
+	else
+	{
+		spdlog::warn("Map load failed: no map name provided");
+	}
 
 	OriginalMapCommand(args);
 }
