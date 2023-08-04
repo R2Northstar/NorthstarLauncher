@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <Psapi.h>
 
-
 AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros
@@ -413,7 +412,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 	if (moduleAddress)
 	{
 		CallLoadLibraryACallbacks(lpLibFileName, moduleAddress);
-		InformPluginsDLLLoad(lpLibFileName, moduleAddress);
+		InformPluginsDLLLoad(fs::path(lpLibFileName), moduleAddress);
 	}
 
 	return moduleAddress;
@@ -453,7 +452,10 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 
 	if (moduleAddress)
+	{
 		CallLoadLibraryWCallbacks(lpLibFileName, moduleAddress);
+		InformPluginsDLLLoad(fs::path(lpLibFileName), moduleAddress);
+	}
 
 	return moduleAddress;
 }

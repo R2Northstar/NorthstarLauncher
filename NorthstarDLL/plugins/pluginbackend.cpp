@@ -44,9 +44,9 @@ void PluginCommunicationHandler::PushRequest(PluginDataRequestType type, PluginR
 	requestQueue.push(PluginDataRequest {type, func});
 }
 
-void InformPluginsDLLLoad(const char* dllPath, void* address)
+void InformPluginsDLLLoad(fs::path dllPath, void* address)
 {
-	std::string dllName = fs::path(dllPath).filename().string();
+	std::string dllName = dllPath.filename().string();
 
 	void* data = NULL;
 	if (strncmp(dllName.c_str(), "engine.dll", 10) == 0)
