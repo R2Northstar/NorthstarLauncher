@@ -43,8 +43,7 @@ Developers who can work a command line may be interested in using [Visual Studio
   
 ## Linux
 ### Steps
-1. Download the [Dockerfile.txt](Dockerfile.txt) file. Rename it to just `Dockerfile` (GitHub wouldn't allow uploading otherwise).
-  
+1. Download the [Dockerfile](Dockerfile) file.
 2. Run the following command:
 * `docker build --rm -t test-fedora`
 3. Go to the `NorthstarLauncher` folder and run the following commands:
