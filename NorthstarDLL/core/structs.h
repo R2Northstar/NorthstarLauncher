@@ -35,19 +35,42 @@ OFFSET_STRUCT(Name)
 // Special case for a 0-offset field
 #define STRUCT_FIELD_NOOFFSET(offset, signature) signature;
 
+// Just puts two tokens next to each other, but
+// allows us to force the preprocessor to do another pass
 #define FX(f, x) f x
 
+// Macro used to detect if the given offset is 0 or not
+#define TEST_0 ,
 // MSVC does no preprocessing of integer literals.
 // On other compilers `0x0` gets processed into `0`
-#define TEST_0 ,
 #define TEST_0x0 ,
 
+// Concats the first and third argument and drops everything else
+// Used with preprocessor expansion in later passes to move the third argument to the fourth and change the value
 #define ZERO_P_I(a, b, c, ...) a##c
+
+// We use FX to prepare to use ZERO_P_I.
+// The right block contains 3 arguments:
+// NIF_
+// CONCAT2(TEST_, offset)
+// 1
+//
+// If offset is not 0 (or 0x0) the preprocessor replaces
+// it with nothing and the third argument stays 1
+//
+// If the offset is 0, TEST_0 expands to , and 1 becomes the fourth argument
+//
+// With those arguments we call ZERO_P_I and the first and third arugment get concat.
+// We either end up with:
+// NIF_ (if offset is 0) or
+// NIF_1 (if offset is not 0)
 #define IF_ZERO(m) FX(ZERO_P_I, (NIF_, CONCAT2(TEST_, m), 1))
 
+// These macros are used to branch after we processed if the offset is zero or not
 #define NIF_(t, ...) t
 #define NIF_1(t, ...) __VA_ARGS__
 
+// FIELD(S), generates an anonymous struct when a non 0 offset is given, otherwise just a signature
 #define FIELD(offset, signature) IF_ZERO(offset)(STRUCT_FIELD_NOOFFSET, STRUCT_FIELD_OFFSET)(offset, signature)
 #define FIELDS FIELD
 
