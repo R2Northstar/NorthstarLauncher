@@ -31,7 +31,11 @@ struct MapVPKInfo
 // our current list of maps in the game
 std::vector<MapVPKInfo> vMapList;
 
-FnCommandCallback_t OriginalMapCommand = NULL;
+typedef void (*Host_Map_helperType)(const CCommand&, void*);
+typedef void (*Host_Changelevel_fType)(const CCommand&);
+
+Host_Map_helperType Host_Map_helper;
+Host_Changelevel_fType Host_Changelevel_f;
 
 void RefreshMapList()
 {
@@ -184,7 +188,9 @@ void ConCommand_maps(const CCommand& args)
 			spdlog::info("({}) {}", PrintMapSource.at(map.source), map.name);
 }
 
-void ConCommand_map(const CCommand& args)
+// clang-format off
+AUTOHOOK(Host_Map_f, engine.dll + 0x15B340, void, __fastcall, (const CCommand& args))
+// clang-format on
 {
 	RefreshMapList();
 
@@ -194,12 +200,16 @@ void ConCommand_map(const CCommand& args)
 		spdlog::warn("Map load failed: {} not found or invalid", args.Arg(1));
 		return;
 	}
-	else
+	else if (args.ArgC() == 1)
 	{
 		spdlog::warn("Map load failed: no map name provided");
+		return;
 	}
 
-	OriginalMapCommand(args);
+	if (*R2::g_pServerState >= R2::server_state_t::ss_active)
+		return Host_Changelevel_f(args);
+	else
+		return Host_Map_helper(args, std::nullptr_t());
 }
 
 void InitialiseMapsPrint()
@@ -208,8 +218,10 @@ void InitialiseMapsPrint()
 
 	ConCommand* mapsCommand = R2::g_pCVar->FindCommand("maps");
 	mapsCommand->m_pCommandCallback = ConCommand_maps;
+}
 
-	ConCommand* mapCommand = R2::g_pCVar->FindCommand("map");
-	OriginalMapCommand = mapCommand->m_pCommandCallback;
-	mapCommand->m_pCommandCallback = ConCommand_map;
+ON_DLL_LOAD("engine.dll", Host_Map_f, (CModule module))
+{
+	Host_Map_helper = module.Offset(0x15AEF0).RCast<Host_Map_helperType>();
+	Host_Changelevel_f = module.Offset(0x15AAD0).RCast<Host_Changelevel_fType>();
 }
