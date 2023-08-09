@@ -48,14 +48,14 @@ void ConCommand_cvar_setdefaultvalue(const CCommand& arg)
 {
 	if (arg.ArgC() < 3)
 	{
-		spdlog::info("usage: cvar_setdefaultvalue mp_gamemode tdm");
+		DevMsg(eLog::NS, "usage: cvar_setdefaultvalue mp_gamemode tdm\n");
 		return;
 	}
 
 	ConVar* pCvar = R2::g_pCVar->FindVar(arg.Arg(1));
 	if (!pCvar)
 	{
-		spdlog::info("usage: cvar_setdefaultvalue mp_gamemode tdm");
+		DevMsg(eLog::NS, "usage: cvar_setdefaultvalue mp_gamemode tdm\n");
 		return;
 	}
 
@@ -71,14 +71,14 @@ void ConCommand_cvar_setvalueanddefaultvalue(const CCommand& arg)
 {
 	if (arg.ArgC() < 3)
 	{
-		spdlog::info("usage: cvar_setvalueanddefaultvalue mp_gamemode tdm");
+		DevMsg(eLog::NS, "usage: cvar_setvalueanddefaultvalue mp_gamemode tdm\n");
 		return;
 	}
 
 	ConVar* pCvar = R2::g_pCVar->FindVar(arg.Arg(1));
 	if (!pCvar)
 	{
-		spdlog::info("usage: cvar_setvalueanddefaultvalue mp_gamemode tdm");
+		DevMsg(eLog::NS, "usage: cvar_setvalueanddefaultvalue mp_gamemode tdm\n");
 		return;
 	}
 
@@ -95,14 +95,14 @@ void ConCommand_cvar_reset(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
 	{
-		spdlog::info("usage: cvar_reset mp_gamemode");
+		DevMsg(eLog::NS, "usage: cvar_reset mp_gamemode\n");
 		return;
 	}
 
 	ConVar* pCvar = R2::g_pCVar->FindVar(arg.Arg(1));
 	if (!pCvar)
 	{
-		spdlog::info("usage: cvar_reset mp_gamemode");
+		DevMsg(eLog::NS, "usage: cvar_reset mp_gamemode\n");
 		return;
 	}
 
@@ -166,7 +166,7 @@ void FixupCvarFlags()
 			pair.second->m_nFlags = flags;
 		}
 
-		spdlog::info("Removed {} hidden/devonly cvar flags", iNumCvarsAltered);
+		DevMsg(eLog::NS, "Removed %i hidden/devonly cvar flags\n", iNumCvarsAltered);
 	}
 
 	// make all engine client commands FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS

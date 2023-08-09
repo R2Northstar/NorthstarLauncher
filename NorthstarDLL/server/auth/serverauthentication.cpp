@@ -260,7 +260,7 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 
 	if (pAuthenticationFailure)
 	{
-		spdlog::info("{}'s (uid {}) connection was rejected: \"{}\"", pName, iNextPlayerUid, pAuthenticationFailure);
+		Warning(eLog::NS, "%s's (uid %li) connection was rejected: \"%s\"\n", pName, iNextPlayerUid, pAuthenticationFailure);
 
 		strncpy_s(pDisconnectReason, 256, pAuthenticationFailure, 255);
 		return false;
@@ -313,7 +313,7 @@ void,, (R2::CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, 
 	// this reason is used while connecting to a local server, hacky, but just ignore it
 	if (strcmp(pReason, "Connection closing"))
 	{
-		spdlog::info("Player {} disconnected: \"{}\"", self->m_Name, buf);
+		DevMsg(eLog::NS, "Player %s disconnected: \"%s\"\n", self->m_Name, buf);
 
 		// dcing, write persistent data
 		if (g_pServerAuthentication->m_PlayerAuthenticationData[self].needPersistenceWriteOnLeave)
@@ -335,11 +335,11 @@ void ConCommand_ns_resetpersistence(const CCommand& args)
 {
 	if (*R2::g_pServerState == R2::server_state_t::ss_active)
 	{
-		spdlog::error("ns_resetpersistence must be entered from the main menu");
+		Error(eLog::NS, NO_ERROR, "ns_resetpersistence must be entered from the main menu\n");
 		return;
 	}
 
-	spdlog::info("resetting persistence on next lobby load...");
+	Warning(eLog::NS, "resetting persistence on next lobby load...\n");
 	g_pServerAuthentication->m_bForceResetLocalPlayerPersistence = true;
 }
 

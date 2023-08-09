@@ -106,14 +106,14 @@ bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
 	{
 		if (MH_EnableHook(addr) == MH_OK)
 		{
-			spdlog::info("Enabling hook {}", pFuncName);
+			DevMsg(eLog::NS, "Enabling hook %s\n", pFuncName);
 			return true;
 		}
 		else
-			spdlog::error("MH_EnableHook failed for function {}", pFuncName);
+			Error(eLog::NS, NO_ERROR, "MH_EnableHook failed for function %s\n", pFuncName);
 	}
 	else
-		spdlog::error("MH_CreateHook failed for function {}", pFuncName);
+		Error(eLog::NS, NO_ERROR, "MH_CreateHook failed for function %s\n", pFuncName);
 
 	return false;
 }
@@ -211,12 +211,12 @@ void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFun
 	if (MH_CreateHook(pTarget, pDetour, (LPVOID*)ppOriginal) == MH_OK)
 	{
 		if (MH_EnableHook(pTarget) == MH_OK)
-			spdlog::info("Enabling hook {}", pStrippedFuncName);
+			DevMsg(eLog::NS, "Enabling hook %s\n", pStrippedFuncName);
 		else
-			spdlog::error("MH_EnableHook failed for function {}", pStrippedFuncName);
+			Error(eLog::NS, NO_ERROR, "MH_EnableHook failed for function %s\n", pStrippedFuncName);
 	}
 	else
-		spdlog::error("MH_CreateHook failed for function {}", pStrippedFuncName);
+		Error(eLog::NS, NO_ERROR, "MH_CreateHook failed for function %s\n", pStrippedFuncName);
 }
 
 AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, (LPVOID)GetCommandLineA, LPSTR, WINAPI, ())
@@ -271,7 +271,7 @@ AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, (LPVOID)GetCommandLineA, LPSTR, WINAPI, 
 		cmdlineModified = new char[len + 1];
 		if (!cmdlineModified)
 		{
-			spdlog::error("malloc failed for command line");
+			Error(eLog::NS, NO_ERROR, "malloc failed for command line\n");
 			return cmdlineOrg;
 		}
 		memcpy(cmdlineModified, args.c_str(), len + 1);
@@ -400,8 +400,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 
 		if (!moduleAddress)
 		{
-			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
-			exit(EXIT_FAILURE);
+			Error(eLog::NS, EXIT_FAILURE, "Could not find XInput9_1_0.dll\n");
 
 			return nullptr;
 		}
@@ -463,7 +462,7 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 void InstallInitialHooks()
 {
 	if (MH_Initialize() != MH_OK)
-		spdlog::error("MH_Initialize (minhook initialization) failed");
+		Error(eLog::NS, NO_ERROR, "MH_Initialize (minhook initialization) failed\n");
 
 	AUTOHOOK_DISPATCH()
 }

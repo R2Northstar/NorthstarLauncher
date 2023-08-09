@@ -17,15 +17,14 @@
 
 #include <string.h>
 #include <filesystem>
+#include <util/utils.h>
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
 {
-	switch (ul_reason_for_call)
+	switch (dwReason)
 	{
-	case DLL_PROCESS_ATTACH:
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
+		SpdLog_Shutdown();
 		break;
 	}
 
@@ -40,21 +39,30 @@ bool InitialiseNorthstar()
 
 	bInitialised = true;
 
+	// Initilaze working profile directory
 	InitialiseNorthstarPrefix();
 
-	// initialise the console if needed (-northstar needs this)
-	InitialiseConsole();
-	// initialise logging before most other things so that they can use spdlog and it have the proper formatting
-	InitialiseLogging();
-	InitialiseVersion();
-	CreateLogFiles();
+	// Initilaze log directory
+	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), NS::Utils::CreateTimeStamp());
+
+	// Checks if we can write into install directory
+	SpdLog_PreInit();
+
+	// Make sure we have a console window
+	Console_Init();
+
+	// Init logging
+	SpdLog_Init();
+	SpdLog_CreateLoggers();
 
 	g_pCrashHandler = new CCrashHandler();
 	bool bAllFatal = strstr(GetCommandLineA(), "-crash_handle_all") != NULL;
 	g_pCrashHandler->SetAllFatal(bAllFatal);
 
 	// Write launcher version to log
-	StartupLog();
+	Sys_PrintOSVer();
+
+	InitialiseVersion();
 
 	InstallInitialHooks();
 

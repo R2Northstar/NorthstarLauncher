@@ -16,7 +16,7 @@ template <typename T> class SourceInterface
 		CreateInterfaceFn createInterface = (CreateInterfaceFn)GetProcAddress(handle, "CreateInterface");
 		m_interface = (T*)createInterface(interfaceName.c_str(), NULL);
 		if (m_interface == nullptr)
-			spdlog::error("Failed to call CreateInterface for %s in %s", interfaceName, moduleName);
+			Error(eLog::NS, NO_ERROR, "Failed to call CreateInterface for %s in %s\n", interfaceName, moduleName);
 	}
 
 	T* operator->() const

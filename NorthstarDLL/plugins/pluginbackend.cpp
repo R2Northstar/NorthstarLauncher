@@ -26,7 +26,12 @@ void PluginCommunicationHandler::RunFrame()
 		switch (storedRequest.type)
 		{
 		default:
-			spdlog::error("{} was called with invalid request type '{}'", __FUNCTION__, static_cast<int>(storedRequest.type));
+			Error(
+				eLog::PLUGSYS,
+				NO_ERROR,
+				"'%s' was called with invalid request type %i\n",
+				__FUNCTION__,
+				static_cast<int>(storedRequest.type));
 		}
 		requestQueue.pop();
 	}

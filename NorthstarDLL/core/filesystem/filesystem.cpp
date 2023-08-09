@@ -73,6 +73,9 @@ void SetNewModSearchPaths(Mod* mod)
 	{
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
+			// NOTE [Fifty]: Possibly put this behind some check
+			// DevMsg(eLog::FS, "Changing mod search path from %s to %s\n", sCurrentModPath.c_str(), mod->m_ModDirectory.string().c_str());
+
 			AddSearchPath(
 				&*(*g_pFilesystem), (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
@@ -141,7 +144,7 @@ FileHandle_t, __fastcall, (IFileSystem* filesystem, const char* pPath, const cha
 
 HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* pVpkPath))
 {
-	NS::log::fs->info("MountVPK {}", pVpkPath);
+	DevMsg(eLog::FS, "MountVPK %s\n", pVpkPath);
 	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
 	for (Mod mod : g_pModManager->m_LoadedMods)

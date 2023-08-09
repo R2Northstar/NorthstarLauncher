@@ -11,7 +11,7 @@ void*, __fastcall, (const char* pName, const int* pReturnCode))
 // clang-format on
 {
 	void* ret = ClientCreateInterface(pName, pReturnCode);
-	spdlog::info("CreateInterface CLIENT {}", pName);
+	DevMsg(eLog::CLIENT, "CreateInterface CLIENT %s\n", pName);
 
 	if (!strcmp(pName, "GameClientExports001"))
 		InitialiseConsoleOnInterfaceCreation();
@@ -25,7 +25,7 @@ void*, __fastcall, (const char* pName, const int* pReturnCode))
 // clang-format on
 {
 	void* ret = ServerCreateInterface(pName, pReturnCode);
-	spdlog::info("CreateInterface SERVER {}", pName);
+	DevMsg(eLog::SERVER, "CreateInterface SERVER %s\n", pName);
 
 	return ret;
 }
@@ -36,7 +36,7 @@ void*, __fastcall, (const char* pName, const int* pReturnCode))
 // clang-format on
 {
 	void* ret = EngineCreateInterface(pName, pReturnCode);
-	spdlog::info("CreateInterface ENGINE {}", pName);
+	DevMsg(eLog::ENGINE, "CreateInterface ENGINE %s\n", pName);
 
 	return ret;
 }

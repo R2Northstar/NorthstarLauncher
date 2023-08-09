@@ -6,6 +6,9 @@
 #include "plugins/plugin_abi.h"
 #include "mods/modmanager.h"
 
+eLog SQ_GetLogContextScript(ScriptContext nSqContext);
+eLog SQ_GetLogContextNative(ScriptContext nSqContext);
+
 /*
 	definitions from hell
 	required to function
@@ -55,11 +58,6 @@ void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMe
 
 ScriptContext ScriptContextFromString(std::string string);
 
-namespace NS::log
-{
-	template <ScriptContext context> std::shared_ptr<spdlog::logger> squirrel_logger();
-}; // namespace NS::log
-
 // This base class means that only the templated functions have to be rebuilt for each template instance
 // Cuts down on compile time by ~5 seconds
 class SquirrelManagerBase
@@ -73,8 +71,6 @@ class SquirrelManagerBase
 	std::map<std::string, SQFunction> m_funcOriginals = {};
 
 	bool m_bFatalCompilationErrors = false;
-
-	std::shared_ptr<spdlog::logger> logger;
 
 #pragma region SQVM funcs
 	RegisterSquirrelFuncType RegisterSquirrelFunc;
@@ -256,7 +252,6 @@ class SquirrelManagerBase
 	{
 		return __sq_stackinfos(sqvm, level, &out, sqvm->_callstacksize);
 	}
-
 	inline Mod* getcallingmod(HSquirrelVM* sqvm, int depth = 0)
 	{
 		SQStackInfos stackInfo {};
@@ -353,15 +348,20 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
-			spdlog::error(
-				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
+			// TODO [Fifty]: Potentially make this fatal?
+			Error(
+				SQ_GetLogContextNative(context),
+				NO_ERROR,
+				"%s was called on context %s while VM was not initialized. This will crash\n",
+				__FUNCTION__,
+				GetContextName(context));
 		}
 
 		SQObject functionobj {};
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
-			NS::log::squirrel_logger<context>()->error("Call was unable to find function with name '{}'. Is it global?", funcname);
+			Error(SQ_GetLogContextNative(context), NO_ERROR, "Call was unable to find function with name '%s'. Is it global?\n", funcname);
 			return SQRESULT_ERROR;
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
@@ -377,14 +377,19 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		// If you want to call into squirrel asynchronously, use `schedule_call` instead
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
-			spdlog::error(
-				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
+			// TODO [Fifty]: Potentially make this fatal?
+			Error(
+				SQ_GetLogContextNative(context),
+				NO_ERROR,
+				"%s was called on context %s while VM was not initialized. This will crash\n",
+				__FUNCTION__,
+				GetContextName(context));
 		}
 		SQObject functionobj {};
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
 		if (result != 0) // This func returns 0 on success for some reason
 		{
-			NS::log::squirrel_logger<context>()->error("Call was unable to find function with name '{}'. Is it global?", funcname);
+			Error(SQ_GetLogContextNative(context), NO_ERROR, "Call was unable to find function with name '%s'. Is it global?\n", funcname);
 			return SQRESULT_ERROR;
 		}
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object

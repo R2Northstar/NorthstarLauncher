@@ -140,7 +140,7 @@ template <ScriptContext context> void EncodeJSONTable(
 				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newArray, allocator);
 				break;
 			default:
-				spdlog::warn("SQ_EncodeJSON: squirrel type {} not supported", SQTypeNameFromID(node->val._Type));
+				Warning(eLog::NS, "SQ_EncodeJSON: squirrel type %s not supported\n", SQTypeNameFromID(node->val._Type));
 				break;
 			}
 		}
@@ -185,7 +185,7 @@ template <ScriptContext context> void EncodeJSONArray(
 			obj->PushBack(newArray, allocator);
 			break;
 		default:
-			spdlog::info("SQ encode Json type {} not supported", SQTypeNameFromID(node->_Type));
+			Warning(eLog::NS, "SQ encode Json type %s not supported\n", SQTypeNameFromID(node->_Type));
 		}
 	}
 }
@@ -217,7 +217,7 @@ ADD_SQFUNC(
 			return SQRESULT_ERROR;
 		}
 
-		spdlog::warn(sErrorString);
+		Warning(eLog::NS, "%s\n", sErrorString.c_str());
 		return SQRESULT_NOTNULL;
 	}
 

@@ -80,3 +80,58 @@ void NS::Utils::RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 				*pc = ' ';
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+std::string NS::Utils::FormatV(const char* fmt, va_list vArgs)
+{
+	va_list vArgsCopy;
+	va_copy(vArgsCopy, vArgs);
+	int iLen = std::vsnprintf(NULL, 0, fmt, vArgsCopy);
+	va_end(vArgsCopy);
+
+	std::string svResult;
+
+	if (iLen > 0)
+	{
+		svResult.resize(iLen);
+		std::vsnprintf(svResult.data(), iLen + 1, fmt, vArgs);
+	}
+
+	return svResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+std::string NS::Utils::Format(const char* fmt, ...)
+{
+	std::string svResult;
+
+	va_list vArgs;
+	va_start(vArgs, fmt);
+	svResult = FormatV(fmt, vArgs);
+	va_end(vArgs);
+
+	return svResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+std::string NS::Utils::CreateTimeStamp()
+{
+	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+	time_t timer = std::chrono::system_clock::to_time_t(now);
+	std::tm localtime = *std::localtime(&timer);
+
+	std::ostringstream oss;
+	oss << std::put_time(&localtime, "%Y-%m-%d_%H-%M-%S");
+	oss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+
+	return oss.str();
+}

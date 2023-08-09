@@ -88,7 +88,7 @@ void ServerBanSystem::BanUID(uint64_t uid)
 	m_vBannedUids.push_back(uid);
 	m_sBanlistStream << std::to_string(uid) << std::endl;
 	m_sBanlistStream.close();
-	spdlog::info("{} was banned", uid);
+	DevMsg(eLog::NS, "%li was banned\n", uid);
 }
 
 void ServerBanSystem::UnbanUID(uint64_t uid)
@@ -168,7 +168,7 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 		m_sBanlistStream << updatedLine << std::endl;
 
 	m_sBanlistStream.close();
-	spdlog::info("{} was unbanned", uid);
+	DevMsg(eLog::NS, "%li was unbanned\n", uid);
 }
 
 bool ServerBanSystem::IsUIDAllowed(uint64_t uid)

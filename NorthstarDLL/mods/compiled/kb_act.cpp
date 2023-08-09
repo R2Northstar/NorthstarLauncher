@@ -8,7 +8,7 @@ const char* KB_ACT_PATH = "scripts\\kb_act.lst";
 // compiles the file kb_act.lst, that defines entries for keybindings in the options menu
 void ModManager::BuildKBActionsList()
 {
-	spdlog::info("Building kb_act.lst");
+	DevMsg(eLog::MODSYS, "Building kb_act.lst\n");
 
 	fs::create_directories(GetCompiledAssetsPath() / "scripts");
 	std::ofstream soCompiledKeys(GetCompiledAssetsPath() / KB_ACT_PATH, std::ios::binary);
