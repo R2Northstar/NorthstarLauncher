@@ -10,6 +10,8 @@
 #include "squirrel/squirrel.h"
 #include "server/serverpresence.h"
 
+#include "windows/libsys.h"
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -32,6 +34,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	}
 
 	return TRUE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Init minhook
+//-----------------------------------------------------------------------------
+void HookSys_Init()
+{
+	if (MH_Initialize() != MH_OK)
+	{
+		spdlog::error("MH_Initialize (minhook initialization) failed");
+	}
+
+	InstallInitialHooks();
 }
 
 bool InitialiseNorthstar()
@@ -62,7 +77,11 @@ bool InitialiseNorthstar()
 	// Write launcher version to log
 	StartupLog();
 
-	InstallInitialHooks();
+	// Init minhook
+	HookSys_Init();
+
+	// Init loadlibrary callbacks
+	LibSys_Init();
 
 	g_pServerPresence = new ServerPresenceManager();
 
