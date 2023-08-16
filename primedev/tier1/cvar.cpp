@@ -1,6 +1,6 @@
 #include "cvar.h"
 #include "convar.h"
-#include "concommand.h"
+#include "tier1/cmd.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: returns all ConVars

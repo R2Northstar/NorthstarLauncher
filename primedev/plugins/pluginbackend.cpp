@@ -5,7 +5,7 @@
 #include "squirrel/squirrel.h"
 #include "plugins.h"
 
-#include "core/convar/concommand.h"
+#include "tier1/cmd.h"
 
 #include <filesystem>
 

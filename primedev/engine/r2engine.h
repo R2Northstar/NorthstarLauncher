@@ -1,4 +1,6 @@
 #pragma once
+
+#include "tier1/cmd.h"
 #include "shared/keyvalues.h"
 
 // Cbuf
