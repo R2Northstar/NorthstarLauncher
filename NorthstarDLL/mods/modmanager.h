@@ -8,10 +8,13 @@
 #include <vector>
 #include <filesystem>
 
-const std::string MOD_FOLDER_SUFFIX = "/mods";
-const std::string REMOTE_MOD_FOLDER_SUFFIX = "/runtime/remote/mods";
+const std::string MOD_FOLDER_SUFFIX = "\\mods";
+const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\packages";
+const std::string REMOTE_MOD_FOLDER_SUFFIX = "\\runtime\\remote\\mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
-const std::string COMPILED_ASSETS_SUFFIX = "/runtime/compiled";
+const std::string COMPILED_ASSETS_SUFFIX = "\\runtime\\compiled";
+
+const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
 
 struct ModConVar
 {
@@ -41,6 +44,8 @@ struct ModScriptCallback
 	std::string BeforeCallback;
 	// called after the codecallback has finished executing
 	std::string AfterCallback;
+	// called right before the vm is destroyed.
+	std::string DestroyCallback;
 };
 
 struct ModScript
@@ -101,6 +106,8 @@ class Mod
 	std::vector<ModConCommand*> ConCommands;
 	// custom localisation files created by the mod
 	std::vector<std::string> LocalisationFiles;
+	// custom script init.nut
+	std::string initScript;
 
 	// other files:
 
@@ -120,6 +127,14 @@ class Mod
 
   public:
 	Mod(fs::path modPath, char* jsonBuf);
+
+  private:
+	void ParseConVars(rapidjson_document& json);
+	void ParseConCommands(rapidjson_document& json);
+	void ParseScripts(rapidjson_document& json);
+	void ParseLocalization(rapidjson_document& json);
+	void ParseDependencies(rapidjson_document& json);
+	void ParseInitScript(rapidjson_document& json);
 };
 
 struct ModOverrideFile
@@ -161,6 +176,8 @@ class ModManager
 };
 
 fs::path GetModFolderPath();
+fs::path GetRemoteModFolderPath();
+fs::path GetThunderstoreModFolderPath();
 fs::path GetCompiledAssetsPath();
 
 extern ModManager* g_pModManager;

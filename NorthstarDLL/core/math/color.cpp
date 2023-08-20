@@ -1,4 +1,3 @@
-#include "pch.h"
 
 // clang-format off
 namespace NS::Colors
@@ -14,6 +13,8 @@ namespace NS::Colors
 	Color RPAK			(255, 190, 0  );
 	Color NORTHSTAR		(66 , 72 , 128);
 	Color ECHO			(150, 150, 159);
+	Color PLUGINSYS		(244, 60 , 14);
+	Color PLUGIN		(244, 106, 14);
 
 	Color TRACE		(0  , 255, 255);
 	Color DEBUG		(0  , 255, 255);

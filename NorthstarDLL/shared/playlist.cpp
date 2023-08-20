@@ -1,9 +1,9 @@
-#include "pch.h"
 #include "playlist.h"
 #include "core/convar/concommand.h"
 #include "core/convar/convar.h"
 #include "squirrel/squirrel.h"
 #include "engine/hoststate.h"
+#include "engine/r2engine.h"
 #include "server/serverpresence.h"
 
 AUTOHOOK_INIT()
@@ -11,10 +11,10 @@ AUTOHOOK_INIT()
 // use the R2 namespace for game funcs
 namespace R2
 {
-	const char* (*GetCurrentPlaylistName)();
-	void (*SetCurrentPlaylist)(const char* pPlaylistName);
-	void (*SetPlaylistVarOverride)(const char* pVarName, const char* pValue);
-	const char* (*GetCurrentPlaylistVar)(const char* pVarName, bool bUseOverrides);
+	DEFINED_VAR_AT(engine.dll + 0x18C640, GetCurrentPlaylistName);
+	DEFINED_VAR_AT(engine.dll + 0x18EB20, SetCurrentPlaylist);
+	DEFINED_VAR_AT(engine.dll + 0x18ED00, SetPlaylistVarOverride);
+	DEFINED_VAR_AT(engine.dll + 0x18C680, GetCurrentPlaylistVar);
 } // namespace R2
 
 ConVar* Cvar_ns_use_clc_SetPlaylistVarOverride;
@@ -26,7 +26,7 @@ char, __fastcall, (void* a1, void* a2))
 {
 	// the private_match playlist on mp_lobby is the only situation where there should be any legitimate sending of this netmessage
 	if (!Cvar_ns_use_clc_SetPlaylistVarOverride->GetBool() || strcmp(R2::GetCurrentPlaylistName(), "private_match") ||
-		strcmp(R2::g_pHostState->m_levelName, "mp_lobby"))
+		strcmp(R2::g_pGlobals->m_pMapName, "mp_lobby"))
 		return 1;
 
 	return clc_SetPlaylistVarOverride__Process(a1, a2);
@@ -103,11 +103,6 @@ void ConCommand_setplaylistvaroverride(const CCommand& args)
 ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (CModule module))
 {
 	AUTOHOOK_DISPATCH()
-
-	R2::GetCurrentPlaylistName = module.Offset(0x18C640).As<const char* (*)()>();
-	R2::SetCurrentPlaylist = module.Offset(0x18EB20).As<void (*)(const char*)>();
-	R2::SetPlaylistVarOverride = module.Offset(0x18ED00).As<void (*)(const char*, const char*)>();
-	R2::GetCurrentPlaylistVar = module.Offset(0x18C680).As<const char* (*)(const char*, bool)>();
 
 	// playlist is the name of the command on respawn servers, but we already use setplaylist so can't get rid of it
 	RegisterConCommand("playlist", ConCommand_playlist, "Sets the current playlist", FCVAR_NONE);

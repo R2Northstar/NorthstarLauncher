@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "engine/hoststate.h"
 #include "masterserver/masterserver.h"
 #include "server/auth/serverauthentication.h"
@@ -8,6 +7,8 @@
 #include "engine/r2engine.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "squirrel/squirrel.h"
+#include "plugins/plugins.h"
+#include "plugins/pluginbackend.h"
 
 AUTOHOOK_INIT()
 
@@ -19,10 +20,10 @@ namespace R2
 	CHostState* g_pHostState;
 } // namespace R2
 
-ConVar* Cvar_hostport;
 std::string sLastMode;
 
-void (*_fastcall _Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists);
+VAR_AT(engine.dll + 0x13FA6070, ConVar*, Cvar_hostport);
+FUNCTION_AT(engine.dll + 0x1232C0, void, __fastcall, _Cmd_Exec_f, (const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists));
 
 void ServerStartingOrChangingMap()
 {
@@ -86,7 +87,6 @@ void, __fastcall, (CHostState* self))
 	g_pServerPresence->SetPlaylist(GetCurrentPlaylistName());
 	g_pServerPresence->SetPort(Cvar_hostport->GetInt());
 
-	g_pServerAuthentication->StartPlayerAuthServer();
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
@@ -114,7 +114,6 @@ void, __fastcall, (CHostState* self))
 	// no server presence, can't do it because no map name in hoststate
 	// and also not super important for sp saves really
 
-	g_pServerAuthentication->StartPlayerAuthServer();
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
@@ -142,7 +141,6 @@ void, __fastcall, (CHostState* self))
 	spdlog::info("HostState: GameShutdown");
 
 	g_pServerPresence->DestroyPresence();
-	g_pServerAuthentication->StopPlayerAuthServer();
 
 	CHostState__State_GameShutdown(self);
 
@@ -188,14 +186,13 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 
 	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
 		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
+
+	g_pGameStatePresence->RunFrame();
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
-	g_pHostState = module.Offset(0x7CF180).As<CHostState*>();
-	Cvar_hostport = module.Offset(0x13FA6070).As<ConVar*>();
-
-	_Cmd_Exec_f = module.Offset(0x1232C0).As<void (*__fastcall)(const CCommand&, bool, bool)>();
+	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }

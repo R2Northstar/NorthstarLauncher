@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "r2server.h"
 
 using namespace R2;
@@ -12,6 +11,6 @@ namespace R2
 
 ON_DLL_LOAD("server.dll", R2GameServer, (CModule module))
 {
-	Server_GetEntityByIndex = module.Offset(0xFB820).As<CBaseEntity* (*)(int)>();
-	UTIL_PlayerByIndex = module.Offset(0x26AA10).As<CBasePlayer*(__fastcall*)(int)>();
+	Server_GetEntityByIndex = module.Offset(0xFB820).RCast<CBaseEntity* (*)(int)>();
+	UTIL_PlayerByIndex = module.Offset(0x26AA10).RCast<CBasePlayer*(__fastcall*)(int)>();
 }

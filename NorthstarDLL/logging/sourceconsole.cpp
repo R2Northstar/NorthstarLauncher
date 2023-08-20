@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "core/convar/convar.h"
 #include "sourceconsole.h"
 #include "core/sourceinterface.h"
@@ -72,7 +71,7 @@ void InitialiseConsoleOnInterfaceCreation()
 {
 	(*g_pSourceGameConsole)->Initialize();
 	// hook OnCommandSubmitted so we print inputted commands
-	OnCommandSubmittedHook.Dispatch((*g_pSourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted);
+	OnCommandSubmittedHook.Dispatch((LPVOID)(*g_pSourceGameConsole)->m_pConsole->m_vtable->OnCommandSubmitted);
 
 	auto consoleSink = std::make_shared<SourceConsoleSink>();
 	if (g_bSpdLog_UseAnsiColor)

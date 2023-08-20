@@ -1,4 +1,3 @@
-#include "pch.h"
 
 AUTOHOOK_INIT()
 
@@ -21,5 +20,5 @@ ON_DLL_LOAD_CLIENT("engine.dll", ScriptExternalBrowserHooks, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
-	bIsOriginOverlayEnabled = module.Offset(0x13978255).As<bool*>();
+	bIsOriginOverlayEnabled = module.Offset(0x13978255).RCast<bool*>();
 }

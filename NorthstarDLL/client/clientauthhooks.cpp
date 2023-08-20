@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "masterserver/masterserver.h"
 #include "core/convar/convar.h"
 #include "client/r2client.h"
@@ -53,7 +52,7 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule modu
 {
 	AUTOHOOK_DISPATCH()
 
-	p3PToken = module.Offset(0x13979D80).As<char*>();
+	p3PToken = module.Offset(0x13979D80).RCast<char*>();
 
 	// this cvar will save to cfg once initially agreed with
 	Cvar_ns_has_agreed_to_send_token = new ConVar(

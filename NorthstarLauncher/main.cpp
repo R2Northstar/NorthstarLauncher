@@ -27,8 +27,6 @@ HMODULE hTier0Module;
 wchar_t exePath[4096];
 wchar_t buffer[8192];
 
-bool noLoadPlugins = false;
-
 DWORD GetProcessByName(std::wstring processName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -256,13 +254,9 @@ void PrependPath()
 
 bool ShouldLoadNorthstar(int argc, char* argv[])
 {
-	bool loadNorthstar = true;
 	for (int i = 0; i < argc; i++)
 		if (!strcmp(argv[i], "-vanilla"))
-			loadNorthstar = false;
-
-	if (!loadNorthstar)
-		return loadNorthstar;
+			return false;
 
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
@@ -271,16 +265,51 @@ bool ShouldLoadNorthstar(int argc, char* argv[])
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
 		if (runNorthstarFileBuffer.str().starts_with("0"))
-			loadNorthstar = false;
+			return false;
 	}
-	return loadNorthstar;
+	return true;
 }
 
 bool LoadNorthstar()
 {
 	FARPROC Hook_Init = nullptr;
 	{
-		swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
+		std::string strProfile = "R2Northstar";
+		char* clachar = strstr(GetCommandLineA(), "-profile=");
+		if (clachar)
+		{
+			std::string cla = std::string(clachar);
+			if (strncmp(cla.substr(9, 1).c_str(), "\"", 1))
+			{
+				int space = cla.find(" ");
+				std::string dirname = cla.substr(9, space - 9);
+				std::cout << "[*] Found profile in command line arguments: " << dirname << std::endl;
+				strProfile = dirname.c_str();
+			}
+			else
+			{
+				std::string quote = "\"";
+				int quote1 = cla.find(quote);
+				int quote2 = (cla.substr(quote1 + 1)).find(quote);
+				std::string dirname = cla.substr(quote1 + 1, quote2);
+				std::cout << "[*] Found profile in command line arguments: " << dirname << std::endl;
+				strProfile = dirname;
+			}
+		}
+		else
+		{
+			std::cout << "[*] Profile was not found in command line arguments. Using default: R2Northstar" << std::endl;
+			strProfile = "R2Northstar";
+		}
+
+		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
+		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
+
+		if (!fs::exists(fs::path(buffer)))
+			swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
+
+		std::wcout << L"[*] Using: " << buffer << std::endl;
+
 		hHookModule = LoadLibraryExW(buffer, 0, 8u);
 		if (hHookModule)
 			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
@@ -291,19 +320,6 @@ bool LoadNorthstar()
 		}
 	}
 	((bool (*)())Hook_Init)();
-
-	FARPROC LoadPlugins = nullptr;
-	if (!noLoadPlugins)
-	{
-		LoadPlugins = GetProcAddress(hHookModule, "LoadPlugins");
-		if (!hHookModule || LoadPlugins == nullptr)
-		{
-			std::cout << "Failed to get function pointer to LoadPlugins of Northstar.dll" << std::endl;
-			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
-			return false;
-		}
-		((bool (*)())LoadPlugins)();
-	}
 
 	return true;
 }
@@ -356,8 +372,6 @@ int main(int argc, char* argv[])
 			dedicated = true;
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
-		else if (!strcmp(argv[i], "-noplugins"))
-			noLoadPlugins = true;
 
 	if (!noOriginStartup && !dedicated)
 	{

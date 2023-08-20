@@ -1,11 +1,10 @@
-#include "pch.h"
 #include "concommand.h"
 #include "shared/misccommands.h"
 #include "engine/r2engine.h"
 
-#include <iostream>
+#include "plugins/pluginbackend.h"
 
-bool (*CCommand__Tokenize)(CCommand& self, const char* pCommandString, R2::cmd_source_t commandSource);
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if this is a command
@@ -149,6 +148,8 @@ void RegisterConCommand(
 
 ON_DLL_LOAD("engine.dll", ConCommand, (CModule module))
 {
-	ConCommandConstructor = module.Offset(0x415F60).As<ConCommandConstructorType>();
+	ConCommandConstructor = module.Offset(0x415F60).RCast<ConCommandConstructorType>();
 	AddMiscConCommands();
+
+	g_pPluginCommunicationhandler->m_sEngineData.ConCommandConstructor = (void*)ConCommandConstructor;
 }

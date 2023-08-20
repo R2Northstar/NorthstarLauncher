@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "dedicated/dedicated.h"
 
 #include <iostream>
@@ -66,6 +65,9 @@ __dllLoadCallback::__dllLoadCallback(
 
 void __fileAutohook::Dispatch()
 {
+	for (__autovar* var : vars)
+		var->Dispatch();
+
 	for (__autohook* hook : hooks)
 		hook->Dispatch();
 }
@@ -113,6 +115,42 @@ bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
 		spdlog::error("MH_CreateHook failed for function {}", pFuncName);
 
 	return false;
+}
+
+uintptr_t ParseDLLOffsetString(const char* pAddrString)
+{
+	// in the format server.dll + 0xDEADBEEF
+	int iDllNameEnd = 0;
+	for (; !isspace(pAddrString[iDllNameEnd]) && pAddrString[iDllNameEnd] != '+'; iDllNameEnd++)
+		;
+
+	char* pModuleName = new char[iDllNameEnd + 1];
+	memcpy(pModuleName, pAddrString, iDllNameEnd);
+	pModuleName[iDllNameEnd] = '\0';
+
+	// get the module address
+	const HMODULE pModuleAddr = GetModuleHandleA(pModuleName);
+
+	if (!pModuleAddr)
+		return 0;
+
+	// get the offset string
+	uintptr_t iOffset = 0;
+
+	int iOffsetBegin = iDllNameEnd;
+	int iOffsetEnd = strlen(pAddrString);
+
+	// seek until we hit the start of the number offset
+	for (; !(pAddrString[iOffsetBegin] >= '0' && pAddrString[iOffsetBegin] <= '9') && pAddrString[iOffsetBegin]; iOffsetBegin++)
+		;
+
+	bool bIsHex = pAddrString[iOffsetBegin] == '0' && (pAddrString[iOffsetBegin + 1] == 'X' || pAddrString[iOffsetBegin + 1] == 'x');
+	if (bIsHex)
+		iOffset = std::stoi(pAddrString + iOffsetBegin + 2, 0, 16);
+	else
+		iOffset = std::stoi(pAddrString + iOffsetBegin);
+
+	return ((uintptr_t)pModuleAddr + iOffset);
 }
 
 // dll load callback stuff
@@ -180,7 +218,7 @@ void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFun
 		spdlog::error("MH_CreateHook failed for function {}", pStrippedFuncName);
 }
 
-AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA, LPSTR, WINAPI, ())
+AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, (LPVOID)GetCommandLineA, LPSTR, WINAPI, ())
 {
 	static char* cmdlineModified;
 	static char* cmdlineOrg;
@@ -236,8 +274,6 @@ AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, GetCommandLineA, LPSTR, WINAPI, ())
 			return cmdlineOrg;
 		}
 		memcpy(cmdlineModified, args.c_str(), len + 1);
-
-		spdlog::info("Command line: {}", cmdlineModified);
 	}
 
 	return cmdlineModified;
@@ -350,7 +386,7 @@ void CallAllPendingDLLLoadCallbacks()
 }
 
 // clang-format off
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, LoadLibraryExA,
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExA, (LPVOID)LoadLibraryExA,
 HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 // clang-format on
 {
@@ -379,7 +415,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 }
 
 // clang-format off
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, LoadLibraryA,
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryA, (LPVOID)LoadLibraryA,
 HMODULE, WINAPI, (LPCSTR lpLibFileName))
 // clang-format on
 {
@@ -392,7 +428,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName))
 }
 
 // clang-format off
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, LoadLibraryExW,
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryExW, (LPVOID)LoadLibraryExW,
 HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 // clang-format on
 {
@@ -405,7 +441,7 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 }
 
 // clang-format off
-AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, LoadLibraryW,
+AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, (LPVOID)LoadLibraryW,
 HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 // clang-format on
 {

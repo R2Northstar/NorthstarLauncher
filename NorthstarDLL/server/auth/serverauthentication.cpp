@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "serverauthentication.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "core/convar/cvar.h"
@@ -6,7 +5,6 @@
 #include "masterserver/masterserver.h"
 #include "server/serverpresence.h"
 #include "engine/hoststate.h"
-#include "shared/maxplayers.h"
 #include "bansystem.h"
 #include "core/convar/concommand.h"
 #include "dedicated/dedicated.h"
@@ -16,88 +14,30 @@
 #include "client/r2client.h"
 #include "server/r2server.h"
 
-#include "httplib.h"
-
 #include <fstream>
 #include <filesystem>
+#include <string>
 #include <thread>
 
 AUTOHOOK_INIT()
-
-const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
 // global vars
 ServerAuthenticationManager* g_pServerAuthentication;
 CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 
-void ServerAuthenticationManager::StartPlayerAuthServer()
+void ServerAuthenticationManager::AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata)
 {
-	if (m_bRunningPlayerAuthThread)
-	{
-		spdlog::warn("ServerAuthenticationManager::StartPlayerAuthServer was called while m_bRunningPlayerAuthThread is true");
-		return;
-	}
+	std::string uidS = std::to_string(uid);
 
-	g_pServerPresence->SetAuthPort(Cvar_ns_player_auth_port->GetInt()); // set auth port for presence
-	m_bRunningPlayerAuthThread = true;
+	RemoteAuthData newAuthData {};
+	strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), uidS.c_str(), uidS.length());
+	strncpy_s(newAuthData.username, sizeof(newAuthData.username), username.c_str(), username.length());
+	newAuthData.pdata = new char[pdata.length()];
+	newAuthData.pdataSize = pdata.length();
+	memcpy(newAuthData.pdata, pdata.c_str(), newAuthData.pdataSize);
 
-	// listen is a blocking call so thread this
-	std::thread serverThread(
-		[this]
-		{
-			// this is just a super basic way to verify that servers have ports open, masterserver will try to read this before ensuring
-			// server is legit
-			m_PlayerAuthServer.Get(
-				"/verify",
-				[](const httplib::Request& request, httplib::Response& response)
-				{ response.set_content(AUTHSERVER_VERIFY_STRING, "text/plain"); });
-
-			m_PlayerAuthServer.Post(
-				"/authenticate_incoming_player",
-				[this](const httplib::Request& request, httplib::Response& response)
-				{
-					if (!request.has_param("id") || !request.has_param("authToken") || request.body.size() >= R2::PERSISTENCE_MAX_SIZE ||
-						!request.has_param("serverAuthToken") ||
-						strcmp(g_pMasterServerManager->m_sOwnServerAuthToken, request.get_param_value("serverAuthToken").c_str()))
-					{
-						response.set_content("{\"success\":false}", "application/json");
-						return;
-					}
-
-					RemoteAuthData newAuthData {};
-					strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), request.get_param_value("id").c_str(), sizeof(newAuthData.uid) - 1);
-					strncpy_s(
-						newAuthData.username,
-						sizeof(newAuthData.username),
-						request.get_param_value("username").c_str(),
-						sizeof(newAuthData.username) - 1);
-
-					newAuthData.pdataSize = request.body.size();
-					newAuthData.pdata = new char[newAuthData.pdataSize];
-					memcpy(newAuthData.pdata, request.body.c_str(), newAuthData.pdataSize);
-
-					std::lock_guard<std::mutex> guard(m_AuthDataMutex);
-					m_RemoteAuthenticationData.insert(std::make_pair(request.get_param_value("authToken"), newAuthData));
-
-					response.set_content("{\"success\":true}", "application/json");
-				});
-
-			m_PlayerAuthServer.listen("0.0.0.0", Cvar_ns_player_auth_port->GetInt());
-		});
-
-	serverThread.detach();
-}
-
-void ServerAuthenticationManager::StopPlayerAuthServer()
-{
-	if (!m_bRunningPlayerAuthThread)
-	{
-		spdlog::warn("ServerAuthenticationManager::StopPlayerAuthServer was called while m_bRunningPlayerAuthThread is false");
-		return;
-	}
-
-	m_bRunningPlayerAuthThread = false;
-	m_PlayerAuthServer.stop();
+	std::lock_guard<std::mutex> guard(m_AuthDataMutex);
+	m_RemoteAuthenticationData[token] = newAuthData;
 }
 
 void ServerAuthenticationManager::AddPlayer(R2::CBaseClient* pPlayer, const char* pToken)
@@ -154,7 +94,7 @@ bool ServerAuthenticationManager::IsDuplicateAccount(R2::CBaseClient* pPlayer, c
 		return false;
 
 	bool bHasUidPlayer = false;
-	for (int i = 0; i < R2::GetMaxPlayers(); i++)
+	for (int i = 0; i < R2::g_pGlobals->m_nMaxClients; i++)
 		if (&R2::g_pClientArray[i] != pPlayer && !strcmp(pPlayerUid, R2::g_pClientArray[i].m_UID))
 			return true;
 
@@ -409,7 +349,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
-	g_pServerAuthentication->Cvar_ns_player_auth_port = new ConVar("ns_player_auth_port", "8081", FCVAR_GAMEDLL, "");
 	g_pServerAuthentication->Cvar_ns_erase_auth_info =
 		new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
 	g_pServerAuthentication->Cvar_ns_auth_allow_insecure =
@@ -429,7 +368,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 	// patch to disable fairfight marking players as cheaters and kicking them
 	module.Offset(0x101012).Patch("E9 90 00");
 
-	CBaseServer__RejectConnection = module.Offset(0x1182E0).As<CBaseServer__RejectConnectionType>();
+	CBaseServer__RejectConnection = module.Offset(0x1182E0).RCast<CBaseServer__RejectConnectionType>();
 
 	if (Tier0::CommandLine()->CheckParm("-allowdupeaccounts"))
 	{
