@@ -261,7 +261,6 @@ void StartupLog()
 		spdlog::info("Operating System: {} (Wine)", sysname);
 		spdlog::info("Wine build: {}", wine_get_build_id());
 
-
 		// STEAM_COMPAT_TOOL_PATHS is a colon separated lists of all compat tool paths used
 		// The first one tends to be the Proton path itself
 		// We extract the basename out of it to get the name used
