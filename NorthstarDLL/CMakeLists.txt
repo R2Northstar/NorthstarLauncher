@@ -149,7 +149,7 @@ add_library(NorthstarDLL SHARED
             "dllmain.cpp"
             "dllmain.h"
             "ns_version.h"
- "mods/autodownload/moddownloader.hpp" "mods/autodownload/moddownloader.cpp")
+ "mods/autodownload/moddownloader.h" "mods/autodownload/moddownloader.cpp")
 
 target_link_libraries(NorthstarDLL PRIVATE
                       minhook
