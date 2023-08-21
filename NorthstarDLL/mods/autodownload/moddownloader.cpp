@@ -1,5 +1,7 @@
 #include "moddownloader.h"
 
+ModDownloader* g_pModDownloader;
+
 void ModDownloader::FetchModsListFromAPI() {
 	const char* url = MODS_LIST_URL;
 
@@ -17,4 +19,9 @@ void ModDownloader::FetchModsListFromAPI() {
 		curl_easy_perform(easyhandle);
 		std::cout << readBuffer << std::endl;
 	});
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand, MasterServer), (CModule module))
+{
+	g_pModDownloader = new ModDownloader;
 }
