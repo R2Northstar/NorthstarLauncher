@@ -2,7 +2,10 @@
 
 ModDownloader* g_pModDownloader;
 
-void ModDownloader::FetchModsListFromAPI() {
+ModDownloader::ModDownloader() {}
+
+void ModDownloader::FetchModsListFromAPI()
+{
 	const char* url = MODS_LIST_URL;
 
 	std::thread requestThread(
@@ -21,7 +24,13 @@ void ModDownloader::FetchModsListFromAPI() {
 	});
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand, MasterServer), (CModule module))
+void ConCommand_fetch_verified_mods(const CCommand& args)
 {
-	g_pModDownloader = new ModDownloader;
+	g_pModDownloader->FetchModsListFromAPI();
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
+{
+	g_pModDownloader = new ModDownloader();
+	RegisterConCommand("fetch_verified_mods", ConCommand_fetch_verified_mods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
 }
