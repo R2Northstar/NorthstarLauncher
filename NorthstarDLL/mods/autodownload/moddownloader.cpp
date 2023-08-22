@@ -3,7 +3,8 @@
 
 ModDownloader* g_pModDownloader;
 
-ModDownloader::ModDownloader() {
+ModDownloader::ModDownloader()
+{
 	spdlog::info("Mod downloaded initialized");
 	modState = {};
 }
@@ -72,11 +73,11 @@ void ModDownloader::FetchModsListFromAPI()
 				spdlog::info("==> Loaded configuration for mod \"" + name + "\"");
 			}
 
-			spdlog::info("Done loading verified mods list."); 
+			spdlog::info("Done loading verified mods list.");
 
 		REQUEST_END_CLEANUP:
 			curl_easy_cleanup(easyhandle);
-	});
+		});
 	requestThread.detach();
 }
 
@@ -88,5 +89,6 @@ void ConCommand_fetch_verified_mods(const CCommand& args)
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
-	RegisterConCommand("fetch_verified_mods", ConCommand_fetch_verified_mods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
+	RegisterConCommand(
+		"fetch_verified_mods", ConCommand_fetch_verified_mods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
 }
