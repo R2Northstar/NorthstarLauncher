@@ -81,6 +81,24 @@ void ModDownloader::FetchModsListFromAPI()
 	requestThread.detach();
 }
 
+bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
+{
+	if (!verifiedMods.contains(modName))
+	{
+		return false;
+	}
+
+	std::vector<VerifiedModVersion> versions = verifiedMods[modName].versions;
+	std::vector<VerifiedModVersion> matchingVersions;
+	std::copy_if(
+		versions.begin(),
+		versions.end(),
+		std::back_inserter(matchingVersions),
+		[modVersion](VerifiedModVersion v) { return strcmp(modVersion, v.version) == 0; });
+
+	return matchingVersions.size() != 0;
+}
+
 void ConCommand_fetch_verified_mods(const CCommand& args)
 {
 	g_pModDownloader->FetchModsListFromAPI();
