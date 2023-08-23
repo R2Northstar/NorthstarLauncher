@@ -165,16 +165,27 @@ void ModDownloader::DownloadMod(char* modName, char* modVersion)
 		return;
 	}
 
-	// Download mod archive
-	std::string expectedHash = "TODO";
-	fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
-	if (!IsModLegit(archiveLocation, (char*)expectedHash.c_str()))
-	{
-		spdlog::warn("Archive hash does not match expected checksum, aborting.");
-		return;
-	}
+	std::thread requestThread(
+		[this, modName, modVersion]()
+		{
+			// Download mod archive
+			std::string expectedHash = "TODO";
+			fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
+			if (!IsModLegit(archiveLocation, (char*)expectedHash.c_str()))
+			{
+				spdlog::warn("Archive hash does not match expected checksum, aborting.");
+				return;
+			}
 
-	// TODO extract mod archive
+			spdlog::info("Hash OK");
+
+			// TODO extract mod archive
+
+		REQUEST_END_CLEANUP:
+			spdlog::info("ok");
+		});
+
+	requestThread.detach();
 }
 
 
