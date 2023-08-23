@@ -104,9 +104,32 @@ void ConCommand_fetch_verified_mods(const CCommand& args)
 	g_pModDownloader->FetchModsListFromAPI();
 }
 
+void ConCommand_is_mod_verified(const CCommand& args)
+{
+	if (args.ArgC() < 3)
+	{
+		return;
+	}
+
+	// Split arguments string by whitespaces (https://stackoverflow.com/a/5208977)
+	std::string buf;
+	std::stringstream ss(args.ArgS());
+	std::vector<std::string> tokens;
+	while (ss >> buf)
+		tokens.push_back(buf);
+
+	char* modName = (char*)tokens[0].c_str();
+	char* modVersion = (char*)tokens[1].c_str();
+	bool result = g_pModDownloader->IsModAuthorized(modName, modVersion);
+	std::string msg = std::format("Mod \"{}\" (version {}) is verified: {}", modName, modVersion, result);
+	spdlog::info(msg);
+}
+
+
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
 	RegisterConCommand(
 		"fetch_verified_mods", ConCommand_fetch_verified_mods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
+	RegisterConCommand("is_mod_verified", ConCommand_is_mod_verified, "checks if a mod is included in verified mods list", FCVAR_NONE);
 }
