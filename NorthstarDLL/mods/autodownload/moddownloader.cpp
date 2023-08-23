@@ -135,7 +135,8 @@ fs::path ModDownloader::FetchModFromDistantStore(char* modName, char* modVersion
 
 bool ModDownloader::IsModLegit(fs::path modPath, char* expectedChecksum)
 {
-	return false;
+	// TODO implement
+	return true;
 }
 
 bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
@@ -162,15 +163,13 @@ void ModDownloader::DownloadMod(char* modName, char* modVersion)
 		[this, modName, modVersion]()
 		{
 			// Download mod archive
-			std::string expectedHash = "TODO";
+			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
 			fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
 			if (!IsModLegit(archiveLocation, (char*)expectedHash.c_str()))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
 				return;
 			}
-
-			spdlog::info("Hash OK");
 
 			// TODO extract mod archive
 
