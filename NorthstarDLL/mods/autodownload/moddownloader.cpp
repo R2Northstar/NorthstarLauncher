@@ -180,8 +180,6 @@ void ModDownloader::DownloadMod(char* modName, char* modVersion)
 	requestThread.detach();
 }
 
-
-
 void ConCommand_fetch_verified_mods(const CCommand& args)
 {
 	g_pModDownloader->FetchModsListFromAPI();
@@ -226,7 +224,6 @@ void ConCommand_download_mod(const CCommand& args)
 	char* modVersion = (char*)tokens[1].c_str();
 	g_pModDownloader->DownloadMod(modName, modVersion);
 }
-
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
