@@ -65,7 +65,7 @@ void ModDownloader::FetchModsListFromAPI()
 					assert(attribute.IsObject());
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
-					modVersions.push_back({.version = (char*)version.c_str(), .checksum = (char*)checksum.c_str()});
+					modVersions.push_back({.version = version, .checksum = checksum});
 				}
 
 				VerifiedModDetails modConfig = {.dependencyPrefix = (char*)dependency.c_str(), .versions = modVersions};
@@ -94,7 +94,7 @@ bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
 		versions.begin(),
 		versions.end(),
 		std::back_inserter(matchingVersions),
-		[modVersion](VerifiedModVersion v) { return strcmp(modVersion, v.version) == 0; });
+		[modVersion](VerifiedModVersion v) { return strcmp(modVersion, v.version.c_str()) == 0; });
 
 	return matchingVersions.size() != 0;
 }

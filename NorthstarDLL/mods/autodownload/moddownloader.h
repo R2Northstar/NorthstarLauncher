@@ -6,8 +6,8 @@ class ModDownloader
 
 	struct VerifiedModVersion
 	{
-		char* version;
-		char* checksum;
+		std::string version;
+		std::string checksum;
 	};
 	struct VerifiedModDetails
 	{
