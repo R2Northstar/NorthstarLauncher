@@ -81,9 +81,56 @@ void ModDownloader::FetchModsListFromAPI()
 	requestThread.detach();
 }
 
+size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+	size_t written;
+	written = fwrite(ptr, size, nmemb, stream);
+	return written;
+}
+
 fs::path ModDownloader::FetchModFromDistantStore(char* modName, char* modVersion)
 {
-	return fs::path();
+	// Build archive distant URI
+	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName].dependencyPrefix, modVersion);
+	std::string url = STORE_URL + archiveName;
+	spdlog::info(std::format("Fetching mod archive from {}", url));
+
+	// Download destination
+	std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
+
+	// Download the actual archive
+	std::thread requestThread(
+		[this, url, downloadPath]()
+		{
+			FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
+			CURLcode result;
+			CURL* easyhandle;
+			easyhandle = curl_easy_init();
+
+			curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
+			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
+			curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
+			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, write_data);
+			result = curl_easy_perform(easyhandle);
+
+			if (result == CURLcode::CURLE_OK)
+			{
+				spdlog::info("Mod archive successfully fetched.");
+			}
+			else
+			{
+				spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
+				goto REQUEST_END_CLEANUP;
+			}
+
+		REQUEST_END_CLEANUP:
+			curl_easy_cleanup(easyhandle);
+			fclose(fp);
+		});
+
+	requestThread.join();
+	return downloadPath;
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, char* expectedChecksum)
