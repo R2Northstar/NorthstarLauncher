@@ -6,13 +6,12 @@ class ModDownloader
 
 	struct VerifiedModVersion
 	{
-		std::string version;
 		std::string checksum;
 	};
 	struct VerifiedModDetails
 	{
 		std::string dependencyPrefix;
-		std::vector<VerifiedModVersion> versions;
+		std::unordered_map<std::string, VerifiedModVersion> versions = {};
 	};
 	std::unordered_map<std::string, VerifiedModDetails> verifiedMods = {};
 

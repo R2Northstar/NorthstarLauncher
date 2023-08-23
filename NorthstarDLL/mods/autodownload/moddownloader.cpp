@@ -56,7 +56,7 @@ void ModDownloader::FetchModsListFromAPI()
 				std::string name = i->name.GetString();
 				std::string dependency = i->value["DependencyPrefix"].GetString();
 
-				std::vector<VerifiedModVersion> modVersions;
+				std::unordered_map<std::string, VerifiedModVersion> modVersions;
 				rapidjson::Value& versions = i->value["Versions"];
 				assert(versions.IsArray());
 				for (rapidjson::Value::ConstValueIterator itr = versions.Begin(); itr != versions.End(); ++itr)
@@ -65,7 +65,7 @@ void ModDownloader::FetchModsListFromAPI()
 					assert(attribute.IsObject());
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
-					modVersions.push_back({.version = version, .checksum = checksum});
+					modVersions.insert({version, {.checksum = checksum}});
 				}
 
 				VerifiedModDetails modConfig = {.dependencyPrefix = dependency, .versions = modVersions};
@@ -145,15 +145,8 @@ bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
 		return false;
 	}
 
-	std::vector<VerifiedModVersion> versions = verifiedMods[modName].versions;
-	std::vector<VerifiedModVersion> matchingVersions;
-	std::copy_if(
-		versions.begin(),
-		versions.end(),
-		std::back_inserter(matchingVersions),
-		[modVersion](VerifiedModVersion v) { return strcmp(modVersion, v.version.c_str()) == 0; });
-
-	return matchingVersions.size() != 0;
+	std::unordered_map<std::string, VerifiedModVersion> versions = verifiedMods[modName].versions;
+	return versions.count(modVersion) != 0;
 }
 
 void ModDownloader::DownloadMod(char* modName, char* modVersion)
