@@ -81,6 +81,16 @@ void ModDownloader::FetchModsListFromAPI()
 	requestThread.detach();
 }
 
+fs::path ModDownloader::FetchModFromDistantStore(char* modName, char* modVersion)
+{
+	return fs::path();
+}
+
+bool ModDownloader::IsModLegit(fs::path modPath, char* expectedChecksum)
+{
+	return false;
+}
+
 bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
 {
 	if (!verifiedMods.contains(modName))
@@ -113,7 +123,7 @@ void ModDownloader::DownloadMod(char* modName, char* modVersion)
 	fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
 	if (!IsModLegit(archiveLocation, (char*)expectedHash.c_str()))
 	{
-		spdlog::info("Archive hash does not match expected checksum, aborting.");
+		spdlog::warn("Archive hash does not match expected checksum, aborting.");
 		return;
 	}
 
@@ -148,6 +158,25 @@ void ConCommand_is_mod_verified(const CCommand& args)
 	spdlog::info(msg);
 }
 
+void ConCommand_download_mod(const CCommand& args)
+{
+	if (args.ArgC() < 3)
+	{
+		return;
+	}
+
+	// Split arguments string by whitespaces (https://stackoverflow.com/a/5208977)
+	std::string buf;
+	std::stringstream ss(args.ArgS());
+	std::vector<std::string> tokens;
+	while (ss >> buf)
+		tokens.push_back(buf);
+
+	char* modName = (char*)tokens[0].c_str();
+	char* modVersion = (char*)tokens[1].c_str();
+	g_pModDownloader->DownloadMod(modName, modVersion);
+}
+
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
@@ -155,4 +184,5 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 	RegisterConCommand(
 		"fetch_verified_mods", ConCommand_fetch_verified_mods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
 	RegisterConCommand("is_mod_verified", ConCommand_is_mod_verified, "checks if a mod is included in verified mods list", FCVAR_NONE);
+	RegisterConCommand("download_mod", ConCommand_download_mod, "downloads a mod from remote store", FCVAR_NONE);
 }
