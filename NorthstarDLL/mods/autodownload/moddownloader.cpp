@@ -68,7 +68,7 @@ void ModDownloader::FetchModsListFromAPI()
 					modVersions.push_back({.version = version, .checksum = checksum});
 				}
 
-				VerifiedModDetails modConfig = {.dependencyPrefix = (char*)dependency.c_str(), .versions = modVersions};
+				VerifiedModDetails modConfig = {.dependencyPrefix = dependency, .versions = modVersions};
 				verifiedMods.insert({name, modConfig});
 				spdlog::info("==> Loaded configuration for mod \"" + name + "\"");
 			}

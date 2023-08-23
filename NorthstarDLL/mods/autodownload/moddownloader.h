@@ -11,7 +11,7 @@ class ModDownloader
 	};
 	struct VerifiedModDetails
 	{
-		char* dependencyPrefix;
+		std::string dependencyPrefix;
 		std::vector<VerifiedModVersion> versions;
 	};
 	std::unordered_map<std::string, VerifiedModDetails> verifiedMods = {};
