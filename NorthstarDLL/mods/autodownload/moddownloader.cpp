@@ -99,6 +99,29 @@ bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
 	return matchingVersions.size() != 0;
 }
 
+void ModDownloader::DownloadMod(char* modName, char* modVersion)
+{
+	// Check if mod can be auto-downloaded
+	if (!IsModAuthorized(modName, modVersion))
+	{
+		spdlog::warn("Tried to download a mod that is not verified, aborting.");
+		return;
+	}
+
+	// Download mod archive
+	std::string expectedHash = "TODO";
+	fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
+	if (!IsModLegit(archiveLocation, (char*)expectedHash.c_str()))
+	{
+		spdlog::info("Archive hash does not match expected checksum, aborting.");
+		return;
+	}
+
+	// TODO extract mod archive
+}
+
+
+
 void ConCommand_fetch_verified_mods(const CCommand& args)
 {
 	g_pModDownloader->FetchModsListFromAPI();
