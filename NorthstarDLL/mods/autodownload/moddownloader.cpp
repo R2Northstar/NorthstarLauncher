@@ -88,7 +88,7 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
 	return written;
 }
 
-fs::path ModDownloader::FetchModFromDistantStore(char* modName, char* modVersion)
+fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::string modVersion)
 {
 	// Build archive distant URI
 	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName].dependencyPrefix, modVersion);
@@ -134,13 +134,13 @@ fs::path ModDownloader::FetchModFromDistantStore(char* modName, char* modVersion
 	return downloadPath;
 }
 
-bool ModDownloader::IsModLegit(fs::path modPath, char* expectedChecksum)
+bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 {
 	// TODO implement
 	return true;
 }
 
-bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
+bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 {
 	if (!verifiedMods.contains(modName))
 	{
@@ -151,7 +151,7 @@ bool ModDownloader::IsModAuthorized(char* modName, char* modVersion)
 	return versions.count(modVersion) != 0;
 }
 
-void ModDownloader::DownloadMod(char* modName, char* modVersion)
+void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 {
 	// Check if mod can be auto-downloaded
 	if (!IsModAuthorized(modName, modVersion))
@@ -166,7 +166,7 @@ void ModDownloader::DownloadMod(char* modName, char* modVersion)
 			// Download mod archive
 			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
 			fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
-			if (!IsModLegit(archiveLocation, (char*)expectedHash.c_str()))
+			if (!IsModLegit(archiveLocation, expectedHash))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
 				return;
@@ -200,8 +200,8 @@ void ConCommand_is_mod_verified(const CCommand& args)
 	while (ss >> buf)
 		tokens.push_back(buf);
 
-	char* modName = (char*)tokens[0].c_str();
-	char* modVersion = (char*)tokens[1].c_str();
+	std::string modName = tokens[0];
+	std::string modVersion = tokens[1];
 	bool result = g_pModDownloader->IsModAuthorized(modName, modVersion);
 	std::string msg = std::format("Mod \"{}\" (version {}) is verified: {}", modName, modVersion, result);
 	spdlog::info(msg);
@@ -221,8 +221,8 @@ void ConCommand_download_mod(const CCommand& args)
 	while (ss >> buf)
 		tokens.push_back(buf);
 
-	char* modName = (char*)tokens[0].c_str();
-	char* modVersion = (char*)tokens[1].c_str();
+	std::string modName = tokens[0];
+	std::string modVersion = tokens[1];
 	g_pModDownloader->DownloadMod(modName, modVersion);
 }
 

@@ -26,7 +26,7 @@ class ModDownloader
 	 * @param modVersion version of the mod to be downloaded
 	 * @returns location of the downloaded archive
 	 */
-	fs::path FetchModFromDistantStore(char* modName, char* modVersion);
+	fs::path FetchModFromDistantStore(std::string modName, std::string modVersion);
 
 	/**
 	 * Tells if a mod archive has not been corrupted.
@@ -40,7 +40,7 @@ class ModDownloader
 	 * @param expectedChecksum checksum the archive should have
 	 * @returns whether archive is legit
 	 */
-	bool IsModLegit(fs::path modPath, char* expectedChecksum);
+	bool IsModLegit(fs::path modPath, std::string expectedChecksum);
 
 	/**
 	 * Extracts a mod archive to the game folder.
@@ -79,7 +79,7 @@ class ModDownloader
 	 * @param modVersion version of the mod to be downloaded
 	 * @returns nothing
 	 **/
-	void DownloadMod(char* modName, char* modVersion);
+	void DownloadMod(std::string modName, std::string modVersion);
 
 	/**
 	 * Checks whether a mod is verified.
@@ -93,7 +93,7 @@ class ModDownloader
 	 * @param modVersion version of the mod to be checked, must follow semantic versioning
 	 * @returns whether the mod is authorized and can be auto-downloaded
 	 */
-	bool IsModAuthorized(char* modName, char* modVersion);
+	bool IsModAuthorized(std::string modName, std::string modVersion);
 
 	enum ModInstallState
 	{
@@ -130,7 +130,7 @@ class ModDownloader
 	 * @param modName name of the mod to get information of
 	 * @returns the class MOD_STATE instance
 	 */
-	MOD_STATE GetModInstallProgress(char* modName);
+	MOD_STATE GetModInstallProgress(std::string modName);
 
 	/**
 	 * Cancels installation of a mod.
@@ -144,5 +144,5 @@ class ModDownloader
 	 * @param modName name of the mod to prevent installation of
 	 * @returns nothing
 	 */
-	void CancelDownload(char* modName);
+	void CancelDownload(std::string modName);
 };
