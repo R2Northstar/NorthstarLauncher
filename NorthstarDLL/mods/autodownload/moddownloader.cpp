@@ -97,6 +97,7 @@ fs::path ModDownloader::FetchModFromDistantStore(char* modName, char* modVersion
 
 	// Download destination
 	std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
+	spdlog::info(std::format("Downloading archive to {}", downloadPath.generic_string()));
 
 	// Download the actual archive
 	std::thread requestThread(
