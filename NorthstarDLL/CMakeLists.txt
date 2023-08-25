@@ -2,6 +2,7 @@
 
 find_package(minhook REQUIRED)
 find_package(libcurl REQUIRED)
+find_package(minizip REQUIRED)
 
 add_library(NorthstarDLL SHARED
             "client/audio.cpp"
@@ -154,6 +155,7 @@ add_library(NorthstarDLL SHARED
 target_link_libraries(NorthstarDLL PRIVATE
                       minhook
                       libcurl
+					  minizip
                       WS2_32.lib
                       Crypt32.lib
                       Cryptui.lib
