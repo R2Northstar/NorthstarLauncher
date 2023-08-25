@@ -175,12 +175,21 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		spdlog::error("Failed getting information from archive (error code: {})", status);
 	}
 
+	// Mod directory name (removing the ".zip" fom the archive name)
+	std::string name = modPath.filename().string();
+	name = name.substr(0, name.length() - 4);
+	fs::path modDirectory = GetRemoteModFolderPath() / name;
+
 	for (int i = 0; i < gi.number_entry; i++)
 	{
 		char filename_inzip[256];
 		unz_file_info64 file_info;
 		status = unzGetCurrentFileInfo64(file, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
-		spdlog::info("{}", filename_inzip);
+
+		// Extract file
+		fs::path fileDestination = modDirectory / filename_inzip;
+		spdlog::info("{}", fileDestination.generic_string());
+
 
 		// Go to next file
 		if ((i + 1) < gi.number_entry)
