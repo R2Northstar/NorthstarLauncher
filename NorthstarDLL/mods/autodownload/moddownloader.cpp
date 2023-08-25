@@ -196,7 +196,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			if (!std::filesystem::exists(fileDestination.parent_path()))
 			{
 				spdlog::warn("Parent directory does not exist for file {}, creating it.", fileDestination.generic_string());
-				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec))
+				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec) && ec.value() != 0)
 				{
 					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
 					return;
@@ -207,7 +207,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			if (fileDestination.generic_string().back() == '/')
 			{
 				// Create directory
-				if (!std::filesystem::create_directory(fileDestination, ec))
+				if (!std::filesystem::create_directory(fileDestination, ec) && ec.value() != 0)
 				{
 					spdlog::error("Directory creation failed: {}", ec.message());
 					return;
