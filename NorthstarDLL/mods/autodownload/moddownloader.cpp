@@ -187,9 +187,39 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		status = unzGetCurrentFileInfo64(file, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
 
 		// Extract file
-		fs::path fileDestination = modDirectory / filename_inzip;
-		spdlog::info("{}", fileDestination.generic_string());
+		{
+			std::error_code ec;
+			fs::path fileDestination = modDirectory / filename_inzip;
+			spdlog::info("{}", fileDestination.generic_string());
 
+			// Create parent directory if needed
+			if (!std::filesystem::exists(fileDestination.parent_path()))
+			{
+				spdlog::warn("Parent directory does not exist for file {}, creating it.", fileDestination.generic_string());
+				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec))
+				{
+					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
+					return;
+				}
+			}
+
+			// If current file is a directory, create directory...
+			if (fileDestination.generic_string().back() == '/')
+			{
+				// Create directory
+				if (!std::filesystem::create_directory(fileDestination, ec))
+				{
+					spdlog::error("Directory creation failed: {}", ec.message());
+					return;
+				}
+			}
+
+			// ...else create file
+			else
+			{
+				// TODO create file
+			}
+		}
 
 		// Go to next file
 		if ((i + 1) < gi.number_entry)
