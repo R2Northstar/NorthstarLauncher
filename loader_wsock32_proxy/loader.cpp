@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "loader.h"
-#include "../NorthstarDLL/hookutils.h"
 #include <string>
 #include <system_error>
 #include <sstream>
@@ -94,12 +93,10 @@ bool ProvisionNorthstar()
 		return false;
 	}
 
-	HookEnabler hook;
-	ENABLER_CREATEHOOK(
-		hook,
-		reinterpret_cast<void*>(GetProcAddress(launcherHandle, "LauncherMain")),
-		&LauncherMainHook,
-		reinterpret_cast<LPVOID*>(&LauncherMainOriginal));
+	LPVOID pTarget = (LPVOID)GetProcAddress(launcherHandle, "LauncherMain");
+	if (MH_CreateHook(pTarget, (LPVOID)&LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
+		MH_EnableHook(pTarget) != MH_OK)
+		MessageBoxA(GetForegroundWindow(), "Hook creation failed for function LauncherMain.", "Northstar Wsock32 Proxy Error", 0);
 
 	return true;
 }

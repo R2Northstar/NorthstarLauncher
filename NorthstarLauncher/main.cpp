@@ -27,8 +27,6 @@ HMODULE hTier0Module;
 wchar_t exePath[4096];
 wchar_t buffer[8192];
 
-bool noLoadPlugins = false;
-
 DWORD GetProcessByName(std::wstring processName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -256,13 +254,9 @@ void PrependPath()
 
 bool ShouldLoadNorthstar(int argc, char* argv[])
 {
-	bool loadNorthstar = true;
 	for (int i = 0; i < argc; i++)
 		if (!strcmp(argv[i], "-vanilla"))
-			loadNorthstar = false;
-
-	if (!loadNorthstar)
-		return loadNorthstar;
+			return false;
 
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
@@ -271,9 +265,9 @@ bool ShouldLoadNorthstar(int argc, char* argv[])
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
 		if (runNorthstarFileBuffer.str().starts_with("0"))
-			loadNorthstar = false;
+			return false;
 	}
-	return loadNorthstar;
+	return true;
 }
 
 bool LoadNorthstar()
@@ -291,19 +285,6 @@ bool LoadNorthstar()
 		}
 	}
 	((bool (*)())Hook_Init)();
-
-	FARPROC LoadPlugins = nullptr;
-	if (!noLoadPlugins)
-	{
-		LoadPlugins = GetProcAddress(hHookModule, "LoadPlugins");
-		if (!hHookModule || LoadPlugins == nullptr)
-		{
-			std::cout << "Failed to get function pointer to LoadPlugins of Northstar.dll" << std::endl;
-			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
-			return false;
-		}
-		((bool (*)())LoadPlugins)();
-	}
 
 	return true;
 }
@@ -323,6 +304,15 @@ HMODULE LoadDediStub(const char* name)
 
 int main(int argc, char* argv[])
 {
+
+	if (strstr(GetCommandLineA(), "-waitfordebugger"))
+	{
+		while (!IsDebuggerPresent())
+		{
+			// Sleep 100ms to give debugger time to attach.
+			Sleep(100);
+		}
+	}
 
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
@@ -347,8 +337,6 @@ int main(int argc, char* argv[])
 			dedicated = true;
 		else if (!strcmp(argv[i], "-nostubs"))
 			nostubs = true;
-		else if (!strcmp(argv[i], "-noplugins"))
-			noLoadPlugins = true;
 
 	if (!noOriginStartup && !dedicated)
 	{
