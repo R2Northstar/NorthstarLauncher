@@ -128,7 +128,7 @@ void LoadPostloadPaks(const char* pPath)
 		if (!mod.m_bEnabled)
 			continue;
 
-		// need to get a relative path of mod to mod folder to load the rpak properly
+		// need to get a relative path of mod to mod folder
 		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
