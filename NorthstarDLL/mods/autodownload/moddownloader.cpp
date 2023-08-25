@@ -1,5 +1,10 @@
 #include "moddownloader.h"
 #include <rapidjson/fwd.h>
+#include <mz_strm_mem.h>
+#include <mz.h>
+#include <mz_strm.h>
+#include <mz_zip.h>
+#include <mz_compat.h>
 
 ModDownloader* g_pModDownloader;
 
@@ -151,6 +156,45 @@ bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 	return versions.count(modVersion) != 0;
 }
 
+void ModDownloader::ExtractMod(fs::path modPath)
+{
+	unzFile file;
+
+	file = unzOpen(modPath.generic_string().c_str());
+	if (file == NULL)
+	{
+		spdlog::error("Cannot open archive located at {}.", modPath.generic_string());
+		return;
+	}
+
+	unz_global_info64 gi;
+	int status;
+	status = unzGetGlobalInfo64(file, &gi);
+	if (file != UNZ_OK)
+	{
+		spdlog::error("Failed getting information from archive (error code: {})", status);
+	}
+
+	for (int i = 0; i < gi.number_entry; i++)
+	{
+		char filename_inzip[256];
+		unz_file_info64 file_info;
+		status = unzGetCurrentFileInfo64(file, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+		spdlog::info("{}", filename_inzip);
+
+		// Go to next file
+		if ((i + 1) < gi.number_entry)
+		{
+			status = unzGoToNextFile(file);
+			if (status != UNZ_OK)
+			{
+				spdlog::error("Error while browsing archive files (error code: {}).", status);
+				break;
+			}
+		}
+	}
+}
+
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 {
 	// Check if mod can be auto-downloaded
@@ -172,7 +216,8 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				return;
 			}
 
-			// TODO extract mod archive
+			// Extract downloaded mod archive
+			ExtractMod(archiveLocation);
 
 		REQUEST_END_CLEANUP:
 			spdlog::info("ok");
