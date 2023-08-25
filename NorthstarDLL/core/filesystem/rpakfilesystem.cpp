@@ -128,12 +128,17 @@ void LoadPostloadPaks(const char* pPath)
 		if (!mod.m_bEnabled)
 			continue;
 
-		// need to get a relative path of mod to mod folder
+		// need to get a relative path of mod to mod folder to load the rpak properly
 		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
 		for (ModRpakEntry& pak : mod.Rpaks)
-			if (pak.m_sLoadAfterPak == pPath)
+		{
+			if (pak.m_sLoadAfterPak == fs::path(*map).filename() ||
+				fs::path(*map).compare("." / (std::filesystem::weakly_canonical("/" / mod.ModDirectory / "paks" / pak.m_sLoadAfterPak))))
+			{
 				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::CONSTANT);
+			}
+		}
 	}
 }
 
