@@ -217,7 +217,12 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			// ...else create file
 			else
 			{
-				// TODO create file
+				// Ensure file is in zip archive
+				if (unzLocateFile(file, filename_inzip, 0) != UNZ_OK)
+				{
+					spdlog::error("File \"{}\" was not found in archive.", filename_inzip);
+					return;
+				}
 			}
 		}
 
