@@ -209,7 +209,7 @@ AUTOHOOK(Host_Map_f, engine.dll + 0x15B340, void, __fastcall, (const CCommand& a
 	if (*R2::g_pServerState >= R2::server_state_t::ss_active)
 		return Host_Changelevel_f(args);
 	else
-		return Host_Map_helper(args, std::nullptr_t());
+		return Host_Map_helper(args, nullptr);
 }
 
 void InitialiseMapsPrint()
