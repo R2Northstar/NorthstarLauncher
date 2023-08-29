@@ -223,6 +223,69 @@ void ModDownloader::ExtractMod(fs::path modPath)
 					spdlog::error("File \"{}\" was not found in archive.", filename_inzip);
 					return;
 				}
+
+				// Create file
+				int size_buf;
+				void* buf;
+				int err = UNZ_OK;
+				FILE* fout = NULL;
+
+				// Create destination file
+				fout = fopen(fileDestination.generic_string().c_str(), "wb");
+				if (fout == NULL)
+				{
+					spdlog::error("Failed creating destination file.");
+					return;
+				}
+
+				// Allocate memory for buffer
+				size_buf = 8192;
+				buf = (void*)malloc(size_buf);
+				if (buf == NULL)
+				{
+					spdlog::error("Error while allocating memory.");
+					return;
+				}
+
+				// Extract file to destination
+				do
+				{
+					err = unzReadCurrentFile(file, buf, size_buf);
+					if (err < 0)
+					{
+						spdlog::error("error {} with zipfile in unzReadCurrentFile", err);
+						break;
+					}
+					if (err > 0)
+					{
+						spdlog::info("oi oi oi {}", buf);
+						if (fwrite(buf, (unsigned)err, 1, fout) != 1)
+						{
+							spdlog::error("error in writing extracted file\n");
+							err = UNZ_ERRNO;
+							break;
+						}
+						spdlog::info("fwrite result: {}", err);
+					}
+				} while (err > 0);
+
+				if (err == UNZ_OK)
+				{
+					spdlog::info("CLOSING FILE");
+					err = unzCloseCurrentFile(file);
+					if (err != UNZ_OK)
+					{
+						spdlog::error("error {} with zipfile in unzCloseCurrentFile", err);
+					}
+				}
+				else {
+					spdlog::info("yo? {}", err);
+					unzCloseCurrentFile(file);
+				}
+
+				// Cleanup
+				if (fout)
+					fclose(fout);
 			}
 		}
 
