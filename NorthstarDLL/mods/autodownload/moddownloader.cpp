@@ -285,7 +285,8 @@ void ModDownloader::ExtractMod(fs::path modPath)
 						spdlog::error("error {} with zipfile in unzCloseCurrentFile", err);
 					}
 				}
-				else {
+				else
+				{
 					spdlog::info("yo? {}", err);
 					unzCloseCurrentFile(file);
 				}
