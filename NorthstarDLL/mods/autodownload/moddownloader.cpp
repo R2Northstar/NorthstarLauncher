@@ -230,6 +230,13 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				int err = UNZ_OK;
 				FILE* fout = NULL;
 
+				// Open zip file to prepare its extraction
+				status = unzOpenCurrentFile(file);
+				if (status != UNZ_OK)
+				{
+					spdlog::error("Could not open file {} from archive.", filename_inzip);
+				}
+
 				// Create destination file
 				fout = fopen(fileDestination.generic_string().c_str(), "wb");
 				if (fout == NULL)
