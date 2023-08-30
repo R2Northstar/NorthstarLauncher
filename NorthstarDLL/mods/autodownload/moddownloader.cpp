@@ -190,12 +190,12 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		{
 			std::error_code ec;
 			fs::path fileDestination = modDirectory / filename_inzip;
-			spdlog::info("{}", fileDestination.generic_string());
+			spdlog::info("=> {}", fileDestination.generic_string());
 
 			// Create parent directory if needed
 			if (!std::filesystem::exists(fileDestination.parent_path()))
 			{
-				spdlog::warn("Parent directory does not exist for file {}, creating it.", fileDestination.generic_string());
+				spdlog::info("Parent directory does not exist, creating it.", fileDestination.generic_string());
 				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec) && ec.value() != 0)
 				{
 					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
@@ -265,30 +265,24 @@ void ModDownloader::ExtractMod(fs::path modPath)
 					}
 					if (err > 0)
 					{
-						spdlog::info("oi oi oi {}", buf);
 						if (fwrite(buf, (unsigned)err, 1, fout) != 1)
 						{
 							spdlog::error("error in writing extracted file\n");
 							err = UNZ_ERRNO;
 							break;
 						}
-						spdlog::info("fwrite result: {}", err);
 					}
 				} while (err > 0);
 
-				if (err == UNZ_OK)
+				if (err != UNZ_OK)
 				{
-					spdlog::info("CLOSING FILE");
-					err = unzCloseCurrentFile(file);
-					if (err != UNZ_OK)
-					{
-						spdlog::error("error {} with zipfile in unzCloseCurrentFile", err);
-					}
+					spdlog::error("An error occurred during file extraction (code: {})", err);
+					
 				}
-				else
+				err = unzCloseCurrentFile(file);
+				if (err != UNZ_OK)
 				{
-					spdlog::info("yo? {}", err);
-					unzCloseCurrentFile(file);
+					spdlog::error("error {} with zipfile in unzCloseCurrentFile", err);
 				}
 
 				// Cleanup
@@ -335,7 +329,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			ExtractMod(archiveLocation);
 
 		REQUEST_END_CLEANUP:
-			spdlog::info("ok");
+			spdlog::info("Done downloading {}.", modName);
 		});
 
 	requestThread.detach();
