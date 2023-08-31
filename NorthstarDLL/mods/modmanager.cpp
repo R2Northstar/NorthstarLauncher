@@ -614,10 +614,9 @@ void ModManager::LoadMods()
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
 	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
 
-	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
-		for (fs::directory_entry dir : modIterator)
-			if (fs::exists(dir.path() / "mod.json"))
-				modDirs.push_back(dir.path());
+	for (fs::directory_entry dir : classicModsDir)
+		if (fs::exists(dir.path() / "mod.json"))
+			modDirs.push_back(dir.path());
 
 	// Special case for Thunderstore and remote mods directories
 	// Set up regex for `AUTHOR-MOD-VERSION` pattern
