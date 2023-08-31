@@ -29,6 +29,20 @@ class ModDownloader
 	fs::path FetchModFromDistantStore(std::string modName, std::string modVersion);
 
 	/**
+	 * Checks whether a mod is verified.
+	 *
+	 * A mod is deemed verified/authorized through a manual validation process that is
+	 * described here: https://github.com/R2Northstar/VerifiedMods; in practice, a mod
+	 * is considered authorized if their name AND exact version appear in the
+	 * `verifiedMods` variable.
+	 *
+	 * @param modName name of the mod to be checked
+	 * @param modVersion version of the mod to be checked, must follow semantic versioning
+	 * @returns whether the mod is authorized and can be auto-downloaded
+	 */
+	bool IsModAuthorized(std::string modName, std::string modVersion);
+
+	/**
 	 * Tells if a mod archive has not been corrupted.
 	 *
 	 * The mod validation procedure includes computing the SHA256 hash of the final
@@ -80,20 +94,6 @@ class ModDownloader
 	 * @returns nothing
 	 **/
 	void DownloadMod(std::string modName, std::string modVersion);
-
-	/**
-	 * Checks whether a mod is verified.
-	 *
-	 * A mod is deemed verified/authorized through a manual validation process that is
-	 * described here: https://github.com/R2Northstar/VerifiedMods; in practice, a mod
-	 * is considered authorized if their name AND exact version appear in the
-	 * `verifiedMods` variable.
-	 *
-	 * @param modName name of the mod to be checked
-	 * @param modVersion version of the mod to be checked, must follow semantic versioning
-	 * @returns whether the mod is authorized and can be auto-downloaded
-	 */
-	bool IsModAuthorized(std::string modName, std::string modVersion);
 
 	enum ModInstallState
 	{
