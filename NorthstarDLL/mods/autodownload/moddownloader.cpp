@@ -14,7 +14,7 @@ ModDownloader::ModDownloader()
 	modState = {};
 }
 
-size_t write_to_string(void* ptr, size_t size, size_t count, void* stream)
+size_t writeToString(void* ptr, size_t size, size_t count, void* stream)
 {
 	((std::string*)stream)->append((char*)ptr, 0, size * count);
 	return size * count;
@@ -40,7 +40,7 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, write_to_string);
+			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeToString);
 			result = curl_easy_perform(easyhandle);
 
 			if (result == CURLcode::CURLE_OK)
@@ -86,7 +86,7 @@ void ModDownloader::FetchModsListFromAPI()
 	requestThread.detach();
 }
 
-size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream)
+size_t writeData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
 	size_t written;
 	written = fwrite(ptr, size, nmemb, stream);
@@ -117,7 +117,7 @@ fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::strin
 			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, write_data);
+			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
 			result = curl_easy_perform(easyhandle);
 
 			if (result == CURLcode::CURLE_OK)
@@ -182,14 +182,14 @@ void ModDownloader::ExtractMod(fs::path modPath)
 
 	for (int i = 0; i < gi.number_entry; i++)
 	{
-		char filename_inzip[256];
-		unz_file_info64 file_info;
-		status = unzGetCurrentFileInfo64(file, &file_info, filename_inzip, sizeof(filename_inzip), NULL, 0, NULL, 0);
+		char zipFilename[256];
+		unz_file_info64 fileInfo;
+		status = unzGetCurrentFileInfo64(file, &fileInfo, zipFilename, sizeof(zipFilename), NULL, 0, NULL, 0);
 
 		// Extract file
 		{
 			std::error_code ec;
-			fs::path fileDestination = modDirectory / filename_inzip;
+			fs::path fileDestination = modDirectory / zipFilename;
 			spdlog::info("=> {}", fileDestination.generic_string());
 
 			// Create parent directory if needed
@@ -218,15 +218,15 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			else
 			{
 				// Ensure file is in zip archive
-				if (unzLocateFile(file, filename_inzip, 0) != UNZ_OK)
+				if (unzLocateFile(file, zipFilename, 0) != UNZ_OK)
 				{
-					spdlog::error("File \"{}\" was not found in archive.", filename_inzip);
+					spdlog::error("File \"{}\" was not found in archive.", zipFilename);
 					return;
 				}
 
 				// Create file
-				int size_buf;
-				void* buf;
+				int bufferSize;
+				void* buffer;
 				int err = UNZ_OK;
 				FILE* fout = NULL;
 
@@ -234,7 +234,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				status = unzOpenCurrentFile(file);
 				if (status != UNZ_OK)
 				{
-					spdlog::error("Could not open file {} from archive.", filename_inzip);
+					spdlog::error("Could not open file {} from archive.", zipFilename);
 				}
 
 				// Create destination file
@@ -246,9 +246,9 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				}
 
 				// Allocate memory for buffer
-				size_buf = 8192;
-				buf = (void*)malloc(size_buf);
-				if (buf == NULL)
+				bufferSize = 8192;
+				buffer = (void*)malloc(bufferSize);
+				if (buffer == NULL)
 				{
 					spdlog::error("Error while allocating memory.");
 					return;
@@ -257,7 +257,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				// Extract file to destination
 				do
 				{
-					err = unzReadCurrentFile(file, buf, size_buf);
+					err = unzReadCurrentFile(file, buffer, bufferSize);
 					if (err < 0)
 					{
 						spdlog::error("error {} with zipfile in unzReadCurrentFile", err);
@@ -265,7 +265,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 					}
 					if (err > 0)
 					{
-						if (fwrite(buf, (unsigned)err, 1, fout) != 1)
+						if (fwrite(buffer, (unsigned)err, 1, fout) != 1)
 						{
 							spdlog::error("error in writing extracted file\n");
 							err = UNZ_ERRNO;
@@ -334,12 +334,12 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	requestThread.detach();
 }
 
-void ConCommand_fetch_verified_mods(const CCommand& args)
+void ConCommandFetchVerifiedMods(const CCommand& args)
 {
 	g_pModDownloader->FetchModsListFromAPI();
 }
 
-void ConCommand_is_mod_verified(const CCommand& args)
+void ConCommandIsModVerified(const CCommand& args)
 {
 	if (args.ArgC() < 3)
 	{
@@ -347,11 +347,11 @@ void ConCommand_is_mod_verified(const CCommand& args)
 	}
 
 	// Split arguments string by whitespaces (https://stackoverflow.com/a/5208977)
-	std::string buf;
+	std::string buffer;
 	std::stringstream ss(args.ArgS());
 	std::vector<std::string> tokens;
-	while (ss >> buf)
-		tokens.push_back(buf);
+	while (ss >> buffer)
+		tokens.push_back(buffer);
 
 	std::string modName = tokens[0];
 	std::string modVersion = tokens[1];
@@ -360,7 +360,7 @@ void ConCommand_is_mod_verified(const CCommand& args)
 	spdlog::info(msg);
 }
 
-void ConCommand_download_mod(const CCommand& args)
+void ConCommandDownloadMod(const CCommand& args)
 {
 	if (args.ArgC() < 3)
 	{
@@ -368,11 +368,11 @@ void ConCommand_download_mod(const CCommand& args)
 	}
 
 	// Split arguments string by whitespaces (https://stackoverflow.com/a/5208977)
-	std::string buf;
+	std::string buffer;
 	std::stringstream ss(args.ArgS());
 	std::vector<std::string> tokens;
-	while (ss >> buf)
-		tokens.push_back(buf);
+	while (ss >> buffer)
+		tokens.push_back(buffer);
 
 	std::string modName = tokens[0];
 	std::string modVersion = tokens[1];
@@ -383,7 +383,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 {
 	g_pModDownloader = new ModDownloader();
 	RegisterConCommand(
-		"fetch_verified_mods", ConCommand_fetch_verified_mods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
-	RegisterConCommand("is_mod_verified", ConCommand_is_mod_verified, "checks if a mod is included in verified mods list", FCVAR_NONE);
-	RegisterConCommand("download_mod", ConCommand_download_mod, "downloads a mod from remote store", FCVAR_NONE);
+		"fetch_verified_mods", ConCommandFetchVerifiedMods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
+	RegisterConCommand("is_mod_verified", ConCommandIsModVerified, "checks if a mod is included in verified mods list", FCVAR_NONE);
+	RegisterConCommand("download_mod", ConCommandDownloadMod, "downloads a mod from remote store", FCVAR_NONE);
 }
