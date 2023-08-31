@@ -277,7 +277,6 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (err != UNZ_OK)
 				{
 					spdlog::error("An error occurred during file extraction (code: {})", err);
-					
 				}
 				err = unzCloseCurrentFile(file);
 				if (err != UNZ_OK)
