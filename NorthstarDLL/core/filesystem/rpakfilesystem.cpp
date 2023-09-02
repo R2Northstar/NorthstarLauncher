@@ -133,8 +133,8 @@ void LoadPostloadPaks(const char* pPath)
 
 		for (ModRpakEntry& pak : mod.Rpaks)
 		{
-			if (pak.m_sLoadAfterPak == fs::path(*map).filename() ||
-				fs::path(*map).compare("." / (std::filesystem::weakly_canonical("/" / mod.ModDirectory / "paks" / pak.m_sLoadAfterPak))))
+			if (pak.m_sLoadAfterPak == fs::path(pPath).filename() ||
+				fs::path(pPath).compare("." / (std::filesystem::weakly_canonical("/" / mod.m_ModDirectory / "paks" / pak.m_sLoadAfterPak))))
 			{
 				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::CONSTANT);
 			}
