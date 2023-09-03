@@ -152,6 +152,7 @@ void, __fastcall, (bool bRender))
 		if (OverlayBase_t__IsDead(currentOverlay))
 		{
 			// compiler optimisation moment? is EnterCriticalSection not working?
+			// basically this would seemingly crash if I didn't do this?
 			volatile OverlayBase_t* nextOverlay = currentOverlay->m_pNextOverlay;
 
 			if (previousOverlay != nullptr)
