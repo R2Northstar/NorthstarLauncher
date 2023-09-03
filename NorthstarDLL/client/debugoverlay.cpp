@@ -151,19 +151,20 @@ void, __fastcall, (bool bRender))
 	{
 		if (OverlayBase_t__IsDead(currentOverlay))
 		{
-			OverlayBase_t* nextOverlay = currentOverlay->m_pNextOverlay;
+			// compiler optimisation moment? is EnterCriticalSection not working?
+			volatile OverlayBase_t* nextOverlay = currentOverlay->m_pNextOverlay;
 
 			if (previousOverlay != nullptr)
 			{
-				previousOverlay->m_pNextOverlay = nextOverlay;
+				previousOverlay->m_pNextOverlay = (OverlayBase_t*)nextOverlay;
 			}
 			else
 			{
-				*startOverlay = nextOverlay;
+				*startOverlay = (OverlayBase_t*)nextOverlay;
 			}
 
 			OverlayBase_t__DestroyOverlay(currentOverlay);
-			currentOverlay = nextOverlay;
+			currentOverlay = (OverlayBase_t*)nextOverlay;
 			continue;
 		}
 
@@ -186,8 +187,8 @@ void, __fastcall, (bool bRender))
 		if (shouldRender)
 		{
 RENDER_OVERLAY:
-			// smart pistol's trace lines for some reason use OVERLAY_TRIANGLE not sure why, nothing else that i've found uses it
-			// so I'm going to assume its fine to allow that draw type through enable_debug_overlays
+			// smart pistol's trace lines for some reason use OVERLAY_TRIANGLE not sure why, perhaps the enum is wrong?
+			// nothing else that i've found uses it so I'm going to assume its fine to allow that draw type through enable_debug_overlays
 			if (bRender && (debugOverlaysEnabled || currentOverlay->m_Type == OVERLAY_TRIANGLE))
 				DrawOverlay(currentOverlay);
 		}
