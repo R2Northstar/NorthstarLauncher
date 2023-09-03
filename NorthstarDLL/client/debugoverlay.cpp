@@ -128,7 +128,7 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	break;
 	default:
 		DrawOverlay(pOverlay);
-	break;
+		break;
 	}
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
@@ -187,14 +187,14 @@ void, __fastcall, (bool bRender))
 
 		if (shouldRender)
 		{
-RENDER_OVERLAY:
+		RENDER_OVERLAY:
 			// smart pistol's trace lines for some reason use OVERLAY_TRIANGLE not sure why, perhaps the enum is wrong?
 			// nothing else that i've found uses it so I'm going to assume its fine to allow that draw type through enable_debug_overlays
 			if (bRender && (debugOverlaysEnabled || currentOverlay->m_Type == OVERLAY_TRIANGLE))
 				DrawOverlay(currentOverlay);
 		}
 
-NEXT_OVERLAY:
+	NEXT_OVERLAY:
 		previousOverlay = currentOverlay;
 		currentOverlay = currentOverlay->m_pNextOverlay;
 	}
