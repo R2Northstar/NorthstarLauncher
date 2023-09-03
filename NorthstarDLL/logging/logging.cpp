@@ -270,7 +270,11 @@ void StartupLog()
 			std::string compatToolPath(compatToolPtr);
 
 			auto protonBasenameEnd = compatToolPath.find(":");
+			if (protonBasenameEnd == std::string::npos)
+				protonBasenameEnd = 0;
 			auto protonBasenameStart = compatToolPath.rfind("/", protonBasenameEnd) + 1;
+			if (protonBasenameStart == std::string::npos)
+				protonBasenameStart = 0;
 
 			spdlog::info("Proton build: {}", compatToolPath.substr(protonBasenameStart, protonBasenameEnd - protonBasenameStart));
 		}
