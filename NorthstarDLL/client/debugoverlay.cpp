@@ -127,8 +127,10 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	}
 	break;
 	default:
+	{
 		DrawOverlay(pOverlay);
-		break;
+	}
+	break;
 	}
 	LeaveCriticalSection((LPCRITICAL_SECTION)((char*)sEngineModule + 0x10DB0A38));
 }
