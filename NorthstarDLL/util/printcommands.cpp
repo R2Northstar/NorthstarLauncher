@@ -209,7 +209,8 @@ void ConCommand_differences(const CCommand& arg)
 
 void InitialiseCommandPrint()
 {
-	RegisterConCommand("convar_find", ConCommand_find, "Find concommands with the specified string in their name/help text.", FCVAR_NONE);
+	RegisterConCommand(
+		"convar_find", ConCommand_find, "Find convars/concommands with the specified string in their name/help text.", FCVAR_NONE);
 
 	// these commands already exist, so we need to modify the preexisting command to use our func instead
 	// and clear the flags also
