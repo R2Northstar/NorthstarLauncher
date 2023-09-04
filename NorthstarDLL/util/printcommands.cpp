@@ -160,14 +160,50 @@ void ConCommand_findflags(const CCommand& arg)
 	delete[] upperFlag;
 }
 
+void ConCommand_list(const CCommand& arg)
+{
+	for (auto& map : R2::g_pCVar->DumpToMap())
+	{
+		PrintCommandHelpDialogue(map.second, map.second->m_pszName);
+	}
+}
+
+void ConCommand_differences(const CCommand& arg)
+{
+	for (auto& map : R2::g_pCVar->DumpToMap())
+	{
+		ConVar* cvar = R2::g_pCVar->FindVar(map.second->m_pszName);
+		if (cvar && strcmp(cvar->GetString(), "FCVAR_NEVER_AS_STRING") != NULL)
+		{
+			if (strcmp(cvar->GetString(), cvar->m_pszDefaultValue) != NULL)
+			{
+				PrintCommandHelpDialogue(map.second, map.second->m_pszName);
+				spdlog::info("Current Value: {}", cvar->m_Value.m_pszString);
+				spdlog::info("Default Value: {}", cvar->m_pszDefaultValue);
+			}
+		}
+	}
+}
+
 void InitialiseCommandPrint()
 {
-	RegisterConCommand("find", ConCommand_find, "Find concommands with the specified string in their name/help text.", FCVAR_NONE);
-	RegisterConCommand("findflags", ConCommand_findflags, "Find concommands by flags.", FCVAR_NONE);
+	RegisterConCommand("convar_find", ConCommand_find, "Find concommands with the specified string in their name/help text.", FCVAR_NONE);
 
-	// help is already a command, so we need to modify the preexisting command to use our func instead
+	// these commands already exist, so we need to modify the preexisting command to use our func instead
 	// and clear the flags also
 	ConCommand* helpCommand = R2::g_pCVar->FindCommand("help");
 	helpCommand->m_nFlags = FCVAR_NONE;
 	helpCommand->m_pCommandCallback = ConCommand_help;
+
+	ConCommand* findCommand = R2::g_pCVar->FindCommand("convar_findByFlags");
+	findCommand->m_nFlags = FCVAR_NONE;
+	findCommand->m_pCommandCallback = ConCommand_findflags;
+
+	ConCommand* listCommand = R2::g_pCVar->FindCommand("convar_list");
+	listCommand->m_nFlags = FCVAR_NONE;
+	listCommand->m_pCommandCallback = ConCommand_list;
+
+	ConCommand* diffCommand = R2::g_pCVar->FindCommand("convar_differences");
+	diffCommand->m_nFlags = FCVAR_NONE;
+	diffCommand->m_pCommandCallback = ConCommand_differences;
 }
