@@ -141,12 +141,24 @@ fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::strin
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 {
+	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
+	{
+		spdlog::info("Bypassing mod verification due to flag set up.");
+		return true;
+	}
+
 	// TODO implement
-	return true;
+	return false;
 }
 
 bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 {
+	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
+	{
+		spdlog::info("Bypassing mod verification due to flag set up.");
+		return true;
+	}
+
 	if (!verifiedMods.contains(modName))
 	{
 		return false;

@@ -3,6 +3,7 @@ class ModDownloader
   private:
 	const char* STORE_URL = "https://gcdn.thunderstore.io/live/repository/packages/";
 	const char* MODS_LIST_URL = "https://raw.githubusercontent.com/R2Northstar/VerifiedMods/master/mods.json";
+	const char* VERIFICATION_COMMAND = "-disablemodverification";
 
 	struct VerifiedModVersion
 	{
