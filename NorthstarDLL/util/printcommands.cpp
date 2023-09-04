@@ -11,6 +11,7 @@ std::vector<std::pair<std::string, ConCommandBase*>> ConvarSort(std::unordered_m
 		[](std::pair<std::string, ConCommandBase*>& a, std::pair<std::string, ConCommandBase*>& b) { return a.first < b.first; });
 	return sorted;
 }
+
 void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 {
 	if (!command)
