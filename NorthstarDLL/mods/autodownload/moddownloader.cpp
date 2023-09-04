@@ -171,12 +171,14 @@ bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 void ModDownloader::ExtractMod(fs::path modPath)
 {
 	unzFile file;
+	std::string name;
+	fs::path modDirectory;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	if (file == NULL)
 	{
 		spdlog::error("Cannot open archive located at {}.", modPath.generic_string());
-		return;
+		goto EXTRACTION_CLEANUP;
 	}
 
 	unz_global_info64 gi;
@@ -188,9 +190,9 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	}
 
 	// Mod directory name (removing the ".zip" fom the archive name)
-	std::string name = modPath.filename().string();
+	name = modPath.filename().string();
 	name = name.substr(0, name.length() - 4);
-	fs::path modDirectory = GetRemoteModFolderPath() / name;
+	modDirectory = GetRemoteModFolderPath() / name;
 
 	for (int i = 0; i < gi.number_entry; i++)
 	{
@@ -211,7 +213,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec) && ec.value() != 0)
 				{
 					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 			}
 
@@ -222,7 +224,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (!std::filesystem::create_directory(fileDestination, ec) && ec.value() != 0)
 				{
 					spdlog::error("Directory creation failed: {}", ec.message());
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 			}
 
@@ -233,7 +235,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (unzLocateFile(file, zipFilename, 0) != UNZ_OK)
 				{
 					spdlog::error("File \"{}\" was not found in archive.", zipFilename);
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Create file
@@ -247,6 +249,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (status != UNZ_OK)
 				{
 					spdlog::error("Could not open file {} from archive.", zipFilename);
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Create destination file
@@ -254,7 +257,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (fout == NULL)
 				{
 					spdlog::error("Failed creating destination file.");
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Allocate memory for buffer
@@ -263,7 +266,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (buffer == NULL)
 				{
 					spdlog::error("Error while allocating memory.");
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Extract file to destination
@@ -289,6 +292,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (err != UNZ_OK)
 				{
 					spdlog::error("An error occurred during file extraction (code: {})", err);
+					goto EXTRACTION_CLEANUP;
 				}
 				err = unzCloseCurrentFile(file);
 				if (err != UNZ_OK)
@@ -309,12 +313,16 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			if (status != UNZ_OK)
 			{
 				spdlog::error("Error while browsing archive files (error code: {}).", status);
-				break;
+				goto EXTRACTION_CLEANUP;
 			}
 		}
 	}
 
-	unzClose(file);
+EXTRACTION_CLEANUP:
+	if (unzClose(file) != MZ_OK)
+	{
+		spdlog::error("Failed closing mod archive after extraction.");
+	}
 }
 
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
