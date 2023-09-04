@@ -335,7 +335,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			if (!IsModLegit(archiveLocation, expectedHash))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
-				return;
+				goto REQUEST_END_CLEANUP;
 			}
 
 			// Extract downloaded mod archive
