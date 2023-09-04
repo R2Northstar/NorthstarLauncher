@@ -313,6 +313,8 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			}
 		}
 	}
+
+	unzClose(file);
 }
 
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
@@ -340,6 +342,15 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			ExtractMod(archiveLocation);
 
 		REQUEST_END_CLEANUP:
+			try
+			{
+				remove( archiveLocation );
+			}
+			catch (const std::exception& a)
+			{
+				spdlog::error("Error while removing downloaded archive: {}", a.what());
+			}
+
 			spdlog::info("Done downloading {}.", modName);
 		});
 
