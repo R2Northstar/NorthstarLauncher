@@ -2,6 +2,15 @@
 #include "core/convar/convar.h"
 #include "core/convar/concommand.h"
 
+std::vector<std::pair<std::string, ConCommandBase*>> ConvarSort(std::unordered_map<std::string, ConCommandBase*> map)
+{
+	std::vector<std::pair<std::string, ConCommandBase*>> sorted(map.begin(), map.end());
+	std::sort(
+		sorted.begin(),
+		sorted.end(),
+		[](std::pair<std::string, ConCommandBase*>& a, std::pair<std::string, ConCommandBase*>& b) { return a.first < b.first; });
+	return sorted;
+}
 void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 {
 	if (!command)
@@ -94,7 +103,9 @@ void ConCommand_find(const CCommand& arg)
 	char pTempName[256];
 	char pTempSearchTerm[256];
 
-	for (auto& map : R2::g_pCVar->DumpToMap())
+	std::vector<std::pair<std::string, ConCommandBase*>> sorted = ConvarSort(R2::g_pCVar->DumpToMap());
+
+	for (auto& map : sorted)
 	{
 		bool bPrintCommand = true;
 		for (int i = 0; i < arg.ArgC() - 1; i++)
@@ -150,8 +161,8 @@ void ConCommand_findflags(const CCommand& arg)
 		}
 	}
 
-	// print cvars
-	for (auto& map : R2::g_pCVar->DumpToMap())
+	std::vector<std::pair<std::string, ConCommandBase*>> sorted = ConvarSort(R2::g_pCVar->DumpToMap());
+	for (auto& map : sorted)
 	{
 		if (map.second->m_nFlags & resolvedFlag)
 			PrintCommandHelpDialogue(map.second, map.second->m_pszName);
@@ -162,7 +173,8 @@ void ConCommand_findflags(const CCommand& arg)
 
 void ConCommand_list(const CCommand& arg)
 {
-	for (auto& map : R2::g_pCVar->DumpToMap())
+	std::vector<std::pair<std::string, ConCommandBase*>> sorted = ConvarSort(R2::g_pCVar->DumpToMap());
+	for (auto& map : sorted)
 	{
 		PrintCommandHelpDialogue(map.second, map.second->m_pszName);
 	}
@@ -170,16 +182,26 @@ void ConCommand_list(const CCommand& arg)
 
 void ConCommand_differences(const CCommand& arg)
 {
-	for (auto& map : R2::g_pCVar->DumpToMap())
+	std::vector<std::pair<std::string, ConCommandBase*>> sorted = ConvarSort(R2::g_pCVar->DumpToMap());
+	for (auto& map : sorted)
 	{
 		ConVar* cvar = R2::g_pCVar->FindVar(map.second->m_pszName);
 		if (cvar && strcmp(cvar->GetString(), "FCVAR_NEVER_AS_STRING") != NULL)
 		{
 			if (strcmp(cvar->GetString(), cvar->m_pszDefaultValue) != NULL)
 			{
-				PrintCommandHelpDialogue(map.second, map.second->m_pszName);
-				spdlog::info("Current Value: {}", cvar->m_Value.m_pszString);
-				spdlog::info("Default Value: {}", cvar->m_pszDefaultValue);
+				std::string formatted =
+					fmt::format("\"{}\" = \"{}\" ( def. \"{}\" )", cvar->GetBaseName(), cvar->GetString(), cvar->m_pszDefaultValue);
+				if (cvar->m_bHasMin)
+				{
+					formatted.append(fmt::format(" min. {}", cvar->m_fMinVal));
+				}
+				if (cvar->m_bHasMax)
+				{
+					formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
+				}
+				formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
+				spdlog::info(formatted);
 			}
 		}
 	}
