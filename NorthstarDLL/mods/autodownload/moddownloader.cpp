@@ -350,7 +350,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 		REQUEST_END_CLEANUP:
 			try
 			{
-				remove( archiveLocation );
+				remove(archiveLocation);
 			}
 			catch (const std::exception& a)
 			{
