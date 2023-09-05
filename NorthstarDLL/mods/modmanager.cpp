@@ -104,6 +104,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	ParseScripts(modJson);
 	ParseLocalization(modJson);
 	ParseDependencies(modJson);
+	ParsePluginDependencies(modJson);
 	ParseInitScript(modJson);
 
 	m_bWasReadSuccessfully = true;
@@ -477,6 +478,28 @@ void Mod::ParseDependencies(rapidjson_document& json)
 			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
 
 		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
+	}
+}
+
+void Mod::ParsePluginDependencies(rapidjson_document& json)
+{
+	if (!json.HasMember("PluginDependencies"))
+		return;
+
+	if (!modJson["PluginDependencies"].IsArray())
+	{
+		spdlog::warn("'PluginDependencies' field is not an object, skipping...");
+		return;
+	}
+
+	for (auto& name : modJson["PluginDependencies"].GetArray())
+	{
+		if (!name.IsString())
+			continue;
+
+		spdlog::info("Plugin Constant {} defined by {}", name.GetString(), Name);
+
+		PluginDependencyConstants.push_back(name.GetString());
 	}
 }
 

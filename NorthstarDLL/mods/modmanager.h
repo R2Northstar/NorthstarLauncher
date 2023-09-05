@@ -136,6 +136,7 @@ class Mod
 	void ParseScripts(rapidjson_document& json);
 	void ParseLocalization(rapidjson_document& json);
 	void ParseDependencies(rapidjson_document& json);
+	void ParsePluginDependencies(rapidjson_document& json);
 	void ParseInitScript(rapidjson_document& json);
 };
 
