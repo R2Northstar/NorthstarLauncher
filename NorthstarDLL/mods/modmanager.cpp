@@ -486,13 +486,13 @@ void Mod::ParsePluginDependencies(rapidjson_document& json)
 	if (!json.HasMember("PluginDependencies"))
 		return;
 
-	if (!modJson["PluginDependencies"].IsArray())
+	if (!json["PluginDependencies"].IsArray())
 	{
 		spdlog::warn("'PluginDependencies' field is not an object, skipping...");
 		return;
 	}
 
-	for (auto& name : modJson["PluginDependencies"].GetArray())
+	for (auto& name : json["PluginDependencies"].GetArray())
 	{
 		if (!name.IsString())
 			continue;
