@@ -38,6 +38,7 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
 			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
+			curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeToString);
 			result = curl_easy_perform(easyhandle);
