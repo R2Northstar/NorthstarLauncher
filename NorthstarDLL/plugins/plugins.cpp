@@ -7,6 +7,7 @@
 #include "core/convar/convar.h"
 #include "server/serverpresence.h"
 #include <optional>
+#include <regex>
 
 #include "util/version.h"
 #include "pluginbackend.h"
@@ -62,7 +63,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
-	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(IDR_RCDATA1), MAKEINTRESOURCEW(RT_RCDATA));
+	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(IDR_RCDATA1), RT_RCDATA);
 
 	if (manifestResource == NULL)
 	{
@@ -188,11 +189,34 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	return plugin;
 }
 
+inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
+{
+	// ensure dirs exist
+	if (!fs::exists(pluginPath) || !fs::is_directory(pluginPath))
+	{
+		return;
+	}
+
+	for (const fs::directory_entry& entry : fs::recursive_directory_iterator(pluginPath))
+	{
+		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
+			paths.emplace_back(entry.path());
+	}
+}
+
 bool PluginManager::LoadPlugins()
 {
+	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	{
+		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
+		return false;
+	}
+
+	fs::create_directories(GetThunderstoreModFolderPath());
+
 	std::vector<fs::path> paths;
 
-	pluginPath = GetNorthstarPrefix() + "/plugins";
+	pluginPath = GetNorthstarPrefix() + "\\plugins";
 
 	PluginNorthstarData data {};
 	std::string ns_version {version};
@@ -207,28 +231,30 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
-	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
+	FindPlugins(pluginPath, paths);
+
+	// Special case for Thunderstore mods dir
+	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
+	// Set up regex for `AUTHOR-MOD-VERSION` pattern
+	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
+	for (fs::directory_entry dir : thunderstoreModsDir)
 	{
-		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
-		return false;
+		fs::path pluginsDir = dir.path() / "plugins";
+		// Use regex to match `AUTHOR-MOD-VERSION` pattern
+		if (!std::regex_match(dir.path().string(), pattern))
+		{
+			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", dir.path().string());
+			continue; // skip loading package that doesn't match
+		}
+		FindPlugins(pluginsDir, paths);
 	}
-	if (!fs::exists(pluginPath))
-	{
-		NS::log::PLUGINSYS->warn("Could not find a plugins directory. Skipped loading plugins");
-		return false;
-	}
-	// ensure dirs exist
-	fs::recursive_directory_iterator iterator(pluginPath);
-	if (std::filesystem::begin(iterator) == std::filesystem::end(iterator))
+
+	if (paths.empty())
 	{
 		NS::log::PLUGINSYS->warn("Could not find any plugins. Skipped loading plugins");
 		return false;
 	}
-	for (auto const& entry : iterator)
-	{
-		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-			paths.emplace_back(entry.path());
-	}
+
 	for (fs::path path : paths)
 	{
 		if (LoadPlugin(path, &funcs, &data))

@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "dedicatedlogtoclient.h"
 #include "engine/r2engine.h"
 
@@ -45,5 +44,5 @@ void DedicatedServerLogToClientSink::flush_() {}
 
 ON_DLL_LOAD_DEDI("engine.dll", DedicatedServerLogToClient, (CModule module))
 {
-	CGameClient__ClientPrintf = module.Offset(0x1016A0).As<void (*)(R2::CBaseClient*, const char*, ...)>();
+	CGameClient__ClientPrintf = module.Offset(0x1016A0).RCast<void (*)(R2::CBaseClient*, const char*, ...)>();
 }
