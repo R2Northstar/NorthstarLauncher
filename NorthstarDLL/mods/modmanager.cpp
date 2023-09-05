@@ -16,6 +16,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <regex>
 
 ModManager* g_pModManager;
 
@@ -627,7 +628,7 @@ void ModManager::LoadMods()
 		// Use regex to match `AUTHOR-MOD-VERSION` pattern
 		if (!std::regex_match(dir.path().string(), pattern))
 		{
-			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", modsDir.string());
+			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", dir.path().string());
 			continue; // skip loading mod that doesn't match
 		}
 		if (fs::exists(modsDir) && fs::is_directory(modsDir))
