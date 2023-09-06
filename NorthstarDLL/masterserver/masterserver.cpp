@@ -1189,7 +1189,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 			};
 
 			// don't log errors if we wouldn't actually show up in the server list anyway (stop tickets)
-			bool shouldLogError = !strstr(pServerPresence->m_MapName, "mp_lobby") && strstr(pServerPresence->m_PlaylistName, "private_match");
+			bool shouldLogError =
+				!strstr(pServerPresence->m_MapName, "mp_lobby") && strstr(pServerPresence->m_PlaylistName, "private_match");
 
 			curl_mime_data(part, modInfo.c_str(), modInfo.size());
 			curl_mime_name(part, "modinfo");
@@ -1242,8 +1243,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				{
 					if (shouldLogError)
 						spdlog::error(
-						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+							"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+							rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
