@@ -1191,9 +1191,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 			// don't log errors if we wouldn't actually show up in the server list anyway (stop tickets)
 			// except for dedis, for which this error logging is actually pretty important
-			bool shouldLogError = !strstr(pServerPresence->m_MapName, "mp_lobby")
-			                    && strstr(pServerPresence->m_PlaylistName, "private_match")
-			                    && !IsDedicatedServer();
+			bool shouldLogError = !strstr(pServerPresence->m_MapName, "mp_lobby") &&
+			                       strstr(pServerPresence->m_PlaylistName, "private_match") && !IsDedicatedServer();
 
 			curl_mime_data(part, modInfo.c_str(), modInfo.size());
 			curl_mime_name(part, "modinfo");
