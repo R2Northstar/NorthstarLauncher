@@ -195,8 +195,8 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 		return false;
 	}
 
-    // Create a hash handle
-    status = BCryptCreateHash(
+	// Create a hash handle
+	status = BCryptCreateHash(
 		algorithmHandle, // Handle to an algorithm provider
 		&hashHandle, // A pointer to a hash handle - can be a hash or hmac object
 		NULL, // Pointer to the buffer that recieves the hash/hmac object
