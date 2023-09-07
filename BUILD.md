@@ -44,7 +44,7 @@ Developers who can work a command line may be interested in using [Visual Studio
 ## Linux
 ### Steps
 1. Clone the GitHub repo
-2. Use `cd` to navigate to the cloned repeo's directory
+2. Use `cd` to navigate to the cloned repo's directory
 3. Then, run the following commands in order:
 * `docker build --rm -t test-fedora .`
 * `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build test-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja"`
