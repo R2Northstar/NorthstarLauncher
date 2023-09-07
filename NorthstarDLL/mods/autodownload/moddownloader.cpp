@@ -158,7 +158,104 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 		return true;
 	}
 
-	// TODO implement
+	NTSTATUS status;
+	BCRYPT_ALG_HANDLE algorithmHandle = NULL;
+	BCRYPT_HASH_HANDLE hashHandle = NULL;
+	std::vector<uint8_t> hash;
+	DWORD hashLength = 0;
+	DWORD resultLength = 0;
+
+	constexpr size_t bufferSize {1 << 12};
+	std::vector<char> buffer(bufferSize, '\0');
+	std::ifstream fp(modPath.generic_string(), std::ios::binary);
+
+	// Open an algorithm handle
+	// This sample passes BCRYPT_HASH_REUSABLE_FLAG with BCryptAlgorithmProvider(...) to load a provider which supports reusable hash
+	status = BCryptOpenAlgorithmProvider(
+		&algorithmHandle, // Alg Handle pointer
+		BCRYPT_SHA256_ALGORITHM, // Cryptographic Algorithm name (null terminated unicode string)
+		NULL, // Provider name; if null, the default provider is loaded
+		BCRYPT_HASH_REUSABLE_FLAG); // Flags; Loads a provider which supports reusable hash
+	if (!NT_SUCCESS(status))
+	{
+		goto cleanup;
+	}
+
+	// Obtain the length of the hash
+	status = BCryptGetProperty(
+		algorithmHandle, // Handle to a CNG object
+		BCRYPT_HASH_LENGTH, // Property name (null terminated unicode string)
+		(PBYTE)&hashLength, // Address of the output buffer which recieves the property value
+		sizeof(hashLength), // Size of the buffer in bytes
+		&resultLength, // Number of bytes that were copied into the buffer
+		0); // Flags
+	if (!NT_SUCCESS(status))
+	{
+		// goto cleanup;
+		return false;
+	}
+
+    // Create a hash handle
+    status = BCryptCreateHash(
+		algorithmHandle, // Handle to an algorithm provider
+		&hashHandle, // A pointer to a hash handle - can be a hash or hmac object
+		NULL, // Pointer to the buffer that recieves the hash/hmac object
+		0, // Size of the buffer in bytes
+		NULL, // A pointer to a key to use for the hash or MAC
+		0, // Size of the key in bytes
+		0); // Flags
+	if (!NT_SUCCESS(status))
+	{
+		goto cleanup;
+	}
+
+	// Hash archive content
+	if (!fp.is_open())
+	{
+		spdlog::error("Unable to open archive.");
+		return false;
+	}
+	while (fp.good())
+	{
+		fp.read(buffer.data(), bufferSize);
+		status = BCryptHashData(hashHandle, (PBYTE)buffer.data(), bufferSize, 0);
+		if (!NT_SUCCESS(status))
+		{
+			goto cleanup;
+		}
+	}
+
+	hash = std::vector<uint8_t>(hashLength);
+
+	// Obtain the hash of the message(s) into the hash buffer
+	status = BCryptFinishHash(
+		hashHandle, // Handle to the hash or MAC object
+		hash.data(), // A pointer to a buffer that receives the hash or MAC value
+		hashLength, // Size of the buffer in bytes
+		0); // Flags
+	if (!NT_SUCCESS(status))
+	{
+		goto cleanup;
+	}
+
+	spdlog::info("Expected checksum: {}", expectedChecksum);
+	spdlog::info("Computed checksum: {}", (char*)hash.data());
+
+	// TODO compare hash
+
+cleanup:
+	if (NULL != hashHandle)
+	{
+		BCryptDestroyHash(hashHandle); // Handle to hash/MAC object which needs to be destroyed
+	}
+
+	if (NULL != algorithmHandle)
+	{
+		BCryptCloseAlgorithmProvider(
+			algorithmHandle, // Handle to the algorithm provider which needs to be closed
+			0); // Flags
+	}
+
 	return false;
 }
 
