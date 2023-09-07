@@ -5,6 +5,11 @@
 #include <mz_strm.h>
 #include <mz_zip.h>
 #include <mz_compat.h>
+#include <thread>
+#include <future>
+#include <bcrypt.h>
+#include <winternl.h>
+#include <fstream>
 
 ModDownloader* g_pModDownloader;
 
@@ -93,7 +98,40 @@ size_t writeData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 	return written;
 }
 
-fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::string modVersion)
+void func(std::promise<std::optional<fs::path>>&& p, std::string url, fs::path downloadPath)
+{
+	bool failed = false;
+	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
+	CURLcode result;
+	CURL* easyhandle;
+	easyhandle = curl_easy_init();
+
+	curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
+	curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
+	result = curl_easy_perform(easyhandle);
+
+	if (result == CURLcode::CURLE_OK)
+	{
+		spdlog::info("Mod archive successfully fetched.");
+		goto REQUEST_END_CLEANUP;
+	}
+	else
+	{
+		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
+		failed = true;
+		goto REQUEST_END_CLEANUP;
+	}
+
+REQUEST_END_CLEANUP:
+	curl_easy_cleanup(easyhandle);
+	fclose(fp);
+	p.set_value(failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath));
+}
+
+std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string modName, std::string modVersion)
 {
 	// Build archive distant URI
 	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName].dependencyPrefix, modVersion);
@@ -105,37 +143,11 @@ fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::strin
 	spdlog::info(std::format("Downloading archive to {}", downloadPath.generic_string()));
 
 	// Download the actual archive
-	std::thread requestThread(
-		[this, url, downloadPath]()
-		{
-			FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
-			CURLcode result;
-			CURL* easyhandle;
-			easyhandle = curl_easy_init();
-
-			curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
-			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
-			result = curl_easy_perform(easyhandle);
-
-			if (result == CURLcode::CURLE_OK)
-			{
-				spdlog::info("Mod archive successfully fetched.");
-			}
-			else
-			{
-				spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
-				goto REQUEST_END_CLEANUP;
-			}
-
-		REQUEST_END_CLEANUP:
-			curl_easy_cleanup(easyhandle);
-			fclose(fp);
-		});
-
-	requestThread.join();
-	return downloadPath;
+	std::promise<std::optional<fs::path>> promise;
+	auto f = promise.get_future();
+	std::thread t(&func, std::move(promise), url, downloadPath);
+	t.join();
+	return f.get();
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
@@ -336,9 +348,17 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	std::thread requestThread(
 		[this, modName, modVersion]()
 		{
+			fs::path archiveLocation;
+
 			// Download mod archive
 			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
-			fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
+			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(modName, modVersion);
+			if (!fetchingResult.has_value())
+			{
+				spdlog::error("Something went wrong while fetching archive, aborting.");
+				goto REQUEST_END_CLEANUP;
+			}
+			archiveLocation = fetchingResult.value();
 			if (!IsModLegit(archiveLocation, expectedHash))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
