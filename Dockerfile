@@ -16,6 +16,7 @@ RUN dnf update -y && \
     dnf clean all && \
     mkdir /opt/msvc/ /build
 
+RUN git config --global --add safe.directory /build
 RUN git clone https://github.com/mstorsjo/msvc-wine && \
     ./msvc-wine/vsdownload.py --accept-license --dest /opt/msvc/ && \
     ./msvc-wine/install.sh /opt/msvc/ && \
