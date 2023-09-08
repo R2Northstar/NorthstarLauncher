@@ -3,6 +3,7 @@ class ModDownloader
   private:
 	const char* STORE_URL = "https://gcdn.thunderstore.io/live/repository/packages/";
 	const char* MODS_LIST_URL = "https://raw.githubusercontent.com/R2Northstar/VerifiedMods/master/mods.json";
+	const char* VERIFICATION_FLAG = "-disablemodverification";
 
 	struct VerifiedModVersion
 	{
@@ -19,14 +20,17 @@ class ModDownloader
 	 * Downloads a mod archive from distant store.
 	 *
 	 * This rebuilds the URI of the mod archive using both a predefined store URI
-	 * and the mod dependency string from the `verifiedMods` variabl; fetched
+	 * and the mod dependency string from the `verifiedMods` variable; fetched
 	 * archive is then stored in a temporary location.
+	 *
+	 * If something went wrong during archive download, this will return an empty
+	 * optional object.
 	 *
 	 * @param modName name of the mod to be downloaded
 	 * @param modVersion version of the mod to be downloaded
 	 * @returns location of the downloaded archive
 	 */
-	fs::path FetchModFromDistantStore(std::string modName, std::string modVersion);
+	std::optional<fs::path> FetchModFromDistantStore(std::string modName, std::string modVersion);
 
 	/**
 	 * Checks whether a mod is verified.

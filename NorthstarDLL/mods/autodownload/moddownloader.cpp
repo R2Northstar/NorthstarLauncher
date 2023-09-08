@@ -5,6 +5,11 @@
 #include <mz_strm.h>
 #include <mz_zip.h>
 #include <mz_compat.h>
+#include <thread>
+#include <future>
+#include <bcrypt.h>
+#include <winternl.h>
+#include <fstream>
 
 ModDownloader* g_pModDownloader;
 
@@ -38,7 +43,7 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_CUSTOMREQUEST, "GET");
 			curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
 			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
+			curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeToString);
 			result = curl_easy_perform(easyhandle);
@@ -93,7 +98,40 @@ size_t writeData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 	return written;
 }
 
-fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::string modVersion)
+void func(std::promise<std::optional<fs::path>>&& p, std::string url, fs::path downloadPath)
+{
+	bool failed = false;
+	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
+	CURLcode result;
+	CURL* easyhandle;
+	easyhandle = curl_easy_init();
+
+	curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
+	curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
+	result = curl_easy_perform(easyhandle);
+
+	if (result == CURLcode::CURLE_OK)
+	{
+		spdlog::info("Mod archive successfully fetched.");
+		goto REQUEST_END_CLEANUP;
+	}
+	else
+	{
+		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
+		failed = true;
+		goto REQUEST_END_CLEANUP;
+	}
+
+REQUEST_END_CLEANUP:
+	curl_easy_cleanup(easyhandle);
+	fclose(fp);
+	p.set_value(failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath));
+}
+
+std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string modName, std::string modVersion)
 {
 	// Build archive distant URI
 	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName].dependencyPrefix, modVersion);
@@ -105,48 +143,130 @@ fs::path ModDownloader::FetchModFromDistantStore(std::string modName, std::strin
 	spdlog::info(std::format("Downloading archive to {}", downloadPath.generic_string()));
 
 	// Download the actual archive
-	std::thread requestThread(
-		[this, url, downloadPath]()
-		{
-			FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
-			CURLcode result;
-			CURL* easyhandle;
-			easyhandle = curl_easy_init();
-
-			curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
-			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(easyhandle, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
-			result = curl_easy_perform(easyhandle);
-
-			if (result == CURLcode::CURLE_OK)
-			{
-				spdlog::info("Mod archive successfully fetched.");
-			}
-			else
-			{
-				spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
-				goto REQUEST_END_CLEANUP;
-			}
-
-		REQUEST_END_CLEANUP:
-			curl_easy_cleanup(easyhandle);
-			fclose(fp);
-		});
-
-	requestThread.join();
-	return downloadPath;
+	std::promise<std::optional<fs::path>> promise;
+	auto f = promise.get_future();
+	std::thread t(&func, std::move(promise), url, downloadPath);
+	t.join();
+	return f.get();
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 {
-	// TODO implement
-	return true;
+	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
+	{
+		spdlog::info("Bypassing mod verification due to flag set up.");
+		return true;
+	}
+
+	NTSTATUS status;
+	BCRYPT_ALG_HANDLE algorithmHandle = NULL;
+	BCRYPT_HASH_HANDLE hashHandle = NULL;
+	std::vector<uint8_t> hash;
+	DWORD hashLength = 0;
+	DWORD resultLength = 0;
+
+	constexpr size_t bufferSize {1 << 12};
+	std::vector<char> buffer(bufferSize, '\0');
+	std::ifstream fp(modPath.generic_string(), std::ios::binary);
+
+	// Open an algorithm handle
+	// This sample passes BCRYPT_HASH_REUSABLE_FLAG with BCryptAlgorithmProvider(...) to load a provider which supports reusable hash
+	status = BCryptOpenAlgorithmProvider(
+		&algorithmHandle, // Alg Handle pointer
+		BCRYPT_SHA256_ALGORITHM, // Cryptographic Algorithm name (null terminated unicode string)
+		NULL, // Provider name; if null, the default provider is loaded
+		BCRYPT_HASH_REUSABLE_FLAG); // Flags; Loads a provider which supports reusable hash
+	if (!NT_SUCCESS(status))
+	{
+		goto cleanup;
+	}
+
+	// Obtain the length of the hash
+	status = BCryptGetProperty(
+		algorithmHandle, // Handle to a CNG object
+		BCRYPT_HASH_LENGTH, // Property name (null terminated unicode string)
+		(PBYTE)&hashLength, // Address of the output buffer which recieves the property value
+		sizeof(hashLength), // Size of the buffer in bytes
+		&resultLength, // Number of bytes that were copied into the buffer
+		0); // Flags
+	if (!NT_SUCCESS(status))
+	{
+		// goto cleanup;
+		return false;
+	}
+
+	// Create a hash handle
+	status = BCryptCreateHash(
+		algorithmHandle, // Handle to an algorithm provider
+		&hashHandle, // A pointer to a hash handle - can be a hash or hmac object
+		NULL, // Pointer to the buffer that recieves the hash/hmac object
+		0, // Size of the buffer in bytes
+		NULL, // A pointer to a key to use for the hash or MAC
+		0, // Size of the key in bytes
+		0); // Flags
+	if (!NT_SUCCESS(status))
+	{
+		goto cleanup;
+	}
+
+	// Hash archive content
+	if (!fp.is_open())
+	{
+		spdlog::error("Unable to open archive.");
+		return false;
+	}
+	while (fp.good())
+	{
+		fp.read(buffer.data(), bufferSize);
+		status = BCryptHashData(hashHandle, (PBYTE)buffer.data(), bufferSize, 0);
+		if (!NT_SUCCESS(status))
+		{
+			goto cleanup;
+		}
+	}
+
+	hash = std::vector<uint8_t>(hashLength);
+
+	// Obtain the hash of the message(s) into the hash buffer
+	status = BCryptFinishHash(
+		hashHandle, // Handle to the hash or MAC object
+		hash.data(), // A pointer to a buffer that receives the hash or MAC value
+		hashLength, // Size of the buffer in bytes
+		0); // Flags
+	if (!NT_SUCCESS(status))
+	{
+		goto cleanup;
+	}
+
+	spdlog::info("Expected checksum: {}", expectedChecksum);
+	spdlog::info("Computed checksum: {}", (char*)hash.data());
+
+	// TODO compare hash
+
+cleanup:
+	if (NULL != hashHandle)
+	{
+		BCryptDestroyHash(hashHandle); // Handle to hash/MAC object which needs to be destroyed
+	}
+
+	if (NULL != algorithmHandle)
+	{
+		BCryptCloseAlgorithmProvider(
+			algorithmHandle, // Handle to the algorithm provider which needs to be closed
+			0); // Flags
+	}
+
+	return false;
 }
 
 bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 {
+	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
+	{
+		spdlog::info("Bypassing mod verification due to flag set up.");
+		return true;
+	}
+
 	if (!verifiedMods.contains(modName))
 	{
 		return false;
@@ -159,12 +279,14 @@ bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 void ModDownloader::ExtractMod(fs::path modPath)
 {
 	unzFile file;
+	std::string name;
+	fs::path modDirectory;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	if (file == NULL)
 	{
 		spdlog::error("Cannot open archive located at {}.", modPath.generic_string());
-		return;
+		goto EXTRACTION_CLEANUP;
 	}
 
 	unz_global_info64 gi;
@@ -176,9 +298,9 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	}
 
 	// Mod directory name (removing the ".zip" fom the archive name)
-	std::string name = modPath.filename().string();
+	name = modPath.filename().string();
 	name = name.substr(0, name.length() - 4);
-	fs::path modDirectory = GetRemoteModFolderPath() / name;
+	modDirectory = GetRemoteModFolderPath() / name;
 
 	for (int i = 0; i < gi.number_entry; i++)
 	{
@@ -199,7 +321,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec) && ec.value() != 0)
 				{
 					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 			}
 
@@ -210,7 +332,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (!std::filesystem::create_directory(fileDestination, ec) && ec.value() != 0)
 				{
 					spdlog::error("Directory creation failed: {}", ec.message());
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 			}
 
@@ -221,7 +343,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (unzLocateFile(file, zipFilename, 0) != UNZ_OK)
 				{
 					spdlog::error("File \"{}\" was not found in archive.", zipFilename);
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Create file
@@ -235,6 +357,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (status != UNZ_OK)
 				{
 					spdlog::error("Could not open file {} from archive.", zipFilename);
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Create destination file
@@ -242,7 +365,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (fout == NULL)
 				{
 					spdlog::error("Failed creating destination file.");
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Allocate memory for buffer
@@ -251,7 +374,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (buffer == NULL)
 				{
 					spdlog::error("Error while allocating memory.");
-					return;
+					goto EXTRACTION_CLEANUP;
 				}
 
 				// Extract file to destination
@@ -277,6 +400,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				if (err != UNZ_OK)
 				{
 					spdlog::error("An error occurred during file extraction (code: {})", err);
+					goto EXTRACTION_CLEANUP;
 				}
 				err = unzCloseCurrentFile(file);
 				if (err != UNZ_OK)
@@ -297,9 +421,15 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			if (status != UNZ_OK)
 			{
 				spdlog::error("Error while browsing archive files (error code: {}).", status);
-				break;
+				goto EXTRACTION_CLEANUP;
 			}
 		}
+	}
+
+EXTRACTION_CLEANUP:
+	if (unzClose(file) != MZ_OK)
+	{
+		spdlog::error("Failed closing mod archive after extraction.");
 	}
 }
 
@@ -315,19 +445,36 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	std::thread requestThread(
 		[this, modName, modVersion]()
 		{
+			fs::path archiveLocation;
+
 			// Download mod archive
 			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
-			fs::path archiveLocation = FetchModFromDistantStore(modName, modVersion);
+			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(modName, modVersion);
+			if (!fetchingResult.has_value())
+			{
+				spdlog::error("Something went wrong while fetching archive, aborting.");
+				goto REQUEST_END_CLEANUP;
+			}
+			archiveLocation = fetchingResult.value();
 			if (!IsModLegit(archiveLocation, expectedHash))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
-				return;
+				goto REQUEST_END_CLEANUP;
 			}
 
 			// Extract downloaded mod archive
 			ExtractMod(archiveLocation);
 
 		REQUEST_END_CLEANUP:
+			try
+			{
+				remove(archiveLocation);
+			}
+			catch (const std::exception& a)
+			{
+				spdlog::error("Error while removing downloaded archive: {}", a.what());
+			}
+
 			spdlog::info("Done downloading {}.", modName);
 		});
 
