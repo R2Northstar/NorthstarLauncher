@@ -267,13 +267,13 @@ void StartupLog()
 		char* compatToolPtr = std::getenv("STEAM_COMPAT_TOOL_PATHS");
 		if (compatToolPtr)
 		{
-			std::string compatToolPath(compatToolPtr);
+			std::string_view compatToolPath(compatToolPtr);
 
 			auto protonBasenameEnd = compatToolPath.find(":");
-			if (protonBasenameEnd == std::string::npos)
+			if (protonBasenameEnd == std::string_view::npos)
 				protonBasenameEnd = 0;
 			auto protonBasenameStart = compatToolPath.rfind("/", protonBasenameEnd) + 1;
-			if (protonBasenameStart == std::string::npos)
+			if (protonBasenameStart == std::string_view::npos)
 				protonBasenameStart = 0;
 
 			spdlog::info("Proton build: {}", compatToolPath.substr(protonBasenameStart, protonBasenameEnd - protonBasenameStart));
