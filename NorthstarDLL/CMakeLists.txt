@@ -73,6 +73,8 @@ add_library(NorthstarDLL SHARED
             "logging/sourceconsole.h"
             "masterserver/masterserver.cpp"
             "masterserver/masterserver.h"
+            "mods/autodownload/moddownloader.h"
+            "mods/autodownload/moddownloader.cpp"
             "mods/compiled/kb_act.cpp"
             "mods/compiled/modkeyvalues.cpp"
             "mods/compiled/modpdef.cpp"
@@ -149,8 +151,7 @@ add_library(NorthstarDLL SHARED
             "audio_asm.asm"
             "dllmain.cpp"
             "dllmain.h"
-            "ns_version.h"
- "mods/autodownload/moddownloader.h" "mods/autodownload/moddownloader.cpp")
+            "ns_version.h")
 
 target_link_libraries(NorthstarDLL PRIVATE
                       minhook
