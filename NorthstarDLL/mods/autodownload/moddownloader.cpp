@@ -215,13 +215,18 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 		spdlog::error("Unable to open archive.");
 		return false;
 	}
+	fp.seekg(0, fp.beg);
 	while (fp.good())
 	{
 		fp.read(buffer.data(), bufferSize);
-		status = BCryptHashData(hashHandle, (PBYTE)buffer.data(), bufferSize, 0);
-		if (!NT_SUCCESS(status))
+		std::streamsize bytesRead = fp.gcount();
+		if (bytesRead > 0)
 		{
-			goto cleanup;
+			status = BCryptHashData(hashHandle, (PBYTE)buffer.data(), bytesRead, 0);
+			if (!NT_SUCCESS(status))
+			{
+				goto cleanup;
+			}
 		}
 	}
 
