@@ -262,9 +262,9 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 
 		// insert zeroed token since bots steal tokens from previously connected players
 		// pNextPlayerToken is also uninit if a bot spawns before a player connects
-		pNextPlayerToken = "0000000000000";
+		pNextPlayerToken = "000000000000";
 		iNextPlayerUid = 0;
-	} 
+	}
 
 	if (pAuthenticationFailure)
 	{
