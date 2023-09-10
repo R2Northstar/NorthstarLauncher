@@ -164,6 +164,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 	std::vector<uint8_t> hash;
 	DWORD hashLength = 0;
 	DWORD resultLength = 0;
+	std::stringstream ss;
 
 	constexpr size_t bufferSize {1 << 12};
 	std::vector<char> buffer(bufferSize, '\0');
@@ -243,10 +244,16 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 		goto cleanup;
 	}
 
-	spdlog::info("Expected checksum: {}", expectedChecksum);
-	spdlog::info("Computed checksum: {}", (char*)hash.data());
+	// Convert hash to string using bytes raw values
+	ss << std::hex << std::setfill('0');
+	for (int i = 0; i < hashLength; i++)
+	{
+		ss << std::hex << std::setw(2) << static_cast<int>(hash.data()[i]);
+	}
 
-	// TODO compare hash
+	spdlog::info("Expected checksum: {}", expectedChecksum);
+	spdlog::info("Computed checksum: {}", ss.str());
+	return expectedChecksum.compare(ss.str()) == 0;
 
 cleanup:
 	if (NULL != hashHandle)
