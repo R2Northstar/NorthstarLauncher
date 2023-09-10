@@ -101,7 +101,7 @@ bool ServerAuthenticationManager::IsDuplicateAccount(R2::CBaseClient* pPlayer, c
 	return false;
 }
 
-bool ServerAuthenticationManager::CheckAuthentication(R2::CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken)
+bool ServerAuthenticationManager::CheckAuthentication(R2::CBaseClient* pPlayer, uint64_t iUid, const char* pAuthToken)
 {
 	std::string sUid = std::to_string(iUid);
 
@@ -126,7 +126,7 @@ bool ServerAuthenticationManager::CheckAuthentication(R2::CBaseClient* pPlayer, 
 	return false;
 }
 
-void ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken)
+void ServerAuthenticationManager::AuthenticatePlayer(R2::CBaseClient* pPlayer, uint64_t iUid, const char* pAuthToken)
 {
 	// for bot players, generate a new uid
 	if (pPlayer->m_bFakePlayer)
@@ -204,8 +204,8 @@ void ServerAuthenticationManager::WritePersistentData(R2::CBaseClient* pPlayer)
 
 // store these in vars so we can use them in CBaseClient::Connect
 // this is fine because ptrs won't decay by the time we use this, just don't use it outside of calls from cbaseclient::connectclient
-char* pNextPlayerToken;
-uint64_t iNextPlayerUid;
+const char* pNextPlayerToken = "0";
+uint64_t iNextPlayerUid = 0;
 
 // clang-format off
 AUTOHOOK(CBaseServer__ConnectClient, engine.dll + 0x114430,
@@ -255,8 +255,16 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 		else if (!g_pServerAuthentication->CheckAuthentication(self, iNextPlayerUid, pNextPlayerToken))
 			pAuthenticationFailure = "Authentication Failed.";
 	}
-	else // need to copy name for bots still
+	else
+	{
+		// need to copy name for bots still
 		strncpy_s(pVerifiedName, pName, 63);
+
+		// insert zeroed token since bots steal tokens from previously connected players
+		// pNextPlayerToken is also uninit if a bot spawns before a player connects
+		pNextPlayerToken = "0000000000000";
+		iNextPlayerUid = 0;
+	} 
 
 	if (pAuthenticationFailure)
 	{
