@@ -255,16 +255,8 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 		else if (!g_pServerAuthentication->CheckAuthentication(self, iNextPlayerUid, pNextPlayerToken))
 			pAuthenticationFailure = "Authentication Failed.";
 	}
-	else
-	{
-		// need to copy name for bots still
+	else // need to copy name for bots still
 		strncpy_s(pVerifiedName, pName, 63);
-
-		// insert zeroed token since bots steal tokens from previously connected players
-		// pNextPlayerToken is also uninit if a bot spawns before a player connects
-		pNextPlayerToken = "000000000000";
-		iNextPlayerUid = 0;
-	}
 
 	if (pAuthenticationFailure)
 	{
