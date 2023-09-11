@@ -150,7 +150,7 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	return f.get();
 }
 
-bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
+bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecksum)
 {
 	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
 	{
@@ -251,7 +251,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string expectedChecksum)
 		ss << std::hex << std::setw(2) << static_cast<int>(hash.data()[i]);
 	}
 
-	spdlog::info("Expected checksum: {}", expectedChecksum);
+	spdlog::info("Expected checksum: {}", expectedChecksum.data());
 	spdlog::info("Computed checksum: {}", ss.str());
 	return expectedChecksum.compare(ss.str()) == 0;
 
@@ -468,7 +468,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				goto REQUEST_END_CLEANUP;
 			}
 			archiveLocation = fetchingResult.value();
-			if (!IsModLegit(archiveLocation, expectedHash))
+			if (!IsModLegit(archiveLocation, std::string_view(expectedHash)))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
 				goto REQUEST_END_CLEANUP;

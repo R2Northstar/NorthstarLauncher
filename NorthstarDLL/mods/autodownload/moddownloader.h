@@ -58,7 +58,7 @@ class ModDownloader
 	 * @param expectedChecksum checksum the archive should have
 	 * @returns whether archive is legit
 	 */
-	bool IsModLegit(fs::path modPath, std::string expectedChecksum);
+	bool IsModLegit(fs::path modPath, std::string_view expectedChecksum);
 
 	/**
 	 * Extracts a mod archive to the game folder.
