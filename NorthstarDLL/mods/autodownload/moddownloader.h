@@ -30,7 +30,7 @@ class ModDownloader
 	 * @param modVersion version of the mod to be downloaded
 	 * @returns location of the downloaded archive
 	 */
-	std::optional<fs::path> FetchModFromDistantStore(std::string modName, std::string modVersion);
+	std::optional<fs::path> FetchModFromDistantStore(std::string_view modName, std::string_view modVersion);
 
 	/**
 	 * Checks whether a mod is verified.

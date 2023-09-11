@@ -98,7 +98,7 @@ size_t writeData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 	return written;
 }
 
-void func(std::promise<std::optional<fs::path>>&& p, std::string url, fs::path downloadPath)
+void func(std::promise<std::optional<fs::path>>&& p, std::string_view url, fs::path downloadPath)
 {
 	bool failed = false;
 	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
@@ -107,7 +107,7 @@ void func(std::promise<std::optional<fs::path>>&& p, std::string url, fs::path d
 	easyhandle = curl_easy_init();
 
 	curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
-	curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(easyhandle, CURLOPT_URL, url.data());
 	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
@@ -131,10 +131,10 @@ REQUEST_END_CLEANUP:
 	p.set_value(failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath));
 }
 
-std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string modName, std::string modVersion)
+std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, std::string_view modVersion)
 {
 	// Build archive distant URI
-	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName].dependencyPrefix, modVersion);
+	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName.data()].dependencyPrefix, modVersion.data());
 	std::string url = STORE_URL + archiveName;
 	spdlog::info(std::format("Fetching mod archive from {}", url));
 
@@ -145,7 +145,7 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string modN
 	// Download the actual archive
 	std::promise<std::optional<fs::path>> promise;
 	auto f = promise.get_future();
-	std::thread t(&func, std::move(promise), url, downloadPath);
+	std::thread t(&func, std::move(promise), std::string_view(url), downloadPath);
 	t.join();
 	return f.get();
 }
@@ -461,7 +461,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 
 			// Download mod archive
 			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
-			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(modName, modVersion);
+			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), std::string_view(modVersion));
 			if (!fetchingResult.has_value())
 			{
 				spdlog::error("Something went wrong while fetching archive, aborting.");
