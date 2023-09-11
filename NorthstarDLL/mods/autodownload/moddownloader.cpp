@@ -271,7 +271,7 @@ cleanup:
 	return false;
 }
 
-bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
+bool ModDownloader::IsModAuthorized(std::string_view modName, std::string_view modVersion)
 {
 	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
 	{
@@ -279,13 +279,13 @@ bool ModDownloader::IsModAuthorized(std::string modName, std::string modVersion)
 		return true;
 	}
 
-	if (!verifiedMods.contains(modName))
+	if (!verifiedMods.contains(modName.data()))
 	{
 		return false;
 	}
 
-	std::unordered_map<std::string, VerifiedModVersion> versions = verifiedMods[modName].versions;
-	return versions.count(modVersion) != 0;
+	std::unordered_map<std::string, VerifiedModVersion> versions = verifiedMods[modName.data()].versions;
+	return versions.count(modVersion.data()) != 0;
 }
 
 void ModDownloader::ExtractMod(fs::path modPath)
@@ -448,7 +448,7 @@ EXTRACTION_CLEANUP:
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 {
 	// Check if mod can be auto-downloaded
-	if (!IsModAuthorized(modName, modVersion))
+	if (!IsModAuthorized(std::string_view(modName), std::string_view(modVersion)))
 	{
 		spdlog::warn("Tried to download a mod that is not verified, aborting.");
 		return;

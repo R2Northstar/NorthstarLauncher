@@ -44,7 +44,7 @@ class ModDownloader
 	 * @param modVersion version of the mod to be checked, must follow semantic versioning
 	 * @returns whether the mod is authorized and can be auto-downloaded
 	 */
-	bool IsModAuthorized(std::string modName, std::string modVersion);
+	bool IsModAuthorized(std::string_view modName, std::string_view modVersion);
 
 	/**
 	 * Tells if a mod archive has not been corrupted.
