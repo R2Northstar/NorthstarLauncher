@@ -85,9 +85,12 @@ struct LogMsg
 	int pluginHandle;
 };
 
-typedef void (*loggerfunc_t)(LogMsg* msg);
-typedef void (*PLUGIN_RELAY_INVITE_TYPE)(const char* invite);
-typedef void* (*CreateObjectFunc)(ObjectType type);
+extern "C"
+{
+	typedef void (*loggerfunc_t)(LogMsg* msg);
+	typedef void (*PLUGIN_RELAY_INVITE_TYPE)(const char* invite);
+	typedef void* (*CreateObjectFunc)(ObjectType type);
+}
 
 struct PluginNorthstarData
 {
@@ -128,7 +131,7 @@ typedef void (*PLUGIN_INIT_SQVM_TYPE)(SquirrelFunctions* funcs);
 typedef void (*PLUGIN_INFORM_SQVM_CREATED_TYPE)(ScriptContext context, CSquirrelVM* sqvm);
 typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
 
-typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(const char* dll, void* data, void* dllPtr);
+typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(const char* dll, PluginEngineData* data, void* dllPtr);
 typedef void (*PLUGIN_RUNFRAME)();
 
 // Async Communication types
