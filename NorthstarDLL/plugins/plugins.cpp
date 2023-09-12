@@ -306,7 +306,7 @@ void PluginManager::InformDLLLoad(const char* dll, void* data, void* dllPtr)
 	{
 		if (plugin.inform_dll_load != NULL)
 		{
-			plugin.inform_dll_load(dll, data, dllPtr);
+			plugin.inform_dll_load(dll, (PluginEngineData*)data, dllPtr);
 		}
 	}
 }
