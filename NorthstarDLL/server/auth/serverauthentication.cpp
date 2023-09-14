@@ -252,13 +252,6 @@ R2::CBaseClient*,, (
 
 		CBaseServer__PushDisconnectReason(self, (int32_t)((uintptr_t)self + 0xc), addr, "A bot was init in CServer__ConnectClient");
 		return nullptr;
-
-		// this should never happen but just in case
-		// need to copy name for bots still
-		// strncpy_s(pVerifiedName, playerName, 63);
-		// default stuff for bots
-		// authToken = "00000000000000";
-		// uid = 0;
 	}
 
 	if (pAuthenticationFailure)
@@ -286,7 +279,7 @@ AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, void* a5, char pDisconnectReason[256], void* a7))
 // clang-format on
 {
-	// only remains to count bots in player count, since bots take player slots and it will give a false player count on the server browser.
+	// only remains to count bots in player count, since bots take player slots and it will give if not counted a false player count on the server browser.
 
 	if (!bFakePlayer)
 		return CBaseClient__Connect(self, pName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7);
