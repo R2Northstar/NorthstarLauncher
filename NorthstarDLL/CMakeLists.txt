@@ -157,7 +157,7 @@ add_library(NorthstarDLL SHARED
 target_link_libraries(NorthstarDLL PRIVATE
                       minhook
                       libcurl
-					  minizip
+                      minizip
                       WS2_32.lib
                       Crypt32.lib
                       Cryptui.lib
