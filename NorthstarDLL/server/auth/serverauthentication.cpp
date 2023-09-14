@@ -279,7 +279,8 @@ AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, void* a5, char pDisconnectReason[256], void* a7))
 // clang-format on
 {
-	// only remains to count bots in player count, since bots take player slots and it will give if not counted a false player count on the server browser.
+	// only remains to count bots in player count,
+	// since bots take player slots and it will give if not counted a false player count on the server browser.
 
 	if (!bFakePlayer)
 		return CBaseClient__Connect(self, pName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7);
