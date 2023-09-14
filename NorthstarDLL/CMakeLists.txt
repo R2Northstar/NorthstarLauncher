@@ -151,7 +151,8 @@ add_library(NorthstarDLL SHARED
             "audio_asm.asm"
             "dllmain.cpp"
             "dllmain.h"
-            "ns_version.h")
+            "ns_version.h"
+)
 
 target_link_libraries(NorthstarDLL PRIVATE
                       minhook
