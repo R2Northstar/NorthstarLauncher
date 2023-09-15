@@ -248,7 +248,9 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 
 	if (!bFakePlayer)
 	{
-		if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
+		if (g_pServerPresence->IsDraining())
+			pAuthenticationFailure = "Server is shutting down.";
+		else if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
 			pAuthenticationFailure = "Invalid Name.";
 		else if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
 			pAuthenticationFailure = "Banned From server.";
@@ -327,6 +329,13 @@ void,, (R2::CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, 
 	}
 
 	g_pServerPresence->SetPlayerCount(g_pServerAuthentication->m_PlayerAuthenticationData.size());
+
+	if (g_pServerPresence->IsDraining() && !g_pServerAuthentication->m_PlayerAuthenticationData.size())
+	{
+		spdlog::info("server drain complete (server is empty), quitting");
+		R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "quit", R2::cmd_source_t::kCommandSrcCode);
+		R2::Cbuf_Execute();
+	}
 
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
 }

@@ -19,6 +19,8 @@ struct ServerPresence
 	int m_iPlayerCount;
 	int m_iMaxPlayers;
 
+	bool m_bIsDraining;
+
 	ServerPresence()
 	{
 		memset(this, 0, sizeof(this));
@@ -39,6 +41,8 @@ struct ServerPresence
 
 		m_iPlayerCount = obj->m_iPlayerCount;
 		m_iMaxPlayers = obj->m_iMaxPlayers;
+
+		m_bIsDraining = obj->m_bIsDraining;
 	}
 };
 
@@ -72,6 +76,7 @@ class ServerPresenceManager
 	ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
   public:
+
 	void AddPresenceReporter(ServerPresenceReporter* reporter);
 
 	void CreateConVars();
@@ -89,6 +94,9 @@ class ServerPresenceManager
 	void SetMap(const char* pMapName, bool isInitialising = false);
 	void SetPlaylist(const char* pPlaylistName);
 	void SetPlayerCount(const int iPlayerCount);
+
+	void SetIsDraining(bool bIsDraining);
+	bool IsDraining() const;
 };
 
 extern ServerPresenceManager* g_pServerPresence;

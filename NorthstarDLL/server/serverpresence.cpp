@@ -221,8 +221,28 @@ void ServerPresenceManager::SetPlayerCount(const int iPlayerCount)
 	m_ServerPresence.m_iPlayerCount = iPlayerCount;
 }
 
+void ServerPresenceManager::SetIsDraining(bool bIsDraining)
+{
+	m_ServerPresence.m_bIsDraining = bIsDraining;
+}
+
+bool ServerPresenceManager::IsDraining() const
+{
+	// TODO: is there a better place for this?
+	return m_ServerPresence.m_bIsDraining;
+}
+
 ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (CModule module))
 {
 	g_pServerPresence->CreateConVars();
 	Cvar_hostname = module.Offset(0x1315BAE8).Deref().RCast<ConVar*>();
+}
+
+ADD_SQFUNC("void", NSDrainServer, "bool drain, int timeout", "", ScriptContext::SERVER) {
+	bool drain = g_pSquirrel<ScriptContext::SERVER>->getbool(sqvm, 1);
+	int timeout = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 2);
+	g_pServerPresence->SetIsDraining(drain);
+	// TODO: notify the connected clients when this is set?
+	// TODO: auto exit after a timeout or match end or player count reaches zero (use the quit command for a graceful exit)
+	return SQRESULT_NULL;
 }
