@@ -101,10 +101,10 @@ static void ProcessAtlasConnectionlessPacketSigreq1(R2::netpacket_t* packet, boo
 	{
 		if (dbg)
 			spdlog::warn(
-				"ignoring Atlas connectionless packet (size={} type={}): invalid (data={}): no masterserver token yet",
-				packet->size,
-				pType,
-				pData);
+			    "ignoring Atlas connectionless packet (size={} type={}): invalid (data={}): no masterserver token yet",
+			    packet->size,
+			    pType,
+			    pData);
 		return;
 	}
 
@@ -114,16 +114,16 @@ static void ProcessAtlasConnectionlessPacketSigreq1(R2::netpacket_t* packet, boo
 		{
 			if (dbg)
 				spdlog::warn(
-					"ignoring Atlas connectionless packet (size={} type={}): invalid: invalid signature (key={})",
-					packet->size,
-					pType,
-					std::string(g_pMasterServerManager->m_sOwnServerAuthToken));
+				    "ignoring Atlas connectionless packet (size={} type={}): invalid: invalid signature (key={})",
+				    packet->size,
+				    pType,
+				    std::string(g_pMasterServerManager->m_sOwnServerAuthToken));
 			return;
 		}
 		spdlog::warn(
-			"processing Atlas connectionless packet (size={} type={}) with invalid signature due to net_debug_atlas_packet_insecure",
-			packet->size,
-			pType);
+		    "processing Atlas connectionless packet (size={} type={}) with invalid signature due to net_debug_atlas_packet_insecure",
+		    packet->size,
+		    pType);
 	}
 
 	if (dbg)
@@ -197,22 +197,22 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerNetHooks, ConVar, (CModule module))
 		throw std::runtime_error("failed to initialize bcrypt");
 
 	if (!VerifyHMACSHA256(
-			"test",
-			"\x88\xcd\x21\x08\xb5\x34\x7d\x97\x3c\xf3\x9c\xdf\x90\x53\xd7\xdd\x42\x70\x48\x76\xd8\xc9\xa9\xbd\x8e\x2d\x16\x82\x59\xd3\xdd"
-			"\xf7",
-			"test"))
+	        "test",
+	        "\x88\xcd\x21\x08\xb5\x34\x7d\x97\x3c\xf3\x9c\xdf\x90\x53\xd7\xdd\x42\x70\x48\x76\xd8\xc9\xa9\xbd\x8e\x2d\x16\x82\x59\xd3\xdd"
+	        "\xf7",
+	        "test"))
 		throw std::runtime_error("bcrypt HMAC-SHA256 is broken");
 
 	Cvar_net_debug_atlas_packet = new ConVar(
-		"net_debug_atlas_packet",
-		"0",
-		FCVAR_NONE,
-		"Whether to log detailed debugging information for Atlas connectionless packets (warning: this allows unlimited amounts of "
-		"arbitrary data to be logged)");
+	    "net_debug_atlas_packet",
+	    "0",
+	    FCVAR_NONE,
+	    "Whether to log detailed debugging information for Atlas connectionless packets (warning: this allows unlimited amounts of "
+	    "arbitrary data to be logged)");
 
 	Cvar_net_debug_atlas_packet_insecure = new ConVar(
-		"net_debug_atlas_packet_insecure",
-		"0",
-		FCVAR_NONE,
-		"Whether to disable signature verification for Atlas connectionless packets (DANGEROUS: this allows anyone to impersonate Atlas)");
+	    "net_debug_atlas_packet_insecure",
+	    "0",
+	    FCVAR_NONE,
+	    "Whether to disable signature verification for Atlas connectionless packets (DANGEROUS: this allows anyone to impersonate Atlas)");
 }

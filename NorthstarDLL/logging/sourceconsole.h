@@ -68,13 +68,13 @@ class SourceConsoleSink : public CustomSink
 {
   private:
 	std::map<spdlog::level::level_enum, SourceColor> m_LogColours = {
-		{spdlog::level::trace, NS::Colors::TRACE.ToSourceColor()},
-		{spdlog::level::debug, NS::Colors::DEBUG.ToSourceColor()},
-		{spdlog::level::info, NS::Colors::INFO.ToSourceColor()},
-		{spdlog::level::warn, NS::Colors::WARN.ToSourceColor()},
-		{spdlog::level::err, NS::Colors::ERR.ToSourceColor()},
-		{spdlog::level::critical, NS::Colors::CRIT.ToSourceColor()},
-		{spdlog::level::off, NS::Colors::OFF.ToSourceColor()}};
+	    {spdlog::level::trace, NS::Colors::TRACE.ToSourceColor()},
+	    {spdlog::level::debug, NS::Colors::DEBUG.ToSourceColor()},
+	    {spdlog::level::info, NS::Colors::INFO.ToSourceColor()},
+	    {spdlog::level::warn, NS::Colors::WARN.ToSourceColor()},
+	    {spdlog::level::err, NS::Colors::ERR.ToSourceColor()},
+	    {spdlog::level::critical, NS::Colors::CRIT.ToSourceColor()},
+	    {spdlog::level::off, NS::Colors::OFF.ToSourceColor()}};
 
   protected:
 	void custom_sink_it_(const custom_log_msg& msg);

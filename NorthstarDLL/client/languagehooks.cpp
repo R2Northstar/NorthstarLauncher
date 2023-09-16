@@ -62,9 +62,9 @@ char*, __fastcall, ())
 		if (!CheckLangAudioExists((char*)forcedLanguage))
 		{
 			spdlog::info(
-				"User tried to force the language (-language) to \"{}\", but audio for this language doesn't exist and the game is bound "
-				"to error, falling back to next option...",
-				forcedLanguage);
+			    "User tried to force the language (-language) to \"{}\", but audio for this language doesn't exist and the game is bound "
+			    "to error, falling back to next option...",
+			    forcedLanguage);
 		}
 		else
 		{
@@ -80,9 +80,9 @@ char*, __fastcall, ())
 		if (!CheckLangAudioExists(lang))
 		{
 			if (strcmp(lang, "russian") !=
-				0) // don't log for "russian" since it's the default and that means Origin detection just didn't change it most likely
+			    0) // don't log for "russian" since it's the default and that means Origin detection just didn't change it most likely
 				spdlog::info(
-					"Origin detected language \"{}\", but we do not have audio for it installed, falling back to the next option", lang);
+				    "Origin detected language \"{}\", but we do not have audio for it installed, falling back to the next option", lang);
 		}
 		else
 		{
@@ -92,14 +92,14 @@ char*, __fastcall, ())
 	}
 
 	Tier0_DetectDefaultLanguageType(); // force the global in tier0 to be populated with language inferred from user's system rather than
-									   // defaulting to Russian
+	                                   // defaulting to Russian
 	canOriginDictateLang = false; // Origin has no say anymore, we will fallback to user's system setup language
 	auto lang = GetGameLanguage();
 	spdlog::info("Detected system language: {}", lang);
 	if (!CheckLangAudioExists(lang))
 	{
 		spdlog::warn("Caution, audio for this language does NOT exist. You might want to override your game language with -language "
-					 "command line option.");
+		             "command line option.");
 		auto lang = GetAnyInstalledAudioLanguage();
 		spdlog::warn("Falling back to the first installed audio language: {}", lang.c_str());
 		strncpy(ingameLang1, lang.c_str(), 256);

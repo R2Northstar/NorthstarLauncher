@@ -52,12 +52,12 @@ ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''",
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"Tried to auth with server index {} when only {} servers are available",
-				serverIndex,
-				g_pMasterServerManager->m_vRemoteServers.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "Tried to auth with server index {} when only {} servers are available",
+		        serverIndex,
+		        g_pMasterServerManager->m_vRemoteServers.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -68,10 +68,10 @@ ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''",
 
 	// do auth
 	g_pMasterServerManager->AuthenticateWithServer(
-		R2::g_pLocalPlayerUserID,
-		g_pMasterServerManager->m_sOwnClientAuthToken,
-		g_pMasterServerManager->m_vRemoteServers[serverIndex],
-		(char*)password);
+	    R2::g_pLocalPlayerUserID,
+	    g_pMasterServerManager->m_sOwnClientAuthToken,
+	    g_pMasterServerManager->m_vRemoteServers[serverIndex],
+	    (char*)password);
 
 	return SQRESULT_NULL;
 }
@@ -93,7 +93,7 @@ ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext::UI)
 	if (!g_pMasterServerManager->m_bHasPendingConnectionInfo)
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("Tried to connect to authed server before any pending connection info was available").c_str());
+		    sqvm, fmt::format("Tried to connect to authed server before any pending connection info was available").c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -103,16 +103,16 @@ ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext::UI)
 	// i'm honestly not entirely sure how silentconnect works regarding ports and encryption so using connect for now
 	R2::g_pCVar->FindVar("serverfilter")->SetValue(info.authToken);
 	R2::Cbuf_AddText(
-		R2::Cbuf_GetCurrentPlayer(),
-		fmt::format(
-			"connect {}.{}.{}.{}:{}",
-			info.ip.S_un.S_un_b.s_b1,
-			info.ip.S_un.S_un_b.s_b2,
-			info.ip.S_un.S_un_b.s_b3,
-			info.ip.S_un.S_un_b.s_b4,
-			info.port)
-			.c_str(),
-		R2::cmd_source_t::kCommandSrcCode);
+	    R2::Cbuf_GetCurrentPlayer(),
+	    fmt::format(
+	        "connect {}.{}.{}.{}:{}",
+	        info.ip.S_un.S_un_b.s_b1,
+	        info.ip.S_un.S_un_b.s_b2,
+	        info.ip.S_un.S_un_b.s_b3,
+	        info.ip.S_un.S_un_b.s_b4,
+	        info.port)
+	        .c_str(),
+	    R2::cmd_source_t::kCommandSrcCode);
 
 	g_pMasterServerManager->m_bHasPendingConnectionInfo = false;
 	return SQRESULT_NULL;

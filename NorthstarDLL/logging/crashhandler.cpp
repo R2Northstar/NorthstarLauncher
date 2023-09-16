@@ -13,16 +13,16 @@ std::shared_ptr<ExceptionLog> storedException {};
 #define RUNTIME_EXCEPTION 3765269347
 // clang format did this :/
 std::map<int, std::string> ExceptionNames = {
-	{EXCEPTION_ACCESS_VIOLATION, "Access Violation"},			{EXCEPTION_IN_PAGE_ERROR, "Access Violation"},
-	{EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "Array bounds exceeded"}, {EXCEPTION_DATATYPE_MISALIGNMENT, "Datatype misalignment"},
-	{EXCEPTION_FLT_DENORMAL_OPERAND, "Denormal operand"},		{EXCEPTION_FLT_DIVIDE_BY_ZERO, "Divide by zero (float)"},
-	{EXCEPTION_FLT_INEXACT_RESULT, "Inexact float result"},		{EXCEPTION_FLT_INVALID_OPERATION, "Invalid operation"},
-	{EXCEPTION_FLT_OVERFLOW, "Numeric overflow (float)"},		{EXCEPTION_FLT_STACK_CHECK, "Stack check"},
-	{EXCEPTION_FLT_UNDERFLOW, "Numeric underflow (float)"},		{EXCEPTION_ILLEGAL_INSTRUCTION, "Illegal instruction"},
-	{EXCEPTION_INT_DIVIDE_BY_ZERO, "Divide by zero (int)"},		{EXCEPTION_INT_OVERFLOW, "Numeric overfloat (int)"},
-	{EXCEPTION_INVALID_DISPOSITION, "Invalid disposition"},		{EXCEPTION_NONCONTINUABLE_EXCEPTION, "Non-continuable exception"},
-	{EXCEPTION_PRIV_INSTRUCTION, "Priviledged instruction"},	{EXCEPTION_STACK_OVERFLOW, "Stack overflow"},
-	{RUNTIME_EXCEPTION, "Uncaught runtime exception:"},
+    {EXCEPTION_ACCESS_VIOLATION, "Access Violation"},           {EXCEPTION_IN_PAGE_ERROR, "Access Violation"},
+    {EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "Array bounds exceeded"}, {EXCEPTION_DATATYPE_MISALIGNMENT, "Datatype misalignment"},
+    {EXCEPTION_FLT_DENORMAL_OPERAND, "Denormal operand"},       {EXCEPTION_FLT_DIVIDE_BY_ZERO, "Divide by zero (float)"},
+    {EXCEPTION_FLT_INEXACT_RESULT, "Inexact float result"},     {EXCEPTION_FLT_INVALID_OPERATION, "Invalid operation"},
+    {EXCEPTION_FLT_OVERFLOW, "Numeric overflow (float)"},       {EXCEPTION_FLT_STACK_CHECK, "Stack check"},
+    {EXCEPTION_FLT_UNDERFLOW, "Numeric underflow (float)"},     {EXCEPTION_ILLEGAL_INSTRUCTION, "Illegal instruction"},
+    {EXCEPTION_INT_DIVIDE_BY_ZERO, "Divide by zero (int)"},     {EXCEPTION_INT_OVERFLOW, "Numeric overfloat (int)"},
+    {EXCEPTION_INVALID_DISPOSITION, "Invalid disposition"},     {EXCEPTION_NONCONTINUABLE_EXCEPTION, "Non-continuable exception"},
+    {EXCEPTION_PRIV_INSTRUCTION, "Priviledged instruction"},    {EXCEPTION_STACK_OVERFLOW, "Stack overflow"},
+    {RUNTIME_EXCEPTION, "Uncaught runtime exception:"},
 };
 
 void PrintExceptionLog(ExceptionLog& exc)
@@ -67,10 +67,10 @@ void PrintExceptionLog(ExceptionLog& exc)
 
 	if (!IsDedicatedServer())
 		MessageBoxA(
-			0,
-			"Northstar has crashed! Crash info can be found in R2Northstar/logs",
-			"Northstar has crashed!",
-			MB_ICONERROR | MB_OK | MB_SYSTEMMODAL);
+		    0,
+		    "Northstar has crashed! Crash info can be found in R2Northstar/logs",
+		    "Northstar has crashed!",
+		    MB_ICONERROR | MB_OK | MB_SYSTEMMODAL);
 
 	NS::log::FlushLoggers();
 }
@@ -111,16 +111,16 @@ template <> struct fmt::formatter<M128A> : fmt::formatter<string_view>
 		int v3 = obj.High & INT_MAX;
 		int v4 = obj.High >> 32;
 		return fmt::format_to(
-			ctx.out(),
-			"[ {:G}, {:G}, {:G}, {:G}], [ 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x} ]",
-			*reinterpret_cast<float*>(&v1),
-			*reinterpret_cast<float*>(&v2),
-			*reinterpret_cast<float*>(&v3),
-			*reinterpret_cast<float*>(&v4),
-			v1,
-			v2,
-			v3,
-			v4);
+		    ctx.out(),
+		    "[ {:G}, {:G}, {:G}, {:G}], [ 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x} ]",
+		    *reinterpret_cast<float*>(&v1),
+		    *reinterpret_cast<float*>(&v2),
+		    *reinterpret_cast<float*>(&v3),
+		    *reinterpret_cast<float*>(&v4),
+		    v1,
+		    v2,
+		    v3,
+		    v4);
 	}
 };
 
@@ -153,7 +153,7 @@ void GenerateTrace(ExceptionLog& exc, bool skipErrorHandlingFrames = true, int n
 		if (!haveSkippedErrorHandlingFrames)
 		{
 			if (!strncmp(backtraceModuleFullName, crashedModuleFullName, MAX_PATH) &&
-				!strncmp(backtraceModuleName, crashedModuleName, MAX_PATH))
+			    !strncmp(backtraceModuleName, crashedModuleName, MAX_PATH))
 			{
 				haveSkippedErrorHandlingFrames = true;
 			}
@@ -248,13 +248,13 @@ void CreateMiniDump(EXCEPTION_POINTERS* exceptionInfo)
 		dumpExceptionInfo.ClientPointers = false;
 
 		MiniDumpWriteDump(
-			GetCurrentProcess(),
-			GetCurrentProcessId(),
-			hMinidumpFile,
-			MINIDUMP_TYPE(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory),
-			&dumpExceptionInfo,
-			nullptr,
-			nullptr);
+		    GetCurrentProcess(),
+		    GetCurrentProcessId(),
+		    hMinidumpFile,
+		    MINIDUMP_TYPE(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory),
+		    &dumpExceptionInfo,
+		    nullptr,
+		    nullptr);
 		CloseHandle(hMinidumpFile);
 	}
 	else
@@ -344,7 +344,7 @@ void RuntimeExceptionHandler()
 	else
 	{
 		spdlog::error(
-			"std::current_exception() returned nullptr while being handled by RuntimeExceptionHandler. This should never happen!");
+		    "std::current_exception() returned nullptr while being handled by RuntimeExceptionHandler. This should never happen!");
 		std::abort();
 	}
 }

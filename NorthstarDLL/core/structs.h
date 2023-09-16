@@ -18,8 +18,8 @@
 /*
 OFFSET_STRUCT(Name)
 {
-	STRUCT_SIZE(0x100)		// Total in-memory struct size
-	FIELD(0x0, int field)	// offset, signature
+    STRUCT_SIZE(0x100)		// Total in-memory struct size
+    FIELD(0x0, int field)	// offset, signature
 }
 */
 

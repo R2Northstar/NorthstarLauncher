@@ -32,7 +32,7 @@ void ModManager::BuildScriptsRson()
 			When: "CONTEXT"
 			Scripts:
 			[
-				_coolscript.gnut
+			    _coolscript.gnut
 			]*/
 
 			scriptsRson += "When: \"";

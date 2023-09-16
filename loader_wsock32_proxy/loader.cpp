@@ -16,10 +16,10 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 	if (dwMessageId == 126 && std::filesystem::exists(location))
 	{
 		sprintf_s(
-			text,
-			"%s\n\nThe file at the specified location DOES exist, so this error indicates that one of its *dependencies* failed to be "
-			"found.",
-			text);
+		    text,
+		    "%s\n\nThe file at the specified location DOES exist, so this error indicates that one of its *dependencies* failed to be "
+		    "found.",
+		    text);
 	}
 	MessageBoxA(GetForegroundWindow(), text, "Northstar Wsock32 Proxy Error", 0);
 }
@@ -117,7 +117,7 @@ bool ProvisionNorthstar()
 	if (MH_Initialize() != MH_OK)
 	{
 		MessageBoxA(
-			GetForegroundWindow(), "MH_Initialize failed\nThe game cannot continue and has to exit.", "Northstar Wsock32 Proxy Error", 0);
+		    GetForegroundWindow(), "MH_Initialize failed\nThe game cannot continue and has to exit.", "Northstar Wsock32 Proxy Error", 0);
 		return false;
 	}
 
@@ -125,16 +125,16 @@ bool ProvisionNorthstar()
 	if (!launcherHandle)
 	{
 		MessageBoxA(
-			GetForegroundWindow(),
-			"Launcher isn't loaded yet.\nThe game cannot continue and has to exit.",
-			"Northstar Wsock32 Proxy Error",
-			0);
+		    GetForegroundWindow(),
+		    "Launcher isn't loaded yet.\nThe game cannot continue and has to exit.",
+		    "Northstar Wsock32 Proxy Error",
+		    0);
 		return false;
 	}
 
 	LPVOID pTarget = (LPVOID)GetProcAddress(launcherHandle, "LauncherMain");
 	if (MH_CreateHook(pTarget, (LPVOID)&LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
-		MH_EnableHook(pTarget) != MH_OK)
+	    MH_EnableHook(pTarget) != MH_OK)
 		MessageBoxA(GetForegroundWindow(), "Hook creation failed for function LauncherMain.", "Northstar Wsock32 Proxy Error", 0);
 
 	return true;

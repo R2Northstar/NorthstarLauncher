@@ -123,7 +123,7 @@ char* ConCommandBase::CopyString(const char* szFrom) const
 }
 
 typedef void (*ConCommandConstructorType)(
-	ConCommand* newCommand, const char* name, FnCommandCallback_t callback, const char* helpString, int flags, void* parent);
+    ConCommand* newCommand, const char* name, FnCommandCallback_t callback, const char* helpString, int flags, void* parent);
 ConCommandConstructorType ConCommandConstructor;
 
 void RegisterConCommand(const char* name, FnCommandCallback_t callback, const char* helpString, int flags)
@@ -136,7 +136,7 @@ void RegisterConCommand(const char* name, FnCommandCallback_t callback, const ch
 }
 
 void RegisterConCommand(
-	const char* name, FnCommandCallback_t callback, const char* helpString, int flags, FnCommandCompletionCallback completionCallback)
+    const char* name, FnCommandCallback_t callback, const char* helpString, int flags, FnCommandCompletionCallback completionCallback)
 {
 	spdlog::info("Registering ConCommand {}", name);
 

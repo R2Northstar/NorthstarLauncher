@@ -58,13 +58,13 @@ DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>
 		case rapidjson::kObjectType:
 			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
 			DecodeJsonTable<context>(
-				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
+			    sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
 		case rapidjson::kArrayType:
 			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
 			DecodeJsonArray<context>(
-				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
+			    sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
 		case rapidjson::kStringType:
@@ -97,9 +97,9 @@ DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>
 }
 
 template <ScriptContext context> void EncodeJSONTable(
-	SQTable* table,
-	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
-	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
+    SQTable* table,
+    rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+    rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
 {
 	for (int i = 0; i < table->_numOfNodes; i++)
 	{
@@ -113,7 +113,7 @@ template <ScriptContext context> void EncodeJSONTable(
 			{
 			case OT_STRING:
 				obj->AddMember(
-					rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::StringRef(node->val._VAL.asString->_val), allocator);
+				    rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::StringRef(node->val._VAL.asString->_val), allocator);
 				break;
 			case OT_INTEGER:
 				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asInteger, allocator);
@@ -148,9 +148,9 @@ template <ScriptContext context> void EncodeJSONTable(
 }
 
 template <ScriptContext context> void EncodeJSONArray(
-	SQArray* arr,
-	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
-	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
+    SQArray* arr,
+    rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
+    rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
 {
 	for (int i = 0; i < arr->_usedSlots; i++)
 	{
@@ -191,11 +191,11 @@ template <ScriptContext context> void EncodeJSONArray(
 }
 
 ADD_SQFUNC(
-	"table",
-	DecodeJSON,
-	"string json, bool fatalParseErrors = false",
-	"converts a json string to a squirrel table",
-	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+    "table",
+    DecodeJSON,
+    "string json, bool fatalParseErrors = false",
+    "converts a json string to a squirrel table",
+    ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	const char* pJson = g_pSquirrel<context>->getstring(sqvm, 1);
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
@@ -207,9 +207,9 @@ ADD_SQFUNC(
 		g_pSquirrel<context>->newtable(sqvm);
 
 		std::string sErrorString = fmt::format(
-			"Failed parsing json file: encountered parse error \"{}\" at offset {}",
-			GetParseError_En(doc.GetParseError()),
-			doc.GetErrorOffset());
+		    "Failed parsing json file: encountered parse error \"{}\" at offset {}",
+		    GetParseError_En(doc.GetParseError()),
+		    doc.GetErrorOffset());
 
 		if (bFatalParseErrors)
 		{
@@ -226,11 +226,11 @@ ADD_SQFUNC(
 }
 
 ADD_SQFUNC(
-	"string",
-	EncodeJSON,
-	"table data",
-	"converts a squirrel table to a json string",
-	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+    "string",
+    EncodeJSON,
+    "table data",
+    "converts a squirrel table to a json string",
+    ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	rapidjson_document doc;
 	doc.SetObject();

@@ -226,7 +226,7 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 		memcpy(diskNode.unk3, aiNetwork->nodes[i]->unk3, sizeof(diskNode.unk3));
 		diskNode.unk4 = aiNetwork->nodes[i]->unk6;
 		diskNode.unk5 =
-			-1; // aiNetwork->nodes[i]->unk8; // this field is wrong, however, it's always -1 in vanilla navmeshes anyway, so no biggie
+		    -1; // aiNetwork->nodes[i]->unk8; // this field is wrong, however, it's always -1 in vanilla navmeshes anyway, so no biggie
 		memcpy(diskNode.unk6, aiNetwork->nodes[i]->unk10, sizeof(diskNode.unk6));
 
 		spdlog::info("writing node {} from {} to {:x}", aiNetwork->nodes[i]->index, (void*)aiNetwork->nodes[i], writeStream.tellp());
@@ -386,7 +386,7 @@ ON_DLL_LOAD("server.dll", BuildAINFile, (CModule module))
 	AUTOHOOK_DISPATCH()
 
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
-		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
+	    "ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
 
 	pUnkStruct0Count = module.Offset(0x1063BF8).RCast<int*>();
 	pppUnkNodeStruct0s = module.Offset(0x1063BE0).RCast<UnkNodeStruct0***>();

@@ -220,7 +220,7 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 	if (IsHttpDisabled())
 	{
 		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
-					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
+		             " Please check if requests are allowed using NSIsHttpEnabled() first.");
 		return -1;
 	}
 
@@ -230,219 +230,219 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 	int handle = ++m_iLastRequestHandle;
 
 	std::thread requestThread(
-		[this, handle, requestParameters, bAllowLocalHttp]()
-		{
-			std::string hostname, resolvedAddress, resolvedPort;
+	    [this, handle, requestParameters, bAllowLocalHttp]()
+	    {
+		    std::string hostname, resolvedAddress, resolvedPort;
 
-			if (!bAllowLocalHttp)
-			{
-				if (!IsHttpDestinationHostAllowed(requestParameters.baseUrl, hostname, resolvedAddress, resolvedPort))
-				{
-					spdlog::warn(
-						"HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed when "
-						"running the game with -allowlocalhttp.");
-					g_pSquirrel<context>->AsyncCall(
-						"NSHandleFailedHttpRequest",
-						handle,
-						(int)0,
-						"Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more "
-						"information.");
-					return;
-				}
-			}
+		    if (!bAllowLocalHttp)
+		    {
+			    if (!IsHttpDestinationHostAllowed(requestParameters.baseUrl, hostname, resolvedAddress, resolvedPort))
+			    {
+				    spdlog::warn(
+				        "HttpRequestHandler::MakeHttpRequest attempted to make a request to a private network. This is only allowed when "
+				        "running the game with -allowlocalhttp.");
+				    g_pSquirrel<context>->AsyncCall(
+				        "NSHandleFailedHttpRequest",
+				        handle,
+				        (int)0,
+				        "Cannot make HTTP requests to private network hosts without -allowlocalhttp. Check your console for more "
+				        "information.");
+				    return;
+			    }
+		    }
 
-			CURL* curl = curl_easy_init();
-			if (!curl)
-			{
-				spdlog::error("HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.");
-				g_pSquirrel<context>->AsyncCall(
-					"NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));
-				return;
-			}
+		    CURL* curl = curl_easy_init();
+		    if (!curl)
+		    {
+			    spdlog::error("HttpRequestHandler::MakeHttpRequest failed to init libcurl for request.");
+			    g_pSquirrel<context>->AsyncCall(
+			        "NSHandleFailedHttpRequest", handle, static_cast<int>(CURLE_FAILED_INIT), curl_easy_strerror(CURLE_FAILED_INIT));
+			    return;
+		    }
 
-			// HEAD has no body.
-			if (requestParameters.method == HttpRequestMethod::HRM_HEAD)
-			{
-				curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-			}
+		    // HEAD has no body.
+		    if (requestParameters.method == HttpRequestMethod::HRM_HEAD)
+		    {
+			    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+		    }
 
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HttpRequestMethod::ToString(requestParameters.method).c_str());
+		    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, HttpRequestMethod::ToString(requestParameters.method).c_str());
 
-			// Only resolve to IPv4 if we don't allow private network requests.
-			curl_slist* host = nullptr;
-			if (!bAllowLocalHttp)
-			{
-				curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-				host = curl_slist_append(host, fmt::format("{}:{}:{}", hostname, resolvedPort, resolvedAddress).c_str());
-				curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
-			}
+		    // Only resolve to IPv4 if we don't allow private network requests.
+		    curl_slist* host = nullptr;
+		    if (!bAllowLocalHttp)
+		    {
+			    curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+			    host = curl_slist_append(host, fmt::format("{}:{}:{}", hostname, resolvedPort, resolvedAddress).c_str());
+			    curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
+		    }
 
-			// Ensure we only allow HTTP or HTTPS.
-			curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+		    // Ensure we only allow HTTP or HTTPS.
+		    curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 
-			// Allow redirects
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
+		    // Allow redirects
+		    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 3L);
 
-			// Check if the url already contains a query.
-			// If so, we'll know to append with & instead of start with ?
-			std::string queryUrl = requestParameters.baseUrl;
-			bool bUrlContainsQuery = false;
+		    // Check if the url already contains a query.
+		    // If so, we'll know to append with & instead of start with ?
+		    std::string queryUrl = requestParameters.baseUrl;
+		    bool bUrlContainsQuery = false;
 
-			// If this fails, just ignore the parsing and trust what the user wants to query.
-			// Probably will fail but handling it here would be annoying.
-			CURLU* curlUrl = curl_url();
-			if (curlUrl)
-			{
-				if (curl_url_set(curlUrl, CURLUPART_URL, queryUrl.c_str(), CURLU_DEFAULT_SCHEME) == CURLUE_OK)
-				{
-					char* currentQuery;
-					if (curl_url_get(curlUrl, CURLUPART_QUERY, &currentQuery, 0) == CURLUE_OK)
-					{
-						if (currentQuery && std::strlen(currentQuery) != 0)
-						{
-							bUrlContainsQuery = true;
-						}
-					}
+		    // If this fails, just ignore the parsing and trust what the user wants to query.
+		    // Probably will fail but handling it here would be annoying.
+		    CURLU* curlUrl = curl_url();
+		    if (curlUrl)
+		    {
+			    if (curl_url_set(curlUrl, CURLUPART_URL, queryUrl.c_str(), CURLU_DEFAULT_SCHEME) == CURLUE_OK)
+			    {
+				    char* currentQuery;
+				    if (curl_url_get(curlUrl, CURLUPART_QUERY, &currentQuery, 0) == CURLUE_OK)
+				    {
+					    if (currentQuery && std::strlen(currentQuery) != 0)
+					    {
+						    bUrlContainsQuery = true;
+					    }
+				    }
 
-					curl_free(currentQuery);
-				}
+				    curl_free(currentQuery);
+			    }
 
-				curl_url_cleanup(curlUrl);
-			}
+			    curl_url_cleanup(curlUrl);
+		    }
 
-			// GET requests, or POST-like requests with an empty body, can have query parameters.
-			// Append them to the base url.
-			if (HttpRequestMethod::CanHaveQueryParameters(requestParameters.method) &&
-					!HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) ||
-				requestParameters.body.empty())
-			{
-				bool isFirstValue = true;
-				for (const auto& kv : requestParameters.queryParameters)
-				{
-					char* key = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
+		    // GET requests, or POST-like requests with an empty body, can have query parameters.
+		    // Append them to the base url.
+		    if (HttpRequestMethod::CanHaveQueryParameters(requestParameters.method) &&
+		            !HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) ||
+		        requestParameters.body.empty())
+		    {
+			    bool isFirstValue = true;
+			    for (const auto& kv : requestParameters.queryParameters)
+			    {
+				    char* key = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
 
-					for (const std::string& queryValue : kv.second)
-					{
-						char* value = curl_easy_escape(curl, queryValue.c_str(), queryValue.length());
+				    for (const std::string& queryValue : kv.second)
+				    {
+					    char* value = curl_easy_escape(curl, queryValue.c_str(), queryValue.length());
 
-						if (isFirstValue && !bUrlContainsQuery)
-						{
-							queryUrl.append(fmt::format("?{}={}", key, value));
-							isFirstValue = false;
-						}
-						else
-						{
-							queryUrl.append(fmt::format("&{}={}", key, value));
-						}
+					    if (isFirstValue && !bUrlContainsQuery)
+					    {
+						    queryUrl.append(fmt::format("?{}={}", key, value));
+						    isFirstValue = false;
+					    }
+					    else
+					    {
+						    queryUrl.append(fmt::format("&{}={}", key, value));
+					    }
 
-						curl_free(value);
-					}
+					    curl_free(value);
+				    }
 
-					curl_free(key);
-				}
-			}
+				    curl_free(key);
+			    }
+		    }
 
-			// If this method uses POST-like curl options, set those and set the body.
-			// The body won't be sent if it's empty anyway, meaning the query parameters above, if any, would be.
-			if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method))
-			{
-				// Grab the body and set it as a POST field
-				curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		    // If this method uses POST-like curl options, set those and set the body.
+		    // The body won't be sent if it's empty anyway, meaning the query parameters above, if any, would be.
+		    if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method))
+		    {
+			    // Grab the body and set it as a POST field
+			    curl_easy_setopt(curl, CURLOPT_POST, 1L);
 
-				curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, requestParameters.body.length());
-				curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, requestParameters.body.c_str());
-			}
+			    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, requestParameters.body.length());
+			    curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, requestParameters.body.c_str());
+		    }
 
-			// Set the full URL for this http request.
-			curl_easy_setopt(curl, CURLOPT_URL, queryUrl.c_str());
+		    // Set the full URL for this http request.
+		    curl_easy_setopt(curl, CURLOPT_URL, queryUrl.c_str());
 
-			std::string bodyBuffer;
-			std::string headerBuffer;
+		    std::string bodyBuffer;
+		    std::string headerBuffer;
 
-			// Set up buffers to write the response headers and body.
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpCurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bodyBuffer);
-			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpCurlWriteToStringBufferCallback);
-			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
+		    // Set up buffers to write the response headers and body.
+		    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpCurlWriteToStringBufferCallback);
+		    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bodyBuffer);
+		    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HttpCurlWriteToStringBufferCallback);
+		    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
 
-			// Add all the headers for the request.
-			curl_slist* headers = nullptr;
+		    // Add all the headers for the request.
+		    curl_slist* headers = nullptr;
 
-			// Content-Type header for POST-like requests.
-			if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) && !requestParameters.body.empty())
-			{
-				headers = curl_slist_append(headers, fmt::format("Content-Type: {}", requestParameters.contentType).c_str());
-			}
+		    // Content-Type header for POST-like requests.
+		    if (HttpRequestMethod::UsesCurlPostOptions(requestParameters.method) && !requestParameters.body.empty())
+		    {
+			    headers = curl_slist_append(headers, fmt::format("Content-Type: {}", requestParameters.contentType).c_str());
+		    }
 
-			for (const auto& kv : requestParameters.headers)
-			{
-				for (const std::string& headerValue : kv.second)
-				{
-					headers = curl_slist_append(headers, fmt::format("{}: {}", kv.first, headerValue).c_str());
-				}
-			}
+		    for (const auto& kv : requestParameters.headers)
+		    {
+			    for (const std::string& headerValue : kv.second)
+			    {
+				    headers = curl_slist_append(headers, fmt::format("{}: {}", kv.first, headerValue).c_str());
+			    }
+		    }
 
-			if (headers != nullptr)
-			{
-				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-			}
+		    if (headers != nullptr)
+		    {
+			    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		    }
 
-			// Disable SSL checks if requested by the user.
-			if (DisableHttpSsl())
-			{
-				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-				curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
-			}
+		    // Disable SSL checks if requested by the user.
+		    if (DisableHttpSsl())
+		    {
+			    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+			    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
+		    }
 
-			// Enforce the Northstar user agent, unless an override was specified.
-			if (requestParameters.userAgent.empty())
-			{
-				curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
-			}
-			else
-			{
-				curl_easy_setopt(curl, CURLOPT_USERAGENT, requestParameters.userAgent.c_str());
-			}
+		    // Enforce the Northstar user agent, unless an override was specified.
+		    if (requestParameters.userAgent.empty())
+		    {
+			    curl_easy_setopt(curl, CURLOPT_USERAGENT, &NSUserAgent);
+		    }
+		    else
+		    {
+			    curl_easy_setopt(curl, CURLOPT_USERAGENT, requestParameters.userAgent.c_str());
+		    }
 
-			// Set the timeout for this request. Max 60 seconds so mods can't just spin up native threads all the time.
-			curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::clamp<long>(requestParameters.timeout, 1, 60));
+		    // Set the timeout for this request. Max 60 seconds so mods can't just spin up native threads all the time.
+		    curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::clamp<long>(requestParameters.timeout, 1, 60));
 
-			CURLcode result = curl_easy_perform(curl);
-			if (IsRunning())
-			{
-				if (result == CURLE_OK)
-				{
-					// While the curl request is OK, it could return a non success code.
-					// Squirrel side will handle firing the correct callback.
-					long httpCode = 0;
-					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-					g_pSquirrel<context>->AsyncCall(
-						"NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);
-				}
-				else
-				{
-					// Pass CURL result code & error.
-					spdlog::error(
-						"curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
+		    CURLcode result = curl_easy_perform(curl);
+		    if (IsRunning())
+		    {
+			    if (result == CURLE_OK)
+			    {
+				    // While the curl request is OK, it could return a non success code.
+				    // Squirrel side will handle firing the correct callback.
+				    long httpCode = 0;
+				    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+				    g_pSquirrel<context>->AsyncCall(
+				        "NSHandleSuccessfulHttpRequest", handle, static_cast<int>(httpCode), bodyBuffer, headerBuffer);
+			    }
+			    else
+			    {
+				    // Pass CURL result code & error.
+				    spdlog::error(
+				        "curl_easy_perform() failed with code {}, error: {}", static_cast<int>(result), curl_easy_strerror(result));
 
-					// If it's an SSL issue, tell the user they may disable SSL checks using -disablehttpssl.
-					if (result == CURLE_PEER_FAILED_VERIFICATION || result == CURLE_SSL_CERTPROBLEM ||
-						result == CURLE_SSL_INVALIDCERTSTATUS)
-					{
-						spdlog::error("You can try disabling SSL verifications for this issue using the -disablehttpssl launch argument. "
-									  "Keep in mind this is potentially dangerous!");
-					}
+				    // If it's an SSL issue, tell the user they may disable SSL checks using -disablehttpssl.
+				    if (result == CURLE_PEER_FAILED_VERIFICATION || result == CURLE_SSL_CERTPROBLEM ||
+				        result == CURLE_SSL_INVALIDCERTSTATUS)
+				    {
+					    spdlog::error("You can try disabling SSL verifications for this issue using the -disablehttpssl launch argument. "
+					                  "Keep in mind this is potentially dangerous!");
+				    }
 
-					g_pSquirrel<context>->AsyncCall(
-						"NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));
-				}
-			}
+				    g_pSquirrel<context>->AsyncCall(
+				        "NSHandleFailedHttpRequest", handle, static_cast<int>(result), curl_easy_strerror(result));
+			    }
+		    }
 
-			curl_easy_cleanup(curl);
-			curl_slist_free_all(headers);
-			curl_slist_free_all(host);
-		});
+		    curl_easy_cleanup(curl);
+		    curl_slist_free_all(headers);
+		    curl_slist_free_all(host);
+	    });
 
 	requestThread.detach();
 	return handle;
@@ -462,7 +462,7 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	if (IsHttpDisabled())
 	{
 		spdlog::warn("NS_InternalMakeHttpRequest called while the game is running with -disablehttprequests."
-					 " Please check if requests are allowed using NSIsHttpEnabled() first.");
+		             " Please check if requests are allowed using NSIsHttpEnabled() first.");
 		g_pSquirrel<context>->pushinteger(sqvm, -1);
 		return SQRESULT_NOTNULL;
 	}
@@ -543,28 +543,28 @@ template <ScriptContext context> SQRESULT SQ_IsLocalHttpAllowed(HSquirrelVM* sqv
 template <ScriptContext context> void HttpRequestHandler::RegisterSQFuncs()
 {
 	g_pSquirrel<context>->AddFuncRegistration(
-		"int",
-		"NS_InternalMakeHttpRequest",
-		"int method, string baseUrl, table<string, array<string> > headers, table<string, array<string> > queryParams, string contentType, "
-		"string body, "
-		"int timeout, string userAgent",
-		"[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
-		SQ_InternalMakeHttpRequest<context>);
+	    "int",
+	    "NS_InternalMakeHttpRequest",
+	    "int method, string baseUrl, table<string, array<string> > headers, table<string, array<string> > queryParams, string contentType, "
+	    "string body, "
+	    "int timeout, string userAgent",
+	    "[Internal use only] Passes the HttpRequest struct fields to be reconstructed in native and used for an http request",
+	    SQ_InternalMakeHttpRequest<context>);
 
 	g_pSquirrel<context>->AddFuncRegistration(
-		"bool",
-		"NSIsHttpEnabled",
-		"",
-		"Whether or not HTTP requests are enabled. You can opt-out by starting the game with -disablehttprequests.",
-		SQ_IsHttpEnabled<context>);
+	    "bool",
+	    "NSIsHttpEnabled",
+	    "",
+	    "Whether or not HTTP requests are enabled. You can opt-out by starting the game with -disablehttprequests.",
+	    SQ_IsHttpEnabled<context>);
 
 	g_pSquirrel<context>->AddFuncRegistration(
-		"bool",
-		"NSIsLocalHttpAllowed",
-		"",
-		"Whether or not HTTP requests can be made to a private network address. You can enable this by starting the game with "
-		"-allowlocalhttp.",
-		SQ_IsLocalHttpAllowed<context>);
+	    "bool",
+	    "NSIsLocalHttpAllowed",
+	    "",
+	    "Whether or not HTTP requests can be made to a private network address. You can enable this by starting the game with "
+	    "-allowlocalhttp.",
+	    SQ_IsLocalHttpAllowed<context>);
 }
 
 ON_DLL_LOAD_RELIESON("client.dll", HttpRequestHandler_ClientInit, ClientSquirrel, (CModule module))

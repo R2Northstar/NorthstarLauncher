@@ -20,7 +20,7 @@ class CRecipientFilter
 CServerGameDLL* g_pServerGameDLL;
 
 void(__fastcall* CServerGameDLL__OnReceivedSayTextMessage)(
-	CServerGameDLL* self, unsigned int senderPlayerId, const char* text, int channelId);
+    CServerGameDLL* self, unsigned int senderPlayerId, const char* text, int channelId);
 
 void(__fastcall* CRecipientFilter__Construct)(CRecipientFilter* self);
 void(__fastcall* CRecipientFilter__Destruct)(CRecipientFilter* self);
@@ -56,7 +56,7 @@ void, __fastcall, (CServerGameDLL* self, unsigned int senderPlayerId, const char
 		return;
 
 	SQRESULT result = g_pSquirrel<ScriptContext::SERVER>->Call(
-		"CServerGameDLL_ProcessMessageStartThread", static_cast<int>(senderPlayerId) - 1, text, isTeam);
+	    "CServerGameDLL_ProcessMessageStartThread", static_cast<int>(senderPlayerId) - 1, text, isTeam);
 
 	if (result == SQRESULT_ERROR)
 		_CServerGameDLL__OnReceivedSayTextMessage(self, senderPlayerId, text, isTeam);
@@ -66,11 +66,11 @@ void ChatSendMessage(unsigned int playerIndex, const char* text, bool isTeam)
 {
 	bShouldCallSayTextHook = true;
 	CServerGameDLL__OnReceivedSayTextMessage(
-		g_pServerGameDLL,
-		// Ensure the first bit isn't set, since this indicates a custom message
-		(playerIndex + 1) & CUSTOM_MESSAGE_INDEX_MASK,
-		text,
-		isTeam);
+	    g_pServerGameDLL,
+	    // Ensure the first bit isn't set, since this indicates a custom message
+	    (playerIndex + 1) & CUSTOM_MESSAGE_INDEX_MASK,
+	    text,
+	    isTeam);
 }
 
 void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* text, bool isTeam, bool isDead, CustomMessageType messageType)
@@ -125,11 +125,11 @@ ADD_SQFUNC("void", NSSendMessage, "int playerIndex, string text, bool isTeam", "
 }
 
 ADD_SQFUNC(
-	"void",
-	NSBroadcastMessage,
-	"int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",
-	"",
-	ScriptContext::SERVER)
+    "void",
+    NSBroadcastMessage,
+    "int fromPlayerIndex, int toPlayerIndex, string text, bool isTeam, bool isDead, int messageType",
+    "",
+    ScriptContext::SERVER)
 {
 	int fromPlayerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 1);
 	int toPlayerIndex = g_pSquirrel<ScriptContext::SERVER>->getinteger(sqvm, 2);
@@ -159,7 +159,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule mod
 	AUTOHOOK_DISPATCH_MODULE(server.dll)
 
 	CServerGameDLL__OnReceivedSayTextMessage =
-		module.Offset(0x1595C0).RCast<void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int)>();
+	    module.Offset(0x1595C0).RCast<void(__fastcall*)(CServerGameDLL*, unsigned int, const char*, int)>();
 	CRecipientFilter__Construct = module.Offset(0x1E9440).RCast<void(__fastcall*)(CRecipientFilter*)>();
 	CRecipientFilter__Destruct = module.Offset(0x1E9700).RCast<void(__fastcall*)(CRecipientFilter*)>();
 	CRecipientFilter__AddAllPlayers = module.Offset(0x1E9940).RCast<void(__fastcall*)(CRecipientFilter*)>();

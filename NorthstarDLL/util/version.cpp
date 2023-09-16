@@ -17,23 +17,23 @@ void InitialiseVersion()
 	{
 		sprintf(version, "%d.%d.%d.%d+dev", northstar_version[0], northstar_version[1], northstar_version[2], northstar_version[3]);
 		ua_len += snprintf(
-			NSUserAgent + ua_len,
-			sizeof(NSUserAgent) - ua_len,
-			"R2Northstar/%d.%d.%d+dev",
-			northstar_version[0],
-			northstar_version[1],
-			northstar_version[2]);
+		    NSUserAgent + ua_len,
+		    sizeof(NSUserAgent) - ua_len,
+		    "R2Northstar/%d.%d.%d+dev",
+		    northstar_version[0],
+		    northstar_version[1],
+		    northstar_version[2]);
 	}
 	else
 	{
 		sprintf(version, "%d.%d.%d.%d", northstar_version[0], northstar_version[1], northstar_version[2], northstar_version[3]);
 		ua_len += snprintf(
-			NSUserAgent + ua_len,
-			sizeof(NSUserAgent) - ua_len,
-			"R2Northstar/%d.%d.%d",
-			northstar_version[0],
-			northstar_version[1],
-			northstar_version[2]);
+		    NSUserAgent + ua_len,
+		    sizeof(NSUserAgent) - ua_len,
+		    "R2Northstar/%d.%d.%d",
+		    northstar_version[0],
+		    northstar_version[1],
+		    northstar_version[2]);
 	}
 
 	if (IsDedicatedServer())
@@ -75,12 +75,12 @@ void InitialiseVersion()
 		// windows version
 		if (osvi.dwMajorVersion)
 			ua_len += snprintf(
-				NSUserAgent + ua_len,
-				sizeof(NSUserAgent) - ua_len,
-				" Windows/%d.%d.%d",
-				osvi.dwMajorVersion,
-				osvi.dwMinorVersion,
-				osvi.dwBuildNumber);
+			    NSUserAgent + ua_len,
+			    sizeof(NSUserAgent) - ua_len,
+			    " Windows/%d.%d.%d",
+			    osvi.dwMajorVersion,
+			    osvi.dwMinorVersion,
+			    osvi.dwBuildNumber);
 
 		// wine version
 		if (wine_version && wine_build_id)

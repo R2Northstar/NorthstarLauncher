@@ -31,10 +31,10 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 		if (!GetExePathWide(exePath, 4096))
 		{
 			MessageBoxA(
-				GetForegroundWindow(),
-				"Failed getting game directory.\nThe game cannot continue and has to exit.",
-				"Northstar Wsock32 Proxy Error",
-				0);
+			    GetForegroundWindow(),
+			    "Failed getting game directory.\nThe game cannot continue and has to exit.",
+			    "Northstar Wsock32 Proxy Error",
+			    0);
 			return true;
 		}
 
@@ -67,13 +67,13 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 					if (!std::filesystem::exists(temp_dir))
 					{
 						swprintf_s(
-							buffer2,
-							L"Failed copying wsock32.dll from system32 to \"%s\"\n\n%S\n\nFurthermore, we failed copying wsock32.dll into "
-							L"temporary directory at \"%s\"\n\n%S",
-							buffer1,
-							e1.what(),
-							temp_dir.c_str(),
-							e2.what());
+						    buffer2,
+						    L"Failed copying wsock32.dll from system32 to \"%s\"\n\n%S\n\nFurthermore, we failed copying wsock32.dll into "
+						    L"temporary directory at \"%s\"\n\n%S",
+						    buffer1,
+						    e1.what(),
+						    temp_dir.c_str(),
+						    e2.what());
 						MessageBoxW(GetForegroundWindow(), buffer2, L"Northstar Wsock32 Proxy Error", 0);
 						return false;
 					}

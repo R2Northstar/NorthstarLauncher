@@ -328,10 +328,10 @@ REPLACE_SQFUNC(GetDataTableString, (ScriptContext::UI | ScriptContext::CLIENT | 
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -355,10 +355,10 @@ REPLACE_SQFUNC(GetDataTableAsset, (ScriptContext::UI | ScriptContext::CLIENT | S
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -382,10 +382,10 @@ REPLACE_SQFUNC(GetDataTableInt, (ScriptContext::UI | ScriptContext::CLIENT | Scr
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -409,10 +409,10 @@ REPLACE_SQFUNC(GetDataTableFloat, (ScriptContext::UI | ScriptContext::CLIENT | S
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -436,10 +436,10 @@ REPLACE_SQFUNC(GetDataTableBool, (ScriptContext::UI | ScriptContext::CLIENT | Sc
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -463,10 +463,10 @@ REPLACE_SQFUNC(GetDataTableVector, (ScriptContext::UI | ScriptContext::CLIENT | 
 	if (nRow >= csv->dataPointers.size() || nCol >= csv->dataPointers[nRow].size())
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "row {} and col {} are outside of range row {} and col {}", nRow, nCol, csv->dataPointers.size(), csv->columns.size())
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -819,67 +819,67 @@ void ConCommand_dump_datatables(const CCommand& args)
 {
 	// likely not a comprehensive list, might be missing a couple?
 	static const std::vector<const char*> VANILLA_DATATABLE_PATHS = {
-		"datatable/burn_meter_rewards.rpak",
-		"datatable/burn_meter_store.rpak",
-		"datatable/calling_cards.rpak",
-		"datatable/callsign_icons.rpak",
-		"datatable/camo_skins.rpak",
-		"datatable/default_pilot_loadouts.rpak",
-		"datatable/default_titan_loadouts.rpak",
-		"datatable/faction_leaders.rpak",
-		"datatable/fd_awards.rpak",
-		"datatable/features_mp.rpak",
-		"datatable/non_loadout_weapons.rpak",
-		"datatable/pilot_abilities.rpak",
-		"datatable/pilot_executions.rpak",
-		"datatable/pilot_passives.rpak",
-		"datatable/pilot_properties.rpak",
-		"datatable/pilot_weapons.rpak",
-		"datatable/pilot_weapon_features.rpak",
-		"datatable/pilot_weapon_mods.rpak",
-		"datatable/pilot_weapon_mods_common.rpak",
-		"datatable/playlist_items.rpak",
-		"datatable/titans_mp.rpak",
-		"datatable/titan_abilities.rpak",
-		"datatable/titan_executions.rpak",
-		"datatable/titan_fd_upgrades.rpak",
-		"datatable/titan_nose_art.rpak",
-		"datatable/titan_passives.rpak",
-		"datatable/titan_primary_mods.rpak",
-		"datatable/titan_primary_mods_common.rpak",
-		"datatable/titan_primary_weapons.rpak",
-		"datatable/titan_properties.rpak",
-		"datatable/titan_skins.rpak",
-		"datatable/titan_voices.rpak",
-		"datatable/unlocks_faction_level.rpak",
-		"datatable/unlocks_fd_titan_level.rpak",
-		"datatable/unlocks_player_level.rpak",
-		"datatable/unlocks_random.rpak",
-		"datatable/unlocks_titan_level.rpak",
-		"datatable/unlocks_weapon_level_pilot.rpak",
-		"datatable/weapon_skins.rpak",
-		"datatable/xp_per_faction_level.rpak",
-		"datatable/xp_per_fd_titan_level.rpak",
-		"datatable/xp_per_player_level.rpak",
-		"datatable/xp_per_titan_level.rpak",
-		"datatable/xp_per_weapon_level.rpak",
-		"datatable/faction_leaders_dropship_anims.rpak",
-		"datatable/score_events.rpak",
-		"datatable/startpoints.rpak",
-		"datatable/sp_levels.rpak",
-		"datatable/community_entries.rpak",
-		"datatable/spotlight_images.rpak",
-		"datatable/death_hints_mp.rpak",
-		"datatable/flightpath_assets.rpak",
-		"datatable/earn_meter_mp.rpak",
-		"datatable/battle_chatter_voices.rpak",
-		"datatable/battle_chatter.rpak",
-		"datatable/titan_os_conversations.rpak",
-		"datatable/faction_dialogue.rpak",
-		"datatable/grunt_chatter_mp.rpak",
-		"datatable/spectre_chatter_mp.rpak",
-		"datatable/pain_death_sounds.rpak",
-		"datatable/caller_ids_mp.rpak"};
+	    "datatable/burn_meter_rewards.rpak",
+	    "datatable/burn_meter_store.rpak",
+	    "datatable/calling_cards.rpak",
+	    "datatable/callsign_icons.rpak",
+	    "datatable/camo_skins.rpak",
+	    "datatable/default_pilot_loadouts.rpak",
+	    "datatable/default_titan_loadouts.rpak",
+	    "datatable/faction_leaders.rpak",
+	    "datatable/fd_awards.rpak",
+	    "datatable/features_mp.rpak",
+	    "datatable/non_loadout_weapons.rpak",
+	    "datatable/pilot_abilities.rpak",
+	    "datatable/pilot_executions.rpak",
+	    "datatable/pilot_passives.rpak",
+	    "datatable/pilot_properties.rpak",
+	    "datatable/pilot_weapons.rpak",
+	    "datatable/pilot_weapon_features.rpak",
+	    "datatable/pilot_weapon_mods.rpak",
+	    "datatable/pilot_weapon_mods_common.rpak",
+	    "datatable/playlist_items.rpak",
+	    "datatable/titans_mp.rpak",
+	    "datatable/titan_abilities.rpak",
+	    "datatable/titan_executions.rpak",
+	    "datatable/titan_fd_upgrades.rpak",
+	    "datatable/titan_nose_art.rpak",
+	    "datatable/titan_passives.rpak",
+	    "datatable/titan_primary_mods.rpak",
+	    "datatable/titan_primary_mods_common.rpak",
+	    "datatable/titan_primary_weapons.rpak",
+	    "datatable/titan_properties.rpak",
+	    "datatable/titan_skins.rpak",
+	    "datatable/titan_voices.rpak",
+	    "datatable/unlocks_faction_level.rpak",
+	    "datatable/unlocks_fd_titan_level.rpak",
+	    "datatable/unlocks_player_level.rpak",
+	    "datatable/unlocks_random.rpak",
+	    "datatable/unlocks_titan_level.rpak",
+	    "datatable/unlocks_weapon_level_pilot.rpak",
+	    "datatable/weapon_skins.rpak",
+	    "datatable/xp_per_faction_level.rpak",
+	    "datatable/xp_per_fd_titan_level.rpak",
+	    "datatable/xp_per_player_level.rpak",
+	    "datatable/xp_per_titan_level.rpak",
+	    "datatable/xp_per_weapon_level.rpak",
+	    "datatable/faction_leaders_dropship_anims.rpak",
+	    "datatable/score_events.rpak",
+	    "datatable/startpoints.rpak",
+	    "datatable/sp_levels.rpak",
+	    "datatable/community_entries.rpak",
+	    "datatable/spotlight_images.rpak",
+	    "datatable/death_hints_mp.rpak",
+	    "datatable/flightpath_assets.rpak",
+	    "datatable/earn_meter_mp.rpak",
+	    "datatable/battle_chatter_voices.rpak",
+	    "datatable/battle_chatter.rpak",
+	    "datatable/titan_os_conversations.rpak",
+	    "datatable/faction_dialogue.rpak",
+	    "datatable/grunt_chatter_mp.rpak",
+	    "datatable/spectre_chatter_mp.rpak",
+	    "datatable/pain_death_sounds.rpak",
+	    "datatable/caller_ids_mp.rpak"};
 
 	for (const char* datatable : VANILLA_DATATABLE_PATHS)
 		DumpDatatable(datatable);
@@ -899,10 +899,10 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CMod
 ON_DLL_LOAD_RELIESON("engine.dll", SharedScriptDataTables, ConVar, (CModule module))
 {
 	Cvar_ns_prefer_datatable_from_disk = new ConVar(
-		"ns_prefer_datatable_from_disk",
-		IsDedicatedServer() && Tier0::CommandLine()->CheckParm("-nopakdedi") ? "1" : "0",
-		FCVAR_NONE,
-		"whether to prefer loading datatables from disk, rather than rpak");
+	    "ns_prefer_datatable_from_disk",
+	    IsDedicatedServer() && Tier0::CommandLine()->CheckParm("-nopakdedi") ? "1" : "0",
+	    FCVAR_NONE,
+	    "whether to prefer loading datatables from disk, rather than rpak");
 
 	RegisterConCommand("dump_datatables", ConCommand_dump_datatables, "dumps all datatables from a hardcoded list", FCVAR_NONE);
 	RegisterConCommand("dump_datatable", ConCommand_dump_datatable, "dump a datatable", FCVAR_NONE);

@@ -52,7 +52,7 @@ class IFileSystem
 		int (*Read)(IFileSystem::VTable2** fileSystem, void* pOutput, int size, FileHandle_t file);
 		void* unknown[1];
 		FileHandle_t (*Open)(
-			IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pOptions, const char* pathID, int64_t unknown);
+		    IFileSystem::VTable2** fileSystem, const char* pFileName, const char* pOptions, const char* pathID, int64_t unknown);
 		void (*Close)(IFileSystem* fileSystem, FileHandle_t file);
 		long long (*Seek)(IFileSystem::VTable2** fileSystem, FileHandle_t file, long long offset, long long whence);
 		void* unknown2[5];

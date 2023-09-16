@@ -8,16 +8,16 @@
 #include <float.h>
 
 typedef void (*ConVarRegisterType)(
-	ConVar* pConVar,
-	const char* pszName,
-	const char* pszDefaultValue,
-	int nFlags,
-	const char* pszHelpString,
-	bool bMin,
-	float fMin,
-	bool bMax,
-	float fMax,
-	void* pCallback);
+    ConVar* pConVar,
+    const char* pszName,
+    const char* pszDefaultValue,
+    int nFlags,
+    const char* pszHelpString,
+    bool bMin,
+    float fMin,
+    bool bMax,
+    float fMax,
+    void* pCallback);
 ConVarRegisterType conVarRegister;
 
 typedef void (*ConVarMallocType)(void* pConVarMaloc, int a2, int a3);
@@ -64,15 +64,15 @@ ConVar::ConVar(const char* pszName, const char* pszDefaultValue, int nFlags, con
 // Purpose: constructor
 //-----------------------------------------------------------------------------
 ConVar::ConVar(
-	const char* pszName,
-	const char* pszDefaultValue,
-	int nFlags,
-	const char* pszHelpString,
-	bool bMin,
-	float fMin,
-	bool bMax,
-	float fMax,
-	FnChangeCallback_t pCallback)
+    const char* pszName,
+    const char* pszDefaultValue,
+    int nFlags,
+    const char* pszHelpString,
+    bool bMin,
+    float fMin,
+    bool bMax,
+    float fMax,
+    FnChangeCallback_t pCallback)
 {
 	spdlog::info("Registering Convar {}", pszName);
 
@@ -423,7 +423,7 @@ bool ConVar::SetColorFromString(const char* pszValue)
 		}
 
 		if (nRGBA[0] >= 0 && nRGBA[0] <= 255 && nRGBA[1] >= 0 && nRGBA[1] <= 255 && nRGBA[2] >= 0 && nRGBA[2] <= 255 && nRGBA[3] >= 0 &&
-			nRGBA[3] <= 255)
+		    nRGBA[3] <= 255)
 		{
 			// printf("*** WOW! Found a color!! ***\n");
 

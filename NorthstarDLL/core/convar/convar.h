@@ -20,7 +20,7 @@
 // ConVar only
 #define FCVAR_PROTECTED                                                                                                                    \
 	(1 << 5) // It's a server cvar, but we don't send the data since it's a password, etc.  Sends 1 if it's not bland/zero, 0 otherwise as
-			 // value.
+	         // value.
 #define FCVAR_SPONLY (1 << 6) // This cvar cannot be changed by clients connected to a multiplayer server.
 #define FCVAR_ARCHIVE (1 << 7) // set to cause it to be saved to vars.rc
 #define FCVAR_NOTIFY (1 << 8) // notifies players when changed
@@ -29,8 +29,8 @@
 #define FCVAR_PRINTABLEONLY (1 << 10) // This cvar's string cannot contain unprintable characters ( e.g., used for player name etc ).
 #define FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS                                                                                                   \
 	(1 << 10) // When on concommands this allows remote clients to execute this cmd on the server.
-			  // We are changing the default behavior of concommands to disallow execution by remote clients without
-			  // this flag due to the number existing concommands that can lag or crash the server when clients abuse them.
+	          // We are changing the default behavior of concommands to disallow execution by remote clients without
+	          // this flag due to the number existing concommands that can lag or crash the server when clients abuse them.
 
 #define FCVAR_UNLOGGED (1 << 11) // If this is a FCVAR_SERVER, don't log changes to the log file / console if we are creating a log
 #define FCVAR_NEVER_AS_STRING (1 << 12) // never try to print that cvar
@@ -55,7 +55,7 @@
 
 #define FCVAR_SERVER_CAN_EXECUTE                                                                                                           \
 	(1 << 28) // the server is allowed to execute this command on clients via
-			  // ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd.
+	          // ClientCommand/NET_StringCmd/CBaseClientState::ProcessStringCmd.
 #define FCVAR_SERVER_CANNOT_QUERY                                                                                                          \
 	(1 << 29) // If this is set, then the server is not allowed to query this cvar's value (via IServerPluginHelpers::StartQueryCvarValue).
 
@@ -64,7 +64,7 @@
 // FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS in all places this flag was previously used
 #define FCVAR_CLIENTCMD_CAN_EXECUTE                                                                                                        \
 	(1 << 30) // IVEngineClient::ClientCmd is allowed to execute this command.
-			  // Note: IVEngineClient::ClientCmd_Unrestricted can run any client command.
+	          // Note: IVEngineClient::ClientCmd_Unrestricted can run any client command.
 
 #define FCVAR_ACCESSIBLE_FROM_THREADS (1 << 25) // used as a debugging tool necessary to check material system thread convars
 
@@ -75,40 +75,40 @@
 
 // flag => string stuff
 const std::multimap<int, const char*> g_PrintCommandFlags = {
-	{FCVAR_UNREGISTERED, "UNREGISTERED"},
-	{FCVAR_DEVELOPMENTONLY, "DEVELOPMENTONLY"},
-	{FCVAR_GAMEDLL, "GAMEDLL"},
-	{FCVAR_CLIENTDLL, "CLIENTDLL"},
-	{FCVAR_HIDDEN, "HIDDEN"},
-	{FCVAR_PROTECTED, "PROTECTED"},
-	{FCVAR_SPONLY, "SPONLY"},
-	{FCVAR_ARCHIVE, "ARCHIVE"},
-	{FCVAR_NOTIFY, "NOTIFY"},
-	{FCVAR_USERINFO, "USERINFO"},
+    {FCVAR_UNREGISTERED, "UNREGISTERED"},
+    {FCVAR_DEVELOPMENTONLY, "DEVELOPMENTONLY"},
+    {FCVAR_GAMEDLL, "GAMEDLL"},
+    {FCVAR_CLIENTDLL, "CLIENTDLL"},
+    {FCVAR_HIDDEN, "HIDDEN"},
+    {FCVAR_PROTECTED, "PROTECTED"},
+    {FCVAR_SPONLY, "SPONLY"},
+    {FCVAR_ARCHIVE, "ARCHIVE"},
+    {FCVAR_NOTIFY, "NOTIFY"},
+    {FCVAR_USERINFO, "USERINFO"},
 
-	// TODO: PRINTABLEONLY and GAMEDLL_FOR_REMOTE_CLIENTS are both 1<<10, one is for vars and one is for commands
-	// this fucking sucks i think
-	{FCVAR_PRINTABLEONLY, "PRINTABLEONLY"},
-	{FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS, "GAMEDLL_FOR_REMOTE_CLIENTS"},
+    // TODO: PRINTABLEONLY and GAMEDLL_FOR_REMOTE_CLIENTS are both 1<<10, one is for vars and one is for commands
+    // this fucking sucks i think
+    {FCVAR_PRINTABLEONLY, "PRINTABLEONLY"},
+    {FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS, "GAMEDLL_FOR_REMOTE_CLIENTS"},
 
-	{FCVAR_UNLOGGED, "UNLOGGED"},
-	{FCVAR_NEVER_AS_STRING, "NEVER_AS_STRING"},
-	{FCVAR_REPLICATED, "REPLICATED"},
-	{FCVAR_CHEAT, "CHEAT"},
-	{FCVAR_SS, "SS"},
-	{FCVAR_DEMO, "DEMO"},
-	{FCVAR_DONTRECORD, "DONTRECORD"},
-	{FCVAR_SS_ADDED, "SS_ADDED"},
-	{FCVAR_RELEASE, "RELEASE"},
-	{FCVAR_RELOAD_MATERIALS, "RELOAD_MATERIALS"},
-	{FCVAR_RELOAD_TEXTURES, "RELOAD_TEXTURES"},
-	{FCVAR_NOT_CONNECTED, "NOT_CONNECTED"},
-	{FCVAR_MATERIAL_SYSTEM_THREAD, "MATERIAL_SYSTEM_THREAD"},
-	{FCVAR_ARCHIVE_PLAYERPROFILE, "ARCHIVE_PLAYERPROFILE"},
-	{FCVAR_SERVER_CAN_EXECUTE, "SERVER_CAN_EXECUTE"},
-	{FCVAR_SERVER_CANNOT_QUERY, "SERVER_CANNOT_QUERY"},
-	{FCVAR_CLIENTCMD_CAN_EXECUTE, "UNKNOWN"},
-	{FCVAR_ACCESSIBLE_FROM_THREADS, "ACCESSIBLE_FROM_THREADS"}};
+    {FCVAR_UNLOGGED, "UNLOGGED"},
+    {FCVAR_NEVER_AS_STRING, "NEVER_AS_STRING"},
+    {FCVAR_REPLICATED, "REPLICATED"},
+    {FCVAR_CHEAT, "CHEAT"},
+    {FCVAR_SS, "SS"},
+    {FCVAR_DEMO, "DEMO"},
+    {FCVAR_DONTRECORD, "DONTRECORD"},
+    {FCVAR_SS_ADDED, "SS_ADDED"},
+    {FCVAR_RELEASE, "RELEASE"},
+    {FCVAR_RELOAD_MATERIALS, "RELOAD_MATERIALS"},
+    {FCVAR_RELOAD_TEXTURES, "RELOAD_TEXTURES"},
+    {FCVAR_NOT_CONNECTED, "NOT_CONNECTED"},
+    {FCVAR_MATERIAL_SYSTEM_THREAD, "MATERIAL_SYSTEM_THREAD"},
+    {FCVAR_ARCHIVE_PLAYERPROFILE, "ARCHIVE_PLAYERPROFILE"},
+    {FCVAR_SERVER_CAN_EXECUTE, "SERVER_CAN_EXECUTE"},
+    {FCVAR_SERVER_CANNOT_QUERY, "SERVER_CANNOT_QUERY"},
+    {FCVAR_CLIENTCMD_CAN_EXECUTE, "UNKNOWN"},
+    {FCVAR_ACCESSIBLE_FROM_THREADS, "ACCESSIBLE_FROM_THREADS"}};
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -128,15 +128,15 @@ class ConVar
 	ConVar(void) {};
 	ConVar(const char* pszName, const char* pszDefaultValue, int nFlags, const char* pszHelpString);
 	ConVar(
-		const char* pszName,
-		const char* pszDefaultValue,
-		int nFlags,
-		const char* pszHelpString,
-		bool bMin,
-		float fMin,
-		bool bMax,
-		float fMax,
-		FnChangeCallback_t pCallback);
+	    const char* pszName,
+	    const char* pszDefaultValue,
+	    int nFlags,
+	    const char* pszHelpString,
+	    bool bMin,
+	    float fMin,
+	    bool bMax,
+	    float fMax,
+	    FnChangeCallback_t pCallback);
 	~ConVar(void);
 
 	const char* GetBaseName(void) const;

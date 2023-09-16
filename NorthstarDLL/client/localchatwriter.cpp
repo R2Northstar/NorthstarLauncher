@@ -73,31 +73,31 @@ typedef void(__fastcall* ConvertANSIToUnicodeType)(LPCSTR ansi, int ansiCharLeng
 ConvertANSIToUnicodeType ConvertANSIToUnicode;
 
 LocalChatWriter::SwatchColor swatchColors[4] = {
-	LocalChatWriter::MainTextColor,
-	LocalChatWriter::SameTeamNameColor,
-	LocalChatWriter::EnemyTeamNameColor,
-	LocalChatWriter::NetworkNameColor,
+    LocalChatWriter::MainTextColor,
+    LocalChatWriter::SameTeamNameColor,
+    LocalChatWriter::EnemyTeamNameColor,
+    LocalChatWriter::NetworkNameColor,
 };
 
 Color darkColors[8] = {
-	Color {0, 0, 0, 255},
-	Color {205, 49, 49, 255},
-	Color {13, 188, 121, 255},
-	Color {229, 229, 16, 255},
-	Color {36, 114, 200, 255},
-	Color {188, 63, 188, 255},
-	Color {17, 168, 205, 255},
-	Color {229, 229, 229, 255}};
+    Color {0, 0, 0, 255},
+    Color {205, 49, 49, 255},
+    Color {13, 188, 121, 255},
+    Color {229, 229, 16, 255},
+    Color {36, 114, 200, 255},
+    Color {188, 63, 188, 255},
+    Color {17, 168, 205, 255},
+    Color {229, 229, 229, 255}};
 
 Color lightColors[8] = {
-	Color {102, 102, 102, 255},
-	Color {241, 76, 76, 255},
-	Color {35, 209, 139, 255},
-	Color {245, 245, 67, 255},
-	Color {59, 142, 234, 255},
-	Color {214, 112, 214, 255},
-	Color {41, 184, 219, 255},
-	Color {255, 255, 255, 255}};
+    Color {102, 102, 102, 255},
+    Color {241, 76, 76, 255},
+    Color {35, 209, 139, 255},
+    Color {245, 245, 67, 255},
+    Color {59, 142, 234, 255},
+    Color {214, 112, 214, 255},
+    Color {41, 184, 219, 255},
+    Color {255, 255, 255, 255}};
 
 class AnsiEscapeParser
 {

@@ -98,24 +98,24 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 		if (pCurrBox->a > 0)
 		{
 			RenderBox(
-				pCurrBox->origin,
-				pCurrBox->angles,
-				pCurrBox->mins,
-				pCurrBox->maxs,
-				Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, pCurrBox->a),
-				false,
-				false);
+			    pCurrBox->origin,
+			    pCurrBox->angles,
+			    pCurrBox->mins,
+			    pCurrBox->maxs,
+			    Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, pCurrBox->a),
+			    false,
+			    false);
 		}
 		if (pCurrBox->a < 255)
 		{
 			RenderWireframeBox(
-				pCurrBox->origin,
-				pCurrBox->angles,
-				pCurrBox->mins,
-				pCurrBox->maxs,
-				Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, 255),
-				false,
-				false);
+			    pCurrBox->origin,
+			    pCurrBox->angles,
+			    pCurrBox->mins,
+			    pCurrBox->maxs,
+			    Color(pCurrBox->r, pCurrBox->g, pCurrBox->b, 255),
+			    false,
+			    false);
 		}
 	}
 	break;

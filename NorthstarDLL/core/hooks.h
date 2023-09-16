@@ -9,9 +9,9 @@ void InstallInitialHooks();
 typedef void (*DllLoadCallbackFuncType)(CModule moduleAddress);
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
 void AddDllLoadCallbackForDedicatedServer(
-	std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
+    std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
 void AddDllLoadCallbackForClient(
-	std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
+    std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
 
 void CallAllPendingDLLLoadCallbacks();
 
@@ -28,11 +28,11 @@ class __dllLoadCallback
   public:
 	__dllLoadCallback() = delete;
 	__dllLoadCallback(
-		eDllLoadCallbackSide side,
-		const std::string dllName,
-		DllLoadCallbackFuncType callback,
-		std::string uniqueStr,
-		std::string reliesOn);
+	    eDllLoadCallbackSide side,
+	    const std::string dllName,
+	    DllLoadCallbackFuncType callback,
+	    std::string uniqueStr,
+	    std::string reliesOn);
 };
 
 #define __CONCAT3(x, y, z) x##y##z
@@ -47,7 +47,7 @@ class __dllLoadCallback
 	namespace                                                                                                                              \
 	{                                                                                                                                      \
 		__dllLoadCallback CONCAT2(__dllLoadCallbackInstance, __LINE__)(                                                                    \
-			side, dllName, CONCAT2(__dllLoadCallback, uniquestr), __STR(uniquestr), reliesOn);                                             \
+		    side, dllName, CONCAT2(__dllLoadCallback, uniquestr), __STR(uniquestr), reliesOn);                                             \
 	}                                                                                                                                      \
 	void CONCAT2(__dllLoadCallback, uniquestr) args
 
@@ -115,7 +115,7 @@ class __autohook
 	__autohook() = delete;
 
 	__autohook(__fileAutohook* autohook, const char* funcName, LPVOID absoluteAddress, LPVOID* orig, LPVOID func)
-		: pHookFunc(func), ppOrigFunc(orig), iAbsoluteAddress(absoluteAddress)
+	    : pHookFunc(func), ppOrigFunc(orig), iAbsoluteAddress(absoluteAddress)
 	{
 		iAddressResolutionMode = ABSOLUTE_ADDR;
 
@@ -127,7 +127,7 @@ class __autohook
 	}
 
 	__autohook(__fileAutohook* autohook, const char* funcName, const char* addrString, LPVOID* orig, LPVOID func)
-		: pHookFunc(func), ppOrigFunc(orig)
+	    : pHookFunc(func), ppOrigFunc(orig)
 	{
 		iAddressResolutionMode = OFFSET_STRING;
 
@@ -143,7 +143,7 @@ class __autohook
 	}
 
 	__autohook(__fileAutohook* autohook, const char* funcName, const char* moduleName, const char* procName, LPVOID* orig, LPVOID func)
-		: pHookFunc(func), ppOrigFunc(orig)
+	    : pHookFunc(func), ppOrigFunc(orig)
 	{
 		iAddressResolutionMode = PROCADDRESS;
 
@@ -221,7 +221,7 @@ class __autohook
 	{                                                                                                                                      \
 		type(*callingConvention name) args;                                                                                                \
 		__autohook CONCAT2(__autohook, __LINE__)(                                                                                          \
-			&__FILEAUTOHOOK, __STR(name), __STR(addrString), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));                       \
+		    &__FILEAUTOHOOK, __STR(name), __STR(addrString), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));                       \
 	}                                                                                                                                      \
 	type callingConvention CONCAT2(__autohookfunc, name) args
 
@@ -232,7 +232,7 @@ class __autohook
 	{                                                                                                                                      \
 		type(*callingConvention name) args;                                                                                                \
 		__autohook                                                                                                                         \
-			CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
+		    CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
 	}                                                                                                                                      \
 	type callingConvention CONCAT2(__autohookfunc, name) args
 
@@ -243,7 +243,7 @@ class __autohook
 	{                                                                                                                                      \
 		type(*callingConvention name) args;                                                                                                \
 		__autohook CONCAT2(__autohook, __LINE__)(                                                                                          \
-			&__FILEAUTOHOOK, __STR(name), __STR(moduleName), __STR(procName), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
+		    &__FILEAUTOHOOK, __STR(name), __STR(moduleName), __STR(procName), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
 	}                                                                                                                                      \
 	type callingConvention CONCAT2(__autohookfunc, name)                                                                                   \
 	args

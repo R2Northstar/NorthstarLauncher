@@ -35,15 +35,15 @@ void ServerStartingOrChangingMap()
 	memset(commandBuf, 0, sizeof(commandBuf));
 	CCommand tempCommand = *(CCommand*)&commandBuf;
 	if (sLastMode.length() &&
-		CCommand__Tokenize(
-			tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
+	    CCommand__Tokenize(
+	        tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
 		_Cmd_Exec_f(tempCommand, false, false);
 
 	memset(commandBuf, 0, sizeof(commandBuf));
 	if (CCommand__Tokenize(
-			tempCommand,
-			fmt::format("exec server/setup_gamemode_{}", sLastMode = Cvar_mp_gamemode->GetString()).c_str(),
-			R2::cmd_source_t::kCommandSrcCode))
+	        tempCommand,
+	        fmt::format("exec server/setup_gamemode_{}", sLastMode = Cvar_mp_gamemode->GetString()).c_str(),
+	        R2::cmd_source_t::kCommandSrcCode))
 	{
 		_Cmd_Exec_f(tempCommand, false, false);
 	}
@@ -151,7 +151,7 @@ void, __fastcall, (CHostState* self))
 		memset(commandBuf, 0, sizeof(commandBuf));
 		CCommand tempCommand = *(CCommand*)&commandBuf;
 		if (CCommand__Tokenize(
-				tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
+		        tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), R2::cmd_source_t::kCommandSrcCode))
 		{
 			_Cmd_Exec_f(tempCommand, false, false);
 			Cbuf_Execute();

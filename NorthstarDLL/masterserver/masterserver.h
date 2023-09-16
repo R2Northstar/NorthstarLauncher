@@ -39,15 +39,15 @@ class RemoteServerInfo
 
   public:
 	RemoteServerInfo(
-		const char* newId,
-		const char* newName,
-		const char* newDescription,
-		const char* newMap,
-		const char* newPlaylist,
-		const char* newRegion,
-		int newPlayerCount,
-		int newMaxPlayers,
-		bool newRequiresPassword);
+	    const char* newId,
+	    const char* newName,
+	    const char* newDescription,
+	    const char* newMap,
+	    const char* newPlaylist,
+	    const char* newRegion,
+	    int newPlayerCount,
+	    int newMaxPlayers,
+	    bool newRequiresPassword);
 };
 
 struct RemoteServerConnectionInfo

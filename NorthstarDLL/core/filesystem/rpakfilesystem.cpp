@@ -165,7 +165,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 
 					bHasOriginalPak = true;
 					*bNeedToFreePakName =
-						true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
+					    true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
 				}
 				else
 					g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_sPakName).string().c_str(), ePakLoadSource::MAP);
@@ -210,7 +210,7 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 		// sp_<map> rpaks contain tutorial ghost data
 		// sucks to have to load the entire rpak for that but sp was never meant to be done on dedi
 		if (IsDedicatedServer() && (Tier0::CommandLine()->CheckParm("-nopakdedi") ||
-									strncmp(&originalPath[0], "common", 6) && strncmp(&originalPath[0], "sp_", 3)))
+		                            strncmp(&originalPath[0], "common", 6) && strncmp(&originalPath[0], "sp_", 3)))
 		{
 			if (bNeedToFreePakName)
 				delete[] pPath;

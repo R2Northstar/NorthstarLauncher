@@ -52,7 +52,7 @@ class CModule : public CMemoryAddress
 	{
 		ModuleSections_t(void) = default;
 		ModuleSections_t(const std::string& svSectionName, uintptr_t pSectionBase, size_t nSectionSize)
-			: m_svSectionName(svSectionName), m_pSectionBase(pSectionBase), m_nSectionSize(nSectionSize)
+		    : m_svSectionName(svSectionName), m_pSectionBase(pSectionBase), m_nSectionSize(nSectionSize)
 		{
 		}
 

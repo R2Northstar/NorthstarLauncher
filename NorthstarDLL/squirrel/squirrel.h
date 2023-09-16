@@ -7,8 +7,8 @@
 #include "mods/modmanager.h"
 
 /*
-	definitions from hell
-	required to function
+    definitions from hell
+    required to function
 */
 
 template <ScriptContext context, typename T> inline void SqRecurseArgs(FunctionVector& v, T& arg);
@@ -16,7 +16,7 @@ template <ScriptContext context, typename T> inline void SqRecurseArgs(FunctionV
 template <ScriptContext context, typename T, typename... Args> inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
 
 /*
-	sanity below
+    sanity below
 */
 
 // stolen from ttf2sdk: sqvm types
@@ -354,7 +354,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
 			spdlog::error(
-				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
+			    "{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
 		}
 
 		SQObject functionobj {};
@@ -378,7 +378,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
 			spdlog::error(
-				"{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
+			    "{} was called on context {} while VM was not initialized. This will crash", __FUNCTION__, GetContextName(context));
 		}
 		SQObject functionobj {};
 		int result = sq_getfunction(m_pSQVM->sqvm, funcname, &functionobj, 0);
@@ -425,9 +425,9 @@ template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;
 void InitialiseSquirrelManagers();
 
 /*
-	Beware all ye who enter below.
-	This place is not a place of honor... no highly esteemed deed is commemorated here... nothing valued is here.
-	What is here was dangerous and repulsive to us. This message is a warning about danger.
+    Beware all ye who enter below.
+    This place is not a place of honor... no highly esteemed deed is commemorated here... nothing valued is here.
+    What is here was dangerous and repulsive to us. This message is a warning about danger.
 */
 
 #pragma region MessageBuffer templates

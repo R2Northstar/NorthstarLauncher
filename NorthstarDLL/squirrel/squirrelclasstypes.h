@@ -27,9 +27,9 @@ enum class eSQReturnType
 };
 
 const std::map<SQRESULT, const char*> PrintSQRESULT = {
-	{SQRESULT::SQRESULT_ERROR, "SQRESULT_ERROR"},
-	{SQRESULT::SQRESULT_NULL, "SQRESULT_NULL"},
-	{SQRESULT::SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}};
+    {SQRESULT::SQRESULT_ERROR, "SQRESULT_ERROR"},
+    {SQRESULT::SQRESULT_NULL, "SQRESULT_NULL"},
+    {SQRESULT::SQRESULT_NOTNULL, "SQRESULT_NOTNULL"}};
 
 struct CompileBufferState
 {
@@ -189,7 +189,7 @@ typedef int64_t (*RegisterSquirrelFuncType)(CSquirrelVM* sqvm, SQFuncRegistratio
 typedef void (*sq_defconstType)(CSquirrelVM* sqvm, const SQChar* name, int value);
 
 typedef SQRESULT (*sq_compilebufferType)(
-	HSquirrelVM* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, SQBool bShouldThrowError);
+    HSquirrelVM* sqvm, CompileBufferState* compileBuffer, const char* file, int a1, SQBool bShouldThrowError);
 typedef SQRESULT (*sq_callType)(HSquirrelVM* sqvm, SQInteger iArgs, SQBool bShouldReturn, SQBool bThrowError);
 typedef SQInteger (*sq_raiseerrorType)(HSquirrelVM* sqvm, const SQChar* pError);
 typedef bool (*sq_compilefileType)(CSquirrelVM* sqvm, const char* path, const char* name, int a4);

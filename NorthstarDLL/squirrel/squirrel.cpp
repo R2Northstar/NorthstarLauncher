@@ -75,15 +75,15 @@ const char* GetContextName_Short(ScriptContext context)
 eSQReturnType SQReturnTypeFromString(const char* pReturnType)
 {
 	static const std::map<std::string, eSQReturnType> sqReturnTypeNameToString = {
-		{"bool", eSQReturnType::Boolean},
-		{"float", eSQReturnType::Float},
-		{"vector", eSQReturnType::Vector},
-		{"int", eSQReturnType::Integer},
-		{"entity", eSQReturnType::Entity},
-		{"string", eSQReturnType::String},
-		{"array", eSQReturnType::Arrays},
-		{"asset", eSQReturnType::Asset},
-		{"table", eSQReturnType::Table}};
+	    {"bool", eSQReturnType::Boolean},
+	    {"float", eSQReturnType::Float},
+	    {"vector", eSQReturnType::Vector},
+	    {"int", eSQReturnType::Integer},
+	    {"entity", eSQReturnType::Entity},
+	    {"string", eSQReturnType::String},
+	    {"array", eSQReturnType::Arrays},
+	    {"asset", eSQReturnType::Asset},
+	    {"table", eSQReturnType::Table}};
 
 	if (sqReturnTypeNameToString.find(pReturnType) != sqReturnTypeNameToString.end())
 		return sqReturnTypeNameToString.at(pReturnType);
@@ -320,7 +320,7 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 }
 
 template <ScriptContext context> void SquirrelManager<context>::AddFuncRegistration(
-	std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func)
+    std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func)
 {
 	SQFuncRegistration* reg = new SQFuncRegistration;
 
@@ -480,10 +480,10 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		else
 		{
 			R2::Cbuf_AddText(
-				R2::Cbuf_GetCurrentPlayer(),
-				fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
-					.c_str(),
-				R2::cmd_source_t::kCommandSrcCode);
+			    R2::Cbuf_GetCurrentPlayer(),
+			    fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
+			        .c_str(),
+			    R2::cmd_source_t::kCommandSrcCode);
 
 			// likely temp: show console so user can see any errors, as error message wont display if ui is dead
 			// maybe we could disable all mods other than the coremods and try a reload before doing this?
@@ -636,7 +636,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 		if (result != 0) // This func returns 0 on success for some reason
 		{
 			NS::log::squirrel_logger<context>()->error(
-				"ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
+			    "ProcessMessageBuffer was unable to find function with name '{}'. Is it global?", message.functionName);
 			continue;
 		}
 
@@ -661,11 +661,11 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 }
 
 ADD_SQFUNC(
-	"string",
-	NSGetCurrentModName,
-	"",
-	"Returns the mod name of the script running this function",
-	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+    "string",
+    NSGetCurrentModName,
+    "",
+    "Returns the mod name of the script running this function",
+    ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
 	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
@@ -681,11 +681,11 @@ ADD_SQFUNC(
 }
 
 ADD_SQFUNC(
-	"string",
-	NSGetCallingModName,
-	"int depth = 0",
-	"Returns the mod name of the script running this function",
-	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
+    "string",
+    NSGetCallingModName,
+    "int depth = 0",
+    "Returns the mod name of the script running this function",
+    ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	int depth = g_pSquirrel<context>->getinteger(sqvm, 1);
 	if (auto mod = g_pSquirrel<context>->getcallingmod(sqvm, depth); mod == nullptr)
@@ -772,7 +772,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x3E49B0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance = module.Offset(0x114F0).RCast<sq_getentityfrominstanceType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_GetEntityConstant_CBaseEntity =
-		g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity;
+	    g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity;
 	g_pSquirrel<ScriptContext::UI>->__sq_getentityfrominstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance;
 
 	// Message buffer stuff
@@ -789,9 +789,9 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->__sq_sealstructslot = g_pSquirrel<ScriptContext::CLIENT>->__sq_sealstructslot;
 
 	MAKEHOOK(
-		module.Offset(0x108E0),
-		&RegisterSquirrelFunctionHook<ScriptContext::CLIENT>,
-		&g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc);
+	    module.Offset(0x108E0),
+	    &RegisterSquirrelFunctionHook<ScriptContext::CLIENT>,
+	    &g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc);
 	g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc = g_pSquirrel<ScriptContext::CLIENT>->RegisterSquirrelFunc;
 
 	g_pSquirrel<ScriptContext::CLIENT>->logger = NS::log::SCRIPT_CL;
@@ -882,9 +882,9 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::SERVER>->__sq_sealstructslot = module.Offset(0x5510).RCast<sq_sealstructslotType>();
 
 	MAKEHOOK(
-		module.Offset(0x1DD10),
-		&RegisterSquirrelFunctionHook<ScriptContext::SERVER>,
-		&g_pSquirrel<ScriptContext::SERVER>->RegisterSquirrelFunc);
+	    module.Offset(0x1DD10),
+	    &RegisterSquirrelFunctionHook<ScriptContext::SERVER>,
+	    &g_pSquirrel<ScriptContext::SERVER>->RegisterSquirrelFunc);
 
 	MAKEHOOK(module.Offset(0x8AA0), &sq_compiler_createHook<ScriptContext::SERVER>, &sq_compiler_create<ScriptContext::SERVER>);
 
@@ -897,10 +897,10 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats
 	// are enabled for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
-		"script",
-		ConCommand_script<ScriptContext::SERVER>,
-		"Executes script code on the server vm",
-		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
+	    "script",
+	    ConCommand_script<ScriptContext::SERVER>,
+	    "Executes script code on the server vm",
+	    FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 
 	StubUnsafeSQFuncs<ScriptContext::SERVER>();
 

@@ -114,10 +114,10 @@ ON_DLL_LOAD("engine.dll", MaxPlayersOverride_Engine, (CModule module))
 
 	// patch max players in userinfo stringtable creation
 	/*{
-		int maxPlayersPowerOf2 = 1;
-		while (maxPlayersPowerOf2 < NEW_MAX_PLAYERS)
-			maxPlayersPowerOf2 <<= 1;
-		ChangeOffset<unsigned char>((char*)baseAddress + 0x114B79 + 3, maxPlayersPowerOf2); // original: 32
+	    int maxPlayersPowerOf2 = 1;
+	    while (maxPlayersPowerOf2 < NEW_MAX_PLAYERS)
+	        maxPlayersPowerOf2 <<= 1;
+	    ChangeOffset<unsigned char>((char*)baseAddress + 0x114B79 + 3, maxPlayersPowerOf2); // original: 32
 	}*/
 	// this is not supposed to work at all but it does on 64 players (how)
 	// proper fix below
@@ -184,9 +184,9 @@ void,, (bool a1, float a2))
 
 	v3 = *(unsigned char*)(g_pGlobals + 73);
 	if (*(DWORD*)(qword_1814D9648 + 92) &&
-		((*(unsigned __int8(__fastcall**)(__int64))(*(__int64*)g_pEngineServer + 32))(g_pEngineServer) ||
-		 !*(DWORD*)(qword_1814DA408 + 92)) &&
-		v3)
+	    ((*(unsigned __int8(__fastcall**)(__int64))(*(__int64*)g_pEngineServer + 32))(g_pEngineServer) ||
+	     !*(DWORD*)(qword_1814DA408 + 92)) &&
+	    v3)
 	{
 		globals = g_pGlobals;
 		v5 = 1;
@@ -482,11 +482,11 @@ ON_DLL_LOAD("client.dll", MaxPlayersOverride_Client, (CModule module))
 
 	// C_PlayerResource::C_PlayerResource - change m_szName address
 	ChangeOffset<unsigned int>(
-		module.Offset(0x1640D0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
+	    module.Offset(0x1640D0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
 
 	// C_PlayerResource::C_PlayerResource - change m_szName address
 	ChangeOffset<unsigned int>(
-		module.Offset(0x1640D0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
+	    module.Offset(0x1640D0 + 3), C_PlayerResource_OriginalSize + PlayerResource_Name_Start); // appended to the end of the class
 
 	// C_PlayerResource::C_PlayerResource - increase memset length to clean newly allocated data
 	ChangeOffset<unsigned int>(module.Offset(0x1640D0 + 3), 2244 + C_PlayerResource_AddedSize);

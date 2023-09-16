@@ -22,7 +22,7 @@ void, __fastcall, (void* a1))
 	{
 		// if player has agreed to send token and we aren't already authing, try to auth
 		if (Cvar_ns_has_agreed_to_send_token->GetInt() == AGREED_TO_SEND_TOKEN &&
-			!g_pMasterServerManager->m_bOriginAuthWithMasterServerInProgress)
+		    !g_pMasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 			g_pMasterServerManager->AuthenticateOriginWithMasterServer(R2::g_pLocalPlayerUserID, R2::g_pLocalPlayerOriginToken);
 
 		// invalidate key so auth will fail
@@ -56,8 +56,8 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule modu
 
 	// this cvar will save to cfg once initially agreed with
 	Cvar_ns_has_agreed_to_send_token = new ConVar(
-		"ns_has_agreed_to_send_token",
-		"0",
-		FCVAR_ARCHIVE_PLAYERPROFILE,
-		"whether the user has agreed to send their origin token to the northstar masterserver");
+	    "ns_has_agreed_to_send_token",
+	    "0",
+	    FCVAR_ARCHIVE_PLAYERPROFILE,
+	    "whether the user has agreed to send their origin token to the northstar masterserver");
 }

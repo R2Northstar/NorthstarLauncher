@@ -199,9 +199,9 @@ CModule::CModule(const HMODULE pModule)
 		const IMAGE_SECTION_HEADER& hCurrentSection = hSection[i]; // Get current section.
 
 		ModuleSections_t moduleSection = ModuleSections_t(
-			std::string(reinterpret_cast<const char*>(hCurrentSection.Name)),
-			static_cast<uintptr_t>(m_pModuleBase + hCurrentSection.VirtualAddress),
-			hCurrentSection.SizeOfRawData);
+		    std::string(reinterpret_cast<const char*>(hCurrentSection.Name)),
+		    static_cast<uintptr_t>(m_pModuleBase + hCurrentSection.VirtualAddress),
+		    hCurrentSection.SizeOfRawData);
 
 		if (!strcmp((const char*)hCurrentSection.Name, ".text"))
 			m_ExecutableCode = moduleSection;

@@ -63,7 +63,7 @@ void CreateLogFiles()
 		{
 			spdlog::error("Failed creating log file!");
 			MessageBoxA(
-				0, "Failed creating log file! Make sure the profile directory is writable.", "Northstar Warning", MB_ICONWARNING | MB_OK);
+			    0, "Failed creating log file! Make sure the profile directory is writable.", "Northstar Warning", MB_ICONWARNING | MB_OK);
 		}
 	}
 }

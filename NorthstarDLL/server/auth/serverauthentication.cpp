@@ -192,7 +192,7 @@ void ServerAuthenticationManager::WritePersistentData(R2::CBaseClient* pPlayer)
 	if (pPlayer->m_iPersistenceReady == R2::ePersistenceReady::READY_REMOTE)
 	{
 		g_pMasterServerManager->WritePlayerPersistentData(
-			pPlayer->m_UID, (const char*)pPlayer->m_PersistenceBuffer, m_PlayerAuthenticationData[pPlayer].pdataSize);
+		    pPlayer->m_UID, (const char*)pPlayer->m_PersistenceBuffer, m_PlayerAuthenticationData[pPlayer].pdataSize);
 	}
 	else if (Cvar_ns_auth_allow_insecure_write->GetBool())
 	{
@@ -350,17 +350,17 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
 	g_pServerAuthentication->Cvar_ns_erase_auth_info =
-		new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
+	    new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
 	g_pServerAuthentication->Cvar_ns_auth_allow_insecure =
-		new ConVar("ns_auth_allow_insecure", "0", FCVAR_GAMEDLL, "Whether this server will allow unauthenicated players to connect");
+	    new ConVar("ns_auth_allow_insecure", "0", FCVAR_GAMEDLL, "Whether this server will allow unauthenicated players to connect");
 	g_pServerAuthentication->Cvar_ns_auth_allow_insecure_write = new ConVar(
-		"ns_auth_allow_insecure_write",
-		"0",
-		FCVAR_GAMEDLL,
-		"Whether the pdata of unauthenticated clients will be written to disk when changed");
+	    "ns_auth_allow_insecure_write",
+	    "0",
+	    FCVAR_GAMEDLL,
+	    "Whether the pdata of unauthenticated clients will be written to disk when changed");
 
 	RegisterConCommand(
-		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
+	    "ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
 
 	// patch to disable kicking based on incorrect serverfilter in connectclient, since we repurpose it for use as an auth token
 	module.Offset(0x114655).Patch("EB");

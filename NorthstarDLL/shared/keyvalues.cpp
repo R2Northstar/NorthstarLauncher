@@ -25,7 +25,7 @@ struct CKeyValuesSystem
 		const char* (*GetStringForSymbol)(CKeyValuesSystem* self, HKeySymbol symbol);
 		char pad1[8 * 5];
 		HKeySymbol (*GetSymbolForStringCaseSensitive)(
-			CKeyValuesSystem* self, HKeySymbol& hCaseInsensitiveSymbol, const char* name, bool bCreate);
+		    CKeyValuesSystem* self, HKeySymbol& hCaseInsensitiveSymbol, const char* name, bool bCreate);
 	};
 
 	const __VTable* m_pVtable;
@@ -95,7 +95,7 @@ KeyValues::KeyValues(const char* pszSetName, const char* pszFirstKey, int iFirst
 //			*pszSecondValue -
 //-----------------------------------------------------------------------------
 KeyValues::KeyValues(
-	const char* pszSetName, const char* pszFirstKey, const char* pszFirstValue, const char* pszSecondKey, const char* pszSecondValue)
+    const char* pszSetName, const char* pszFirstKey, const char* pszFirstValue, const char* pszSecondKey, const char* pszSecondValue)
 {
 	Init();
 	SetName(pszSetName);
@@ -585,7 +585,7 @@ KeyValues* KeyValues::GetNextKey() const
 const char* KeyValues::GetName(void) const
 {
 	return KeyValuesSystem()->m_pVtable->GetStringForSymbol(
-		KeyValuesSystem(), MAKE_3_BYTES_FROM_1_AND_2(m_iKeyNameCaseSensitive1, m_iKeyNameCaseSensitive2));
+	    KeyValuesSystem(), MAKE_3_BYTES_FROM_1_AND_2(m_iKeyNameCaseSensitive1, m_iKeyNameCaseSensitive2));
 }
 
 //-----------------------------------------------------------------------------
@@ -974,7 +974,7 @@ void KeyValues::SetName(const char* pszSetName)
 {
 	HKeySymbol hCaseSensitiveKeyName = INVALID_KEY_SYMBOL, hCaseInsensitiveKeyName = INVALID_KEY_SYMBOL;
 	hCaseSensitiveKeyName =
-		KeyValuesSystem()->m_pVtable->GetSymbolForStringCaseSensitive(KeyValuesSystem(), hCaseInsensitiveKeyName, pszSetName, false);
+	    KeyValuesSystem()->m_pVtable->GetSymbolForStringCaseSensitive(KeyValuesSystem(), hCaseInsensitiveKeyName, pszSetName, false);
 
 	m_iKeyName = hCaseInsensitiveKeyName;
 	SPLIT_3_BYTES_INTO_1_AND_2(m_iKeyNameCaseSensitive1, m_iKeyNameCaseSensitive2, hCaseSensitiveKeyName);

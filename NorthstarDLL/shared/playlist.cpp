@@ -26,7 +26,7 @@ char, __fastcall, (void* a1, void* a2))
 {
 	// the private_match playlist on mp_lobby is the only situation where there should be any legitimate sending of this netmessage
 	if (!Cvar_ns_use_clc_SetPlaylistVarOverride->GetBool() || strcmp(R2::GetCurrentPlaylistName(), "private_match") ||
-		strcmp(R2::g_pGlobals->m_pMapName, "mp_lobby"))
+	    strcmp(R2::g_pGlobals->m_pMapName, "mp_lobby"))
 		return 1;
 
 	return clc_SetPlaylistVarOverride__Process(a1, a2);
@@ -114,7 +114,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (CModule
 	// disabled altogether, since the custom menus won't use it anyway this should only really be accepted if you want vanilla client
 	// compatibility
 	Cvar_ns_use_clc_SetPlaylistVarOverride = new ConVar(
-		"ns_use_clc_SetPlaylistVarOverride", "0", FCVAR_GAMEDLL, "Whether the server should accept clc_SetPlaylistVarOverride messages");
+	    "ns_use_clc_SetPlaylistVarOverride", "0", FCVAR_GAMEDLL, "Whether the server should accept clc_SetPlaylistVarOverride messages");
 
 	// patch to prevent clc_SetPlaylistVarOverride from being able to crash servers if we reach max overrides due to a call to Error (why is
 	// this possible respawn, wtf) todo: add a warning for this

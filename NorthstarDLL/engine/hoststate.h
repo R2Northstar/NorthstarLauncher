@@ -37,7 +37,7 @@ namespace R2
 		bool m_bLetToolsOverrideLoadGameEnts; // During a load game, this tells Foundry to override ents that are selected in Hammer.
 		bool m_bSplitScreenConnect;
 		bool m_bGameHasShutDownAndFlushedMemory; // This is false once we load a map into memory, and set to true once the map is unloaded
-												 // and all memory flushed
+		                                         // and all memory flushed
 		bool m_bWorkshopMapDownloadPending;
 	};
 

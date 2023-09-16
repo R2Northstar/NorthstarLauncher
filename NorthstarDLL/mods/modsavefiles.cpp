@@ -72,47 +72,47 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 {
 	auto mutex = std::ref(fileMutex);
 	std::thread writeThread(
-		[mutex, file, contents]()
-		{
-			try
-			{
-				mutex.get().lock();
+	    [mutex, file, contents]()
+	    {
+		    try
+		    {
+			    mutex.get().lock();
 
-				fs::path dir = file.parent_path();
-				// this actually allows mods to go over the limit, but not by much
-				// the limit is to prevent mods from taking gigabytes of space,
-				// we don't need to be particularly strict.
-				if (GetSizeOfFolderContentsMinusFile(dir, file.filename().string()) + contents.length() > MAX_FOLDER_SIZE)
-				{
-					// tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
-					spdlog::error(fmt::format("Mod spamming save requests? Folder limit bypassed despite previous checks. Not saving."));
-					mutex.get().unlock();
-					return;
-				}
+			    fs::path dir = file.parent_path();
+			    // this actually allows mods to go over the limit, but not by much
+			    // the limit is to prevent mods from taking gigabytes of space,
+			    // we don't need to be particularly strict.
+			    if (GetSizeOfFolderContentsMinusFile(dir, file.filename().string()) + contents.length() > MAX_FOLDER_SIZE)
+			    {
+				    // tbh, you're either trying to fill the hard drive or use so much data, you SHOULD be congratulated.
+				    spdlog::error(fmt::format("Mod spamming save requests? Folder limit bypassed despite previous checks. Not saving."));
+				    mutex.get().unlock();
+				    return;
+			    }
 
-				std::ofstream fileStr(file);
-				if (fileStr.fail())
-				{
-					mutex.get().unlock();
-					return;
-				}
+			    std::ofstream fileStr(file);
+			    if (fileStr.fail())
+			    {
+				    mutex.get().unlock();
+				    return;
+			    }
 
-				fileStr.write(contents.c_str(), contents.length());
-				fileStr.close();
+			    fileStr.write(contents.c_str(), contents.length());
+			    fileStr.close();
 
-				mutex.get().unlock();
-				// side-note: this causes a leak?
-				// when a file is added to the map, it's never removed.
-				// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
-				// tried to use m.try_lock(), but it's unreliable, it seems.
-			}
-			catch (std::exception ex)
-			{
-				spdlog::error("SAVE FAILED!");
-				mutex.get().unlock();
-				spdlog::error(ex.what());
-			}
-		});
+			    mutex.get().unlock();
+			    // side-note: this causes a leak?
+			    // when a file is added to the map, it's never removed.
+			    // no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+			    // tried to use m.try_lock(), but it's unreliable, it seems.
+		    }
+		    catch (std::exception ex)
+		    {
+			    spdlog::error("SAVE FAILED!");
+			    mutex.get().unlock();
+			    spdlog::error(ex.what());
+		    }
+	    });
 
 	writeThread.detach();
 }
@@ -123,42 +123,42 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 	int handle = ++m_iLastRequestHandle;
 	auto mutex = std::ref(fileMutex);
 	std::thread readThread(
-		[mutex, file, handle]()
-		{
-			try
-			{
-				mutex.get().lock();
+	    [mutex, file, handle]()
+	    {
+		    try
+		    {
+			    mutex.get().lock();
 
-				std::ifstream fileStr(file);
-				if (fileStr.fail())
-				{
-					spdlog::error("A file was supposed to be loaded but we can't access it?!");
+			    std::ifstream fileStr(file);
+			    if (fileStr.fail())
+			    {
+				    spdlog::error("A file was supposed to be loaded but we can't access it?!");
 
-					g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
-					mutex.get().unlock();
-					return;
-				}
+				    g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
+				    mutex.get().unlock();
+				    return;
+			    }
 
-				std::stringstream stringStream;
-				stringStream << fileStr.rdbuf();
+			    std::stringstream stringStream;
+			    stringStream << fileStr.rdbuf();
 
-				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, true, stringStream.str());
+			    g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, true, stringStream.str());
 
-				fileStr.close();
-				mutex.get().unlock();
-				// side-note: this causes a leak?
-				// when a file is added to the map, it's never removed.
-				// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
-				// tried to use m.try_lock(), but it's unreliable, it seems.
-			}
-			catch (std::exception ex)
-			{
-				spdlog::error("LOAD FAILED!");
-				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
-				mutex.get().unlock();
-				spdlog::error(ex.what());
-			}
-		});
+			    fileStr.close();
+			    mutex.get().unlock();
+			    // side-note: this causes a leak?
+			    // when a file is added to the map, it's never removed.
+			    // no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+			    // tried to use m.try_lock(), but it's unreliable, it seems.
+		    }
+		    catch (std::exception ex)
+		    {
+			    spdlog::error("LOAD FAILED!");
+			    g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
+			    mutex.get().unlock();
+			    spdlog::error(ex.what());
+		    }
+	    });
 
 	readThread.detach();
 	return handle;
@@ -170,27 +170,27 @@ template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path 
 	// P.S. I don't like how we have to async delete calls but we do.
 	auto m = std::ref(fileMutex);
 	std::thread deleteThread(
-		[m, file]()
-		{
-			try
-			{
-				m.get().lock();
+	    [m, file]()
+	    {
+		    try
+		    {
+			    m.get().lock();
 
-				fs::remove(file);
+			    fs::remove(file);
 
-				m.get().unlock();
-				// side-note: this causes a leak?
-				// when a file is added to the map, it's never removed.
-				// no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
-				// tried to use m.try_lock(), but it's unreliable, it seems.
-			}
-			catch (std::exception ex)
-			{
-				spdlog::error("DELETE FAILED!");
-				m.get().unlock();
-				spdlog::error(ex.what());
-			}
-		});
+			    m.get().unlock();
+			    // side-note: this causes a leak?
+			    // when a file is added to the map, it's never removed.
+			    // no idea how to fix this - because we have no way to check if there are other threads waiting to use this file(?)
+			    // tried to use m.try_lock(), but it's unreliable, it seems.
+		    }
+		    catch (std::exception ex)
+		    {
+			    spdlog::error("DELETE FAILED!");
+			    m.get().unlock();
+			    spdlog::error(ex.what());
+		    }
+	    });
 
 	deleteThread.detach();
 }
@@ -215,13 +215,13 @@ bool IsPathSafe(const std::string param, fs::path dir)
 		auto itr = std::search(normChild.begin(), normChild.end(), normRoot.begin(), normRoot.end());
 		// we return if the file is safe (inside the directory) and uses only ASCII chars in the path.
 		return itr == normChild.begin() && std::none_of(
-											   param.begin(),
-											   param.end(),
-											   [](char c)
-											   {
-												   unsigned char unsignedC = static_cast<unsigned char>(c);
-												   return unsignedC > 127 || unsignedC < 0;
-											   });
+		                                       param.begin(),
+		                                       param.end(),
+		                                       [](char c)
+		                                       {
+			                                       unsigned char unsignedC = static_cast<unsigned char>(c);
+			                                       return unsignedC > 127 || unsignedC < 0;
+		                                       });
 	}
 	catch (fs::filesystem_error err)
 	{
@@ -244,13 +244,13 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				fileName,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        fileName,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -258,7 +258,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	if (ContainsInvalidChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File contents may not contain NUL/\\0 characters! Make sure your strings are valid!", mod->Name).c_str());
+		    sqvm, fmt::format("File contents may not contain NUL/\\0 characters! Make sure your strings are valid!", mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -269,12 +269,12 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"The mod {} has reached the maximum folder size.\n\nAsk the mod developer to optimize their data usage,"
-				"or increase the maximum folder size using the -maxfoldersize launch parameter.",
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "The mod {} has reached the maximum folder size.\n\nAsk the mod developer to optimize their data usage,"
+		        "or increase the maximum folder size using the -maxfoldersize launch parameter.",
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -298,13 +298,13 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				fileName,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        fileName,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -314,7 +314,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	if (ContainsInvalidChars(content))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm, fmt::format("File contents may not contain NUL/\\0 characters! Make sure your strings are valid!", mod->Name).c_str());
+		    sqvm, fmt::format("File contents may not contain NUL/\\0 characters! Make sure your strings are valid!", mod->Name).c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -325,12 +325,12 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"The mod {} has reached the maximum folder size.\n\nAsk the mod developer to optimize their data usage,"
-				"or increase the maximum folder size using the -maxfoldersize launch parameter.",
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "The mod {} has reached the maximum folder size.\n\nAsk the mod developer to optimize their data usage,"
+		        "or increase the maximum folder size using the -maxfoldersize launch parameter.",
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -354,13 +354,13 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER 
 	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				fileName,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        fileName,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -379,13 +379,13 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | S
 	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				fileName,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        fileName,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -403,13 +403,13 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | Scri
 	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				fileName,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        fileName,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -437,13 +437,13 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | Scri
 	if (!IsPathSafe(fileName, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				fileName,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        fileName,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 
@@ -464,13 +464,13 @@ ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptCon
 	if (!IsPathSafe(pathStr, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				pathStr,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        pathStr,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 	try
@@ -502,13 +502,13 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | Script
 	if (!IsPathSafe(pathStr, dir))
 	{
 		g_pSquirrel<context>->raiseerror(
-			sqvm,
-			fmt::format(
-				"File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
-				"save folder.",
-				pathStr,
-				mod->Name)
-				.c_str());
+		    sqvm,
+		    fmt::format(
+		        "File name invalid ({})! Make sure it does not contain any non-ASCII character, and results in a path inside your mod's "
+		        "save folder.",
+		        pathStr,
+		        mod->Name)
+		        .c_str());
 		return SQRESULT_ERROR;
 	}
 	try

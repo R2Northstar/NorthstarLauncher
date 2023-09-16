@@ -27,7 +27,7 @@ HRESULT, __stdcall, (
 		DriverType = 5; // D3D_DRIVER_TYPE_WARP
 
 	return D3D11CreateDevice(
-		pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel, ppImmediateContext);
+	    pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, ppDevice, pFeatureLevel, ppImmediateContext);
 }
 
 ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, (CModule module))

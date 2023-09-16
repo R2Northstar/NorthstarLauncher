@@ -19,7 +19,7 @@ void TryCreateGlobalMemAlloc()
 {
 	// init memalloc stuff
 	CreateGlobalMemAlloc =
-		reinterpret_cast<CreateGlobalMemAllocType>(GetProcAddress(GetModuleHandleA("tier0.dll"), "CreateGlobalMemAlloc"));
+	    reinterpret_cast<CreateGlobalMemAllocType>(GetProcAddress(GetModuleHandleA("tier0.dll"), "CreateGlobalMemAlloc"));
 	Tier0::g_pMemAllocSingleton = CreateGlobalMemAlloc(); // if it already exists, this returns the preexisting IMemAlloc instance
 }
 

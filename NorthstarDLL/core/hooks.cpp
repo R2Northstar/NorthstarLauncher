@@ -13,7 +13,7 @@ AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros
 __dllLoadCallback::__dllLoadCallback(
-	eDllLoadCallbackSide side, const std::string dllName, DllLoadCallbackFuncType callback, std::string uniqueStr, std::string reliesOn)
+    eDllLoadCallbackSide side, const std::string dllName, DllLoadCallbackFuncType callback, std::string uniqueStr, std::string reliesOn)
 {
 	// parse reliesOn array from string
 	std::vector<std::string> reliesOnArray;
@@ -78,7 +78,7 @@ void __fileAutohook::DispatchForModule(const char* pModuleName)
 
 	for (__autohook* hook : hooks)
 		if ((hook->iAddressResolutionMode == __autohook::OFFSET_STRING && !strncmp(pModuleName, hook->pAddrString, iModuleNameLen)) ||
-			(hook->iAddressResolutionMode == __autohook::PROCADDRESS && !strcmp(pModuleName, hook->pModuleName)))
+		    (hook->iAddressResolutionMode == __autohook::PROCADDRESS && !strcmp(pModuleName, hook->pModuleName)))
 			hook->Dispatch();
 }
 
@@ -184,7 +184,7 @@ void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::
 }
 
 void AddDllLoadCallbackForDedicatedServer(
-	std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::vector<std::string> reliesOn)
+    std::string dll, DllLoadCallbackFuncType callback, std::string tag, std::vector<std::string> reliesOn)
 {
 	if (!IsDedicatedServer())
 		return;
@@ -254,13 +254,13 @@ AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, (LPVOID)GetCommandLineA, LPSTR, WINAPI, 
 				// both either space after or ending with
 				if (!isDedi && argBuffer.str().find("-northstar") != std::string::npos)
 					MessageBoxA(
-						NULL,
-						"The \"-northstar\" command line option is NOT supposed to go into ns_startup_args.txt file!\n\nThis option is "
-						"supposed to go into Origin/Steam game launch options, and then you are supposed to launch the original "
-						"Titanfall2.exe "
-						"rather than NorthstarLauncher.exe to make use of it.",
-						"Northstar Warning",
-						MB_ICONWARNING);
+					    NULL,
+					    "The \"-northstar\" command line option is NOT supposed to go into ns_startup_args.txt file!\n\nThis option is "
+					    "supposed to go into Origin/Steam game launch options, and then you are supposed to launch the original "
+					    "Titanfall2.exe "
+					    "rather than NorthstarLauncher.exe to make use of it.",
+					    "Northstar Warning",
+					    MB_ICONWARNING);
 
 				args.append(argBuffer.str());
 			}

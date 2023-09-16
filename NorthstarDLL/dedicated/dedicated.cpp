@@ -65,7 +65,7 @@ void RunServer(CDedicatedExports* dedicated)
 		g_pEngine->Frame();
 
 		std::this_thread::sleep_for(
-			std::chrono::duration<double, std::ratio<1>>(g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
+		    std::chrono::duration<double, std::ratio<1>>(g_pGlobals->m_flTickInterval - fmin(Tier0::Plat_FloatTime() - frameStart, 0.25)));
 	}
 }
 
@@ -75,13 +75,13 @@ class DedicatedConsoleServerPresence : public ServerPresenceReporter
 	void ReportPresence(const ServerPresence* pServerPresence) override
 	{
 		SetConsoleTitleA(fmt::format(
-							 "{} - {} {}/{} players ({})",
-							 pServerPresence->m_sServerName,
-							 pServerPresence->m_MapName,
-							 pServerPresence->m_iPlayerCount,
-							 pServerPresence->m_iMaxPlayers,
-							 pServerPresence->m_PlaylistName)
-							 .c_str());
+		                     "{} - {} {}/{} players ({})",
+		                     pServerPresence->m_sServerName,
+		                     pServerPresence->m_MapName,
+		                     pServerPresence->m_iPlayerCount,
+		                     pServerPresence->m_iMaxPlayers,
+		                     pServerPresence->m_PlaylistName)
+		                     .c_str());
 	}
 };
 
@@ -292,7 +292,7 @@ ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
 	{
 		module.Offset(0x6BA350).Patch("C3"); // dont load skins.rson from rpak if we don't have rpaks, as loading it will cause a crash
 		module.Offset(0x6BA300).Patch(
-			"B8 C8 00 00 00 C3"); // return 200 as the number of skins from server.dll + 6BA300, this is the normal value read from
-								  // skins.rson and should be updated when we need it more modular
+		    "B8 C8 00 00 00 C3"); // return 200 as the number of skins from server.dll + 6BA300, this is the normal value read from
+		                          // skins.rson and should be updated when we need it more modular
 	}
 }

@@ -78,51 +78,51 @@ void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* 
 	std::string message = std::system_category().message(dwMessageId);
 
 	sprintf_s(
-		text,
-		"Failed to load the %ls at \"%ls\" (%lu):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "
-		"before reaching out for help.",
-		libName,
-		location,
-		dwMessageId,
-		message.c_str());
+	    text,
+	    "Failed to load the %ls at \"%ls\" (%lu):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "
+	    "before reaching out for help.",
+	    libName,
+	    location,
+	    dwMessageId,
+	    message.c_str());
 
 	if (dwMessageId == 126 && std::filesystem::exists(location))
 	{
 		sprintf_s(
-			text,
-			"%s\n\nThe file at the specified location DOES exist, so this error indicates that one of its *dependencies* failed to be "
-			"found.\n\nTry the following steps:\n1. Install Visual C++ 2022 Redistributable: "
-			"https://aka.ms/vs/17/release/vc_redist.x64.exe\n2. Repair game files",
-			text);
+		    text,
+		    "%s\n\nThe file at the specified location DOES exist, so this error indicates that one of its *dependencies* failed to be "
+		    "found.\n\nTry the following steps:\n1. Install Visual C++ 2022 Redistributable: "
+		    "https://aka.ms/vs/17/release/vc_redist.x64.exe\n2. Repair game files",
+		    text);
 	}
 	else if (!fs::exists("Titanfall2.exe") && (fs::exists("..\\Titanfall2.exe") || fs::exists("..\\..\\Titanfall2.exe")))
 	{
 		auto curDir = std::filesystem::current_path().filename().string();
 		auto aboveDir = std::filesystem::current_path().parent_path().filename().string();
 		sprintf_s(
-			text,
-			"%s\n\nWe detected that in your case you have extracted the files into a *subdirectory* of your Titanfall 2 "
-			"installation.\nPlease move all the files and folders from current folder (\"%s\") into the Titanfall 2 installation directory "
-			"just above (\"%s\").\n\nPlease try out the above steps by yourself before reaching out to the community for support.",
-			text,
-			curDir.c_str(),
-			aboveDir.c_str());
+		    text,
+		    "%s\n\nWe detected that in your case you have extracted the files into a *subdirectory* of your Titanfall 2 "
+		    "installation.\nPlease move all the files and folders from current folder (\"%s\") into the Titanfall 2 installation directory "
+		    "just above (\"%s\").\n\nPlease try out the above steps by yourself before reaching out to the community for support.",
+		    text,
+		    curDir.c_str(),
+		    aboveDir.c_str());
 	}
 	else if (!fs::exists("Titanfall2.exe"))
 	{
 		sprintf_s(
-			text,
-			"%s\n\nRemember: you need to unpack the contents of this archive into your Titanfall 2 game installation directory, not just "
-			"to any random folder.",
-			text);
+		    text,
+		    "%s\n\nRemember: you need to unpack the contents of this archive into your Titanfall 2 game installation directory, not just "
+		    "to any random folder.",
+		    text);
 	}
 	else if (fs::exists("Titanfall2.exe"))
 	{
 		sprintf_s(
-			text,
-			"%s\n\nTitanfall2.exe has been found in the current directory: is the game installation corrupted or did you not unpack all "
-			"Northstar files here?",
-			text);
+		    text,
+		    "%s\n\nTitanfall2.exe has been found in the current directory: is the game installation corrupted or did you not unpack all "
+		    "Northstar files here?",
+		    text);
 	}
 
 	MessageBoxA(GetForegroundWindow(), text, "Northstar Launcher Error", 0);
@@ -195,16 +195,16 @@ void EnsureOriginStarted()
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_MINIMIZE;
 	CreateProcessA(
-		originPath,
-		(char*)"",
-		NULL,
-		NULL,
-		false,
-		CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP,
-		NULL,
-		NULL,
-		(LPSTARTUPINFOA)&si,
-		&pi);
+	    originPath,
+	    (char*)"",
+	    NULL,
+	    NULL,
+	    false,
+	    CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP,
+	    NULL,
+	    NULL,
+	    (LPSTARTUPINFOA)&si,
+	    &pi);
 
 	std::cout << "[*] Waiting for Origin..." << std::endl;
 
@@ -233,22 +233,22 @@ void PrependPath()
 		if (result == -1)
 		{
 			MessageBoxW(
-				GetForegroundWindow(),
-				L"Warning: could not prepend the current directory to app's PATH environment variable. Something may break because of "
-				L"that.",
-				L"Northstar Launcher Warning",
-				0);
+			    GetForegroundWindow(),
+			    L"Warning: could not prepend the current directory to app's PATH environment variable. Something may break because of "
+			    L"that.",
+			    L"Northstar Launcher Warning",
+			    0);
 		}
 		free(pPath);
 	}
 	else
 	{
 		MessageBoxW(
-			GetForegroundWindow(),
-			L"Warning: could not get current PATH environment variable in order to prepend the current directory to it. Something may "
-			L"break because of that.",
-			L"Northstar Launcher Warning",
-			0);
+		    GetForegroundWindow(),
+		    L"Warning: could not get current PATH environment variable in order to prepend the current directory to it. Something may "
+		    L"break because of that.",
+		    L"Northstar Launcher Warning",
+		    0);
 	}
 }
 
@@ -352,10 +352,10 @@ int main(int argc, char* argv[])
 	if (!GetExePathWide(exePath, sizeof(exePath)))
 	{
 		MessageBoxA(
-			GetForegroundWindow(),
-			"Failed getting game directory.\nThe game cannot continue and has to exit.",
-			"Northstar Launcher Error",
-			0);
+		    GetForegroundWindow(),
+		    "Failed getting game directory.\nThe game cannot continue and has to exit.",
+		    "Northstar Launcher Error",
+		    0);
 		return 1;
 	}
 
@@ -383,26 +383,26 @@ int main(int argc, char* argv[])
 		std::cout << "[*] Loading stubs" << std::endl;
 		HMODULE gssao, gtxaa, d3d11;
 		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) && !(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
-			!(d3d11 = GetModuleHandleA("d3d11.dll")))
+		    !(d3d11 = GetModuleHandleA("d3d11.dll")))
 		{
 			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) || !(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
-				!(d3d11 = LoadDediStub("d3d11.dll")))
+			    !(d3d11 = LoadDediStub("d3d11.dll")))
 			{
 				if ((!gssao || FreeLibrary(gssao)) && (!gtxaa || FreeLibrary(gtxaa)) && (!d3d11 || FreeLibrary(d3d11)))
 				{
 					std::cout << "[*] WARNING: Failed to load d3d11/gfsdk stubs from bin/x64_dedi. "
-								 "The stubs have been unloaded and the original libraries will be used instead"
-							  << std::endl;
+					             "The stubs have been unloaded and the original libraries will be used instead"
+					          << std::endl;
 				}
 				else
 				{
 					// this is highly unlikely
 					MessageBoxA(
-						GetForegroundWindow(),
-						"Failed to load one or more stubs, but could not unload them either.\n"
-						"The game cannot continue and has to exit.",
-						"Northstar Launcher Error",
-						0);
+					    GetForegroundWindow(),
+					    "Failed to load one or more stubs, but could not unload them either.\n"
+					    "The game cannot continue and has to exit.",
+					    "Northstar Launcher Error",
+					    0);
 					return 1;
 				}
 			}
@@ -411,8 +411,8 @@ int main(int argc, char* argv[])
 		{
 			// this should never happen
 			std::cout << "[*] WARNING: Failed to load stubs because conflicting modules are already loaded, so those will be used instead "
-						 "(did Northstar initialize too late?)."
-					  << std::endl;
+			             "(did Northstar initialize too late?)."
+			          << std::endl;
 		}
 	}
 
@@ -467,12 +467,12 @@ int main(int argc, char* argv[])
 	auto LauncherMain = GetLauncherMain();
 	if (!LauncherMain)
 		MessageBoxA(
-			GetForegroundWindow(),
-			"Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
-			"Northstar Launcher Error",
-			0);
+		    GetForegroundWindow(),
+		    "Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
+		    "Northstar Launcher Error",
+		    0);
 
 	std::cout.flush();
 	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
-		NULL, NULL, NULL, 0); // the parameters aren't really used anyways
+	    NULL, NULL, NULL, 0); // the parameters aren't really used anyways
 }

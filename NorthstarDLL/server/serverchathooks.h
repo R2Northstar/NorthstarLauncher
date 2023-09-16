@@ -21,4 +21,4 @@ void ChatSendMessage(unsigned int playerIndex, const char* text, bool isteam);
 //   isDead: display a [DEAD] badge
 //   messageType: send a specific message type
 void ChatBroadcastMessage(
-	int fromPlayerIndex, int toPlayerIndex, const char* text, bool isTeam, bool isDead, CustomMessageType messageType);
+    int fromPlayerIndex, int toPlayerIndex, const char* text, bool isTeam, bool isDead, CustomMessageType messageType);

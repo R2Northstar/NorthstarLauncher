@@ -26,10 +26,10 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, (CModule module))
 
 	if (pLfxModule = LoadLibraryA("latencyflex_layer.dll"))
 		m_winelfx_WaitAndBeginFrame =
-			reinterpret_cast<void (*)()>(reinterpret_cast<void*>(GetProcAddress(pLfxModule, "lfx_WaitAndBeginFrame")));
+		    reinterpret_cast<void (*)()>(reinterpret_cast<void*>(GetProcAddress(pLfxModule, "lfx_WaitAndBeginFrame")));
 	else if (pLfxModule = LoadLibraryA("latencyflex_wine.dll"))
 		m_winelfx_WaitAndBeginFrame =
-			reinterpret_cast<void (*)()>(reinterpret_cast<void*>(GetProcAddress(pLfxModule, "winelfx_WaitAndBeginFrame")));
+		    reinterpret_cast<void (*)()>(reinterpret_cast<void*>(GetProcAddress(pLfxModule, "winelfx_WaitAndBeginFrame")));
 	else
 	{
 		spdlog::info("Unable to load LatencyFleX library, LatencyFleX disabled.");

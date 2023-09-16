@@ -61,7 +61,7 @@ void ModManager::BuildPdef()
 					inEnum = false;
 				else
 					enumAdds[currentEnum].push_back(currentLine); // only need to push_back current line, if there's syntax errors then game
-																  // pdef parser will handle them
+					                                              // pdef parser will handle them
 			}
 			else if (!currentLine.compare(start, 9, "$ENUM_ADD"))
 			{

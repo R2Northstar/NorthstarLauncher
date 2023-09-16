@@ -7,9 +7,9 @@
 INLINE int GetBitForBitnum(int bitNum)
 {
 	static int bitsForBitnum[] = {
-		(1 << 0),  (1 << 1),  (1 << 2),	 (1 << 3),	(1 << 4),  (1 << 5),  (1 << 6),	 (1 << 7),	(1 << 8),  (1 << 9),  (1 << 10),
-		(1 << 11), (1 << 12), (1 << 13), (1 << 14), (1 << 15), (1 << 16), (1 << 17), (1 << 18), (1 << 19), (1 << 20), (1 << 21),
-		(1 << 22), (1 << 23), (1 << 24), (1 << 25), (1 << 26), (1 << 27), (1 << 28), (1 << 29), (1 << 30), (1 << 31),
+	    (1 << 0),  (1 << 1),  (1 << 2),  (1 << 3),  (1 << 4),  (1 << 5),  (1 << 6),  (1 << 7),  (1 << 8),  (1 << 9),  (1 << 10),
+	    (1 << 11), (1 << 12), (1 << 13), (1 << 14), (1 << 15), (1 << 16), (1 << 17), (1 << 18), (1 << 19), (1 << 20), (1 << 21),
+	    (1 << 22), (1 << 23), (1 << 24), (1 << 25), (1 << 26), (1 << 27), (1 << 28), (1 << 29), (1 << 30), (1 << 31),
 	};
 
 	return bitsForBitnum[(bitNum) & (BITS_PER_INT - 1)];
@@ -45,39 +45,39 @@ static INLINE u32 LoadLittleDWord(u32* base, size_t dwordIndex)
 #include <algorithm>
 
 static inline const u32 s_nMaskTable[33] = {
-	0,
-	(1 << 1) - 1,
-	(1 << 2) - 1,
-	(1 << 3) - 1,
-	(1 << 4) - 1,
-	(1 << 5) - 1,
-	(1 << 6) - 1,
-	(1 << 7) - 1,
-	(1 << 8) - 1,
-	(1 << 9) - 1,
-	(1 << 10) - 1,
-	(1 << 11) - 1,
-	(1 << 12) - 1,
-	(1 << 13) - 1,
-	(1 << 14) - 1,
-	(1 << 15) - 1,
-	(1 << 16) - 1,
-	(1 << 17) - 1,
-	(1 << 18) - 1,
-	(1 << 19) - 1,
-	(1 << 20) - 1,
-	(1 << 21) - 1,
-	(1 << 22) - 1,
-	(1 << 23) - 1,
-	(1 << 24) - 1,
-	(1 << 25) - 1,
-	(1 << 26) - 1,
-	(1 << 27) - 1,
-	(1 << 28) - 1,
-	(1 << 29) - 1,
-	(1 << 30) - 1,
-	0x7fffffff,
-	0xffffffff,
+    0,
+    (1 << 1) - 1,
+    (1 << 2) - 1,
+    (1 << 3) - 1,
+    (1 << 4) - 1,
+    (1 << 5) - 1,
+    (1 << 6) - 1,
+    (1 << 7) - 1,
+    (1 << 8) - 1,
+    (1 << 9) - 1,
+    (1 << 10) - 1,
+    (1 << 11) - 1,
+    (1 << 12) - 1,
+    (1 << 13) - 1,
+    (1 << 14) - 1,
+    (1 << 15) - 1,
+    (1 << 16) - 1,
+    (1 << 17) - 1,
+    (1 << 18) - 1,
+    (1 << 19) - 1,
+    (1 << 20) - 1,
+    (1 << 21) - 1,
+    (1 << 22) - 1,
+    (1 << 23) - 1,
+    (1 << 24) - 1,
+    (1 << 25) - 1,
+    (1 << 26) - 1,
+    (1 << 27) - 1,
+    (1 << 28) - 1,
+    (1 << 29) - 1,
+    (1 << 30) - 1,
+    0x7fffffff,
+    0xffffffff,
 };
 
 enum EBitCoordType
@@ -273,158 +273,158 @@ class BFRead : public BitBufferBase
 	}
 
 	/*INLINE float ReadBitCoord() {
-		i32   intval = 0, fractval = 0, signbit = 0;
-		float value = 0.0;
+	    i32   intval = 0, fractval = 0, signbit = 0;
+	    float value = 0.0;
 
-		// Read the required integer and fraction flags
-		intval = ReadOneBit();
-		fractval = ReadOneBit();
+	    // Read the required integer and fraction flags
+	    intval = ReadOneBit();
+	    fractval = ReadOneBit();
 
-		// If we got either parse them, otherwise it's a zero.
-		if (intval || fractval) {
-			// Read the sign bit
-			signbit = ReadOneBit();
+	    // If we got either parse them, otherwise it's a zero.
+	    if (intval || fractval) {
+	        // Read the sign bit
+	        signbit = ReadOneBit();
 
-			// If there's an integer, read it in
-			if (intval) {
-				// Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
-				intval = ReadUBitLong(COORD_INTEGER_BITS) + 1;
-			}
+	        // If there's an integer, read it in
+	        if (intval) {
+	            // Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
+	            intval = ReadUBitLong(COORD_INTEGER_BITS) + 1;
+	        }
 
-			// If there's a fraction, read it in
-			if (fractval) {
-				fractval = ReadUBitLong(COORD_FRACTIONAL_BITS);
-			}
+	        // If there's a fraction, read it in
+	        if (fractval) {
+	            fractval = ReadUBitLong(COORD_FRACTIONAL_BITS);
+	        }
 
-			// Calculate the correct floating point value
-			value = intval + ((float)fractval * COORD_RESOLUTION);
+	        // Calculate the correct floating point value
+	        value = intval + ((float)fractval * COORD_RESOLUTION);
 
-			// Fixup the sign if negative.
-			if (signbit)
-				value = -value;
-		}
+	        // Fixup the sign if negative.
+	        if (signbit)
+	            value = -value;
+	    }
 
-		return value;
+	    return value;
 	}
 
 	INLINE float ReadBitCoordMP() {
-		i32   intval = 0, fractval = 0, signbit = 0;
-		float value = 0.0;
+	    i32   intval = 0, fractval = 0, signbit = 0;
+	    float value = 0.0;
 
-		bool inBounds = ReadOneBit() ? true : false;
+	    bool inBounds = ReadOneBit() ? true : false;
 
-		// Read the required integer and fraction flags
-		intval = ReadOneBit();
+	    // Read the required integer and fraction flags
+	    intval = ReadOneBit();
 
-		// If we got either parse them, otherwise it's a zero.
-		if (intval) {
-			// Read the sign bit
-			signbit = ReadOneBit();
+	    // If we got either parse them, otherwise it's a zero.
+	    if (intval) {
+	        // Read the sign bit
+	        signbit = ReadOneBit();
 
-			// If there's an integer, read it in
-			// Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
-			if (inBounds)
-				value = ReadUBitLong(COORD_INTEGER_BITS_MP) + 1;
-			else
-				value = ReadUBitLong(COORD_INTEGER_BITS) + 1;
-		}
+	        // If there's an integer, read it in
+	        // Adjust the integers from [0..MAX_COORD_VALUE-1] to [1..MAX_COORD_VALUE]
+	        if (inBounds)
+	            value = ReadUBitLong(COORD_INTEGER_BITS_MP) + 1;
+	        else
+	            value = ReadUBitLong(COORD_INTEGER_BITS) + 1;
+	    }
 
-		// Fixup the sign if negative.
-		if (signbit)
-			value = -value;
+	    // Fixup the sign if negative.
+	    if (signbit)
+	        value = -value;
 
-		return value;
+	    return value;
 	}
 
 	INLINE float ReadBitCellCoord(int bits, EBitCoordType coordType) {
-		bool bIntegral = (coordType == kCW_Integral);
-		bool bLowPrecision = (coordType == kCW_LowPrecision);
+	    bool bIntegral = (coordType == kCW_Integral);
+	    bool bLowPrecision = (coordType == kCW_LowPrecision);
 
-		int   intval = 0, fractval = 0;
-		float value = 0.0;
+	    int   intval = 0, fractval = 0;
+	    float value = 0.0;
 
-		if (bIntegral)
-			value = ReadUBitLong(bits);
-		else {
-			intval = ReadUBitLong(bits);
+	    if (bIntegral)
+	        value = ReadUBitLong(bits);
+	    else {
+	        intval = ReadUBitLong(bits);
 
-			// If there's a fraction, read it in
-			fractval = ReadUBitLong(bLowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
+	        // If there's a fraction, read it in
+	        fractval = ReadUBitLong(bLowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
 
-			// Calculate the correct floating point value
-			value = intval + ((float)fractval * (bLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION));
-		}
+	        // Calculate the correct floating point value
+	        value = intval + ((float)fractval * (bLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION));
+	    }
 
-		return value;
+	    return value;
 	}
 
 	INLINE float ReadBitNormal() {
-		// Read the sign bit
-		i32 signbit = ReadOneBit();
+	    // Read the sign bit
+	    i32 signbit = ReadOneBit();
 
-		// Read the fractional part
-		u32 fractval = ReadUBitLong(NORMAL_FRACTIONAL_BITS);
+	    // Read the fractional part
+	    u32 fractval = ReadUBitLong(NORMAL_FRACTIONAL_BITS);
 
-		// Calculate the correct floating point value
-		float value = (float)fractval * NORMAL_RESOLUTION;
+	    // Calculate the correct floating point value
+	    float value = (float)fractval * NORMAL_RESOLUTION;
 
-		// Fixup the sign if negative.
-		if (signbit)
-			value = -value;
+	    // Fixup the sign if negative.
+	    if (signbit)
+	        value = -value;
 
-		return value;
+	    return value;
 	}
 
 	INLINE void ReadBitVec3Coord(Vector& fa) {
-		i32 xflag, yflag, zflag;
+	    i32 xflag, yflag, zflag;
 
-		// This vector must be initialized! Otherwise, If any of the flags aren't set,
-		// the corresponding component will not be read and will be stack garbage.
-		fa.Init(0, 0, 0);
+	    // This vector must be initialized! Otherwise, If any of the flags aren't set,
+	    // the corresponding component will not be read and will be stack garbage.
+	    fa.Init(0, 0, 0);
 
-		xflag = ReadOneBit();
-		yflag = ReadOneBit();
-		zflag = ReadOneBit();
+	    xflag = ReadOneBit();
+	    yflag = ReadOneBit();
+	    zflag = ReadOneBit();
 
-		if (xflag)
-			fa[0] = ReadBitCoord();
-		if (yflag)
-			fa[1] = ReadBitCoord();
-		if (zflag)
-			fa[2] = ReadBitCoord();
+	    if (xflag)
+	        fa[0] = ReadBitCoord();
+	    if (yflag)
+	        fa[1] = ReadBitCoord();
+	    if (zflag)
+	        fa[2] = ReadBitCoord();
 	}
 
 	INLINE void ReadBitVec3Normal(Vector& fa) {
-		i32 xflag = ReadOneBit();
-		i32 yflag = ReadOneBit();
+	    i32 xflag = ReadOneBit();
+	    i32 yflag = ReadOneBit();
 
-		if (xflag)
-			fa[0] = ReadBitNormal();
-		else
-			fa[0] = 0.0f;
+	    if (xflag)
+	        fa[0] = ReadBitNormal();
+	    else
+	        fa[0] = 0.0f;
 
-		if (yflag)
-			fa[1] = ReadBitNormal();
-		else
-			fa[1] = 0.0f;
+	    if (yflag)
+	        fa[1] = ReadBitNormal();
+	    else
+	        fa[1] = 0.0f;
 
-		// The first two imply the third (but not its sign)
-		i32 znegative = ReadOneBit();
+	    // The first two imply the third (but not its sign)
+	    i32 znegative = ReadOneBit();
 
-		float fafafbfb = fa[0] * fa[0] + fa[1] * fa[1];
-		if (fafafbfb < 1.0f)
-			fa[2] = sqrt(1.0f - fafafbfb);
-		else
-			fa[2] = 0.0f;
+	    float fafafbfb = fa[0] * fa[0] + fa[1] * fa[1];
+	    if (fafafbfb < 1.0f)
+	        fa[2] = sqrt(1.0f - fafafbfb);
+	    else
+	        fa[2] = 0.0f;
 
-		if (znegative)
-			fa[2] = -fa[2];
+	    if (znegative)
+	        fa[2] = -fa[2];
 	}
 
 	INLINE void ReadBitAngles(QAngle& fa) {
-		Vector tmp;
-		ReadBitVec3Coord(tmp);
-		fa.Init(tmp.x, tmp.y, tmp.z);
+	    Vector tmp;
+	    ReadBitVec3Coord(tmp);
+	    fa.Init(tmp.x, tmp.y, tmp.z);
 	}*/
 
 	INLINE float ReadBitAngle(int numBits)
@@ -970,72 +970,72 @@ class BFWrite : public BitBufferBase
 	}
 
 	/*INLINE void WriteBitCoord(const float f) {
-		i32 signbit = (f <= -COORD_RESOLUTION);
-		i32 intval = (i32)abs(f);
-		i32 fractval = abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1);
+	    i32 signbit = (f <= -COORD_RESOLUTION);
+	    i32 intval = (i32)abs(f);
+	    i32 fractval = abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1);
 
-		// Send the bit flags that indicate whether we have an integer part and/or a fraction part.
-		WriteOneBit(intval);
-		WriteOneBit(fractval);
+	    // Send the bit flags that indicate whether we have an integer part and/or a fraction part.
+	    WriteOneBit(intval);
+	    WriteOneBit(fractval);
 
-		if (intval || fractval) {
-			// Send the sign bit
-			WriteOneBit(signbit);
+	    if (intval || fractval) {
+	        // Send the sign bit
+	        WriteOneBit(signbit);
 
-			// Send the integer if we have one.
-			if (intval) {
-				// Adjust the integers from [1..MAX_COORD_VALUE] to [0..MAX_COORD_VALUE-1]
-				intval--;
-				WriteUBitLong((u32)intval, COORD_INTEGER_BITS);
-			}
+	        // Send the integer if we have one.
+	        if (intval) {
+	            // Adjust the integers from [1..MAX_COORD_VALUE] to [0..MAX_COORD_VALUE-1]
+	            intval--;
+	            WriteUBitLong((u32)intval, COORD_INTEGER_BITS);
+	        }
 
-			// Send the fraction if we have one
-			if (fractval) {
-				WriteUBitLong((u32)fractval, COORD_FRACTIONAL_BITS);
-			}
-		}
+	        // Send the fraction if we have one
+	        if (fractval) {
+	            WriteUBitLong((u32)fractval, COORD_FRACTIONAL_BITS);
+	        }
+	    }
 	}
 
 	INLINE void WriteBitCoordMP(const float f) {
-		i32 signbit = (f <= -COORD_RESOLUTION);
-		i32 intval = (i32)abs(f);
-		i32 fractval = (abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1));
+	    i32 signbit = (f <= -COORD_RESOLUTION);
+	    i32 intval = (i32)abs(f);
+	    i32 fractval = (abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1));
 
-		bool bInBounds = intval < (1 << COORD_INTEGER_BITS_MP);
+	    bool bInBounds = intval < (1 << COORD_INTEGER_BITS_MP);
 
-		WriteOneBit(bInBounds);
+	    WriteOneBit(bInBounds);
 
-		// Send the sign bit
-		WriteOneBit(intval);
+	    // Send the sign bit
+	    WriteOneBit(intval);
 
-		if (intval) {
-			WriteOneBit(signbit);
+	    if (intval) {
+	        WriteOneBit(signbit);
 
-			// Send the integer if we have one.
-			// Adjust the integers from [1..MAX_COORD_VALUE] to [0..MAX_COORD_VALUE-1]
-			intval--;
+	        // Send the integer if we have one.
+	        // Adjust the integers from [1..MAX_COORD_VALUE] to [0..MAX_COORD_VALUE-1]
+	        intval--;
 
-			if (bInBounds)
-				WriteUBitLong((u32)intval, COORD_INTEGER_BITS_MP);
-			else
-				WriteUBitLong((u32)intval, COORD_INTEGER_BITS);
-		}
+	        if (bInBounds)
+	            WriteUBitLong((u32)intval, COORD_INTEGER_BITS_MP);
+	        else
+	            WriteUBitLong((u32)intval, COORD_INTEGER_BITS);
+	    }
 	}
 
 	INLINE void WriteBitCellCoord(const float f, int bits, EBitCoordType coordType) {
-		bool bIntegral = (coordType == kCW_Integral);
-		bool bLowPrecision = (coordType == kCW_LowPrecision);
+	    bool bIntegral = (coordType == kCW_Integral);
+	    bool bLowPrecision = (coordType == kCW_LowPrecision);
 
-		i32 intval = (i32)abs(f);
-		i32 fractval = bLowPrecision ? (abs((i32)(f * COORD_DENOMINATOR_LOWPRECISION)) & (COORD_DENOMINATOR_LOWPRECISION - 1)) :
+	    i32 intval = (i32)abs(f);
+	    i32 fractval = bLowPrecision ? (abs((i32)(f * COORD_DENOMINATOR_LOWPRECISION)) & (COORD_DENOMINATOR_LOWPRECISION - 1)) :
 	(abs((i32)(f * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1));
 
-		if (bIntegral)
-			WriteUBitLong((u32)intval, bits);
-		else {
-			WriteUBitLong((u32)intval, bits);
-			WriteUBitLong((u32)fractval, bLowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
-		}
+	    if (bIntegral)
+	        WriteUBitLong((u32)intval, bits);
+	    else {
+	        WriteUBitLong((u32)intval, bits);
+	        WriteUBitLong((u32)fractval, bLowPrecision ? COORD_FRACTIONAL_BITS_MP_LOWPRECISION : COORD_FRACTIONAL_BITS);
+	    }
 	}*/
 
 	INLINE void SeekToBit(int bit)
@@ -1048,58 +1048,58 @@ class BFWrite : public BitBufferBase
 	}
 
 	/*INLINE void WriteBitVec3Coord(const Vector& fa) {
-		i32 xflag, yflag, zflag;
+	    i32 xflag, yflag, zflag;
 
-		xflag = (fa[0] >= COORD_RESOLUTION) || (fa[0] <= -COORD_RESOLUTION);
-		yflag = (fa[1] >= COORD_RESOLUTION) || (fa[1] <= -COORD_RESOLUTION);
-		zflag = (fa[2] >= COORD_RESOLUTION) || (fa[2] <= -COORD_RESOLUTION);
+	    xflag = (fa[0] >= COORD_RESOLUTION) || (fa[0] <= -COORD_RESOLUTION);
+	    yflag = (fa[1] >= COORD_RESOLUTION) || (fa[1] <= -COORD_RESOLUTION);
+	    zflag = (fa[2] >= COORD_RESOLUTION) || (fa[2] <= -COORD_RESOLUTION);
 
-		WriteOneBit(xflag);
-		WriteOneBit(yflag);
-		WriteOneBit(zflag);
+	    WriteOneBit(xflag);
+	    WriteOneBit(yflag);
+	    WriteOneBit(zflag);
 
-		if (xflag)
-			WriteBitCoord(fa[0]);
-		if (yflag)
-			WriteBitCoord(fa[1]);
-		if (zflag)
-			WriteBitCoord(fa[2]);
+	    if (xflag)
+	        WriteBitCoord(fa[0]);
+	    if (yflag)
+	        WriteBitCoord(fa[1]);
+	    if (zflag)
+	        WriteBitCoord(fa[2]);
 	}
 
 	INLINE void WriteBitNormal(float f) {
-		i32 signbit = (f <= -NORMAL_RESOLUTION);
+	    i32 signbit = (f <= -NORMAL_RESOLUTION);
 
-		// NOTE: Since +/-1 are valid values for a normal, I'm going to encode that as all ones
-		u32 fractval = abs((i32)(f * NORMAL_DENOMINATOR));
+	    // NOTE: Since +/-1 are valid values for a normal, I'm going to encode that as all ones
+	    u32 fractval = abs((i32)(f * NORMAL_DENOMINATOR));
 
-		// clamp..
-		if (fractval > NORMAL_DENOMINATOR)
-			fractval = NORMAL_DENOMINATOR;
+	    // clamp..
+	    if (fractval > NORMAL_DENOMINATOR)
+	        fractval = NORMAL_DENOMINATOR;
 
-		// Send the sign bit
-		WriteOneBit(signbit);
+	    // Send the sign bit
+	    WriteOneBit(signbit);
 
-		// Send the fractional component
-		WriteUBitLong(fractval, NORMAL_FRACTIONAL_BITS);
+	    // Send the fractional component
+	    WriteUBitLong(fractval, NORMAL_FRACTIONAL_BITS);
 	}
 
 	INLINE void WriteBitVec3Normal(const Vector& fa) {
-		i32 xflag, yflag;
+	    i32 xflag, yflag;
 
-		xflag = (fa[0] >= NORMAL_RESOLUTION) || (fa[0] <= -NORMAL_RESOLUTION);
-		yflag = (fa[1] >= NORMAL_RESOLUTION) || (fa[1] <= -NORMAL_RESOLUTION);
+	    xflag = (fa[0] >= NORMAL_RESOLUTION) || (fa[0] <= -NORMAL_RESOLUTION);
+	    yflag = (fa[1] >= NORMAL_RESOLUTION) || (fa[1] <= -NORMAL_RESOLUTION);
 
-		WriteOneBit(xflag);
-		WriteOneBit(yflag);
+	    WriteOneBit(xflag);
+	    WriteOneBit(yflag);
 
-		if (xflag)
-			WriteBitNormal(fa[0]);
-		if (yflag)
-			WriteBitNormal(fa[1]);
+	    if (xflag)
+	        WriteBitNormal(fa[0]);
+	    if (yflag)
+	        WriteBitNormal(fa[1]);
 
-		// Write z sign bit
-		i32 signbit = (fa[2] <= -NORMAL_RESOLUTION);
-		WriteOneBit(signbit);
+	    // Write z sign bit
+	    i32 signbit = (fa[2] <= -NORMAL_RESOLUTION);
+	    WriteOneBit(signbit);
 	}*/
 
 	INLINE void WriteBitAngle(float angle, int numBits)
@@ -1126,9 +1126,9 @@ class BFWrite : public BitBufferBase
 	}
 
 	/*INLINE void WriteBitAngles(const QAngle& fa) {
-		// FIXME:
-		Vector tmp(fa.x, fa.y, fa.z);
-		WriteBitVec3Coord(tmp);
+	    // FIXME:
+	    Vector tmp(fa.x, fa.y, fa.z);
+	    WriteBitVec3Coord(tmp);
 	}*/
 
   private:

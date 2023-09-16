@@ -201,10 +201,10 @@ void ServerPresenceManager::SetPlaylist(const char* pPlaylistName)
 {
 	// update playlist
 	strncpy_s(
-		m_ServerPresence.m_PlaylistName,
-		sizeof(m_ServerPresence.m_PlaylistName),
-		pPlaylistName,
-		sizeof(m_ServerPresence.m_PlaylistName) - 1);
+	    m_ServerPresence.m_PlaylistName,
+	    sizeof(m_ServerPresence.m_PlaylistName),
+	    pPlaylistName,
+	    sizeof(m_ServerPresence.m_PlaylistName) - 1);
 
 	// update maxplayers
 	const char* pMaxPlayers = R2::GetCurrentPlaylistVar("max_players", true);

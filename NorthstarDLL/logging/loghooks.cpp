@@ -47,26 +47,26 @@ enum class SpewType_t
 };
 
 const std::unordered_map<SpewType_t, const char*> PrintSpewTypes = {
-	{SpewType_t::SPEW_MESSAGE, "SPEW_MESSAGE"},
-	{SpewType_t::SPEW_WARNING, "SPEW_WARNING"},
-	{SpewType_t::SPEW_ASSERT, "SPEW_ASSERT"},
-	{SpewType_t::SPEW_ERROR, "SPEW_ERROR"},
-	{SpewType_t::SPEW_LOG, "SPEW_LOG"}};
+    {SpewType_t::SPEW_MESSAGE, "SPEW_MESSAGE"},
+    {SpewType_t::SPEW_WARNING, "SPEW_WARNING"},
+    {SpewType_t::SPEW_ASSERT, "SPEW_ASSERT"},
+    {SpewType_t::SPEW_ERROR, "SPEW_ERROR"},
+    {SpewType_t::SPEW_LOG, "SPEW_LOG"}};
 
 // these are used to define the base text colour for these things
 const std::unordered_map<SpewType_t, spdlog::level::level_enum> PrintSpewLevels = {
-	{SpewType_t::SPEW_MESSAGE, spdlog::level::level_enum::info},
-	{SpewType_t::SPEW_WARNING, spdlog::level::level_enum::warn},
-	{SpewType_t::SPEW_ASSERT, spdlog::level::level_enum::err},
-	{SpewType_t::SPEW_ERROR, spdlog::level::level_enum::err},
-	{SpewType_t::SPEW_LOG, spdlog::level::level_enum::info}};
+    {SpewType_t::SPEW_MESSAGE, spdlog::level::level_enum::info},
+    {SpewType_t::SPEW_WARNING, spdlog::level::level_enum::warn},
+    {SpewType_t::SPEW_ASSERT, spdlog::level::level_enum::err},
+    {SpewType_t::SPEW_ERROR, spdlog::level::level_enum::err},
+    {SpewType_t::SPEW_LOG, spdlog::level::level_enum::info}};
 
 const std::unordered_map<SpewType_t, const char> PrintSpewTypes_Short = {
-	{SpewType_t::SPEW_MESSAGE, 'M'},
-	{SpewType_t::SPEW_WARNING, 'W'},
-	{SpewType_t::SPEW_ASSERT, 'A'},
-	{SpewType_t::SPEW_ERROR, 'E'},
-	{SpewType_t::SPEW_LOG, 'L'}};
+    {SpewType_t::SPEW_MESSAGE, 'M'},
+    {SpewType_t::SPEW_WARNING, 'W'},
+    {SpewType_t::SPEW_ASSERT, 'A'},
+    {SpewType_t::SPEW_ERROR, 'E'},
+    {SpewType_t::SPEW_LOG, 'L'}};
 
 ICenterPrint* pInternalCenterPrint = NULL;
 
