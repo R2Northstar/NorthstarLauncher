@@ -1108,7 +1108,9 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 
 		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)
 		{
-			spdlog::error("Reached max ms server registration attempts.");
+			spdlog::log(
+				IsDedicatedServer() ? spdlog::level::level_enum::err : spdlog::level::level_enum::warn,
+				"Reached max ms server registration attempts.");
 		}
 	}
 	else if (updateServerFuture.valid())
