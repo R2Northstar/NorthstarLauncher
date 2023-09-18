@@ -4,6 +4,7 @@
 #include "server/r2server.h"
 #include "engine/r2engine.h"
 #include "config/profile.h"
+#include "shared/maxplayers.h"
 
 #include <filesystem>
 
@@ -208,12 +209,49 @@ void ConCommand_clearbanlist(const CCommand& args)
 	g_pBanSystem->ClearBanlist();
 }
 
+int ConCommand_banCompletion(
+	const char* const cmdname, const char* const query, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
+{
+	const int cmdLength = strlen(cmdname);
+	const int queryLength = strlen(query);
+
+	int numCompletions = 0;
+	for (int i = 0; i < R2::GetMaxPlayers() && numCompletions < COMMAND_COMPLETION_MAXITEMS - 2; i++)
+	{
+		R2::CBaseClient* client = &R2::g_pClientArray[i];
+		if (client->m_Signon < R2::eSignonState::CONNECTED)
+			continue;
+
+		if (!strncmp(query, client->m_Name, queryLength))
+		{
+			strcpy(commands[numCompletions], cmdname);
+			strncpy_s(
+				commands[numCompletions++] + cmdLength,
+				COMMAND_COMPLETION_ITEM_LENGTH,
+				client->m_Name,
+				COMMAND_COMPLETION_ITEM_LENGTH - cmdLength);
+		}
+
+		if (!strncmp(query, client->m_UID, queryLength))
+		{
+			strcpy(commands[numCompletions], cmdname);
+			strncpy_s(
+				commands[numCompletions++] + cmdLength,
+				COMMAND_COMPLETION_ITEM_LENGTH,
+				client->m_UID,
+				COMMAND_COMPLETION_ITEM_LENGTH - cmdLength);
+		}
+	}
+
+	return numCompletions;
+}
+
 ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (CModule module))
 {
 	g_pBanSystem = new ServerBanSystem;
 	g_pBanSystem->OpenBanlist();
 
-	RegisterConCommand("ban", ConCommand_ban, "bans a given player by uid or name", FCVAR_GAMEDLL);
-	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_GAMEDLL);
+	RegisterConCommand("ban", ConCommand_ban, "bans a given player by uid or name", FCVAR_GAMEDLL, ConCommand_banCompletion);
+	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_GAMEDLL, ConCommand_banCompletion);
 	RegisterConCommand("clearbanlist", ConCommand_clearbanlist, "clears all uids on the banlist", FCVAR_GAMEDLL);
 }
