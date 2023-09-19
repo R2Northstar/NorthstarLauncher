@@ -133,5 +133,3 @@ typedef void (*PLUGIN_INFORM_SQVM_DESTROYED_TYPE)(ScriptContext context);
 
 typedef void (*PLUGIN_INFORM_DLL_LOAD_TYPE)(const char* dll, PluginEngineData* data, void* dllPtr);
 typedef void (*PLUGIN_RUNFRAME)();
-
-// Async Communication types
