@@ -19,7 +19,7 @@ ModDownloader::ModDownloader()
 	modState = {};
 }
 
-size_t writeToString(void* ptr, size_t size, size_t count, void* stream)
+size_t WriteToString(void* ptr, size_t size, size_t count, void* stream)
 {
 	((std::string*)stream)->append((char*)ptr, 0, size * count);
 	return size * count;
@@ -45,7 +45,7 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeToString);
+			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteToString);
 			result = curl_easy_perform(easyhandle);
 
 			if (result == CURLcode::CURLE_OK)
@@ -91,14 +91,14 @@ void ModDownloader::FetchModsListFromAPI()
 	requestThread.detach();
 }
 
-size_t writeData(void* ptr, size_t size, size_t nmemb, FILE* stream)
+size_t WriteData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
 	size_t written;
 	written = fwrite(ptr, size, nmemb, stream);
 	return written;
 }
 
-void func(std::promise<std::optional<fs::path>>&& p, std::string_view url, fs::path downloadPath)
+void FetchModSync(std::promise<std::optional<fs::path>>&& p, std::string_view url, fs::path downloadPath)
 {
 	bool failed = false;
 	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
@@ -110,7 +110,7 @@ void func(std::promise<std::optional<fs::path>>&& p, std::string_view url, fs::p
 	curl_easy_setopt(easyhandle, CURLOPT_URL, url.data());
 	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
-	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, writeData);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteData);
 	result = curl_easy_perform(easyhandle);
 
 	if (result == CURLcode::CURLE_OK)
@@ -145,7 +145,7 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	// Download the actual archive
 	std::promise<std::optional<fs::path>> promise;
 	auto f = promise.get_future();
-	std::thread t(&func, std::move(promise), std::string_view(url), downloadPath);
+	std::thread t(&FetchModSync, std::move(promise), std::string_view(url), downloadPath);
 	t.join();
 	return f.get();
 }
