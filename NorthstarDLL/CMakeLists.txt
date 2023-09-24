@@ -5,6 +5,7 @@ find_package(libcurl REQUIRED)
 find_package(minizip REQUIRED)
 
 add_library(NorthstarDLL SHARED
+            "resources.rc"
             "client/audio.cpp"
             "client/audio.h"
             "client/chatcommand.cpp"
