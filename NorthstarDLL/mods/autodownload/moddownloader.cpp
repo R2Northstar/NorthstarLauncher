@@ -358,7 +358,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				}
 
 				// Create file
-				int bufferSize = 8192;
+				const int bufferSize = 8192;
 				void* buffer;
 				int err = UNZ_OK;
 				FILE* fout = NULL;
