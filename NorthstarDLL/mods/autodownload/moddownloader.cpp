@@ -15,7 +15,7 @@ ModDownloader* g_pModDownloader;
 
 ModDownloader::ModDownloader()
 {
-	spdlog::info("Mod downloaded initialized");
+	spdlog::info("Mod downloader initialized");
 	modState = {};
 }
 
