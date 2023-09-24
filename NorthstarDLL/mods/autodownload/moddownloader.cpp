@@ -358,7 +358,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				}
 
 				// Create file
-				int bufferSize;
+				int bufferSize = 8192;
 				void* buffer;
 				int err = UNZ_OK;
 				FILE* fout = NULL;
@@ -380,7 +380,6 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				}
 
 				// Allocate memory for buffer
-				bufferSize = 8192;
 				buffer = (void*)malloc(bufferSize);
 				if (buffer == NULL)
 				{
