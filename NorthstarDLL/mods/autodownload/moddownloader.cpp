@@ -347,7 +347,6 @@ void ModDownloader::ExtractMod(fs::path modPath)
 					goto EXTRACTION_CLEANUP;
 				}
 			}
-
 			// ...else create file
 			else
 			{
