@@ -123,7 +123,7 @@ class ModDownloader
 		int progress;
 		int total;
 		float ratio;
-	} modState;
+	} modState = {};
 
 	/**
 	 * Retrieves installation information of a mod.

@@ -16,7 +16,6 @@ ModDownloader* g_pModDownloader;
 ModDownloader::ModDownloader()
 {
 	spdlog::info("Mod downloader initialized");
-	modState = {};
 }
 
 size_t WriteToString(void* ptr, size_t size, size_t count, void* stream)
