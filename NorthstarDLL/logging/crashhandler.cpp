@@ -366,6 +366,9 @@ BOOL WINAPI ConsoleHandlerRoutine(DWORD eventCode)
 
 void InitialiseCrashHandler()
 {
+	if (strstr(GetCommandLineA(), "-disablecrashhandler"))
+		return;
+
 	hExceptionFilter = AddVectoredExceptionHandler(TRUE, ExceptionFilter);
 	SetConsoleCtrlHandler(ConsoleHandlerRoutine, true);
 	std::set_terminate(RuntimeExceptionHandler);
