@@ -291,8 +291,7 @@ ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
 	if (Tier0::CommandLine()->CheckParm("-nopakdedi"))
 	{
 		module.Offset(0x6BA350).Patch("C3"); // dont load skins.rson from rpak if we don't have rpaks, as loading it will cause a crash
-		module.Offset(0x6BA300).Patch(
-			"B8 C8 00 00 00 C3"); // return 200 as the number of skins from server.dll + 6BA300, this is the normal value read from
-								  // skins.rson and should be updated when we need it more modular
+		module.Offset(0x6BA300).Patch("B8 C8 00 00 00 C3"); // return 200 as the number of skins from server.dll + 6BA300, this is the normal value read from
+															// skins.rson and should be updated when we need it more modular
 	}
 }

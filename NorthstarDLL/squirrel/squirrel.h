@@ -11,9 +11,11 @@
 	required to function
 */
 
-template <ScriptContext context, typename T> inline void SqRecurseArgs(FunctionVector& v, T& arg);
+template <ScriptContext context, typename T>
+inline void SqRecurseArgs(FunctionVector& v, T& arg);
 
-template <ScriptContext context, typename T, typename... Args> inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
+template <ScriptContext context, typename T, typename... Args>
+inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args);
 
 /*
 	sanity below
@@ -57,7 +59,8 @@ ScriptContext ScriptContextFromString(std::string string);
 
 namespace NS::log
 {
-	template <ScriptContext context> std::shared_ptr<spdlog::logger> squirrel_logger();
+	template <ScriptContext context>
+	std::shared_ptr<spdlog::logger> squirrel_logger();
 }; // namespace NS::log
 
 // This base class means that only the templated functions have to be rebuilt for each template instance
@@ -274,12 +277,14 @@ class SquirrelManagerBase
 		}
 		return nullptr;
 	}
-	template <typename T> inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
+	template <typename T>
+	inline SQRESULT getuserdata(HSquirrelVM* sqvm, const SQInteger stackpos, T* data, uint64_t* typeId)
 	{
 		return __sq_getuserdata(sqvm, stackpos, (void**)data, typeId); // this sometimes crashes idk
 	}
 
-	template <typename T> inline T* createuserdata(HSquirrelVM* sqvm, SQInteger size)
+	template <typename T>
+	inline T* createuserdata(HSquirrelVM* sqvm, SQInteger size)
 	{
 		void* ret = __sq_createuserdata(sqvm, size);
 		memset(ret, 0, size);
@@ -291,12 +296,14 @@ class SquirrelManagerBase
 		return __sq_setuserdatatypeid(sqvm, stackpos, typeId);
 	}
 
-	template <typename T> inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
+	template <typename T>
+	inline SQBool getthisentity(HSquirrelVM* sqvm, T* ppEntity)
 	{
 		return __sq_getthisentity(sqvm, (void**)ppEntity);
 	}
 
-	template <typename T> inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
+	template <typename T>
+	inline T* getentity(HSquirrelVM* sqvm, SQInteger iStackPos)
 	{
 		SQObject obj;
 		__sq_getobject(sqvm, iStackPos, &obj);
@@ -317,13 +324,15 @@ class SquirrelManagerBase
 #pragma endregion
 };
 
-template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
+template <ScriptContext context>
+class SquirrelManager : public virtual SquirrelManagerBase
 {
   public:
 #pragma region MessageBuffer
 	SquirrelMessageBuffer* messageBuffer;
 
-	template <typename... Args> SquirrelMessage AsyncCall(std::string funcname, Args... args)
+	template <typename... Args>
+	SquirrelMessage AsyncCall(std::string funcname, Args... args)
 	{
 		// This function schedules a call to be executed on the next frame
 		// This is useful for things like threads and plugins, which do not run on the main thread
@@ -369,7 +378,8 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 		return _call(m_pSQVM->sqvm, 0);
 	}
 
-	template <typename... Args> SQRESULT Call(const char* funcname, Args... args)
+	template <typename... Args>
+	SQRESULT Call(const char* funcname, Args... args)
 	{
 		// Warning!
 		// This function assumes the squirrel VM is stopped/blocked at the moment of call
@@ -420,7 +430,8 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 	void GenerateSquirrelFunctionsStruct(SquirrelFunctions* s);
 };
 
-template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;
+template <ScriptContext context>
+SquirrelManager<context>* g_pSquirrel;
 
 void InitialiseSquirrelManagers();
 

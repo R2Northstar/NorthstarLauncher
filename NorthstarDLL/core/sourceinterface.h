@@ -4,7 +4,8 @@
 // literally just copied from ttf2sdk definition
 typedef void* (*CreateInterfaceFn)(const char* pName, int* pReturnCode);
 
-template <typename T> class SourceInterface
+template <typename T>
+class SourceInterface
 {
   private:
 	T* m_interface;

@@ -312,7 +312,10 @@ void MasterServerManager::RequestServerList()
 				std::sort(
 					m_vRemoteServers.begin(),
 					m_vRemoteServers.end(),
-					[](RemoteServerInfo& a, RemoteServerInfo& b) { return a.playerCount > b.playerCount; });
+					[](RemoteServerInfo& a, RemoteServerInfo& b)
+					{
+						return a.playerCount > b.playerCount;
+					});
 			}
 			else
 			{

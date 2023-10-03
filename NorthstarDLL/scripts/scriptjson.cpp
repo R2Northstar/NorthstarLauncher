@@ -9,8 +9,8 @@
 #undef GetObject // fuck microsoft developers
 #endif
 
-template <ScriptContext context> void
-DecodeJsonArray(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
+template <ScriptContext context>
+void DecodeJsonArray(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
@@ -46,8 +46,8 @@ DecodeJsonArray(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>
 	}
 }
 
-template <ScriptContext context> void
-DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
+template <ScriptContext context>
+void DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
 {
 	g_pSquirrel<context>->newtable(sqvm);
 
@@ -96,7 +96,8 @@ DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>
 	}
 }
 
-template <ScriptContext context> void EncodeJSONTable(
+template <ScriptContext context>
+void EncodeJSONTable(
 	SQTable* table,
 	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
 	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
@@ -147,7 +148,8 @@ template <ScriptContext context> void EncodeJSONTable(
 	}
 }
 
-template <ScriptContext context> void EncodeJSONArray(
+template <ScriptContext context>
+void EncodeJSONArray(
 	SQArray* arr,
 	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
 	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)

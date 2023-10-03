@@ -42,23 +42,23 @@ class __dllLoadCallback
 #define __STR(s) #s
 
 // adds a callback to be called when a given dll is loaded, for creating hooks and such
-#define __ON_DLL_LOAD(dllName, side, uniquestr, reliesOn, args)                                                                            \
-	void CONCAT2(__dllLoadCallback, uniquestr) args;                                                                                       \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		__dllLoadCallback CONCAT2(__dllLoadCallbackInstance, __LINE__)(                                                                    \
-			side, dllName, CONCAT2(__dllLoadCallback, uniquestr), __STR(uniquestr), reliesOn);                                             \
-	}                                                                                                                                      \
+#define __ON_DLL_LOAD(dllName, side, uniquestr, reliesOn, args)                                \
+	void CONCAT2(__dllLoadCallback, uniquestr) args;                                           \
+	namespace                                                                                  \
+	{                                                                                          \
+		__dllLoadCallback CONCAT2(__dllLoadCallbackInstance, __LINE__)(                        \
+			side, dllName, CONCAT2(__dllLoadCallback, uniquestr), __STR(uniquestr), reliesOn); \
+	}                                                                                          \
 	void CONCAT2(__dllLoadCallback, uniquestr) args
 
 #define ON_DLL_LOAD(dllName, uniquestr, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::UNSIDED, uniquestr, "", args)
-#define ON_DLL_LOAD_RELIESON(dllName, uniquestr, reliesOn, args)                                                                           \
+#define ON_DLL_LOAD_RELIESON(dllName, uniquestr, reliesOn, args) \
 	__ON_DLL_LOAD(dllName, eDllLoadCallbackSide::UNSIDED, uniquestr, __STR(reliesOn), args)
 #define ON_DLL_LOAD_CLIENT(dllName, uniquestr, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::CLIENT, uniquestr, "", args)
-#define ON_DLL_LOAD_CLIENT_RELIESON(dllName, uniquestr, reliesOn, args)                                                                    \
+#define ON_DLL_LOAD_CLIENT_RELIESON(dllName, uniquestr, reliesOn, args) \
 	__ON_DLL_LOAD(dllName, eDllLoadCallbackSide::CLIENT, uniquestr, __STR(reliesOn), args)
 #define ON_DLL_LOAD_DEDI(dllName, uniquestr, args) __ON_DLL_LOAD(dllName, eDllLoadCallbackSide::DEDICATED_SERVER, uniquestr, "", args)
-#define ON_DLL_LOAD_DEDI_RELIESON(dllName, uniquestr, reliesOn, args)                                                                      \
+#define ON_DLL_LOAD_DEDI_RELIESON(dllName, uniquestr, reliesOn, args) \
 	__ON_DLL_LOAD(dllName, eDllLoadCallbackSide::DEDICATED_SERVER, uniquestr, __STR(reliesOn), args)
 
 // new macro hook stuff
@@ -78,10 +78,10 @@ class __fileAutohook
 uintptr_t ParseDLLOffsetString(const char* pAddrString);
 
 // initialise autohooks for this file
-#define AUTOHOOK_INIT()                                                                                                                    \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		__fileAutohook __FILEAUTOHOOK;                                                                                                     \
+#define AUTOHOOK_INIT()                \
+	namespace                          \
+	{                                  \
+		__fileAutohook __FILEAUTOHOOK; \
 	}
 
 // dispatch all autohooks in this file
@@ -215,37 +215,37 @@ class __autohook
 };
 
 // hook a function at a given offset from a dll to be dispatched with AUTOHOOK_DISPATCH()
-#define AUTOHOOK(name, addrString, type, callingConvention, args)                                                                          \
-	type callingConvention CONCAT2(__autohookfunc, name) args;                                                                             \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		type(*callingConvention name) args;                                                                                                \
-		__autohook CONCAT2(__autohook, __LINE__)(                                                                                          \
-			&__FILEAUTOHOOK, __STR(name), __STR(addrString), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));                       \
-	}                                                                                                                                      \
+#define AUTOHOOK(name, addrString, type, callingConvention, args)                                                    \
+	type callingConvention CONCAT2(__autohookfunc, name) args;                                                       \
+	namespace                                                                                                        \
+	{                                                                                                                \
+		type(*callingConvention name) args;                                                                          \
+		__autohook CONCAT2(__autohook, __LINE__)(                                                                    \
+			&__FILEAUTOHOOK, __STR(name), __STR(addrString), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
+	}                                                                                                                \
 	type callingConvention CONCAT2(__autohookfunc, name) args
 
 // hook a function at a given absolute constant address to be dispatched with AUTOHOOK_DISPATCH()
-#define AUTOHOOK_ABSOLUTEADDR(name, addr, type, callingConvention, args)                                                                   \
-	type callingConvention CONCAT2(__autohookfunc, name) args;                                                                             \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		type(*callingConvention name) args;                                                                                                \
-		__autohook                                                                                                                         \
-			CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
-	}                                                                                                                                      \
+#define AUTOHOOK_ABSOLUTEADDR(name, addr, type, callingConvention, args)                                                              \
+	type callingConvention CONCAT2(__autohookfunc, name) args;                                                                        \
+	namespace                                                                                                                         \
+	{                                                                                                                                 \
+		type(*callingConvention name) args;                                                                                           \
+		__autohook                                                                                                                    \
+			CONCAT2(__autohook, __LINE__)(&__FILEAUTOHOOK, __STR(name), addr, (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
+	}                                                                                                                                 \
 	type callingConvention CONCAT2(__autohookfunc, name) args
 
 // hook a function at a given module and exported function to be dispatched with AUTOHOOK_DISPATCH()
-#define AUTOHOOK_PROCADDRESS(name, moduleName, procName, type, callingConvention, args)                                                    \
-	type callingConvention CONCAT2(__autohookfunc, name) args;                                                                             \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		type(*callingConvention name) args;                                                                                                \
-		__autohook CONCAT2(__autohook, __LINE__)(                                                                                          \
-			&__FILEAUTOHOOK, __STR(name), __STR(moduleName), __STR(procName), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name));      \
-	}                                                                                                                                      \
-	type callingConvention CONCAT2(__autohookfunc, name)                                                                                   \
+#define AUTOHOOK_PROCADDRESS(name, moduleName, procName, type, callingConvention, args)                                               \
+	type callingConvention CONCAT2(__autohookfunc, name) args;                                                                        \
+	namespace                                                                                                                         \
+	{                                                                                                                                 \
+		type(*callingConvention name) args;                                                                                           \
+		__autohook CONCAT2(__autohook, __LINE__)(                                                                                     \
+			&__FILEAUTOHOOK, __STR(name), __STR(moduleName), __STR(procName), (LPVOID*)&name, (LPVOID)CONCAT2(__autohookfunc, name)); \
+	}                                                                                                                                 \
+	type callingConvention CONCAT2(__autohookfunc, name)                                                                              \
 	args
 
 class ManualHook
@@ -264,19 +264,19 @@ class ManualHook
 };
 
 // hook a function to be dispatched manually later
-#define HOOK(varName, originalFunc, type, callingConvention, args)                                                                         \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		type(*callingConvention originalFunc) args;                                                                                        \
-	}                                                                                                                                      \
-	type callingConvention CONCAT2(__manualhookfunc, varName) args;                                                                        \
-	ManualHook varName = ManualHook(__STR(varName), (LPVOID*)&originalFunc, (LPVOID)CONCAT2(__manualhookfunc, varName));                   \
+#define HOOK(varName, originalFunc, type, callingConvention, args)                                                       \
+	namespace                                                                                                            \
+	{                                                                                                                    \
+		type(*callingConvention originalFunc) args;                                                                      \
+	}                                                                                                                    \
+	type callingConvention CONCAT2(__manualhookfunc, varName) args;                                                      \
+	ManualHook varName = ManualHook(__STR(varName), (LPVOID*)&originalFunc, (LPVOID)CONCAT2(__manualhookfunc, varName)); \
 	type callingConvention CONCAT2(__manualhookfunc, varName) args
 
-#define HOOK_NOORIG(varName, type, callingConvention, args)                                                                                \
-	type callingConvention CONCAT2(__manualhookfunc, varName) args;                                                                        \
-	ManualHook varName = ManualHook(__STR(varName), (LPVOID)CONCAT2(__manualhookfunc, varName));                                           \
-	type callingConvention CONCAT2(__manualhookfunc, varName)                                                                              \
+#define HOOK_NOORIG(varName, type, callingConvention, args)                                      \
+	type callingConvention CONCAT2(__manualhookfunc, varName) args;                              \
+	ManualHook varName = ManualHook(__STR(varName), (LPVOID)CONCAT2(__manualhookfunc, varName)); \
+	type callingConvention CONCAT2(__manualhookfunc, varName)                                    \
 	args
 
 void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFuncName = "");
@@ -307,25 +307,25 @@ class __autovar
 };
 
 // VAR_AT(engine.dll+0x404, ConVar*, Cvar_host_timescale)
-#define VAR_AT(addrString, type, name)                                                                                                     \
-	type name;                                                                                                                             \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
+#define VAR_AT(addrString, type, name)                                                             \
+	type name;                                                                                     \
+	namespace                                                                                      \
+	{                                                                                              \
+		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name); \
 	}
 
 // FUNCTION_AT(engine.dll + 0xDEADBEEF, void, __fastcall, SomeFunc, (void* a1))
-#define FUNCTION_AT(addrString, type, callingConvention, name, args)                                                                       \
-	type(*callingConvention name) args;                                                                                                    \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
+#define FUNCTION_AT(addrString, type, callingConvention, name, args)                               \
+	type(*callingConvention name) args;                                                            \
+	namespace                                                                                      \
+	{                                                                                              \
+		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name); \
 	}
 
 // int* g_pSomeInt;
 // DEFINED_VAR_AT(engine.dll + 0x5005, g_pSomeInt)
-#define DEFINED_VAR_AT(addrString, name)                                                                                                   \
-	namespace                                                                                                                              \
-	{                                                                                                                                      \
-		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name);                                         \
+#define DEFINED_VAR_AT(addrString, name)                                                           \
+	namespace                                                                                      \
+	{                                                                                              \
+		__autovar CONCAT2(__autovar, __LINE__)(&__FILEAUTOHOOK, __STR(addrString), (void**)&name); \
 	}

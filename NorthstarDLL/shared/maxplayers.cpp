@@ -64,7 +64,8 @@ namespace R2 // use R2 namespace for game funcs
 	}
 } // namespace R2
 
-template <class T> void ChangeOffset(CMemoryAddress addr, unsigned int offset)
+template <class T>
+void ChangeOffset(CMemoryAddress addr, unsigned int offset)
 {
 	addr.Patch((BYTE*)&offset, sizeof(T));
 }

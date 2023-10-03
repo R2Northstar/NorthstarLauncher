@@ -46,7 +46,8 @@ void InitialiseVersion()
 	if (ntdll)
 	{
 		// real win32 version info (i.e., ignore manifest)
-		DWORD(WINAPI * RtlGetVersion)(LPOSVERSIONINFOEXW);
+		DWORD(WINAPI * RtlGetVersion)
+		(LPOSVERSIONINFOEXW);
 		*(FARPROC*)(&RtlGetVersion) = GetProcAddress(ntdll, "RtlGetVersion");
 
 		// wine version (7.0-rc1, 7.0, 7.11, etc)

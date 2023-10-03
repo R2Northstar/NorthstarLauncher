@@ -44,7 +44,8 @@ struct Datatable
 
 ConVar* Cvar_ns_prefer_datatable_from_disk;
 
-template <ScriptContext context> Datatable* (*SQ_GetDatatableInternal)(HSquirrelVM* sqvm);
+template <ScriptContext context>
+Datatable* (*SQ_GetDatatableInternal)(HSquirrelVM* sqvm);
 
 struct CSVData
 {

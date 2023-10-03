@@ -13,15 +13,24 @@ std::shared_ptr<ExceptionLog> storedException {};
 #define RUNTIME_EXCEPTION 3765269347
 // clang format did this :/
 std::map<int, std::string> ExceptionNames = {
-	{EXCEPTION_ACCESS_VIOLATION, "Access Violation"},			{EXCEPTION_IN_PAGE_ERROR, "Access Violation"},
-	{EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "Array bounds exceeded"}, {EXCEPTION_DATATYPE_MISALIGNMENT, "Datatype misalignment"},
-	{EXCEPTION_FLT_DENORMAL_OPERAND, "Denormal operand"},		{EXCEPTION_FLT_DIVIDE_BY_ZERO, "Divide by zero (float)"},
-	{EXCEPTION_FLT_INEXACT_RESULT, "Inexact float result"},		{EXCEPTION_FLT_INVALID_OPERATION, "Invalid operation"},
-	{EXCEPTION_FLT_OVERFLOW, "Numeric overflow (float)"},		{EXCEPTION_FLT_STACK_CHECK, "Stack check"},
-	{EXCEPTION_FLT_UNDERFLOW, "Numeric underflow (float)"},		{EXCEPTION_ILLEGAL_INSTRUCTION, "Illegal instruction"},
-	{EXCEPTION_INT_DIVIDE_BY_ZERO, "Divide by zero (int)"},		{EXCEPTION_INT_OVERFLOW, "Numeric overfloat (int)"},
-	{EXCEPTION_INVALID_DISPOSITION, "Invalid disposition"},		{EXCEPTION_NONCONTINUABLE_EXCEPTION, "Non-continuable exception"},
-	{EXCEPTION_PRIV_INSTRUCTION, "Priviledged instruction"},	{EXCEPTION_STACK_OVERFLOW, "Stack overflow"},
+	{EXCEPTION_ACCESS_VIOLATION, "Access Violation"},
+	{EXCEPTION_IN_PAGE_ERROR, "Access Violation"},
+	{EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "Array bounds exceeded"},
+	{EXCEPTION_DATATYPE_MISALIGNMENT, "Datatype misalignment"},
+	{EXCEPTION_FLT_DENORMAL_OPERAND, "Denormal operand"},
+	{EXCEPTION_FLT_DIVIDE_BY_ZERO, "Divide by zero (float)"},
+	{EXCEPTION_FLT_INEXACT_RESULT, "Inexact float result"},
+	{EXCEPTION_FLT_INVALID_OPERATION, "Invalid operation"},
+	{EXCEPTION_FLT_OVERFLOW, "Numeric overflow (float)"},
+	{EXCEPTION_FLT_STACK_CHECK, "Stack check"},
+	{EXCEPTION_FLT_UNDERFLOW, "Numeric underflow (float)"},
+	{EXCEPTION_ILLEGAL_INSTRUCTION, "Illegal instruction"},
+	{EXCEPTION_INT_DIVIDE_BY_ZERO, "Divide by zero (int)"},
+	{EXCEPTION_INT_OVERFLOW, "Numeric overfloat (int)"},
+	{EXCEPTION_INVALID_DISPOSITION, "Invalid disposition"},
+	{EXCEPTION_NONCONTINUABLE_EXCEPTION, "Non-continuable exception"},
+	{EXCEPTION_PRIV_INSTRUCTION, "Priviledged instruction"},
+	{EXCEPTION_STACK_OVERFLOW, "Stack overflow"},
 	{RUNTIME_EXCEPTION, "Uncaught runtime exception:"},
 };
 
@@ -101,9 +110,11 @@ std::string GetExceptionName(ExceptionLog& exc)
 }
 
 // Custom formatter for the Xmm registers
-template <> struct fmt::formatter<M128A> : fmt::formatter<string_view>
+template <>
+struct fmt::formatter<M128A> : fmt::formatter<string_view>
 {
-	template <typename FormatContext> auto format(const M128A& obj, FormatContext& ctx)
+	template <typename FormatContext>
+	auto format(const M128A& obj, FormatContext& ctx)
 	{
 		// Masking the top and bottom half of the long long
 		int v1 = obj.Low & INT_MAX;

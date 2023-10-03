@@ -117,10 +117,12 @@ class HttpRequestHandler
 	 * @param requestParameters The parameters to use for this http request.
 	 * @returns The handle for the http request being sent, or -1 if the request failed.
 	 */
-	template <ScriptContext context> int MakeHttpRequest(const HttpRequest& requestParameters);
+	template <ScriptContext context>
+	int MakeHttpRequest(const HttpRequest& requestParameters);
 
 	/** Registers the HTTP request Squirrel functions for the given script context. */
-	template <ScriptContext context> void RegisterSQFuncs();
+	template <ScriptContext context>
+	void RegisterSQFuncs();
 
   private:
 	int m_iLastRequestHandle = 0;

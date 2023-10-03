@@ -8,11 +8,11 @@ typedef int HKeySymbol;
 #define INVALID_KEY_SYMBOL (-1)
 
 #define MAKE_3_BYTES_FROM_1_AND_2(x1, x2) ((((uint16_t)x2) << 8) | (uint8_t)(x1))
-#define SPLIT_3_BYTES_INTO_1_AND_2(x1, x2, x3)                                                                                             \
-	do                                                                                                                                     \
-	{                                                                                                                                      \
-		x1 = (uint8_t)(x3);                                                                                                                \
-		x2 = (uint16_t)((x3) >> 8);                                                                                                        \
+#define SPLIT_3_BYTES_INTO_1_AND_2(x1, x2, x3) \
+	do                                         \
+	{                                          \
+		x1 = (uint8_t)(x3);                    \
+		x2 = (uint16_t)((x3) >> 8);            \
 	} while (0)
 
 struct CKeyValuesSystem
