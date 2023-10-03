@@ -623,7 +623,7 @@ REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToIntValue, (ScriptContext::UI |
 	{
 		if (nIntVal >= std::stoi(csv->dataPointers[i][nCol]))
 		{
-			spdlog::info("datatable not loaded");
+			Warning(eLog::NS, "datatable not loaded\n");
 			g_pSquirrel<context>->pushinteger(sqvm, 1);
 			return SQRESULT_NOTNULL;
 		}
@@ -789,7 +789,7 @@ void DumpDatatable(const char* pDatatablePath)
 	Datatable* pDatatable = (Datatable*)g_pPakLoadManager->LoadFile(pDatatablePath);
 	if (!pDatatable)
 	{
-		spdlog::error("couldn't load datatable {} (rpak containing it may not be loaded?)", pDatatablePath);
+		Error(eLog::NS, NO_ERROR, "couldn't load datatable {} (rpak containing it may not be loaded?)\n", pDatatablePath);
 		return;
 	}
 
@@ -801,14 +801,14 @@ void DumpDatatable(const char* pDatatablePath)
 	outputStream.write(sDatatableContents.c_str(), sDatatableContents.size());
 	outputStream.close();
 
-	spdlog::info("dumped datatable {} {} to {}", pDatatablePath, (void*)pDatatable, sOutputPath);
+	DevMsg(eLog::NS, "dumped datatable %s %p to %s\n", pDatatablePath, (void*)pDatatable, sOutputPath.c_str());
 }
 
 void ConCommand_dump_datatable(const CCommand& args)
 {
 	if (args.ArgC() < 2)
 	{
-		spdlog::info("usage: dump_datatable datatable/tablename.rpak");
+		DevMsg(eLog::NS, "usage: dump_datatable datatable/tablename.rpak\n");
 		return;
 	}
 

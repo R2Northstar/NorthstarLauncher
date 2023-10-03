@@ -6,6 +6,7 @@
 #include "core/filesystem/filesystem.h"
 #include "core/filesystem/rpakfilesystem.h"
 #include "config/profile.h"
+#include "squirrel/squirrel.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
@@ -29,14 +30,16 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	rapidjson_document modJson;
 	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
 
-	spdlog::info("Loading mod file at path '{}'", modDir.string());
+	DevMsg(eLog::MODSYS, "Loading mod file at path '%s'\n", modDir.string().c_str());
 
 	// fail if parse error
 	if (modJson.HasParseError())
 	{
-		spdlog::error(
-			"Failed reading mod file {}: encountered parse error \"{}\" at offset {}",
-			(modDir / "mod.json").string(),
+		Error(
+			eLog::MODSYS,
+			NO_ERROR,
+			"Failed reading mod file %s: encountered parse error \"%s\" at offset %li\n",
+			(modDir / "mod.json").string().c_str(),
 			GetParseError_En(modJson.GetParseError()),
 			modJson.GetErrorOffset());
 		return;
@@ -45,7 +48,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	// fail if it's not a json obj (could be an array, string, etc)
 	if (!modJson.IsObject())
 	{
-		spdlog::error("Failed reading mod file {}: file is not a JSON object", (modDir / "mod.json").string());
+		Error(eLog::MODSYS, NO_ERROR, "Failed reading mod file %s: file is not a JSON object\n", (modDir / "mod.json").string().c_str());
 		return;
 	}
 
@@ -53,17 +56,21 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	// name is required
 	if (!modJson.HasMember("Name"))
 	{
-		spdlog::error("Failed reading mod file {}: missing required member \"Name\"", (modDir / "mod.json").string());
+		Error(
+			eLog::MODSYS,
+			NO_ERROR,
+			"Failed reading mod file %s: missing required member \"Name\"\n",
+			(modDir / "mod.json").string().c_str());
 		return;
 	}
 
 	Name = modJson["Name"].GetString();
-	spdlog::info("Loading mod '{}'", Name);
+	Warning(eLog::MODSYS, "Loading mod '%s'\n", Name.c_str());
 
 	// Don't load blacklisted mods
 	if (!strstr(GetCommandLineA(), "-nomodblacklist") && MODS_BLACKLIST.find(Name) != std::end(MODS_BLACKLIST))
 	{
-		spdlog::warn("Skipping blacklisted mod \"{}\"!", Name);
+		Warning(eLog::MODSYS, "Skipping blacklisted mod \"%s\"!\n", Name.c_str());
 		return;
 	}
 
@@ -77,7 +84,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	else
 	{
 		Version = "0.0.0";
-		spdlog::warn("Mod file {} is missing a version, consider adding a version", (modDir / "mod.json").string());
+		Warning(eLog::MS, "Mod file %s is missing a version, consider adding a version\n", (modDir / "mod.json").string().c_str());
 	}
 
 	if (modJson.HasMember("DownloadLink"))
@@ -94,7 +101,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		LoadPriority = modJson["LoadPriority"].GetInt();
 	else
 	{
-		spdlog::info("Mod file {} is missing a LoadPriority, consider adding one", (modDir / "mod.json").string());
+		Warning(eLog::MS, "Mod file %s is missing a LoadPriority, consider adding one\n", (modDir / "mod.json").string().c_str());
 		LoadPriority = 0;
 	}
 
@@ -116,7 +123,7 @@ void Mod::ParseConVars(rapidjson_document& json)
 
 	if (!json["ConVars"].IsArray())
 	{
-		spdlog::warn("'ConVars' field is not an array, skipping...");
+		Warning(eLog::MODSYS, "'ConVars' field is not an array, skipping...\n");
 		return;
 	}
 
@@ -124,18 +131,18 @@ void Mod::ParseConVars(rapidjson_document& json)
 	{
 		if (!convarObj.IsObject())
 		{
-			spdlog::warn("ConVar is not an object, skipping...");
+			Warning(eLog::MODSYS, "ConVar is not an object, skipping...\n");
 			continue;
 		}
 		if (!convarObj.HasMember("Name"))
 		{
-			spdlog::warn("ConVar does not have a Name, skipping...");
+			Warning(eLog::MODSYS, "ConVar does not have a Name, skipping...\n");
 			continue;
 		}
 		// from here on, the ConVar can be referenced by name in logs
 		if (!convarObj.HasMember("DefaultValue"))
 		{
-			spdlog::warn("ConVar '{}' does not have a DefaultValue, skipping...", convarObj["Name"].GetString());
+			Warning(eLog::MODSYS, "ConVar '%s' does not have a DefaultValue, skipping...\n", convarObj["Name"].GetString());
 			continue;
 		}
 
@@ -167,7 +174,7 @@ void Mod::ParseConVars(rapidjson_document& json)
 
 		ConVars.push_back(convar);
 
-		spdlog::info("'{}' contains ConVar '{}'", Name, convar->Name);
+		DevMsg(eLog::MODSYS, "'%s' contains ConVar '%s'\n", Name.c_str(), convar->Name.c_str());
 	}
 }
 
@@ -178,7 +185,7 @@ void Mod::ParseConCommands(rapidjson_document& json)
 
 	if (!json["ConCommands"].IsArray())
 	{
-		spdlog::warn("'ConCommands' field is not an array, skipping...");
+		Warning(eLog::MODSYS, "'ConCommands' field is not an array, skipping...\n");
 		return;
 	}
 
@@ -186,23 +193,23 @@ void Mod::ParseConCommands(rapidjson_document& json)
 	{
 		if (!concommandObj.IsObject())
 		{
-			spdlog::warn("ConCommand is not an object, skipping...");
+			Warning(eLog::MODSYS, "ConCommand is not an object, skipping...\n");
 			continue;
 		}
 		if (!concommandObj.HasMember("Name"))
 		{
-			spdlog::warn("ConCommand does not have a Name, skipping...");
+			Warning(eLog::MODSYS, "ConCommand does not have a Name, skipping...\n");
 			continue;
 		}
 		// from here on, the ConCommand can be referenced by name in logs
 		if (!concommandObj.HasMember("Function"))
 		{
-			spdlog::warn("ConCommand '{}' does not have a Function, skipping...", concommandObj["Name"].GetString());
+			Warning(eLog::MODSYS, "ConCommand '{}' does not have a Function, skipping...\n", concommandObj["Name"].GetString());
 			continue;
 		}
 		if (!concommandObj.HasMember("Context"))
 		{
-			spdlog::warn("ConCommand '{}' does not have a Context, skipping...", concommandObj["Name"].GetString());
+			Warning(eLog::MODSYS, "ConCommand '{}' does not have a Context, skipping...\n", concommandObj["Name"].GetString());
 			continue;
 		}
 
@@ -214,7 +221,8 @@ void Mod::ParseConCommands(rapidjson_document& json)
 		concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
 		if (concommand->Context == ScriptContext::INVALID)
 		{
-			spdlog::warn("ConCommand '{}' has invalid context '{}', skipping...", concommand->Name, concommandObj["Context"].GetString());
+			Warning(
+				eLog::MODSYS, "Mod ConCommand %s has invalid context %s\n", concommand->Name.c_str(), concommandObj["Context"].GetString());
 			continue;
 		}
 
@@ -242,7 +250,7 @@ void Mod::ParseConCommands(rapidjson_document& json)
 
 		ConCommands.push_back(concommand);
 
-		spdlog::info("'{}' contains ConCommand '{}'", Name, concommand->Name);
+		DevMsg(eLog::MODSYS, "'%s' contains ConCommand '%s'\n", Name.c_str(), concommand->Name.c_str());
 	}
 }
 
@@ -253,7 +261,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 
 	if (!json["Scripts"].IsArray())
 	{
-		spdlog::warn("'Scripts' field is not an array, skipping...");
+		Warning(eLog::MODSYS, "'Scripts' field is not an array, skipping...\n");
 		return;
 	}
 
@@ -261,12 +269,12 @@ void Mod::ParseScripts(rapidjson_document& json)
 	{
 		if (!scriptObj.IsObject())
 		{
-			spdlog::warn("Script is not an object, skipping...");
+			Warning(eLog::MODSYS, "Script is not an object, skipping...\n");
 			continue;
 		}
 		if (!scriptObj.HasMember("Path"))
 		{
-			spdlog::warn("Script does not have a Path, skipping...");
+			Warning(eLog::MODSYS, "Script does not have a Path, skipping...\n");
 			continue;
 		}
 		// from here on, the Path for a script is used as it's name in logs
@@ -274,7 +282,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 		{
 			// "a RunOn" sounds dumb but anything else doesn't match the format of the warnings...
 			// this is the best i could think of within 20 seconds
-			spdlog::warn("Script '{}' does not have a RunOn field, skipping...", scriptObj["Path"].GetString());
+			Warning(eLog::MODSYS, "Script '%s' does not have a RunOn field, skipping...\n", scriptObj["Path"].GetString());
 			continue;
 		}
 
@@ -295,7 +303,10 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["ServerCallback"]["Before"].IsString())
 						callback.BeforeCallback = scriptObj["ServerCallback"]["Before"].GetString();
 					else
-						spdlog::warn("'Before' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'Before' ServerCallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				if (scriptObj["ServerCallback"].HasMember("After"))
@@ -303,7 +314,10 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["ServerCallback"]["After"].IsString())
 						callback.AfterCallback = scriptObj["ServerCallback"]["After"].GetString();
 					else
-						spdlog::warn("'After' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'After' ServerCallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				if (scriptObj["ServerCallback"].HasMember("Destroy"))
@@ -311,15 +325,17 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["ServerCallback"]["Destroy"].IsString())
 						callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
 					else
-						spdlog::warn(
-							"'Destroy' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'Destroy' ServerCallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				script.Callbacks.push_back(callback);
 			}
 			else
 			{
-				spdlog::warn("ServerCallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+				Warning(eLog::MODSYS, "ServerCallback for script '%s' is not an object, skipping...\n", scriptObj["Path"].GetString());
 			}
 		}
 
@@ -335,7 +351,10 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["ClientCallback"]["Before"].IsString())
 						callback.BeforeCallback = scriptObj["ClientCallback"]["Before"].GetString();
 					else
-						spdlog::warn("'Before' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'Before' ClientCallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				if (scriptObj["ClientCallback"].HasMember("After"))
@@ -343,7 +362,10 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["ClientCallback"]["After"].IsString())
 						callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
 					else
-						spdlog::warn("'After' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'After' ClientCallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				if (scriptObj["ClientCallback"].HasMember("Destroy"))
@@ -351,15 +373,17 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["ClientCallback"]["Destroy"].IsString())
 						callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
 					else
-						spdlog::warn(
-							"'Destroy' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'Destroy' ClientCallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				script.Callbacks.push_back(callback);
 			}
 			else
 			{
-				spdlog::warn("ClientCallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+				Warning(eLog::MODSYS, "ClientCallback for script '%s' is not an object, skipping...\n", scriptObj["Path"].GetString());
 			}
 		}
 
@@ -375,7 +399,10 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["UICallback"]["Before"].IsString())
 						callback.BeforeCallback = scriptObj["UICallback"]["Before"].GetString();
 					else
-						spdlog::warn("'Before' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'Before' UICallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				if (scriptObj["UICallback"].HasMember("After"))
@@ -383,7 +410,10 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["UICallback"]["After"].IsString())
 						callback.AfterCallback = scriptObj["UICallback"]["After"].GetString();
 					else
-						spdlog::warn("'After' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'After' UICallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				if (scriptObj["UICallback"].HasMember("Destroy"))
@@ -391,20 +421,23 @@ void Mod::ParseScripts(rapidjson_document& json)
 					if (scriptObj["UICallback"]["Destroy"].IsString())
 						callback.DestroyCallback = scriptObj["UICallback"]["Destroy"].GetString();
 					else
-						spdlog::warn("'Destroy' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						Warning(
+							eLog::MODSYS,
+							"'Destroy' UICallback for script '%s' is not a string, skipping...\n",
+							scriptObj["Path"].GetString());
 				}
 
 				script.Callbacks.push_back(callback);
 			}
 			else
 			{
-				spdlog::warn("UICallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+				Warning(eLog::MODSYS, "UICallback for script '%s' is not an object, skipping...\n", scriptObj["Path"].GetString());
 			}
 		}
 
 		Scripts.push_back(script);
 
-		spdlog::info("'{}' contains Script '{}'", Name, script.Path);
+		DevMsg(eLog::MODSYS, "'%s' contains Script '%s'\n", Name.c_str(), script.Path.c_str());
 	}
 }
 
@@ -415,7 +448,7 @@ void Mod::ParseLocalization(rapidjson_document& json)
 
 	if (!json["Localisation"].IsArray())
 	{
-		spdlog::warn("'Localisation' field is not an array, skipping...");
+		Warning(eLog::MODSYS, "'Localisation' field is not an array, skipping...\n");
 		return;
 	}
 
@@ -424,13 +457,13 @@ void Mod::ParseLocalization(rapidjson_document& json)
 		if (!localisationStr.IsString())
 		{
 			// not a string but we still GetString() to log it :trol:
-			spdlog::warn("Localisation '{}' is not a string, skipping...", localisationStr.GetString());
+			Warning(eLog::MODSYS, "Localisation '%s' is not a string, skipping...\n", localisationStr.GetString());
 			continue;
 		}
 
 		LocalisationFiles.push_back(localisationStr.GetString());
 
-		spdlog::info("'{}' registered Localisation '{}'", Name, localisationStr.GetString());
+		DevMsg(eLog::MODSYS, "'%s' registered Localisation '%s'\n", Name.c_str(), localisationStr.GetString());
 	}
 }
 
@@ -441,7 +474,7 @@ void Mod::ParseDependencies(rapidjson_document& json)
 
 	if (!json["Dependencies"].IsObject())
 	{
-		spdlog::warn("'Dependencies' field is not an object, skipping...");
+		Warning(eLog::MODSYS, "'Dependencies' field is not an object, skipping...\n");
 		return;
 	}
 
@@ -449,12 +482,12 @@ void Mod::ParseDependencies(rapidjson_document& json)
 	{
 		if (!v->name.IsString())
 		{
-			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->name.GetString());
+			Warning(eLog::MODSYS, "Dependency constant '%s' is not a string, skipping...\n", v->name.GetString());
 			continue;
 		}
 		if (!v->value.IsString())
 		{
-			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->value.GetString());
+			Warning(eLog::MODSYS, "Dependency constant '%s' is not a string, skipping...\n", v->value.GetString());
 			continue;
 		}
 
@@ -463,20 +496,27 @@ void Mod::ParseDependencies(rapidjson_document& json)
 		{
 			// this is fatal because otherwise the mod will probably try to use functions that dont exist,
 			// which will cause errors further down the line that are harder to debug
-			spdlog::error(
-				"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
-				"Change the constant name.",
-				Name,
+			Error(
+				eLog::MODSYS,
+				NO_ERROR,
+				"'%s' attempted to register a dependency constant '%s' for '%s' that already exists for '%s'. "
+				"Change the constant name.\n",
+				Name.c_str(),
 				v->name.GetString(),
 				v->value.GetString(),
-				DependencyConstants[v->name.GetString()]);
+				DependencyConstants[v->name.GetString()].c_str());
 			return;
 		}
 
 		if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
 			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
 
-		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
+		DevMsg(
+			eLog::MODSYS,
+			"'%s' registered dependency constant '%s' for mod '%s'\n",
+			Name.c_str(),
+			v->name.GetString(),
+			v->value.GetString());
 	}
 }
 
@@ -487,7 +527,7 @@ void Mod::ParseInitScript(rapidjson_document& json)
 
 	if (!json["InitScript"].IsString())
 	{
-		spdlog::warn("'InitScript' field is not a string, skipping...");
+		Warning(eLog::MODSYS, "'InitScript' field is not a string, skipping...\n");
 		return;
 	}
 
@@ -532,7 +572,11 @@ template <ScriptContext context> auto ModConCommandCallback_Internal(std::string
 	}
 	else
 	{
-		spdlog::warn("ConCommand `{}` was called while the associated Squirrel VM `{}` was unloaded", name, GetContextName(context));
+		Warning(
+			eLog::MODSYS,
+			"ConCommand `%s` was called while the associated Squirrel VM `%s` was unloaded\n",
+			name.c_str(),
+			GetContextName(context));
 	}
 }
 
@@ -655,8 +699,10 @@ void ModManager::LoadMods()
 		// fail if no mod json
 		if (jsonStream.fail())
 		{
-			spdlog::warn(
-				"Mod file at '{}' does not exist or could not be read, is it installed correctly?", (modDir / "mod.json").string());
+			Warning(
+				eLog::MODSYS,
+				"Mod file at '%s' does not exist or could not be read, is it installed correctly?\n",
+				(modDir / "mod.json").string().c_str());
 			continue;
 		}
 
@@ -671,13 +717,15 @@ void ModManager::LoadMods()
 		{
 			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
 			{
-				spdlog::error(
-					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
-					"Change the constant name.",
-					mod.Name,
-					pair.first,
-					pair.second,
-					m_DependencyConstants[pair.first]);
+				Error(
+					eLog::MODSYS,
+					NO_ERROR,
+					"'%s' attempted to register a dependency constant '%s' for '%s' that already exists for '%s'. "
+					"Change the constant name.\n",
+					mod.Name.c_str(),
+					pair.first.c_str(),
+					pair.second.c_str(),
+					m_DependencyConstants[pair.first].c_str());
 				mod.m_bWasReadSuccessfully = false;
 				break;
 			}
@@ -693,14 +741,14 @@ void ModManager::LoadMods()
 		if (mod.m_bWasReadSuccessfully)
 		{
 			if (mod.m_bEnabled)
-				spdlog::info("'{}' loaded successfully", mod.Name);
+				DevMsg(eLog::MODSYS, "'%s' loaded successfully\n", mod.Name.c_str());
 			else
-				spdlog::info("'{}' loaded successfully (DISABLED)", mod.Name);
+				DevMsg(eLog::MODSYS, "'%s' loaded successfully (DISABLED)\n", mod.Name.c_str());
 
 			m_LoadedMods.push_back(mod);
 		}
 		else
-			spdlog::warn("Mod file at '{}' failed to load", (modDir / "mod.json").string());
+			Warning(eLog::MODSYS, "Mod file at '%s' failed to load\n", (modDir / "mod.json").string().c_str());
 	}
 
 	// sort by load prio, lowest-highest
@@ -871,7 +919,7 @@ void ModManager::LoadMods()
 							if (!str.empty())
 							{
 								mod.StarpakPaths.push_back(STR_HASH(str));
-								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
+								DevMsg(eLog::MODSYS, "Mod %s registered starpak '%s'\n", mod.Name.c_str(), str.c_str());
 								str = "";
 							}
 						}
@@ -932,7 +980,11 @@ void ModManager::LoadMods()
 				{
 					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
 					{
-						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+						Warning(
+							eLog::MODSYS,
+							"Mod %s has an invalid audio def %s\n",
+							mod.Name.c_str(),
+							file.path().filename().string().c_str());
 						continue;
 					}
 				}

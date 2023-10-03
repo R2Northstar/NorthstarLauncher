@@ -7,7 +7,7 @@ AUTOHOOK_INIT()
 
 void ModManager::TryBuildKeyValues(const char* filename)
 {
-	spdlog::info("Building KeyValues for file {}", filename);
+	DevMsg(eLog::MODSYS, "Building KeyValues for file %s\n", filename);
 
 	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(filename));
 	fs::path compiledPath = GetCompiledAssetsPath() / filename;
@@ -60,7 +60,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 
 	if (!originalFile.length())
 	{
-		spdlog::warn("Tried to patch kv {} but no base kv was found!", ogFilePath);
+		Warning(eLog::MODSYS, "Tried to patch kv %s but no base kv was found!\n", ogFilePath.c_str());
 		return;
 	}
 

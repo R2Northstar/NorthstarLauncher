@@ -176,8 +176,8 @@ void ConCommand_maps(const CCommand& args)
 {
 	if (args.ArgC() < 2)
 	{
-		spdlog::info("Usage: maps <substring>");
-		spdlog::info("maps * for full listing");
+		DevMsg(eLog::NS, "Usage: maps <substring>\n");
+		DevMsg(eLog::NS, "maps * for full listing\n");
 		return;
 	}
 
@@ -185,7 +185,7 @@ void ConCommand_maps(const CCommand& args)
 
 	for (MapVPKInfo& map : vMapList) // need to figure out a nice way to include parent path without making the formatting awful
 		if ((*args.Arg(1) == '*' && !args.Arg(1)[1]) || strstr(map.name.c_str(), args.Arg(1)))
-			spdlog::info("({}) {}", PrintMapSource.at(map.source), map.name);
+			DevMsg(eLog::NS, "(%s) %s\n", PrintMapSource.at(map.source), map.name.c_str());
 }
 
 // clang-format off

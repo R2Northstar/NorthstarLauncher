@@ -21,18 +21,41 @@ void freeLibrary(HMODULE hLib)
 {
 	if (!FreeLibrary(hLib))
 	{
-		spdlog::error("There was an error while trying to free library");
+		Error(eLog::PLUGSYS, NO_ERROR, "There was an error while trying to free library\n");
 	}
 }
 
 EXPORT void PLUGIN_LOG(LogMsg* msg)
 {
-	spdlog::source_loc src {};
-	src.filename = msg->source.file;
-	src.funcname = msg->source.func;
-	src.line = msg->source.line;
-	auto&& logger = g_pPluginManager->m_vLoadedPlugins[msg->pluginHandle].logger;
-	logger->log(src, (spdlog::level::level_enum)msg->level, msg->msg);
+	eLogLevel eLevel = eLogLevel::LOG_INFO;
+
+	switch (msg->level)
+	{
+	case spdlog::level::level_enum::debug:
+	case spdlog::level::level_enum::info:
+		eLevel = eLogLevel::LOG_INFO;
+		break;
+	case spdlog::level::level_enum::off:
+	case spdlog::level::level_enum::trace:
+	case spdlog::level::level_enum::warn:
+		eLevel = eLogLevel::LOG_WARN;
+		break;
+	case spdlog::level::level_enum::critical:
+	case spdlog::level::level_enum::err:
+		eLevel = eLogLevel::LOG_ERROR;
+		break;
+	}
+
+	int hPlugin = msg->pluginHandle;
+	if (hPlugin < g_pPluginManager->m_vLoadedPlugins.size() && hPlugin >= 0)
+	{
+		const char* pszName = g_pPluginManager->m_vLoadedPlugins[hPlugin].displayName.c_str();
+		PluginMsg(eLevel, pszName, "%s\n", msg->msg);
+	}
+	else
+	{
+		DevMsg(eLog::PLUGSYS, "Invalid plugin handle: %i\n", hPlugin);
+	}
 }
 
 EXPORT void* CreateObject(ObjectType type)
@@ -60,21 +83,26 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE datafile = LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE); // Load the DLL as a data file
 	if (datafile == NULL)
 	{
-		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
+		Error(
+			eLog::PLUGSYS,
+			NO_ERROR,
+			"Failed to load library '%s': %s\n",
+			pathstring.c_str(),
+			std::system_category().message(GetLastError()).c_str());
 		return std::nullopt;
 	}
 	HRSRC manifestResource = FindResourceW(datafile, MAKEINTRESOURCEW(IDR_RCDATA1), RT_RCDATA);
 
 	if (manifestResource == NULL)
 	{
-		NS::log::PLUGINSYS->info("Could not find manifest for library '{}'", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "Could not find manifest for library '%s'\n", pathstring.c_str());
 		freeLibrary(datafile);
 		return std::nullopt;
 	}
 	HGLOBAL myResourceData = LoadResource(datafile, manifestResource);
 	if (myResourceData == NULL)
 	{
-		NS::log::PLUGINSYS->error("Failed to load manifest from library '{}'", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "Failed to load manifest from library '%s'\n", pathstring.c_str());
 		freeLibrary(datafile);
 		return std::nullopt;
 	}
@@ -87,49 +115,54 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	if (manifestJSON.HasParseError())
 	{
-		NS::log::PLUGINSYS->error("Manifest for '{}' was invalid", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "Manifest for '%s' was invalid\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("name"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing a name in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing a name in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("displayname"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing a displayname in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing a displayname in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("description"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing a description in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing a description in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("api_version"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing a api_version in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing a api_version in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("version"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing a version in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing a version in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("run_on_server"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing 'run_on_server' in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing 'run_on_server' in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	if (!manifestJSON.HasMember("run_on_client"))
 	{
-		NS::log::PLUGINSYS->error("'{}' is missing 'run_on_client' in its manifest", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "'%s' is missing 'run_on_client' in its manifest\n", pathstring.c_str());
 		return std::nullopt;
 	}
 	auto test = manifestJSON["api_version"].GetString();
 	if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 	{
-		NS::log::PLUGINSYS->error(
-			"'{}' has an incompatible API version number '{}' in its manifest. Current ABI version is '{}'", pathstring, ABI_VERSION);
+		Error(
+			eLog::PLUGSYS,
+			NO_ERROR,
+			"'%s' has an incompatible API version number '%s' in its manifest. Current ABI version is '%i'\n",
+			pathstring.c_str(),
+			manifestJSON["api_version"].GetString(),
+			ABI_VERSION);
 		return std::nullopt;
 	}
 	// Passed all checks, going to actually load it now
@@ -137,16 +170,21 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
 	if (pluginLib == NULL)
 	{
-		NS::log::PLUGINSYS->info("Failed to load library '{}': ", std::system_category().message(GetLastError()));
+		Error(
+			eLog::PLUGSYS,
+			NO_ERROR,
+			"Failed to load library '%s': %s\n",
+			pathstring.c_str(),
+			std::system_category().message(GetLastError()).c_str());
 		return std::nullopt;
 	}
 	plugin.init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
 	if (plugin.init == NULL)
 	{
-		NS::log::PLUGINSYS->info("Library '{}' has no function 'PLUGIN_INIT'", pathstring);
+		Error(eLog::PLUGSYS, NO_ERROR, "Library '%s' has no function 'PLUGIN_INIT'\n", pathstring.c_str());
 		return std::nullopt;
 	}
-	NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring);
+	DevMsg(eLog::PLUGSYS, "Succesfully loaded %s\n", pathstring.c_str());
 
 	plugin.name = manifestJSON["name"].GetString();
 	plugin.displayName = manifestJSON["displayname"].GetString();
@@ -179,9 +217,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	plugin.inform_dll_load = (PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_DLL_LOAD");
 
 	plugin.handle = m_vLoadedPlugins.size();
-	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName.c_str(), NS::Colors::PLUGIN);
-	RegisterLogger(plugin.logger);
-	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.displayName, plugin.version);
+	DevMsg(eLog::PLUGSYS, "Loading plugin %s version %s\n", plugin.displayName.c_str(), plugin.version.c_str());
 	m_vLoadedPlugins.push_back(plugin);
 
 	plugin.init(funcs, data);
@@ -208,7 +244,7 @@ bool PluginManager::LoadPlugins()
 {
 	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
 	{
-		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
+		Warning(eLog::PLUGSYS, "-noplugins detected; skipping loading plugins\n");
 		return false;
 	}
 
@@ -251,7 +287,7 @@ bool PluginManager::LoadPlugins()
 
 	if (paths.empty())
 	{
-		NS::log::PLUGINSYS->warn("Could not find any plugins. Skipped loading plugins");
+		Warning(eLog::PLUGSYS, "Could not find any plugins. Skipped loading plugins\n");
 		return false;
 	}
 

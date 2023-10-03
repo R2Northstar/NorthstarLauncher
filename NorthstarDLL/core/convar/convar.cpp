@@ -51,7 +51,7 @@ ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 //-----------------------------------------------------------------------------
 ConVar::ConVar(const char* pszName, const char* pszDefaultValue, int nFlags, const char* pszHelpString)
 {
-	spdlog::info("Registering Convar {}", pszName);
+	DevMsg(eLog::ENGINE, "Registering Convar %s\n", pszName);
 
 	this->m_ConCommandBase.m_pConCommandBaseVTable = g_pConVar_Vtable;
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
@@ -74,7 +74,7 @@ ConVar::ConVar(
 	float fMax,
 	FnChangeCallback_t pCallback)
 {
-	spdlog::info("Registering Convar {}", pszName);
+	DevMsg(eLog::ENGINE, "Registering Convar %s\n", pszName);
 
 	this->m_ConCommandBase.m_pConCommandBaseVTable = g_pConVar_Vtable;
 	this->m_ConCommandBase.s_pConCommandBases = (ConCommandBase*)g_pIConVar_Vtable;
@@ -323,7 +323,7 @@ void ConVar::SetValue(const char* pszValue)
 		float flNewValue = (float)atof(pszValue);
 		if (!std::isfinite(flNewValue))
 		{
-			spdlog::warn("Warning: ConVar '{}' = '{}' is infinite, clamping value.\n", GetBaseName(), pszValue);
+			Warning(eLog::NS, "ConVar '%s' = '%s' is infinite, clamping value.\n", GetBaseName(), pszValue);
 			flNewValue = FLT_MAX;
 		}
 
@@ -524,7 +524,7 @@ int ParseConVarFlagsString(std::string modName, std::string sFlags)
 		}
 		if (!ok)
 		{
-			spdlog::warn("Mod ConCommand {} has unknown flag {}", modName, sFlag);
+			Warning(eLog::NS, "Mod ConCommand %s has unknown flag %s\n", modName.c_str(), sFlag.c_str());
 		}
 	}
 

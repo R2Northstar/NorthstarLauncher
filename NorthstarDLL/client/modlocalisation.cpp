@@ -14,7 +14,7 @@ bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, bo
 
 	bool ret = CLocalize__AddFile(pVguiLocalize, path, pathId, bIncludeFallbackSearchPaths);
 	if (ret)
-		spdlog::info("Loaded localisation file {} successfully", path);
+		DevMsg(eLog::MODSYS, "Loaded localisation file %s successfully\n", path);
 
 	return true;
 }
@@ -30,7 +30,7 @@ void, __fastcall, (void* pVguiLocalize))
 			for (std::string& localisationFile : mod.LocalisationFiles)
 				CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 
-	spdlog::info("reloading localization...");
+	DevMsg(eLog::MODSYS, "reloading localization...\n");
 	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
 }
 
@@ -40,6 +40,8 @@ void, __fastcall, (void* self))
 // clang-format on
 {
 	CEngineVGui__Init(self); // this loads r1_english, valve_english, dev_english
+
+	g_bEngineVguiInitilazed = true;
 
 	// previously we did this in CLocalize::AddFile, but for some reason it won't properly overwrite localization from
 	// files loaded previously if done there, very weird but this works so whatever

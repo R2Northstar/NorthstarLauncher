@@ -23,19 +23,23 @@ static bool InitHMACSHA256()
 
 	if ((status = BCryptOpenAlgorithmProvider(&HMACSHA256, BCRYPT_SHA256_ALGORITHM, NULL, BCRYPT_ALG_HANDLE_HMAC_FLAG)))
 	{
-		spdlog::error("failed to initialize HMAC-SHA256: BCryptOpenAlgorithmProvider: error 0x{:08X}", (ULONG)status);
+		Error(eLog::NS, NO_ERROR, "failed to initialize HMAC-SHA256: BCryptOpenAlgorithmProvider: error 0x%x\n", (ULONG)status);
 		return false;
 	}
 
 	if ((status = BCryptGetProperty(HMACSHA256, BCRYPT_HASH_LENGTH, (PUCHAR)&hashLength, sizeof(hashLength), &hashLengthSz, 0)))
 	{
-		spdlog::error("failed to initialize HMAC-SHA256: BCryptGetProperty(BCRYPT_HASH_LENGTH): error 0x{:08X}", (ULONG)status);
+		Error(eLog::NS, NO_ERROR, "failed to initialize HMAC-SHA256: BCryptGetProperty(BCRYPT_HASH_LENGTH): error 0x%x\n", (ULONG)status);
 		return false;
 	}
 
 	if (hashLength != HMACSHA256_LEN)
 	{
-		spdlog::error("failed to initialize HMAC-SHA256: BCryptGetProperty(BCRYPT_HASH_LENGTH): unexpected value {}", hashLength);
+		Error(
+			eLog::NS,
+			NO_ERROR,
+			"failed to initialize HMAC-SHA256: BCryptGetProperty(BCRYPT_HASH_LENGTH): unexpected value %i\n",
+			hashLength);
 		return false;
 	}
 
@@ -53,19 +57,19 @@ static bool VerifyHMACSHA256(std::string key, std::string sig, std::string data)
 
 	if ((status = BCryptCreateHash(HMACSHA256, &h, NULL, 0, (PUCHAR)key.c_str(), (ULONG)key.length(), 0)))
 	{
-		spdlog::error("failed to verify HMAC-SHA256: BCryptCreateHash: error 0x{:08X}", (ULONG)status);
+		Error(eLog::NS, NO_ERROR, "failed to verify HMAC-SHA256: BCryptCreateHash: error 0x%x\n", (ULONG)status);
 		goto cleanup;
 	}
 
 	if ((status = BCryptHashData(h, (PUCHAR)data.c_str(), (ULONG)data.length(), 0)))
 	{
-		spdlog::error("failed to verify HMAC-SHA256: BCryptHashData: error 0x{:08X}", (ULONG)status);
+		Error(eLog::NS, NO_ERROR, "failed to verify HMAC-SHA256: BCryptHashData: error 0x%x\n", (ULONG)status);
 		goto cleanup;
 	}
 
 	if ((status = BCryptFinishHash(h, (PUCHAR)&hash, (ULONG)sizeof(hash), 0)))
 	{
-		spdlog::error("failed to verify HMAC-SHA256: BCryptFinishHash: error 0x{:08X}", (ULONG)status);
+		Error(eLog::NS, NO_ERROR, "failed to verify HMAC-SHA256: BCryptFinishHash: error 0x%x\n", (ULONG)status);
 		goto cleanup;
 	}
 
@@ -89,7 +93,11 @@ static void ProcessAtlasConnectionlessPacketSigreq1(R2::netpacket_t* packet, boo
 	if (pData.length() < HMACSHA256_LEN)
 	{
 		if (dbg)
-			spdlog::warn("ignoring Atlas connectionless packet (size={} type={}): invalid: too short for signature", packet->size, pType);
+			Warning(
+				eLog::MS,
+				"ignoring Atlas connectionless packet (size=%i type=%s): invalid: too short for signature\n",
+				packet->size,
+				pType.c_str());
 		return;
 	}
 
@@ -100,11 +108,12 @@ static void ProcessAtlasConnectionlessPacketSigreq1(R2::netpacket_t* packet, boo
 	if (!g_pMasterServerManager || !g_pMasterServerManager->m_sOwnServerAuthToken[0])
 	{
 		if (dbg)
-			spdlog::warn(
-				"ignoring Atlas connectionless packet (size={} type={}): invalid (data={}): no masterserver token yet",
+			Warning(
+				eLog::MS,
+				"ignoring Atlas connectionless packet (size=%i type=%s): invalid (data=%s): no masterserver token yet\n",
 				packet->size,
-				pType,
-				pData);
+				pType.c_str(),
+				pData.c_str());
 		return;
 	}
 
@@ -113,21 +122,23 @@ static void ProcessAtlasConnectionlessPacketSigreq1(R2::netpacket_t* packet, boo
 		if (!Cvar_net_debug_atlas_packet_insecure->GetBool())
 		{
 			if (dbg)
-				spdlog::warn(
-					"ignoring Atlas connectionless packet (size={} type={}): invalid: invalid signature (key={})",
+				Warning(
+					eLog::MS,
+					"ignoring Atlas connectionless packet (size=%i type=%s): invalid: invalid signature (key=%s)\n",
 					packet->size,
-					pType,
-					std::string(g_pMasterServerManager->m_sOwnServerAuthToken));
+					pType.c_str(),
+					g_pMasterServerManager->m_sOwnServerAuthToken);
 			return;
 		}
-		spdlog::warn(
-			"processing Atlas connectionless packet (size={} type={}) with invalid signature due to net_debug_atlas_packet_insecure",
+		Warning(
+			eLog::MS,
+			"processing Atlas connectionless packet (size=%i type=%s) with invalid signature due to net_debug_atlas_packet_insecure\n",
 			packet->size,
-			pType);
+			pType.c_str());
 	}
 
 	if (dbg)
-		spdlog::info("got Atlas connectionless packet (size={} type={} data={})", packet->size, pType, pData);
+		DevMsg(eLog::MS, "got Atlas connectionless packet (size=%i type=%s data=%s)\n", packet->size, pType.c_str(), pData.c_str());
 
 	std::thread t(&MasterServerManager::ProcessConnectionlessPacketSigreq1, g_pMasterServerManager, pData);
 	t.detach();
@@ -164,7 +175,7 @@ static void ProcessAtlasConnectionlessPacket(R2::netpacket_t* packet)
 	}
 
 	if (dbg)
-		spdlog::warn("ignoring Atlas connectionless packet (size={} type={}): unknown type", packet->size, pType);
+		Warning(eLog::MS, "ignoring Atlas connectionless packet (size=%i type=%s): unknown type\n", packet->size, pType.c_str());
 	return;
 }
 
@@ -194,14 +205,14 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerNetHooks, ConVar, (CModule module))
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
 	if (!InitHMACSHA256())
-		throw std::runtime_error("failed to initialize bcrypt");
+		Error(eLog::NS, EXIT_FAILURE, "Failed to initialize bcrypt\n");
 
 	if (!VerifyHMACSHA256(
 			"test",
 			"\x88\xcd\x21\x08\xb5\x34\x7d\x97\x3c\xf3\x9c\xdf\x90\x53\xd7\xdd\x42\x70\x48\x76\xd8\xc9\xa9\xbd\x8e\x2d\x16\x82\x59\xd3\xdd"
 			"\xf7",
 			"test"))
-		throw std::runtime_error("bcrypt HMAC-SHA256 is broken");
+		Error(eLog::NS, EXIT_FAILURE, "bcrypt HMAC-SHA256 is broken\n");
 
 	Cvar_net_debug_atlas_packet = new ConVar(
 		"net_debug_atlas_packet",
