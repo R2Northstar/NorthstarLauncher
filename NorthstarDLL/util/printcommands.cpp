@@ -237,24 +237,26 @@ void ConCommand_differences(const CCommand& arg)
 			continue;
 		}
 
-		if (strcmp(cvar->GetString(), cvar->m_pszDefaultValue) != NULL)
+		if (strcmp(cvar->GetString(), cvar->m_pszDefaultValue) == NULL)
 		{
-			std::string formatted =
-				fmt::format("\"{}\" = \"{}\" ( def. \"{}\" )", cvar->GetBaseName(), cvar->GetString(), cvar->m_pszDefaultValue);
-
-			if (cvar->m_bHasMin)
-			{
-				formatted.append(fmt::format(" min. {}", cvar->m_fMinVal));
-			}
-
-			if (cvar->m_bHasMax)
-			{
-				formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
-			}
-
-			formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
-			spdlog::info(formatted);
+			continue;
 		}
+
+		std::string formatted =
+			fmt::format("\"{}\" = \"{}\" ( def. \"{}\" )", cvar->GetBaseName(), cvar->GetString(), cvar->m_pszDefaultValue);
+
+		if (cvar->m_bHasMin)
+		{
+			formatted.append(fmt::format(" min. {}", cvar->m_fMinVal));
+		}
+
+		if (cvar->m_bHasMax)
+		{
+			formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
+		}
+
+		formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
+		spdlog::info(formatted);
 	}
 }
 
