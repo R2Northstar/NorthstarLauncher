@@ -205,16 +205,17 @@ void ConCommand_list(const CCommand& arg)
 	{
 		PrintCommandHelpDialogue(map.second, map.second->m_pszName);
 	}
+	spdlog::info("{} total convars/concommands", sorted.size());
 }
 
 void ConCommand_differences(const CCommand& arg)
 {
-	ConCommandBase* var;
 	CCVarIteratorInternal* itint = R2::g_pCVar->FactoryInternalIterator();
 	std::map<std::string, ConCommandBase*> sorted;
+
 	for (itint->SetFirst(); itint->IsValid(); itint->Next())
 	{
-		var = itint->Get();
+		ConCommandBase* var = itint->Get();
 		if (!var->IsFlagSet(FCVAR_DEVELOPMENTONLY) && !var->IsFlagSet(FCVAR_HIDDEN))
 		{
 			sorted.insert({var->m_pszName, var});
@@ -225,26 +226,34 @@ void ConCommand_differences(const CCommand& arg)
 	for (auto& map : sorted)
 	{
 		ConVar* cvar = R2::g_pCVar->FindVar(map.second->m_pszName);
-		if (cvar && !cvar->IsFlagSet(FCVAR_HIDDEN))
+
+		if (!cvar)
 		{
-			if (strcmp(cvar->GetString(), "FCVAR_NEVER_AS_STRING") != NULL)
+			continue;
+		}
+
+		if (strcmp(cvar->GetString(), "FCVAR_NEVER_AS_STRING") == NULL)
+		{
+			continue;
+		}
+
+		if (strcmp(cvar->GetString(), cvar->m_pszDefaultValue) != NULL)
+		{
+			std::string formatted =
+				fmt::format("\"{}\" = \"{}\" ( def. \"{}\" )", cvar->GetBaseName(), cvar->GetString(), cvar->m_pszDefaultValue);
+
+			if (cvar->m_bHasMin)
 			{
-				if (strcmp(cvar->GetString(), cvar->m_pszDefaultValue) != NULL)
-				{
-					std::string formatted =
-						fmt::format("\"{}\" = \"{}\" ( def. \"{}\" )", cvar->GetBaseName(), cvar->GetString(), cvar->m_pszDefaultValue);
-					if (cvar->m_bHasMin)
-					{
-						formatted.append(fmt::format(" min. {}", cvar->m_fMinVal));
-					}
-					if (cvar->m_bHasMax)
-					{
-						formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
-					}
-					formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
-					spdlog::info(formatted);
-				}
+				formatted.append(fmt::format(" min. {}", cvar->m_fMinVal));
 			}
+
+			if (cvar->m_bHasMax)
+			{
+				formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
+			}
+
+			formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
+			spdlog::info(formatted);
 		}
 	}
 }
