@@ -371,7 +371,7 @@ bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
-template <ScriptContext context> void* (*__fastcall sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
+template <ScriptContext context> void* (*sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
 template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
 {
 	// store whether errors generated from this compile should be fatal
@@ -403,7 +403,7 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 	return 0;
 }
 
-template <ScriptContext context> CSquirrelVM* (*__fastcall CreateNewVM)(void* a1, ScriptContext realContext);
+template <ScriptContext context> CSquirrelVM* (*CreateNewVM)(void* a1, ScriptContext realContext);
 template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a1, ScriptContext realContext)
 {
 	CSquirrelVM* sqvm = CreateNewVM<context>(a1, realContext);
@@ -416,7 +416,7 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	return sqvm;
 }
 
-template <ScriptContext context> bool (*__fastcall CSquirrelVM_init)(CSquirrelVM* vm, ScriptContext realContext, float time);
+template <ScriptContext context> bool (*CSquirrelVM_init)(CSquirrelVM* vm, ScriptContext realContext, float time);
 template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelVM* vm, ScriptContext realContext, float time)
 {
 	bool ret = CSquirrelVM_init<context>(vm, realContext, time);
@@ -433,7 +433,7 @@ template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelV
 	return ret;
 }
 
-template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, CSquirrelVM* sqvm);
+template <ScriptContext context> void (*DestroyVM)(void* a1, CSquirrelVM* sqvm);
 template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirrelVM* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
@@ -452,8 +452,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirr
 	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
 
-template <ScriptContext context>
-void (*__fastcall SQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
+template <ScriptContext context> void (*SQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
 template <ScriptContext context>
 void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column)
 {
@@ -501,8 +500,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 	// dont call the original function since it kills game lol
 }
 
-template <ScriptContext context>
-int64_t (*__fastcall RegisterSquirrelFunction)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
+template <ScriptContext context> int64_t (*RegisterSquirrelFunction)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
 template <ScriptContext context>
 int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown)
 {
@@ -528,7 +526,7 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 	return g_pSquirrel<context>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
 }
 
-template <ScriptContext context> bool (*__fastcall CallScriptInitCallback)(void* sqvm, const char* callback);
+template <ScriptContext context> bool (*CallScriptInitCallback)(void* sqvm, const char* callback);
 template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void* sqvm, const char* callback)
 {
 	ScriptContext realContext = context;
