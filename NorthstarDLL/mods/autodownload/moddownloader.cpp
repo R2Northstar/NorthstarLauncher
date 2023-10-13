@@ -306,6 +306,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	if (status != UNZ_OK)
 	{
 		spdlog::error("Failed getting information from archive (error code: {})", status);
+		goto EXTRACTION_CLEANUP;
 	}
 
 	// Mod directory name (removing the ".zip" fom the archive name)
