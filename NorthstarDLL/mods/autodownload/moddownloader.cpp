@@ -303,7 +303,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	unz_global_info64 gi;
 	int status;
 	status = unzGetGlobalInfo64(file, &gi);
-	if (file != UNZ_OK)
+	if (status != UNZ_OK)
 	{
 		spdlog::error("Failed getting information from archive (error code: {})", status);
 	}
