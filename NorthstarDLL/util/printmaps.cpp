@@ -104,7 +104,7 @@ void RefreshMapList()
 	}
 
 	// get maps in game dir
-	char* gameDir = fmt::format("{}/maps", R2::g_pModName);
+	std::string gameDir = fmt::format("{}/maps", R2::g_pModName);
 	if (!std::filesystem::exists(gameDir))
 	{
 		return;
