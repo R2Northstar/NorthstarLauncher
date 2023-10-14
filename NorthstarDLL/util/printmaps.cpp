@@ -104,12 +104,13 @@ void RefreshMapList()
 	}
 
 	// get maps in game dir
-	if (!std::filesystem::exists(fmt::format("{}/maps", R2::g_pModName)))
+	char* gameDir = fmt::format("{}/maps", R2::g_pModName);
+	if (!std::filesystem::exists(gameDir))
 	{
 		return;
 	}
 
-	for (fs::directory_entry file : fs::directory_iterator(fmt::format("{}/maps", R2::g_pModName)))
+	for (fs::directory_entry file : fs::directory_iterator(gameDir))
 	{
 		if (file.path().extension() == ".bsp")
 		{
