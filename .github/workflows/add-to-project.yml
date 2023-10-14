@@ -11,6 +11,9 @@ on:
 jobs:
   add-to-project:
     name: Add to project
+    # Don't run on forks cause they don't have the token set
+    # This means that any outside branch that is PR'd (which is the vast majority) won't get auto added to board
+    if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.5.0
