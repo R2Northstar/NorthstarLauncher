@@ -39,6 +39,4 @@ class PluginCommunicationHandler
 	PluginEngineData m_sEngineData {};
 };
 
-void init_plugincommunicationhandler();
-
 extern PluginCommunicationHandler* g_pPluginCommunicationhandler;
