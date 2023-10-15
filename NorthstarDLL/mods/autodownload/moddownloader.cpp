@@ -68,9 +68,8 @@ void ModDownloader::FetchModsListFromAPI()
 				std::unordered_map<std::string, VerifiedModVersion> modVersions;
 				rapidjson::Value& versions = i->value["Versions"];
 				assert(versions.IsArray());
-				for (rapidjson::Value::ConstValueIterator itr = versions.Begin(); itr != versions.End(); ++itr)
+				for (auto& attribute : versions.GetArray())
 				{
-					const rapidjson::Value& attribute = *itr;
 					assert(attribute.IsObject());
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
