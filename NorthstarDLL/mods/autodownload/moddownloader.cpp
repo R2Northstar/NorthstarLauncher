@@ -131,8 +131,10 @@ REQUEST_END_CLEANUP:
 
 std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, std::string_view modVersion)
 {
+	// Retrieve mod prefix from local mods list, or use mod name as mod prefix if bypass flag is set
+	std::string modPrefix = strstr(GetCommandLineA(), VERIFICATION_FLAG) ? modName.data() : verifiedMods[modName.data()].dependencyPrefix;
 	// Build archive distant URI
-	std::string archiveName = std::format("{}-{}.zip", verifiedMods[modName.data()].dependencyPrefix, modVersion.data());
+	std::string archiveName = std::format("{}-{}.zip", modPrefix, modVersion.data());
 	std::string url = STORE_URL + archiveName;
 	spdlog::info(std::format("Fetching mod archive from {}", url));
 

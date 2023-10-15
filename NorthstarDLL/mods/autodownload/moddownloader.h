@@ -20,7 +20,8 @@ class ModDownloader
 	 * Downloads a mod archive from distant store.
 	 *
 	 * This rebuilds the URI of the mod archive using both a predefined store URI
-	 * and the mod dependency string from the `verifiedMods` variable; fetched
+	 * and the mod dependency string from the `verifiedMods` variable, or using
+	 * input mod name as mod dependency string if bypass flag is set up; fetched
 	 * archive is then stored in a temporary location.
 	 *
 	 * If something went wrong during archive download, this will return an empty
