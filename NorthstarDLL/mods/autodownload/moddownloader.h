@@ -129,16 +129,13 @@ class ModDownloader
 	} modState = {};
 
 	/**
-	 * Cancels installation of a mod.
+	 * Cancels installation of the mod.
 	 *
-	 * Prevents installation of a mod currently being installed, no matter the install
+	 * Prevents installation of the mod currently being installed, no matter the install
 	 * progress (downloading, checksuming, extracting), and frees all resources currently
 	 * being used in this purpose.
 	 *
-	 * Does nothing if mod passed as argument is not being installed.
-	 *
-	 * @param modName name of the mod to prevent installation of
 	 * @returns nothing
 	 */
-	void CancelDownload(std::string modName);
+	void CancelDownload();
 };
