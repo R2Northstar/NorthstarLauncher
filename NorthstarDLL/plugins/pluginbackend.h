@@ -30,14 +30,11 @@ class PluginCommunicationHandler
 	void PushRequest(PluginDataRequestType type, PluginRespondDataCallable func);
 
   public:
-	std::queue<PluginDataRequest> requestQueue;
+	std::queue<PluginDataRequest> requestQueue = {};
 	std::mutex requestMutex;
 
 	PluginEngineData m_sEngineData {};
 };
 
-void init_plugincommunicationhandler();
-
 void InformPluginsDLLLoad(fs::path dllPath, void* address);
-
 extern PluginCommunicationHandler* g_pPluginCommunicationhandler;

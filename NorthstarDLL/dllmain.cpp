@@ -5,6 +5,7 @@
 #include "config/profile.h"
 #include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
+#include "plugins/pluginbackend.h"
 #include "util/version.h"
 #include "squirrel/squirrel.h"
 #include "server/serverpresence.h"
@@ -60,6 +61,7 @@ bool InitialiseNorthstar()
 	g_pServerPresence = new ServerPresenceManager();
 
 	g_pPluginManager = new PluginManager();
+	g_pPluginCommunicationhandler = new PluginCommunicationHandler();
 	g_pPluginManager->LoadPlugins();
 
 	InitialiseSquirrelManagers();
