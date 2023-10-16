@@ -16,6 +16,34 @@ ModDownloader* g_pModDownloader;
 ModDownloader::ModDownloader()
 {
 	spdlog::info("Mod downloader initialized");
+
+	// Initialise mods list URI
+	char* clachar = strstr(GetCommandLineA(), CUSTOM_MODS_URL_FLAG);
+	if (clachar)
+	{
+		std::string url;
+		int iFlagStringLength = strlen(CUSTOM_MODS_URL_FLAG);
+		std::string cla = std::string(clachar);
+		if (strncmp(cla.substr(iFlagStringLength, 1).c_str(), "\"", 1))
+		{
+			int space = cla.find(" ");
+			url = cla.substr(iFlagStringLength, space - iFlagStringLength);
+		}
+		else
+		{
+			std::string quote = "\"";
+			int quote1 = cla.find(quote);
+			int quote2 = (cla.substr(quote1 + 1)).find(quote);
+			url = cla.substr(quote1 + 1, quote2);
+		}
+		spdlog::info("Found custom verified mods URL in command line argument: {}", url);
+		modsListUrl = strdup(url.c_str());
+	}
+	else
+	{
+		spdlog::info("Custom verified mods URL not found in command line arguments, using default URL.");
+		modsListUrl = strdup(DEFAULT_MODS_LIST_URL);
+	}
 }
 
 size_t WriteToString(void* ptr, size_t size, size_t count, void* stream)
@@ -32,7 +60,7 @@ void ModDownloader::FetchModsListFromAPI()
 			CURLcode result;
 			CURL* easyhandle;
 			rapidjson::Document verifiedModsJson;
-			std::string url = MODS_LIST_URL;
+			std::string url = modsListUrl;
 
 			curl_global_init(CURL_GLOBAL_ALL);
 			easyhandle = curl_easy_init();

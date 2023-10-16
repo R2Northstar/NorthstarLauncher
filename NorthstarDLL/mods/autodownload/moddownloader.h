@@ -1,9 +1,11 @@
 class ModDownloader
 {
   private:
-	const char* STORE_URL = "https://gcdn.thunderstore.io/live/repository/packages/";
-	const char* MODS_LIST_URL = "https://raw.githubusercontent.com/R2Northstar/VerifiedMods/master/mods.json";
 	const char* VERIFICATION_FLAG = "-disablemodverification";
+	const char* CUSTOM_MODS_URL_FLAG = "-customverifiedurl=";
+	const char* STORE_URL = "https://gcdn.thunderstore.io/live/repository/packages/";
+	const char* DEFAULT_MODS_LIST_URL = "https://raw.githubusercontent.com/R2Northstar/VerifiedMods/master/mods.json";
+	char* modsListUrl;
 
 	struct VerifiedModVersion
 	{
