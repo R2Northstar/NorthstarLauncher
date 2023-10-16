@@ -129,17 +129,6 @@ class ModDownloader
 	} modState = {};
 
 	/**
-	 * Retrieves installation information of a mod.
-	 *
-	 * Since mods are installed one at a time, mod installation data is stored in a global
-	 * MOD_STATE instance.
-	 *
-	 * @param modName name of the mod to get information of
-	 * @returns the class MOD_STATE instance
-	 */
-	MOD_STATE GetModInstallProgress(std::string modName);
-
-	/**
 	 * Cancels installation of a mod.
 	 *
 	 * Prevents installation of a mod currently being installed, no matter the install
