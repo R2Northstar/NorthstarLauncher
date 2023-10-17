@@ -10,6 +10,21 @@ namespace R2
 	extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
 
 	// clang-format off
+	struct StatusEffectTimedData
+	{
+		void* vftable;
+		unsigned int seComboVars;
+		float seTimeEnd;
+		float seFadeOutTime;
+	};
+
+	struct StatusEffectEndlessData
+	{
+		void* vftable;
+		unsigned short seComboVars;
+		unsigned short seComboVars2;
+	};
+
 	OFFSET_STRUCT(CBasePlayer)
 	{
 		FIELD(0x58, uint32_t m_nPlayerIndex)
@@ -103,6 +118,10 @@ namespace R2
 		FIELD(0x15A4, float m_zoomFullStartTime)
 		FIELD(0xA04, int32_t m_camoIndex)
 		FIELD(0xA08, int32_t m_decalIndex)
+		FIELD(0x2D18, StatusEffectTimedData m_statusEffectsTimedPlayerNV [10])
+		FIELD(0x2E08, StatusEffectEndlessData m_statusEffectsEndlessPlayerNV [10])
+		FIELD(0x1AB8, StatusEffectTimedData m_clientStatusEffectsTimedPlayerNV [10])
+		FIELD(0x1BA8, StatusEffectEndlessData m_clientStatusEffectsEndlessPlayerNV [10])
 	};
 	// clang-format on
 
