@@ -4,6 +4,7 @@ find_package(minhook REQUIRED)
 find_package(libcurl REQUIRED)
 
 add_library(NorthstarDLL SHARED
+            "resources.rc"
             "client/audio.cpp"
             "client/audio.h"
             "client/chatcommand.cpp"
@@ -90,6 +91,7 @@ add_library(NorthstarDLL SHARED
             "scripts/client/scriptbrowserhooks.cpp"
             "scripts/client/scriptmainmenupromos.cpp"
             "scripts/client/scriptmodmenu.cpp"
+            "scripts/client/scriptoriginauth.cpp"
             "scripts/client/scriptserverbrowser.cpp"
             "scripts/client/scriptservertoclientstringcommand.cpp"
             "scripts/server/miscserverfixes.cpp"
