@@ -9,6 +9,10 @@
 #include <filesystem>
 #include <Psapi.h>
 
+#define IGO_DLL L"IGO64.dll"
+
+bool disable_igo = false;
+
 AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros
@@ -445,6 +449,15 @@ AUTOHOOK_ABSOLUTEADDR(_LoadLibraryW, (LPVOID)LoadLibraryW,
 HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 // clang-format on
 {
+	if (disable_igo)
+	{
+		LPCWSTR LibFileNameEnd = lpLibFileName + wcslen(lpLibFileName);
+		LPCWSTR LibName = LibFileNameEnd - wcslen(IGO_DLL);
+
+		if (!wcsncmp(LibName, IGO_DLL, wcslen(IGO_DLL)))
+			return nullptr;
+	}
+
 	HMODULE moduleAddress = _LoadLibraryW(lpLibFileName);
 
 	if (moduleAddress)
@@ -459,4 +472,6 @@ void InstallInitialHooks()
 		spdlog::error("MH_Initialize (minhook initialization) failed");
 
 	AUTOHOOK_DISPATCH()
+
+	disable_igo = strstr(GetCommandLineA(), "-disable_igo");
 }
