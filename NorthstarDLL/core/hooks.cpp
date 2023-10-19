@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <Psapi.h>
 
+#define XINPUT1_3_DLL "XInput1_3.dll"
+
 AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros
@@ -392,8 +394,11 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 {
 	HMODULE moduleAddress;
 
+	LPCSTR lpLibFileNameEnd = lpLibFileName + strlen(lpLibFileName);
+	LPCSTR lpLibName = lpLibFileNameEnd - strlen(XINPUT1_3_DLL);
+
 	// replace xinput dll with one that has ASLR
-	if (!strncmp(lpLibFileName, "XInput1_3.dll", 14))
+	if (!strncmp(lpLibName, XINPUT1_3_DLL, strlen(XINPUT1_3_DLL)+1))
 	{
 		moduleAddress = _LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
 
