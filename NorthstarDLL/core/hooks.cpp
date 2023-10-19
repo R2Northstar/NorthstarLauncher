@@ -451,10 +451,10 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 {
 	if (disable_igo)
 	{
-		LPCWSTR LibFileNameEnd = lpLibFileName + wcslen(lpLibFileName);
-		LPCWSTR LibName = LibFileNameEnd - wcslen(IGO_DLL);
+		LPCWSTR lpLibFileNameEnd = lpLibFileName + wcslen(lpLibFileName);
+		LPCWSTR lpLibName = lpLibFileNameEnd - wcslen(IGO_DLL);
 
-		if (!wcsncmp(LibName, IGO_DLL, wcslen(IGO_DLL) + sizeof(*LPCWSTR)))
+		if (!wcsncmp(lpLibName, IGO_DLL, wcslen(IGO_DLL) + sizeof(wchar_t)))
 			return nullptr;
 	}
 
