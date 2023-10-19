@@ -454,7 +454,7 @@ HMODULE, WINAPI, (LPCWSTR lpLibFileName))
 		LPCWSTR LibFileNameEnd = lpLibFileName + wcslen(lpLibFileName);
 		LPCWSTR LibName = LibFileNameEnd - wcslen(IGO_DLL);
 
-		if (!wcsncmp(LibName, IGO_DLL, wcslen(IGO_DLL)))
+		if (!wcsncmp(LibName, IGO_DLL, wcslen(IGO_DLL) + sizeof(*LPCWSTR)))
 			return nullptr;
 	}
 
