@@ -398,7 +398,7 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 	LPCSTR lpLibName = lpLibFileNameEnd - strlen(XINPUT1_3_DLL);
 
 	// replace xinput dll with one that has ASLR
-	if (!strncmp(lpLibName, XINPUT1_3_DLL, strlen(XINPUT1_3_DLL) + 1))
+	if (lpLibFileName <= lpLibName && !strncmp(lpLibName, XINPUT1_3_DLL, strlen(XINPUT1_3_DLL) + 1))
 	{
 		moduleAddress = _LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
 
