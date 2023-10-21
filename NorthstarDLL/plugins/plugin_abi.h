@@ -90,6 +90,22 @@ extern "C"
 	typedef void (*loggerfunc_t)(LogMsg* msg);
 	typedef void (*PLUGIN_RELAY_INVITE_TYPE)(const char* invite);
 	typedef void* (*CreateObjectFunc)(ObjectType type);
+
+	typedef void (*PluginFnCommandCallback_t)(void* command);
+	typedef void (*PluginConCommandConstructorType)(
+		void* newCommand, char* name, PluginFnCommandCallback_t callback, char* helpString, int flags, void* parent);
+	typedef void (*PluginConVarRegisterType)(
+		void* pConVar,
+		char* pszName,
+		char* pszDefaultValue,
+		int nFlags,
+		char* pszHelpString,
+		bool bMin,
+		float fMin,
+		bool bMax,
+		float fMax,
+		void* pCallback);
+	typedef void (*PluginConVarMallocType)(void* pConVarMaloc, int a2, int a3);
 }
 
 struct PluginNorthstarData
@@ -108,9 +124,9 @@ struct PluginInitFuncs
 
 struct PluginEngineData
 {
-	void* ConCommandConstructor;
-	void* conVarMalloc;
-	void* conVarRegister;
+	PluginConCommandConstructorType ConCommandConstructor;
+	PluginConVarMallocType conVarMalloc;
+	PluginConVarRegisterType conVarRegister;
 	void* ConVar_Vtable;
 	void* IConVar_Vtable;
 	void* g_pCVar;

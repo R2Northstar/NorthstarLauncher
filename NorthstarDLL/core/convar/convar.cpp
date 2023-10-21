@@ -4,6 +4,7 @@
 #include "core/sourceinterface.h"
 
 #include "plugins/pluginbackend.h"
+#include "plugins/plugin_abi.h"
 
 #include <float.h>
 
@@ -40,11 +41,11 @@ ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 	R2::g_pCVarInterface = new SourceInterface<CCvar>("vstdlib.dll", "VEngineCvar007");
 	R2::g_pCVar = *R2::g_pCVarInterface;
 
-	g_pPluginCommunicationhandler->m_sEngineData.conVarMalloc = (void*)conVarMalloc;
-	g_pPluginCommunicationhandler->m_sEngineData.conVarRegister = (void*)conVarRegister;
-	g_pPluginCommunicationhandler->m_sEngineData.ConVar_Vtable = (void*)g_pConVar_Vtable;
-	g_pPluginCommunicationhandler->m_sEngineData.IConVar_Vtable = (void*)g_pIConVar_Vtable;
-	g_pPluginCommunicationhandler->m_sEngineData.g_pCVar = (void*)R2::g_pCVar;
+	g_pPluginCommunicationhandler->m_sEngineData.conVarMalloc = static_cast<PluginConVarMallocType>(conVarMalloc);
+	g_pPluginCommunicationhandler->m_sEngineData.conVarRegister = static_cast<PluginConVarRegisterType>(conVarRegister);
+	g_pPluginCommunicationhandler->m_sEngineData.ConVar_Vtable = static_cast<void*>(g_pConVar_Vtable);
+	g_pPluginCommunicationhandler->m_sEngineData.IConVar_Vtable = static_cast<void*>(g_pIConVar_Vtable);
+	g_pPluginCommunicationhandler->m_sEngineData.g_pCVar = static_cast<void*>(R2::g_pCVar);
 }
 
 //-----------------------------------------------------------------------------
