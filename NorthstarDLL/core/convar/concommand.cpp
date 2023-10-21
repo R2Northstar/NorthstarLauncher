@@ -153,5 +153,5 @@ ON_DLL_LOAD("engine.dll", ConCommand, (CModule module))
 	AddMiscConCommands();
 
 	g_pPluginCommunicationhandler->m_sEngineData.ConCommandConstructor =
-		static_cast<PluginConCommandConstructorType>(ConCommandConstructor);
+		reinterpret_cast<PluginConCommandConstructorType>(ConCommandConstructor);
 }
