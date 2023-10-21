@@ -93,13 +93,13 @@ extern "C"
 
 	typedef void (*PluginFnCommandCallback_t)(void* command);
 	typedef void (*PluginConCommandConstructorType)(
-		void* newCommand, char* name, PluginFnCommandCallback_t callback, char* helpString, int flags, void* parent);
+		void* newCommand, const char* name, PluginFnCommandCallback_t callback, const char* helpString, int flags, void* parent);
 	typedef void (*PluginConVarRegisterType)(
 		void* pConVar,
-		char* pszName,
-		char* pszDefaultValue,
+		const char* pszName,
+		const char* pszDefaultValue,
 		int nFlags,
-		char* pszHelpString,
+		const char* pszHelpString,
 		bool bMin,
 		float fMin,
 		bool bMax,
