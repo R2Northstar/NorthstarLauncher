@@ -1,7 +1,6 @@
 #include "squirrel/squirrel.h"
 #include "client/r2client.h"
 #include "engine/r2engine.h"
-#include "ns_version.h"
 
 // asset function StringToAsset( string assetName )
 ADD_SQFUNC(
@@ -26,22 +25,4 @@ ADD_SQFUNC(
 	}
 
 	return SQRESULT_NULL;
-}
-
-ADD_SQFUNC(
-	"string",
-	GetNorthstarVersion,
-	"",
-	"Returns the current version string of Northstar(.dll)",
-	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
-{
-	constexpr int version[4] {NORTHSTAR_VERSION};
-	std::string versionStr = std::format("{}.{}.{}", version[0], version[1], version[2]);
-
-	// for dev builds, show the fourth version number and the +dev bit
-	if (version[3])
-		versionStr += std::format(".{}+dev", version[3]);
-
-	g_pSquirrel<context>->pushstring(sqvm, versionStr.c_str());
-	return SQRESULT_NOTNULL;
 }
