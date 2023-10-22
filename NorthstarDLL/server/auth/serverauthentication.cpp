@@ -286,10 +286,9 @@ bool,, (R2::CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer,
 		return CBaseClient__Connect(self, pName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7);
 
 	// try to actually connect the bot
-	else if (!CBaseClient__Connect(self, pName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7))
+	if (!CBaseClient__Connect(self, pName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7))
 		return false;
 
-	// we already know this player's authentication data is legit, actually write it to them now
 	g_pServerAuthentication->AuthenticatePlayer(self, 0, "0");
 
 	g_pServerAuthentication->AddPlayer(self, "0");
