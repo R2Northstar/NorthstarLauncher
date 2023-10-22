@@ -682,6 +682,10 @@ void ModManager::LoadMods()
 					{
 						modDirs.push_back(subDir.path());
 					}
+					else
+					{
+						VerifyModManifestLocation(subDir);
+					}
 				}
 			}
 		}
