@@ -648,16 +648,15 @@ void ModManager::LoadMods()
 
 	this->m_invalidMods.clear();
 
-	for (std::filesystem::directory_iterator modIterator : {classicModsDir, remoteModsDir})
-		for (fs::directory_entry dir : modIterator)
+	for (fs::directory_entry dir : classicModsDir)
+	{
+		if (fs::exists(dir.path() / "mod.json"))
+			modDirs.push_back(dir.path());
+		else if (fs::is_directory(dir.path()))
 		{
-			if (fs::exists(dir.path() / "mod.json"))
-				modDirs.push_back(dir.path());
-			else if (fs::is_directory(dir.path()))
-			{
-				VerifyModManifestLocation(dir);
-			}
+			VerifyModManifestLocation(dir);
 		}
+	}
 
 	// Special case for Thunderstore and remote mods directories
 	// Set up regex for `AUTHOR-MOD-VERSION` pattern
