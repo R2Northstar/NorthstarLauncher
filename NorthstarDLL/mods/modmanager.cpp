@@ -583,6 +583,11 @@ auto ModConCommandCallback(const CCommand& command)
 
 void ModManager::VerifyModManifestLocation(fs::directory_entry modDir)
 {
+	if (!fs::is_directory(modDir))
+	{
+		return;
+	}
+
 	std::string filename = modDir.path().filename().generic_string().c_str();
 	// Don't display an error for hidden directories
 	if (filename.at(0) == '.')
