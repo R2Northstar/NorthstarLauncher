@@ -1,108 +1,165 @@
 #include "mods/modmanager.h"
 #include "squirrel/squirrel.h"
 
-template <ScriptContext context> void PushModStruct(HSquirrelVM* sqvm, const Mod& mod, SQInteger index)
+ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
-	g_pSquirrel<context>->pushnewstructinstance(sqvm, 10);
-
-	// index
-	g_pSquirrel<context>->pushinteger(sqvm, index);
-	g_pSquirrel<context>->sealstructslot(sqvm, 0);
-
-	// name
-	g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
-	g_pSquirrel<context>->sealstructslot(sqvm, 1);
-
-	// description
-	g_pSquirrel<context>->pushstring(sqvm, mod.Description.c_str(), -1);
-	g_pSquirrel<context>->sealstructslot(sqvm, 2);
-
-	// version
-	g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str(), -1);
-	g_pSquirrel<context>->sealstructslot(sqvm, 3);
-
-	// link
-	g_pSquirrel<context>->pushstring(sqvm, mod.DownloadLink.c_str(), -1);
-	g_pSquirrel<context>->sealstructslot(sqvm, 4);
-
-	// installLocation
-	g_pSquirrel<context>->pushstring(sqvm, mod.m_ModDirectory.generic_string().c_str());
-	g_pSquirrel<context>->sealstructslot(sqvm, 5);
-
-	// loadPriority
-	g_pSquirrel<context>->pushinteger(sqvm, mod.LoadPriority);
-	g_pSquirrel<context>->sealstructslot(sqvm, 6);
-
-	// requiredOnClient
-	g_pSquirrel<context>->pushbool(sqvm, mod.RequiredOnClient);
-	g_pSquirrel<context>->sealstructslot(sqvm, 7);
-
-	// enabled
-	g_pSquirrel<context>->pushbool(sqvm, mod.m_bEnabled);
-	g_pSquirrel<context>->sealstructslot(sqvm, 8);
-
-	// conVars
 	g_pSquirrel<context>->newarray(sqvm, 0);
-	for (ModConVar* conVar : mod.ConVars)
+
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		g_pSquirrel<context>->pushstring(sqvm, conVar->Name.c_str());
+		g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str());
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
 	}
-	g_pSquirrel<context>->sealstructslot(sqvm, 9);
 
-	g_pSquirrel<context>->arrayappend(sqvm, -2);
+	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSSetModEnabled, "int index, bool enabled", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsModEnabled, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
-	const int index = g_pSquirrel<context>->getinteger(sqvm, 1);
-	const SQBool enabled = g_pSquirrel<context>->getbool(sqvm, 2);
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 
-	if (index < 0 || index >= g_pModManager->m_LoadedMods.size())
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		spdlog::warn("Tried disabling mod at {} but only {} mods are loaded", index, g_pModManager->m_LoadedMods.size());
-		return SQRESULT_ERROR;
+		if (!mod.Name.compare(modName))
+		{
+			g_pSquirrel<context>->pushbool(sqvm, mod.m_bEnabled);
+			return SQRESULT_NOTNULL;
+		}
 	}
-
-	g_pModManager->m_LoadedMods[index].m_bEnabled = enabled;
 
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC("void", NSSetModEnabled, "string modName, bool enabled", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
-	g_pModManager->LoadMods();
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+	const SQBool enabled = g_pSquirrel<context>->getbool(sqvm, 2);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (!mod.Name.compare(modName))
+		{
+			mod.m_bEnabled = enabled;
+			return SQRESULT_NULL;
+		}
+	}
+
+	return SQRESULT_NULL;
+}
+
+ADD_SQFUNC("string", NSGetModDescriptionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (!mod.Name.compare(modName))
+		{
+			g_pSquirrel<context>->pushstring(sqvm, mod.Description.c_str());
+			return SQRESULT_NOTNULL;
+		}
+	}
+
+	return SQRESULT_NULL;
+}
+
+ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (!mod.Name.compare(modName))
+		{
+			g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str());
+			return SQRESULT_NOTNULL;
+		}
+	}
+
+	return SQRESULT_NULL;
+}
+
+ADD_SQFUNC("string", NSGetModDownloadLinkByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (!mod.Name.compare(modName))
+		{
+			g_pSquirrel<context>->pushstring(sqvm, mod.DownloadLink.c_str());
+			return SQRESULT_NOTNULL;
+		}
+	}
+
+	return SQRESULT_NULL;
+}
+
+ADD_SQFUNC("int", NSGetModLoadPriority, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (!mod.Name.compare(modName))
+		{
+			g_pSquirrel<context>->pushinteger(sqvm, mod.LoadPriority);
+			return SQRESULT_NOTNULL;
+		}
+	}
+
+	return SQRESULT_NULL;
+}
+
+ADD_SQFUNC("bool", NSIsModRequiredOnClient, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (!mod.Name.compare(modName))
+		{
+			g_pSquirrel<context>->pushbool(sqvm, mod.RequiredOnClient);
+			return SQRESULT_NOTNULL;
+		}
+	}
+
 	return SQRESULT_NULL;
 }
 
 ADD_SQFUNC(
-	"array<Mod>",
-	NSGetInvalidMods,
-	"",
-	"Get all mods that are installed in a subfolder",
-	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+	"array<string>", NSGetModConvarsByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
-	for (auto& invalidMod : g_pModManager->m_invalidMods)
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		const Mod& mod = *invalidMod.get();
-		PushModStruct<context>(sqvm, mod, -1);
+		if (!mod.Name.compare(modName))
+		{
+			for (ModConVar* cvar : mod.ConVars)
+			{
+				g_pSquirrel<context>->pushstring(sqvm, cvar->Name.c_str());
+				g_pSquirrel<context>->arrayappend(sqvm, -2);
+			}
+
+			return SQRESULT_NOTNULL;
+		}
 	}
 
-	return SQRESULT_NOTNULL;
+	return SQRESULT_NOTNULL; // return empty array
 }
 
-ADD_SQFUNC("array<Mod>", NSGetMods, "", "Get all installed mods", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
 {
-	g_pSquirrel<context>->newarray(sqvm, 0);
-
-	for (SQInteger i = 0; i < g_pModManager->m_LoadedMods.size(); i++)
-	{
-		const Mod& mod = g_pModManager->m_LoadedMods[i];
-
-		PushModStruct<context>(sqvm, mod, i);
-	}
-
-	return SQRESULT_NOTNULL;
+	g_pModManager->LoadMods();
+	return SQRESULT_NULL;
 }
