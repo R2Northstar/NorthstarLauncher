@@ -581,6 +581,35 @@ auto ModConCommandCallback(const CCommand& command)
 	};
 }
 
+void ModManager::VerifyModManifestLocation(fs::directory_entry modDir)
+{
+	std::string filename = modDir.path().filename().generic_string().c_str();
+	// Don't display an error for hidden directories
+	if (filename.at(0) == '.')
+		return;
+
+	for (fs::directory_entry subdir : fs::recursive_directory_iterator(modDir.path()))
+	{
+		fs::path modPath = subdir.path() / "mod.json";
+		if (fs::exists(modPath))
+		{
+			spdlog::warn(
+				"mod.json file for directory {} is located at the wrong location ({}).",
+				modDir.path().generic_string().c_str(),
+				subdir.path().generic_string().c_str());
+
+			// read mod json file
+			std::ifstream jsonStream(modPath);
+			std::stringstream jsonStringStream;
+			jsonStringStream << jsonStream.rdbuf();
+			jsonStream.close();
+
+			std::shared_ptr<Mod> mod = std::shared_ptr<Mod>(new Mod(subdir, (char*)jsonStringStream.str().c_str()));
+			this->m_invalidMods.push_back(mod);
+		}
+	}
+}
+
 void ModManager::LoadMods()
 {
 	if (m_bHasLoadedMods)
@@ -626,31 +655,7 @@ void ModManager::LoadMods()
 				modDirs.push_back(dir.path());
 			else if (fs::is_directory(dir.path()))
 			{
-				std::string filename = dir.path().filename().generic_string().c_str();
-				// Don't display an error for hidden directories
-				if (filename.at(0) == '.')
-					continue;
-
-				for (fs::directory_entry subdir : fs::recursive_directory_iterator(dir.path()))
-				{
-					fs::path modPath = subdir.path() / "mod.json";
-					if (fs::exists(modPath))
-					{
-						spdlog::warn(
-							"mod.json file for directory {} is located at the wrong location ({}).",
-							dir.path().generic_string().c_str(),
-							subdir.path().generic_string().c_str());
-
-						// read mod json file
-						std::ifstream jsonStream(modPath);
-						std::stringstream jsonStringStream;
-						jsonStringStream << jsonStream.rdbuf();
-						jsonStream.close();
-
-						std::shared_ptr<Mod> mod = std::shared_ptr<Mod>(new Mod(subdir, (char*)jsonStringStream.str().c_str()));
-						this->m_invalidMods.push_back(mod);
-					}
-				}
+				VerifyModManifestLocation(dir);
 			}
 		}
 

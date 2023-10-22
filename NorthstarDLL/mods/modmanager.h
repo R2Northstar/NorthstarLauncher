@@ -174,6 +174,9 @@ class ModManager
 	void TryBuildKeyValues(const char* filename);
 	void BuildPdef();
 	void BuildKBActionsList();
+
+  private:
+	void VerifyModManifestLocation(fs::directory_entry modDir);
 };
 
 fs::path GetModFolderPath();
