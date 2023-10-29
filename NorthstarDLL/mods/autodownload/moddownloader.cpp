@@ -550,3 +550,17 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 	RegisterConCommand("fetch_verified_mods", ConCommandFetchVerifiedMods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
 	RegisterConCommand("download_mod", ConCommandDownloadMod, "downloads a mod from remote store", FCVAR_NONE);
 }
+
+ADD_SQFUNC(
+	"bool", NSIsModDownloadable, "string name, string version", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	g_pSquirrel<context>->newarray(sqvm, 0);
+
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
+
+	bool result = g_pModDownloader->IsModAuthorized(modName, modVersion);
+	g_pSquirrel<context>->pushbool(sqvm, result);
+
+	return SQRESULT_NOTNULL;
+}
