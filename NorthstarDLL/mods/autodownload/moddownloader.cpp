@@ -564,3 +564,13 @@ ADD_SQFUNC(
 
 	return SQRESULT_NOTNULL;
 }
+
+ADD_SQFUNC(
+	"void", NSDownloadMod, "string name, string version", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
+	g_pModDownloader->DownloadMod(modName, modVersion);
+
+	return SQRESULT_NOTNULL;
+}
