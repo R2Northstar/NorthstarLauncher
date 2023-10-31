@@ -357,7 +357,6 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	unzFile file;
 	std::string name;
 	fs::path modDirectory;
-	int archiveSize;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	if (file == NULL)
@@ -379,8 +378,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 
 	// Update state
 	modState.state = EXTRACTING;
-	archiveSize = GetModArchiveSize(file, gi);
-	spdlog::info("Total archive size: {}", archiveSize);
+	modState.total = GetModArchiveSize(file, gi);
 
 	// Mod directory name (removing the ".zip" fom the archive name)
 	name = modPath.filename().string();
@@ -484,6 +482,10 @@ void ModDownloader::ExtractMod(fs::path modPath)
 							break;
 						}
 					}
+
+					// Update extraction stats
+					modState.progress += bufferSize;
+					modState.ratio = roundf(static_cast<float>(modState.progress) / modState.total * 100);
 				} while (err > 0);
 
 				if (err != UNZ_OK)
