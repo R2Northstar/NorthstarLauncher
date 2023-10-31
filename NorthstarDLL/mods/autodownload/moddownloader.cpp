@@ -328,11 +328,36 @@ bool ModDownloader::IsModAuthorized(std::string_view modName, std::string_view m
 	return versions.count(modVersion.data()) != 0;
 }
 
+int GetModArchiveSize(unzFile file, unz_global_info64 info)
+{
+	int totalSize = 0;
+
+	for (int i = 0; i < info.number_entry; i++)
+	{
+		char zipFilename[256];
+		unz_file_info64 fileInfo;
+		unzGetCurrentFileInfo64(file, &fileInfo, zipFilename, sizeof(zipFilename), NULL, 0, NULL, 0);
+
+		totalSize += fileInfo.uncompressed_size;
+
+		if ((i + 1) < info.number_entry)
+		{
+			unzGoToNextFile(file);
+		}
+	}
+
+	// Reset file pointer for archive extraction
+	unzGoToFirstFile(file);
+
+	return totalSize;
+}
+
 void ModDownloader::ExtractMod(fs::path modPath)
 {
 	unzFile file;
 	std::string name;
 	fs::path modDirectory;
+	int archiveSize;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	if (file == NULL)
@@ -354,6 +379,8 @@ void ModDownloader::ExtractMod(fs::path modPath)
 
 	// Update state
 	modState.state = EXTRACTING;
+	archiveSize = GetModArchiveSize(file, gi);
+	spdlog::info("Total archive size: {}", archiveSize);
 
 	// Mod directory name (removing the ".zip" fom the archive name)
 	name = modPath.filename().string();
