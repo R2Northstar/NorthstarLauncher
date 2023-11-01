@@ -388,6 +388,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	// Update state
 	modState.state = EXTRACTING;
 	modState.total = GetModArchiveSize(file, gi);
+	modState.progress = 0;
 
 	// Mod directory name (removing the ".zip" fom the archive name)
 	name = modPath.filename().string();
