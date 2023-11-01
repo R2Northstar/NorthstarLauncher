@@ -19,6 +19,16 @@ class ModDownloader
 	std::unordered_map<std::string, VerifiedModDetails> verifiedMods = {};
 
 	/**
+	 * Mod archive download callback.
+	 *
+	 * This function is called by curl as it's downloading the mod archive; this
+	 * will retrieve the current `ModDownloader` instance and update its `modState`
+	 * member accordingly.
+	 */
+	static int ModFetchingProgressCallback(
+		void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded);
+
+	/**
 	 * Downloads a mod archive from distant store.
 	 *
 	 * This rebuilds the URI of the mod archive using both a predefined store URI

@@ -124,37 +124,19 @@ size_t WriteData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 	return written;
 }
 
-void FetchModSync(std::promise<std::optional<fs::path>>&& p, std::string_view url, fs::path downloadPath)
+int ModDownloader::ModFetchingProgressCallback(
+	void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded)
 {
-	bool failed = false;
-	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
-	CURLcode result;
-	CURL* easyhandle;
-	easyhandle = curl_easy_init();
-
-	curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
-	curl_easy_setopt(easyhandle, CURLOPT_URL, url.data());
-	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
-	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
-	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteData);
-	result = curl_easy_perform(easyhandle);
-
-	if (result == CURLcode::CURLE_OK)
+	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
-		spdlog::info("Mod archive successfully fetched.");
-		goto REQUEST_END_CLEANUP;
-	}
-	else
-	{
-		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
-		failed = true;
-		goto REQUEST_END_CLEANUP;
+		ModDownloader* instance = static_cast<ModDownloader*>(ptr);
+		auto currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
+		instance->modState.progress = finishedDownloadSize;
+		instance->modState.total = totalDownloadSize;
+		instance->modState.ratio = currentDownloadProgress;
 	}
 
-REQUEST_END_CLEANUP:
-	curl_easy_cleanup(easyhandle);
-	fclose(fp);
-	p.set_value(failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath));
+	return 0;
 }
 
 std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, std::string_view modVersion)
@@ -174,11 +156,38 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	modState.state = DOWNLOADING;
 
 	// Download the actual archive
-	std::promise<std::optional<fs::path>> promise;
-	auto f = promise.get_future();
-	std::thread t(&FetchModSync, std::move(promise), std::string_view(url), downloadPath);
-	t.join();
-	return f.get();
+	bool failed = false;
+	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
+	CURLcode result;
+	CURL* easyhandle;
+	easyhandle = curl_easy_init();
+
+	curl_easy_setopt(easyhandle, CURLOPT_TIMEOUT, 30L);
+	curl_easy_setopt(easyhandle, CURLOPT_URL, url.data());
+	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteData);
+	curl_easy_setopt(easyhandle, CURLOPT_NOPROGRESS, 0L);
+	curl_easy_setopt(easyhandle, CURLOPT_XFERINFOFUNCTION, ModDownloader::ModFetchingProgressCallback);
+	curl_easy_setopt(easyhandle, CURLOPT_XFERINFODATA, this);
+	result = curl_easy_perform(easyhandle);
+
+	if (result == CURLcode::CURLE_OK)
+	{
+		spdlog::info("Mod archive successfully fetched.");
+		goto REQUEST_END_CLEANUP;
+	}
+	else
+	{
+		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
+		failed = true;
+		goto REQUEST_END_CLEANUP;
+	}
+
+	REQUEST_END_CLEANUP:
+		curl_easy_cleanup(easyhandle);
+		fclose(fp);
+		return failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath);
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecksum)
