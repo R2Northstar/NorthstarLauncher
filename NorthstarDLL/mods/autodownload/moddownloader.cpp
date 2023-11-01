@@ -184,10 +184,10 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 		goto REQUEST_END_CLEANUP;
 	}
 
-	REQUEST_END_CLEANUP:
-		curl_easy_cleanup(easyhandle);
-		fclose(fp);
-		return failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath);
+REQUEST_END_CLEANUP:
+	curl_easy_cleanup(easyhandle);
+	fclose(fp);
+	return failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath);
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecksum)
