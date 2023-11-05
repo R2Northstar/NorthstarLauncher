@@ -373,3 +373,6 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# CMake deps folder?
+_deps/
