@@ -586,36 +586,10 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	requestThread.detach();
 }
 
-void ConCommandFetchVerifiedMods(const CCommand& args)
-{
-	g_pModDownloader->FetchModsListFromAPI();
-}
-
-void ConCommandDownloadMod(const CCommand& args)
-{
-	if (args.ArgC() < 3)
-	{
-		return;
-	}
-
-	// Split arguments string by whitespaces (https://stackoverflow.com/a/5208977)
-	std::string buffer;
-	std::stringstream ss(args.ArgS());
-	std::vector<std::string> tokens;
-	while (ss >> buffer)
-		tokens.push_back(buffer);
-
-	std::string modName = tokens[0];
-	std::string modVersion = tokens[1];
-	g_pModDownloader->DownloadMod(modName, modVersion);
-}
-
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
 	g_pModDownloader->FetchModsListFromAPI();
-	RegisterConCommand("fetch_verified_mods", ConCommandFetchVerifiedMods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
-	RegisterConCommand("download_mod", ConCommandDownloadMod, "downloads a mod from remote store", FCVAR_NONE);
 }
 
 ADD_SQFUNC(
