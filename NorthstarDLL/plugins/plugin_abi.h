@@ -48,10 +48,6 @@ struct SquirrelFunctions
 	sq_pushassetType __sq_pushasset;
 	sq_pushvectorType __sq_pushvector;
 	sq_pushobjectType __sq_pushobject;
-	sq_getthisentityType __sq_getthisentity;
-	sq_getobjectType __sq_getobject;
-
-	sq_stackinfosType __sq_stackinfos;
 
 	sq_getstringType __sq_getstring;
 	sq_getintegerType __sq_getinteger;
@@ -61,6 +57,10 @@ struct SquirrelFunctions
 	sq_getassetType __sq_getasset;
 	sq_getuserdataType __sq_getuserdata;
 	sq_getvectorType __sq_getvector;
+	sq_getthisentityType __sq_getthisentity;
+	sq_getobjectType __sq_getobject;
+
+	sq_stackinfosType __sq_stackinfos;
 
 	sq_createuserdataType __sq_createuserdata;
 	sq_setuserdatatypeidType __sq_setuserdatatypeid;
