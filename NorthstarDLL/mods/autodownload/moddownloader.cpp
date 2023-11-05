@@ -613,6 +613,7 @@ void ConCommandDownloadMod(const CCommand& args)
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
+	g_pModDownloader->FetchModsListFromAPI();
 	RegisterConCommand("fetch_verified_mods", ConCommandFetchVerifiedMods, "fetches verified mods list from GitHub repository", FCVAR_NONE);
 	RegisterConCommand("download_mod", ConCommandDownloadMod, "downloads a mod from remote store", FCVAR_NONE);
 }
