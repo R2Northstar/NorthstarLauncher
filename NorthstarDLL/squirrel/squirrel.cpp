@@ -8,6 +8,7 @@
 #include "core/tier0.h"
 #include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
+#include "ns_version.h"
 
 #include <any>
 
@@ -163,6 +164,7 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_compilebuffer = __sq_compilebuffer;
 	s->__sq_call = __sq_call;
 	s->__sq_raiseerror = __sq_raiseerror;
+	s->__sq_compilefile = __sq_compilefile;
 
 	s->__sq_newarray = __sq_newarray;
 	s->__sq_arrayappend = __sq_arrayappend;
@@ -178,12 +180,8 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_pushasset = __sq_pushasset;
 	s->__sq_pushvector = __sq_pushvector;
 	s->__sq_pushobject = __sq_pushobject;
+
 	s->__sq_getstring = __sq_getstring;
-	s->__sq_getthisentity = __sq_getthisentity;
-	s->__sq_getobject = __sq_getobject;
-
-	s->__sq_stackinfos = __sq_stackinfos;
-
 	s->__sq_getinteger = __sq_getinteger;
 	s->__sq_getfloat = __sq_getfloat;
 	s->__sq_getbool = __sq_getbool;
@@ -191,24 +189,32 @@ template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrel
 	s->__sq_getasset = __sq_getasset;
 	s->__sq_getuserdata = __sq_getuserdata;
 	s->__sq_getvector = __sq_getvector;
+	s->__sq_getthisentity = __sq_getthisentity;
+	s->__sq_getobject = __sq_getobject;
+
+	s->__sq_stackinfos = __sq_stackinfos;
+
 	s->__sq_createuserdata = __sq_createuserdata;
 	s->__sq_setuserdatatypeid = __sq_setuserdatatypeid;
 	s->__sq_getfunction = __sq_getfunction;
 
+	s->__sq_schedule_call_external = AsyncCall_External;
+
 	s->__sq_getentityfrominstance = __sq_getentityfrominstance;
 	s->__sq_GetEntityConstant_CBaseEntity = __sq_GetEntityConstant_CBaseEntity;
 
-	s->__sq_schedule_call_external = AsyncCall_External;
+	s->__sq_pushnewstructinstance = __sq_pushnewstructinstance;
+	s->__sq_sealstructslot = __sq_sealstructslot;
 }
 
 // Allows for generating squirrelmessages from plugins.
-// Not used in this version, but will be used later
-void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function)
+void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function, void* userdata)
 {
 	SquirrelMessage message {};
 	message.functionName = func_name;
 	message.isExternal = true;
 	message.externalFunc = function;
+	message.userdata = userdata;
 	switch (context)
 	{
 	case ScriptContext::CLIENT:
@@ -265,6 +271,14 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	}
 
 	defconst(m_pSQVM, "MAX_FOLDER_SIZE", GetMaxSaveFolderSize() / 1024);
+
+	// define squirrel constants for northstar(.dll) version
+	constexpr int version[4] {NORTHSTAR_VERSION};
+	defconst(m_pSQVM, "NS_VERSION_MAJOR", version[0]);
+	defconst(m_pSQVM, "NS_VERSION_MINOR", version[1]);
+	defconst(m_pSQVM, "NS_VERSION_PATCH", version[2]);
+	defconst(m_pSQVM, "NS_VERSION_DEV", version[3]);
+
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 	g_pPluginManager->InformSQVMCreated(context, newSqvm);
 }
@@ -374,7 +388,7 @@ bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
-template <ScriptContext context> void* (*__fastcall sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
+template <ScriptContext context> void* (*sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
 template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
 {
 	// store whether errors generated from this compile should be fatal
@@ -406,7 +420,7 @@ template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const 
 	return 0;
 }
 
-template <ScriptContext context> CSquirrelVM* (*__fastcall CreateNewVM)(void* a1, ScriptContext realContext);
+template <ScriptContext context> CSquirrelVM* (*CreateNewVM)(void* a1, ScriptContext realContext);
 template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a1, ScriptContext realContext)
 {
 	CSquirrelVM* sqvm = CreateNewVM<context>(a1, realContext);
@@ -419,7 +433,7 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	return sqvm;
 }
 
-template <ScriptContext context> bool (*__fastcall CSquirrelVM_init)(CSquirrelVM* vm, ScriptContext realContext, float time);
+template <ScriptContext context> bool (*CSquirrelVM_init)(CSquirrelVM* vm, ScriptContext realContext, float time);
 template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelVM* vm, ScriptContext realContext, float time)
 {
 	bool ret = CSquirrelVM_init<context>(vm, realContext, time);
@@ -436,7 +450,7 @@ template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelV
 	return ret;
 }
 
-template <ScriptContext context> void (*__fastcall DestroyVM)(void* a1, CSquirrelVM* sqvm);
+template <ScriptContext context> void (*DestroyVM)(void* a1, CSquirrelVM* sqvm);
 template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirrelVM* sqvm)
 {
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
@@ -455,8 +469,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirr
 	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
 
-template <ScriptContext context>
-void (*__fastcall SQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
+template <ScriptContext context> void (*SQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
 template <ScriptContext context>
 void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column)
 {
@@ -504,8 +517,7 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 	// dont call the original function since it kills game lol
 }
 
-template <ScriptContext context>
-int64_t (*__fastcall RegisterSquirrelFunction)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
+template <ScriptContext context> int64_t (*RegisterSquirrelFunction)(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown);
 template <ScriptContext context>
 int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistration* funcReg, char unknown)
 {
@@ -531,7 +543,7 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 	return g_pSquirrel<context>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
 }
 
-template <ScriptContext context> bool (*__fastcall CallScriptInitCallback)(void* sqvm, const char* callback);
+template <ScriptContext context> bool (*CallScriptInitCallback)(void* sqvm, const char* callback);
 template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void* sqvm, const char* callback)
 {
 	ScriptContext realContext = context;
@@ -651,9 +663,11 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
 		pushroottable(m_pSQVM->sqvm);
 
-		if (message.isExternal)
+		int argsAmount = message.args.size();
+
+		if (message.isExternal && message.externalFunc != NULL)
 		{
-			message.externalFunc(m_pSQVM->sqvm);
+			argsAmount = message.externalFunc(m_pSQVM->sqvm, message.userdata);
 		}
 		else
 		{
@@ -664,7 +678,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 			}
 		}
 
-		_call(m_pSQVM->sqvm, message.args.size());
+		_call(m_pSQVM->sqvm, argsAmount);
 	}
 }
 
@@ -901,7 +915,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	MAKEHOOK(module.Offset(0x26E20), &DestroyVMHook<ScriptContext::SERVER>, &DestroyVM<ScriptContext::SERVER>);
 	MAKEHOOK(module.Offset(0x799E0), &ScriptCompileErrorHook<ScriptContext::SERVER>, &SQCompileError<ScriptContext::SERVER>);
 	MAKEHOOK(module.Offset(0x1D5C0), &CallScriptInitCallbackHook<ScriptContext::SERVER>, &CallScriptInitCallback<ScriptContext::SERVER>);
-	MAKEHOOK(module.Offset(0x17BE0), &CSquirrelVM_initHook<ScriptContext::SERVER>, &CSquirrelVM_init<ScriptContext::SERVER>);
+	MAKEHOOK(module.Offset(0x1B7E0), &CSquirrelVM_initHook<ScriptContext::SERVER>, &CSquirrelVM_init<ScriptContext::SERVER>);
 	// FCVAR_CHEAT and FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS allows clients to execute this, but since it's unsafe we only allow it when cheats
 	// are enabled for script_client and script_ui, we don't use cheats, so clients can execute them on themselves all they want
 	RegisterConCommand(
