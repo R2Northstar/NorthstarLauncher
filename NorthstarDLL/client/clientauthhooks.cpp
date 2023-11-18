@@ -19,7 +19,7 @@ void, __fastcall, (void* a1))
 {
 	// don't attempt to do Atlas auth if we are in vanilla compatibility mode
 	// this prevents users from joining untrustworthy servers (unless they use a concommand or something)
-	if (g_bIsVanillaCompatible)
+	if (g_pVanillaCompatibility->GetVanillaCompatibility())
 	{
 		AuthWithStryder(a1);
 		return;
@@ -48,7 +48,7 @@ AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
 char*, __fastcall, ())
 // clang-format on
 {
-	if (!g_bIsVanillaCompatible && g_pMasterServerManager->m_sOwnClientAuthToken[0])
+	if (!g_pVanillaCompatibility->GetVanillaCompatibility() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
 	{
 		memset(p3PToken, 0x0, 1024);
 		strcpy(p3PToken, "Protocol 3: Protect the Pilot");

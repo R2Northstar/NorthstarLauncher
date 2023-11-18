@@ -55,7 +55,8 @@ bool InitialiseNorthstar()
 	g_pCrashHandler->SetAllFatal(bAllFatal);
 
 	// determine if we are in vanilla-compatibility mode
-	g_bIsVanillaCompatible = strstr(GetCommandLineA(), "-vanilla") != NULL;
+	g_pVanillaCompatibility = new VanillaCompatibility();
+	g_pVanillaCompatibility->SetVanillaCompatibility(strstr(GetCommandLineA(), "-vanilla") != NULL);
 
 	// Write launcher version to log
 	StartupLog();

@@ -88,7 +88,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, const char* originToken)
 {
-	if (m_bOriginAuthWithMasterServerInProgress || g_bIsVanillaCompatible)
+	if (m_bOriginAuthWithMasterServerInProgress || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	// do this here so it's instantly set
@@ -466,7 +466,7 @@ void MasterServerManager::RequestMainMenuPromos()
 void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char* playerToken)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer || g_bIsVanillaCompatible)
+	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
@@ -601,7 +601,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 void MasterServerManager::AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer || g_bIsVanillaCompatible)
+	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
