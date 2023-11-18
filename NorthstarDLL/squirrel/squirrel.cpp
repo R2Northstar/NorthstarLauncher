@@ -274,7 +274,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	defconst(m_pSQVM, "NS_VERSION_DEV", version[3]);
 
 	// define squirrel constant for if we are in vanilla-compatibility mode
-	defconst(m_pSQVM, "VANILLA", g_bIsVanillaCompatible)
+	defconst(m_pSQVM, "VANILLA", g_bIsVanillaCompatible);
 
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 	g_pPluginManager->InformSQVMCreated(context, newSqvm);
