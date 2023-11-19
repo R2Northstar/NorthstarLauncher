@@ -255,7 +255,7 @@ void PrependPath()
 bool ShouldLoadNorthstar(int argc, char* argv[])
 {
 	for (int i = 0; i < argc; i++)
-		if (!strcmp(argv[i], "-noworkerdll"))
+		if (!strcmp(argv[i], "-nonorthstardll"))
 			return false;
 
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
