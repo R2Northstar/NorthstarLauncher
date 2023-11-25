@@ -8,6 +8,7 @@
 #include "shared/misccommands.h"
 #include "util/version.h"
 #include "server/auth/bansystem.h"
+#include "dedicated/dedicated.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -95,6 +96,10 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 	std::string uidStr(uid);
 	std::string tokenStr(originToken);
 
+	m_bOriginAuthWithMasterServerSuccessful = false;
+	m_sOriginAuthWithMasterServerErrorCode = "";
+	m_sOriginAuthWithMasterServerErrorMessage = "";
+
 	std::thread requestThread(
 		[this, uidStr, tokenStr]()
 		{
@@ -142,9 +147,26 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 						originAuthInfo["token"].GetString(),
 						sizeof(m_sOwnClientAuthToken) - 1);
 					spdlog::info("Northstar origin authentication completed successfully!");
+					m_bOriginAuthWithMasterServerSuccessful = true;
 				}
 				else
+				{
 					spdlog::error("Northstar origin authentication failed");
+
+					if (originAuthInfo.HasMember("error") && originAuthInfo["error"].IsObject())
+					{
+
+						if (originAuthInfo["error"].HasMember("enum") && originAuthInfo["error"]["enum"].IsString())
+						{
+							m_sOriginAuthWithMasterServerErrorCode = originAuthInfo["error"]["enum"].GetString();
+						}
+
+						if (originAuthInfo["error"].HasMember("msg") && originAuthInfo["error"]["msg"].IsString())
+						{
+							m_sOriginAuthWithMasterServerErrorMessage = originAuthInfo["error"]["msg"].GetString();
+						}
+					}
+				}
 			}
 			else
 			{
@@ -1107,7 +1129,9 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 
 		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)
 		{
-			spdlog::error("Reached max ms server registration attempts.");
+			spdlog::log(
+				IsDedicatedServer() ? spdlog::level::level_enum::err : spdlog::level::level_enum::warn,
+				"Reached max ms server registration attempts.");
 		}
 	}
 	else if (updateServerFuture.valid())
@@ -1160,7 +1184,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 	addServerFuture = std::async(
 		std::launch::async,
-		[threadedPresence, modInfo, hostname]
+		[threadedPresence, modInfo, hostname, pServerPresence]
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -1187,6 +1211,11 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 				return data;
 			};
+
+			// don't log errors if we wouldn't actually show up in the server list anyway (stop tickets)
+			// except for dedis, for which this error logging is actually pretty important
+			bool shouldLogError = IsDedicatedServer() || (!strstr(pServerPresence->m_MapName, "mp_lobby") &&
+														  strstr(pServerPresence->m_PlaylistName, "private_match"));
 
 			curl_mime_data(part, modInfo.c_str(), modInfo.size());
 			curl_mime_name(part, "modinfo");
@@ -1237,22 +1266,27 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				// No retry.
 				if (serverAddedJson.HasParseError())
 				{
-					spdlog::error(
-						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+					if (shouldLogError)
+						spdlog::error(
+							"Failed reading masterserver authentication response: encountered parse error \"{}\"",
+							rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (!serverAddedJson.IsObject())
 				{
-					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
+					if (shouldLogError)
+						spdlog::error("Failed reading masterserver authentication response: root object is not an object");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (serverAddedJson.HasMember("error"))
 				{
-					spdlog::error("Failed reading masterserver response: got fastify error response");
-					spdlog::error(readBuffer);
+					if (shouldLogError)
+					{
+						spdlog::error("Failed reading masterserver response: got fastify error response");
+						spdlog::error(readBuffer);
+					}
 
 					// If this is DUPLICATE_SERVER, we'll retry adding the server every 20 seconds.
 					// The master server will only update its internal server list and clean up dead servers on certain events.
@@ -1261,7 +1295,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					if (serverAddedJson["error"].HasMember("enum") &&
 						strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER") == 0)
 					{
-						spdlog::error("Cooling down while the master server cleans the dead server entry, if any.");
+						if (shouldLogError)
+							spdlog::error("Cooling down while the master server cleans the dead server entry, if any.");
 						return ReturnCleanup(MasterServerReportPresenceResult::FailedDuplicateServer);
 					}
 
@@ -1271,14 +1306,16 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 				if (!serverAddedJson["success"].IsTrue())
 				{
-					spdlog::error("Adding server to masterserver failed: \"success\" is not true");
+					if (shouldLogError)
+						spdlog::error("Adding server to masterserver failed: \"success\" is not true");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
 					!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
 				{
-					spdlog::error("Failed reading masterserver response: malformed json object");
+					if (shouldLogError)
+						spdlog::error("Failed reading masterserver response: malformed json object");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
@@ -1290,7 +1327,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 			}
 			else
 			{
-				spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
+				if (shouldLogError)
+					spdlog::error("Failed adding self to server list: error {}", curl_easy_strerror(result));
 				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoConnect);
 			}
 		});

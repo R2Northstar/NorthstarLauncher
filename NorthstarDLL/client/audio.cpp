@@ -10,12 +10,9 @@
 
 AUTOHOOK_INIT()
 
-extern "C"
-{
-	// should be called only in LoadSampleMetadata_Hook
-	extern void* __fastcall Audio_GetParentEvent();
-}
+static const char* pszAudioEventName;
 
+ConVar* Cvar_mileslog_enable;
 ConVar* Cvar_ns_print_played_sounds;
 
 CustomAudioManager g_CustomAudioManager;
@@ -365,32 +362,16 @@ bool ShouldPlayAudioEvent(const char* eventName, const std::shared_ptr<EventOver
 	return true; // good to go
 }
 
-// forward declare
-bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
-	uintptr_t parentEvent, void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType);
-
-// DO NOT TOUCH THIS FUNCTION
-// The actual logic of it in a separate function (forcefully not inlined) to preserve the r12 register, which holds the event pointer.
 // clang-format off
 AUTOHOOK(LoadSampleMetadata, mileswin64.dll + 0xF110, 
 bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType))
 // clang-format on
 {
-	uintptr_t parentEvent = (uintptr_t)Audio_GetParentEvent();
-
 	// Raw source, used for voice data only
 	if (audioType == 0)
 		return LoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
 
-	return LoadSampleMetadata_Internal(parentEvent, sample, audioBuffer, audioBufferLength, audioType);
-}
-
-// DO NOT INLINE THIS FUNCTION
-// See comment below.
-bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
-	uintptr_t parentEvent, void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType)
-{
-	char* eventName = (char*)parentEvent + 0x110;
+	const char* eventName = pszAudioEventName;
 
 	if (Cvar_ns_print_played_sounds->GetInt() > 0)
 		spdlog::info("[AUDIO] Playing event {}", eventName);
@@ -490,11 +471,28 @@ bool __declspec(noinline) __fastcall LoadSampleMetadata_Internal(
 }
 
 // clang-format off
+AUTOHOOK(sub_1800294C0, mileswin64.dll + 0x294C0,
+void*, __fastcall, (void* a1, void* a2))
+// clang-format on
+{
+	pszAudioEventName = reinterpret_cast<const char*>((*((__int64*)a2 + 6)));
+	return sub_1800294C0(a1, a2);
+}
+
+// clang-format off
 AUTOHOOK(MilesLog, client.dll + 0x57DAD0, 
 void, __fastcall, (int level, const char* string))
 // clang-format on
 {
+	if (!Cvar_mileslog_enable->GetBool())
+		return;
+
 	spdlog::info("[MSS] {} - {}", level, string);
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
+{
+	Cvar_mileslog_enable = new ConVar("mileslog_enable", "0", FCVAR_NONE, "Enables/disables whether the mileslog func should be logged");
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (CModule module))
