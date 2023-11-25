@@ -8,6 +8,8 @@
 #include "shared/maxplayers.h"
 
 #include <filesystem>
+#include <stdio.h>
+#include <string.h>
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 const char BANLIST_COMMENT_CHAR = '#';
@@ -214,11 +216,14 @@ void ConCommand_clearbanlist(const CCommand& args)
 	g_pBanSystem->ClearBanlist();
 }
 
-int ConCommand_banCompletion(
-	const char* const cmdname, const char* const query, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
+int ConCommand_banCompletion(const char* const partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
 {
-	const int cmdLength = strlen(cmdname);
+	const char* space = strchr(partial, ' ');
+	const char* cmdName = partial;
+	const char* query = partial + (space == nullptr ? 0 : space - partial) + 1;
+
 	const int queryLength = strlen(query);
+	const int cmdLength = strlen(cmdName) - queryLength;
 
 	int numCompletions = 0;
 	for (int i = 0; i < R2::GetMaxPlayers() && numCompletions < COMMAND_COMPLETION_MAXITEMS - 2; i++)
@@ -229,7 +234,7 @@ int ConCommand_banCompletion(
 
 		if (!strncmp(query, client->m_Name, queryLength))
 		{
-			strcpy(commands[numCompletions], cmdname);
+			strncpy(commands[numCompletions], cmdName, cmdLength);
 			strncpy_s(
 				commands[numCompletions++] + cmdLength,
 				COMMAND_COMPLETION_ITEM_LENGTH,
@@ -239,7 +244,7 @@ int ConCommand_banCompletion(
 
 		if (!strncmp(query, client->m_UID, queryLength))
 		{
-			strcpy(commands[numCompletions], cmdname);
+			strncpy(commands[numCompletions], cmdName, cmdLength);
 			strncpy_s(
 				commands[numCompletions++] + cmdLength,
 				COMMAND_COMPLETION_ITEM_LENGTH,
@@ -259,4 +264,11 @@ ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (CModule module))
 	RegisterConCommand("ban", ConCommand_ban, "bans a given player by uid or name", FCVAR_GAMEDLL, ConCommand_banCompletion);
 	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_GAMEDLL, ConCommand_banCompletion);
 	RegisterConCommand("clearbanlist", ConCommand_clearbanlist, "clears all uids on the banlist", FCVAR_GAMEDLL);
+}
+
+ON_DLL_LOAD_RELIESON("server.dll", KickCompletion, ConCommand, (CModule module))
+{
+	ConCommand* kick = R2::g_pCVar->FindCommand("kick");
+	kick->m_pCompletionCallback = ConCommand_banCompletion;
+	kick->m_nCallbackFlags |= 0x3;
 }
