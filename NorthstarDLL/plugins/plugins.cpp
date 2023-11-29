@@ -68,18 +68,18 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		return std::nullopt;
 	}
 
-	uint32_t* abi_version = (uint32_t*)GetProcAddress(pluginLib, "ABI_VERSION");
+	uint32_t* abiVersion = (uint32_t*)GetProcAddress(pluginLib, "ABI_VERSION");
 	char** name = (char**)GetProcAddress(pluginLib, "NAME");
 	char** description = (char**)GetProcAddress(pluginLib, "DESCRIPTION");
 	char** abbreviation = (char**)GetProcAddress(pluginLib, "ABBREVIATION");
 	char** version = (char**)GetProcAddress(pluginLib, "VERSION");
-	char** dependency_name = (char**)GetProcAddress(pluginLib, "DEPENDENCY_NAME");
+	char** dependencyName = (char**)GetProcAddress(pluginLib, "DEPENDENCY_NAME");
 	uint8_t* context = (uint8_t*)GetProcAddress(pluginLib, "CONTEXT");
 	PLUGIN_INIT_TYPE plugin_init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
 
 	// ensure all required values are found
 #define ASSERT_HAS_PROP(e, prop) if (!e) { NS::log::PLUGINSYS->error("'{}' is not exporting it's {}", pathstring, prop); freeLibrary(pluginLib); return std::nullopt;; }
-		ASSERT_HAS_PROP(abi_version, "ABI_VERSION")
+		ASSERT_HAS_PROP(abiVersion, "ABI_VERSION")
 		ASSERT_HAS_PROP(name, "NAME");
 		ASSERT_HAS_PROP(description, "DESCRIPTION");
 		ASSERT_HAS_PROP(abbreviation, "ABBREVIATION");
@@ -88,10 +88,10 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		ASSERT_HAS_PROP(plugin_init, "PLUGIN_INIT");
 #undef ASSERT_HAS_PROP
 
-		if (ABI_VERSION != *abi_version)
+		if (ABI_VERSION != *abiVersion)
 		{
 			NS::log::PLUGINSYS->error(
-				"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'", pathstring, *abi_version, ABI_VERSION);
+				"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'", pathstring, *abiVersion, ABI_VERSION);
 			freeLibrary(pluginLib);
 			return std::nullopt;
 		}
@@ -102,7 +102,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	plugin.name = *name;
 	plugin.displayName = *abbreviation;
 	plugin.description = *description;
-	plugin.api_version = *abi_version;
+	plugin.api_version = *abiVersion;
 	plugin.version = *version;
 	plugin.init = *plugin_init;
 
@@ -115,9 +115,9 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		return std::nullopt;
 	}
 
-	if (dependency_name)
+	if (dependencyName)
 	{
-		plugin.dependencyName = *dependency_name;
+		plugin.dependencyName = *dependencyName;
 	}
 	else
 	{
