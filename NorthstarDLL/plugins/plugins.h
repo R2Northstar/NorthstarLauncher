@@ -17,8 +17,8 @@ class Plugin
 {
   public:
 	char* name;
-	char* displayName; // used somewhere
-	char* dependencyName; // used somewhere
+	char* displayName;
+	char* dependencyName;
 	char* description;
 
 	uint32_t api_version;
