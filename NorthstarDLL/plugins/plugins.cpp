@@ -68,23 +68,23 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		return std::nullopt;
 	}
 
-	uint32_t* abiVersion = (uint32_t*)GetProcAddress(pluginLib, "ABI_VERSION");
-	char** name = (char**)GetProcAddress(pluginLib, "NAME");
-	char** description = (char**)GetProcAddress(pluginLib, "DESCRIPTION");
-	char** abbreviation = (char**)GetProcAddress(pluginLib, "ABBREVIATION");
-	char** version = (char**)GetProcAddress(pluginLib, "VERSION");
-	char** dependencyName = (char**)GetProcAddress(pluginLib, "DEPENDENCY_NAME");
-	uint8_t* context = (uint8_t*)GetProcAddress(pluginLib, "CONTEXT");
+	uint32_t* abiVersion = (uint32_t*)GetProcAddress(pluginLib, "PLUGIN_ABI_VERSION");
+	char** name = (char**)GetProcAddress(pluginLib, "PLUGIN_NAME");
+	char** description = (char**)GetProcAddress(pluginLib, "PLUGIN_DESCRIPTION");
+	char** abbreviation = (char**)GetProcAddress(pluginLib, "PLUGIN_ABBREVIATION");
+	char** version = (char**)GetProcAddress(pluginLib, "PLUGIN_VERSION");
+	char** dependencyName = (char**)GetProcAddress(pluginLib, "PLUGIN_DEPENDENCY_NAME");
+	uint8_t* context = (uint8_t*)GetProcAddress(pluginLib, "PLUGIN_CONTEXT");
 	PLUGIN_INIT_TYPE plugin_init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
 
 	// ensure all required values are found
 #define ASSERT_HAS_PROP(e, prop) if (!e) { NS::log::PLUGINSYS->error("'{}' is not exporting it's {}", pathstring, prop); freeLibrary(pluginLib); return std::nullopt;; }
-		ASSERT_HAS_PROP(abiVersion, "ABI_VERSION")
-		ASSERT_HAS_PROP(name, "NAME");
-		ASSERT_HAS_PROP(description, "DESCRIPTION");
-		ASSERT_HAS_PROP(abbreviation, "ABBREVIATION");
-		ASSERT_HAS_PROP(version, "VERSION");
-		ASSERT_HAS_PROP(context, "CONTEXT");
+		ASSERT_HAS_PROP(abiVersion, "PLUGIN_ABI_VERSION")
+		ASSERT_HAS_PROP(name, "PLUGIN_NAME");
+		ASSERT_HAS_PROP(description, "PLUGIN_DESCRIPTION");
+		ASSERT_HAS_PROP(abbreviation, "PLUGIN_ABBREVIATION");
+		ASSERT_HAS_PROP(version, "PLUGIN_VERSION");
+		ASSERT_HAS_PROP(context, "PLUGIN_CONTEXT");
 		ASSERT_HAS_PROP(plugin_init, "PLUGIN_INIT");
 #undef ASSERT_HAS_PROP
 
