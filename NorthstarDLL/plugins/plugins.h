@@ -4,45 +4,73 @@
 
 const int IDR_RCDATA1 = 101;
 
-// can't use bitwise ops on enum classes
-namespace PluginContext {
-	enum: uint8_t
-		  {
-			  DEDICATED = 0x1,
-			  CLIENT = 0x2,
-		  };
-}
-
 class Plugin
 {
   public:
-	char* name;
-	char* displayName;
-	char* dependencyName;
-	char* description;
+	const char* name;
+	const char* logName;
+	const char* dependencyName;
+	const char* description;
 
-	uint32_t api_version;
-	char* version;
+	const uint32_t api_version;
+	const char* version;
 
 	// For now this is just implemented as the index into the plugins array
 	// Maybe a bit shit but it works
-	int handle;
+	const int handle;
 
 	std::shared_ptr<ColoredLogger> logger;
 
-	bool run_on_client = false;
-	bool run_on_server = false;
+	const bool run_on_client = false;
+	const bool run_on_server = false;
 
   public:
-	PLUGIN_INIT_TYPE init;
-	PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
-	PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
-	PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
-	PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
+	Plugin(
+			const char* name,
+			const char* logName,
+			const char* dependencyName,
+			const char* description,
+			uint32_t api_version,
+			const char* version,
+			int handle,
+			bool runOnServer,
+			bool runOnClient,
+			const PLUGIN_INIT_TYPE init,
+			const PLUGIN_INIT_SQVM_TYPE initClientSqvm,
+			const PLUGIN_INIT_SQVM_TYPE initServerSqvm,
+			const PLUGIN_INFORM_SQVM_CREATED_TYPE sqvmCreated,
+			const PLUGIN_INFORM_SQVM_DESTROYED_TYPE sqvmDestroyed,
+			const PLUGIN_INFORM_DLL_LOAD_TYPE informLibLoad,
+			const PLUGIN_RUNFRAME runFrame)
+		: name(name)
+		, logName(logName)
+		, dependencyName(dependencyName)
+		, description(description)
+		, api_version(api_version)
+		, version(version)
+		, handle(handle)
+		, run_on_client(runOnClient)
+		, run_on_server(runOnServer)
+		, init(init)
+		, init_sqvm_client(initClientSqvm)
+		, init_sqvm_server(initServerSqvm)
+		, inform_sqvm_created(sqvmCreated)
+		, inform_sqvm_destroyed(sqvmDestroyed)
+		, inform_dll_load(informLibLoad)
+		, run_frame(runFrame)
+	{};
 
-	PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
+	const PLUGIN_INIT_TYPE init;
 
-	PLUGIN_RUNFRAME run_frame;
+	// all following functions are optional. Maybe should be std::optional in the future
+	const PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
+	const PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
+	const PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
+	const PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
+
+	const PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
+
+	const PLUGIN_RUNFRAME run_frame;
 };
 
 class PluginManager

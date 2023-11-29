@@ -51,16 +51,9 @@ EXPORT void* CreateObject(ObjectType type)
 
 std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
 {
-
-	Plugin plugin {};
-
 	std::string pathstring = path.string();
-	std::wstring wpath = path.wstring(); // is there any reason to load the libs with wide strings?
-
-	LPCWSTR wpptr = wpath.c_str();
-
 	HMODULE pluginLib =
-		LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS); // Load the DLL with lib folders
+		LoadLibraryExA(pathstring.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS); // Load the DLL with lib folders
 
 	if (!pluginLib)
 	{
@@ -68,21 +61,36 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		return std::nullopt;
 	}
 
-	uint32_t* abiVersion = (uint32_t*)GetProcAddress(pluginLib, "PLUGIN_ABI_VERSION");
-	char** name = (char**)GetProcAddress(pluginLib, "PLUGIN_NAME");
-	char** description = (char**)GetProcAddress(pluginLib, "PLUGIN_DESCRIPTION");
-	char** abbreviation = (char**)GetProcAddress(pluginLib, "PLUGIN_ABBREVIATION");
-	char** version = (char**)GetProcAddress(pluginLib, "PLUGIN_VERSION");
-	char** dependencyName = (char**)GetProcAddress(pluginLib, "PLUGIN_DEPENDENCY_NAME");
-	uint8_t* context = (uint8_t*)GetProcAddress(pluginLib, "PLUGIN_CONTEXT");
-	PLUGIN_INIT_TYPE plugin_init = (PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
+	// required properties
+	const uint32_t* abiVersion = (const uint32_t*)GetProcAddress(pluginLib, "PLUGIN_ABI_VERSION");
+	const char** name = (const char**)GetProcAddress(pluginLib, "PLUGIN_NAME");
+	const char** description = (const char**)GetProcAddress(pluginLib, "PLUGIN_DESCRIPTION");
+	const char** logName = (const char**)GetProcAddress(pluginLib, "PLUGIN_LOG_NAME");
+	const char** version = (const char**)GetProcAddress(pluginLib, "PLUGIN_VERSION");
+	const char** dependencyName = (const char**)GetProcAddress(pluginLib, "PLUGIN_DEPENDENCY_NAME");
+	const uint8_t* context = (const uint8_t*)GetProcAddress(pluginLib, "PLUGIN_CONTEXT");
+	const PLUGIN_INIT_TYPE plugin_init = (const PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT");
+
+	// optional properties
+	const PLUGIN_INIT_SQVM_TYPE initClientSqvm = (const PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_CLIENT");
+	const PLUGIN_INIT_SQVM_TYPE initServerSqvm = (const PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_SERVER");
+	const PLUGIN_INFORM_SQVM_CREATED_TYPE sqvmCreated = (const PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
+	const PLUGIN_INFORM_SQVM_DESTROYED_TYPE sqvmDestroyed = (const PLUGIN_INFORM_SQVM_DESTROYED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_DESTROYED");
+
+	const PLUGIN_INFORM_DLL_LOAD_TYPE informLibLoad = (const PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_DLL_LOAD");
+
+	const PLUGIN_RUNFRAME runFrame = (const PLUGIN_RUNFRAME)GetProcAddress(pluginLib, "PLUGIN_RUNFRAME");
+
+	// decode fields
+	const bool runOnServer = PluginContext::DEDICATED & *context;
+	const bool runOnClient = PluginContext::CLIENT & *context;
 
 	// ensure all required values are found
-#define ASSERT_HAS_PROP(e, prop) if (!e) { NS::log::PLUGINSYS->error("'{}' is not exporting it's {}", pathstring, prop); freeLibrary(pluginLib); return std::nullopt;; }
+#define ASSERT_HAS_PROP(e, prop) if (!e) { NS::log::PLUGINSYS->error("'{}' does not export required symbol {}", pathstring, prop); freeLibrary(pluginLib); return std::nullopt;; }
 		ASSERT_HAS_PROP(abiVersion, "PLUGIN_ABI_VERSION")
 		ASSERT_HAS_PROP(name, "PLUGIN_NAME");
 		ASSERT_HAS_PROP(description, "PLUGIN_DESCRIPTION");
-		ASSERT_HAS_PROP(abbreviation, "PLUGIN_ABBREVIATION");
+		ASSERT_HAS_PROP(logName, "PLUGIN_ABBREVIATION");
 		ASSERT_HAS_PROP(version, "PLUGIN_VERSION");
 		ASSERT_HAS_PROP(context, "PLUGIN_CONTEXT");
 		ASSERT_HAS_PROP(plugin_init, "PLUGIN_INIT");
@@ -96,44 +104,35 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 			return std::nullopt;
 		}
 
-	// Passed all checks, going to actually load it now
-	// NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring); // we log the same thing 20 lines later why is this here
-
-	plugin.name = *name;
-	plugin.displayName = *abbreviation;
-	plugin.description = *description;
-	plugin.api_version = *abiVersion;
-	plugin.version = *version;
-	plugin.init = *plugin_init;
-
-	plugin.run_on_client = PluginContext::CLIENT & *context;
-	plugin.run_on_server = PluginContext::DEDICATED & *context;
-
-	if (!plugin.run_on_server && IsDedicatedServer())
+	if (!runOnServer && IsDedicatedServer())
 	{
 		freeLibrary(pluginLib);
 		return std::nullopt;
 	}
 
-	if (dependencyName)
-	{
-		plugin.dependencyName = *dependencyName;
-	}
-	else
-	{
-		plugin.dependencyName = plugin.name;
-	}
+	// Passed all checks, going to actually load it now
+	// NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring); // we log the same thing 20 lines later why is this here
 
-	plugin.init_sqvm_client = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_CLIENT");
-	plugin.init_sqvm_server = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_SERVER");
-	plugin.inform_sqvm_created = (PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
-	plugin.inform_sqvm_destroyed = (PLUGIN_INFORM_SQVM_DESTROYED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_DESTROYED");
+	Plugin plugin = Plugin(
+		*name,
+		*abbreviation,
+		dependencyName ? *dependencyName : *name,
+		*description,
+		*abiVersion,
+		*version,
+		m_vLoadedPlugins.size(),
+		runOnServer,
+		runOnClient,
+		*plugin_init,
+		initClientSqvm ? *initClientSqvm : nullptr,
+		initServerSqvm ? *initServerSqvm : nullptr,
+		sqvmCreated ? *sqvmCreated : nullptr,
+		sqvmDestroyed ? *sqvmDestroyed : nullptr,
+		informLibLoad ? *informLibLoad : nullptr,
+		runFrame ? *runFrame : nullptr
+	);
 
-	plugin.inform_dll_load = (PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_DLL_LOAD");
-
-	plugin.run_frame = (PLUGIN_RUNFRAME)GetProcAddress(pluginLib, "PLUGIN_RUNFRAME");
-
-	plugin.handle = m_vLoadedPlugins.size();
+	//plugin.handle = m_vLoadedPlugins.size();
 	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName, NS::Colors::PLUGIN);
 	RegisterLogger(plugin.logger);
 	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.displayName, plugin.version);

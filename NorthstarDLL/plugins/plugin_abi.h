@@ -1,7 +1,17 @@
 #pragma once
 #include "squirrel/squirrelclasstypes.h"
+#include <stdint.h>
 
 #define ABI_VERSION 4
+
+// can't use bitwise ops on enum classes
+namespace PluginContext {
+	enum: uint8_t
+		  {
+			  DEDICATED = 0x1,
+			  CLIENT = 0x2,
+		  };
+}
 
 enum PluginLoadDLL
 {
