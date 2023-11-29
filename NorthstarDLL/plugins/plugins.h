@@ -1,18 +1,28 @@
 #pragma once
+#include <stdint.h>
 #include "plugin_abi.h"
 
 const int IDR_RCDATA1 = 101;
 
+// can't use bitwise ops on enum classes
+namespace PluginContext {
+	enum: uint8_t
+		  {
+			  DEDICATED = 0x1,
+			  CLIENT = 0x2,
+		  };
+}
+
 class Plugin
 {
   public:
-	std::string name;
-	std::string displayName;
-	std::string dependencyName;
-	std::string description;
+	char* name;
+	char* displayName; // used somewhere
+	char* dependencyName; // used somewhere
+	char* description;
 
-	std::string api_version;
-	std::string version;
+	uint32_t api_version;
+	char* version;
 
 	// For now this is just implemented as the index into the plugins array
 	// Maybe a bit shit but it works

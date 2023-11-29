@@ -1,7 +1,7 @@
 #pragma once
 #include "squirrel/squirrelclasstypes.h"
 
-#define ABI_VERSION 3
+#define ABI_VERSION 4
 
 enum PluginLoadDLL
 {
