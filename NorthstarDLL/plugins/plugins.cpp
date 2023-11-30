@@ -125,7 +125,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	Plugin plugin = Plugin(pluginLib, m_vLoadedPlugins.size(), pathstring);
 
-	if (!plugin.valid || (!plugin.run_on_server && IsDedicatedServer())
+	if (!plugin.valid || (!plugin.run_on_server && IsDedicatedServer()))
 	{
 		freeLibrary(pluginLib);
 		return std::nullopt;
@@ -135,7 +135,6 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	// NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring); // we log the same thing 20 lines later why is this here
 
 	plugin.logger = std::make_shared<ColoredLogger>(plugin.logName, NS::Colors::PLUGIN);
-	d
 	RegisterLogger(plugin.logger);
 	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.logName, plugin.version);
 	m_vLoadedPlugins.push_back(plugin);
