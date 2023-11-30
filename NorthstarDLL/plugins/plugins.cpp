@@ -35,6 +35,51 @@ namespace Symbol {
 
 PluginManager* g_pPluginManager;
 
+template<typename T> T GetSymbolValue(HMODULE lib, const char* symbol)
+{
+	const T* addr = (T*)GetProcAddress(lib, symbol);
+	return addr ? *addr : NULL;
+}
+
+Plugin::Plugin(HMODULE lib, int handle, std::string path)
+		: name(GetSymbolValue<char*>(lib, Symbol::NAME)),
+		logName(GetSymbolValue<char*>(lib, Symbol::LOG_NAME)),
+		dependencyName(GetSymbolValue<char*>(lib, Symbol::DEPENDENCY_NAME)),
+		description(GetSymbolValue<char*>(lib, Symbol::DESCRIPTION)),
+		api_version(GetSymbolValue<uint32_t>(lib, Symbol::REQUIRED_ABI_VERSION)),
+		  version(GetSymbolValue<char*>(lib, Symbol::VERSION)),
+		  handle(handle),
+		  runOnContext(GetSymbolValue<uint8_t>(lib, Symbol::CONTEXT)),
+		  run_on_client(runOnContext & PluginContext::CLIENT),
+		  run_on_server(runOnContext & PluginContext::DEDICATED),
+		  init(GetSymbolValue<PLUGIN_INIT_TYPE>(lib, Symbol::INIT)),
+		  init_sqvm_client(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::CLIENT_SQVM_INIT)),
+		  init_sqvm_server(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::SERVER_SQVM_INIT)),
+		  inform_sqvm_created(GetSymbolValue<PLUGIN_INFORM_SQVM_CREATED_TYPE>(lib,Symbol::SQVM_CREATED)),
+		  inform_sqvm_destroyed(GetSymbolValue<PLUGIN_INFORM_SQVM_DESTROYED_TYPE>(lib, Symbol::SQVM_DESTROYED)),
+		  inform_dll_load(GetSymbolValue<PLUGIN_INFORM_DLL_LOAD_TYPE>(lib, Symbol::LIB_LOAD)),
+		  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME)),
+		  valid(api_version && name && description && version && init && logName && runOnContext) {
+			#define LOG_MISSING_SYMBOL(e, symbol) if(!e) NS::log::PLUGINSYS->error("'{} does not export required symbol '{}'", path, symbol);
+			  LOG_MISSING_SYMBOL(api_version, Symbol::REQUIRED_ABI_VERSION)
+				LOG_MISSING_SYMBOL(name, Symbol::NAME)
+				LOG_MISSING_SYMBOL(description, Symbol::DESCRIPTION)
+				LOG_MISSING_SYMBOL(version, Symbol::VERSION)
+				LOG_MISSING_SYMBOL(logName, Symbol::LOG_NAME)
+				LOG_MISSING_SYMBOL(runOnContext, Symbol::CONTEXT)
+				LOG_MISSING_SYMBOL(init, Symbol::INIT)
+#undef LOG_MISSING_SYMBOL
+
+		  	if (ABI_VERSION != api_version)
+	{
+		NS::log::PLUGINSYS->error(
+			"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'",
+			path,
+			api_version,
+			ABI_VERSION);
+	}
+}
+
 void freeLibrary(HMODULE hLib)
 {
 	if (!FreeLibrary(hLib))
@@ -80,63 +125,9 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		return std::nullopt;
 	}
 
-	// required properties
-	const uint32_t* abiVersion = (const uint32_t*)GetProcAddress(pluginLib, Symbol::REQUIRED_ABI_VERSION);
-	const char** name = (const char**)GetProcAddress(pluginLib, Symbol::NAME);
-	const char** description = (const char**)GetProcAddress(pluginLib, Symbol::DESCRIPTION);
-	const char** logName = (const char**)GetProcAddress(pluginLib, Symbol::LOG_NAME);
-	const char** version = (const char**)GetProcAddress(pluginLib, Symbol::VERSION);
-	const char** dependencyName = (const char**)GetProcAddress(pluginLib, Symbol::DEPENDENCY_NAME);
-	const uint8_t* context = (const uint8_t*)GetProcAddress(pluginLib, Symbol::CONTEXT);
-	const PLUGIN_INIT_TYPE plugin_init = (const PLUGIN_INIT_TYPE)GetProcAddress(pluginLib, Symbol::INIT);
+	Plugin plugin = Plugin(pluginLib, m_vLoadedPlugins.size(), pathstring);
 
-	// optional properties
-	const PLUGIN_INIT_SQVM_TYPE initClientSqvm = (const PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, Symbol::CLIENT_SQVM_INIT);
-	const PLUGIN_INIT_SQVM_TYPE initServerSqvm = (const PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, Symbol::SERVER_SQVM_INIT);
-	const PLUGIN_INFORM_SQVM_CREATED_TYPE sqvmCreated =
-		(const PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, Symbol::SQVM_CREATED);
-	const PLUGIN_INFORM_SQVM_DESTROYED_TYPE sqvmDestroyed =
-		(const PLUGIN_INFORM_SQVM_DESTROYED_TYPE)GetProcAddress(pluginLib, Symbol::SQVM_DESTROYED);
-
-	const PLUGIN_INFORM_DLL_LOAD_TYPE informLibLoad =
-		(const PLUGIN_INFORM_DLL_LOAD_TYPE)GetProcAddress(pluginLib, Symbol::LIB_LOAD);
-
-	const PLUGIN_RUNFRAME runFrame = (const PLUGIN_RUNFRAME)GetProcAddress(pluginLib, Symbol::RUN_FRAME);
-
-	// decode fields
-	const bool runOnServer = PluginContext::DEDICATED & *context;
-	const bool runOnClient = PluginContext::CLIENT & *context;
-
-	// ensure all required values are found
-#define ASSERT_HAS_PROP(e, prop)                                                                                                           \
-	if (!e)                                                                                                                                \
-	{                                                                                                                                      \
-		NS::log::PLUGINSYS->error("'{}' does not export required symbol {}", pathstring, prop);                                            \
-		freeLibrary(pluginLib);                                                                                                            \
-		return std::nullopt;                                                                                                               \
-		;                                                                                                                                  \
-	}
-	ASSERT_HAS_PROP(abiVersion, Symbol::REQUIRED_ABI_VERSION);
-	ASSERT_HAS_PROP(name, Symbol::NAME);
-	ASSERT_HAS_PROP(description, Symbol::DESCRIPTION);
-	ASSERT_HAS_PROP(logName, Symbol::LOG_NAME);
-	ASSERT_HAS_PROP(version, Symbol::VERSION);
-	ASSERT_HAS_PROP(context, Symbol::CONTEXT);
-	ASSERT_HAS_PROP(plugin_init, Symbol::INIT);
-#undef ASSERT_HAS_PROP
-
-	if (ABI_VERSION != *abiVersion)
-	{
-		NS::log::PLUGINSYS->error(
-			"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'",
-			pathstring,
-			*abiVersion,
-			ABI_VERSION);
-		freeLibrary(pluginLib);
-		return std::nullopt;
-	}
-
-	if (!runOnServer && IsDedicatedServer())
+	if (!plugin.run_on_server && IsDedicatedServer())
 	{
 		freeLibrary(pluginLib);
 		return std::nullopt;
@@ -145,28 +136,9 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	// Passed all checks, going to actually load it now
 	// NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring); // we log the same thing 20 lines later why is this here
 
-	Plugin plugin = Plugin(
-		*name,
-		*abbreviation,
-		dependencyName ? *dependencyName : *name,
-		*description,
-		*abiVersion,
-		*version,
-		m_vLoadedPlugins.size(),
-		runOnServer,
-		runOnClient,
-		*plugin_init,
-		initClientSqvm ? *initClientSqvm : nullptr,
-		initServerSqvm ? *initServerSqvm : nullptr,
-		sqvmCreated ? *sqvmCreated : nullptr,
-		sqvmDestroyed ? *sqvmDestroyed : nullptr,
-		informLibLoad ? *informLibLoad : nullptr,
-		runFrame ? *runFrame : nullptr);
-
-	// plugin.handle = m_vLoadedPlugins.size();
-	plugin.logger = std::make_shared<ColoredLogger>(plugin.displayName, NS::Colors::PLUGIN);
+	plugin.logger = std::make_shared<ColoredLogger>(plugin.logName, NS::Colors::PLUGIN);
 	RegisterLogger(plugin.logger);
-	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.displayName, plugin.version);
+	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.logName, plugin.version);
 	m_vLoadedPlugins.push_back(plugin);
 
 	plugin.init(funcs, data);
