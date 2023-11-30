@@ -16,7 +16,8 @@
 #include "logging/logging.h"
 #include "dedicated/dedicated.h"
 
-namespace Symbol {
+namespace Symbol
+{
 	static const char* REQUIRED_ABI_VERSION = "PLUGIN_ABI_VERSION";
 	static const char* NAME = "PLUGIN_NAME";
 	static const char* DESCRIPTION = "PLUGIN_DESCRIPTION";
@@ -31,46 +32,43 @@ namespace Symbol {
 	static const char* SQVM_DESTROYED = "PLUGIN_INFORM_SQVM_CREATED";
 	static const char* LIB_LOAD = "PLUGIN_INFORM_DLL_LOAD";
 	static const char* RUN_FRAME = "PLUGIN_RUNFRAME";
-};
+}; // namespace Symbol
 
 PluginManager* g_pPluginManager;
 
-template<typename T> T GetSymbolValue(HMODULE lib, const char* symbol)
+template <typename T> T GetSymbolValue(HMODULE lib, const char* symbol)
 {
 	const T* addr = (T*)GetProcAddress(lib, symbol);
 	return addr ? *addr : NULL;
 }
 
 Plugin::Plugin(HMODULE lib, int handle, std::string path)
-		: name(GetSymbolValue<char*>(lib, Symbol::NAME)),
-		logName(GetSymbolValue<char*>(lib, Symbol::LOG_NAME)),
-		dependencyName(GetSymbolValue<char*>(lib, Symbol::DEPENDENCY_NAME)),
-		description(GetSymbolValue<char*>(lib, Symbol::DESCRIPTION)),
-		api_version(GetSymbolValue<uint32_t>(lib, Symbol::REQUIRED_ABI_VERSION)),
-		  version(GetSymbolValue<char*>(lib, Symbol::VERSION)),
-		  handle(handle),
-		  runOnContext(GetSymbolValue<uint8_t>(lib, Symbol::CONTEXT)),
-		  run_on_client(runOnContext & PluginContext::CLIENT),
-		  run_on_server(runOnContext & PluginContext::DEDICATED),
-		  init(GetSymbolValue<PLUGIN_INIT_TYPE>(lib, Symbol::INIT)),
-		  init_sqvm_client(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::CLIENT_SQVM_INIT)),
-		  init_sqvm_server(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::SERVER_SQVM_INIT)),
-		  inform_sqvm_created(GetSymbolValue<PLUGIN_INFORM_SQVM_CREATED_TYPE>(lib,Symbol::SQVM_CREATED)),
-		  inform_sqvm_destroyed(GetSymbolValue<PLUGIN_INFORM_SQVM_DESTROYED_TYPE>(lib, Symbol::SQVM_DESTROYED)),
-		  inform_dll_load(GetSymbolValue<PLUGIN_INFORM_DLL_LOAD_TYPE>(lib, Symbol::LIB_LOAD)),
-		  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME)),
-		  valid(api_version && name && description && version && init && logName && runOnContext) {
-			#define LOG_MISSING_SYMBOL(e, symbol) if(!e) NS::log::PLUGINSYS->error("'{} does not export required symbol '{}'", path, symbol);
-			  LOG_MISSING_SYMBOL(api_version, Symbol::REQUIRED_ABI_VERSION)
-				LOG_MISSING_SYMBOL(name, Symbol::NAME)
-				LOG_MISSING_SYMBOL(description, Symbol::DESCRIPTION)
-				LOG_MISSING_SYMBOL(version, Symbol::VERSION)
-				LOG_MISSING_SYMBOL(logName, Symbol::LOG_NAME)
-				LOG_MISSING_SYMBOL(runOnContext, Symbol::CONTEXT)
-				LOG_MISSING_SYMBOL(init, Symbol::INIT)
+	: name(GetSymbolValue<char*>(lib, Symbol::NAME)), logName(GetSymbolValue<char*>(lib, Symbol::LOG_NAME)),
+	  dependencyName(GetSymbolValue<char*>(lib, Symbol::DEPENDENCY_NAME)), description(GetSymbolValue<char*>(lib, Symbol::DESCRIPTION)),
+	  api_version(GetSymbolValue<uint32_t>(lib, Symbol::REQUIRED_ABI_VERSION)), version(GetSymbolValue<char*>(lib, Symbol::VERSION)),
+	  handle(handle), runOnContext(GetSymbolValue<uint8_t>(lib, Symbol::CONTEXT)), run_on_client(runOnContext & PluginContext::CLIENT),
+	  run_on_server(runOnContext & PluginContext::DEDICATED), init(GetSymbolValue<PLUGIN_INIT_TYPE>(lib, Symbol::INIT)),
+	  init_sqvm_client(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::CLIENT_SQVM_INIT)),
+	  init_sqvm_server(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::SERVER_SQVM_INIT)),
+	  inform_sqvm_created(GetSymbolValue<PLUGIN_INFORM_SQVM_CREATED_TYPE>(lib, Symbol::SQVM_CREATED)),
+	  inform_sqvm_destroyed(GetSymbolValue<PLUGIN_INFORM_SQVM_DESTROYED_TYPE>(lib, Symbol::SQVM_DESTROYED)),
+	  inform_dll_load(GetSymbolValue<PLUGIN_INFORM_DLL_LOAD_TYPE>(lib, Symbol::LIB_LOAD)),
+	  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME)),
+	  valid(api_version && name && description && version && init && logName && runOnContext)
+{
+#define LOG_MISSING_SYMBOL(e, symbol)                                                                                                      \
+	if (!e)                                                                                                                                \
+		NS::log::PLUGINSYS->error("'{} does not export required symbol '{}'", path, symbol);
+	LOG_MISSING_SYMBOL(api_version, Symbol::REQUIRED_ABI_VERSION)
+	LOG_MISSING_SYMBOL(name, Symbol::NAME)
+	LOG_MISSING_SYMBOL(description, Symbol::DESCRIPTION)
+	LOG_MISSING_SYMBOL(version, Symbol::VERSION)
+	LOG_MISSING_SYMBOL(logName, Symbol::LOG_NAME)
+	LOG_MISSING_SYMBOL(runOnContext, Symbol::CONTEXT)
+	LOG_MISSING_SYMBOL(init, Symbol::INIT)
 #undef LOG_MISSING_SYMBOL
 
-		  	if (ABI_VERSION != api_version)
+	if (ABI_VERSION != api_version)
 	{
 		NS::log::PLUGINSYS->error(
 			"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'",
