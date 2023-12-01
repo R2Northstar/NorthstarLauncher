@@ -29,31 +29,6 @@ class Plugin
 
   public:
 	Plugin(HMODULE lib, int handle, std::string path);
-	/*
-	Plugin(
-		const bool valid, // true if all required values are not null
-
-		const char* name,
-		const char* logName,
-		const char* dependencyName,
-		const char* description,
-		uint32_t api_version,
-		const char* version,
-		int handle,
-		bool runOnServer,
-		bool runOnClient,
-		const PLUGIN_INIT_TYPE init,
-		const PLUGIN_INIT_SQVM_TYPE initClientSqvm,
-		const PLUGIN_INIT_SQVM_TYPE initServerSqvm,
-		const PLUGIN_INFORM_SQVM_CREATED_TYPE sqvmCreated,
-		const PLUGIN_INFORM_SQVM_DESTROYED_TYPE sqvmDestroyed,
-		const PLUGIN_INFORM_DLL_LOAD_TYPE informLibLoad,
-		const PLUGIN_RUNFRAME runFrame)
-		: name(name), logName(logName), dependencyName(dependencyName), description(description), api_version(api_version),
-		  version(version), handle(handle), run_on_client(runOnClient), run_on_server(runOnServer), init(init),
-		  init_sqvm_client(initClientSqvm), init_sqvm_server(initServerSqvm), inform_sqvm_created(sqvmCreated),
-		  inform_sqvm_destroyed(sqvmDestroyed), inform_dll_load(informLibLoad), run_frame(runFrame) {};
-		  */
 
 	const PLUGIN_INIT_TYPE init;
 

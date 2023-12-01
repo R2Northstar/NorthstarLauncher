@@ -42,7 +42,7 @@ template <typename T> T GetSymbolValue(HMODULE lib, const char* symbol)
 	return addr ? *addr : NULL;
 }
 
-Plugin::Plugin(HMODULE lib, int handle, std::string path)
+Plugin::Plugin(HMODULE lib, int handle, std::string identifier)
 	: name(GetSymbolValue<char*>(lib, Symbol::NAME)), logName(GetSymbolValue<char*>(lib, Symbol::LOG_NAME)),
 	  dependencyName(GetSymbolValue<char*>(lib, Symbol::DEPENDENCY_NAME)), description(GetSymbolValue<char*>(lib, Symbol::DESCRIPTION)),
 	  api_version(GetSymbolValue<uint32_t>(lib, Symbol::REQUIRED_ABI_VERSION)), version(GetSymbolValue<char*>(lib, Symbol::VERSION)),
@@ -58,7 +58,7 @@ Plugin::Plugin(HMODULE lib, int handle, std::string path)
 {
 #define LOG_MISSING_SYMBOL(e, symbol)                                                                                                      \
 	if (!e)                                                                                                                                \
-		NS::log::PLUGINSYS->error("'{} does not export required symbol '{}'", path, symbol);
+		NS::log::PLUGINSYS->error("'{} does not export required symbol '{}'", identifier, symbol);
 	LOG_MISSING_SYMBOL(api_version, Symbol::REQUIRED_ABI_VERSION)
 	LOG_MISSING_SYMBOL(name, Symbol::NAME)
 	LOG_MISSING_SYMBOL(description, Symbol::DESCRIPTION)
@@ -72,7 +72,7 @@ Plugin::Plugin(HMODULE lib, int handle, std::string path)
 	{
 		NS::log::PLUGINSYS->error(
 			"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'",
-			path,
+			identifier,
 			api_version,
 			ABI_VERSION);
 	}
@@ -119,7 +119,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	{
 		NS::log::PLUGINSYS->error(
 			"'Failed to load library '{}'",
-			std::system_category().message(GetLastError())); // GetLastError??? We know the path that failed to load
+			std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
 
@@ -130,9 +130,6 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		freeLibrary(pluginLib);
 		return std::nullopt;
 	}
-
-	// Passed all checks, going to actually load it now
-	// NS::log::PLUGINSYS->info("Succesfully loaded {}", pathstring); // we log the same thing 20 lines later why is this here
 
 	plugin.logger = std::make_shared<ColoredLogger>(plugin.logName, NS::Colors::PLUGIN);
 	RegisterLogger(plugin.logger);
