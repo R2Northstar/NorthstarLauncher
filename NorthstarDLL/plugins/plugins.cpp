@@ -117,9 +117,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	if (!pluginLib)
 	{
-		NS::log::PLUGINSYS->error(
-			"'Failed to load library '{}'",
-			std::system_category().message(GetLastError()));
+		NS::log::PLUGINSYS->error("'Failed to load library '{}'", std::system_category().message(GetLastError()));
 		return std::nullopt;
 	}
 
