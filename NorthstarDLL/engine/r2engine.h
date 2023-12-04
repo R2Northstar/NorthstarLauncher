@@ -173,20 +173,29 @@ namespace R2
 		CHANGELEVEL = 9, // server is changing level; please wait
 	};
 
-	// clang-format off
-	OFFSET_STRUCT(CBaseClient)
+#pragma pack(push, 1)
+	typedef struct
 	{
-		STRUCT_SIZE(0x2D728)
-		FIELD(0x16, char m_Name[64])
-		FIELD(0x258, KeyValues* m_ConVars)
-		FIELD(0x2A0, eSignonState m_Signon)
-		FIELD(0x358, char m_ClanTag[16])
-		FIELD(0x484, bool m_bFakePlayer)
-		FIELD(0x4A0, ePersistenceReady m_iPersistenceReady)
-		FIELD(0x4FA, char m_PersistenceBuffer[PERSISTENCE_MAX_SIZE])
-		FIELD(0xF500, char m_UID[32])
-	};
-	// clang-format on
+		char _unk1[22]; // 0x0 ( Size: 22 )
+		char m_Name[64]; // 0x16 ( Size: 64 )
+		char _unk2[514]; // 0x56 ( Size: 514 )
+		KeyValues* m_ConVars; // 0x258 ( Size: 8 )
+		char _unk3[64]; // 0x260 ( Size: 64 )
+		eSignonState m_Signon; // 0x2a0 ( Size: 4 )
+		char _unk4[180]; // 0x2a4 ( Size: 180 )
+		char m_ClanTag[16]; // 0x358 ( Size: 16 )
+		char _unk5[284]; // 0x368 ( Size: 284 )
+		bool m_bFakePlayer; // 0x484 ( Size: 1 )
+		char _unk6[27]; // 0x485 ( Size: 27 )
+		ePersistenceReady m_iPersistenceReady; // 0x4a0 ( Size: 1 )
+		char _unk7[89]; // 0x4a1 ( Size: 89 )
+		char m_PersistenceBuffer[PERSISTENCE_MAX_SIZE]; // 0x4fa ( Size: 56781 )
+		char _unk8[4665]; // 0xe2c7 ( Size: 4665 )
+		char m_UID[32]; // 0xf500 ( Size: 32 )
+		char _unk9[123400]; // 0xf520 ( Size: 123400 )
+	} CBaseClient;
+	static_assert(sizeof(CBaseClient) == 0x2D728);
+#pragma pack(pop)
 
 	extern CBaseClient* g_pClientArray;
 
@@ -202,63 +211,56 @@ namespace R2
 
 	extern char* g_pModName;
 
-	// clang-format off
-	OFFSET_STRUCT(CGlobalVars)
+#pragma pack(push, 1)
+	typedef struct
 	{
-		FIELD(0x0,
-			// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time 
-			//  perf clock, but not that it doesn't obey host_timescale/host_framerate)
-			double m_flRealTime);
+		// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time
+		//  perf clock, but not that it doesn't obey host_timescale/host_framerate)
+		double m_flRealTime; // 0x0 ( Size: 8 )
 
-		FIELDS(0x8,
-			// Absolute frame counter - continues to increase even if game is paused
-			int m_nFrameCount;
-		
-			// Non-paused frametime
-			float m_flAbsoluteFrameTime;
-		
-			// Current time 
-			//
-			// On the client, this (along with tickcount) takes a different meaning based on what
-			// piece of code you're in:
-			// 
-			//   - While receiving network packets (like in PreDataUpdate/PostDataUpdate and proxies),
-			//     this is set to the SERVER TICKCOUNT for that packet. There is no interval between
-			//     the server ticks.
-			//     [server_current_Tick * tick_interval]
-			//
-			//   - While rendering, this is the exact client clock 
-			//     [client_current_tick * tick_interval + interpolation_amount]
-			//
-			//   - During prediction, this is based on the client's current tick:
-			//     [client_current_tick * tick_interval]
-			float m_flCurTime;
-		)
+		// Absolute frame counter - continues to increase even if game is paused
+		int m_nFrameCount; // 0x8 ( Size: 4 )
 
-		FIELDS(0x30,
-			// Time spent on last server or client frame (has nothing to do with think intervals)
-			float m_flFrameTime;
+		// Non-paused frametime
+		float m_flAbsoluteFrameTime; // 0xc ( Size: 4 )
 
-			// current maxplayers setting
-			int m_nMaxClients;
-		)
+		// Current time
+		//
+		// On the client, this (along with tickcount) takes a different meaning based on what
+		// piece of code you're in:
+		//
+		//   - While receiving network packets (like in PreDataUpdate/PostDataUpdate and proxies),
+		//     this is set to the SERVER TICKCOUNT for that packet. There is no interval between
+		//     the server ticks.
+		//     [server_current_Tick * tick_interval]
+		//
+		//   - While rendering, this is the exact client clock
+		//     [client_current_tick * tick_interval + interpolation_amount]
+		//
+		//   - During prediction, this is based on the client's current tick:
+		//     [client_current_tick * tick_interval]
+		float m_flCurTime; // 0x10 ( Size: 4 )
+		char _unk1[28]; // 0x14 ( Size: 28 )
 
-		FIELDS(0x3C,
-			// Simulation ticks - does not increase when game is paused
-			uint32_t m_nTickCount; // this is weird and doesn't seem to increase once per frame?
+		// Time spent on last server or client frame (has nothing to do with think intervals)
+		float m_flFrameTime; // 0x30 ( Size: 4 )
 
-			// Simulation tick interval
-			float m_flTickInterval;
-		)
+		// current maxplayers setting
+		int m_nMaxClients; // 0x34 ( Size: 4 )
+		char _unk2[4]; // 0x38 ( Size: 4 )
 
-		FIELDS(0x60,
-			const char* m_pMapName;
-			int m_nMapVersion;
-		)
+		// Simulation ticks - does not increase when game is paused
+		//   this is weird and doesn't seem to increase once per frame?
+		uint32_t m_nTickCount; // 0x3c ( Size: 4 )
 
-		//FIELD(0x98, double m_flRealTime); // again?
-	};
-	// clang-format on
+		// Simulation tick interval
+		float m_flTickInterval; // 0x40 ( Size: 4 )
+		char _unk3[28]; // 0x44 ( Size: 28 )
+
+		const char* m_pMapName; // 0x60 ( Size: 8 )
+		int m_nMapVersion; // 0x68 ( Size: 4 )
+	} CGlobalVars;
+#pragma pack(pop)
 
 	extern CGlobalVars* g_pGlobals;
 } // namespace R2
