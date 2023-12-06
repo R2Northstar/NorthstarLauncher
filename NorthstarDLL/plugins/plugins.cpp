@@ -47,14 +47,14 @@ Plugin::Plugin(HMODULE lib, int handle, std::string identifier)
 	  dependencyName(GetSymbolValue<char*>(lib, Symbol::DEPENDENCY_NAME)), description(GetSymbolValue<char*>(lib, Symbol::DESCRIPTION)),
 	  api_version(GetSymbolValue<uint32_t>(lib, Symbol::REQUIRED_ABI_VERSION)), version(GetSymbolValue<char*>(lib, Symbol::VERSION)),
 	  handle(handle), runOnContext(GetSymbolValue<uint8_t>(lib, Symbol::CONTEXT)), run_on_client(runOnContext & PluginContext::CLIENT),
-	  run_on_server(runOnContext & PluginContext::DEDICATED), init(GetSymbolValue<PLUGIN_INIT_TYPE>(lib, Symbol::INIT)),
+	  run_on_server(runOnContext & PluginContext::DEDICATED), init((PLUGIN_INIT_TYPE)GetProcAddress(lib, Symbol::INIT)),
 	  init_sqvm_client(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::CLIENT_SQVM_INIT)),
 	  init_sqvm_server(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::SERVER_SQVM_INIT)),
 	  inform_sqvm_created(GetSymbolValue<PLUGIN_INFORM_SQVM_CREATED_TYPE>(lib, Symbol::SQVM_CREATED)),
 	  inform_sqvm_destroyed(GetSymbolValue<PLUGIN_INFORM_SQVM_DESTROYED_TYPE>(lib, Symbol::SQVM_DESTROYED)),
 	  inform_dll_load(GetSymbolValue<PLUGIN_INFORM_DLL_LOAD_TYPE>(lib, Symbol::LIB_LOAD)),
-	  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME)),
-	  valid(api_version && name && description && version && init && logName && runOnContext)
+	  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME))
+//	  valid(api_version && name && description && version && init && logName && runOnContext)
 {
 #define LOG_MISSING_SYMBOL(e, symbol)                                                                                                      \
 	if (!e)                                                                                                                                \
@@ -76,6 +76,8 @@ Plugin::Plugin(HMODULE lib, int handle, std::string identifier)
 			api_version,
 			ABI_VERSION);
 	}
+
+	this->valid = this->api_version && this->name && this->description && this->version && this->init && this->logName && this->runOnContext;
 }
 
 void freeLibrary(HMODULE hLib)
@@ -109,6 +111,11 @@ EXPORT void* CreateObject(ObjectType type)
 	}
 }
 
+Plugin* PluginManager::GetPlugin(int handle)
+{
+	return &this->m_vLoadedPlugins[handle];
+}
+
 std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
 {
 	std::string pathstring = path.string();
@@ -125,6 +132,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	if (!plugin.valid || (!plugin.run_on_server && IsDedicatedServer()))
 	{
+		NS::log::PLUGINSYS->error("Plugin at '{}' is not valid. {} {}", pathstring, plugin.description, plugin.version);
 		freeLibrary(pluginLib);
 		return std::nullopt;
 	}
@@ -177,7 +185,7 @@ bool PluginManager::LoadPlugins()
 	funcs.createObject = CreateObject;
 
 	data.version = ns_version.c_str();
-	data.northstarModule = g_NorthstarModule;
+	data.northstarModule = GetModuleHandleA(NULL);
 
 	fs::path libPath = fs::absolute(pluginPath + "\\lib");
 	if (fs::exists(libPath) && fs::is_directory(libPath))

@@ -7,7 +7,7 @@ const int IDR_RCDATA1 = 101;
 class Plugin
 {
   public:
-	const bool valid;
+	bool valid;
 
 	const char* name;
 	const char* logName;
@@ -49,6 +49,7 @@ class PluginManager
 	std::vector<Plugin> m_vLoadedPlugins;
 
   public:
+	Plugin* GetPlugin(int handle);
 	bool LoadPlugins();
 	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data);
 
