@@ -54,7 +54,6 @@ Plugin::Plugin(HMODULE lib, int handle, std::string identifier)
 	  inform_sqvm_destroyed(GetSymbolValue<PLUGIN_INFORM_SQVM_DESTROYED_TYPE>(lib, Symbol::SQVM_DESTROYED)),
 	  inform_dll_load(GetSymbolValue<PLUGIN_INFORM_DLL_LOAD_TYPE>(lib, Symbol::LIB_LOAD)),
 	  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME))
-//	  valid(api_version && name && description && version && init && logName && runOnContext)
 {
 #define LOG_MISSING_SYMBOL(e, symbol)                                                                                                      \
 	if (!e)                                                                                                                                \
@@ -77,7 +76,8 @@ Plugin::Plugin(HMODULE lib, int handle, std::string identifier)
 			ABI_VERSION);
 	}
 
-	this->valid = this->api_version && this->name && this->description && this->version && this->init && this->logName && this->runOnContext;
+	this->valid =
+		this->api_version && this->name && this->description && this->version && this->init && this->logName && this->runOnContext;
 }
 
 void freeLibrary(HMODULE hLib)
@@ -132,7 +132,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 
 	if (!plugin.valid || (!plugin.run_on_server && IsDedicatedServer()))
 	{
-		NS::log::PLUGINSYS->error("Plugin at '{}' is not valid. {} {}", pathstring, plugin.description, plugin.version);
+		NS::log::PLUGINSYS->error("Plugin at '{}' is invalid.", pathstring);
 		freeLibrary(pluginLib);
 		return std::nullopt;
 	}

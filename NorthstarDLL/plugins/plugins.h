@@ -7,6 +7,8 @@ const int IDR_RCDATA1 = 101;
 class Plugin
 {
   public:
+	// for some reason some members this depends on aren't set when the initializer for valid runs
+	// so this can't be const. Great language.
 	bool valid;
 
 	const char* name;
@@ -27,7 +29,6 @@ class Plugin
 	const bool run_on_client = false;
 	const bool run_on_server = false;
 
-  public:
 	Plugin(HMODULE lib, int handle, std::string path);
 
 	const PLUGIN_INIT_TYPE init;

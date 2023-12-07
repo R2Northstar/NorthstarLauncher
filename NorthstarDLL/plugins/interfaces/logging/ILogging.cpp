@@ -4,44 +4,27 @@
 
 class CLogging : public ILogging
 {
-	public:
-		void log(int handle, spdlog::level::level_enum level, char* msg)
+  public:
+	void log(int handle, LogLevel level, char* msg)
+	{
+		spdlog::level::level_enum spdLevel;
+
+		switch (level)
 		{
-			NS::log::PLUGINSYS->info("attempting to log msg '{}'", msg);
-			g_pPluginManager->GetPlugin(handle)->logger->log(level, msg);
+		case LogLevel::WARN:
+			spdLevel = spdlog::level::level_enum::warn;
+			break;
+		case LogLevel::ERR:
+			spdLevel = spdlog::level::level_enum::err;
+			break;
+		case LogLevel::INFO:
+		default:
+			spdLevel = spdlog::level::level_enum::info;
+			break;
 		}
 
-		void trace(int handle, char* msg)
-		{
-			g_pPluginManager->GetPlugin(handle)->logger->trace(msg);
-		}
-
-		void debug(int handle, char* msg)
-		{
-			g_pPluginManager->GetPlugin(handle)->logger->debug(msg);
-		}
-
-		void info(int handle, char* msg)
-		{
-			g_pPluginManager->GetPlugin(handle)->logger->info(msg);
-		}
-
-		void warn(int handle, char* msg)
-		{
-			g_pPluginManager->GetPlugin(handle)->logger->warn(msg);
-		}
-
-		void error(int handle, char* msg)
-		{
-			g_pPluginManager->GetPlugin(handle)->logger->error(msg);
-		}
-
-		void critical(int handle, char* msg)
-		{
-			g_pPluginManager->GetPlugin(handle)->logger->critical(msg);
-		}
+		g_pPluginManager->GetPlugin(handle)->logger->log(spdLevel, msg);
+	}
 };
-
-static_assert(sizeof(CLogging) == 8);
 
 EXPOSE_SINGLE_INTERFACE(CLogging, ILogging, LOGGING_VERSION);

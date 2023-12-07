@@ -12,16 +12,16 @@ InterfaceReg::InterfaceReg(InstantiateInterfaceFn fn, const char* pName) : m_pNa
 
 void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 {
-	InterfaceReg *pCur;
+	InterfaceReg* pCur;
 
 	NS::log::PLUGINSYS->info("looking up interface {}", pName);
 
-	for(pCur = s_pInterfaceRegs; pCur; pCur = pCur->m_pNext)
+	for (pCur = s_pInterfaceRegs; pCur; pCur = pCur->m_pNext)
 	{
 		NS::log::PLUGINSYS->info("comparing {} and {} = {}", pCur->m_pName, pName, strcmp(pCur->m_pName, pName));
-		if(strcmp(pCur->m_pName, pName) == 0)
+		if (strcmp(pCur->m_pName, pName) == 0)
 		{
-			if(pReturnCode)
+			if (pReturnCode)
 			{
 				*pReturnCode = InterfaceStatus::IFACE_OK;
 			}
@@ -31,7 +31,7 @@ void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 		}
 	}
 
-	if(pReturnCode)
+	if (pReturnCode)
 	{
 		*pReturnCode = InterfaceStatus::IFACE_FAILED;
 	}
@@ -39,4 +39,3 @@ void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 	NS::log::PLUGINSYS->error("could not find interface {}", pName);
 	return NULL;
 }
-
