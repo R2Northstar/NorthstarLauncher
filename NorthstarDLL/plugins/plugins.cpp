@@ -111,8 +111,10 @@ EXPORT void* CreateObject(ObjectType type)
 	}
 }
 
-Plugin* PluginManager::GetPlugin(int handle)
+std::optional<Plugin*> PluginManager::GetPlugin(int handle)
 {
+	if (handle >= m_vLoadedPlugins.size())
+		return std::nullopt;
 	return &this->m_vLoadedPlugins[handle];
 }
 

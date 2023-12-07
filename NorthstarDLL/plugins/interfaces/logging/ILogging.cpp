@@ -17,13 +17,22 @@ class CLogging : public ILogging
 		case LogLevel::ERR:
 			spdLevel = spdlog::level::level_enum::err;
 			break;
-		case LogLevel::INFO:
 		default:
+			NS::log::PLUGINSYS->warn("Attempted to log with invalid level {}. Defaulting to info", (int)level);
+		case LogLevel::INFO:
 			spdLevel = spdlog::level::level_enum::info;
 			break;
 		}
 
-		g_pPluginManager->GetPlugin(handle)->logger->log(spdLevel, msg);
+		std::optional<Plugin*> plugin = g_pPluginManager->GetPlugin(handle);
+		if (plugin)
+		{
+			(*plugin)->logger->log(spdLevel, msg);
+		}
+		else
+		{
+			NS::log::PLUGINSYS->warn("Attempted to log message '{}' with invalid plugin handle {}", msg, handle);
+		}
 	}
 };
 

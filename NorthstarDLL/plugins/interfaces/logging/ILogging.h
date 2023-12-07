@@ -3,7 +3,7 @@
 
 #define LOGGING_VERSION "Logging001"
 
-enum class LogLevel
+enum class LogLevel : int
 {
 	INFO = 0,
 	WARN,

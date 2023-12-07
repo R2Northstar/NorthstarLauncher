@@ -50,7 +50,7 @@ class PluginManager
 	std::vector<Plugin> m_vLoadedPlugins;
 
   public:
-	Plugin* GetPlugin(int handle);
+	std::optional<Plugin*> GetPlugin(int handle);
 	bool LoadPlugins();
 	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data);
 
