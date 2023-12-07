@@ -1,6 +1,6 @@
-#include "../interface.h"
+#include "plugins/interfaces/interface.h"
 #include "ILogging.h"
-#include "../../plugins.h"
+#include "plugins/plugins.h"
 
 class CLogging : public ILogging
 {
