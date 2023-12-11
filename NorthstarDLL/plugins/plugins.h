@@ -1,47 +1,104 @@
 #pragma once
 #include <stdint.h>
 #include "plugin_abi.h"
+#include "core/sourceinterface.h"
+#include "plugins/interfaces/interface.h"
+#include "plugins/interfaces/IPluginId.h"
+#include "plugins/interfaces/IPluginCallbacks.h"
 
 const int IDR_RCDATA1 = 101;
 
 class Plugin
 {
-  public:
-	// for some reason some members this depends on aren't set when the initializer for valid runs
-	// so this can't be const. Great language.
-	bool valid;
+  private:
+	void* GetProperty(PluginPropertyKey prop)
+	{
+		return this->pluginId->GetProperty(prop);
+	};
+	CreateInterfaceFn m_pCreateInterface;
+	IPluginId* pluginId;
+	IPluginCallbacks* callbacks;
 
-	const char* name;
-	const char* logName;
-	const char* dependencyName;
-	const char* description;
-
-	const uint32_t api_version;
-	const char* version;
-
-	// For now this is just implemented as the index into the plugins array
-	// Maybe a bit shit but it works
-	const int handle;
-
+	HMODULE module = nullptr;
 	std::shared_ptr<ColoredLogger> logger;
 
-	const uint8_t runOnContext; // bitfield that gets resolved to run_on_client and run_on_server
-	const bool run_on_client = false;
-	const bool run_on_server = false;
+	bool valid = false;
+	std::string name;
+	std::string logName;
+	std::string dependencyName;
+	bool runOnServer;
+	bool runOnClient;
 
-	Plugin(HMODULE lib, int handle, std::string path);
+  public:
+	Plugin(std::string path);
 
-	const PLUGIN_INIT_TYPE init;
+	void Unload();
+	void Log(spdlog::level::level_enum level, char* msg)
+	{
+		logger->log(level, msg);
+	}
+
+	const bool IsValid() const
+	{
+		return valid;
+	};
+
+	std::string GetName() const
+	{
+		return name;
+	};
+
+	std::string GetLogName() const
+	{
+		return logName;
+	};
+
+	std::string GetDependencyName() const
+	{
+		return dependencyName;
+	};
+
+	bool ShouldRunOnServer()
+	{
+		return this->runOnServer;
+	}
+
+	bool ShouldRunOnClient()
+	{
+		return this->runOnClient;
+	}
+
+	void* CreateInterface(const char* pName, int* pStatus) const
+	{
+		return m_pCreateInterface(pName, pStatus);
+	}
+
+	void Init()
+	{
+		this->callbacks->Init(&this->initData);
+	};
+
+	void Finalize()
+	{
+		this->callbacks->Finalize();
+	};
+
+	const int handle; // identifier of this plugin used only for logging atm
+	const std::string location; // path of the dll
+	const PluginNorthstarData initData;
+
+	PLUGIN_INIT_TYPE init;
 
 	// all following functions are optional. Maybe should be std::optional in the future
-	const PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
-	const PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
-	const PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
-	const PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
+	PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
+	PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
+	PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
+	PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
 
-	const PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
+	PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
 
-	const PLUGIN_RUNFRAME run_frame;
+	PLUGIN_RUNFRAME run_frame;
+
 };
 
 class PluginManager
@@ -51,8 +108,11 @@ class PluginManager
 
   public:
 	std::optional<Plugin*> GetPlugin(int handle);
+	int GetNewHandle();
 	bool LoadPlugins();
-	std::optional<Plugin> LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data);
+	std::optional<Plugin> LoadPlugin(fs::path path);
+
+	void InformAllPluginsInitialized();
 
 	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
 	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);

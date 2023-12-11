@@ -522,7 +522,7 @@ void CCrashHandler::FormatLoadedPlugins()
 		spdlog::error("Loaded Plugins:");
 		for (const Plugin& plugin : g_pPluginManager->m_vLoadedPlugins)
 		{
-			spdlog::error("\t{}", plugin.name);
+			spdlog::error("\t{}", plugin.GetName());
 		}
 	}
 }

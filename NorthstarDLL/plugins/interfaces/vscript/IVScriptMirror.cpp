@@ -2,7 +2,7 @@
 
 class VScriptClientMirror : IVScriptMirror
 {
-	public:
+  public:
 	SQBool sq_getbool(HSquirrelVM* sqvm, SQInteger stackPos)
 	{
 		return g_pSquirrel<ScriptContext::CLIENT>->sq_getbool(sqvm, stackPos);

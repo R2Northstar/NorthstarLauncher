@@ -34,13 +34,6 @@ class InterfaceReg
 	static className __g_##className##_singleton;                                                                                          \
 	EXPOSE_SINGLE_INTERFACE_GLOBALVAR(className, interfaceName, versionName, __g_##className##_singleton)
 
-// interface return status
-enum class InterfaceStatus : int
-{
-	IFACE_OK = 0,
-	IFACE_FAILED,
-};
-
 EXPORT void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode);
 
 #endif

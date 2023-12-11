@@ -27,7 +27,7 @@ class CLogging : public ILogging
 		std::optional<Plugin*> plugin = g_pPluginManager->GetPlugin(handle);
 		if (plugin)
 		{
-			(*plugin)->logger->log(spdLevel, msg);
+			(*plugin)->Log(spdLevel, msg);
 		}
 		else
 		{

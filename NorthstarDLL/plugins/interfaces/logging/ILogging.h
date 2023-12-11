@@ -1,7 +1,7 @@
 #ifndef ILOGGING_H
 #define ILOGGING_H
 
-#define LOGGING_VERSION "Logging001"
+#define LOGGING_VERSION "NSLogging001"
 
 enum class LogLevel : int
 {

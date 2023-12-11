@@ -11,93 +11,146 @@
 #include <stdint.h>
 
 #include "util/version.h"
-#include "pluginbackend.h"
 #include "util/wininfo.h"
+#include "core/sourceinterface.h"
+#include "pluginbackend.h"
 #include "logging/logging.h"
 #include "dedicated/dedicated.h"
 
-namespace Symbol
-{
-	static const char* REQUIRED_ABI_VERSION = "PLUGIN_ABI_VERSION";
-	static const char* NAME = "PLUGIN_NAME";
-	static const char* DESCRIPTION = "PLUGIN_DESCRIPTION";
-	static const char* LOG_NAME = "PLUGIN_LOG_NAME";
-	static const char* VERSION = "PLUGIN_VERSION";
-	static const char* DEPENDENCY_NAME = "PLUGIN_DEPENDENCY_NAME";
-	static const char* CONTEXT = "PLUGIN_CONTEXT";
-	static const char* INIT = "PLUGIN_INIT";
-	static const char* CLIENT_SQVM_INIT = "PLUGIN_INIT_SQVM_CLIENT";
-	static const char* SERVER_SQVM_INIT = "PLUGIN_INIT_SQVM_SERVER";
-	static const char* SQVM_CREATED = "PLUGIN_INFORM_SQVM_CREATED";
-	static const char* SQVM_DESTROYED = "PLUGIN_INFORM_SQVM_CREATED";
-	static const char* LIB_LOAD = "PLUGIN_INFORM_DLL_LOAD";
-	static const char* RUN_FRAME = "PLUGIN_RUNFRAME";
-}; // namespace Symbol
-
 PluginManager* g_pPluginManager;
 
-template <typename T> T GetSymbolValue(HMODULE lib, const char* symbol)
+bool isValidSquirrelIdentifier(std::string s)
 {
-	const T* addr = (T*)GetProcAddress(lib, symbol);
-	return addr ? *addr : NULL;
+	if(!s.size()) return false; // identifiers can't be empty
+	if(s[0] <= 57) return false; // identifier can't start with a number
+	for(char& c : s)
+	{
+		// only allow underscores, 0-9, A-Z and a-z
+		if((c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == '_') continue;
+		return false;
+	}
+	return true;
 }
 
-Plugin::Plugin(HMODULE lib, int handle, std::string identifier)
-	: name(GetSymbolValue<char*>(lib, Symbol::NAME)), logName(GetSymbolValue<char*>(lib, Symbol::LOG_NAME)),
-	  dependencyName(GetSymbolValue<char*>(lib, Symbol::DEPENDENCY_NAME)), description(GetSymbolValue<char*>(lib, Symbol::DESCRIPTION)),
-	  api_version(GetSymbolValue<uint32_t>(lib, Symbol::REQUIRED_ABI_VERSION)), version(GetSymbolValue<char*>(lib, Symbol::VERSION)),
-	  handle(handle), runOnContext(GetSymbolValue<uint8_t>(lib, Symbol::CONTEXT)), run_on_client(runOnContext & PluginContext::CLIENT),
-	  run_on_server(runOnContext & PluginContext::DEDICATED), init((PLUGIN_INIT_TYPE)GetProcAddress(lib, Symbol::INIT)),
-	  init_sqvm_client(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::CLIENT_SQVM_INIT)),
-	  init_sqvm_server(GetSymbolValue<PLUGIN_INIT_SQVM_TYPE>(lib, Symbol::SERVER_SQVM_INIT)),
-	  inform_sqvm_created(GetSymbolValue<PLUGIN_INFORM_SQVM_CREATED_TYPE>(lib, Symbol::SQVM_CREATED)),
-	  inform_sqvm_destroyed(GetSymbolValue<PLUGIN_INFORM_SQVM_DESTROYED_TYPE>(lib, Symbol::SQVM_DESTROYED)),
-	  inform_dll_load(GetSymbolValue<PLUGIN_INFORM_DLL_LOAD_TYPE>(lib, Symbol::LIB_LOAD)),
-	  run_frame(GetSymbolValue<PLUGIN_RUNFRAME>(lib, Symbol::RUN_FRAME))
-{
-#define LOG_MISSING_SYMBOL(e, symbol)                                                                                                      \
-	if (!e)                                                                                                                                \
-		NS::log::PLUGINSYS->error("'{} does not export required symbol '{}'", identifier, symbol);
-	LOG_MISSING_SYMBOL(api_version, Symbol::REQUIRED_ABI_VERSION)
-	LOG_MISSING_SYMBOL(name, Symbol::NAME)
-	LOG_MISSING_SYMBOL(description, Symbol::DESCRIPTION)
-	LOG_MISSING_SYMBOL(version, Symbol::VERSION)
-	LOG_MISSING_SYMBOL(logName, Symbol::LOG_NAME)
-	LOG_MISSING_SYMBOL(runOnContext, Symbol::CONTEXT)
-	LOG_MISSING_SYMBOL(init, Symbol::INIT)
-#undef LOG_MISSING_SYMBOL
+Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), location(path), initData({.northstarModule = g_NorthstarModule, .pluginHandle = this->handle}) {
+	NS::log::PLUGINSYS->info("Loading plugin at '{}'", path);
 
-	if (ABI_VERSION != api_version)
+	this->module = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+
+	if(!this->module)
 	{
-		NS::log::PLUGINSYS->error(
-			"'{}' has an incompatible API version number ('{}') in its manifest. Current ABI version is '{}'",
-			identifier,
-			api_version,
-			ABI_VERSION);
+		NS::log::PLUGINSYS->error("Failed to load main plugin library '{}' (Error: {})", path, GetLastError());
+		return;
 	}
 
-	this->valid =
-		this->api_version && this->name && this->description && this->version && this->init && this->logName && this->runOnContext;
-}
+	NS::log::PLUGINSYS->info("loading interface getter");
+	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(this->module, "CreateInterface");
 
-void freeLibrary(HMODULE hLib)
-{
-	if (!FreeLibrary(hLib))
+	if(!CreatePluginInterface)
 	{
-		spdlog::error("There was an error while trying to free library");
+		NS::log::PLUGINSYS->error("Plugin at '{}' does not expose CreateInterface()", path);
+		return;
 	}
+
+	NS::log::PLUGINSYS->info("loading plugin id");
+	this->pluginId = (IPluginId*)CreatePluginInterface("PluginId001", 0);
+
+	if(!this->pluginId)
+	{
+		NS::log::PLUGINSYS->error("Could not load IPluginId interface of plugin at '{}'", path);
+		return;
+	}
+
+	NS::log::PLUGINSYS->info("loading properties");
+	char* name = (char*)this->GetProperty(PluginPropertyKey::NAME);
+	char* logName = (char*)this->GetProperty(PluginPropertyKey::LOG_NAME);
+	char* dependencyName = (char*)this->GetProperty(PluginPropertyKey::DEPENDENCY_NAME);
+	int64_t context = (int64_t)this->pluginId->GetProperty(PluginPropertyKey::CONTEXT); // this shit crashes when I made it a union idk skill issue
+	this->runOnServer = context & PluginContext::DEDICATED;
+	this->runOnClient = context & PluginContext::CLIENT;
+
+	/*
+	//int64_t test = this->GetProperty(PluginPropertyKey::NAME);
+	char* test = (char*)this->GetProperty(PluginPropertyKey::NAME);
+	NS::log::PLUGINSYS->info("PLUGIN NAME IS {}", test);
+
+	const char* name = "TEST";
+	const char* logName = "TEST";
+	const char* dependencyName = "TEST";
+	*/
+
+	this->name = std::string(name);
+	this->logName = std::string(logName);
+	this->dependencyName = std::string(dependencyName);
+//	this->runOnServer = context & PluginContext::DEDICATED;
+//	this->runOnClient = context & PluginContext::CLIENT;
+
+	if(!name)
+	{
+		NS::log::PLUGINSYS->error("Could not load name of plugin at '{}'", path);
+		return;
+	}
+
+	if(!logName)
+	{
+		NS::log::PLUGINSYS->error("Could not load logName of plugin {}", name);
+		return;
+	}
+
+	if(!dependencyName)
+	{
+		NS::log::PLUGINSYS->error("Could not load dependencyName of plugin {}", name);
+		return;
+	}
+
+	if(!isValidSquirrelIdentifier(this->dependencyName))
+	{
+		NS::log::PLUGINSYS->error("Dependency name \"{}\" of plugin {} is not valid", dependencyName, name);
+		return;
+	}
+
+	NS::log::PLUGINSYS->info("loading callbacks");
+	this->callbacks = (IPluginCallbacks*)CreatePluginInterface("PluginCallbacks001", 0);
+
+	if(!this->callbacks)
+	{
+		NS::log::PLUGINSYS->error("Could not create callback interface of plugin {}", name);
+		return;
+	}
+
+	this->logger = std::make_shared<ColoredLogger>(this->logName, NS::Colors::PLUGIN);
+	RegisterLogger(this->logger);
+
+	if(IsDedicatedServer() && !this->runOnServer)
+	{
+		NS::log::PLUGINSYS->error("Plugin {} did not request to run on dedicated servers", this->name);
+		return;
+	}
+
+	if(!IsDedicatedServer() && !this->runOnClient)
+	{
+		NS::log::PLUGINSYS->warn("Plugin {} did not request to run on clients", this->name);
+		return;
+	}
+
+	this->valid = true;
 }
 
-EXPORT void PLUGIN_LOG(LogMsg* msg)
+void Plugin::Unload()
 {
-	spdlog::source_loc src {};
-	src.filename = msg->source.file;
-	src.funcname = msg->source.func;
-	src.line = msg->source.line;
-	auto&& logger = g_pPluginManager->m_vLoadedPlugins[msg->pluginHandle].logger;
-	logger->log(src, (spdlog::level::level_enum)msg->level, msg->msg);
+	if(!this->module) return;
+
+	if(!FreeLibrary(this->module))
+	{
+		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
+		return;
+	}
+
+	this->module = 0;
+	this->valid = false;
 }
 
+// TODO throw this shit out
 EXPORT void* CreateObject(ObjectType type)
 {
 	switch (type)
@@ -113,38 +166,23 @@ EXPORT void* CreateObject(ObjectType type)
 
 std::optional<Plugin*> PluginManager::GetPlugin(int handle)
 {
-	if (handle >= m_vLoadedPlugins.size())
-		return std::nullopt;
+	if(handle < 0 || handle >= this->m_vLoadedPlugins.size()) return std::nullopt;
 	return &this->m_vLoadedPlugins[handle];
 }
 
-std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* funcs, PluginNorthstarData* data)
+std::optional<Plugin> PluginManager::LoadPlugin(fs::path path)
 {
-	std::string pathstring = path.string();
-	HMODULE pluginLib = LoadLibraryExA(
-		pathstring.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS); // Load the DLL with lib folders
+	Plugin plugin = Plugin(path.string());
 
-	if (!pluginLib)
+	if(!plugin.IsValid())
 	{
-		NS::log::PLUGINSYS->error("'Failed to load library '{}'", std::system_category().message(GetLastError()));
+		NS::log::PLUGINSYS->warn("Unloading plugin '{}' because it's invalid", path.string());
+		plugin.Unload();
 		return std::nullopt;
 	}
 
-	Plugin plugin = Plugin(pluginLib, m_vLoadedPlugins.size(), pathstring);
-
-	if (!plugin.valid || (!plugin.run_on_server && IsDedicatedServer()))
-	{
-		NS::log::PLUGINSYS->error("Plugin at '{}' is invalid.", pathstring);
-		freeLibrary(pluginLib);
-		return std::nullopt;
-	}
-
-	plugin.logger = std::make_shared<ColoredLogger>(plugin.logName, NS::Colors::PLUGIN);
-	RegisterLogger(plugin.logger);
-	NS::log::PLUGINSYS->info("Loading plugin {} version {}", plugin.logName, plugin.version);
 	m_vLoadedPlugins.push_back(plugin);
-
-	plugin.init(funcs, data);
+	plugin.Init();
 
 	return plugin;
 }
@@ -177,17 +215,6 @@ bool PluginManager::LoadPlugins()
 	std::vector<fs::path> paths;
 
 	pluginPath = GetNorthstarPrefix() + "\\plugins";
-
-	PluginNorthstarData data {};
-	std::string ns_version {version};
-
-	PluginInitFuncs funcs {};
-	funcs.logger = PLUGIN_LOG;
-	funcs.relayInviteFunc = nullptr;
-	funcs.createObject = CreateObject;
-
-	data.version = ns_version.c_str();
-	data.northstarModule = GetModuleHandleA(NULL);
 
 	fs::path libPath = fs::absolute(pluginPath + "\\lib");
 	if (fs::exists(libPath) && fs::is_directory(libPath))
@@ -224,14 +251,25 @@ bool PluginManager::LoadPlugins()
 
 	for (fs::path path : paths)
 	{
-		if (LoadPlugin(path, &funcs, &data))
-			data.pluginHandle += 1;
+		LoadPlugin(path);
 	}
+
+	for(Plugin& plugin : m_vLoadedPlugins)
+	{
+		plugin.Finalize();
+	}
+
 	return true;
+}
+
+int PluginManager::GetNewHandle()
+{
+	return this->m_vLoadedPlugins.size();
 }
 
 void PluginManager::InformSQVMLoad(ScriptContext context, SquirrelFunctions* s)
 {
+	/*
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (context == ScriptContext::CLIENT && plugin.init_sqvm_client != NULL)
@@ -243,10 +281,12 @@ void PluginManager::InformSQVMLoad(ScriptContext context, SquirrelFunctions* s)
 			plugin.init_sqvm_server(s);
 		}
 	}
+	*/
 }
 
 void PluginManager::InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm)
 {
+	/*
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (plugin.inform_sqvm_created != NULL)
@@ -254,10 +294,12 @@ void PluginManager::InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm)
 			plugin.inform_sqvm_created(context, sqvm);
 		}
 	}
+	*/
 }
 
 void PluginManager::InformSQVMDestroyed(ScriptContext context)
 {
+	/*
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (plugin.inform_sqvm_destroyed != NULL)
@@ -265,10 +307,12 @@ void PluginManager::InformSQVMDestroyed(ScriptContext context)
 			plugin.inform_sqvm_destroyed(context);
 		}
 	}
+	*/
 }
 
 void PluginManager::InformDLLLoad(const char* dll, void* data, void* dllPtr)
 {
+	/*
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (plugin.inform_dll_load != NULL)
@@ -276,10 +320,12 @@ void PluginManager::InformDLLLoad(const char* dll, void* data, void* dllPtr)
 			plugin.inform_dll_load(dll, (PluginEngineData*)data, dllPtr);
 		}
 	}
+	*/
 }
 
 void PluginManager::RunFrame()
 {
+	/*
 	for (auto plugin : m_vLoadedPlugins)
 	{
 		if (plugin.run_frame != NULL)
@@ -287,4 +333,5 @@ void PluginManager::RunFrame()
 			plugin.run_frame();
 		}
 	}
+	*/
 }

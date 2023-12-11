@@ -7,6 +7,7 @@
 #include "plugins/plugins.h"
 #include "plugins/pluginbackend.h"
 #include "util/version.h"
+#include "util/wininfo.h"
 #include "squirrel/squirrel.h"
 #include "server/serverpresence.h"
 
@@ -23,6 +24,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
+		g_NorthstarModule = hModule;
+		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:

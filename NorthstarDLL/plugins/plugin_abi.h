@@ -121,9 +121,8 @@ extern "C"
 
 struct PluginNorthstarData
 {
-	const char* version;
-	HMODULE northstarModule;
-	int pluginHandle;
+	const HMODULE northstarModule;
+	const int pluginHandle;
 };
 
 struct PluginInitFuncs
