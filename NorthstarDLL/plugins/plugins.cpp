@@ -21,23 +21,29 @@ PluginManager* g_pPluginManager;
 
 bool isValidSquirrelIdentifier(std::string s)
 {
-	if(!s.size()) return false; // identifiers can't be empty
-	if(s[0] <= 57) return false; // identifier can't start with a number
-	for(char& c : s)
+	if (!s.size())
+		return false; // identifiers can't be empty
+	if (s[0] <= 57)
+		return false; // identifier can't start with a number
+	for (char& c : s)
 	{
 		// only allow underscores, 0-9, A-Z and a-z
-		if((c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == '_') continue;
+		if ((c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == '_')
+			continue;
 		return false;
 	}
 	return true;
 }
 
-Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), location(path), initData({.northstarModule = g_NorthstarModule, .pluginHandle = this->handle}) {
+Plugin::Plugin(std::string path)
+	: handle(g_pPluginManager->GetNewHandle()), location(path),
+	  initData({.northstarModule = g_NorthstarModule, .pluginHandle = this->handle})
+{
 	NS::log::PLUGINSYS->info("Loading plugin at '{}'", path);
 
 	this->module = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
-	if(!this->module)
+	if (!this->module)
 	{
 		NS::log::PLUGINSYS->error("Failed to load main plugin library '{}' (Error: {})", path, GetLastError());
 		return;
@@ -46,7 +52,7 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 	NS::log::PLUGINSYS->info("loading interface getter");
 	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(this->module, "CreateInterface");
 
-	if(!CreatePluginInterface)
+	if (!CreatePluginInterface)
 	{
 		NS::log::PLUGINSYS->error("Plugin at '{}' does not expose CreateInterface()", path);
 		return;
@@ -55,7 +61,7 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 	NS::log::PLUGINSYS->info("loading plugin id");
 	this->pluginId = (IPluginId*)CreatePluginInterface("PluginId001", 0);
 
-	if(!this->pluginId)
+	if (!this->pluginId)
 	{
 		NS::log::PLUGINSYS->error("Could not load IPluginId interface of plugin at '{}'", path);
 		return;
@@ -65,7 +71,8 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 	char* name = (char*)this->GetProperty(PluginPropertyKey::NAME);
 	char* logName = (char*)this->GetProperty(PluginPropertyKey::LOG_NAME);
 	char* dependencyName = (char*)this->GetProperty(PluginPropertyKey::DEPENDENCY_NAME);
-	int64_t context = (int64_t)this->pluginId->GetProperty(PluginPropertyKey::CONTEXT); // this shit crashes when I made it a union idk skill issue
+	int64_t context =
+		(int64_t)this->pluginId->GetProperty(PluginPropertyKey::CONTEXT); // this shit crashes when I made it a union idk skill issue
 	this->runOnServer = context & PluginContext::DEDICATED;
 	this->runOnClient = context & PluginContext::CLIENT;
 
@@ -82,28 +89,28 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 	this->name = std::string(name);
 	this->logName = std::string(logName);
 	this->dependencyName = std::string(dependencyName);
-//	this->runOnServer = context & PluginContext::DEDICATED;
-//	this->runOnClient = context & PluginContext::CLIENT;
+	//	this->runOnServer = context & PluginContext::DEDICATED;
+	//	this->runOnClient = context & PluginContext::CLIENT;
 
-	if(!name)
+	if (!name)
 	{
 		NS::log::PLUGINSYS->error("Could not load name of plugin at '{}'", path);
 		return;
 	}
 
-	if(!logName)
+	if (!logName)
 	{
 		NS::log::PLUGINSYS->error("Could not load logName of plugin {}", name);
 		return;
 	}
 
-	if(!dependencyName)
+	if (!dependencyName)
 	{
 		NS::log::PLUGINSYS->error("Could not load dependencyName of plugin {}", name);
 		return;
 	}
 
-	if(!isValidSquirrelIdentifier(this->dependencyName))
+	if (!isValidSquirrelIdentifier(this->dependencyName))
 	{
 		NS::log::PLUGINSYS->error("Dependency name \"{}\" of plugin {} is not valid", dependencyName, name);
 		return;
@@ -112,7 +119,7 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 	NS::log::PLUGINSYS->info("loading callbacks");
 	this->callbacks = (IPluginCallbacks*)CreatePluginInterface("PluginCallbacks001", 0);
 
-	if(!this->callbacks)
+	if (!this->callbacks)
 	{
 		NS::log::PLUGINSYS->error("Could not create callback interface of plugin {}", name);
 		return;
@@ -121,13 +128,13 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 	this->logger = std::make_shared<ColoredLogger>(this->logName, NS::Colors::PLUGIN);
 	RegisterLogger(this->logger);
 
-	if(IsDedicatedServer() && !this->runOnServer)
+	if (IsDedicatedServer() && !this->runOnServer)
 	{
 		NS::log::PLUGINSYS->error("Plugin {} did not request to run on dedicated servers", this->name);
 		return;
 	}
 
-	if(!IsDedicatedServer() && !this->runOnClient)
+	if (!IsDedicatedServer() && !this->runOnClient)
 	{
 		NS::log::PLUGINSYS->warn("Plugin {} did not request to run on clients", this->name);
 		return;
@@ -138,9 +145,10 @@ Plugin::Plugin(std::string path) : handle(g_pPluginManager->GetNewHandle()), loc
 
 void Plugin::Unload()
 {
-	if(!this->module) return;
+	if (!this->module)
+		return;
 
-	if(!FreeLibrary(this->module))
+	if (!FreeLibrary(this->module))
 	{
 		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
 		return;
@@ -166,7 +174,8 @@ EXPORT void* CreateObject(ObjectType type)
 
 std::optional<Plugin*> PluginManager::GetPlugin(int handle)
 {
-	if(handle < 0 || handle >= this->m_vLoadedPlugins.size()) return std::nullopt;
+	if (handle < 0 || handle >= this->m_vLoadedPlugins.size())
+		return std::nullopt;
 	return &this->m_vLoadedPlugins[handle];
 }
 
@@ -174,7 +183,7 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path)
 {
 	Plugin plugin = Plugin(path.string());
 
-	if(!plugin.IsValid())
+	if (!plugin.IsValid())
 	{
 		NS::log::PLUGINSYS->warn("Unloading plugin '{}' because it's invalid", path.string());
 		plugin.Unload();
@@ -254,7 +263,7 @@ bool PluginManager::LoadPlugins()
 		LoadPlugin(path);
 	}
 
-	for(Plugin& plugin : m_vLoadedPlugins)
+	for (Plugin& plugin : m_vLoadedPlugins)
 	{
 		plugin.Finalize();
 	}

@@ -98,7 +98,6 @@ class Plugin
 	PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
 
 	PLUGIN_RUNFRAME run_frame;
-
 };
 
 class PluginManager
