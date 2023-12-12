@@ -10,7 +10,7 @@ namespace R2
 	extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
 
 #pragma pack(push, 1)
-	typedef struct
+	struct CBasePlayer
 	{
 		char _unk1[88]; // 0x0 ( Size: 88 )
 		uint32_t m_nPlayerIndex; // 0x58 ( Size: 4 )
@@ -159,7 +159,7 @@ namespace R2
 		Vector3 m_vecAbsOrigin; // 0x100490 ( Size: 12 )
 		char _unk57[7656]; // 0x10049c ( Size: 7656 )
 		Vector3 m_upDir; // 0x102284 ( Size: 12 )
-	} CBasePlayer;
+	};
 #pragma pack(pop)
 
 	extern CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);

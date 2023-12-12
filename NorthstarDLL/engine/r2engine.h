@@ -174,7 +174,7 @@ namespace R2
 	};
 
 #pragma pack(push, 1)
-	typedef struct
+	struct CBaseClient
 	{
 		char _unk1[22]; // 0x0 ( Size: 22 )
 		char m_Name[64]; // 0x16 ( Size: 64 )
@@ -193,7 +193,7 @@ namespace R2
 		char _unk8[4665]; // 0xe2c7 ( Size: 4665 )
 		char m_UID[32]; // 0xf500 ( Size: 32 )
 		char _unk9[123400]; // 0xf520 ( Size: 123400 )
-	} CBaseClient;
+	};
 	static_assert(sizeof(CBaseClient) == 0x2D728);
 #pragma pack(pop)
 
@@ -212,7 +212,7 @@ namespace R2
 	extern char* g_pModName;
 
 #pragma pack(push, 1)
-	typedef struct
+	struct CGlobalVars
 	{
 		// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time
 		//  perf clock, but not that it doesn't obey host_timescale/host_framerate)
@@ -259,7 +259,7 @@ namespace R2
 
 		const char* m_pMapName; // 0x60 ( Size: 8 )
 		int m_nMapVersion; // 0x68 ( Size: 4 )
-	} CGlobalVars;
+	};
 #pragma pack(pop)
 
 	extern CGlobalVars* g_pGlobals;
