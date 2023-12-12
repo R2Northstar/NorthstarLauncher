@@ -11,10 +11,6 @@ const int IDR_RCDATA1 = 101;
 class Plugin
 {
   private:
-	void* GetProperty(PluginPropertyKey prop)
-	{
-		return this->pluginId->GetProperty(prop);
-	};
 	CreateInterfaceFn m_pCreateInterface;
 	IPluginId* pluginId;
 	IPluginCallbacks* callbacks;

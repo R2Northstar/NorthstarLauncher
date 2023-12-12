@@ -59,7 +59,7 @@ Plugin::Plugin(std::string path)
 	}
 
 	NS::log::PLUGINSYS->info("loading plugin id");
-	this->pluginId = (IPluginId*)CreatePluginInterface("PluginId001", 0);
+	this->pluginId = (IPluginId*)CreatePluginInterface(PLUGIN_ID_VERSION, 0);
 
 	if (!this->pluginId)
 	{
@@ -68,17 +68,17 @@ Plugin::Plugin(std::string path)
 	}
 
 	NS::log::PLUGINSYS->info("loading properties");
-	char* name = (char*)this->GetProperty(PluginPropertyKey::NAME);
-	char* logName = (char*)this->GetProperty(PluginPropertyKey::LOG_NAME);
-	char* dependencyName = (char*)this->GetProperty(PluginPropertyKey::DEPENDENCY_NAME);
-	int64_t context =
-		(int64_t)this->pluginId->GetProperty(PluginPropertyKey::CONTEXT); // this shit crashes when I made it a union idk skill issue
+	const char* name = this->pluginId->GetProperty(PluginString::NAME);
+	const char* logName = this->pluginId->GetProperty(PluginString::LOG_NAME);
+	const char* dependencyName = this->pluginId->GetProperty(PluginString::DEPENDENCY_NAME);
+	int64_t context = this->pluginId->GetField(PluginField::CONTEXT);
+
 	this->runOnServer = context & PluginContext::DEDICATED;
 	this->runOnClient = context & PluginContext::CLIENT;
 
 	/*
-	//int64_t test = this->GetProperty(PluginPropertyKey::NAME);
-	char* test = (char*)this->GetProperty(PluginPropertyKey::NAME);
+	//int64_t test = this->GetProperty(PluginString::NAME);
+	char* test = (char*)this->GetProperty(PluginString::NAME);
 	NS::log::PLUGINSYS->info("PLUGIN NAME IS {}", test);
 
 	const char* name = "TEST";
