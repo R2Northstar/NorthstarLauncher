@@ -182,11 +182,18 @@ namespace R2
 		KeyValues* m_ConVars; // 0x258 ( Size: 8 )
 		char _unk3[64]; // 0x260 ( Size: 64 )
 		eSignonState m_Signon; // 0x2a0 ( Size: 4 )
-		char _unk4[180]; // 0x2a4 ( Size: 180 )
+		int32_t m_nDeltaTick; // 0x2a4 ( Size: 4 )
+		uint64_t m_nOriginID; // 0x2a8 ( Size: 8 )
+		int32_t m_nStringTableAckTick; // 0x2b0 ( Size: 4 )
+		int32_t m_nSignonTick; // 0x2b4 ( Size: 4 )
+		char _unk4[160]; // 0x2b8 ( Size: 180 )
 		char m_ClanTag[16]; // 0x358 ( Size: 16 )
 		char _unk5[284]; // 0x368 ( Size: 284 )
 		bool m_bFakePlayer; // 0x484 ( Size: 1 )
-		char _unk6[27]; // 0x485 ( Size: 27 )
+		bool m_bReceivedPacket; // 0x485 ( Size: 1 )
+		bool m_bLowViolence;  // 0x486 ( Size: 1 )
+		bool m_bFullyAuthenticated;  // 0x487 ( Size: 1 )
+		char _unk6[24]; // 0x488 ( Size: 24 )
 		ePersistenceReady m_iPersistenceReady; // 0x4a0 ( Size: 1 )
 		char _unk7[89]; // 0x4a1 ( Size: 89 )
 		char m_PersistenceBuffer[PERSISTENCE_MAX_SIZE]; // 0x4fa ( Size: 56781 )
@@ -198,8 +205,15 @@ namespace R2
 	static_assert(offsetof(CBaseClient, m_Name) == 0x16);
 	static_assert(offsetof(CBaseClient, m_ConVars) == 0x258);
 	static_assert(offsetof(CBaseClient, m_Signon) == 0x2A0);
+	static_assert(offsetof(CBaseClient, m_nDeltaTick) == 0x2A4);
+	static_assert(offsetof(CBaseClient, m_nOriginID) == 0x2A8);
+	static_assert(offsetof(CBaseClient, m_nStringTableAckTick) == 0x2B0);
+	static_assert(offsetof(CBaseClient, m_nSignonTick) == 0x2B4);
 	static_assert(offsetof(CBaseClient, m_ClanTag) == 0x358);
 	static_assert(offsetof(CBaseClient, m_bFakePlayer) == 0x484);
+	static_assert(offsetof(CBaseClient, m_bReceivedPacket) == 0x485);
+	static_assert(offsetof(CBaseClient, m_bLowViolence) == 0x486);
+	static_assert(offsetof(CBaseClient, m_bFullyAuthenticated) == 0x487);
 	static_assert(offsetof(CBaseClient, m_iPersistenceReady) == 0x4A0);
 	static_assert(offsetof(CBaseClient, m_PersistenceBuffer) == 0x4FA);
 	static_assert(offsetof(CBaseClient, m_UID) == 0xF500);
@@ -217,6 +231,13 @@ namespace R2
 	extern server_state_t* g_pServerState;
 
 	extern char* g_pModName;
+
+	enum class GameMode_t : int
+	{
+		NO_MODE = 0,
+		MP_MODE,
+		SP_MODE,
+	};
 
 	class CGlobalVars
 	{
@@ -247,6 +268,7 @@ namespace R2
 		//   - During prediction, this is based on the client's current tick:
 		//     [client_current_tick * tick_interval]
 		float m_flCurTime; // 0x10 ( Size: 4 )
+
 		char _unk1[28]; // 0x14 ( Size: 28 )
 
 		// Time spent on last server or client frame (has nothing to do with think intervals)
@@ -254,7 +276,7 @@ namespace R2
 
 		// current maxplayers setting
 		int m_nMaxClients; // 0x34 ( Size: 4 )
-		char _unk2[4]; // 0x38 ( Size: 4 )
+		GameMode_t m_nGameMode; // 0x38 ( Size: 4 )
 
 		// Simulation ticks - does not increase when game is paused
 		//   this is weird and doesn't seem to increase once per frame?
@@ -273,6 +295,7 @@ namespace R2
 	static_assert(offsetof(CGlobalVars, m_flCurTime) == 0x10);
 	static_assert(offsetof(CGlobalVars, m_flFrameTime) == 0x30);
 	static_assert(offsetof(CGlobalVars, m_nMaxClients) == 0x34);
+	static_assert(offsetof(CGlobalVars, m_nGameMode) == 0x38);
 	static_assert(offsetof(CGlobalVars, m_nTickCount) == 0x3c);
 	static_assert(offsetof(CGlobalVars, m_flTickInterval) == 0x40);
 	static_assert(offsetof(CGlobalVars, m_pMapName) == 0x60);
