@@ -10,8 +10,9 @@ namespace R2
 	extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
 
 #pragma pack(push, 1)
-	struct CBasePlayer
+	class CBasePlayer
 	{
+	  public:
 		char _unk1[88]; // 0x0 ( Size: 88 )
 		uint32_t m_nPlayerIndex; // 0x58 ( Size: 4 )
 		char _unk2[572]; // 0x5c ( Size: 572 )

@@ -173,8 +173,9 @@ namespace R2
 		CHANGELEVEL = 9, // server is changing level; please wait
 	};
 
-	struct CBaseClient
+	class CBaseClient
 	{
+	  public:
 		char _unk1[22]; // 0x0 ( Size: 22 )
 		char m_Name[64]; // 0x16 ( Size: 64 )
 		char _unk2[514]; // 0x56 ( Size: 514 )
@@ -217,8 +218,9 @@ namespace R2
 
 	extern char* g_pModName;
 
-	struct CGlobalVars
+	class CGlobalVars
 	{
+	  public:
 		// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time
 		//  perf clock, but not that it doesn't obey host_timescale/host_framerate)
 		double m_flRealTime; // 0x0 ( Size: 8 )
