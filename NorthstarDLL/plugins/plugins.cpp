@@ -28,7 +28,7 @@ bool isValidSquirrelIdentifier(std::string s)
 	for (char& c : s)
 	{
 		// only allow underscores, 0-9, A-Z and a-z
-		if ((c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == '_')
+		if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
 			continue;
 		return false;
 	}
