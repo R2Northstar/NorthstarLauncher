@@ -176,30 +176,30 @@ namespace R2
 	class CBaseClient
 	{
 	  public:
-		char _unk1[22]; // 0x0 ( Size: 22 )
+		char _unk_0x0[22]; // 0x0 ( Size: 22 )
 		char m_Name[64]; // 0x16 ( Size: 64 )
-		char _unk2[514]; // 0x56 ( Size: 514 )
+		char _unk_0x56[514]; // 0x56 ( Size: 514 )
 		KeyValues* m_ConVars; // 0x258 ( Size: 8 )
-		char _unk3[64]; // 0x260 ( Size: 64 )
+		char _unk_0x260[64]; // 0x260 ( Size: 64 )
 		eSignonState m_Signon; // 0x2a0 ( Size: 4 )
 		int32_t m_nDeltaTick; // 0x2a4 ( Size: 4 )
 		uint64_t m_nOriginID; // 0x2a8 ( Size: 8 )
 		int32_t m_nStringTableAckTick; // 0x2b0 ( Size: 4 )
 		int32_t m_nSignonTick; // 0x2b4 ( Size: 4 )
-		char _unk4[160]; // 0x2b8 ( Size: 180 )
+		char _unk_0x2b8[160]; // 0x2b8 ( Size: 180 )
 		char m_ClanTag[16]; // 0x358 ( Size: 16 )
-		char _unk5[284]; // 0x368 ( Size: 284 )
+		char _unk_0x368[284]; // 0x368 ( Size: 284 )
 		bool m_bFakePlayer; // 0x484 ( Size: 1 )
 		bool m_bReceivedPacket; // 0x485 ( Size: 1 )
 		bool m_bLowViolence; // 0x486 ( Size: 1 )
 		bool m_bFullyAuthenticated; // 0x487 ( Size: 1 )
-		char _unk6[24]; // 0x488 ( Size: 24 )
+		char _unk_0x488[24]; // 0x488 ( Size: 24 )
 		ePersistenceReady m_iPersistenceReady; // 0x4a0 ( Size: 1 )
-		char _unk7[89]; // 0x4a1 ( Size: 89 )
+		char _unk_0x4a1[89]; // 0x4a1 ( Size: 89 )
 		char m_PersistenceBuffer[PERSISTENCE_MAX_SIZE]; // 0x4fa ( Size: 56781 )
-		char _unk8[4665]; // 0xe2c7 ( Size: 4665 )
+		char _unk_0xe2c7[4665]; // 0xe2c7 ( Size: 4665 )
 		char m_UID[32]; // 0xf500 ( Size: 32 )
-		char _unk9[123400]; // 0xf520 ( Size: 123400 )
+		char _unk_0xf520[123400]; // 0xf520 ( Size: 123400 )
 	};
 	static_assert(sizeof(CBaseClient) == 0x2D728);
 	static_assert(offsetof(CBaseClient, m_Name) == 0x16);
@@ -269,7 +269,7 @@ namespace R2
 		//     [client_current_tick * tick_interval]
 		float m_flCurTime; // 0x10 ( Size: 4 )
 
-		char _unk1[28]; // 0x14 ( Size: 28 )
+		char _unk_0x14[28]; // 0x14 ( Size: 28 )
 
 		// Time spent on last server or client frame (has nothing to do with think intervals)
 		float m_flFrameTime; // 0x30 ( Size: 4 )
@@ -284,7 +284,7 @@ namespace R2
 
 		// Simulation tick interval
 		float m_flTickInterval; // 0x40 ( Size: 4 )
-		char _unk3[28]; // 0x44 ( Size: 28 )
+		char _unk_0x44[28]; // 0x44 ( Size: 28 )
 
 		const char* m_pMapName; // 0x60 ( Size: 8 )
 		int m_nMapVersion; // 0x68 ( Size: 4 )
