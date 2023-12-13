@@ -98,3 +98,83 @@ ADD_SQFUNC(
 	g_pSquirrel<context>->pushbool(sqvm, true);
 	return SQRESULT_NOTNULL;
 }
+
+ADD_SQFUNC("array<StatusEffectData>", GetPlayerStatusEffects, "entity player", "", ScriptContext::CLIENT | ScriptContext::SERVER)
+{
+	const R2::CBasePlayer* pPlayer = g_pSquirrel<context>->template getentity<R2::CBasePlayer>(sqvm, 1);
+
+	g_pSquirrel<context>->newarray(sqvm, 0);
+	for (int i = 0; i < 10; i++)
+	{
+		R2::StatusEffectTimedData effect;
+		if (context == ScriptContext::CLIENT)
+			effect = pPlayer->m_clientStatusEffectsTimedPlayerNV[i];
+		else
+			effect = pPlayer->m_statusEffectsTimedPlayerNV[i];
+
+		float intensity = ((effect.seComboVars >> 8) % (1 << 8)) / 255.0;
+		if (intensity == 0)
+			continue;
+
+		g_pSquirrel<context>->pushnewstructinstance(sqvm, 6);
+
+		g_pSquirrel<context>->pushbool(sqvm, false); // isEndless
+		g_pSquirrel<context>->sealstructslot(sqvm, 0);
+
+		g_pSquirrel<context>->pushinteger(sqvm, (effect.seComboVars >> 26)); // id
+		g_pSquirrel<context>->sealstructslot(sqvm, 1);
+
+		g_pSquirrel<context>->pushinteger(sqvm, (effect.seComboVars >> 16) % (1 << 10)); // instanceId
+		g_pSquirrel<context>->sealstructslot(sqvm, 2);
+
+		g_pSquirrel<context>->pushfloat(sqvm, intensity); // intensity
+		g_pSquirrel<context>->sealstructslot(sqvm, 3);
+
+		g_pSquirrel<context>->pushfloat(sqvm, effect.seTimeEnd); // endTime
+		g_pSquirrel<context>->sealstructslot(sqvm, 4);
+
+		g_pSquirrel<context>->pushfloat(sqvm, effect.seFadeOutTime); // fadeOutTime
+		g_pSquirrel<context>->sealstructslot(sqvm, 5);
+
+		g_pSquirrel<context>->arrayappend(sqvm, -2);
+
+		// spdlog::info("Player status effect {} {}, end time {}", effect.seComboVars, effect.seComboVars2, effect.seTimeEnd);
+	}
+
+	for (int i = 0; i < 10; i++)
+	{
+		R2::StatusEffectEndlessData effect;
+		if (context == ScriptContext::CLIENT)
+			effect = pPlayer->m_clientStatusEffectsEndlessPlayerNV[i];
+		else
+			effect = pPlayer->m_statusEffectsEndlessPlayerNV[i];
+
+		float intensity = ((effect.seComboVars >> 8) % (1 << 8)) / 255.0;
+		if (intensity == 0)
+			continue;
+
+		g_pSquirrel<context>->pushnewstructinstance(sqvm, 6);
+
+		g_pSquirrel<context>->pushbool(sqvm, true); // isEndless
+		g_pSquirrel<context>->sealstructslot(sqvm, 0);
+
+		g_pSquirrel<context>->pushinteger(sqvm, (effect.seComboVars >> 26)); // id
+		g_pSquirrel<context>->sealstructslot(sqvm, 1);
+
+		g_pSquirrel<context>->pushinteger(sqvm, (effect.seComboVars >> 16) % (1 << 10)); // instanceId
+		g_pSquirrel<context>->sealstructslot(sqvm, 2);
+
+		g_pSquirrel<context>->pushfloat(sqvm, intensity); // intensity
+		g_pSquirrel<context>->sealstructslot(sqvm, 3);
+
+		g_pSquirrel<context>->pushfloat(sqvm, -1); // endTime
+		g_pSquirrel<context>->sealstructslot(sqvm, 4);
+
+		g_pSquirrel<context>->pushfloat(sqvm, -1); // fadeOutTime
+		g_pSquirrel<context>->sealstructslot(sqvm, 5);
+
+		g_pSquirrel<context>->arrayappend(sqvm, -2);
+	}
+
+	return SQRESULT_NOTNULL;
+}
