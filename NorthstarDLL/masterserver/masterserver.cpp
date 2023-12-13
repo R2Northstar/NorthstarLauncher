@@ -839,8 +839,11 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		if (obj.HasMember("username") && obj["username"].IsString())
 			username = obj["username"].GetString();
 
+
 		std::string reject;
-		if (!g_pBanSystem->IsUIDAllowed(uid))
+		if (g_pServerPresence->IsDraining())
+			reject = "Server is shutting down.";
+		else if (!g_pBanSystem->IsUIDAllowed(uid))
 			reject = "Banned from this server.";
 
 		std::string pdata;
@@ -1394,7 +1397,7 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 					fmt::format(
 						"{}/server/"
 						"update_values?id={}&port={}&authPort=udp&name={}&description={}&map={}&playlist={}&playerCount={}&"
-						"maxPlayers={}&password={}",
+						"maxPlayers={}&isDraining={}&password={}",
 						hostname.c_str(),
 						serverId.c_str(),
 						threadedPresence.m_iPort,
@@ -1404,6 +1407,7 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 						playlistEscaped,
 						threadedPresence.m_iPlayerCount,
 						threadedPresence.m_iMaxPlayers,
+						threadedPresence.m_bIsDraining,
 						passwordEscaped)
 						.c_str());
 

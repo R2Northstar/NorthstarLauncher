@@ -75,6 +75,14 @@ void, __fastcall, (CHostState* self))
 	if (g_pServerAuthentication->m_bNeedLocalAuthForNewgame)
 		SetCurrentPlaylist("tdm");
 
+	if (g_pServerPresence->IsDraining())
+	{
+		spdlog::info("server drain complete (server is changing map/mode), quitting");
+		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "quit", cmd_source_t::kCommandSrcCode);
+		Cbuf_Execute();
+		return; // TODO: this is broken; there has to be a better way to do it
+	}
+
 	ServerStartingOrChangingMap();
 
 	double dStartTime = Tier0::Plat_FloatTime();
@@ -123,6 +131,14 @@ void, __fastcall, (CHostState* self))
 // clang-format on
 {
 	spdlog::info("HostState: ChangeLevelMP");
+
+	if (g_pServerPresence->IsDraining())
+	{
+		spdlog::info("server drain complete (server is changing map/mode), quitting");
+		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "quit", cmd_source_t::kCommandSrcCode);
+		Cbuf_Execute();
+		return; // TODO: this is broken; there has to be a better way to do it
+	}
 
 	ServerStartingOrChangingMap();
 
