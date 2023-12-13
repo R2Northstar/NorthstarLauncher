@@ -160,6 +160,7 @@ class ModManager
 	std::vector<Mod> m_LoadedMods;
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
+	std::vector<std::shared_ptr<Mod>> m_invalidMods;
 
   public:
 	ModManager();
@@ -173,6 +174,9 @@ class ModManager
 	void TryBuildKeyValues(const char* filename);
 	void BuildPdef();
 	void BuildKBActionsList();
+
+  private:
+	void VerifyModManifestLocation(fs::directory_entry modDir);
 };
 
 fs::path GetModFolderPath();
