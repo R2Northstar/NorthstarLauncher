@@ -11,11 +11,11 @@ std::vector<Plugin> PluginManager::GetLoadedPlugins()
 	return this->m_vLoadedPlugins;
 }
 
-std::optional<Plugin*> PluginManager::GetPlugin(int handle)
+std::optional<Plugin> PluginManager::GetPlugin(int handle)
 {
 	if (handle < 0 || handle >= this->m_vLoadedPlugins.size())
 		return std::nullopt;
-	return &this->m_vLoadedPlugins[handle];
+	return this->m_vLoadedPlugins[handle];
 }
 
 void PluginManager::LoadPlugin(fs::path path)

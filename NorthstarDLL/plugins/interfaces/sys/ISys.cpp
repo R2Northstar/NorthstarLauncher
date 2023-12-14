@@ -1,12 +1,12 @@
 #include "plugins/interfaces/interface.h"
-#include "ILogging.h"
+#include "ISys.h"
 #include "plugins/plugins.h"
 #include "plugins/pluginmanager.h"
 
-class CLogging : public ILogging
+class CSys : public ISys
 {
   public:
-	void log(int handle, LogLevel level, char* msg)
+	void Log(int handle, LogLevel level, char* msg)
 	{
 		spdlog::level::level_enum spdLevel;
 
@@ -25,16 +25,29 @@ class CLogging : public ILogging
 			break;
 		}
 
-		std::optional<Plugin*> plugin = g_pPluginManager->GetPlugin(handle);
+		std::optional<Plugin> plugin = g_pPluginManager->GetPlugin(handle);
 		if (plugin)
 		{
-			(*plugin)->Log(spdLevel, msg);
+			plugin->Log(spdLevel, msg);
 		}
 		else
 		{
 			NS::log::PLUGINSYS->warn("Attempted to log message '{}' with invalid plugin handle {}", msg, handle);
 		}
 	}
+
+	void Unload(int handle)
+	{
+		std::optional<Plugin> plugin =g_pPluginManager->GetPlugin(handle);
+		if(plugin)
+		{
+			plugin->Unload();
+		}
+		else
+		{
+			NS::log::PLUGINSYS->warn("Attempted to unload plugin with invalid handle {}", handle);
+		}
+	}
 };
 
-EXPOSE_SINGLE_INTERFACE(CLogging, ILogging, LOGGING_VERSION);
+EXPOSE_SINGLE_INTERFACE(CSys, ISys, SYS_VERSION);

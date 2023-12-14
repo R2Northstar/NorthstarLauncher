@@ -30,22 +30,22 @@ class Plugin
 	void Unload();
 
 	// sys
-	void Log(spdlog::level::level_enum level, char* msg)
+	void Log(spdlog::level::level_enum level, char* msg);
 
 	// callbacks
-	const bool IsValid() const
-	std::string GetName() const
-	std::string GetLogName() const
-	std::string GetDependencyName() const
-	bool ShouldRunOnServer()
-	bool ShouldRunOnClient()
-	void* CreateInterface(const char* pName, int* pStatus) const
-	void Init()
-	void Finalize()
-	void OnSqvmCreated(CSquirrelVM* sqvm)
-	void OnSqvmDestroyed(ScriptContext context)
-	void OnLibraryLoaded(HMODULE module, const char* name)
-	void RunFrame()
+	bool IsValid() const;
+	std::string GetName() const;
+	std::string GetLogName() const;
+	std::string GetDependencyName() const;
+	bool ShouldRunOnServer() const;
+	bool ShouldRunOnClient() const;
+	void* CreateInterface(const char* pName, int* pStatus) const;
+	void Init();
+	void Finalize();
+	void OnSqvmCreated(CSquirrelVM* sqvm);
+	void OnSqvmDestroyed(ScriptContext context);
+	void OnLibraryLoaded(HMODULE module, const char* name);
+	void RunFrame();
 
 	const int handle; // identifier of this plugin used only for logging atm
 	const std::string location; // path of the dll

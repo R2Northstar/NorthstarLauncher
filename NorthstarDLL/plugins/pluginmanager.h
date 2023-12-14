@@ -9,7 +9,7 @@ class PluginManager
 {
   public:
 	std::vector<Plugin> GetLoadedPlugins();
-	std::optional<Plugin*> GetPlugin(int handle); // get a plugin by it's handle
+	std::optional<Plugin> GetPlugin(int handle); // get a plugin by it's handle
 	int GetNewHandle(); // get an available handle for a new plugin
 	bool LoadPlugins();
 	void LoadPlugin(fs::path path);
