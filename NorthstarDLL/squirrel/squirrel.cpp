@@ -7,8 +7,10 @@
 #include "engine/r2engine.h"
 #include "core/tier0.h"
 #include "plugins/plugin_abi.h"
+#include "plugins/plugins.h"
 #include "plugins/pluginmanager.h"
 #include "ns_version.h"
+#include "core/vanilla.h"
 
 #include <any>
 
@@ -212,6 +214,13 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
 
+	std::vector<Plugin> loadedPlugins = g_pPluginManager->GetLoadedPlugins();
+	for (const auto& pluginName : g_pModManager->m_PluginDependencyConstants)
+	{
+		auto f = [&](Plugin plugin) -> bool { return plugin.GetDependencyName() == pluginName; };
+		defconst(m_pSQVM, pluginName.c_str(), std::find_if(loadedPlugins.begin(), loadedPlugins.end(), f) != loadedPlugins.end());
+	}
+
 	defconst(m_pSQVM, "MAX_FOLDER_SIZE", GetMaxSaveFolderSize() / 1024);
 
 	// define squirrel constants for northstar(.dll) version
@@ -220,6 +229,9 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	defconst(m_pSQVM, "NS_VERSION_MINOR", version[1]);
 	defconst(m_pSQVM, "NS_VERSION_PATCH", version[2]);
 	defconst(m_pSQVM, "NS_VERSION_DEV", version[3]);
+
+	// define squirrel constant for if we are in vanilla-compatibility mode
+	defconst(m_pSQVM, "VANILLA", g_pVanillaCompatibility->GetVanillaCompatibility());
 
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 	g_pPluginManager->InformSQVMCreated(newSqvm);
