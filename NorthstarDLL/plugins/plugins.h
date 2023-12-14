@@ -27,77 +27,25 @@ class Plugin
 
   public:
 	Plugin(std::string path);
-
 	void Unload();
+
+	// sys
 	void Log(spdlog::level::level_enum level, char* msg)
-	{
-		logger->log(level, msg);
-	}
 
+	// callbacks
 	const bool IsValid() const
-	{
-		return valid;
-	};
-
 	std::string GetName() const
-	{
-		return name;
-	};
-
 	std::string GetLogName() const
-	{
-		return logName;
-	};
-
 	std::string GetDependencyName() const
-	{
-		return dependencyName;
-	};
-
 	bool ShouldRunOnServer()
-	{
-		return this->runOnServer;
-	}
-
 	bool ShouldRunOnClient()
-	{
-		return this->runOnClient;
-	}
-
 	void* CreateInterface(const char* pName, int* pStatus) const
-	{
-		return m_pCreateInterface(pName, pStatus);
-	}
-
 	void Init()
-	{
-		this->callbacks->Init(g_NorthstarModul, e&this->initData);
-	};
-
 	void Finalize()
-	{
-		this->callbacks->Finalize();
-	};
-
 	void OnSqvmCreated(CSquirrelVM* sqvm)
-	{
-		this->callbacks->OnSqvmCreated(sqvm);
-	};
-
 	void OnSqvmDestroyed(ScriptContext context)
-	{
-		this->callbacks->OnSqvmDestroyed(context);
-	}
-
 	void OnLibraryLoaded(HMODULE module, const char* name)
-	{
-		this->callbacks->OnLibraryLoaded(module, name);
-	}
-
 	void RunFrame()
-	{
-		this->callbacks->RunFrame();
-	}
 
 	const int handle; // identifier of this plugin used only for logging atm
 	const std::string location; // path of the dll

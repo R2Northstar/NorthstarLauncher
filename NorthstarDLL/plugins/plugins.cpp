@@ -143,3 +143,73 @@ void Plugin::Unload()
 	this->valid = false;
 }
 
+void Plugin::Log(spdlog::level::level_enum level, char* msg)
+{
+	this->logger->log(level, msg);
+}
+
+bool Plugin::IsValid() const
+{
+	return this->valid;
+}
+
+std::string Plugin::GetName() const
+{
+	return this->name;
+};
+
+std::string Plugin::GetLogName() const
+{
+	return this->logName;
+}
+
+std::string Plugin::GetDependencyName() const
+{
+	return this->dependencyName;
+}
+
+bool Plugin::ShouldRunOnServer() const
+{
+	return this->runOnServer;
+}
+
+bool Plugin::ShouldRunOnClient() const
+{
+	return this->runOnClient;
+}
+
+void* Plugin::CreateInterface(const char* name, int* status) const
+{
+	return this->m_pCreateInterface(name, status);
+}
+
+void Plugin::Init()
+{
+	this->callbacks->Init(g_NorthstarModule, &this->initData);
+}
+
+void Plugin::Finalize()
+{
+	this->callbacks->Finalize();
+}
+
+void Plugin::OnSqvmCreated(CSquirrelVM* sqvm)
+{
+	this->callbacks->OnSqvmCreated(sqvm);
+}
+
+void Plugin::OnSqvmDestroyed(ScriptContext context)
+{
+	this->callbacks->OnSqvmDestroyed(context);
+}
+
+void Plugin::OnLibraryLoaded(HMODULE module, const char* name)
+{
+	this->callbacks->OnLibraryLoaded(module, name);
+}
+
+void Plugin::RunFrame()
+{
+	this->callbacks->RunFrame();
+}
+
