@@ -1,5 +1,4 @@
 #include "plugins.h"
-#include "config/profile.h"
 
 #include "squirrel/squirrel.h"
 #include "plugins.h"
@@ -7,17 +6,15 @@
 #include "core/convar/convar.h"
 #include "server/serverpresence.h"
 #include <optional>
-#include <regex>
 #include <stdint.h>
 
-#include "util/version.h"
 #include "util/wininfo.h"
 #include "core/sourceinterface.h"
 #include "pluginbackend.h"
 #include "logging/logging.h"
 #include "dedicated/dedicated.h"
 
-PluginManager* g_pPluginManager;
+#include "pluginmanager.h"
 
 bool isValidSquirrelIdentifier(std::string s)
 {
@@ -68,29 +65,17 @@ Plugin::Plugin(std::string path)
 	}
 
 	NS::log::PLUGINSYS->info("loading properties");
-	const char* name = this->pluginId->GetProperty(PluginString::NAME);
-	const char* logName = this->pluginId->GetProperty(PluginString::LOG_NAME);
-	const char* dependencyName = this->pluginId->GetProperty(PluginString::DEPENDENCY_NAME);
+	const char* name = this->pluginId->GetString(PluginString::NAME);
+	const char* logName = this->pluginId->GetString(PluginString::LOG_NAME);
+	const char* dependencyName = this->pluginId->GetString(PluginString::DEPENDENCY_NAME);
 	int64_t context = this->pluginId->GetField(PluginField::CONTEXT);
 
 	this->runOnServer = context & PluginContext::DEDICATED;
 	this->runOnClient = context & PluginContext::CLIENT;
 
-	/*
-	//int64_t test = this->GetProperty(PluginString::NAME);
-	char* test = (char*)this->GetProperty(PluginString::NAME);
-	NS::log::PLUGINSYS->info("PLUGIN NAME IS {}", test);
-
-	const char* name = "TEST";
-	const char* logName = "TEST";
-	const char* dependencyName = "TEST";
-	*/
-
 	this->name = std::string(name);
 	this->logName = std::string(logName);
 	this->dependencyName = std::string(dependencyName);
-	//	this->runOnServer = context & PluginContext::DEDICATED;
-	//	this->runOnClient = context & PluginContext::CLIENT;
 
 	if (!name)
 	{
@@ -158,189 +143,3 @@ void Plugin::Unload()
 	this->valid = false;
 }
 
-// TODO throw this shit out
-EXPORT void* CreateObject(ObjectType type)
-{
-	switch (type)
-	{
-	case ObjectType::CONVAR:
-		return (void*)new ConVar;
-	case ObjectType::CONCOMMANDS:
-		return (void*)new ConCommand;
-	default:
-		return NULL;
-	}
-}
-
-std::optional<Plugin*> PluginManager::GetPlugin(int handle)
-{
-	if (handle < 0 || handle >= this->m_vLoadedPlugins.size())
-		return std::nullopt;
-	return &this->m_vLoadedPlugins[handle];
-}
-
-std::optional<Plugin> PluginManager::LoadPlugin(fs::path path)
-{
-	Plugin plugin = Plugin(path.string());
-
-	if (!plugin.IsValid())
-	{
-		NS::log::PLUGINSYS->warn("Unloading plugin '{}' because it's invalid", path.string());
-		plugin.Unload();
-		return std::nullopt;
-	}
-
-	m_vLoadedPlugins.push_back(plugin);
-	plugin.Init();
-
-	return plugin;
-}
-
-inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
-{
-	// ensure dirs exist
-	if (!fs::exists(pluginPath) || !fs::is_directory(pluginPath))
-	{
-		return;
-	}
-
-	for (const fs::directory_entry& entry : fs::directory_iterator(pluginPath))
-	{
-		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
-			paths.emplace_back(entry.path());
-	}
-}
-
-bool PluginManager::LoadPlugins()
-{
-	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
-	{
-		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
-		return false;
-	}
-
-	fs::create_directories(GetThunderstoreModFolderPath());
-
-	std::vector<fs::path> paths;
-
-	pluginPath = GetNorthstarPrefix() + "\\plugins";
-
-	fs::path libPath = fs::absolute(pluginPath + "\\lib");
-	if (fs::exists(libPath) && fs::is_directory(libPath))
-		AddDllDirectory(libPath.wstring().c_str());
-
-	FindPlugins(pluginPath, paths);
-
-	// Special case for Thunderstore mods dir
-	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
-	// Set up regex for `AUTHOR-MOD-VERSION` pattern
-	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
-	for (fs::directory_entry dir : thunderstoreModsDir)
-	{
-		fs::path pluginsDir = dir.path() / "plugins";
-		// Use regex to match `AUTHOR-MOD-VERSION` pattern
-		if (!std::regex_match(dir.path().string(), pattern))
-		{
-			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", dir.path().string());
-			continue; // skip loading package that doesn't match
-		}
-
-		fs::path libDir = fs::absolute(pluginsDir / "lib");
-		if (fs::exists(libDir) && fs::is_directory(libDir))
-			AddDllDirectory(libDir.wstring().c_str());
-
-		FindPlugins(pluginsDir, paths);
-	}
-
-	if (paths.empty())
-	{
-		NS::log::PLUGINSYS->warn("Could not find any plugins. Skipped loading plugins");
-		return false;
-	}
-
-	for (fs::path path : paths)
-	{
-		LoadPlugin(path);
-	}
-
-	for (Plugin& plugin : m_vLoadedPlugins)
-	{
-		plugin.Finalize();
-	}
-
-	return true;
-}
-
-int PluginManager::GetNewHandle()
-{
-	return this->m_vLoadedPlugins.size();
-}
-
-void PluginManager::InformSQVMLoad(ScriptContext context, SquirrelFunctions* s)
-{
-	/*
-	for (auto plugin : m_vLoadedPlugins)
-	{
-		if (context == ScriptContext::CLIENT && plugin.init_sqvm_client != NULL)
-		{
-			plugin.init_sqvm_client(s);
-		}
-		else if (context == ScriptContext::SERVER && plugin.init_sqvm_server != NULL)
-		{
-			plugin.init_sqvm_server(s);
-		}
-	}
-	*/
-}
-
-void PluginManager::InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm)
-{
-	/*
-	for (auto plugin : m_vLoadedPlugins)
-	{
-		if (plugin.inform_sqvm_created != NULL)
-		{
-			plugin.inform_sqvm_created(context, sqvm);
-		}
-	}
-	*/
-}
-
-void PluginManager::InformSQVMDestroyed(ScriptContext context)
-{
-	/*
-	for (auto plugin : m_vLoadedPlugins)
-	{
-		if (plugin.inform_sqvm_destroyed != NULL)
-		{
-			plugin.inform_sqvm_destroyed(context);
-		}
-	}
-	*/
-}
-
-void PluginManager::InformDLLLoad(const char* dll, void* data, void* dllPtr)
-{
-	/*
-	for (auto plugin : m_vLoadedPlugins)
-	{
-		if (plugin.inform_dll_load != NULL)
-		{
-			plugin.inform_dll_load(dll, (PluginEngineData*)data, dllPtr);
-		}
-	}
-	*/
-}
-
-void PluginManager::RunFrame()
-{
-	/*
-	for (auto plugin : m_vLoadedPlugins)
-	{
-		if (plugin.run_frame != NULL)
-		{
-			plugin.run_frame();
-		}
-	}
-	*/
-}

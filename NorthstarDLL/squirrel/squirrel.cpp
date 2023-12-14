@@ -7,7 +7,7 @@
 #include "engine/r2engine.h"
 #include "core/tier0.h"
 #include "plugins/plugin_abi.h"
-#include "plugins/plugins.h"
+#include "plugins/pluginmanager.h"
 #include "ns_version.h"
 
 #include <any>
@@ -156,57 +156,6 @@ const char* SQTypeNameFromID(int type)
 	return "";
 }
 
-template <ScriptContext context> void SquirrelManager<context>::GenerateSquirrelFunctionsStruct(SquirrelFunctions* s)
-{
-	s->RegisterSquirrelFunc = RegisterSquirrelFunc;
-	s->__sq_defconst = __sq_defconst;
-
-	s->__sq_compilebuffer = __sq_compilebuffer;
-	s->__sq_call = __sq_call;
-	s->__sq_raiseerror = __sq_raiseerror;
-	s->__sq_compilefile = __sq_compilefile;
-
-	s->__sq_newarray = __sq_newarray;
-	s->__sq_arrayappend = __sq_arrayappend;
-
-	s->__sq_newtable = __sq_newtable;
-	s->__sq_newslot = __sq_newslot;
-
-	s->__sq_pushroottable = __sq_pushroottable;
-	s->__sq_pushstring = __sq_pushstring;
-	s->__sq_pushinteger = __sq_pushinteger;
-	s->__sq_pushfloat = __sq_pushfloat;
-	s->__sq_pushbool = __sq_pushbool;
-	s->__sq_pushasset = __sq_pushasset;
-	s->__sq_pushvector = __sq_pushvector;
-	s->__sq_pushobject = __sq_pushobject;
-
-	s->__sq_getstring = __sq_getstring;
-	s->__sq_getinteger = __sq_getinteger;
-	s->__sq_getfloat = __sq_getfloat;
-	s->__sq_getbool = __sq_getbool;
-	s->__sq_get = __sq_get;
-	s->__sq_getasset = __sq_getasset;
-	s->__sq_getuserdata = __sq_getuserdata;
-	s->__sq_getvector = __sq_getvector;
-	s->__sq_getthisentity = __sq_getthisentity;
-	s->__sq_getobject = __sq_getobject;
-
-	s->__sq_stackinfos = __sq_stackinfos;
-
-	s->__sq_createuserdata = __sq_createuserdata;
-	s->__sq_setuserdatatypeid = __sq_setuserdatatypeid;
-	s->__sq_getfunction = __sq_getfunction;
-
-	s->__sq_schedule_call_external = AsyncCall_External;
-
-	s->__sq_getentityfrominstance = __sq_getentityfrominstance;
-	s->__sq_GetEntityConstant_CBaseEntity = __sq_GetEntityConstant_CBaseEntity;
-
-	s->__sq_pushnewstructinstance = __sq_pushnewstructinstance;
-	s->__sq_sealstructslot = __sq_sealstructslot;
-}
-
 // Allows for generating squirrelmessages from plugins.
 void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function, void* userdata)
 {
@@ -273,7 +222,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	defconst(m_pSQVM, "NS_VERSION_DEV", version[3]);
 
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
-	g_pPluginManager->InformSQVMCreated(context, newSqvm);
+	g_pPluginManager->InformSQVMCreated(newSqvm);
 }
 
 template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
@@ -836,10 +785,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x6CB0).RCast<sq_getfunctionType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_getfunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction;
-
-	SquirrelFunctions s = {};
-	g_pSquirrel<ScriptContext::CLIENT>->GenerateSquirrelFunctionsStruct(&s);
-	g_pPluginManager->InformSQVMLoad(ScriptContext::CLIENT, &s);
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
@@ -918,10 +863,6 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 
 	StubUnsafeSQFuncs<ScriptContext::SERVER>();
-
-	SquirrelFunctions s = {};
-	g_pSquirrel<ScriptContext::SERVER>->GenerateSquirrelFunctionsStruct(&s);
-	g_pPluginManager->InformSQVMLoad(ScriptContext::SERVER, &s);
 }
 
 void InitialiseSquirrelManagers()

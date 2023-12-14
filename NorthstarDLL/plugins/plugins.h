@@ -79,6 +79,26 @@ class Plugin
 		this->callbacks->Finalize();
 	};
 
+	void OnSqvmCreated(CSquirrelVM* sqvm)
+	{
+		this->callbacks->OnSqvmCreated(sqvm);
+	};
+
+	void OnSqvmDestroyed(ScriptContext context)
+	{
+		this->callbacks->OnSqvmDestroyed(context);
+	}
+
+	void OnLibraryLoaded(HMODULE module, const char* name)
+	{
+		this->callbacks->OnLibraryLoaded(module, name);
+	}
+
+	void RunFrame()
+	{
+		this->callbacks->RunFrame();
+	}
+
 	const int handle; // identifier of this plugin used only for logging atm
 	const std::string location; // path of the dll
 	const PluginNorthstarData initData;
@@ -96,29 +116,3 @@ class Plugin
 	PLUGIN_RUNFRAME run_frame;
 };
 
-class PluginManager
-{
-  public:
-	std::vector<Plugin> m_vLoadedPlugins;
-
-  public:
-	std::optional<Plugin*> GetPlugin(int handle);
-	int GetNewHandle();
-	bool LoadPlugins();
-	std::optional<Plugin> LoadPlugin(fs::path path);
-
-	void InformAllPluginsInitialized();
-
-	void InformSQVMLoad(ScriptContext context, SquirrelFunctions* s);
-	void InformSQVMCreated(ScriptContext context, CSquirrelVM* sqvm);
-	void InformSQVMDestroyed(ScriptContext context);
-
-	void InformDLLLoad(const char* dll, void* data, void* dllPtr);
-
-	void RunFrame();
-
-  private:
-	std::string pluginPath;
-};
-
-extern PluginManager* g_pPluginManager;

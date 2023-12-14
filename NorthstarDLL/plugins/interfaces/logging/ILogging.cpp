@@ -1,6 +1,7 @@
 #include "plugins/interfaces/interface.h"
 #include "ILogging.h"
 #include "plugins/plugins.h"
+#include "plugins/pluginmanager.h"
 
 class CLogging : public ILogging
 {

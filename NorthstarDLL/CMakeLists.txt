@@ -96,6 +96,8 @@ add_library(NorthstarDLL SHARED
             "plugins/pluginbackend.h"
             "plugins/plugins.cpp"
             "plugins/plugins.h"
+			"plugins/pluginmanager.h"
+			"plugins/pluginmanager.cpp"
             "scripts/client/clientchathooks.cpp"
             "scripts/client/cursorposition.cpp"
             "scripts/client/scriptbrowserhooks.cpp"

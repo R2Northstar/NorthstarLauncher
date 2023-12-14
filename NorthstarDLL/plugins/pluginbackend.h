@@ -1,3 +1,5 @@
+// TODO delete this pile of shit
+
 #pragma once
 #include "plugin_abi.h"
 
@@ -26,15 +28,10 @@ class PluginDataRequest
 class PluginCommunicationHandler
 {
   public:
-	void RunFrame();
-	void PushRequest(PluginDataRequestType type, PluginRespondDataCallable func);
-
-  public:
 	std::queue<PluginDataRequest> requestQueue = {};
 	std::mutex requestMutex;
 
 	PluginEngineData m_sEngineData {};
 };
 
-void InformPluginsDLLLoad(fs::path dllPath, void* address);
 extern PluginCommunicationHandler* g_pPluginCommunicationhandler;
