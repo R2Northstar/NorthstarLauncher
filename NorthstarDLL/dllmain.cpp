@@ -6,6 +6,7 @@
 #include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
 #include "plugins/pluginbackend.h"
+#include "plugins/pluginmanager.h"
 #include "util/version.h"
 #include "util/wininfo.h"
 #include "squirrel/squirrel.h"
