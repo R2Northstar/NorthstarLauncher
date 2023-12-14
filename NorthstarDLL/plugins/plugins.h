@@ -71,7 +71,7 @@ class Plugin
 
 	void Init()
 	{
-		this->callbacks->Init(&this->initData);
+		this->callbacks->Init(g_NorthstarModul, e&this->initData);
 	};
 
 	void Finalize()
@@ -102,17 +102,5 @@ class Plugin
 	const int handle; // identifier of this plugin used only for logging atm
 	const std::string location; // path of the dll
 	const PluginNorthstarData initData;
-
-	PLUGIN_INIT_TYPE init;
-
-	// all following functions are optional. Maybe should be std::optional in the future
-	PLUGIN_INIT_SQVM_TYPE init_sqvm_client;
-	PLUGIN_INIT_SQVM_TYPE init_sqvm_server;
-	PLUGIN_INFORM_SQVM_CREATED_TYPE inform_sqvm_created;
-	PLUGIN_INFORM_SQVM_DESTROYED_TYPE inform_sqvm_destroyed;
-
-	PLUGIN_INFORM_DLL_LOAD_TYPE inform_dll_load;
-
-	PLUGIN_RUNFRAME run_frame;
 };
 

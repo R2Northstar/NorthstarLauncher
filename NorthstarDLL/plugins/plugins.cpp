@@ -34,7 +34,7 @@ bool isValidSquirrelIdentifier(std::string s)
 
 Plugin::Plugin(std::string path)
 	: handle(g_pPluginManager->GetNewHandle()), location(path),
-	  initData({.northstarModule = g_NorthstarModule, .pluginHandle = this->handle})
+	  initData({.pluginHandle = this->handle})
 {
 	NS::log::PLUGINSYS->info("Loading plugin at '{}'", path);
 

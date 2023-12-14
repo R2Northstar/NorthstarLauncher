@@ -121,7 +121,6 @@ extern "C"
 
 struct PluginNorthstarData
 {
-	const HMODULE northstarModule;
 	const int pluginHandle;
 };
 

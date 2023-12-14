@@ -7,7 +7,7 @@
 class IPluginCallbacks
 {
 	public:
-	virtual void Init(const PluginNorthstarData* initData) = 0; // runs after the plugin is loaded and validated
+	virtual void Init(HMODULE northstarModule, const PluginNorthstarData* initData) = 0; // runs after the plugin is loaded and validated
 	virtual void Finalize() = 0; // runs after all plugins have been loaded
 	virtual void OnSqvmCreated(CSquirrelVM* sqvm) = 0;
 	virtual void OnSqvmDestroyed(ScriptContext context) = 0;
