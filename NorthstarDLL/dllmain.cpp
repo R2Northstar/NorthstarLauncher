@@ -70,7 +70,6 @@ bool InitialiseNorthstar()
 	g_pServerPresence = new ServerPresenceManager();
 
 	g_pPluginManager = new PluginManager();
-	g_pPluginCommunicationhandler = new PluginCommunicationHandler();
 	g_pPluginManager->LoadPlugins();
 
 	InitialiseSquirrelManagers();

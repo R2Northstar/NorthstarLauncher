@@ -92,8 +92,6 @@ add_library(NorthstarDLL SHARED
             "plugins/interfaces/IPluginId.h"
             "plugins/interfaces/IPluginCallbacks.h"
             "plugins/plugin_abi.h"
-            "plugins/pluginbackend.cpp"
-            "plugins/pluginbackend.h"
             "plugins/plugins.cpp"
             "plugins/plugins.h"
 			"plugins/pluginmanager.h"
