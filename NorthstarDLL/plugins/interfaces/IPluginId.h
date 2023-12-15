@@ -6,25 +6,16 @@
 
 #define PLUGIN_ID_VERSION "PluginId001"
 
-/*
-struct IPluginId {
-	struct {
-		void* (*GetProperty)(IPluginId* self, int prop);
-	}* vftable;
-};
-*/
-
 // an identifier for the type of string data requested from the plugin
-enum class PluginString
+enum class PluginString : int
 {
 	NAME = 0,
 	LOG_NAME = 1,
 	DEPENDENCY_NAME = 2,
-	CONTEXT = 3,
 };
 
 // an identifier for the type of bitflag requested from the plugin
-enum class PluginField
+enum class PluginField : int
 {
 	CONTEXT = 0,
 };

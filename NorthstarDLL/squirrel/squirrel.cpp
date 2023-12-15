@@ -6,7 +6,6 @@
 #include "dedicated/dedicated.h"
 #include "engine/r2engine.h"
 #include "core/tier0.h"
-#include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
 #include "plugins/pluginmanager.h"
 #include "ns_version.h"
@@ -234,7 +233,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	defconst(m_pSQVM, "VANILLA", g_pVanillaCompatibility->GetVanillaCompatibility());
 
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
-	g_pPluginManager->InformSQVMCreated(newSqvm);
+	g_pPluginManager->InformSqvmCreated(newSqvm);
 }
 
 template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
@@ -262,7 +261,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 		}
 	}
 
-	g_pPluginManager->InformSQVMDestroying(m_pSQVM);
+	g_pPluginManager->InformSqvmDestroying(m_pSQVM);
 
 	// Discard the previous vm and delete the message buffer.
 	m_pSQVM = nullptr;

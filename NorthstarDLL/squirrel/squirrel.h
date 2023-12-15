@@ -3,7 +3,6 @@
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
 #include "core/math/vector.h"
-#include "plugins/plugin_abi.h"
 #include "mods/modmanager.h"
 
 /*

@@ -4,7 +4,6 @@
 #include "core/memalloc.h"
 #include "core/vanilla.h"
 #include "config/profile.h"
-#include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
 #include "plugins/pluginmanager.h"
 #include "util/version.h"

@@ -117,7 +117,7 @@ void PluginManager::InformAllPluginsInitialized()
 	}
 }
 
-void PluginManager::InformSQVMCreated(CSquirrelVM* sqvm)
+void PluginManager::InformSqvmCreated(CSquirrelVM* sqvm)
 {
 	for(Plugin& plugin : GetLoadedPlugins())
 	{
@@ -125,7 +125,7 @@ void PluginManager::InformSQVMCreated(CSquirrelVM* sqvm)
 	}
 }
 
-void PluginManager::InformSQVMDestroying(CSquirrelVM* sqvm)
+void PluginManager::InformSqvmDestroying(CSquirrelVM* sqvm)
 {
 	for(Plugin& plugin : GetLoadedPlugins())
 	{

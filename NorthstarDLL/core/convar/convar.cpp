@@ -3,8 +3,6 @@
 #include "convar.h"
 #include "core/sourceinterface.h"
 
-#include "plugins/plugin_abi.h"
-
 #include <float.h>
 
 typedef void (*ConVarRegisterType)(

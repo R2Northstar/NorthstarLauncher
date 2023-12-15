@@ -12,9 +12,7 @@ InterfaceReg::InterfaceReg(InstantiateInterfaceFn fn, const char* pName) : m_pNa
 
 void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 {
-	InterfaceReg* pCur;
-
-	for (pCur = s_pInterfaceRegs; pCur; pCur = pCur->m_pNext)
+	for (InterfaceReg* pCur = s_pInterfaceRegs; pCur; pCur = pCur->m_pNext)
 	{
 		if (strcmp(pCur->m_pName, pName) == 0)
 		{

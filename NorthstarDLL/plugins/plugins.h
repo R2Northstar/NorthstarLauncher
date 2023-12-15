@@ -1,12 +1,9 @@
 #pragma once
 #include <stdint.h>
-#include "plugin_abi.h"
 #include "core/sourceinterface.h"
 #include "plugins/interfaces/interface.h"
 #include "plugins/interfaces/IPluginId.h"
 #include "plugins/interfaces/IPluginCallbacks.h"
-
-const int IDR_RCDATA1 = 101;
 
 class Plugin
 {

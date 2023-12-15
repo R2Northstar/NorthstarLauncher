@@ -132,6 +132,8 @@ void Plugin::Unload()
 	if (!this->module)
 		return;
 
+	this->callbacks->Unload();
+
 	if (!FreeLibrary(this->module))
 	{
 		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
