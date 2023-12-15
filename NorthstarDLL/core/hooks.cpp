@@ -1,5 +1,4 @@
 #include "dedicated/dedicated.h"
-#include "plugins/pluginbackend.h"
 #include "plugins/pluginmanager.h"
 
 #include <iostream>

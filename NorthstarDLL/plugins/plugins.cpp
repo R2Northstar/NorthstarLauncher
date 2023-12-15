@@ -10,7 +10,6 @@
 
 #include "util/wininfo.h"
 #include "core/sourceinterface.h"
-#include "pluginbackend.h"
 #include "logging/logging.h"
 #include "dedicated/dedicated.h"
 
