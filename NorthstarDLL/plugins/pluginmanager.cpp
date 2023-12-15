@@ -125,11 +125,11 @@ void PluginManager::InformSQVMCreated(CSquirrelVM* sqvm)
 	}
 }
 
-void PluginManager::InformSQVMDestroyed(ScriptContext context)
+void PluginManager::InformSQVMDestroying(CSquirrelVM* sqvm)
 {
 	for(Plugin& plugin : GetLoadedPlugins())
 	{
-		plugin.OnSqvmDestroyed(context);
+		plugin.OnSqvmDestroying(sqvm);
 	}
 }
 

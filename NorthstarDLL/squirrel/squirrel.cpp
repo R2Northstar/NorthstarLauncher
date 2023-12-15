@@ -262,7 +262,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 		}
 	}
 
-	g_pPluginManager->InformSQVMDestroyed(context);
+	g_pPluginManager->InformSQVMDestroying(m_pSQVM);
 
 	// Discard the previous vm and delete the message buffer.
 	m_pSQVM = nullptr;

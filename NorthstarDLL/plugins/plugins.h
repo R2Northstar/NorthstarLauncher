@@ -43,7 +43,7 @@ class Plugin
 	void Init();
 	void Finalize();
 	void OnSqvmCreated(CSquirrelVM* sqvm);
-	void OnSqvmDestroyed(ScriptContext context);
+	void OnSqvmDestroying(CSquirrelVM* sqvm);
 	void OnLibraryLoaded(HMODULE module, const char* name);
 	void RunFrame();
 

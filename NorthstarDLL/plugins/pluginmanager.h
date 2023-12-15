@@ -16,7 +16,7 @@ class PluginManager
 
 	// callback triggers
 	void InformSQVMCreated(CSquirrelVM* sqvm);
-	void InformSQVMDestroyed(ScriptContext context);
+	void InformSQVMDestroying(CSquirrelVM* sqvm);
 	void InformDllLoad(HMODULE module, fs::path path);
 	void RunFrame();
 

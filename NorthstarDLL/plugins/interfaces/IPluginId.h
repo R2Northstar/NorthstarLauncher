@@ -35,9 +35,6 @@ class IPluginId
   public:
 	virtual const char* GetString(PluginString prop) = 0;
 	virtual int64_t GetField(PluginField prop) = 0;
-	virtual void OnSqvmCreated(CSquirrelVM* sqvm);
-	virtual void OnSqvmDestroyed(CSquirrelVM* sqvm);
-	virtual void OnLibraryLoaded();
 };
 
 #endif

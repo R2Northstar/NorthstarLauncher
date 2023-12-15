@@ -197,9 +197,9 @@ void Plugin::OnSqvmCreated(CSquirrelVM* sqvm)
 	this->callbacks->OnSqvmCreated(sqvm);
 }
 
-void Plugin::OnSqvmDestroyed(ScriptContext context)
+void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm)
 {
-	this->callbacks->OnSqvmDestroyed(context);
+	this->callbacks->OnSqvmDestroying(sqvm);
 }
 
 void Plugin::OnLibraryLoaded(HMODULE module, const char* name)

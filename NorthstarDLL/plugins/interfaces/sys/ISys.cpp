@@ -38,7 +38,7 @@ class CSys : public ISys
 
 	void Unload(int handle)
 	{
-		std::optional<Plugin> plugin =g_pPluginManager->GetPlugin(handle);
+		std::optional<Plugin> plugin = g_pPluginManager->GetPlugin(handle);
 		if(plugin)
 		{
 			plugin->Unload();
