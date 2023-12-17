@@ -5,6 +5,9 @@
    the type library 'server.dll'
 */
 
+#include <assert.h>
+#include <stddef.h>
+
 struct HSquirrelVM;
 struct CallInfo;
 struct SQTable;

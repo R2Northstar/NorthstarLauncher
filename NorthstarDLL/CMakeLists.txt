@@ -86,7 +86,6 @@ add_library(NorthstarDLL SHARED
             "mods/modsavefiles.h"
             "plugins/interfaces/interface.h"
             "plugins/interfaces/interface.cpp"
-            "plugins/interfaces/vscript/IVScriptMirror.h"
 			"plugins/interfaces/sys/ISys.h"
 			"plugins/interfaces/sys/ISys.cpp"
             "plugins/interfaces/IPluginId.h"

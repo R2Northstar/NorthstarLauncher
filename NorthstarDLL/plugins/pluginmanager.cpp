@@ -3,22 +3,24 @@
 #include <regex>
 #include "plugins.h"
 #include "config/profile.h"
+#include "core/convar/concommand.h"
 
 PluginManager* g_pPluginManager;
 
 std::vector<Plugin> PluginManager::GetLoadedPlugins()
 {
-	return this->m_vLoadedPlugins;
+	return this->plugins;
 }
 
-std::optional<Plugin> PluginManager::GetPlugin(int handle)
+std::optional<Plugin> PluginManager::GetPlugin(HMODULE handle)
 {
-	if (handle < 0 || handle >= this->m_vLoadedPlugins.size())
-		return std::nullopt;
-	return this->m_vLoadedPlugins[handle];
+	for(Plugin& plugin : plugins)
+		if(plugin.handle == handle)
+			return plugin;
+	return std::nullopt;
 }
 
-void PluginManager::LoadPlugin(fs::path path)
+void PluginManager::LoadPlugin(fs::path path, bool reloaded)
 {
 	Plugin plugin = Plugin(path.string());
 
@@ -28,8 +30,8 @@ void PluginManager::LoadPlugin(fs::path path)
 		plugin.Unload();
 	}
 
-	m_vLoadedPlugins.push_back(plugin);
-	plugin.Init();
+	plugins.push_back(plugin);
+	plugin.Init(reloaded);
 }
 
 inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
@@ -47,7 +49,7 @@ inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
 	}
 }
 
-bool PluginManager::LoadPlugins()
+bool PluginManager::LoadPlugins(bool reloaded)
 {
 	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
 	{
@@ -96,7 +98,7 @@ bool PluginManager::LoadPlugins()
 
 	for (fs::path path : paths)
 	{
-		LoadPlugin(path);
+		LoadPlugin(path, reloaded);
 	}
 
 	InformAllPluginsInitialized();
@@ -104,14 +106,33 @@ bool PluginManager::LoadPlugins()
 	return true;
 }
 
-int PluginManager::GetNewHandle()
+void PluginManager::ReloadPlugins()
 {
-	return this->m_vLoadedPlugins.size();
+	for(Plugin& plugin : this->GetLoadedPlugins())
+	{
+			plugin.Unload();
+	}
+
+	this->plugins.clear();
+	this->LoadPlugins(true);
+}
+
+void PluginManager::RemovePlugin(HMODULE handle)
+{
+	for(size_t i = 0; i < plugins.size(); i++)
+	{
+		Plugin* plugin = &plugins[i];
+		if(plugin->handle == handle)
+		{
+			plugins.erase(plugins.begin() + i);
+			return;
+		}
+	}
 }
 
 void PluginManager::InformAllPluginsInitialized()
 {
-	for(Plugin& plugin : this->m_vLoadedPlugins)
+	for(Plugin& plugin : this->plugins)
 	{
 		plugin.Finalize();
 	}
@@ -135,7 +156,8 @@ void PluginManager::InformSqvmDestroying(CSquirrelVM* sqvm)
 
 void PluginManager::InformDllLoad(HMODULE module, fs::path path)
 {
-	const char* filename = path.filename().string().c_str();
+	std::string fn = path.filename().string(); // without this the string gets freed immediately lmao
+	const char* filename = fn.c_str();
 	for(Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnLibraryLoaded(module, filename);
@@ -148,4 +170,14 @@ void PluginManager::RunFrame()
 	{
 		plugin.RunFrame();
 	}
+}
+
+void ConCommand_reload_plugins(const CCommand& args)
+{
+	g_pPluginManager->ReloadPlugins();
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", PluginManager, ConCommand, (CModule module))
+{
+	RegisterConCommand("reload_plugins", ConCommand_reload_plugins, "reloads plugins", FCVAR_NONE);
 }

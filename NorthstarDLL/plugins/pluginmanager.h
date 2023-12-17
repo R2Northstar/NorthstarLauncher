@@ -9,10 +9,11 @@ class PluginManager
 {
   public:
 	std::vector<Plugin> GetLoadedPlugins();
-	std::optional<Plugin> GetPlugin(int handle); // get a plugin by it's handle
-	int GetNewHandle(); // get an available handle for a new plugin
-	bool LoadPlugins();
-	void LoadPlugin(fs::path path);
+	std::optional<Plugin> GetPlugin(HMODULE handle);
+	bool LoadPlugins(bool reloaded = false);
+	void LoadPlugin(fs::path path, bool reloaded = false);
+	void ReloadPlugins();
+	void RemovePlugin(HMODULE handle);
 
 	// callback triggers
 	void InformSqvmCreated(CSquirrelVM* sqvm);
@@ -23,7 +24,7 @@ class PluginManager
   private:
 	void InformAllPluginsInitialized();
 
-	std::vector<Plugin> m_vLoadedPlugins;
+	std::vector<Plugin> plugins;
 	std::string pluginPath;
 };
 

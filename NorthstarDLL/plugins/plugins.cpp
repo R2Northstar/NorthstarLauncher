@@ -32,21 +32,20 @@ bool isValidSquirrelIdentifier(std::string s)
 }
 
 Plugin::Plugin(std::string path)
-	: handle(g_pPluginManager->GetNewHandle()), location(path),
+	: location(path),
 	  initData({.pluginHandle = this->handle})
 {
 	NS::log::PLUGINSYS->info("Loading plugin at '{}'", path);
 
-	this->module = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
-	if (!this->module)
+	if (!this->handle)
 	{
 		NS::log::PLUGINSYS->error("Failed to load main plugin library '{}' (Error: {})", path, GetLastError());
 		return;
 	}
 
-	NS::log::PLUGINSYS->info("loading interface getter");
-	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(this->module, "CreateInterface");
+	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(this->handle, "CreateInterface");
 
 	if (!CreatePluginInterface)
 	{
@@ -54,7 +53,6 @@ Plugin::Plugin(std::string path)
 		return;
 	}
 
-	NS::log::PLUGINSYS->info("loading plugin id");
 	this->pluginId = (IPluginId*)CreatePluginInterface(PLUGIN_ID_VERSION, 0);
 
 	if (!this->pluginId)
@@ -63,7 +61,6 @@ Plugin::Plugin(std::string path)
 		return;
 	}
 
-	NS::log::PLUGINSYS->info("loading properties");
 	const char* name = this->pluginId->GetString(PluginString::NAME);
 	const char* logName = this->pluginId->GetString(PluginString::LOG_NAME);
 	const char* dependencyName = this->pluginId->GetString(PluginString::DEPENDENCY_NAME);
@@ -100,7 +97,6 @@ Plugin::Plugin(std::string path)
 		return;
 	}
 
-	NS::log::PLUGINSYS->info("loading callbacks");
 	this->callbacks = (IPluginCallbacks*)CreatePluginInterface("PluginCallbacks001", 0);
 
 	if (!this->callbacks)
@@ -129,19 +125,27 @@ Plugin::Plugin(std::string path)
 
 void Plugin::Unload()
 {
-	if (!this->module)
+	if (!this->handle)
 		return;
 
 	this->callbacks->Unload();
 
-	if (!FreeLibrary(this->module))
+	if (!FreeLibrary(this->handle))
 	{
 		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
 		return;
 	}
 
-	this->module = 0;
-	this->valid = false;
+	g_pPluginManager->RemovePlugin(this->handle);
+}
+
+void Plugin::Reload()
+{
+	/*
+	std::string path = this->location;
+	this->Unload();
+	g_pPluginManager->LoadPlugin(fs::path(path), true);
+	*/
 }
 
 void Plugin::Log(spdlog::level::level_enum level, char* msg)
@@ -157,7 +161,7 @@ bool Plugin::IsValid() const
 std::string Plugin::GetName() const
 {
 	return this->name;
-};
+}
 
 std::string Plugin::GetLogName() const
 {
@@ -184,9 +188,9 @@ void* Plugin::CreateInterface(const char* name, int* status) const
 	return this->m_pCreateInterface(name, status);
 }
 
-void Plugin::Init()
+void Plugin::Init(bool reloaded)
 {
-	this->callbacks->Init(g_NorthstarModule, &this->initData);
+	this->callbacks->Init(g_NorthstarModule, &this->initData, reloaded);
 }
 
 void Plugin::Finalize()
@@ -201,6 +205,7 @@ void Plugin::OnSqvmCreated(CSquirrelVM* sqvm)
 
 void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm)
 {
+	NS::log::PLUGINSYS->info("destroying sqvm {}", sqvm->vmContext);
 	this->callbacks->OnSqvmDestroying(sqvm);
 }
 

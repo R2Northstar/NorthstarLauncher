@@ -12,7 +12,6 @@ class Plugin
 	IPluginId* pluginId;
 	IPluginCallbacks* callbacks;
 
-	HMODULE module = nullptr;
 	std::shared_ptr<ColoredLogger> logger;
 
 	bool valid = false;
@@ -25,6 +24,7 @@ class Plugin
   public:
 	Plugin(std::string path);
 	void Unload();
+	void Reload();
 
 	// sys
 	void Log(spdlog::level::level_enum level, char* msg);
@@ -37,15 +37,15 @@ class Plugin
 	bool ShouldRunOnServer() const;
 	bool ShouldRunOnClient() const;
 	void* CreateInterface(const char* pName, int* pStatus) const;
-	void Init();
+	void Init(bool reloaded);
 	void Finalize();
 	void OnSqvmCreated(CSquirrelVM* sqvm);
 	void OnSqvmDestroying(CSquirrelVM* sqvm);
 	void OnLibraryLoaded(HMODULE module, const char* name);
 	void RunFrame();
 
-	const int handle; // identifier of this plugin used only for logging atm
-	const std::string location; // path of the dll
-	const PluginNorthstarData initData;
+	HMODULE handle;
+	std::string location; // path of the dll
+	PluginNorthstarData initData;
 };
 

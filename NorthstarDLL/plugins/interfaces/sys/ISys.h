@@ -13,8 +13,9 @@ enum class LogLevel : int
 class ISys
 {
   public:
-	virtual void Log(int handle, LogLevel level, char* msg) = 0;
-	virtual void Unload(int handle) = 0;
+	virtual void Log(HMODULE handle, LogLevel level, char* msg) = 0;
+	virtual void Unload(HMODULE handle) = 0;
+	virtual void Reload(HMODULE handle) = 0;
 };
 
 #endif

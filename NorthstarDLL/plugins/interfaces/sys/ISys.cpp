@@ -6,7 +6,7 @@
 class CSys : public ISys
 {
   public:
-	void Log(int handle, LogLevel level, char* msg)
+	void Log(HMODULE handle, LogLevel level, char* msg)
 	{
 		spdlog::level::level_enum spdLevel;
 
@@ -32,11 +32,11 @@ class CSys : public ISys
 		}
 		else
 		{
-			NS::log::PLUGINSYS->warn("Attempted to log message '{}' with invalid plugin handle {}", msg, handle);
+			NS::log::PLUGINSYS->warn("Attempted to log message '{}' with invalid plugin handle {}", msg, static_cast<void*>(handle));
 		}
 	}
 
-	void Unload(int handle)
+	void Unload(HMODULE handle)
 	{
 		std::optional<Plugin> plugin = g_pPluginManager->GetPlugin(handle);
 		if(plugin)
@@ -45,7 +45,20 @@ class CSys : public ISys
 		}
 		else
 		{
-			NS::log::PLUGINSYS->warn("Attempted to unload plugin with invalid handle {}", handle);
+			NS::log::PLUGINSYS->warn("Attempted to unload plugin with invalid handle {}", static_cast<void*>(handle));
+		}
+	}
+
+	void Reload(HMODULE handle)
+	{
+		std::optional<Plugin> plugin = g_pPluginManager->GetPlugin(handle);
+		if(plugin)
+		{
+			plugin->Reload();
+		}
+		else
+		{
+			NS::log::PLUGINSYS->warn("Attempted to reload plugin with invalid handle {}", static_cast<void*>(handle));
 		}
 	}
 };
