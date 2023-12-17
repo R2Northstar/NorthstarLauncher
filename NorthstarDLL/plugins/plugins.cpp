@@ -34,8 +34,6 @@ bool isValidSquirrelIdentifier(std::string s)
 Plugin::Plugin(std::string path)
 	: location(path)
 {
-	NS::log::PLUGINSYS->info("Loading plugin at '{}'", path);
-
 	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
 	NS::log::PLUGINSYS->info("loaded plugin handle {}", static_cast<void*>(this->handle));
@@ -144,11 +142,9 @@ void Plugin::Unload()
 
 void Plugin::Reload()
 {
-	/*
 	std::string path = this->location;
 	this->Unload();
 	g_pPluginManager->LoadPlugin(fs::path(path), true);
-	*/
 }
 
 void Plugin::Log(spdlog::level::level_enum level, char* msg)
