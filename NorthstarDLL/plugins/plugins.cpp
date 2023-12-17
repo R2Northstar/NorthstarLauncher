@@ -32,18 +32,21 @@ bool isValidSquirrelIdentifier(std::string s)
 }
 
 Plugin::Plugin(std::string path)
-	: location(path),
-	  initData({.pluginHandle = this->handle})
+	: location(path)
 {
 	NS::log::PLUGINSYS->info("Loading plugin at '{}'", path);
 
 	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+
+	NS::log::PLUGINSYS->info("loaded plugin handle {}", static_cast<void*>(this->handle));
 
 	if (!this->handle)
 	{
 		NS::log::PLUGINSYS->error("Failed to load main plugin library '{}' (Error: {})", path, GetLastError());
 		return;
 	}
+
+	this->initData = {.pluginHandle = this->handle};
 
 	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(this->handle, "CreateInterface");
 
