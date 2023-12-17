@@ -31,8 +31,7 @@ bool isValidSquirrelIdentifier(std::string s)
 	return true;
 }
 
-Plugin::Plugin(std::string path)
-	: location(path)
+Plugin::Plugin(std::string path) : location(path)
 {
 	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
@@ -217,4 +216,3 @@ void Plugin::RunFrame()
 {
 	this->callbacks->RunFrame();
 }
-

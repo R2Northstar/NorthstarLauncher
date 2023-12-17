@@ -39,7 +39,7 @@ class CSys : public ISys
 	void Unload(HMODULE handle)
 	{
 		std::optional<Plugin> plugin = g_pPluginManager->GetPlugin(handle);
-		if(plugin)
+		if (plugin)
 		{
 			plugin->Unload();
 		}
@@ -52,7 +52,7 @@ class CSys : public ISys
 	void Reload(HMODULE handle)
 	{
 		std::optional<Plugin> plugin = g_pPluginManager->GetPlugin(handle);
-		if(plugin)
+		if (plugin)
 		{
 			plugin->Reload();
 		}

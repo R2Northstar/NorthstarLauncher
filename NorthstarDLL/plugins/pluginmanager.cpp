@@ -14,8 +14,8 @@ std::vector<Plugin> PluginManager::GetLoadedPlugins()
 
 std::optional<Plugin> PluginManager::GetPlugin(HMODULE handle)
 {
-	for(Plugin& plugin : plugins)
-		if(plugin.handle == handle)
+	for (Plugin& plugin : plugins)
+		if (plugin.handle == handle)
 			return plugin;
 	return std::nullopt;
 }
@@ -108,9 +108,9 @@ bool PluginManager::LoadPlugins(bool reloaded)
 
 void PluginManager::ReloadPlugins()
 {
-	for(Plugin& plugin : this->GetLoadedPlugins())
+	for (Plugin& plugin : this->GetLoadedPlugins())
 	{
-			plugin.Unload();
+		plugin.Unload();
 	}
 
 	this->plugins.clear();
@@ -119,10 +119,10 @@ void PluginManager::ReloadPlugins()
 
 void PluginManager::RemovePlugin(HMODULE handle)
 {
-	for(size_t i = 0; i < plugins.size(); i++)
+	for (size_t i = 0; i < plugins.size(); i++)
 	{
 		Plugin* plugin = &plugins[i];
-		if(plugin->handle == handle)
+		if (plugin->handle == handle)
 		{
 			plugins.erase(plugins.begin() + i);
 			return;
@@ -132,7 +132,7 @@ void PluginManager::RemovePlugin(HMODULE handle)
 
 void PluginManager::InformAllPluginsInitialized()
 {
-	for(Plugin& plugin : this->plugins)
+	for (Plugin& plugin : this->plugins)
 	{
 		plugin.Finalize();
 	}
@@ -140,7 +140,7 @@ void PluginManager::InformAllPluginsInitialized()
 
 void PluginManager::InformSqvmCreated(CSquirrelVM* sqvm)
 {
-	for(Plugin& plugin : GetLoadedPlugins())
+	for (Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnSqvmCreated(sqvm);
 	}
@@ -148,7 +148,7 @@ void PluginManager::InformSqvmCreated(CSquirrelVM* sqvm)
 
 void PluginManager::InformSqvmDestroying(CSquirrelVM* sqvm)
 {
-	for(Plugin& plugin : GetLoadedPlugins())
+	for (Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnSqvmDestroying(sqvm);
 	}
@@ -158,7 +158,7 @@ void PluginManager::InformDllLoad(HMODULE module, fs::path path)
 {
 	std::string fn = path.filename().string(); // without this the string gets freed immediately lmao
 	const char* filename = fn.c_str();
-	for(Plugin& plugin : GetLoadedPlugins())
+	for (Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnLibraryLoaded(module, filename);
 	}
@@ -166,7 +166,7 @@ void PluginManager::InformDllLoad(HMODULE module, fs::path path)
 
 void PluginManager::RunFrame()
 {
-	for(Plugin& plugin : GetLoadedPlugins())
+	for (Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.RunFrame();
 	}

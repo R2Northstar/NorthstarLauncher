@@ -22,8 +22,9 @@ struct PluginNorthstarData
 
 class IPluginCallbacks
 {
-	public:
-	virtual void Init(HMODULE northstarModule, const PluginNorthstarData* initData, bool reloaded) = 0; // runs after the plugin is loaded and validated
+  public:
+	virtual void
+	Init(HMODULE northstarModule, const PluginNorthstarData* initData, bool reloaded) = 0; // runs after the plugin is loaded and validated
 	virtual void Finalize() = 0; // runs after all plugins have been loaded
 	virtual void Unload() = 0; // runs just before the library is freed
 	virtual void OnSqvmCreated(CSquirrelVM* sqvm) = 0;
