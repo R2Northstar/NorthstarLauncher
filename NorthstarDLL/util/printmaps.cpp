@@ -203,12 +203,12 @@ AUTOHOOK(Host_Map_f, engine.dll + 0x15B340, void, __fastcall, (const CCommand& a
 	if (args.ArgC() > 1 &&
 		std::find_if(vMapList.begin(), vMapList.end(), [&](MapVPKInfo map) -> bool { return map.name == args.Arg(1); }) == vMapList.end())
 	{
-		spdlog::warn("Map load failed: {} not found or invalid", args.Arg(1));
+		Warning(eLog::NS, "Map load failed: %s not found or invalid\n", args.Arg(1));
 		return;
 	}
 	else if (args.ArgC() == 1)
 	{
-		spdlog::warn("Map load failed: no map name provided");
+		Warning(eLog::NS, "Map load failed: no map name provided\n");
 		return;
 	}
 

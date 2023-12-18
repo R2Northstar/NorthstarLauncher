@@ -531,7 +531,7 @@ void Mod::ParsePluginDependencies(rapidjson_document& json)
 
 	if (!json["PluginDependencies"].IsArray())
 	{
-		spdlog::warn("'PluginDependencies' field is not an object, skipping...");
+		Warning(eLog::MODSYS, "'PluginDependencies' field is not an object, skipping...\n");
 		return;
 	}
 
@@ -540,7 +540,7 @@ void Mod::ParsePluginDependencies(rapidjson_document& json)
 		if (!name.IsString())
 			continue;
 
-		spdlog::info("Plugin Constant {} defined by {}", name.GetString(), Name);
+		DevMsg(eLog::MODSYS, "Plugin Constant %s defined by %s\n", name.GetString(), Name.c_str());
 
 		PluginDependencyConstants.push_back(name.GetString());
 	}
