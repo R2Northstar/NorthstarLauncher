@@ -7,12 +7,10 @@
 
 AUTOHOOK_INIT()
 
-
 bool bReadingOriginalFile = false;
 std::string sCurrentModPath;
 
 ConVar* Cvar_ns_fs_log_reads;
-
 
 SourceInterface<IFileSystem>* g_pFilesystem;
 

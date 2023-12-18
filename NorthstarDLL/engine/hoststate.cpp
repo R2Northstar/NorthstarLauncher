@@ -12,7 +12,6 @@
 
 AUTOHOOK_INIT()
 
-
 CHostState* g_pHostState;
 
 std::string sLastMode;
@@ -30,8 +29,7 @@ void ServerStartingOrChangingMap()
 	memset(commandBuf, 0, sizeof(commandBuf));
 	CCommand tempCommand = *(CCommand*)&commandBuf;
 	if (sLastMode.length() &&
-		CCommand__Tokenize(
-			tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode))
+		CCommand__Tokenize(tempCommand, fmt::format("exec server/cleanup_gamemode_{}", sLastMode).c_str(), cmd_source_t::kCommandSrcCode))
 		_Cmd_Exec_f(tempCommand, false, false);
 
 	memset(commandBuf, 0, sizeof(commandBuf));
