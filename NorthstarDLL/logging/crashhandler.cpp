@@ -84,7 +84,7 @@ BOOL WINAPI ConsoleCtrlRoutine(DWORD dwCtrlType)
 	switch (dwCtrlType)
 	{
 	case CTRL_CLOSE_EVENT:
-		spdlog::info("Exiting due to console close...");
+		DevMsg(eLog::NS, "Exiting due to console close...\n");
 		delete g_pCrashHandler;
 		g_pCrashHandler = nullptr;
 		std::exit(EXIT_SUCCESS);
@@ -310,15 +310,15 @@ void CCrashHandler::ShowPopUpMessage()
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatException()
 {
-	spdlog::error("-------------------------------------------");
-	spdlog::error("Northstar has crashed!");
-	spdlog::error("\tVersion: {}", version);
+	Error(eLog::NS, NO_ERROR, "-------------------------------------------\n");
+	Error(eLog::NS, NO_ERROR, "Northstar has crashed!\n");
+	Error(eLog::NS, NO_ERROR, "\tVersion: %s\n", version);
 	if (!m_svError.empty())
 	{
-		spdlog::info("\tEncountered an error when gathering crash information!");
-		spdlog::info("\tWinApi Error: {}", m_svError.c_str());
+		DevMsg(eLog::NS, "\tEncountered an error when gathering crash information!\n");
+		DevMsg(eLog::NS, "\tWinApi Error: %s\n", m_svError.c_str());
 	}
-	spdlog::error("\t{}", GetExceptionString());
+	Error(eLog::NS, NO_ERROR, "\t%s", GetExceptionString());
 
 	DWORD dwExceptionCode = m_pExceptionInfos->ExceptionRecord->ExceptionCode;
 	if (dwExceptionCode == EXCEPTION_ACCESS_VIOLATION || dwExceptionCode == EXCEPTION_IN_PAGE_ERROR)
@@ -327,16 +327,16 @@ void CCrashHandler::FormatException()
 		ULONG_PTR uExceptionInfo1 = m_pExceptionInfos->ExceptionRecord->ExceptionInformation[1];
 
 		if (!uExceptionInfo0)
-			spdlog::error("\tAttempted to read from: {:#x}", uExceptionInfo1);
+			Error(eLog::NS, NO_ERROR, "\tAttempted to read from: %p\n", uExceptionInfo1);
 		else if (uExceptionInfo0 == 1)
-			spdlog::error("\tAttempted to write to: {:#x}", uExceptionInfo1);
+			Error(eLog::NS, NO_ERROR, "\tAttempted to write to: %p\n", uExceptionInfo1);
 		else if (uExceptionInfo0 == 8)
-			spdlog::error("\tData Execution Prevention (DEP) at: {:#x}", uExceptionInfo1);
+			Error(eLog::NS, NO_ERROR, "\tData Execution Prevention (DEP) at: %p\n", uExceptionInfo1);
 		else
-			spdlog::error("\tUnknown access violation at: {:#x}", uExceptionInfo1);
+			Error(eLog::NS, NO_ERROR, "\tUnknown access violation at: %p\n", uExceptionInfo1);
 	}
 
-	spdlog::error("\tAt: {} + {}", m_svCrashedModule, m_svCrashedOffset);
+	Error(eLog::NS, NO_ERROR, "\tAt: %s + %s\n", m_svCrashedModule.c_str(), m_svCrashedOffset.c_str());
 }
 
 //-----------------------------------------------------------------------------
@@ -344,7 +344,7 @@ void CCrashHandler::FormatException()
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatCallstack()
 {
-	spdlog::error("Callstack:");
+	Error(eLog::NS, NO_ERROR, "Callstack:\n");
 
 	PVOID pFrames[CRASHHANDLER_MAX_FRAMES];
 
@@ -394,7 +394,7 @@ void CCrashHandler::FormatCallstack()
 		}
 
 		// Log module + offset
-		spdlog::error("\t{} + {:#x}", pszModuleFileName, reinterpret_cast<DWORD64>(pCrashOffset));
+		Error(eLog::NS, NO_ERROR, "\t%s + %s", pszModuleFileName, svCrashOffset.c_str());
 	}
 }
 
@@ -403,7 +403,7 @@ void CCrashHandler::FormatCallstack()
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatFlags(const CHAR* pszRegister, DWORD nValue)
 {
-	spdlog::error("\t{}: {:#b}", pszRegister, nValue);
+	Error(eLog::NS, NO_ERROR, "\t%s: 0x%x\n", pszRegister, nValue);
 }
 
 //-----------------------------------------------------------------------------
@@ -411,7 +411,7 @@ void CCrashHandler::FormatFlags(const CHAR* pszRegister, DWORD nValue)
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatIntReg(const CHAR* pszRegister, DWORD64 nValue)
 {
-	spdlog::error("\t{}: {:#x}", pszRegister, nValue);
+	Error(eLog::NS, NO_ERROR, "\t%s: 0x%x\n", pszRegister, nValue);
 }
 
 //-----------------------------------------------------------------------------
@@ -425,8 +425,8 @@ void CCrashHandler::FormatFloatReg(const CHAR* pszRegister, M128A nValue)
 		static_cast<DWORD>(nValue.High & UINT_MAX),
 		static_cast<DWORD>(nValue.High >> 32)};
 
-	spdlog::error(
-		"\t{}: [ {:G}, {:G}, {:G}, {:G} ]; [ {:#x}, {:#x}, {:#x}, {:#x} ]",
+	Error(eLog::NS, NO_ERROR,
+		"\t%s: [ %f, %f, %f, %f ]; [ 0x%x, 0x%x, 0x%x, 0x%x ]\n",
 		pszRegister,
 		static_cast<float>(nVec[0]),
 		static_cast<float>(nVec[1]),
@@ -443,7 +443,7 @@ void CCrashHandler::FormatFloatReg(const CHAR* pszRegister, M128A nValue)
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatRegisters()
 {
-	spdlog::error("Registers:");
+	Error(eLog::NS, NO_ERROR, "Registers:");
 
 	PCONTEXT pContext = m_pExceptionInfos->ContextRecord;
 
@@ -492,22 +492,22 @@ void CCrashHandler::FormatLoadedMods()
 {
 	if (g_pModManager)
 	{
-		spdlog::error("Enabled mods:");
+		Error(eLog::NS, NO_ERROR, "Enabled mods:\n");
 		for (const Mod& mod : g_pModManager->m_LoadedMods)
 		{
 			if (!mod.m_bEnabled)
 				continue;
 
-			spdlog::error("\t{}", mod.Name);
+			Error(eLog::NS, NO_ERROR, "\t%s\n", mod.Name.c_str());
 		}
 
-		spdlog::error("Disabled mods:");
+		Error(eLog::NS, NO_ERROR, "Disabled mods:\n");
 		for (const Mod& mod : g_pModManager->m_LoadedMods)
 		{
 			if (mod.m_bEnabled)
 				continue;
 
-			spdlog::error("\t{}", mod.Name);
+			Error(eLog::NS, NO_ERROR, "\t%s\n", mod.Name.c_str());
 		}
 	}
 }
@@ -519,10 +519,10 @@ void CCrashHandler::FormatLoadedPlugins()
 {
 	if (g_pPluginManager)
 	{
-		spdlog::error("Loaded Plugins:");
+		Error(eLog::NS, NO_ERROR, "Loaded Plugins:\n");
 		for (const Plugin& plugin : g_pPluginManager->m_vLoadedPlugins)
 		{
-			spdlog::error("\t{}", plugin.name);
+			Error(eLog::NS, NO_ERROR, "\t%s\n", plugin.name.c_str());
 		}
 	}
 }
@@ -532,7 +532,7 @@ void CCrashHandler::FormatLoadedPlugins()
 //-----------------------------------------------------------------------------
 void CCrashHandler::FormatModules()
 {
-	spdlog::error("Loaded modules:");
+	Error(eLog::NS, NO_ERROR, "Loaded modules:\n");
 	HMODULE hModules[1024];
 	DWORD cbNeeded;
 
@@ -544,7 +544,7 @@ void CCrashHandler::FormatModules()
 			if (GetModuleFileNameExA(GetCurrentProcess(), hModules[i], szModulePath, sizeof(szModulePath)))
 			{
 				const CHAR* pszModuleFileName = strrchr(szModulePath, '\\') + 1;
-				spdlog::error("\t{}", pszModuleFileName);
+				Error(eLog::NS, NO_ERROR, "\t%s\n", pszModuleFileName);
 			}
 		}
 	}
@@ -579,7 +579,7 @@ void CCrashHandler::WriteMinidump()
 		CloseHandle(hMinidumpFile);
 	}
 	else
-		spdlog::error("Failed to write minidump file {}!", stream.str());
+		Error(eLog::NS, NO_ERROR, "Failed to write minidump file %s!\n", stream.str().c_str());
 }
 
 //-----------------------------------------------------------------------------

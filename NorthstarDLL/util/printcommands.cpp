@@ -205,7 +205,7 @@ void ConCommand_list(const CCommand& arg)
 	{
 		PrintCommandHelpDialogue(map.second, map.second->m_pszName);
 	}
-	spdlog::info("{} total convars/concommands", sorted.size());
+	DevMsg(eLog::NS, "%z total convars/concommands\n", sorted.size());
 }
 
 void ConCommand_differences(const CCommand& arg)
@@ -255,8 +255,8 @@ void ConCommand_differences(const CCommand& arg)
 			formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
 		}
 
-		formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
-		spdlog::info(formatted);
+		formatted.append(fmt::format(" - {}\n", cvar->GetHelpText()));
+		DevMsg(eLog::NS, formatted.c_str());
 	}
 }
 
