@@ -158,7 +158,7 @@ class SquirrelMessageBuffer
 		auto maybeMessage = this->pop();
 		if (!maybeMessage)
 		{
-			spdlog::error("Plugin tried consuming SquirrelMessage while buffer was empty");
+			Error(eLog::PLUGSYS, NO_ERROR, "Plugin tried consuming SquirrelMessage while buffer was empty\n");
 			return;
 		}
 		auto message = maybeMessage.value();

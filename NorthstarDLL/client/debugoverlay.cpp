@@ -244,7 +244,7 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	break;
 	default:
 	{
-		spdlog::warn("Unimplemented overlay type {}", pOverlay->m_Type);
+		Warning(eLog::ENGINE, "Unimplemented overlay type %i\n", pOverlay->m_Type);
 	}
 	break;
 	}

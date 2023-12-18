@@ -15,7 +15,7 @@ ModDownloader* g_pModDownloader;
 
 ModDownloader::ModDownloader()
 {
-	spdlog::info("Mod downloader initialized");
+	DevMsg(eLog::NS, "Mod downloader initialized\n");
 
 	// Initialise mods list URI
 	char* clachar = strstr(GetCommandLineA(), CUSTOM_MODS_URL_FLAG);
@@ -36,12 +36,12 @@ ModDownloader::ModDownloader()
 			int quote2 = (cla.substr(quote1 + 1)).find(quote);
 			url = cla.substr(quote1 + 1, quote2);
 		}
-		spdlog::info("Found custom verified mods URL in command line argument: {}", url);
+		DevMsg(eLog::NS, "Found custom verified mods URL in command line argument: %s\n", url.c_str());
 		modsListUrl = strdup(url.c_str());
 	}
 	else
 	{
-		spdlog::info("Custom verified mods URL not found in command line arguments, using default URL.");
+		DevMsg(eLog::NS, "Custom verified mods URL not found in command line arguments, using default URL.\n");
 		modsListUrl = strdup(DEFAULT_MODS_LIST_URL);
 	}
 }
@@ -77,16 +77,16 @@ void ModDownloader::FetchModsListFromAPI()
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				spdlog::info("Mods list successfully fetched.");
+				DevMsg(eLog::NS, "Mods list successfully fetched.\n");
 			}
 			else
 			{
-				spdlog::error("Fetching mods list failed: {}", curl_easy_strerror(result));
+				Error(eLog::NS, NO_ERROR, "Fetching mods list failed: %s\n", curl_easy_strerror(result));
 				goto REQUEST_END_CLEANUP;
 			}
 
 			// Load mods list into local state
-			spdlog::info("Loading mods configuration...");
+			DevMsg(eLog::NS, "Loading mods configuration...\n");
 			verifiedModsJson.Parse(readBuffer);
 			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
 			{
@@ -106,10 +106,10 @@ void ModDownloader::FetchModsListFromAPI()
 
 				VerifiedModDetails modConfig = {.dependencyPrefix = dependency, .versions = modVersions};
 				verifiedMods.insert({name, modConfig});
-				spdlog::info("==> Loaded configuration for mod \"" + name + "\"");
+				DevMsg(eLog::NS, "==> Loaded configuration for mod \"%s\n", name.c_str());
 			}
 
-			spdlog::info("Done loading verified mods list.");
+			DevMsg(eLog::NS, "Done loading verified mods list.\n");
 
 		REQUEST_END_CLEANUP:
 			curl_easy_cleanup(easyhandle);
@@ -141,12 +141,12 @@ void FetchModSync(std::promise<std::optional<fs::path>>&& p, std::string_view ur
 
 	if (result == CURLcode::CURLE_OK)
 	{
-		spdlog::info("Mod archive successfully fetched.");
+		DevMsg(eLog::NS, "Mod archive successfully fetched.\n");
 		goto REQUEST_END_CLEANUP;
 	}
 	else
 	{
-		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
+		Error(eLog::NS, NO_ERROR, "Fetching mod archive failed: %s\n", curl_easy_strerror(result));
 		failed = true;
 		goto REQUEST_END_CLEANUP;
 	}
@@ -164,11 +164,11 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	// Build archive distant URI
 	std::string archiveName = std::format("{}-{}.zip", modPrefix, modVersion.data());
 	std::string url = STORE_URL + archiveName;
-	spdlog::info(std::format("Fetching mod archive from {}", url));
+	DevMsg(eLog::NS, "Fetching mod archive from %s\n", url.c_str());
 
 	// Download destination
 	std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
-	spdlog::info(std::format("Downloading archive to {}", downloadPath.generic_string()));
+	DevMsg(eLog::NS, "Downloading archive to %s\n", downloadPath.c_str());
 
 	// Download the actual archive
 	std::promise<std::optional<fs::path>> promise;
@@ -182,7 +182,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 {
 	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
 	{
-		spdlog::info("Bypassing mod verification due to flag set up.");
+		DevMsg(eLog::NS, "Bypassing mod verification due to flag set up.\n");
 		return true;
 	}
 
@@ -241,7 +241,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	// Hash archive content
 	if (!fp.is_open())
 	{
-		spdlog::error("Unable to open archive.");
+		Error(eLog::NS, NO_ERROR, "Unable to open archive.\n");
 		return false;
 	}
 	fp.seekg(0, fp.beg);
@@ -279,8 +279,8 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 		ss << std::hex << std::setw(2) << static_cast<int>(hash.data()[i]);
 	}
 
-	spdlog::info("Expected checksum: {}", expectedChecksum.data());
-	spdlog::info("Computed checksum: {}", ss.str());
+	DevMsg(eLog::NS, "Expected checksum: %s\n", expectedChecksum.data());
+	DevMsg(eLog::NS, "Computed checksum: %s\n", ss.str().c_str());
 	return expectedChecksum.compare(ss.str()) == 0;
 
 cleanup:
@@ -303,7 +303,7 @@ bool ModDownloader::IsModAuthorized(std::string_view modName, std::string_view m
 {
 	if (strstr(GetCommandLineA(), VERIFICATION_FLAG))
 	{
-		spdlog::info("Bypassing mod verification due to flag set up.");
+		DevMsg(eLog::NS, "Bypassing mod verification due to flag set up.\n");
 		return true;
 	}
 
@@ -325,7 +325,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	file = unzOpen(modPath.generic_string().c_str());
 	if (file == NULL)
 	{
-		spdlog::error("Cannot open archive located at {}.", modPath.generic_string());
+		Error(eLog::NS, NO_ERROR, "Cannot open archive located at %s.\n", modPath.c_str());
 		goto EXTRACTION_CLEANUP;
 	}
 
@@ -334,7 +334,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	status = unzGetGlobalInfo64(file, &gi);
 	if (status != UNZ_OK)
 	{
-		spdlog::error("Failed getting information from archive (error code: {})", status);
+		Error(eLog::NS, NO_ERROR, "Failed getting information from archive (error code: %i)\n", status);
 		goto EXTRACTION_CLEANUP;
 	}
 
@@ -353,15 +353,15 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		{
 			std::error_code ec;
 			fs::path fileDestination = modDirectory / zipFilename;
-			spdlog::info("=> {}", fileDestination.generic_string());
+			DevMsg(eLog::NS, "=> %s\n", fileDestination.c_str());
 
 			// Create parent directory if needed
 			if (!std::filesystem::exists(fileDestination.parent_path()))
 			{
-				spdlog::info("Parent directory does not exist, creating it.", fileDestination.generic_string());
+				DevMsg(eLog::NS, "Parent directory does not exist, creating it.\n", fileDestination.generic_string());
 				if (!std::filesystem::create_directories(fileDestination.parent_path(), ec) && ec.value() != 0)
 				{
-					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
+					Error(eLog::NS, NO_ERROR, "Parent directory (%s) creation failed.\n", fileDestination.parent_path().c_str());
 					goto EXTRACTION_CLEANUP;
 				}
 			}
@@ -372,7 +372,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				// Create directory
 				if (!std::filesystem::create_directory(fileDestination, ec) && ec.value() != 0)
 				{
-					spdlog::error("Directory creation failed: {}", ec.message());
+					Error(eLog::NS, NO_ERROR, "Directory creation failed: %s\n", ec.message().c_str());
 					goto EXTRACTION_CLEANUP;
 				}
 			}
@@ -382,7 +382,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				// Ensure file is in zip archive
 				if (unzLocateFile(file, zipFilename, 0) != UNZ_OK)
 				{
-					spdlog::error("File \"{}\" was not found in archive.", zipFilename);
+					Error(eLog::NS, NO_ERROR, "File \"%s\" was not found in archive.\n", zipFilename);
 					goto EXTRACTION_CLEANUP;
 				}
 
@@ -396,7 +396,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				status = unzOpenCurrentFile(file);
 				if (status != UNZ_OK)
 				{
-					spdlog::error("Could not open file {} from archive.", zipFilename);
+					Error(eLog::NS, NO_ERROR, "Could not open file %s from archive.\n", zipFilename);
 					goto EXTRACTION_CLEANUP;
 				}
 
@@ -404,7 +404,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				fout = fopen(fileDestination.generic_string().c_str(), "wb");
 				if (fout == NULL)
 				{
-					spdlog::error("Failed creating destination file.");
+					Error(eLog::NS, NO_ERROR, "Failed creating destination file.\n");
 					goto EXTRACTION_CLEANUP;
 				}
 
@@ -412,7 +412,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				buffer = (void*)malloc(bufferSize);
 				if (buffer == NULL)
 				{
-					spdlog::error("Error while allocating memory.");
+					Error(eLog::NS, NO_ERROR, "Error while allocating memory.\n");
 					goto EXTRACTION_CLEANUP;
 				}
 
@@ -422,14 +422,14 @@ void ModDownloader::ExtractMod(fs::path modPath)
 					err = unzReadCurrentFile(file, buffer, bufferSize);
 					if (err < 0)
 					{
-						spdlog::error("error {} with zipfile in unzReadCurrentFile", err);
+						Error(eLog::NS, NO_ERROR, "error %i with zipfile in unzReadCurrentFile\n", err);
 						break;
 					}
 					if (err > 0)
 					{
 						if (fwrite(buffer, (unsigned)err, 1, fout) != 1)
 						{
-							spdlog::error("error in writing extracted file\n");
+							Error(eLog::NS, NO_ERROR, "error in writing extracted file\n");
 							err = UNZ_ERRNO;
 							break;
 						}
@@ -438,13 +438,13 @@ void ModDownloader::ExtractMod(fs::path modPath)
 
 				if (err != UNZ_OK)
 				{
-					spdlog::error("An error occurred during file extraction (code: {})", err);
+					Error(eLog::NS, NO_ERROR, "An error occurred during file extraction (code: %i)\n", err);
 					goto EXTRACTION_CLEANUP;
 				}
 				err = unzCloseCurrentFile(file);
 				if (err != UNZ_OK)
 				{
-					spdlog::error("error {} with zipfile in unzCloseCurrentFile", err);
+					Error(eLog::NS, NO_ERROR, "error %i with zipfile in unzCloseCurrentFile\n", err);
 				}
 
 				// Cleanup
@@ -459,7 +459,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			status = unzGoToNextFile(file);
 			if (status != UNZ_OK)
 			{
-				spdlog::error("Error while browsing archive files (error code: {}).", status);
+				Error(eLog::NS, NO_ERROR, "Error while browsing archive files (error code: %i).\n", status);
 				goto EXTRACTION_CLEANUP;
 			}
 		}
@@ -468,7 +468,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 EXTRACTION_CLEANUP:
 	if (unzClose(file) != MZ_OK)
 	{
-		spdlog::error("Failed closing mod archive after extraction.");
+		Error(eLog::NS, NO_ERROR, "Failed closing mod archive after extraction.\n");
 	}
 }
 
@@ -477,7 +477,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	// Check if mod can be auto-downloaded
 	if (!IsModAuthorized(std::string_view(modName), std::string_view(modVersion)))
 	{
-		spdlog::warn("Tried to download a mod that is not verified, aborting.");
+		Warning(eLog::NS, "Tried to download a mod that is not verified, aborting.\n");
 		return;
 	}
 
@@ -491,13 +491,13 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), std::string_view(modVersion));
 			if (!fetchingResult.has_value())
 			{
-				spdlog::error("Something went wrong while fetching archive, aborting.");
+				Error(eLog::NS, NO_ERROR, "Something went wrong while fetching archive, aborting.\n");
 				goto REQUEST_END_CLEANUP;
 			}
 			archiveLocation = fetchingResult.value();
 			if (!IsModLegit(archiveLocation, std::string_view(expectedHash)))
 			{
-				spdlog::warn("Archive hash does not match expected checksum, aborting.");
+				Warning(eLog::NS, "Archive hash does not match expected checksum, aborting.\n");
 				goto REQUEST_END_CLEANUP;
 			}
 
@@ -511,10 +511,10 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			}
 			catch (const std::exception& a)
 			{
-				spdlog::error("Error while removing downloaded archive: {}", a.what());
+				Error(eLog::NS, NO_ERROR, "Error while removing downloaded archive: %s\n", a.what());
 			}
 
-			spdlog::info("Done downloading {}.", modName);
+			DevMsg(eLog::NS, "Done downloading %s.\n", modName.c_str());
 		});
 
 	requestThread.detach();
