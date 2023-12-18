@@ -1,6 +1,5 @@
 #pragma once
 
-
 enum class HostState_t
 {
 	HS_NEW_GAME = 0,
@@ -15,7 +14,7 @@ enum class HostState_t
 
 struct CHostState
 {
-	public:
+  public:
 	HostState_t m_iCurrentState;
 	HostState_t m_iNextState;
 
@@ -35,7 +34,7 @@ struct CHostState
 	bool m_bLetToolsOverrideLoadGameEnts; // During a load game, this tells Foundry to override ents that are selected in Hammer.
 	bool m_bSplitScreenConnect;
 	bool m_bGameHasShutDownAndFlushedMemory; // This is false once we load a map into memory, and set to true once the map is unloaded
-												// and all memory flushed
+											 // and all memory flushed
 	bool m_bWorkshopMapDownloadPending;
 };
 
