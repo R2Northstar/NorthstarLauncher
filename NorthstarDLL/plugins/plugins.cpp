@@ -214,7 +214,11 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 			[&](char c) -> bool { return !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_'); }) !=
 		plugin.dependencyName.end())
 	{
-		Warning(eLog::PLUGSYS, "Dependency string \"%s\" in %s is not valid a squirrel constant!\n", plugin.dependencyName.c_str(), plugin.name.c_str());
+		Warning(
+			eLog::PLUGSYS,
+			"Dependency string \"%s\" in %s is not valid a squirrel constant!\n",
+			plugin.dependencyName.c_str(),
+			plugin.name.c_str());
 	}
 
 	plugin.init_sqvm_client = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_CLIENT");
