@@ -429,7 +429,9 @@ void CCrashHandler::FormatFloatReg(const CHAR* pszRegister, M128A nValue)
 		static_cast<DWORD>(nValue.High & UINT_MAX),
 		static_cast<DWORD>(nValue.High >> 32)};
 
-	Error(eLog::NS, NO_ERROR,
+	Error(
+		eLog::NS,
+		NO_ERROR,
 		"\t%s: [ %f, %f, %f, %f ]; [ 0x%x, 0x%x, 0x%x, 0x%x ]\n",
 		pszRegister,
 		static_cast<float>(nVec[0]),
