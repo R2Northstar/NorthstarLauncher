@@ -188,7 +188,7 @@ template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path 
 			{
 				Error(eLog::NS, NO_ERROR, "DELETE FAILED!\n");
 				m.get().unlock();
-				Error(eLog::NS, NO_ERROR, ex.what() << '\n');
+				Error(eLog::NS, NO_ERROR, "%s\n", ex.what());
 			}
 		});
 
