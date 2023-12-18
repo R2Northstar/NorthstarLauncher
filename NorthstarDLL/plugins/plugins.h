@@ -23,7 +23,7 @@ class Plugin
 
   public:
 	Plugin(std::string path);
-	void Unload();
+	bool Unload();
 	void Reload();
 
 	// sys

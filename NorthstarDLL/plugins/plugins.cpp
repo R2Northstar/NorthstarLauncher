@@ -33,7 +33,12 @@ bool isValidSquirrelIdentifier(std::string s)
 
 Plugin::Plugin(std::string path) : location(path)
 {
+	HMODULE m = GetModuleHandleA(path.c_str());
+
+
 	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+
+	NS::log::PLUGINSYS->info("module handle at path {}", (void*)m);
 
 	NS::log::PLUGINSYS->info("loaded plugin handle {}", static_cast<void*>(this->handle));
 
@@ -123,26 +128,34 @@ Plugin::Plugin(std::string path) : location(path)
 	this->valid = true;
 }
 
-void Plugin::Unload()
+bool Plugin::Unload()
 {
 	if (!this->handle)
-		return;
+		return true;
 
-	this->callbacks->Unload();
+	bool unloaded = this->callbacks->Unload();
+
+	if(!unloaded)
+		return false;
 
 	if (!FreeLibrary(this->handle))
 	{
 		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
-		return;
+		return true;
 	}
 
 	g_pPluginManager->RemovePlugin(this->handle);
+	return true;
 }
 
 void Plugin::Reload()
 {
 	std::string path = this->location;
-	this->Unload();
+	bool unloaded = this->Unload();
+
+	if(!unloaded)
+		return;
+
 	g_pPluginManager->LoadPlugin(fs::path(path), true);
 }
 

@@ -26,7 +26,7 @@ class IPluginCallbacks
 	virtual void
 	Init(HMODULE northstarModule, const PluginNorthstarData* initData, bool reloaded) = 0; // runs after the plugin is loaded and validated
 	virtual void Finalize() = 0; // runs after all plugins have been loaded
-	virtual void Unload() = 0; // runs just before the library is freed
+	virtual bool Unload() = 0; // runs just before the library is freed
 	virtual void OnSqvmCreated(CSquirrelVM* sqvm) = 0;
 	virtual void OnSqvmDestroying(CSquirrelVM* sqvm) = 0;
 	virtual void OnLibraryLoaded(HMODULE module, const char* name) = 0;
