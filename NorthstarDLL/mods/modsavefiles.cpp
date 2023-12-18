@@ -110,7 +110,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 			{
 				Error(eLog::NS, NO_ERROR, "SAVE FAILED!\n");
 				mutex.get().unlock();
-				Error(eLog::NS, NO_ERROR, ex.what() << '\n');
+				Error(eLog::NS, NO_ERROR, "%s\n", ex.what());
 			}
 		});
 
@@ -156,7 +156,7 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 				Error(eLog::NS, NO_ERROR, "LOAD FAILED!\n");
 				g_pSquirrel<context>->AsyncCall("NSHandleLoadResult", handle, false, "");
 				mutex.get().unlock();
-				Error(eLog::NS, NO_ERROR, ex.what() << '\n');
+				Error(eLog::NS, NO_ERROR, "%s\n", ex.what());
 			}
 		});
 
