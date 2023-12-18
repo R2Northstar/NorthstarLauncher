@@ -3,11 +3,13 @@
 #include "shared/playlist.h"
 #include "server/auth/serverauthentication.h"
 #include "core/tier0.h"
+#include "core/vanilla.h"
 #include "engine/r2engine.h"
 #include "mods/modmanager.h"
 #include "shared/misccommands.h"
 #include "util/version.h"
 #include "server/auth/bansystem.h"
+#include "dedicated/dedicated.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -87,7 +89,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, const char* originToken)
 {
-	if (m_bOriginAuthWithMasterServerInProgress)
+	if (m_bOriginAuthWithMasterServerInProgress || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	// do this here so it's instantly set
@@ -472,7 +474,7 @@ void MasterServerManager::RequestMainMenuPromos()
 void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char* playerToken)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer)
+	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
@@ -609,7 +611,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 void MasterServerManager::AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer)
+	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
@@ -1172,7 +1174,10 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 
 		if (m_nNumRegistrationAttempts >= MAX_REGISTRATION_ATTEMPTS)
 		{
-			Error(eLog::MS, NO_ERROR, "Reached max ms server registration attempts.\n");
+			if (IsDedicatedServer())
+				Error(eLog::MS, NO_ERROR, "Reached max ms server registration attempts.\n");
+			else
+				Warning(eLog::MS, "Reached max ms server registration attempts.\n");
 		}
 	}
 	else if (updateServerFuture.valid())
@@ -1225,7 +1230,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 	addServerFuture = std::async(
 		std::launch::async,
-		[threadedPresence, modInfo, hostname]
+		[threadedPresence, modInfo, hostname, pServerPresence]
 		{
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -1252,6 +1257,11 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 				return data;
 			};
+
+			// don't log errors if we wouldn't actually show up in the server list anyway (stop tickets)
+			// except for dedis, for which this error logging is actually pretty important
+			bool shouldLogError = IsDedicatedServer() || (!strstr(pServerPresence->m_MapName, "mp_lobby") &&
+														  strstr(pServerPresence->m_PlaylistName, "private_match"));
 
 			curl_mime_data(part, modInfo.c_str(), modInfo.size());
 			curl_mime_name(part, "modinfo");
@@ -1302,24 +1312,29 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				// No retry.
 				if (serverAddedJson.HasParseError())
 				{
-					Error(
-						eLog::MS,
-						NO_ERROR,
-						"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
-						rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+					if (shouldLogError)
+						Error(
+							eLog::MS,
+							NO_ERROR,
+							"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
+							rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (!serverAddedJson.IsObject())
 				{
-					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
+					if (shouldLogError)
+						Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (serverAddedJson.HasMember("error"))
 				{
-					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
-					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
+					if (shouldLogError)
+					{
+						Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
+						Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
+					}
 
 					// If this is DUPLICATE_SERVER, we'll retry adding the server every 20 seconds.
 					// The master server will only update its internal server list and clean up dead servers on certain events.
@@ -1328,7 +1343,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					if (serverAddedJson["error"].HasMember("enum") &&
 						strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER") == 0)
 					{
-						Error(eLog::MS, NO_ERROR, "Cooling down while the master server cleans the dead server entry, if any.\n");
+						if (shouldLogError)
+							Error(eLog::MS, NO_ERROR, "Cooling down while the master server cleans the dead server entry, if any.\n");
 						return ReturnCleanup(MasterServerReportPresenceResult::FailedDuplicateServer);
 					}
 
@@ -1338,14 +1354,16 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 				if (!serverAddedJson["success"].IsTrue())
 				{
-					Error(eLog::MS, NO_ERROR, "Adding server to masterserver failed: \"success\" is not true\n");
+					if (shouldLogError)
+						Error(eLog::MS, NO_ERROR, "Adding server to masterserver failed: \"success\" is not true\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
 				if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
 					!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
 				{
-					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: malformed json object\n");
+					if (shouldLogError)
+						Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: malformed json object\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
@@ -1357,7 +1375,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 			}
 			else
 			{
-				Error(eLog::MS, NO_ERROR, "Failed adding self to server list: error %s\n", curl_easy_strerror(result));
+				if (shouldLogError)
+					Error(eLog::MS, NO_ERROR, "Failed adding self to server list: error %s\n", curl_easy_strerror(result));
 				return ReturnCleanup(MasterServerReportPresenceResult::FailedNoConnect);
 			}
 		});

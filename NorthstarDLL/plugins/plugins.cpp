@@ -167,7 +167,8 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 	}
 	// Passed all checks, going to actually load it now
 
-	HMODULE pluginLib = LoadLibraryW(wpptr); // Load the DLL as a data file
+	HMODULE pluginLib =
+		LoadLibraryExW(wpptr, 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS); // Load the DLL with lib folders
 	if (pluginLib == NULL)
 	{
 		Error(
@@ -207,6 +208,15 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		plugin.dependencyName = plugin.name;
 	}
 
+	if (std::find_if(
+			plugin.dependencyName.begin(),
+			plugin.dependencyName.end(),
+			[&](char c) -> bool { return !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_'); }) !=
+		plugin.dependencyName.end())
+	{
+		NS::log::PLUGINSYS->warn("Dependency string \"{}\" in {} is not valid a squirrel constant!", plugin.dependencyName, plugin.name);
+	}
+
 	plugin.init_sqvm_client = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_CLIENT");
 	plugin.init_sqvm_server = (PLUGIN_INIT_SQVM_TYPE)GetProcAddress(pluginLib, "PLUGIN_INIT_SQVM_SERVER");
 	plugin.inform_sqvm_created = (PLUGIN_INFORM_SQVM_CREATED_TYPE)GetProcAddress(pluginLib, "PLUGIN_INFORM_SQVM_CREATED");
@@ -233,7 +243,7 @@ inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
 		return;
 	}
 
-	for (const fs::directory_entry& entry : fs::recursive_directory_iterator(pluginPath))
+	for (const fs::directory_entry& entry : fs::directory_iterator(pluginPath))
 	{
 		if (fs::is_regular_file(entry) && entry.path().extension() == ".dll")
 			paths.emplace_back(entry.path());
@@ -265,6 +275,10 @@ bool PluginManager::LoadPlugins()
 	data.version = ns_version.c_str();
 	data.northstarModule = g_NorthstarModule;
 
+	fs::path libPath = fs::absolute(pluginPath + "\\lib");
+	if (fs::exists(libPath) && fs::is_directory(libPath))
+		AddDllDirectory(libPath.wstring().c_str());
+
 	FindPlugins(pluginPath, paths);
 
 	// Special case for Thunderstore mods dir
@@ -280,6 +294,11 @@ bool PluginManager::LoadPlugins()
 			Warning(eLog::PLUGSYS, "The following directory did not match 'AUTHOR-MOD-VERSION': %s\n", dir.path().c_str());
 			continue; // skip loading package that doesn't match
 		}
+
+		fs::path libDir = fs::absolute(pluginsDir / "lib");
+		if (fs::exists(libDir) && fs::is_directory(libDir))
+			AddDllDirectory(libDir.wstring().c_str());
+
 		FindPlugins(pluginsDir, paths);
 	}
 
