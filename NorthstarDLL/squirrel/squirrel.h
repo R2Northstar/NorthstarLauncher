@@ -63,10 +63,10 @@ namespace NS::log
 // Cuts down on compile time by ~5 seconds
 class SquirrelManagerBase
 {
-  protected:
+protected:
 	std::vector<SQFuncRegistration*> m_funcRegistrations;
 
-  public:
+public:
 	CSquirrelVM* m_pSQVM;
 	std::map<std::string, SQFunction> m_funcOverrides = {};
 	std::map<std::string, SQFunction> m_funcOriginals = {};
@@ -318,7 +318,7 @@ class SquirrelManagerBase
 
 template <ScriptContext context> class SquirrelManager : public virtual SquirrelManagerBase
 {
-  public:
+public:
 #pragma region MessageBuffer
 	SquirrelMessageBuffer* messageBuffer;
 
@@ -403,7 +403,7 @@ template <ScriptContext context> class SquirrelManager : public virtual Squirrel
 
 #pragma endregion
 
-  public:
+public:
 	SquirrelManager()
 	{
 		m_pSQVM = nullptr;
