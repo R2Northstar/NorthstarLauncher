@@ -84,7 +84,7 @@ void RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-std::string NS::Utils::FormatV(const char* fmt, va_list vArgs)
+std::string FormatV(const char* fmt, va_list vArgs)
 {
 	va_list vArgsCopy;
 	va_copy(vArgsCopy, vArgs);
@@ -105,7 +105,7 @@ std::string NS::Utils::FormatV(const char* fmt, va_list vArgs)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-std::string NS::Utils::Format(const char* fmt, ...)
+std::string Format(const char* fmt, ...)
 {
 	std::string svResult;
 
@@ -120,7 +120,7 @@ std::string NS::Utils::Format(const char* fmt, ...)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-std::string NS::Utils::CreateTimeStamp()
+std::string CreateTimeStamp()
 {
 	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
