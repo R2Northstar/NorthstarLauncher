@@ -64,7 +64,7 @@ void SetCommonHttpClientOptions(CURL* curl)
 	// seconds.
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
-	if (Tier0::CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
+	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -598,7 +598,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 			if (m_bNewgameAfterSelfAuth)
 			{
 				// pretty sure this is threadsafe?
-				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", R2::cmd_source_t::kCommandSrcCode);
+				Cbuf_AddText(Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", cmd_source_t::kCommandSrcCode);
 				m_bNewgameAfterSelfAuth = false;
 			}
 
@@ -920,14 +920,14 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 				return;
 			}
 
-			if (pdata.length() > R2::PERSISTENCE_MAX_SIZE)
+			if (pdata.length() > PERSISTENCE_MAX_SIZE)
 			{
 				Error(
 					eLog::MS,
 					NO_ERROR,
 					"failed to make Atlas connect pdata request %s: pdata is too large (max=%i len=%i)\n",
 					token.c_str(),
-					R2::PERSISTENCE_MAX_SIZE,
+					PERSISTENCE_MAX_SIZE,
 					pdata.length());
 				return;
 			}
@@ -1066,7 +1066,7 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 		}
 
 		// Make sure to wait til the cooldown is over for DUPLICATE_SERVER failures.
-		if (Tier0::Plat_FloatTime() < m_fNextAddServerAttemptTime)
+		if (Plat_FloatTime() < m_fNextAddServerAttemptTime)
 		{
 			return;
 		}
@@ -1168,7 +1168,7 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 		case MasterServerReportPresenceResult::FailedDuplicateServer:
 			++m_nNumRegistrationAttempts;
 			// Wait at least twenty seconds until we re-attempt to add the server.
-			m_fNextAddServerAttemptTime = Tier0::Plat_FloatTime() + 20.0f;
+			m_fNextAddServerAttemptTime = Plat_FloatTime() + 20.0f;
 			break;
 		}
 
