@@ -104,6 +104,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	ParseScripts(modJson);
 	ParseLocalization(modJson);
 	ParseDependencies(modJson);
+	ParsePluginDependencies(modJson);
 	ParseInitScript(modJson);
 
 	// A mod is remote if it's located in the remote mods folder
@@ -483,6 +484,28 @@ void Mod::ParseDependencies(rapidjson_document& json)
 	}
 }
 
+void Mod::ParsePluginDependencies(rapidjson_document& json)
+{
+	if (!json.HasMember("PluginDependencies"))
+		return;
+
+	if (!json["PluginDependencies"].IsArray())
+	{
+		spdlog::warn("'PluginDependencies' field is not an object, skipping...");
+		return;
+	}
+
+	for (auto& name : json["PluginDependencies"].GetArray())
+	{
+		if (!name.IsString())
+			continue;
+
+		spdlog::info("Plugin Constant {} defined by {}", name.GetString(), Name);
+
+		PluginDependencyConstants.push_back(name.GetString());
+	}
+}
+
 void Mod::ParseInitScript(rapidjson_document& json)
 {
 	if (!json.HasMember("InitScript"))
@@ -688,6 +711,11 @@ void ModManager::LoadMods()
 				m_DependencyConstants.emplace(pair);
 		}
 
+		for (std::string& dependency : mod.PluginDependencyConstants)
+		{
+			m_PluginDependencyConstants.insert(dependency);
+		}
+
 		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
 			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
 		else
@@ -732,7 +760,7 @@ void ModManager::LoadMods()
 		{
 			// make sure convar isn't registered yet, unsure if necessary but idk what
 			// behaviour is for defining same convar multiple times
-			if (!R2::g_pCVar->FindVar(convar->Name.c_str()))
+			if (!g_pCVar->FindVar(convar->Name.c_str()))
 			{
 				new ConVar(convar->Name.c_str(), convar->DefaultValue.c_str(), convar->Flags, convar->HelpString.c_str());
 			}
@@ -741,7 +769,7 @@ void ModManager::LoadMods()
 		for (ModConCommand* command : mod.ConCommands)
 		{
 			// make sure command isnt't registered multiple times.
-			if (!R2::g_pCVar->FindCommand(command->Name.c_str()))
+			if (!g_pCVar->FindCommand(command->Name.c_str()))
 			{
 				ConCommand* newCommand = new ConCommand();
 				std::string funcName = command->Function;
@@ -790,7 +818,7 @@ void ModManager::LoadMods()
 					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
 
 					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
-						(*R2::g_pFilesystem)->m_vtable->MountVPK(*R2::g_pFilesystem, vpkName.c_str());
+						(*g_pFilesystem)->m_vtable->MountVPK(*g_pFilesystem, vpkName.c_str());
 				}
 			}
 		}
