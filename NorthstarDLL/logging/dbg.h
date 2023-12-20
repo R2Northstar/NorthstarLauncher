@@ -90,12 +90,8 @@ void Error(eLog eContext, int nCode, const char* fmt, ...);
 
 void PluginMsg(eLogLevel eLevel, const char* pszName, const char* fmt, ...);
 
-// Stubs so i can compile
-namespace NS
-{
-	namespace log
+namespace log
 
-	{
-		inline void FlushLoggers() {};
-	}
-} // namespace NS
+{
+	inline void FlushLoggers() {};
+}
