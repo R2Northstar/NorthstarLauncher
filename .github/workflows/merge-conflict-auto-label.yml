@@ -1,0 +1,17 @@
+name: Merge Conflict Auto Label
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo Hello
+      - uses: mschilde/auto-label-merge-conflicts@master
+        with:
+          CONFLICT_LABEL_NAME: "this is a test"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_RETRIES: 5
+          WAIT_MS: 5000
