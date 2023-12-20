@@ -5,14 +5,14 @@
 
 class EditablePanel
 {
-  public:
+public:
 	virtual ~EditablePanel() = 0;
 	unsigned char unknown[0x2B0];
 };
 
 class IConsoleDisplayFunc
 {
-  public:
+public:
 	virtual void ColorPrint(const SourceColor& clr, const char* pMessage) = 0;
 	virtual void Print(const char* pMessage) = 0;
 	virtual void DPrint(const char* pMessage) = 0;
@@ -24,7 +24,7 @@ class CConsolePanel : public EditablePanel, public IConsoleDisplayFunc
 
 class CConsoleDialog
 {
-  public:
+public:
 	struct VTable
 	{
 		void* unknown[298];
@@ -38,7 +38,7 @@ class CConsoleDialog
 
 class CGameConsole
 {
-  public:
+public:
 	virtual ~CGameConsole() = 0;
 
 	// activates the console, makes it visible and brings it to the foreground
