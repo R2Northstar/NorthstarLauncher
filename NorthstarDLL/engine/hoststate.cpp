@@ -72,7 +72,7 @@ void, __fastcall, (CHostState* self))
 
 	double dStartTime = Plat_FloatTime();
 	CHostState__State_NewGame(self);
-	DevMsg(eLog::ENGINE, "loading took %f sec\n", Plat_FloatTime() - dStartTime
+	DevMsg(eLog::ENGINE, "loading took %f sec\n", Plat_FloatTime() - dStartTime);
 
 	// setup server presence
 	g_pServerPresence->CreatePresence();
