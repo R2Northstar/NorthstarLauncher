@@ -37,8 +37,9 @@ Plugin::Plugin(std::string path) : location(path)
 
 	if(m)
 	{
+		// plugins may refuse to get unloaded for any reason so we need to prevent them getting loaded twice when reloading plugins
 		NS::log::PLUGINSYS->warn("Plugin has already been loaded");
-		return
+		return;
 	}
 
 	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
