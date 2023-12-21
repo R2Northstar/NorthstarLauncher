@@ -44,7 +44,7 @@ jobs:
     - uses: DoozyX/clang-format-lint-action@v0.16.2
       with:
         source: 'primedev'
-        exclude: 'primedev/include primedev/wsockproxy'
+        exclude: 'primedev/include primedev/thirdparty primedev/wsockproxy'
         extensions: 'h,cpp'
         clangFormatVersion: 16
         style: file
