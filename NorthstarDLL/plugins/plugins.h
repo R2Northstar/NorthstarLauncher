@@ -9,8 +9,8 @@ class Plugin
 {
   private:
 	CreateInterfaceFn m_pCreateInterface;
-	IPluginId* pluginId;
-	IPluginCallbacks* callbacks;
+	IPluginId* pluginId = 0;
+	IPluginCallbacks* callbacks = 0;
 
 	std::shared_ptr<ColoredLogger> logger;
 

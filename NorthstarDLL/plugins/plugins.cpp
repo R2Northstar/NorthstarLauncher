@@ -35,6 +35,11 @@ Plugin::Plugin(std::string path) : location(path)
 {
 	HMODULE m = GetModuleHandleA(path.c_str());
 
+	if(m)
+	{
+		NS::log::PLUGINSYS->warn("Plugin has already been loaded");
+		return
+	}
 
 	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
@@ -133,10 +138,13 @@ bool Plugin::Unload()
 	if (!this->handle)
 		return true;
 
-	bool unloaded = this->callbacks->Unload();
+	if(this->IsValid())
+	{
+		bool unloaded = this->callbacks->Unload();
 
-	if(!unloaded)
-		return false;
+		if(!unloaded)
+			return false;
+	}
 
 	if (!FreeLibrary(this->handle))
 	{
