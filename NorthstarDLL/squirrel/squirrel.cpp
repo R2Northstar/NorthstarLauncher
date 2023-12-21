@@ -157,28 +157,6 @@ const char* SQTypeNameFromID(int type)
 	return "";
 }
 
-// Allows for generating squirrelmessages from plugins.
-void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function, void* userdata)
-{
-	SquirrelMessage message {};
-	message.functionName = func_name;
-	message.isExternal = true;
-	message.externalFunc = function;
-	message.userdata = userdata;
-	switch (context)
-	{
-	case ScriptContext::CLIENT:
-		g_pSquirrel<ScriptContext::CLIENT>->messageBuffer->push(message);
-		break;
-	case ScriptContext::SERVER:
-		g_pSquirrel<ScriptContext::SERVER>->messageBuffer->push(message);
-		break;
-	case ScriptContext::UI:
-		g_pSquirrel<ScriptContext::UI>->messageBuffer->push(message);
-		break;
-	}
-}
-
 // needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
 template class SquirrelManager<ScriptContext::SERVER>;
 template class SquirrelManager<ScriptContext::CLIENT>;
@@ -618,18 +596,11 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 
 		int argsAmount = message.args.size();
 
-		if (message.isExternal && message.externalFunc != NULL)
-		{
-			argsAmount = message.externalFunc(m_pSQVM->sqvm, message.userdata);
-		}
-		else
-		{
 			for (auto& v : message.args)
 			{
 				// Execute lambda to push arg to stack
 				v();
 			}
-		}
 
 		_call(m_pSQVM->sqvm, argsAmount);
 	}
