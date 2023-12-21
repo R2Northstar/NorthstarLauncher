@@ -22,7 +22,7 @@ struct PluginNorthstarData
 
 class IPluginCallbacks
 {
-  public:
+public:
 	virtual void
 	Init(HMODULE northstarModule, const PluginNorthstarData* initData, bool reloaded) = 0; // runs after the plugin is loaded and validated
 	virtual void Finalize() = 0; // runs after all plugins have been loaded

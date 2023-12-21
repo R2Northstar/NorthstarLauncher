@@ -7,7 +7,7 @@ class Plugin;
 
 class PluginManager
 {
-  public:
+public:
 	std::vector<Plugin> GetLoadedPlugins();
 	std::optional<Plugin> GetPlugin(HMODULE handle);
 	bool LoadPlugins(bool reloaded = false);
@@ -21,7 +21,7 @@ class PluginManager
 	void InformDllLoad(HMODULE module, fs::path path);
 	void RunFrame();
 
-  private:
+private:
 	void InformAllPluginsInitialized();
 
 	std::vector<Plugin> plugins;

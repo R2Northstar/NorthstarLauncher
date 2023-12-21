@@ -596,11 +596,11 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 
 		int argsAmount = message.args.size();
 
-			for (auto& v : message.args)
-			{
-				// Execute lambda to push arg to stack
-				v();
-			}
+		for (auto& v : message.args)
+		{
+			// Execute lambda to push arg to stack
+			v();
+		}
 
 		_call(m_pSQVM->sqvm, argsAmount);
 	}

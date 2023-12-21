@@ -7,7 +7,7 @@
 
 class Plugin
 {
-  private:
+private:
 	CreateInterfaceFn m_pCreateInterface;
 	IPluginId* pluginId = 0;
 	IPluginCallbacks* callbacks = 0;
@@ -21,7 +21,7 @@ class Plugin
 	bool runOnServer;
 	bool runOnClient;
 
-  public:
+public:
 	Plugin(std::string path);
 	bool Unload();
 	void Reload();

@@ -5,7 +5,7 @@
 
 class CSys : public ISys
 {
-  public:
+public:
 	void Log(HMODULE handle, LogLevel level, char* msg)
 	{
 		spdlog::level::level_enum spdLevel;

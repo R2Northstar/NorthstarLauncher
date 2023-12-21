@@ -23,7 +23,7 @@ enum class PluginField : int
 // an interface that is required from every plugin to query data about it
 class IPluginId
 {
-  public:
+public:
 	virtual const char* GetString(PluginString prop) = 0;
 	virtual int64_t GetField(PluginField prop) = 0;
 };

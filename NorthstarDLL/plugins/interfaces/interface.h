@@ -6,7 +6,7 @@ typedef void* (*InstantiateInterfaceFn)();
 // Used internally to register classes.
 class InterfaceReg
 {
-  public:
+public:
 	InterfaceReg(InstantiateInterfaceFn fn, const char* pName);
 
 	InstantiateInterfaceFn m_CreateFn;

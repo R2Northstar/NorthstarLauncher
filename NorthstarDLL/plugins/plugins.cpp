@@ -35,7 +35,7 @@ Plugin::Plugin(std::string path) : location(path)
 {
 	HMODULE m = GetModuleHandleA(path.c_str());
 
-	if(m)
+	if (m)
 	{
 		// plugins may refuse to get unloaded for any reason so we need to prevent them getting loaded twice when reloading plugins
 		NS::log::PLUGINSYS->warn("Plugin has already been loaded");
@@ -139,11 +139,11 @@ bool Plugin::Unload()
 	if (!this->handle)
 		return true;
 
-	if(this->IsValid())
+	if (this->IsValid())
 	{
 		bool unloaded = this->callbacks->Unload();
 
-		if(!unloaded)
+		if (!unloaded)
 			return false;
 	}
 
@@ -162,7 +162,7 @@ void Plugin::Reload()
 	std::string path = this->location;
 	bool unloaded = this->Unload();
 
-	if(!unloaded)
+	if (!unloaded)
 		return;
 
 	g_pPluginManager->LoadPlugin(fs::path(path), true);
