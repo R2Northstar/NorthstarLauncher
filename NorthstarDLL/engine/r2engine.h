@@ -219,10 +219,10 @@ extern CBaseClient* g_pClientArray;
 
 enum server_state_t
 {
-  ss_dead = 0, // Dead
-  ss_loading, // Spawning
-  ss_active, // Running
-  ss_paused, // Running, but paused
+	ss_dead = 0, // Dead
+	ss_loading, // Spawning
+	ss_active, // Running
+	ss_paused, // Running, but paused
 };
 
 extern server_state_t* g_pServerState;
@@ -231,29 +231,29 @@ extern char* g_pModName;
 
 enum class GameMode_t : int
 {
-  NO_MODE = 0,
-  MP_MODE,
-  SP_MODE,
+	NO_MODE = 0,
+	MP_MODE,
+	SP_MODE,
 };
 
 class CGlobalVars
 {
 public:
-  // Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time
-  //  perf clock, but not that it doesn't obey host_timescale/host_framerate)
-  double m_flRealTime; // 0x0 ( Size: 8 )
+	// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time
+	//  perf clock, but not that it doesn't obey host_timescale/host_framerate)
+	double m_flRealTime; // 0x0 ( Size: 8 )
 
-  // Absolute frame counter - continues to increase even if game is paused
-  int m_nFrameCount; // 0x8 ( Size: 4 )
+	// Absolute frame counter - continues to increase even if game is paused
+	int m_nFrameCount; // 0x8 ( Size: 4 )
 
-  // Non-paused frametime
-  float m_flAbsoluteFrameTime; // 0xc ( Size: 4 )
+	// Non-paused frametime
+	float m_flAbsoluteFrameTime; // 0xc ( Size: 4 )
 
-  // Current time
-  //
-  // On the client, this (along with tickcount) takes a different meaning based on what
-  // piece of code you're in:
-  //
+	// Current time
+	//
+	// On the client, this (along with tickcount) takes a different meaning based on what
+	// piece of code you're in:
+	//
 	//   - While receiving network packets (like in PreDataUpdate/PostDataUpdate and proxies),
 	//     this is set to the SERVER TICKCOUNT for that packet. There is no interval between
 	//     the server ticks.
@@ -264,27 +264,27 @@ public:
 	//
 	//   - During prediction, this is based on the client's current tick:
 	//     [client_current_tick * tick_interval]
-  float m_flCurTime; // 0x10 ( Size: 4 )
+	float m_flCurTime; // 0x10 ( Size: 4 )
 
-  char _unk_0x14[28]; // 0x14 ( Size: 28 )
+	char _unk_0x14[28]; // 0x14 ( Size: 28 )
 
-  // Time spent on last server or client frame (has nothing to do with think intervals)
-  float m_flFrameTime; // 0x30 ( Size: 4 )
+	// Time spent on last server or client frame (has nothing to do with think intervals)
+	float m_flFrameTime; // 0x30 ( Size: 4 )
 
-  // current maxplayers setting
-  int m_nMaxClients; // 0x34 ( Size: 4 )
-  GameMode_t m_nGameMode; // 0x38 ( Size: 4 )
+	// current maxplayers setting
+	int m_nMaxClients; // 0x34 ( Size: 4 )
+	GameMode_t m_nGameMode; // 0x38 ( Size: 4 )
 
-  // Simulation ticks - does not increase when game is paused
-  //   this is weird and doesn't seem to increase once per frame?
-  uint32_t m_nTickCount; // 0x3c ( Size: 4 )
+	// Simulation ticks - does not increase when game is paused
+	//   this is weird and doesn't seem to increase once per frame?
+	uint32_t m_nTickCount; // 0x3c ( Size: 4 )
 
-  // Simulation tick interval
-  float m_flTickInterval; // 0x40 ( Size: 4 )
-  char _unk_0x44[28]; // 0x44 ( Size: 28 )
+	// Simulation tick interval
+	float m_flTickInterval; // 0x40 ( Size: 4 )
+	char _unk_0x44[28]; // 0x44 ( Size: 28 )
 
-  const char* m_pMapName; // 0x60 ( Size: 8 )
-  int m_nMapVersion; // 0x68 ( Size: 4 )
+	const char* m_pMapName; // 0x60 ( Size: 8 )
+	int m_nMapVersion; // 0x68 ( Size: 4 )
 };
 static_assert(offsetof(CGlobalVars, m_flRealTime) == 0x0);
 static_assert(offsetof(CGlobalVars, m_nFrameCount) == 0x8);
