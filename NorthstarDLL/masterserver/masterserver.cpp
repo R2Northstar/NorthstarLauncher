@@ -3,6 +3,7 @@
 #include "shared/playlist.h"
 #include "server/auth/serverauthentication.h"
 #include "core/tier0.h"
+#include "core/vanilla.h"
 #include "engine/r2engine.h"
 #include "mods/modmanager.h"
 #include "shared/misccommands.h"
@@ -63,7 +64,7 @@ void SetCommonHttpClientOptions(CURL* curl)
 	// seconds.
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 	// curl_easy_setopt(curl, CURLOPT_STDERR, stdout);
-	if (Tier0::CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
+	if (CommandLine()->FindParm("-msinsecure")) // TODO: this check doesn't seem to work
 	{
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -88,7 +89,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, const char* originToken)
 {
-	if (m_bOriginAuthWithMasterServerInProgress)
+	if (m_bOriginAuthWithMasterServerInProgress || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	// do this here so it's instantly set
@@ -466,7 +467,7 @@ void MasterServerManager::RequestMainMenuPromos()
 void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char* playerToken)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer)
+	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
@@ -588,7 +589,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 			if (m_bNewgameAfterSelfAuth)
 			{
 				// pretty sure this is threadsafe?
-				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", R2::cmd_source_t::kCommandSrcCode);
+				Cbuf_AddText(Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", cmd_source_t::kCommandSrcCode);
 				m_bNewgameAfterSelfAuth = false;
 			}
 
@@ -601,7 +602,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 void MasterServerManager::AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer)
+	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
@@ -896,12 +897,12 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 				return;
 			}
 
-			if (pdata.length() > R2::PERSISTENCE_MAX_SIZE)
+			if (pdata.length() > PERSISTENCE_MAX_SIZE)
 			{
 				spdlog::error(
 					"failed to make Atlas connect pdata request {}: pdata is too large (max={} len={})",
 					token,
-					R2::PERSISTENCE_MAX_SIZE,
+					PERSISTENCE_MAX_SIZE,
 					pdata.length());
 				return;
 			}
@@ -1021,7 +1022,7 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 		}
 
 		// Make sure to wait til the cooldown is over for DUPLICATE_SERVER failures.
-		if (Tier0::Plat_FloatTime() < m_fNextAddServerAttemptTime)
+		if (Plat_FloatTime() < m_fNextAddServerAttemptTime)
 		{
 			return;
 		}
@@ -1123,7 +1124,7 @@ void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPr
 		case MasterServerReportPresenceResult::FailedDuplicateServer:
 			++m_nNumRegistrationAttempts;
 			// Wait at least twenty seconds until we re-attempt to add the server.
-			m_fNextAddServerAttemptTime = Tier0::Plat_FloatTime() + 20.0f;
+			m_fNextAddServerAttemptTime = Plat_FloatTime() + 20.0f;
 			break;
 		}
 

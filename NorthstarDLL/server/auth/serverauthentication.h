@@ -26,33 +26,33 @@ extern CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 
 class ServerAuthenticationManager
 {
-  public:
+public:
 	ConVar* Cvar_ns_erase_auth_info;
 	ConVar* Cvar_ns_auth_allow_insecure;
 	ConVar* Cvar_ns_auth_allow_insecure_write;
 
 	std::mutex m_AuthDataMutex;
 	std::unordered_map<std::string, RemoteAuthData> m_RemoteAuthenticationData;
-	std::unordered_map<R2::CBaseClient*, PlayerAuthenticationData> m_PlayerAuthenticationData;
+	std::unordered_map<CBaseClient*, PlayerAuthenticationData> m_PlayerAuthenticationData;
 
 	bool m_bAllowDuplicateAccounts = false;
 	bool m_bNeedLocalAuthForNewgame = false;
 	bool m_bForceResetLocalPlayerPersistence = false;
 	bool m_bStartingLocalSPGame = false;
 
-  public:
+public:
 	void AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata);
 
-	void AddPlayer(R2::CBaseClient* pPlayer, const char* pAuthToken);
-	void RemovePlayer(R2::CBaseClient* pPlayer);
+	void AddPlayer(CBaseClient* pPlayer, const char* pAuthToken);
+	void RemovePlayer(CBaseClient* pPlayer);
 
 	bool VerifyPlayerName(const char* pAuthToken, const char* pName, char pOutVerifiedName[64]);
-	bool IsDuplicateAccount(R2::CBaseClient* pPlayer, const char* pUid);
-	bool CheckAuthentication(R2::CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken);
+	bool IsDuplicateAccount(CBaseClient* pPlayer, const char* pUid);
+	bool CheckAuthentication(CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken);
 
-	void AuthenticatePlayer(R2::CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken);
-	bool RemovePlayerAuthData(R2::CBaseClient* pPlayer);
-	void WritePersistentData(R2::CBaseClient* pPlayer);
+	void AuthenticatePlayer(CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken);
+	bool RemovePlayerAuthData(CBaseClient* pPlayer);
+	void WritePersistentData(CBaseClient* pPlayer);
 };
 
 extern ServerAuthenticationManager* g_pServerAuthentication;

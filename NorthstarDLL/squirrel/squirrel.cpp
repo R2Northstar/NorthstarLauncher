@@ -9,6 +9,7 @@
 #include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
 #include "ns_version.h"
+#include "core/vanilla.h"
 
 #include <any>
 
@@ -263,6 +264,13 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
 	}
 
+	auto loadedPlugins = &g_pPluginManager->m_vLoadedPlugins;
+	for (const auto& pluginName : g_pModManager->m_PluginDependencyConstants)
+	{
+		auto f = [&](Plugin plugin) -> bool { return plugin.dependencyName == pluginName; };
+		defconst(m_pSQVM, pluginName.c_str(), std::find_if(loadedPlugins->begin(), loadedPlugins->end(), f) != loadedPlugins->end());
+	}
+
 	defconst(m_pSQVM, "MAX_FOLDER_SIZE", GetMaxSaveFolderSize() / 1024);
 
 	// define squirrel constants for northstar(.dll) version
@@ -271,6 +279,9 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 	defconst(m_pSQVM, "NS_VERSION_MINOR", version[1]);
 	defconst(m_pSQVM, "NS_VERSION_PATCH", version[2]);
 	defconst(m_pSQVM, "NS_VERSION_DEV", version[3]);
+
+	// define squirrel constant for if we are in vanilla-compatibility mode
+	defconst(m_pSQVM, "VANILLA", g_pVanillaCompatibility->GetVanillaCompatibility());
 
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 	g_pPluginManager->InformSQVMCreated(context, newSqvm);
@@ -493,17 +504,17 @@ void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, con
 		}
 		else
 		{
-			R2::Cbuf_AddText(
-				R2::Cbuf_GetCurrentPlayer(),
+			Cbuf_AddText(
+				Cbuf_GetCurrentPlayer(),
 				fmt::format("disconnect \"Encountered {} script compilation error, see console for details.\"", GetContextName(realContext))
 					.c_str(),
-				R2::cmd_source_t::kCommandSrcCode);
+				cmd_source_t::kCommandSrcCode);
 
 			// likely temp: show console so user can see any errors, as error message wont display if ui is dead
 			// maybe we could disable all mods other than the coremods and try a reload before doing this?
 			// could also maybe do some vgui bullshit to show something visually rather than console
 			if (realContext == ScriptContext::UI)
-				R2::Cbuf_AddText(R2::Cbuf_GetCurrentPlayer(), "showconsole", R2::cmd_source_t::kCommandSrcCode);
+				Cbuf_AddText(Cbuf_GetCurrentPlayer(), "showconsole", cmd_source_t::kCommandSrcCode);
 		}
 	}
 
@@ -627,7 +638,7 @@ template <ScriptContext context, TemplateStringLiteral funcName> SQRESULT SQ_Stu
 
 template <ScriptContext context> void StubUnsafeSQFuncs()
 {
-	if (!Tier0::CommandLine()->CheckParm("-allowunsafesqfuncs"))
+	if (!CommandLine()->CheckParm("-allowunsafesqfuncs"))
 	{
 		g_pSquirrel<context>->AddFuncOverride("DevTextBufferWrite", SQ_StubbedFunc<context, "DevTextBufferWrite">);
 		g_pSquirrel<context>->AddFuncOverride("DevTextBufferClear", SQ_StubbedFunc<context, "DevTextBufferClear">);

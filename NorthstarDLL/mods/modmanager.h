@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <unordered_set>
 
 const std::string MOD_FOLDER_SUFFIX = "\\mods";
 const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\packages";
@@ -18,7 +19,7 @@ const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
 
 struct ModConVar
 {
-  public:
+public:
 	std::string Name;
 	std::string DefaultValue;
 	std::string HelpString;
@@ -27,7 +28,7 @@ struct ModConVar
 
 struct ModConCommand
 {
-  public:
+public:
 	std::string Name;
 	std::string Function;
 	std::string HelpString;
@@ -37,7 +38,7 @@ struct ModConCommand
 
 struct ModScriptCallback
 {
-  public:
+public:
 	ScriptContext Context;
 
 	// called before the codecallback is executed
@@ -50,7 +51,7 @@ struct ModScriptCallback
 
 struct ModScript
 {
-  public:
+public:
 	std::string Path;
 	std::string RunOn;
 
@@ -60,14 +61,14 @@ struct ModScript
 // these are pretty much identical, could refactor to use the same stuff?
 struct ModVPKEntry
 {
-  public:
+public:
 	bool m_bAutoLoad;
 	std::string m_sVpkPath;
 };
 
 struct ModRpakEntry
 {
-  public:
+public:
 	bool m_bAutoLoad;
 	std::string m_sPakName;
 	std::string m_sLoadAfterPak;
@@ -75,7 +76,7 @@ struct ModRpakEntry
 
 class Mod
 {
-  public:
+public:
 	// runtime stuff
 	bool m_bEnabled = true;
 	bool m_bWasReadSuccessfully = false;
@@ -124,29 +125,31 @@ class Mod
 	// hashed with STR_HASH
 
 	std::unordered_map<std::string, std::string> DependencyConstants;
+	std::vector<std::string> PluginDependencyConstants;
 
-  public:
+public:
 	Mod(fs::path modPath, char* jsonBuf);
 
-  private:
+private:
 	void ParseConVars(rapidjson_document& json);
 	void ParseConCommands(rapidjson_document& json);
 	void ParseScripts(rapidjson_document& json);
 	void ParseLocalization(rapidjson_document& json);
 	void ParseDependencies(rapidjson_document& json);
+	void ParsePluginDependencies(rapidjson_document& json);
 	void ParseInitScript(rapidjson_document& json);
 };
 
 struct ModOverrideFile
 {
-  public:
+public:
 	Mod* m_pOwningMod;
 	fs::path m_Path;
 };
 
 class ModManager
 {
-  private:
+private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
@@ -156,12 +159,13 @@ class ModManager
 	size_t m_hPdefHash;
 	size_t m_hKBActHash;
 
-  public:
+public:
 	std::vector<Mod> m_LoadedMods;
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
+	std::unordered_set<std::string> m_PluginDependencyConstants;
 
-  public:
+public:
 	ModManager();
 	void LoadMods();
 	void UnloadMods();
