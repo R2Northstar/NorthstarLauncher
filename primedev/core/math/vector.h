@@ -10,7 +10,7 @@
 
 class Vector3
 {
-  public:
+public:
 	float x, y, z;
 
 	Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
@@ -306,7 +306,7 @@ FORCEINLINE void VectorDivide(const Vector3& a, const Vector3& b, Vector3& c)
 
 class QAngle
 {
-  public:
+public:
 	float x;
 	float y;
 	float z;

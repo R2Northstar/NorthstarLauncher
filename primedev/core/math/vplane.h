@@ -11,7 +11,7 @@ typedef int SideType;
 
 class VPlane
 {
-  public:
+public:
 	VPlane();
 	VPlane(const Vector3& vNormal, float dist);
 	VPlane(const Vector3& vPoint, const QAngle& ang);
@@ -37,7 +37,7 @@ class VPlane
 	// Snap the specified point to the plane (along the plane's normal).
 	Vector3 SnapPointToPlane(const Vector3& vPoint) const;
 
-  public:
+public:
 	Vector3 m_Normal;
 	float m_Dist;
 };

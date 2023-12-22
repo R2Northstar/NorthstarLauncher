@@ -6,7 +6,7 @@ dtNavMesh* GetNavMeshForHull(int nHull);
 
 class CAI_Helper
 {
-  public:
+public:
 	void DrawNavmeshPolys(dtNavMesh* pNavMesh = nullptr);
 };
 
