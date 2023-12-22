@@ -1,4 +1,4 @@
-#include "game/server/ai_navmesh.h"
+#include "ai_navmesh.h"
 
 ON_DLL_LOAD("server.dll", ServerAiNavMesh, (CModule module))
 {
