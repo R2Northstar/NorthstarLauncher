@@ -1,5 +1,7 @@
 #include "ai_helper.h"
 
+#include "client/debugoverlay.h"
+#include "client/cdll_client_int.h"
 #include "engine/hoststate.h"
 
 #include "core/math/vplane.h"

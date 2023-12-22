@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mathlib/vector.h"
+#include "core/math/vector.h"
 
 class IClientTools // : public IBaseInterface
 {

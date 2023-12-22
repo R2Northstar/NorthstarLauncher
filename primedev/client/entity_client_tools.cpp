@@ -1,5 +1,5 @@
 #include "toolframework/itoolentity.h"
-#include "game/client/cdll_client_int.h"
+#include "client/cdll_client_int.h"
 
 class CClientTools : public IClientTools
 {

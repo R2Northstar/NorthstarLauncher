@@ -1,6 +1,9 @@
+#include "debugoverlay.h"
+
 #include "dedicated/dedicated.h"
 #include "core/convar/cvar.h"
 #include "core/math/vector.h"
+#include "server/ai_helper.h"
 
 AUTOHOOK_INIT()
 
@@ -130,39 +133,6 @@ static OverlayBase_t__DestroyOverlayType OverlayBase_t__DestroyOverlay;
 static ConVar* Cvar_enable_debug_overlays;
 
 LPCRITICAL_SECTION s_OverlayMutex;
-
-// Render Line
-typedef void (*RenderLineType)(const Vector3& v1, const Vector3& v2, Color c, bool bZBuffer);
-static RenderLineType RenderLine;
-
-// Render box
-typedef void (*RenderBoxType)(
-	const Vector3& vOrigin, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer, bool bInsideOut);
-static RenderBoxType RenderBox;
-
-// Render wireframe box
-static RenderBoxType RenderWireframeBox;
-
-// Render swept box
-typedef void (*RenderWireframeSweptBoxType)(
-	const Vector3& vStart, const Vector3& vEnd, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer);
-RenderWireframeSweptBoxType RenderWireframeSweptBox;
-
-// Render Triangle
-typedef void (*RenderTriangleType)(const Vector3& p1, const Vector3& p2, const Vector3& p3, Color c, bool bZBuffer);
-static RenderTriangleType RenderTriangle;
-
-// Render Axis
-typedef void (*RenderAxisType)(const Vector3& vOrigin, float flScale, bool bZBuffer);
-static RenderAxisType RenderAxis;
-
-// I dont know
-typedef void (*RenderUnknownType)(const Vector3& vUnk, float flUnk, bool bUnk);
-static RenderUnknownType RenderUnknown;
-
-// Render Sphere
-typedef void (*RenderSphereType)(const Vector3& vCenter, float flRadius, int nTheta, int nPhi, Color c, bool bZBuffer);
-static RenderSphereType RenderSphere;
 
 OverlayBase_t** s_pOverlays;
 
@@ -316,9 +286,6 @@ void, __fastcall, (bool bRender))
 
 	if (bRender && Cvar_enable_debug_overlays->GetBool())
 	{
-		if (Cvar_ai_script_nodes_draw->GetBool())
-			g_pAIHelper->DrawNetwork(*g_pAINetwork);
-
 		g_pAIHelper->DrawNavmeshPolys();
 	}
 

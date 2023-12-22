@@ -2,7 +2,7 @@
 
 // [Fifty]: Taken from https://github.com/ASpoonPlaysGames/r2recast
 
-#include "mathlib/vector.h"
+#include "core/math/vector.h"
 
 struct dtMeshHeader;
 struct dtMeshTile;
