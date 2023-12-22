@@ -4,7 +4,7 @@
 
 class IClientTools // : public IBaseInterface
 {
-  public:
+public:
 	virtual void sub_1805E4960() = 0;
 	virtual void sub_1805E4B10() = 0;
 	virtual void sub_1805E4C50() = 0;
