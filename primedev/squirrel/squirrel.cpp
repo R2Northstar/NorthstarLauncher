@@ -620,8 +620,7 @@ template <ScriptContext context> void ConCommand_script(const CCommand& args)
 }
 
 // literal class type that wraps a constant expression string
-template <ScriptContext context>
-SQRESULT SQ_StubbedFunc(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_StubbedFunc(HSquirrelVM* sqvm)
 {
 	SQStackInfos si;
 	g_pSquirrel<context>->sq_stackinfos(sqvm, 0, si);
