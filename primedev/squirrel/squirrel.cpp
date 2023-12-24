@@ -620,13 +620,19 @@ template <ScriptContext context> void ConCommand_script(const CCommand& args)
 }
 
 // literal class type that wraps a constant expression string
-template <ScriptContext context>
-SQRESULT SQ_StubbedFunc(HSquirrelVM* sqvm)
+template <size_t N> struct TemplateStringLiteral
 {
-	SQStackInfos si;
-	g_pSquirrel<context>->sq_stackinfos(sqvm, 0, si);
+	constexpr TemplateStringLiteral(const char (&str)[N])
+	{
+		std::copy_n(str, N, value);
+	}
 
-	spdlog::warn("Blocking call to stubbed function {} in {}", si._name, GetContextName(context));
+	char value[N];
+};
+
+template <ScriptContext context, TemplateStringLiteral funcName> SQRESULT SQ_StubbedFunc(HSquirrelVM* sqvm)
+{
+	spdlog::info("Blocking call to stubbed function {} in {}", funcName.value, GetContextName(context));
 	return SQRESULT_NULL;
 }
 
@@ -634,12 +640,12 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 {
 	if (!CommandLine()->CheckParm("-allowunsafesqfuncs"))
 	{
-		g_pSquirrel<context>->AddFuncOverride("DevTextBufferWrite", SQ_StubbedFunc<context>);
-		g_pSquirrel<context>->AddFuncOverride("DevTextBufferClear", SQ_StubbedFunc<context>);
-		g_pSquirrel<context>->AddFuncOverride("DevTextBufferDumpToFile", SQ_StubbedFunc<context>);
-		g_pSquirrel<context>->AddFuncOverride("Dev_CommandLineAddParam", SQ_StubbedFunc<context>);
-		g_pSquirrel<context>->AddFuncOverride("DevP4Checkout", SQ_StubbedFunc<context>);
-		g_pSquirrel<context>->AddFuncOverride("DevP4Add", SQ_StubbedFunc<context>);
+		g_pSquirrel<context>->AddFuncOverride("DevTextBufferWrite", SQ_StubbedFunc<context, "DevTextBufferWrite">);
+		g_pSquirrel<context>->AddFuncOverride("DevTextBufferClear", SQ_StubbedFunc<context, "DevTextBufferClear">);
+		g_pSquirrel<context>->AddFuncOverride("DevTextBufferDumpToFile", SQ_StubbedFunc<context, "DevTextBufferDumpToFile">);
+		g_pSquirrel<context>->AddFuncOverride("Dev_CommandLineAddParam", SQ_StubbedFunc<context, "Dev_CommandLineAddParam">);
+		g_pSquirrel<context>->AddFuncOverride("DevP4Checkout", SQ_StubbedFunc<context, "DevP4Checkout">);
+		g_pSquirrel<context>->AddFuncOverride("DevP4Add", SQ_StubbedFunc<context, "DevP4Add">);
 	}
 }
 
