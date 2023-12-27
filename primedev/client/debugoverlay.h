@@ -1,34 +1,28 @@
 #pragma once
 
 // Render Line
-typedef void (*RenderLineType)(const Vector3& v1, const Vector3& v2, Color c, bool bZBuffer);
-inline RenderLineType RenderLine;
+inline void (*RenderLine)(const Vector3& v1, const Vector3& v2, Color c, bool bZBuffer);
 
 // Render box
-typedef void (*RenderBoxType)(
+inline void (*RenderBox)(
 	const Vector3& vOrigin, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer, bool bInsideOut);
-inline RenderBoxType RenderBox;
 
 // Render wireframe box
-inline RenderBoxType RenderWireframeBox;
+inline void (*RenderWireframeBox)(
+	const Vector3& vOrigin, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer, bool bInsideOut);
 
 // Render swept box
-typedef void (*RenderWireframeSweptBoxType)(
+inline void (*RenderWireframeSweptBox)(
 	const Vector3& vStart, const Vector3& vEnd, const QAngle& angles, const Vector3& vMins, const Vector3& vMaxs, Color c, bool bZBuffer);
-inline RenderWireframeSweptBoxType RenderWireframeSweptBox;
 
 // Render Triangle
-typedef void (*RenderTriangleType)(const Vector3& p1, const Vector3& p2, const Vector3& p3, Color c, bool bZBuffer);
-inline RenderTriangleType RenderTriangle;
+inline void (*RenderTriangle)(const Vector3& p1, const Vector3& p2, const Vector3& p3, Color c, bool bZBuffer);
 
 // Render Axis
-typedef void (*RenderAxisType)(const Vector3& vOrigin, float flScale, bool bZBuffer);
-inline RenderAxisType RenderAxis;
+inline void (*RenderAxis)(const Vector3& vOrigin, float flScale, bool bZBuffer);
 
 // I dont know
-typedef void (*RenderUnknownType)(const Vector3& vUnk, float flUnk, bool bUnk);
-inline RenderUnknownType RenderUnknown;
+inline void (*RenderUnknown)(const Vector3& vUnk, float flUnk, bool bUnk);
 
 // Render Sphere
-typedef void (*RenderSphereType)(const Vector3& vCenter, float flRadius, int nTheta, int nPhi, Color c, bool bZBuffer);
-inline RenderSphereType RenderSphere;
+inline void (*RenderSphere)(const Vector3& vCenter, float flRadius, int nTheta, int nPhi, Color c, bool bZBuffer);

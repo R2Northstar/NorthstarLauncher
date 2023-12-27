@@ -125,10 +125,8 @@ struct OverlaySphere_t : public OverlayBase_t
 	bool m_bWireframe;
 };
 
-typedef bool (*OverlayBase_t__IsDeadType)(OverlayBase_t* a1);
-static OverlayBase_t__IsDeadType OverlayBase_t__IsDead;
-typedef void (*OverlayBase_t__DestroyOverlayType)(OverlayBase_t* a1);
-static OverlayBase_t__DestroyOverlayType OverlayBase_t__DestroyOverlay;
+static bool (*OverlayBase_t__IsDead)(OverlayBase_t* a1);
+static void (*OverlayBase_t__DestroyOverlay)(OverlayBase_t* a1);
 
 static ConVar* Cvar_enable_debug_overlays;
 
@@ -296,17 +294,17 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module)
 {
 	AUTOHOOK_DISPATCH()
 
-	OverlayBase_t__IsDead = module.Offset(0xACAC0).RCast<OverlayBase_t__IsDeadType>();
-	OverlayBase_t__DestroyOverlay = module.Offset(0xAB680).RCast<OverlayBase_t__DestroyOverlayType>();
+	OverlayBase_t__IsDead = module.Offset(0xACAC0).RCast<decltype(OverlayBase_t__IsDead)>();
+	OverlayBase_t__DestroyOverlay = module.Offset(0xAB680).RCast<decltype(OverlayBase_t__DestroyOverlay)>();
 
-	RenderLine = module.Offset(0x192A70).RCast<RenderLineType>();
-	RenderBox = module.Offset(0x192520).RCast<RenderBoxType>();
-	RenderWireframeBox = module.Offset(0x193DA0).RCast<RenderBoxType>();
-	RenderWireframeSweptBox = module.Offset(0x1945A0).RCast<RenderWireframeSweptBoxType>();
-	RenderTriangle = module.Offset(0x193940).RCast<RenderTriangleType>();
-	RenderAxis = module.Offset(0x1924D0).RCast<RenderAxisType>();
-	RenderSphere = module.Offset(0x194170).RCast<RenderSphereType>();
-	RenderUnknown = module.Offset(0x1924E0).RCast<RenderUnknownType>();
+	RenderLine = module.Offset(0x192A70).RCast<decltype(RenderLine)>();
+	RenderBox = module.Offset(0x192520).RCast<decltype(RenderBox)>();
+	RenderWireframeBox = module.Offset(0x193DA0).RCast<decltype(RenderWireframeBox)>();
+	RenderWireframeSweptBox = module.Offset(0x1945A0).RCast<decltype(RenderWireframeSweptBox)>();
+	RenderTriangle = module.Offset(0x193940).RCast<decltype(RenderTriangle)>();
+	RenderAxis = module.Offset(0x1924D0).RCast<decltype(RenderAxis)>();
+	RenderSphere = module.Offset(0x194170).RCast<decltype(RenderSphere)>();
+	RenderUnknown = module.Offset(0x1924E0).RCast<decltype(RenderUnknown)>();
 
 	s_OverlayMutex = module.Offset(0x10DB0A38).RCast<LPCRITICAL_SECTION>();
 
