@@ -150,7 +150,7 @@ add_library(NorthstarDLL SHARED
             "util/wininfo.h"
             "dllmain.cpp"
             "ns_version.h"
-			"Northstar.def"
+            "Northstar.def"
 )
 
 target_link_libraries(NorthstarDLL PRIVATE
