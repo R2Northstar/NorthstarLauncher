@@ -48,3 +48,6 @@ jobs:
         extensions: 'h,cpp'
         clangFormatVersion: 16
         style: file
+    - uses: puneetmatharu/cmake-format-lint-action@v1.0.4
+      with:
+        args: "--check --config-files: .cmake-format.json"
