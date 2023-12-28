@@ -50,4 +50,6 @@ jobs:
         style: file
     - uses: puneetmatharu/cmake-format-lint-action@v1.0.4
       with:
-        args: "--check"
+        args: "--config-files .cmake-format.json --in-place"
+    - run: |
+        git diff --exit-code
