@@ -52,4 +52,4 @@ jobs:
       with:
         args: "--in-place"
     - run: |
-        git diff --exit-code --color-words
+        git diff --exit-code
