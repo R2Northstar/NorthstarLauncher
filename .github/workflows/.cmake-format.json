@@ -95,7 +95,7 @@
 			"statement, plus one indentation  level, `child`: align to",
 			"the column of the arguments"
 		],
-		"dangle_align": "prefix",
+		"dangle_align": "child",
 		"_help_min_prefix_chars": [
 			"If the statement spelling length (including space and",
 			"parenthesis) is smaller than this amount, then force reject",
