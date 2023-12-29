@@ -1,7 +1,7 @@
 {
 	"format": {
 		"line_width": 120,
-		"tab_size": 2,
+		"tab_size": 4,
 		"use_tabchars": false,
 		"fractional_tab_policy": "use-space",
 		"max_subgroups_hwrap": 4,
