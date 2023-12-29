@@ -226,10 +226,10 @@ int ConCommand_banCompletion(const char* const partial, char commands[COMMAND_CO
 	const int cmdLength = strlen(cmdName) - queryLength;
 
 	int numCompletions = 0;
-	for (int i = 0; i < R2::GetMaxPlayers() && numCompletions < COMMAND_COMPLETION_MAXITEMS - 2; i++)
+	for (int i = 0; i < GetMaxPlayers() && numCompletions < COMMAND_COMPLETION_MAXITEMS - 2; i++)
 	{
-		R2::CBaseClient* client = &R2::g_pClientArray[i];
-		if (client->m_Signon < R2::eSignonState::CONNECTED)
+		CBaseClient* client = &g_pClientArray[i];
+		if (client->m_Signon < eSignonState::CONNECTED)
 			continue;
 
 		if (!strncmp(query, client->m_Name, queryLength))
@@ -268,7 +268,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (CModule module))
 
 ON_DLL_LOAD_RELIESON("server.dll", KickCompletion, ConCommand, (CModule module))
 {
-	ConCommand* kick = R2::g_pCVar->FindCommand("kick");
+	ConCommand* kick = g_pCVar->FindCommand("kick");
 	kick->m_pCompletionCallback = ConCommand_banCompletion;
 	kick->m_nCallbackFlags |= 0x3;
 }
