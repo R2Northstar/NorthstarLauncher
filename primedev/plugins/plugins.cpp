@@ -237,4 +237,3 @@ void Plugin::RunFrame()
 {
 	this->callbacks->RunFrame();
 }
-

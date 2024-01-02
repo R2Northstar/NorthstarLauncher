@@ -48,4 +48,3 @@ public:
 	std::string location; // path of the dll
 	PluginNorthstarData initData;
 };
-
