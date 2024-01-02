@@ -177,19 +177,24 @@ bool Plugin::IsValid() const
 	return this->valid;
 }
 
-std::string Plugin::GetName() const
+const std::string& Plugin::GetName() const
 {
 	return this->name;
 }
 
-std::string Plugin::GetLogName() const
+const std::string& Plugin::GetLogName() const
 {
 	return this->logName;
 }
 
-std::string Plugin::GetDependencyName() const
+const std::string& Plugin::GetDependencyName() const
 {
 	return this->dependencyName;
+}
+
+const std::string& Plugin::GetLocation() const
+{
+	return this->location;
 }
 
 bool Plugin::ShouldRunOnServer() const

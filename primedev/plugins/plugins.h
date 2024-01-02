@@ -18,6 +18,7 @@ private:
 	std::string name;
 	std::string logName;
 	std::string dependencyName;
+	std::string location; // path of the dll
 	bool runOnServer;
 	bool runOnClient;
 
@@ -31,9 +32,10 @@ public:
 
 	// callbacks
 	bool IsValid() const;
-	std::string GetName() const;
-	std::string GetLogName() const;
-	std::string GetDependencyName() const;
+	const std::string& GetName() const;
+	const std::string& GetLogName() const;
+	const std::string& GetDependencyName() const;
+	const std::string& GetLocation() const;
 	bool ShouldRunOnServer() const;
 	bool ShouldRunOnClient() const;
 	void* CreateInterface(const char* pName, int* pStatus) const;
@@ -45,6 +47,5 @@ public:
 	void RunFrame();
 
 	HMODULE handle;
-	std::string location; // path of the dll
 	PluginNorthstarData initData;
 };
