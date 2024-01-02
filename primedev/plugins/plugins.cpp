@@ -1,18 +1,10 @@
 #include "plugins.h"
+#include "pluginmanager.h"
 #include "squirrel/squirrel.h"
-#include "plugins.h"
-#include "masterserver/masterserver.h"
-#include "core/convar/convar.h"
-#include "server/serverpresence.h"
-#include <optional>
-#include <stdint.h>
-
 #include "util/wininfo.h"
 #include "core/sourceinterface.h"
 #include "logging/logging.h"
 #include "dedicated/dedicated.h"
-
-#include "pluginmanager.h"
 
 bool isValidSquirrelIdentifier(std::string s)
 {
@@ -149,7 +141,7 @@ bool Plugin::Unload()
 	if (!FreeLibrary(this->handle))
 	{
 		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
-		return true;
+		return false;
 	}
 
 	g_pPluginManager->RemovePlugin(this->handle);
@@ -158,13 +150,12 @@ bool Plugin::Unload()
 
 void Plugin::Reload()
 {
-	std::string path = this->location;
 	bool unloaded = this->Unload();
 
 	if (!unloaded)
 		return;
 
-	g_pPluginManager->LoadPlugin(fs::path(path), true);
+	g_pPluginManager->LoadPlugin(fs::path(this->location), true);
 }
 
 void Plugin::Log(spdlog::level::level_enum level, char* msg)

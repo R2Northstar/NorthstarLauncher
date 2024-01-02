@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "core/sourceinterface.h"
 #include "plugins/interfaces/interface.h"
 #include "plugins/interfaces/IPluginId.h"
