@@ -3,14 +3,16 @@ cmake_minimum_required(VERSION 3.15)
 project(
     Northstar
     CXX
-    ASM_MASM)
+    ASM_MASM
+    )
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE
         "Release"
         CACHE STRING
               "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-              FORCE)
+              FORCE
+        )
 endif()
 
 # Language specs
@@ -31,7 +33,8 @@ message(STATUS "NS: Building to ${NS_BINARY_DIR}")
 list(
     APPEND
     CMAKE_MODULE_PATH
-    "${CMAKE_CURRENT_SOURCE_DIR}/primedev/cmake")
+    "${CMAKE_CURRENT_SOURCE_DIR}/primedev/cmake"
+    )
 include(utils)
 
 include_directories(primedev)

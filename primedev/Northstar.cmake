@@ -151,7 +151,8 @@ add_library(
     "util/wininfo.h"
     "dllmain.cpp"
     "dllmain.h"
-    "ns_version.h")
+    "ns_version.h"
+    )
 
 target_link_libraries(
     NorthstarDLL
@@ -165,21 +166,25 @@ target_link_libraries(
             Wldap32.lib
             Normaliz.lib
             Bcrypt.lib
-            version.lib)
+            version.lib
+    )
 
 target_precompile_headers(
     NorthstarDLL
     PRIVATE
-    pch.h)
+    pch.h
+    )
 
 target_compile_definitions(
     NorthstarDLL
     PRIVATE UNICODE
             _UNICODE
-            CURL_STATICLIB)
+            CURL_STATICLIB
+    )
 
 set_target_properties(
     NorthstarDLL
     PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR}
                OUTPUT_NAME Northstar
-               LINK_FLAGS "/MANIFEST:NO /DEBUG")
+               LINK_FLAGS "/MANIFEST:NO /DEBUG"
+    )

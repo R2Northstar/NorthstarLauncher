@@ -19,7 +19,10 @@ target_link_libraries(
             uuid.lib
             odbc32.lib
             odbccp32.lib
-            WS2_32.lib)
+            WS2_32.lib
+    )
 
-set_target_properties(NorthstarLauncher PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR}
-                                                   LINK_FLAGS "/MANIFEST:NO /DEBUG /STACK:8000000")
+set_target_properties(
+    NorthstarLauncher PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR} LINK_FLAGS
+                                                                           "/MANIFEST:NO /DEBUG /STACK:8000000"
+    )
