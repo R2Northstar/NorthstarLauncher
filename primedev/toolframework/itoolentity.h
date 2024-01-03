@@ -23,7 +23,7 @@ public:
 	virtual void sub_1805E86A0() = 0;
 	virtual void sub_1805E69B0() = 0;
 	virtual void sub_1805E4D70() = 0; // IClientTools::DrawSprite
-	virtual void sub_1805E57A0() = 0;
+	virtual void* GetLocalPlayer() = 0; // return type unknown probably CBasePlayer*
 	virtual bool GetLocalPlayerEyePosition(Vector3& org, QAngle& ang, float& fov) = 0;
 	virtual void sub_1805E5960() = 0;
 	virtual void sub_1805E5650() = 0;
