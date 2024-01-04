@@ -262,7 +262,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", BanSystem, ConCommand, (CModule module))
 	g_pBanSystem->OpenBanlist();
 
 	RegisterConCommand("ban", ConCommand_ban, "bans a given player by uid or name", FCVAR_GAMEDLL, ConCommand_banCompletion);
-	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_GAMEDLL, ConCommand_banCompletion);
+	RegisterConCommand("unban", ConCommand_unban, "unbans a given player by uid", FCVAR_GAMEDLL);
 	RegisterConCommand("clearbanlist", ConCommand_clearbanlist, "clears all uids on the banlist", FCVAR_GAMEDLL);
 }
 
