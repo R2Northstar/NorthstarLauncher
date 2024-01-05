@@ -23,6 +23,13 @@ target_link_libraries(
     )
 
 set_target_properties(
-    NorthstarLauncher PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR} LINK_FLAGS
-                                                                           "/MANIFEST:NO /DEBUG /STACK:8000000"
+    NorthstarLauncher PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR}
+    LINK_FLAGS "/MANIFEST:NO /DEBUG /STACK:8000000"
     )
+
+if(MSVC)
+    target_compile_options(NorthstarLauncher PRIVATE /W4 /WX)
+else()
+    target_compile_options(NorthstarLauncher PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
