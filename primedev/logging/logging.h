@@ -23,7 +23,7 @@ class CustomSink : public spdlog::sinks::base_sink<std::mutex>
 {
 public:
 	void custom_log(const custom_log_msg& msg);
-	virtual void custom_sink_it_(const custom_log_msg& msg)
+	virtual void custom_sink_it_(const custom_log_msg&)
 	{
 		throw std::runtime_error("Pure virtual call to CustomSink::custom_sink_it_");
 	}
