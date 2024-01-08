@@ -7,14 +7,14 @@
 
 PluginManager* g_pPluginManager;
 
-std::vector<Plugin> PluginManager::GetLoadedPlugins()
+const std::vector<Plugin>& PluginManager::GetLoadedPlugins() const
 {
 	return this->plugins;
 }
 
-std::optional<Plugin> PluginManager::GetPlugin(HMODULE handle)
+const std::optional<Plugin> PluginManager::GetPlugin(HMODULE handle) const
 {
-	for (Plugin& plugin : plugins)
+	for (const Plugin& plugin : GetLoadedPlugins())
 		if (plugin.handle == handle)
 			return plugin;
 	return std::nullopt;
@@ -108,7 +108,7 @@ bool PluginManager::LoadPlugins(bool reloaded)
 
 void PluginManager::ReloadPlugins()
 {
-	for (Plugin& plugin : this->GetLoadedPlugins())
+	for (const Plugin& plugin : this->GetLoadedPlugins())
 	{
 		plugin.Unload();
 	}
@@ -130,43 +130,43 @@ void PluginManager::RemovePlugin(HMODULE handle)
 	}
 }
 
-void PluginManager::InformAllPluginsInitialized()
+void PluginManager::InformAllPluginsInitialized() const
 {
-	for (Plugin& plugin : this->plugins)
+	for (const Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.Finalize();
 	}
 }
 
-void PluginManager::InformSqvmCreated(CSquirrelVM* sqvm)
+void PluginManager::InformSqvmCreated(CSquirrelVM* sqvm) const
 {
-	for (Plugin& plugin : GetLoadedPlugins())
+	for (const Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnSqvmCreated(sqvm);
 	}
 }
 
-void PluginManager::InformSqvmDestroying(CSquirrelVM* sqvm)
+void PluginManager::InformSqvmDestroying(CSquirrelVM* sqvm) const
 {
-	for (Plugin& plugin : GetLoadedPlugins())
+	for (const Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnSqvmDestroying(sqvm);
 	}
 }
 
-void PluginManager::InformDllLoad(HMODULE module, fs::path path)
+void PluginManager::InformDllLoad(HMODULE module, fs::path path) const
 {
 	std::string fn = path.filename().string(); // without this the string gets freed immediately lmao
 	const char* filename = fn.c_str();
-	for (Plugin& plugin : GetLoadedPlugins())
+	for (const Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.OnLibraryLoaded(module, filename);
 	}
 }
 
-void PluginManager::RunFrame()
+void PluginManager::RunFrame() const
 {
-	for (Plugin& plugin : GetLoadedPlugins())
+	for (const Plugin& plugin : GetLoadedPlugins())
 	{
 		plugin.RunFrame();
 	}

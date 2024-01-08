@@ -125,7 +125,7 @@ Plugin::Plugin(std::string path) : location(path)
 	this->valid = true;
 }
 
-bool Plugin::Unload()
+bool Plugin::Unload() const
 {
 	if (!this->handle)
 		return true;
@@ -148,7 +148,7 @@ bool Plugin::Unload()
 	return true;
 }
 
-void Plugin::Reload()
+void Plugin::Reload() const
 {
 	bool unloaded = this->Unload();
 
@@ -158,7 +158,7 @@ void Plugin::Reload()
 	g_pPluginManager->LoadPlugin(fs::path(this->location), true);
 }
 
-void Plugin::Log(spdlog::level::level_enum level, char* msg)
+void Plugin::Log(spdlog::level::level_enum level, char* msg) const
 {
 	this->logger->log(level, msg);
 }
@@ -203,33 +203,33 @@ void* Plugin::CreateInterface(const char* name, int* status) const
 	return this->m_pCreateInterface(name, status);
 }
 
-void Plugin::Init(bool reloaded)
+void Plugin::Init(bool reloaded) const
 {
 	this->callbacks->Init(g_NorthstarModule, &this->initData, reloaded);
 }
 
-void Plugin::Finalize()
+void Plugin::Finalize() const
 {
 	this->callbacks->Finalize();
 }
 
-void Plugin::OnSqvmCreated(CSquirrelVM* sqvm)
+void Plugin::OnSqvmCreated(CSquirrelVM* sqvm) const
 {
 	this->callbacks->OnSqvmCreated(sqvm);
 }
 
-void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm)
+void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm) const
 {
 	NS::log::PLUGINSYS->info("destroying sqvm {}", sqvm->vmContext);
 	this->callbacks->OnSqvmDestroying(sqvm);
 }
 
-void Plugin::OnLibraryLoaded(HMODULE module, const char* name)
+void Plugin::OnLibraryLoaded(HMODULE module, const char* name) const
 {
 	this->callbacks->OnLibraryLoaded(module, name);
 }
 
-void Plugin::RunFrame()
+void Plugin::RunFrame() const
 {
 	this->callbacks->RunFrame();
 }

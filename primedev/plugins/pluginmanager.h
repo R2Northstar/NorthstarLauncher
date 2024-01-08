@@ -8,21 +8,21 @@ class Plugin;
 class PluginManager
 {
 public:
-	std::vector<Plugin> GetLoadedPlugins();
-	std::optional<Plugin> GetPlugin(HMODULE handle);
+	const std::vector<Plugin>& GetLoadedPlugins() const;
+	const std::optional<Plugin> GetPlugin(HMODULE handle) const;
 	bool LoadPlugins(bool reloaded = false);
 	void LoadPlugin(fs::path path, bool reloaded = false);
 	void ReloadPlugins();
 	void RemovePlugin(HMODULE handle);
 
 	// callback triggers
-	void InformSqvmCreated(CSquirrelVM* sqvm);
-	void InformSqvmDestroying(CSquirrelVM* sqvm);
-	void InformDllLoad(HMODULE module, fs::path path);
-	void RunFrame();
+	void InformSqvmCreated(CSquirrelVM* sqvm) const;
+	void InformSqvmDestroying(CSquirrelVM* sqvm) const;
+	void InformDllLoad(HMODULE module, fs::path path) const;
+	void RunFrame() const;
 
 private:
-	void InformAllPluginsInitialized();
+	void InformAllPluginsInitialized() const;
 
 	std::vector<Plugin> plugins;
 	std::string pluginPath;

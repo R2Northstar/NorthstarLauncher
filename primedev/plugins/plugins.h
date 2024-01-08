@@ -23,11 +23,11 @@ private:
 
 public:
 	Plugin(std::string path);
-	bool Unload();
-	void Reload();
+	bool Unload() const;
+	void Reload() const;
 
 	// sys
-	void Log(spdlog::level::level_enum level, char* msg);
+	void Log(spdlog::level::level_enum level, char* msg) const;
 
 	// callbacks
 	bool IsValid() const;
@@ -38,12 +38,12 @@ public:
 	bool ShouldRunOnServer() const;
 	bool ShouldRunOnClient() const;
 	void* CreateInterface(const char* pName, int* pStatus) const;
-	void Init(bool reloaded);
-	void Finalize();
-	void OnSqvmCreated(CSquirrelVM* sqvm);
-	void OnSqvmDestroying(CSquirrelVM* sqvm);
-	void OnLibraryLoaded(HMODULE module, const char* name);
-	void RunFrame();
+	void Init(bool reloaded) const;
+	void Finalize() const;
+	void OnSqvmCreated(CSquirrelVM* sqvm) const;
+	void OnSqvmDestroying(CSquirrelVM* sqvm) const;
+	void OnLibraryLoaded(HMODULE module, const char* name) const;
+	void RunFrame() const;
 
 	HMODULE handle;
 	PluginNorthstarData initData;
