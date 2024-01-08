@@ -1,21 +1,51 @@
 #include "loader.h"
 
-#include <shlwapi.h>
 #include <filesystem>
+#include <MinHook.h>
 
 HINSTANCE hLThis = 0;
 FARPROC p[857];
 HINSTANCE hL = 0;
 
-bool GetExePathWide(wchar_t* dest, DWORD destSize)
-{
-	if (!dest)
-		return NULL;
-	if (destSize < MAX_PATH)
-		return NULL;
+typedef int (*LauncherMainType)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+LauncherMainType LauncherMainOriginal;
 
-	DWORD length = GetModuleFileNameW(NULL, dest, destSize);
-	return length && PathRemoveFileSpecW(dest);
+static int LauncherMainHook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	if (ShouldLoadNorthstar(false))
+		LoadNorthstar();
+	return LauncherMainOriginal(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+}
+
+static bool ProvisionNorthstar()
+{
+	if (!ShouldLoadNorthstar(false))
+		return true;
+
+	if (MH_Initialize() != MH_OK)
+	{
+		MessageBoxA(
+			GetForegroundWindow(), "MH_Initialize failed\nThe game cannot continue and has to exit.", "Northstar Wsock32 Proxy Error", 0);
+		return false;
+	}
+
+	auto launcherHandle = GetModuleHandleA("launcher.dll");
+	if (!launcherHandle)
+	{
+		MessageBoxA(
+			GetForegroundWindow(),
+			"Launcher isn't loaded yet.\nThe game cannot continue and has to exit.",
+			"Northstar Wsock32 Proxy Error",
+			0);
+		return false;
+	}
+
+	LPVOID pTarget = (LPVOID)GetProcAddress(launcherHandle, "LauncherMain");
+	if (MH_CreateHook(pTarget, (LPVOID)&LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
+		MH_EnableHook(pTarget) != MH_OK)
+		MessageBoxA(GetForegroundWindow(), "Hook creation failed for function LauncherMain.", "Northstar Wsock32 Proxy Error", 0);
+
+	return true;
 }
 
 wchar_t exePath[4096];

@@ -1,28 +1,40 @@
 # NorthstarLauncher
 
+find_package(minhook REQUIRED)
+
+add_library(NorthstarLoader OBJECT "primelauncher/loader.cpp" "primelauncher/loader.h")
+
+target_compile_definitions(NorthstarLoader PUBLIC UNICODE _UNICODE)
+
+target_link_libraries(NorthstarLoader PUBLIC minhook shlwapi.lib)
+
 add_executable(NorthstarLauncher "primelauncher/main.cpp" "primelauncher/resources.rc")
 
-target_compile_definitions(NorthstarLauncher PRIVATE UNICODE _UNICODE)
-
-target_link_libraries(
-    NorthstarLauncher
-    PRIVATE shlwapi.lib
-            kernel32.lib
-            user32.lib
-            gdi32.lib
-            winspool.lib
-            comdlg32.lib
-            advapi32.lib
-            shell32.lib
-            ole32.lib
-            oleaut32.lib
-            uuid.lib
-            odbc32.lib
-            odbccp32.lib
-            WS2_32.lib
-    )
+target_link_libraries(NorthstarLauncher PRIVATE NorthstarLoader)
 
 set_target_properties(
     NorthstarLauncher PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR} LINK_FLAGS
                                                                            "/MANIFEST:NO /DEBUG /STACK:8000000"
+    )
+
+add_library(
+    NorthstarWsockProxy SHARED
+    "primelauncher/dllmain.cpp"
+    "primelauncher/wsock32.asm"
+    "primelauncher/wsock32.def"
+    )
+
+target_link_libraries(
+    NorthstarWsockProxy
+    PRIVATE NorthstarLoader
+            minhook
+            mswsock.lib
+            ws2_32.lib
+    )
+
+set_target_properties(
+    NorthstarWsockProxy
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NS_BINARY_DIR}/bin/x64_retail
+               OUTPUT_NAME wsock32
+               LINK_FLAGS "/MANIFEST:NO /DEBUG"
     )
