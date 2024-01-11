@@ -1,4 +1,5 @@
 #include "moddownloader.h"
+#include "core/vanilla.h
 #include <rapidjson/fwd.h>
 #include <mz_strm_mem.h>
 #include <mz.h>
@@ -587,6 +588,9 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
+	if (g_pVanillaCompatibility->GetVanillaCompatibility())
+		return;
+	
 	g_pModDownloader = new ModDownloader();
 	g_pModDownloader->FetchModsListFromAPI();
 }
