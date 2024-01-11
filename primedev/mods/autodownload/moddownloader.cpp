@@ -1,5 +1,5 @@
 #include "moddownloader.h"
-#include "core/vanilla.h
+#include "core/vanilla.h"
 #include <rapidjson/fwd.h>
 #include <mz_strm_mem.h>
 #include <mz.h>
