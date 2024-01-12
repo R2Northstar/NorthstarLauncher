@@ -590,7 +590,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 {
 	if (g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
-	
+
 	g_pModDownloader = new ModDownloader();
 	g_pModDownloader->FetchModsListFromAPI();
 }
