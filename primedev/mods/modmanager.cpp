@@ -699,13 +699,13 @@ void ModManager::LoadMods()
 
 		jsonStream.close();
 
+		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
+
 		if (g_pVanillaCompatibility->GetVanillaCompatibility() && mod.RunOnVanilla == false)
 		{
 			spdlog::info("Mod {} is set to not run on vanilla, not loading...", mod.Name);
 			continue;
 		}
-
-		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
 		for (auto& pair : mod.DependencyConstants)
 		{
