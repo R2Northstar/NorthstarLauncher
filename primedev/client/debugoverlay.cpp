@@ -170,7 +170,7 @@ int* g_nRenderTickCount;
 int* g_nOverlayTickCount;
 
 // clang-format off
-AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0,
+AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
 void, __fastcall, (OverlayBase_t * pOverlay))
 // clang-format on
 {
