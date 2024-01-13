@@ -99,6 +99,9 @@ public:
 	// the priority for this mod's files, mods with prio 0 are loaded first, then 1, then 2, etc
 	int LoadPriority;
 
+	// whether the mod should run on vanilla (true by default)
+	bool RunOnVanilla;
+
 	// custom scripts used by the mod
 	std::vector<ModScript> Scripts;
 	// convars created by the mod

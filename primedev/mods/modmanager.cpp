@@ -6,6 +6,7 @@
 #include "core/filesystem/filesystem.h"
 #include "core/filesystem/rpakfilesystem.h"
 #include "config/profile.h"
+#include "core/vanilla.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
@@ -97,6 +98,13 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		spdlog::info("Mod file {} is missing a LoadPriority, consider adding one", (modDir / "mod.json").string());
 		LoadPriority = 0;
 	}
+
+	// This is more of a blacklist than a whitelist
+	// Mainly for breaking mods to omit themselves from vanilla
+	if (modJson.HasMember("RunOnVanilla"))
+		RunOnVanilla = modJson["RunOnVanilla"].GetBool();
+	else
+		RunOnVanilla = true;
 
 	// Parse all array fields
 	ParseConVars(modJson);
@@ -520,6 +528,20 @@ void Mod::ParseInitScript(rapidjson_document& json)
 	initScript = json["InitScript"].GetString();
 }
 
+void Mod::ParseShouldRunOnVanilla(rapidjson_document& json)
+{
+	if (!json.HasMember("RunOnVanilla"))
+		return;
+
+	if (!json["RunOnVanilla"].IsBool())
+	{
+		spdlog::warn("'RunOnVanilla' field is not a bool, skipping...");
+		return;
+	}
+
+	RunOnVanilla = json["RunOnVanilla"].GetBool();
+}
+
 ModManager::ModManager()
 {
 	// precaculated string hashes
@@ -690,6 +712,13 @@ void ModManager::LoadMods()
 			jsonStringStream << (char)jsonStream.get();
 
 		jsonStream.close();
+
+		if (g_pVanillaCompatibility->GetVanillaCompatibility() && mod.RunOnVanilla == false)
+		{
+			spdlog::info(
+				"Mod {} is set to not run on vanilla, not loading...", mod.Name);
+			continue;
+		}
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
