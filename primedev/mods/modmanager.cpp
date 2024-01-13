@@ -528,20 +528,6 @@ void Mod::ParseInitScript(rapidjson_document& json)
 	initScript = json["InitScript"].GetString();
 }
 
-void Mod::ParseShouldRunOnVanilla(rapidjson_document& json)
-{
-	if (!json.HasMember("RunOnVanilla"))
-		return;
-
-	if (!json["RunOnVanilla"].IsBool())
-	{
-		spdlog::warn("'RunOnVanilla' field is not a bool, skipping...");
-		return;
-	}
-
-	RunOnVanilla = json["RunOnVanilla"].GetBool();
-}
-
 ModManager::ModManager()
 {
 	// precaculated string hashes
@@ -715,8 +701,7 @@ void ModManager::LoadMods()
 
 		if (g_pVanillaCompatibility->GetVanillaCompatibility() && mod.RunOnVanilla == false)
 		{
-			spdlog::info(
-				"Mod {} is set to not run on vanilla, not loading...", mod.Name);
+			spdlog::info("Mod {} is set to not run on vanilla, not loading...", mod.Name);
 			continue;
 		}
 
