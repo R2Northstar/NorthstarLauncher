@@ -44,7 +44,7 @@ bool InitialiseNorthstar()
 	InitialiseNorthstarPrefix();
 
 	// Initilaze log directory
-	g_svLogDirectory = fmt::format("{:s}\\logs\\{:s}", GetNorthstarPrefix(), CreateTimeStamp());
+	g_svLogDirectory = fmt::format("{:s}\\logs", GetNorthstarPrefix());
 
 	// Checks if we can write into install directory
 	SpdLog_PreInit();

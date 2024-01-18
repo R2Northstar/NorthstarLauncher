@@ -90,15 +90,14 @@ void SpdLog_CreateLoggers(void)
 	if (!g_bSpdLog_CreateLogFiles)
 		return;
 
-	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
-		"northstar(info)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "message.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)
-		->set_pattern("[%Y-%m-%d %H:%M:%S.%e] %v");
-	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
-		"northstar(warning)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "warning.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)
-		->set_pattern("[%Y-%m-%d %H:%M:%S.%e] %v");
-	spdlog::rotating_logger_mt<spdlog::synchronous_factory>(
-		"northstar(error)", fmt::format("{:s}\\{:s}", g_svLogDirectory, "error.txt"), SPDLOG_MAX_LOG_SIZE, SPDLOG_MAX_FILES)
-		->set_pattern("[%Y-%m-%d %H:%M:%S.%e] %v");
+	time_t time = std::time(nullptr);
+	tm currentTime = *std::localtime(&time);
+
+	std::stringstream stream;
+	stream << g_svLogDirectory << std::put_time(&currentTime, "\\nslog%Y-%m-%d %H-%M-%S.txt");
+
+	auto logger = spdlog::basic_logger_mt("northstar", stream.str());
+	logger->set_pattern("[%Y-%m-%d] [%H:%M:%S] [%l] %v");
 }
 
 //-----------------------------------------------------------------------------

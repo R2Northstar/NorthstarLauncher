@@ -76,31 +76,6 @@ Color Log_GetColor(eLog eContext, eLogLevel eLevel)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Get logger based on the log level
-// Input  : eLevel -
-// Output : Smart pointer to the logger
-//-----------------------------------------------------------------------------
-std::shared_ptr<spdlog::logger> Log_GetLogger(eLogLevel eLevel)
-{
-	std::string svName;
-
-	switch (eLevel)
-	{
-	case eLogLevel::LOG_INFO:
-		svName = "northstar(info)";
-		break;
-	case eLogLevel::LOG_WARN:
-		svName = "northstar(warning)";
-		break;
-	case eLogLevel::LOG_ERROR:
-		svName = "northstar(error)";
-		break;
-	}
-
-	return spdlog::get(svName);
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Prints to all outputs based on parameters, va_list version
 // Input  : eContext -
 //          eLevel -
@@ -139,7 +114,7 @@ void CoreMsgV(eLog eContext, eLogLevel eLevel, const int iCode, const char* pszN
 	svMessage = std::regex_replace(svMessage, AnsiRegex, "");
 
 	// Log to file
-	std::shared_ptr<spdlog::logger> pLogger = Log_GetLogger(eLevel);
+	auto pLogger = spdlog::get("northstar");
 	if (pLogger.get()) // "-nologfiles" or programmer error can cause this to fail
 		pLogger->info("{:s}", svMessage);
 
