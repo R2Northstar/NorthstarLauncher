@@ -60,6 +60,7 @@ void ModDownloader::FetchModsListFromAPI()
 			CURLcode result;
 			CURL* easyhandle;
 			rapidjson::Document verifiedModsJson;
+			rapidjson::Value verifiedModsJsonThunderstore;
 			std::string url = modsListUrl;
 
 			curl_global_init(CURL_GLOBAL_ALL);
@@ -91,7 +92,7 @@ void ModDownloader::FetchModsListFromAPI()
 			assert(verifiedModsJson.HasMember("thunderstore"));
 
 			// Check if the "thunderstore" key exists
-			auto verifiedModsJsonThunderstore = verifiedModsJson["thunderstore"];
+			verifiedModsJsonThunderstore = verifiedModsJson["thunderstore"];
 
 			assert(verifiedModsJsonThunderstore->value.IsObject());
 
