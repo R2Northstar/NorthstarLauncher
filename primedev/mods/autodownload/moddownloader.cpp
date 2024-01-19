@@ -88,7 +88,14 @@ void ModDownloader::FetchModsListFromAPI()
 			// Load mods list into local state
 			spdlog::info("Loading mods configuration...");
 			verifiedModsJson.Parse(readBuffer);
-			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
+			assert(verifiedModsJson.HasMember("thunderstore"));
+
+			// Check if the "thunderstore" key exists
+			auto verifiedModsJsonThunderstore = verifiedModsJson["thunderstore"];
+
+			assert(verifiedModsJsonThunderstore->value.IsObject());
+
+			for (auto i = verifiedModsJsonThunderstore.MemberBegin(); i != verifiedModsJsonThunderstore.MemberEnd(); ++i)
 			{
 				std::string name = i->name.GetString();
 				std::string dependency = i->value["DependencyPrefix"].GetString();
