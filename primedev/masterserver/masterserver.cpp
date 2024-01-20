@@ -7,6 +7,7 @@
 #include "engine/r2engine.h"
 #include "mods/modmanager.h"
 #include "shared/misccommands.h"
+#include "util/utils.h"
 #include "util/version.h"
 #include "server/auth/bansystem.h"
 #include "dedicated/dedicated.h"
@@ -118,6 +119,13 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			CURLcode result = curl_easy_perform(curl);
+			ScopeGuard cleanup(
+				[&]
+				{
+					m_bOriginAuthWithMasterServerInProgress = false;
+					m_bOriginAuthWithMasterServerDone = true;
+					curl_easy_cleanup(curl);
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -133,14 +141,14 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 						NO_ERROR,
 						"Failed reading origin auth info response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!originAuthInfo.IsObject() || !originAuthInfo.HasMember("success"))
 				{
 					Error(
 						eLog::MS, NO_ERROR, "Failed reading origin auth info response: malformed response object %s\n", readBuffer.c_str());
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (originAuthInfo["success"].IsTrue() && originAuthInfo.HasMember("token") && originAuthInfo["token"].IsString())
@@ -177,12 +185,6 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 				Error(eLog::MS, NO_ERROR, "Failed performing northstar origin auth: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 			}
-
-			// we goto this instead of returning so we always hit this
-		REQUEST_END_CLEANUP:
-			m_bOriginAuthWithMasterServerInProgress = false;
-			m_bOriginAuthWithMasterServerDone = true;
-			curl_easy_cleanup(curl);
 		});
 
 	requestThread.detach();
@@ -216,6 +218,13 @@ void MasterServerManager::RequestServerList()
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			CURLcode result = curl_easy_perform(curl);
+			ScopeGuard cleanup(
+				[&]
+				{
+					m_bRequestingServerList = false;
+					m_bScriptRequestingServerList = false;
+					curl_easy_cleanup(curl);
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -231,20 +240,20 @@ void MasterServerManager::RequestServerList()
 						NO_ERROR,
 						"Failed reading masterserver response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(serverInfoJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (serverInfoJson.IsObject() && serverInfoJson.HasMember("error"))
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
 					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!serverInfoJson.IsArray())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: root object is not an array\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				rapidjson::GenericArray<false, rapidjson_document::GenericValue> serverArray = serverInfoJson.GetArray();
@@ -256,7 +265,7 @@ void MasterServerManager::RequestServerList()
 					if (!serverObj.IsObject())
 					{
 						Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: member of server array is not an object\n");
-						goto REQUEST_END_CLEANUP;
+						return;
 					}
 
 					// todo: verify json props are fine before adding to m_remoteServers
@@ -347,12 +356,6 @@ void MasterServerManager::RequestServerList()
 				Error(eLog::MS, NO_ERROR, "Failed requesting servers: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 			}
-
-			// we goto this instead of returning so we always hit this
-		REQUEST_END_CLEANUP:
-			m_bRequestingServerList = false;
-			m_bScriptRequestingServerList = false;
-			curl_easy_cleanup(curl);
 		});
 
 	requestThread.detach();
@@ -379,6 +382,7 @@ void MasterServerManager::RequestMainMenuPromos()
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			CURLcode result = curl_easy_perform(curl);
+			ScopeGuard cleanup([&] { curl_easy_cleanup(curl); });
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -394,20 +398,20 @@ void MasterServerManager::RequestMainMenuPromos()
 						NO_ERROR,
 						"Failed reading masterserver main menu promos response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(mainMenuPromoJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!mainMenuPromoJson.IsObject())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver main menu promos response: root object is not an object\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (mainMenuPromoJson.HasMember("error"))
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver response: got fastify error response\n");
 					Error(eLog::MS, NO_ERROR, "%s\n", readBuffer.c_str());
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!mainMenuPromoJson.HasMember("newInfo") || !mainMenuPromoJson["newInfo"].IsObject() ||
@@ -435,7 +439,7 @@ void MasterServerManager::RequestMainMenuPromos()
 					!mainMenuPromoJson["smallButton2"]["ImageIndex"].IsNumber())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver main menu promos response: malformed json object\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				m_sMainMenuPromoData.newInfoTitle1 = mainMenuPromoJson["newInfo"]["Title1"].GetString();
@@ -462,10 +466,6 @@ void MasterServerManager::RequestMainMenuPromos()
 				Error(eLog::MS, NO_ERROR, "Failed requesting main menu promos: error %s\n", curl_easy_strerror(result));
 				m_bSuccessfullyConnected = false;
 			}
-
-		REQUEST_END_CLEANUP:
-			// nothing lol
-			curl_easy_cleanup(curl);
 		});
 
 	requestThread.detach();
@@ -502,6 +502,21 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			CURLcode result = curl_easy_perform(curl);
+			ScopeGuard cleanup(
+				[&]
+				{
+					m_bAuthenticatingWithGameServer = false;
+					m_bScriptAuthenticatingWithGameServer = false;
+
+					if (m_bNewgameAfterSelfAuth)
+					{
+						// pretty sure this is threadsafe?
+						Cbuf_AddText(Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", cmd_source_t::kCommandSrcCode);
+						m_bNewgameAfterSelfAuth = false;
+					}
+
+					curl_easy_cleanup(curl);
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -517,13 +532,13 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 						NO_ERROR,
 						"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(authInfoJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!authInfoJson.IsObject())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (authInfoJson.HasMember("error"))
@@ -538,13 +553,13 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					else
 						m_sAuthFailureReason = "No error message provided";
 
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!authInfoJson["success"].IsTrue())
 				{
 					Error(eLog::MS, NO_ERROR, "Authentication with masterserver failed: \"success\" is not true\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!authInfoJson.HasMember("success") || !authInfoJson.HasMember("id") || !authInfoJson["id"].IsString() ||
@@ -552,7 +567,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					!authInfoJson.HasMember("persistentData") || !authInfoJson["persistentData"].IsArray())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: malformed json object\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				RemoteAuthData newAuthData {};
@@ -570,7 +585,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 					if (!byte.IsUint() || byte.GetUint() > 255)
 					{
 						Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: malformed json object\n");
-						goto REQUEST_END_CLEANUP;
+						return;
 					}
 
 					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
@@ -590,19 +605,6 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 				m_bSuccessfullyAuthenticatedWithGameServer = false;
 				m_bScriptAuthenticatingWithGameServer = false;
 			}
-
-		REQUEST_END_CLEANUP:
-			m_bAuthenticatingWithGameServer = false;
-			m_bScriptAuthenticatingWithGameServer = false;
-
-			if (m_bNewgameAfterSelfAuth)
-			{
-				// pretty sure this is threadsafe?
-				Cbuf_AddText(Cbuf_GetCurrentPlayer(), "ns_end_reauth_and_leave_to_lobby", cmd_source_t::kCommandSrcCode);
-				m_bNewgameAfterSelfAuth = false;
-			}
-
-			curl_easy_cleanup(curl);
 		});
 
 	requestThread.detach();
@@ -660,6 +662,13 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			}
 
 			CURLcode result = curl_easy_perform(curl);
+			ScopeGuard cleanup(
+				[&]
+				{
+					m_bAuthenticatingWithGameServer = false;
+					m_bScriptAuthenticatingWithGameServer = false;
+					curl_easy_cleanup(curl);
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -675,13 +684,13 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 						NO_ERROR,
 						"Failed reading masterserver authentication response: encountered parse error \"%s\"\n",
 						rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!connectionInfoJson.IsObject())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (connectionInfoJson.HasMember("error"))
@@ -696,13 +705,13 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 					else
 						m_sAuthFailureReason = "No error message provided";
 
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!connectionInfoJson["success"].IsTrue())
 				{
 					Error(eLog::MS, NO_ERROR, "Authentication with masterserver failed: \"success\" is not true\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") ||
@@ -711,7 +720,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 					!connectionInfoJson["authToken"].IsString())
 				{
 					Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: malformed json object\n");
-					goto REQUEST_END_CLEANUP;
+					return;
 				}
 
 				m_pendingConnectionInfo.ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
@@ -736,11 +745,6 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 				m_bSuccessfullyAuthenticatedWithGameServer = false;
 				m_bScriptAuthenticatingWithGameServer = false;
 			}
-
-		REQUEST_END_CLEANUP:
-			m_bAuthenticatingWithGameServer = false;
-			m_bScriptAuthenticatingWithGameServer = false;
-			curl_easy_cleanup(curl);
 		});
 
 	requestThread.detach();
