@@ -2,22 +2,18 @@
 
 #pragma once
 
-union Vector3
+struct Vector3
 {
-	struct
-	{
-		float x;
-		float y;
-		float z;
-	};
-
-	float raw[3];
+	float x, y, z;
 
 	void MakeValid()
 	{
-		for (auto& fl : raw)
-			if (std::isnan(fl))
-				fl = 0;
+		if (std::isnan(x))
+			x = 0;
+		if (std::isnan(y))
+			y = 0;
+		if (std::isnan(z))
+			z = 0;
 	}
 
 	// todo: more operators maybe
@@ -27,17 +23,9 @@ union Vector3
 	}
 };
 
-union QAngle
+struct QAngle
 {
-	struct
-	{
-		float x;
-		float y;
-		float z;
-		float w;
-	};
-
-	float raw[4];
+	float x, y, z, w;
 
 	// todo: more operators maybe
 	bool operator==(const QAngle& other)
