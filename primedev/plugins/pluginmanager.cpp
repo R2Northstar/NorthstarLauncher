@@ -28,6 +28,7 @@ void PluginManager::LoadPlugin(fs::path path, bool reloaded)
 	{
 		NS::log::PLUGINSYS->warn("Unloading invalid plugin '{}'", path.string());
 		plugin.Unload();
+		return;
 	}
 
 	plugins.push_back(plugin);
