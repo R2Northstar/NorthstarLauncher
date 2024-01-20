@@ -47,3 +47,10 @@ set_target_properties(
                OUTPUT_NAME wsock32
                LINK_FLAGS "/MANIFEST:NO /DEBUG"
     )
+
+# COMPILE_LANGUAGE is used here because of the ASM file
+if(MSVC)
+    target_compile_options(loader_wsock32_proxy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4 /WX>)
+else()
+    target_compile_options(loader_wsock32_proxy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Werror>)
+endif()
