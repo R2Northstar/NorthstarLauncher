@@ -165,7 +165,7 @@ void Plugin::Log(spdlog::level::level_enum level, char* msg) const
 
 bool Plugin::IsValid() const
 {
-	return this->valid;
+	return this->valid && this->m_pCreateInterface && this->pluginId && this->callbacks && this->handle;
 }
 
 const std::string& Plugin::GetName() const
