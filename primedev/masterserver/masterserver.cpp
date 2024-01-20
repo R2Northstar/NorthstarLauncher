@@ -120,7 +120,8 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 
 			CURLcode result = curl_easy_perform(curl);
 			ScopeGuard cleanup(
-				[&] {
+				[&]
+				{
 					m_bOriginAuthWithMasterServerInProgress = false;
 					m_bOriginAuthWithMasterServerDone = true;
 					curl_easy_cleanup(curl);
@@ -215,7 +216,8 @@ void MasterServerManager::RequestServerList()
 
 			CURLcode result = curl_easy_perform(curl);
 			ScopeGuard cleanup(
-				[&] {
+				[&]
+				{
 					m_bRequestingServerList = false;
 					m_bScriptRequestingServerList = false;
 					curl_easy_cleanup(curl);
@@ -375,10 +377,7 @@ void MasterServerManager::RequestMainMenuPromos()
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			CURLcode result = curl_easy_perform(curl);
-			ScopeGuard cleanup(
-				[&] {
-					curl_easy_cleanup(curl);
-				});
+			ScopeGuard cleanup([&] { curl_easy_cleanup(curl); });
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -497,7 +496,8 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 
 			CURLcode result = curl_easy_perform(curl);
 			ScopeGuard cleanup(
-				[&] {
+				[&]
+				{
 					m_bAuthenticatingWithGameServer = false;
 					m_bScriptAuthenticatingWithGameServer = false;
 
@@ -654,7 +654,8 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 
 			CURLcode result = curl_easy_perform(curl);
 			ScopeGuard cleanup(
-				[&] {
+				[&]
+				{
 					m_bAuthenticatingWithGameServer = false;
 					m_bScriptAuthenticatingWithGameServer = false;
 					curl_easy_cleanup(curl);

@@ -75,10 +75,7 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteToString);
 			result = curl_easy_perform(easyhandle);
-			ScopeGuard cleanup(
-				[&] {
-					curl_easy_cleanup(easyhandle);
-				});
+			ScopeGuard cleanup([&] { curl_easy_cleanup(easyhandle); });
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -173,7 +170,8 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	curl_easy_setopt(easyhandle, CURLOPT_XFERINFODATA, this);
 	result = curl_easy_perform(easyhandle);
 	ScopeGuard cleanup(
-		[&] {
+		[&]
+		{
 			curl_easy_cleanup(easyhandle);
 			fclose(fp);
 		});
@@ -214,7 +212,8 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	std::ifstream fp(modPath.generic_string(), std::ios::binary);
 
 	ScopeGuard cleanup(
-		[&] {
+		[&]
+		{
 			if (NULL != hashHandle)
 			{
 				BCryptDestroyHash(hashHandle); // Handle to hash/MAC object which needs to be destroyed
@@ -368,7 +367,8 @@ void ModDownloader::ExtractMod(fs::path modPath)
 
 	file = unzOpen(modPath.generic_string().c_str());
 	ScopeGuard cleanup(
-		[&] {
+		[&]
+		{
 			if (unzClose(file) != MZ_OK)
 			{
 				spdlog::error("Failed closing mod archive after extraction.");
@@ -551,7 +551,8 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			fs::path archiveLocation;
 
 			ScopeGuard cleanup(
-				[&] {
+				[&]
+				{
 					try
 					{
 						remove(archiveLocation);
