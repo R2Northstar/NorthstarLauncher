@@ -1292,7 +1292,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				}
 				else
 				{
-					spdlog::error("No request id? WTF (put a sensible error message here)");
+					spdlog::error("Couldn't find request id in response");
 				}
 
 				if (serverAddedJson.HasMember("error"))
