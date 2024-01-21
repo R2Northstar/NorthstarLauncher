@@ -1,3 +1,5 @@
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include "loader.h"
 #include <string>
 #include <system_error>
@@ -5,28 +7,73 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include <shlwapi.h>
 
 namespace fs = std::filesystem;
 
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
-	char text[4096];
+	char text[8192];
 	std::string message = std::system_category().message(dwMessageId);
-	sprintf_s(text, "Failed to load the %ls at \"%ls\" (%lu):\n\n%hs", libName, location, dwMessageId, message.c_str());
+
+	sprintf_s(
+		text,
+		"Failed to load the %ls at \"%ls\" (%lu):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "
+		"before reaching out for help.",
+		libName,
+		location,
+		dwMessageId,
+		message.c_str());
+
 	if (dwMessageId == 126 && std::filesystem::exists(location))
 	{
 		sprintf_s(
 			text,
 			"%s\n\nThe file at the specified location DOES exist, so this error indicates that one of its *dependencies* failed to be "
-			"found.",
+			"found.\n\nTry the following steps:\n1. Install Visual C++ 2022 Redistributable: "
+			"https://aka.ms/vs/17/release/vc_redist.x64.exe\n2. Repair game files",
 			text);
 	}
-	MessageBoxA(GetForegroundWindow(), text, "Northstar Wsock32 Proxy Error", 0);
+	else if (!fs::exists("Titanfall2.exe") && (fs::exists("..\\Titanfall2.exe") || fs::exists("..\\..\\Titanfall2.exe")))
+	{
+		auto curDir = std::filesystem::current_path().filename().string();
+		auto aboveDir = std::filesystem::current_path().parent_path().filename().string();
+		sprintf_s(
+			text,
+			"%s\n\nWe detected that in your case you have extracted the files into a *subdirectory* of your Titanfall 2 "
+			"installation.\nPlease move all the files and folders from current folder (\"%s\") into the Titanfall 2 installation directory "
+			"just above (\"%s\").\n\nPlease try out the above steps by yourself before reaching out to the community for support.",
+			text,
+			curDir.c_str(),
+			aboveDir.c_str());
+	}
+	else if (!fs::exists("Titanfall2.exe"))
+	{
+		sprintf_s(
+			text,
+			"%s\n\nRemember: you need to unpack the contents of this archive into your Titanfall 2 game installation directory, not just "
+			"to any random folder.",
+			text);
+	}
+	else if (fs::exists("Titanfall2.exe"))
+	{
+		sprintf_s(
+			text,
+			"%s\n\nTitanfall2.exe has been found in the current directory: is the game installation corrupted or did you not unpack all "
+			"Northstar files here?",
+			text);
+	}
+	MessageBoxA(GetForegroundWindow(), text, "Northstar Launcher Error", 0);
 }
 
-bool ShouldLoadNorthstar()
+bool ShouldLoadNorthstar(bool default_case)
 {
-	bool loadNorthstar = strstr(GetCommandLineA(), "-northstar");
+	bool loadNorthstar;
+
+	if (default_case)
+		loadNorthstar = strstr(GetCommandLineA(), "-nonorthstardll") == NULL;
+	else
+		loadNorthstar = strstr(GetCommandLineA(), "-northstar") != NULL;
 
 	if (loadNorthstar)
 		return loadNorthstar;
@@ -37,7 +84,9 @@ bool ShouldLoadNorthstar()
 		std::stringstream runNorthstarFileBuffer;
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
-		if (!runNorthstarFileBuffer.str().starts_with("0"))
+		if (runNorthstarFileBuffer.str().starts_with("0"))
+			loadNorthstar = false;
+		else
 			loadNorthstar = true;
 	}
 	return loadNorthstar;
@@ -99,43 +148,13 @@ bool LoadNorthstar()
 	return true;
 }
 
-typedef int (*LauncherMainType)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-LauncherMainType LauncherMainOriginal;
-
-int LauncherMainHook(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+bool GetExePathWide(wchar_t* dest, DWORD destSize)
 {
-	if (ShouldLoadNorthstar())
-		LoadNorthstar();
-	return LauncherMainOriginal(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-}
+	if (!dest)
+		return NULL;
+	if (destSize < MAX_PATH)
+		return NULL;
 
-bool ProvisionNorthstar()
-{
-	if (!ShouldLoadNorthstar())
-		return true;
-
-	if (MH_Initialize() != MH_OK)
-	{
-		MessageBoxA(
-			GetForegroundWindow(), "MH_Initialize failed\nThe game cannot continue and has to exit.", "Northstar Wsock32 Proxy Error", 0);
-		return false;
-	}
-
-	auto launcherHandle = GetModuleHandleA("launcher.dll");
-	if (!launcherHandle)
-	{
-		MessageBoxA(
-			GetForegroundWindow(),
-			"Launcher isn't loaded yet.\nThe game cannot continue and has to exit.",
-			"Northstar Wsock32 Proxy Error",
-			0);
-		return false;
-	}
-
-	LPVOID pTarget = (LPVOID)GetProcAddress(launcherHandle, "LauncherMain");
-	if (MH_CreateHook(pTarget, (LPVOID)&LauncherMainHook, reinterpret_cast<LPVOID*>(&LauncherMainOriginal)) != MH_OK ||
-		MH_EnableHook(pTarget) != MH_OK)
-		MessageBoxA(GetForegroundWindow(), "Hook creation failed for function LauncherMain.", "Northstar Wsock32 Proxy Error", 0);
-
-	return true;
+	DWORD length = GetModuleFileNameW(NULL, dest, destSize);
+	return length && PathRemoveFileSpecW(dest);
 }
