@@ -125,7 +125,6 @@ std::optional<Plugin> PluginManager::LoadPlugin(fs::path path, PluginInitFuncs* 
 		NS::log::PLUGINSYS->error("'{}' is missing 'run_on_client' in its manifest", pathstring);
 		return std::nullopt;
 	}
-	auto test = manifestJSON["api_version"].GetString();
 	if (strcmp(manifestJSON["api_version"].GetString(), std::to_string(ABI_VERSION).c_str()))
 	{
 		NS::log::PLUGINSYS->error(

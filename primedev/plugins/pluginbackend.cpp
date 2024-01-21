@@ -23,11 +23,12 @@ void PluginCommunicationHandler::RunFrame()
 	if (!requestQueue.empty())
 	{
 		storedRequest = requestQueue.front();
-		switch (storedRequest.type)
-		{
-		default:
-			spdlog::error("{} was called with invalid request type '{}'", __FUNCTION__, static_cast<int>(storedRequest.type));
-		}
+		// lmao, no actual case here so im commenting this out to avoid the warning
+		//switch (storedRequest.type)
+		//{
+		//default:
+		spdlog::error("{} was called with invalid request type '{}'", __FUNCTION__, static_cast<int>(storedRequest.type));
+		//}
 		requestQueue.pop();
 	}
 }
