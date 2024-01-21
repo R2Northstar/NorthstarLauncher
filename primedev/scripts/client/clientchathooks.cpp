@@ -32,8 +32,8 @@ void, __fastcall, (void* self, const char* message, int inboxId, bool isTeam, bo
 
 	RemoveAsciiControlSequences(const_cast<char*>(message), true);
 
-	SQRESULT result = g_pSquirrel<ScriptContext::CLIENT>->Call(
-		"CHudChat_ProcessMessageStartThread", senderId - 1, payload, isTeam, isDead, type);
+	SQRESULT result =
+		g_pSquirrel<ScriptContext::CLIENT>->Call("CHudChat_ProcessMessageStartThread", senderId - 1, payload, isTeam, isDead, type);
 	if (result == SQRESULT_ERROR)
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
 			CHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
