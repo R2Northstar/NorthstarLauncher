@@ -1,6 +1,9 @@
 #include "core/memalloc.h"
 #include "core/tier0.h"
 
+// TODO: refactor this entire thing to not cause the suppressed warnings
+#pragma warning(push)
+#pragma warning(disable : 4273 4565)
 // TODO: rename to malloc and free after removing statically compiled .libs
 
 extern "C" void* _malloc_base(size_t n)
@@ -69,3 +72,5 @@ void operator delete(void* p) noexcept
 {
 	_free_base(p);
 } // /FORCE:MULTIPLE
+
+#pragma warning(pop)
