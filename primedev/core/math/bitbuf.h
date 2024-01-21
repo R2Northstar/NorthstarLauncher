@@ -554,7 +554,7 @@ public:
 
 		while (1)
 		{
-			char val = ReadChar();
+			char val = (char)ReadChar();
 
 			if (val == 0)
 				break;
@@ -745,7 +745,7 @@ public:
 
 	INLINE int GetNumBitsLeft()
 	{
-		return m_OutBitsLeft + (32 * (m_DataEnd - m_DataOut - 1));
+		return (int)(m_OutBitsLeft + (32 * (m_DataEnd - m_DataOut - 1)));
 	}
 
 	INLINE void Reset()
@@ -918,7 +918,7 @@ public:
 
 	INLINE i32 GetNumBitsWritten()
 	{
-		return (32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data));
+		return (i32)((32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data)));
 	}
 
 	INLINE i32 GetNumBytesWritten()

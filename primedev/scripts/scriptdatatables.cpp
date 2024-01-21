@@ -308,7 +308,7 @@ REPLACE_SQFUNC(GetDataTableRowCount, (ScriptContext::UI | ScriptContext::CLIENT 
 		return g_pSquirrel<context>->m_funcOriginals["GetDatatableRowCount"](sqvm);
 
 	CSVData* csv = *pData;
-	g_pSquirrel<context>->pushinteger(sqvm, csv->dataPointers.size());
+	g_pSquirrel<context>->pushinteger(sqvm, (SQInteger)csv->dataPointers.size());
 	return SQRESULT_NOTNULL;
 }
 
@@ -732,7 +732,7 @@ std::string DataTableToString(Datatable* datatable)
 	{
 		sCSVString += '\n';
 
-		bool bShouldComma = false;
+		bShouldComma = false;
 		for (int col = 0; col < datatable->numColumns; col++)
 		{
 			if (bShouldComma)
@@ -815,7 +815,7 @@ void ConCommand_dump_datatable(const CCommand& args)
 	DumpDatatable(args.Arg(1));
 }
 
-void ConCommand_dump_datatables(const CCommand& args)
+void ConCommand_dump_datatables(const CCommand& /*args*/)
 {
 	// likely not a comprehensive list, might be missing a couple?
 	static const std::vector<const char*> VANILLA_DATATABLE_PATHS = {

@@ -530,7 +530,7 @@ ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | Scri
 {
 	Mod* mod = g_pSquirrel<context>->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
-	g_pSquirrel<context>->pushinteger(sqvm, (MAX_FOLDER_SIZE - GetSizeOfFolder(dir)) / 1024);
+	g_pSquirrel<context>->pushinteger(sqvm, (MAX_FOLDER_SIZE - (int)GetSizeOfFolder(dir)) / 1024);
 	return SQRESULT_NOTNULL;
 }
 

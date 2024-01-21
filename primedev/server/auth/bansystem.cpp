@@ -211,7 +211,7 @@ void ConCommand_unban(const CCommand& args)
 	g_pBanSystem->UnbanUID(strtoull(args.Arg(1), nullptr, 10));
 }
 
-void ConCommand_clearbanlist(const CCommand& args)
+void ConCommand_clearbanlist(const CCommand& /*args*/)
 {
 	g_pBanSystem->ClearBanlist();
 }
@@ -222,8 +222,8 @@ int ConCommand_banCompletion(const char* const partial, char commands[COMMAND_CO
 	const char* cmdName = partial;
 	const char* query = partial + (space == nullptr ? 0 : space - partial) + 1;
 
-	const int queryLength = strlen(query);
-	const int cmdLength = strlen(cmdName) - queryLength;
+	const size_t queryLength = strlen(query);
+	const size_t cmdLength = strlen(cmdName) - queryLength;
 
 	int numCompletions = 0;
 	for (int i = 0; i < GetMaxPlayers() && numCompletions < COMMAND_COMPLETION_MAXITEMS - 2; i++)

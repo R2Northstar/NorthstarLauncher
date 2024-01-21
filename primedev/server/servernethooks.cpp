@@ -7,6 +7,8 @@
 #include <thread>
 #include <bcrypt.h>
 
+#define STATUS_SUCCESS 0 // taken from ntstatus.h but redefinition errors
+
 AUTOHOOK_INIT()
 
 static ConVar* Cvar_net_debug_atlas_packet;
@@ -21,13 +23,13 @@ static bool InitHMACSHA256()
 	DWORD hashLength = 0;
 	ULONG hashLengthSz = 0;
 
-	if ((status = BCryptOpenAlgorithmProvider(&HMACSHA256, BCRYPT_SHA256_ALGORITHM, NULL, BCRYPT_ALG_HANDLE_HMAC_FLAG)))
+	if ((status = BCryptOpenAlgorithmProvider(&HMACSHA256, BCRYPT_SHA256_ALGORITHM, NULL, BCRYPT_ALG_HANDLE_HMAC_FLAG)) != STATUS_SUCCESS)
 	{
 		spdlog::error("failed to initialize HMAC-SHA256: BCryptOpenAlgorithmProvider: error 0x{:08X}", (ULONG)status);
 		return false;
 	}
 
-	if ((status = BCryptGetProperty(HMACSHA256, BCRYPT_HASH_LENGTH, (PUCHAR)&hashLength, sizeof(hashLength), &hashLengthSz, 0)))
+	if ((status = BCryptGetProperty(HMACSHA256, BCRYPT_HASH_LENGTH, (PUCHAR)&hashLength, sizeof(hashLength), &hashLengthSz, 0)) != STATUS_SUCCESS)
 	{
 		spdlog::error("failed to initialize HMAC-SHA256: BCryptGetProperty(BCRYPT_HASH_LENGTH): error 0x{:08X}", (ULONG)status);
 		return false;
@@ -51,19 +53,19 @@ static bool VerifyHMACSHA256(std::string key, std::string sig, std::string data)
 	NTSTATUS status;
 	BCRYPT_HASH_HANDLE h = NULL;
 
-	if ((status = BCryptCreateHash(HMACSHA256, &h, NULL, 0, (PUCHAR)key.c_str(), (ULONG)key.length(), 0)))
+	if ((status = BCryptCreateHash(HMACSHA256, &h, NULL, 0, (PUCHAR)key.c_str(), (ULONG)key.length(), 0)) != STATUS_SUCCESS)
 	{
 		spdlog::error("failed to verify HMAC-SHA256: BCryptCreateHash: error 0x{:08X}", (ULONG)status);
 		goto cleanup;
 	}
 
-	if ((status = BCryptHashData(h, (PUCHAR)data.c_str(), (ULONG)data.length(), 0)))
+	if ((status = BCryptHashData(h, (PUCHAR)data.c_str(), (ULONG)data.length(), 0)) != STATUS_SUCCESS)
 	{
 		spdlog::error("failed to verify HMAC-SHA256: BCryptHashData: error 0x{:08X}", (ULONG)status);
 		goto cleanup;
 	}
 
-	if ((status = BCryptFinishHash(h, (PUCHAR)&hash, (ULONG)sizeof(hash), 0)))
+	if ((status = BCryptFinishHash(h, (PUCHAR)&hash, (ULONG)sizeof(hash), 0)) != STATUS_SUCCESS)
 	{
 		spdlog::error("failed to verify HMAC-SHA256: BCryptFinishHash: error 0x{:08X}", (ULONG)status);
 		goto cleanup;

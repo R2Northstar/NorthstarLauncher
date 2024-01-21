@@ -52,12 +52,12 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 void TryPrintCvarHelpForCommand(const char* pCommand)
 {
 	// try to display help text for an inputted command string from the console
-	int pCommandLen = strlen(pCommand);
+	size_t pCommandLen = strlen(pCommand);
 	char* pCvarStr = new char[pCommandLen];
 	strcpy(pCvarStr, pCommand);
 
 	// trim whitespace from right
-	for (int i = pCommandLen - 1; i; i--)
+	for (size_t i = pCommandLen - 1; i; i--)
 	{
 		if (isspace(pCvarStr[i]))
 			pCvarStr[i] = '\0';
@@ -117,11 +117,11 @@ void ConCommand_find(const CCommand& arg)
 			strncpy_s(pTempName, sizeof(pTempName), map.second->m_pszName, sizeof(pTempName) - 1);
 			strncpy_s(pTempSearchTerm, sizeof(pTempSearchTerm), arg.Arg(i + 1), sizeof(pTempSearchTerm) - 1);
 
-			for (int i = 0; pTempName[i]; i++)
-				pTempName[i] = tolower(pTempName[i]);
+			for (int j = 0; pTempName[j]; j++)
+				pTempName[j] = (char)tolower(pTempName[j]);
 
-			for (int i = 0; pTempSearchTerm[i]; i++)
-				pTempSearchTerm[i] = tolower(pTempSearchTerm[i]);
+			for (int j = 0; pTempSearchTerm[j]; j++)
+				pTempSearchTerm[j] = (char)tolower(pTempSearchTerm[j]);
 
 			if (!strstr(pTempName, pTempSearchTerm))
 			{
@@ -151,7 +151,7 @@ void ConCommand_findflags(const CCommand& arg)
 	strcpy(upperFlag, arg.Arg(1));
 
 	for (int i = 0; upperFlag[i]; i++)
-		upperFlag[i] = toupper(upperFlag[i]);
+		upperFlag[i] = (char)toupper(upperFlag[i]);
 
 	// resolve flag name => int flags
 	int resolvedFlag = FCVAR_NONE;
@@ -186,7 +186,7 @@ void ConCommand_findflags(const CCommand& arg)
 	delete[] upperFlag;
 }
 
-void ConCommand_list(const CCommand& arg)
+void ConCommand_list(const CCommand& /*arg*/)
 {
 	ConCommandBase* var;
 	CCVarIteratorInternal* itint = g_pCVar->FactoryInternalIterator();
@@ -208,7 +208,7 @@ void ConCommand_list(const CCommand& arg)
 	spdlog::info("{} total convars/concommands", sorted.size());
 }
 
-void ConCommand_differences(const CCommand& arg)
+void ConCommand_differences(const CCommand& /*arg*/)
 {
 	CCVarIteratorInternal* itint = g_pCVar->FactoryInternalIterator();
 	std::map<std::string, ConCommandBase*> sorted;

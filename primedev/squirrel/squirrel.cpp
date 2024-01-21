@@ -407,6 +407,7 @@ template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirr
 template <ScriptContext context> SQInteger (*SQPrint)(HSquirrelVM* sqvm, const char* fmt);
 template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const char* fmt, ...)
 {
+	NOTE_UNUSED(sqvm)
 	va_list va;
 	va_start(va, fmt);
 
@@ -553,14 +554,14 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 	ScriptContext realContext = context;
 	bool bShouldCallCustomCallbacks = true;
 
-	if (context == ScriptContext::CLIENT)
+	if constexpr (context == ScriptContext::CLIENT)
 	{
 		if (!strcmp(callback, "UICodeCallback_UIInit"))
 			realContext = ScriptContext::UI;
 		else if (strcmp(callback, "ClientCodeCallback_MapSpawn"))
 			bShouldCallCustomCallbacks = false;
 	}
-	else if (context == ScriptContext::SERVER)
+	else if constexpr (context == ScriptContext::SERVER)
 		bShouldCallCustomCallbacks = !strcmp(callback, "CodeCallback_MapSpawn");
 
 	if (bShouldCallCustomCallbacks)
@@ -659,7 +660,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 		pushobject(m_pSQVM->sqvm, &functionobj); // Push the function object
 		pushroottable(m_pSQVM->sqvm);
 
-		int argsAmount = message.args.size();
+		size_t argsAmount = message.args.size();
 
 		if (message.isExternal && message.externalFunc != NULL)
 		{
@@ -674,7 +675,7 @@ template <ScriptContext context> void SquirrelManager<context>::ProcessMessageBu
 			}
 		}
 
-		_call(m_pSQVM->sqvm, argsAmount);
+		_call(m_pSQVM->sqvm, (SQInteger)argsAmount);
 	}
 }
 

@@ -155,7 +155,6 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	modState.state = DOWNLOADING;
 
 	// Download the actual archive
-	bool failed = false;
 	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
 	CURLcode result;
 	CURL* easyhandle;
@@ -288,7 +287,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 		std::streamsize bytesRead = fp.gcount();
 		if (bytesRead > 0)
 		{
-			status = BCryptHashData(hashHandle, (PBYTE)buffer.data(), bytesRead, 0);
+			status = BCryptHashData(hashHandle, (PUCHAR)buffer.data(), (ULONG)bytesRead, 0);
 			if (!NT_SUCCESS(status))
 			{
 				modState.state = MOD_CORRUPTED;

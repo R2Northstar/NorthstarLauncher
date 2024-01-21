@@ -618,7 +618,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 	std::string passwordStr(password);
 
 	std::thread requestThread(
-		[this, uidStr, tokenStr, serverIdStr, passwordStr, server]()
+		[&]()
 		{
 			// esnure that any persistence saving is done, so we know masterserver has newest
 			while (m_bSavingPersistentData)
@@ -635,7 +635,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			{
-				char* escapedPassword = curl_easy_escape(curl, passwordStr.c_str(), passwordStr.length());
+				char* escapedPassword = curl_easy_escape(curl, passwordStr.c_str(), (int)passwordStr.length());
 
 				curl_easy_setopt(
 					curl,
@@ -734,6 +734,8 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 				m_bSuccessfullyAuthenticatedWithGameServer = false;
 				m_bScriptAuthenticatingWithGameServer = false;
 			}
+
+			return;
 		});
 
 	requestThread.detach();

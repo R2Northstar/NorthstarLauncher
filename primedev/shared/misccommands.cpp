@@ -19,14 +19,14 @@ void ConCommand_force_newgame(const CCommand& arg)
 	strncpy(g_pHostState->m_levelName, arg.Arg(1), sizeof(g_pHostState->m_levelName));
 }
 
-void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& arg)
+void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& /*arg*/)
 {
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
 	g_pMasterServerManager->m_bNewgameAfterSelfAuth = true;
 	g_pMasterServerManager->AuthenticateWithOwnServer(g_pLocalPlayerUserID, g_pMasterServerManager->m_sOwnClientAuthToken);
 }
 
-void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
+void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& /*arg*/)
 {
 	if (g_pServerAuthentication->m_RemoteAuthenticationData.size())
 		g_pCVar->FindVar("serverfilter")->SetValue(g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first.c_str());
@@ -60,7 +60,7 @@ void ConCommand_cvar_setdefaultvalue(const CCommand& arg)
 	}
 
 	// unfortunately no way for us to not leak memory here, as default value might not be in writeable memory by default
-	int nLen = strlen(arg.Arg(2));
+	size_t nLen = strlen(arg.Arg(2));
 	char* pBuf = new char[nLen + 1];
 	strncpy_s(pBuf, nLen + 1, arg.Arg(2), nLen);
 
@@ -83,7 +83,7 @@ void ConCommand_cvar_setvalueanddefaultvalue(const CCommand& arg)
 	}
 
 	// unfortunately no way for us to not leak memory here, as default value might not be in writeable memory by default
-	int nLen = strlen(arg.Arg(2));
+	size_t nLen = strlen(arg.Arg(2));
 	char* pBuf = new char[nLen + 1];
 	strncpy_s(pBuf, nLen + 1, arg.Arg(2), nLen);
 

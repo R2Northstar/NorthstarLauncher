@@ -93,7 +93,6 @@ bool ServerAuthenticationManager::IsDuplicateAccount(CBaseClient* pPlayer, const
 	if (m_bAllowDuplicateAccounts)
 		return false;
 
-	bool bHasUidPlayer = false;
 	for (int i = 0; i < g_pGlobals->m_nMaxClients; i++)
 		if (&g_pClientArray[i] != pPlayer && !strcmp(pPlayerUid, g_pClientArray[i].m_UID))
 			return true;
@@ -291,7 +290,7 @@ void,, (CBaseClient* self))
 	{
 		g_pServerAuthentication->m_bForceResetLocalPlayerPersistence = false;
 		g_pServerAuthentication->WritePersistentData(self);
-		g_pServerPresence->SetPlayerCount(g_pServerAuthentication->m_PlayerAuthenticationData.size());
+		g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 	}
 
 	CBaseClient__ActivatePlayer(self);
@@ -326,12 +325,12 @@ void,, (CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...)
 		g_pServerLimits->RemovePlayer(self);
 	}
 
-	g_pServerPresence->SetPlayerCount(g_pServerAuthentication->m_PlayerAuthenticationData.size());
+	g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
 }
 
-void ConCommand_ns_resetpersistence(const CCommand& args)
+void ConCommand_ns_resetpersistence(const CCommand& /*args*/)
 {
 	if (*g_pServerState == server_state_t::ss_active)
 	{
