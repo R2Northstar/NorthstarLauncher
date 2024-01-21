@@ -387,7 +387,7 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 }
 
 // hooks
-bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
+bool IsUIVM(ScriptContext /*context*/, HSquirrelVM* pSqvm)
 {
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }

@@ -48,18 +48,18 @@ std::string UnescapeUnicode(const std::string& str)
 		}
 		if (cp <= 0x7F)
 		{
-			result.push_back(cp);
+			result.push_back((char)cp);
 		}
 		else if (cp <= 0x7FF)
 		{
-			result.push_back((cp >> 6) | 0b11000000 & (~(1 << 5)));
-			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
+			result.push_back((char)((cp >> 6) | 0b11000000 & (~(1 << 5))));
+			result.push_back((char)(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6))));
 		}
 		else if (cp <= 0xFFFF)
 		{
-			result.push_back((cp >> 12) | 0b11100000 & (~(1 << 4)));
-			result.push_back((cp >> 6) & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
-			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
+			result.push_back((char)((cp >> 12) | 0b11100000 & (~(1 << 4))));
+			result.push_back((char)((cp >> 6) & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6))));
+			result.push_back((char)(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6))));
 		}
 	}
 
