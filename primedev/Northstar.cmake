@@ -191,5 +191,11 @@ set_target_properties(
 if(MSVC)
     target_compile_options(NorthstarDLL PRIVATE /W4 /WX)
 else()
-    target_compile_options(NorthstarDLL PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(
+        NorthstarDLL
+        PRIVATE -Wall
+                -Wextra
+                -Wpedantic
+                -Werror
+        )
 endif()

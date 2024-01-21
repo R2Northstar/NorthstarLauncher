@@ -52,5 +52,11 @@ set_target_properties(
 if(MSVC)
     target_compile_options(loader_wsock32_proxy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4 /WX>)
 else()
-    target_compile_options(loader_wsock32_proxy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra -Wpedantic -Werror>)
+    target_compile_options(
+        loader_wsock32_proxy
+        PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall
+                -Wextra
+                -Wpedantic
+                -Werror>
+        )
 endif()
