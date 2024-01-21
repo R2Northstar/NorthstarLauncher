@@ -263,7 +263,7 @@ void, __fastcall, (bool bRender))
 	OverlayBase_t* pPrevOverlay = nullptr; // rsi
 	OverlayBase_t* pNextOverlay = nullptr; // rdi
 
-	int m_nCreationTick; // eax
+	// int m_nCreationTick; // eax
 	bool bShouldDraw; // zf
 	int m_pUnk; // eax
 
@@ -288,7 +288,7 @@ void, __fastcall, (bool bRender))
 		{
 			if (pCurrOverlay->m_nCreationTick == -1)
 			{
-				m_pUnk = pCurrOverlay->m_pUnk;
+				m_pUnk = (int)pCurrOverlay->m_pUnk;
 
 				if (m_pUnk == -1)
 				{

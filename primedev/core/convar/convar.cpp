@@ -370,7 +370,7 @@ void ConVar::SetValue(Color clValue)
 // Purpose: changes the ConVar string value.
 // Input  : *pszTempVal - flOldValue
 //-----------------------------------------------------------------------------
-void ConVar::ChangeStringValue(const char* pszTempVal, float flOldValue)
+void ConVar::ChangeStringValue(const char* pszTempVal, float /*flOldValue*/)
 {
 	assert(!(m_ConCommandBase.m_nFlags & FCVAR_NEVER_AS_STRING));
 
@@ -382,7 +382,7 @@ void ConVar::ChangeStringValue(const char* pszTempVal, float flOldValue)
 
 	if (pszTempVal)
 	{
-		int len = strlen(pszTempVal) + 1;
+		size_t len = strlen(pszTempVal) + 1;
 
 		if (len > m_Value.m_iStringLength)
 		{
@@ -412,8 +412,8 @@ bool ConVar::SetColorFromString(const char* pszValue)
 	bool bColor = false;
 
 	// Try pulling RGBA color values out of the string.
-	int nRGBA[4] {};
-	int nParamsRead = sscanf_s(pszValue, "%i %i %i %i", &(nRGBA[0]), &(nRGBA[1]), &(nRGBA[2]), &(nRGBA[3]));
+	unsigned char nRGBA[4] {};
+	int nParamsRead = sscanf_s(pszValue, "%hhu %hhu %hhu %hhu", &(nRGBA[0]), &(nRGBA[1]), &(nRGBA[2]), &(nRGBA[3]));
 
 	if (nParamsRead >= 3)
 	{

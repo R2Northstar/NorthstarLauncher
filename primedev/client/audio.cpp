@@ -207,14 +207,14 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 
 			// Allocate enough memory for the file.
 			// blank out the memory for now, then read it later
-			uint8_t* data = new uint8_t[fileSize];
-			memcpy(data, EMPTY_WAVE, sizeof(EMPTY_WAVE));
-			Samples.push_back({fileSize, std::unique_ptr<uint8_t[]>(data)});
+			uint8_t* fileData = new uint8_t[fileSize];
+			memcpy(fileData, EMPTY_WAVE, sizeof(EMPTY_WAVE));
+			Samples.push_back({fileSize, std::unique_ptr<uint8_t[]>(fileData)});
 
 			// thread off the file read
 			// should we spawn one thread per read? or should there be a cap to the number of reads at once?
 			std::thread readThread(
-				[pathString, fileSize, data]
+				[pathString, fileSize, fileData]
 				{
 					std::shared_lock lock(g_CustomAudioManager.m_loadingMutex);
 					std::ifstream wavStream(pathString, std::ios::binary);
@@ -228,7 +228,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 
 					// read from after the header first to preserve the empty header, then read the header last
 					wavStream.seekg(0, std::ios::beg);
-					wavStream.read(reinterpret_cast<char*>(data), fileSize);
+					wavStream.read(reinterpret_cast<char*>(fileData), fileSize);
 					wavStream.close();
 
 					spdlog::info("Finished async read of audio sample {}", pathString);
@@ -445,7 +445,7 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 		else
 		{
 			data = dat->second.get();
-			dataLength = dat->first;
+			dataLength = (unsigned int)dat->first;
 		}
 	}
 

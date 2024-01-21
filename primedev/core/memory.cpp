@@ -103,8 +103,8 @@ inline std::vector<uint8_t> HexBytesToString(const char* pHexString)
 {
 	std::vector<uint8_t> ret;
 
-	int size = strlen(pHexString);
-	for (int i = 0; i < size; i++)
+	size_t size = strlen(pHexString);
+	for (size_t i = 0; i < size; i++)
 	{
 		// If this is a space character, ignore it
 		if (isspace(pHexString[i]))
@@ -115,7 +115,7 @@ inline std::vector<uint8_t> HexBytesToString(const char* pHexString)
 			BYTE result = 0;
 			for (int j = 0; j < 2; j++)
 			{
-				int val = 0;
+				BYTE val = 0;
 				char c = *(pHexString + i + j);
 				if (c >= 'a')
 				{
@@ -132,7 +132,7 @@ inline std::vector<uint8_t> HexBytesToString(const char* pHexString)
 				else
 				{
 					assert_msg(false, "Failed to parse invalid hex string.");
-					val = -1;
+					val = 0xFF; // -1
 				}
 
 				result += (j == 0) ? val * 16 : val;
@@ -244,7 +244,7 @@ CMemoryAddress CModule::FindPattern(const uint8_t* pPattern, const char* pMask)
 		{
 			if (pMask[i * 16 + j] == 'x')
 			{
-				_bittestandset(reinterpret_cast<LONG*>(&nMasks[i]), j);
+				_bittestandset(reinterpret_cast<LONG*>(&nMasks[i]), (long)j);
 			}
 		}
 	}
@@ -289,8 +289,8 @@ inline std::pair<std::vector<uint8_t>, std::string> MaskedBytesFromPattern(const
 	std::vector<uint8_t> vRet;
 	std::string sMask;
 
-	int size = strlen(pPatternString);
-	for (int i = 0; i < size; i++)
+	size_t size = strlen(pPatternString);
+	for (size_t i = 0; i < size; i++)
 	{
 		// If this is a space character, ignore it
 		if (isspace(pPatternString[i]))
@@ -307,7 +307,7 @@ inline std::pair<std::vector<uint8_t>, std::string> MaskedBytesFromPattern(const
 			BYTE result = 0;
 			for (int j = 0; j < 2; j++)
 			{
-				int val = 0;
+				BYTE val = 0;
 				char c = *(pPatternString + i + j);
 				if (c >= 'a')
 				{
@@ -324,7 +324,7 @@ inline std::pair<std::vector<uint8_t>, std::string> MaskedBytesFromPattern(const
 				else
 				{
 					assert_msg(false, "Failed to parse invalid pattern string.");
-					val = -1;
+					val = 0xFF; // -1
 				}
 
 				result += (j == 0) ? val * 16 : val;
