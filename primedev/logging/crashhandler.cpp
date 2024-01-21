@@ -88,7 +88,6 @@ BOOL WINAPI ConsoleCtrlRoutine(DWORD dwCtrlType)
 		delete g_pCrashHandler;
 		g_pCrashHandler = nullptr;
 		std::exit(EXIT_SUCCESS);
-		return TRUE;
 	}
 
 	return FALSE;

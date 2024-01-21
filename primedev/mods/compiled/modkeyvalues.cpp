@@ -79,7 +79,6 @@ void ModManager::TryBuildKeyValues(const char* filename)
 		i++;
 	}
 
-	int j = 0;
 	for (int j = 0; originalFile[i] >= 65 && originalFile[i] <= 122; j++)
 		rootName[j] = originalFile[i++];
 

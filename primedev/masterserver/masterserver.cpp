@@ -876,16 +876,16 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 
 			if (respStatus != 200)
 			{
-				rapidjson_document obj;
-				obj.Parse(pdata.c_str());
+				rapidjson_document doc;
+				doc.Parse(pdata.c_str());
 
-				if (!obj.HasParseError() && obj.HasMember("error") && obj["error"].IsObject())
+				if (!doc.HasParseError() && doc.HasMember("error") && doc["error"].IsObject())
 					spdlog::error(
 						"failed to make Atlas connect pdata request {}: response status {}, error: {} ({})",
 						token,
 						respStatus,
-						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
-						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
+						((doc["error"].HasMember("enum") && doc["error"]["enum"].IsString()) ? doc["error"]["enum"].GetString() : ""),
+						((doc["error"].HasMember("msg") && doc["error"]["msg"].IsString()) ? doc["error"]["msg"].GetString() : ""));
 				else
 					spdlog::error("failed to make Atlas connect pdata request {}: response status {}", token, respStatus);
 				return;
@@ -920,7 +920,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
-			char* rejectEnc = curl_easy_escape(curl, reject.c_str(), reject.length());
+			char* rejectEnc = curl_easy_escape(curl, reject.c_str(), (int)reject.length());
 			if (!rejectEnc)
 			{
 				spdlog::error("failed to handle Atlas connect request {}: failed to escape reject", token);
@@ -960,16 +960,16 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 
 			if (respStatus != 200)
 			{
-				rapidjson_document obj;
-				obj.Parse(buf.c_str());
+				rapidjson_document req;
+				req.Parse(buf.c_str());
 
-				if (!obj.HasParseError() && obj.HasMember("error") && obj["error"].IsObject())
+				if (!req.HasParseError() && req.HasMember("error") && req["error"].IsObject())
 					spdlog::error(
 						"failed to respond to Atlas connect request {}: response status {}, error: {} ({})",
 						token,
 						respStatus,
-						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
-						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
+						((req["error"].HasMember("enum") && req["error"]["enum"].IsString()) ? req["error"]["enum"].GetString() : ""),
+						((req["error"].HasMember("msg") && req["error"]["msg"].IsString()) ? req["error"]["msg"].GetString() : ""));
 				else
 					spdlog::error("failed to respond to Atlas connect request {}: response status {}", token, respStatus);
 				return;
@@ -982,7 +982,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 	spdlog::error("invalid Atlas connectionless packet request: unknown type {}", type);
 }
 
-void ConCommand_ns_fetchservers(const CCommand& args)
+void ConCommand_ns_fetchservers(const CCommand& /*args*/)
 {
 	g_pMasterServerManager->RequestServerList();
 }
@@ -1002,7 +1002,7 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (
 	g_pServerPresence->AddPresenceReporter(presenceReporter);
 }
 
-void MasterServerPresenceReporter::CreatePresence(const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::CreatePresence(const ServerPresence* /*pServerPresence*/)
 {
 	m_nNumRegistrationAttempts = 0;
 }
@@ -1045,7 +1045,7 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 	}
 }
 
-void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* /*pServerPresence*/)
 {
 	// Don't call this if we don't have a server id.
 	if (!*g_pMasterServerManager->m_sOwnServerId)
@@ -1073,14 +1073,14 @@ void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServer
 					"{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), g_pMasterServerManager->m_sOwnServerId)
 					.c_str());
 
-			CURLcode result = curl_easy_perform(curl);
+			curl_easy_perform(curl);
 			curl_easy_cleanup(curl);
 		});
 
 	requestThread.detach();
 }
 
-void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::RunFrame(double /*flCurrentTime*/, const ServerPresence* /*pServerPresence*/)
 {
 	// Check if we're already running an InternalAddServer() call in the background.
 	// If so, grab the result if it's ready.

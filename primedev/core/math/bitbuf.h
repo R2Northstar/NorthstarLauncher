@@ -188,7 +188,7 @@ public:
 		return ret;
 	}
 
-	INLINE u32 ReadUBitLong(i32 numBits)
+	INLINE u32 ReadUBitLong(u32 numBits)
 	{
 		if (m_CachedBitsLeft >= numBits)
 		{
@@ -432,7 +432,7 @@ public:
 		float shift = (float)(GetBitForBitnum(numBits));
 
 		i32 i = ReadUBitLong(numBits);
-		float fReturn = (float)i * (360.0 / shift);
+		float fReturn = (float)i * (360.0f / shift);
 
 		return fReturn;
 	}
@@ -531,14 +531,14 @@ public:
 		// read remaining bytes
 		while (bitsLeft >= 8)
 		{
-			*out = ReadUBitLong(8);
+			*out = (u8)ReadUBitLong(8);
 			++out;
 			bitsLeft -= 8;
 		}
 
 		// read remaining bits
 		if (bitsLeft)
-			*out = ReadUBitLong(bitsLeft);
+			*out = (u8)ReadUBitLong(bitsLeft);
 	}
 
 	INLINE bool ReadBytes(uptr outData, u32 byteLength)
@@ -594,7 +594,7 @@ public:
 
 		// Now copy into the output and return it;
 		char* ret = new char[chars + 1];
-		for (u32 i = 0; i <= chars; i++)
+		for (int i = 0; i <= chars; i++)
 			ret[i] = str[i];
 
 		return ret;
@@ -630,7 +630,7 @@ public:
 		// at the head to make reading and detecting the end efficient.
 		int nHead = m_DataBytes & 3;
 
-		int posBytes = startPos / 8;
+		size_t posBytes = startPos / 8;
 		if ((m_DataBytes < 4) || (nHead && (posBytes < nHead)))
 		{
 			// partial first dword
@@ -652,7 +652,7 @@ public:
 		}
 		else
 		{
-			int adjustedPos = startPos - (nHead << 3);
+			size_t adjustedPos = startPos - (nHead << 3);
 
 			m_DataIn = reinterpret_cast<u32 const*>(reinterpret_cast<u8 const*>(m_Data) + ((adjustedPos / 32) << 2) + nHead);
 
@@ -826,7 +826,7 @@ public:
 			Flush();
 	}
 
-	INLINE void WriteUBitLong(u32 data, i32 numBits, bool checkRange = true)
+	INLINE void WriteUBitLong(u32 data, u32 numBits, bool checkRange = true)
 	{
 		if (numBits <= m_OutBitsLeft)
 		{
