@@ -22,7 +22,7 @@ bool skip_valid_ansi_csi_sgr(char*& str)
 
 void RemoveAsciiControlSequences(char* str, bool allow_color_codes)
 {
-	for (char *pc = str; *pc != 0x00; pc++)
+	for (char* pc = str; *pc != 0x00; pc++)
 	{
 		char c = *pc;
 		// skip UTF-8 characters
