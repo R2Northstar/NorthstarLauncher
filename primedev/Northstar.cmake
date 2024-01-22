@@ -80,6 +80,7 @@ add_library(
     "mods/compiled/modkeyvalues.cpp"
     "mods/compiled/modpdef.cpp"
     "mods/compiled/modscriptsrson.cpp"
+    "mods/mod.cpp"
     "mods/modmanager.cpp"
     "mods/modmanager.h"
     "mods/modsavefiles.cpp"
