@@ -1,4 +1,5 @@
 #include "moddownloader.h"
+#include "util/utils.h"
 #include <rapidjson/fwd.h>
 #include <mz_strm_mem.h>
 #include <mz.h>
@@ -22,18 +23,18 @@ ModDownloader::ModDownloader()
 	if (clachar)
 	{
 		std::string url;
-		int iFlagStringLength = strlen(CUSTOM_MODS_URL_FLAG);
+		size_t iFlagStringLength = strlen(CUSTOM_MODS_URL_FLAG);
 		std::string cla = std::string(clachar);
 		if (strncmp(cla.substr(iFlagStringLength, 1).c_str(), "\"", 1))
 		{
-			int space = cla.find(" ");
+			size_t space = cla.find(" ");
 			url = cla.substr(iFlagStringLength, space - iFlagStringLength);
 		}
 		else
 		{
 			std::string quote = "\"";
-			int quote1 = cla.find(quote);
-			int quote2 = (cla.substr(quote1 + 1)).find(quote);
+			size_t quote1 = cla.find(quote);
+			size_t quote2 = (cla.substr(quote1 + 1)).find(quote);
 			url = cla.substr(quote1 + 1, quote2);
 		}
 		spdlog::info("Found custom verified mods URL in command line argument: {}", url);
@@ -75,6 +76,7 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteToString);
 			result = curl_easy_perform(easyhandle);
+			ScopeGuard cleanup([&] { curl_easy_cleanup(easyhandle); });
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -83,7 +85,7 @@ void ModDownloader::FetchModsListFromAPI()
 			else
 			{
 				spdlog::error("Fetching mods list failed: {}", curl_easy_strerror(result));
-				goto REQUEST_END_CLEANUP;
+				return;
 			}
 
 			// Load mods list into local state
@@ -118,9 +120,6 @@ void ModDownloader::FetchModsListFromAPI()
 			}
 
 			spdlog::info("Done loading verified mods list.");
-
-		REQUEST_END_CLEANUP:
-			curl_easy_cleanup(easyhandle);
 		});
 	requestThread.detach();
 }
@@ -172,29 +171,34 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 
 	curl_easy_setopt(easyhandle, CURLOPT_URL, url.data());
 	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
+
+	// abort if slower than 30 bytes/sec during 10 seconds
+	curl_easy_setopt(easyhandle, CURLOPT_LOW_SPEED_TIME, 10L);
+	curl_easy_setopt(easyhandle, CURLOPT_LOW_SPEED_LIMIT, 30L);
+
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteData);
 	curl_easy_setopt(easyhandle, CURLOPT_NOPROGRESS, 0L);
 	curl_easy_setopt(easyhandle, CURLOPT_XFERINFOFUNCTION, ModDownloader::ModFetchingProgressCallback);
 	curl_easy_setopt(easyhandle, CURLOPT_XFERINFODATA, this);
 	result = curl_easy_perform(easyhandle);
+	ScopeGuard cleanup(
+		[&]
+		{
+			curl_easy_cleanup(easyhandle);
+			fclose(fp);
+		});
 
 	if (result == CURLcode::CURLE_OK)
 	{
 		spdlog::info("Mod archive successfully fetched.");
-		goto REQUEST_END_CLEANUP;
+		return std::optional<fs::path>(downloadPath);
 	}
 	else
 	{
 		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
-		failed = true;
-		goto REQUEST_END_CLEANUP;
+		return std::optional<fs::path>();
 	}
-
-REQUEST_END_CLEANUP:
-	curl_easy_cleanup(easyhandle);
-	fclose(fp);
-	return failed ? std::optional<fs::path>() : std::optional<fs::path>(downloadPath);
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecksum)
@@ -220,6 +224,22 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	std::vector<char> buffer(bufferSize, '\0');
 	std::ifstream fp(modPath.generic_string(), std::ios::binary);
 
+	ScopeGuard cleanup(
+		[&]
+		{
+			if (NULL != hashHandle)
+			{
+				BCryptDestroyHash(hashHandle); // Handle to hash/MAC object which needs to be destroyed
+			}
+
+			if (NULL != algorithmHandle)
+			{
+				BCryptCloseAlgorithmProvider(
+					algorithmHandle, // Handle to the algorithm provider which needs to be closed
+					0); // Flags
+			}
+		});
+
 	// Open an algorithm handle
 	// This sample passes BCRYPT_HASH_REUSABLE_FLAG with BCryptAlgorithmProvider(...) to load a provider which supports reusable hash
 	status = BCryptOpenAlgorithmProvider(
@@ -230,7 +250,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	if (!NT_SUCCESS(status))
 	{
 		modState.state = MOD_CORRUPTED;
-		goto cleanup;
+		return false;
 	}
 
 	// Obtain the length of the hash
@@ -243,7 +263,6 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 		0); // Flags
 	if (!NT_SUCCESS(status))
 	{
-		// goto cleanup;
 		modState.state = MOD_CORRUPTED;
 		return false;
 	}
@@ -260,7 +279,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	if (!NT_SUCCESS(status))
 	{
 		modState.state = MOD_CORRUPTED;
-		goto cleanup;
+		return false;
 	}
 
 	// Hash archive content
@@ -281,7 +300,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 			if (!NT_SUCCESS(status))
 			{
 				modState.state = MOD_CORRUPTED;
-				goto cleanup;
+				return false;
 			}
 		}
 	}
@@ -297,7 +316,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	if (!NT_SUCCESS(status))
 	{
 		modState.state = MOD_CORRUPTED;
-		goto cleanup;
+		return false;
 	}
 
 	// Convert hash to string using bytes raw values
@@ -310,21 +329,6 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 	spdlog::info("Expected checksum: {}", expectedChecksum.data());
 	spdlog::info("Computed checksum: {}", ss.str());
 	return expectedChecksum.compare(ss.str()) == 0;
-
-cleanup:
-	if (NULL != hashHandle)
-	{
-		BCryptDestroyHash(hashHandle); // Handle to hash/MAC object which needs to be destroyed
-	}
-
-	if (NULL != algorithmHandle)
-	{
-		BCryptCloseAlgorithmProvider(
-			algorithmHandle, // Handle to the algorithm provider which needs to be closed
-			0); // Flags
-	}
-
-	return false;
 }
 
 bool ModDownloader::IsModAuthorized(std::string_view modName, std::string_view modVersion)
@@ -375,11 +379,20 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	fs::path modDirectory;
 
 	file = unzOpen(modPath.generic_string().c_str());
+	ScopeGuard cleanup(
+		[&]
+		{
+			if (unzClose(file) != MZ_OK)
+			{
+				spdlog::error("Failed closing mod archive after extraction.");
+			}
+		});
+
 	if (file == NULL)
 	{
 		spdlog::error("Cannot open archive located at {}.", modPath.generic_string());
 		modState.state = FAILED_READING_ARCHIVE;
-		goto EXTRACTION_CLEANUP;
+		return;
 	}
 
 	unz_global_info64 gi;
@@ -389,7 +402,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	{
 		spdlog::error("Failed getting information from archive (error code: {})", status);
 		modState.state = FAILED_READING_ARCHIVE;
-		goto EXTRACTION_CLEANUP;
+		return;
 	}
 
 	// Update state
@@ -422,7 +435,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("Parent directory ({}) creation failed.", fileDestination.parent_path().generic_string());
 					modState.state = FAILED_WRITING_TO_DISK;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 			}
 
@@ -434,7 +447,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("Directory creation failed: {}", ec.message());
 					modState.state = FAILED_WRITING_TO_DISK;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 			}
 			// ...else create file
@@ -445,7 +458,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("File \"{}\" was not found in archive.", zipFilename);
 					modState.state = FAILED_READING_ARCHIVE;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 
 				// Create file
@@ -460,7 +473,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("Could not open file {} from archive.", zipFilename);
 					modState.state = FAILED_READING_ARCHIVE;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 
 				// Create destination file
@@ -469,7 +482,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("Failed creating destination file.");
 					modState.state = FAILED_WRITING_TO_DISK;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 
 				// Allocate memory for buffer
@@ -478,7 +491,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("Error while allocating memory.");
 					modState.state = FAILED_WRITING_TO_DISK;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 
 				// Extract file to destination
@@ -509,7 +522,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 				{
 					spdlog::error("An error occurred during file extraction (code: {})", err);
 					modState.state = FAILED_WRITING_TO_DISK;
-					goto EXTRACTION_CLEANUP;
+					return;
 				}
 				err = unzCloseCurrentFile(file);
 				if (err != UNZ_OK)
@@ -530,15 +543,9 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			if (status != UNZ_OK)
 			{
 				spdlog::error("Error while browsing archive files (error code: {}).", status);
-				goto EXTRACTION_CLEANUP;
+				return;
 			}
 		}
-	}
-
-EXTRACTION_CLEANUP:
-	if (unzClose(file) != MZ_OK)
-	{
-		spdlog::error("Failed closing mod archive after extraction.");
 	}
 }
 
@@ -556,6 +563,22 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 		{
 			fs::path archiveLocation;
 
+			ScopeGuard cleanup(
+				[&]
+				{
+					try
+					{
+						remove(archiveLocation);
+					}
+					catch (const std::exception& a)
+					{
+						spdlog::error("Error while removing downloaded archive: {}", a.what());
+					}
+
+					modState.state = DONE;
+					spdlog::info("Done downloading {}.", modName);
+				});
+
 			// Download mod archive
 			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
 			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), std::string_view(modVersion));
@@ -563,31 +586,18 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			{
 				spdlog::error("Something went wrong while fetching archive, aborting.");
 				modState.state = MOD_FETCHING_FAILED;
-				goto REQUEST_END_CLEANUP;
+				return;
 			}
 			archiveLocation = fetchingResult.value();
 			if (!IsModLegit(archiveLocation, std::string_view(expectedHash)))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
 				modState.state = MOD_CORRUPTED;
-				goto REQUEST_END_CLEANUP;
+				return;
 			}
 
 			// Extract downloaded mod archive
 			ExtractMod(archiveLocation);
-
-		REQUEST_END_CLEANUP:
-			try
-			{
-				remove(archiveLocation);
-			}
-			catch (const std::exception& a)
-			{
-				spdlog::error("Error while removing downloaded archive: {}", a.what());
-			}
-
-			modState.state = DONE;
-			spdlog::info("Done downloading {}.", modName);
 		});
 
 	requestThread.detach();
