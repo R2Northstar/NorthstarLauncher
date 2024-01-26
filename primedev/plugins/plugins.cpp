@@ -22,32 +22,30 @@ bool isValidSquirrelIdentifier(std::string s)
 	return true;
 }
 
-Plugin::Plugin(std::string path) : location(path)
+Plugin::Plugin(std::string path) : m_location(path)
 {
-	HMODULE m = GetModuleHandleA(path.c_str());
+	HMODULE pluginModule = GetModuleHandleA(path.c_str());
 
-	if (m)
+	if (pluginModule)
 	{
 		// plugins may refuse to get unloaded for any reason so we need to prevent them getting loaded twice when reloading plugins
 		NS::log::PLUGINSYS->warn("Plugin has already been loaded");
 		return;
 	}
 
-	this->handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+	m_handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
-	NS::log::PLUGINSYS->info("module handle at path {}", (void*)m);
+	NS::log::PLUGINSYS->info("loaded plugin handle {}", static_cast<void*>(m_handle));
 
-	NS::log::PLUGINSYS->info("loaded plugin handle {}", static_cast<void*>(this->handle));
-
-	if (!this->handle)
+	if (!m_handle)
 	{
-		NS::log::PLUGINSYS->error("Failed to load main plugin library '{}' (Error: {})", path, GetLastError());
+		NS::log::PLUGINSYS->error("Failed to load plugin '{}' (Error: {})", path, GetLastError());
 		return;
 	}
 
-	this->initData = {.pluginHandle = this->handle};
+	m_initData = {.pluginHandle = m_handle};
 
-	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(this->handle, "CreateInterface");
+	CreateInterfaceFn CreatePluginInterface = (CreateInterfaceFn)GetProcAddress(m_handle, "CreateInterface");
 
 	if (!CreatePluginInterface)
 	{
@@ -55,25 +53,25 @@ Plugin::Plugin(std::string path) : location(path)
 		return;
 	}
 
-	this->pluginId = (IPluginId*)CreatePluginInterface(PLUGIN_ID_VERSION, 0);
+	m_pluginId = (IPluginId*)CreatePluginInterface(PLUGIN_ID_VERSION, 0);
 
-	if (!this->pluginId)
+	if (!m_pluginId)
 	{
 		NS::log::PLUGINSYS->error("Could not load IPluginId interface of plugin at '{}'", path);
 		return;
 	}
 
-	const char* name = this->pluginId->GetString(PluginString::NAME);
-	const char* logName = this->pluginId->GetString(PluginString::LOG_NAME);
-	const char* dependencyName = this->pluginId->GetString(PluginString::DEPENDENCY_NAME);
-	int64_t context = this->pluginId->GetField(PluginField::CONTEXT);
+	const char* name = m_pluginId->GetString(PluginString::NAME);
+	const char* logName = m_pluginId->GetString(PluginString::LOG_NAME);
+	const char* dependencyName = m_pluginId->GetString(PluginString::DEPENDENCY_NAME);
+	int64_t context = m_pluginId->GetField(PluginField::CONTEXT);
 
-	this->runOnServer = context & PluginContext::DEDICATED;
-	this->runOnClient = context & PluginContext::CLIENT;
+	m_runOnServer = context & PluginContext::DEDICATED;
+	m_runOnClient = context & PluginContext::CLIENT;
 
-	this->name = std::string(name);
-	this->logName = std::string(logName);
-	this->dependencyName = std::string(dependencyName);
+	m_name = std::string(name);
+	m_logName = std::string(logName);
+	m_dependencyName = std::string(dependencyName);
 
 	if (!name)
 	{
@@ -93,143 +91,143 @@ Plugin::Plugin(std::string path) : location(path)
 		return;
 	}
 
-	if (!isValidSquirrelIdentifier(this->dependencyName))
+	if (!isValidSquirrelIdentifier(m_dependencyName))
 	{
 		NS::log::PLUGINSYS->error("Dependency name \"{}\" of plugin {} is not valid", dependencyName, name);
 		return;
 	}
 
-	this->callbacks = (IPluginCallbacks*)CreatePluginInterface("PluginCallbacks001", 0);
+	m_callbacks = (IPluginCallbacks*)CreatePluginInterface("PluginCallbacks001", 0);
 
-	if (!this->callbacks)
+	if (!m_callbacks)
 	{
 		NS::log::PLUGINSYS->error("Could not create callback interface of plugin {}", name);
 		return;
 	}
 
-	this->logger = std::make_shared<ColoredLogger>(this->logName, NS::Colors::PLUGIN);
-	RegisterLogger(this->logger);
+	m_logger = std::make_shared<ColoredLogger>(m_logName, NS::Colors::PLUGIN);
+	RegisterLogger(m_logger);
 
-	if (IsDedicatedServer() && !this->runOnServer)
+	if (IsDedicatedServer() && !m_runOnServer)
 	{
-		NS::log::PLUGINSYS->error("Plugin {} did not request to run on dedicated servers", this->name);
+		NS::log::PLUGINSYS->error("Plugin {} did not request to run on dedicated servers", m_name);
 		return;
 	}
 
-	if (!IsDedicatedServer() && !this->runOnClient)
+	if (!IsDedicatedServer() && !m_runOnClient)
 	{
-		NS::log::PLUGINSYS->warn("Plugin {} did not request to run on clients", this->name);
+		NS::log::PLUGINSYS->warn("Plugin {} did not request to run on clients", m_name);
 		return;
 	}
 
-	this->valid = true;
+	m_valid = true;
 }
 
 bool Plugin::Unload() const
 {
-	if (!this->handle)
+	if (!m_handle)
 		return true;
 
-	if (this->IsValid())
+	if (IsValid())
 	{
-		bool unloaded = this->callbacks->Unload();
+		bool unloaded = m_callbacks->Unload();
 
 		if (!unloaded)
 			return false;
 	}
 
-	if (!FreeLibrary(this->handle))
+	if (!FreeLibrary(m_handle))
 	{
-		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", this->location);
+		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", m_location);
 		return false;
 	}
 
-	g_pPluginManager->RemovePlugin(this->handle);
+	g_pPluginManager->RemovePlugin(m_handle);
 	return true;
 }
 
 void Plugin::Reload() const
 {
-	bool unloaded = this->Unload();
+	bool unloaded = Unload();
 
 	if (!unloaded)
 		return;
 
-	g_pPluginManager->LoadPlugin(fs::path(this->location), true);
+	g_pPluginManager->LoadPlugin(fs::path(m_location), true);
 }
 
 void Plugin::Log(spdlog::level::level_enum level, char* msg) const
 {
-	this->logger->log(level, msg);
+	m_logger->log(level, msg);
 }
 
 bool Plugin::IsValid() const
 {
-	return this->valid && this->m_pCreateInterface && this->pluginId && this->callbacks && this->handle;
+	return m_valid && m_pCreateInterface && m_pluginId && m_callbacks && m_handle;
 }
 
 const std::string& Plugin::GetName() const
 {
-	return this->name;
+	return m_name;
 }
 
 const std::string& Plugin::GetLogName() const
 {
-	return this->logName;
+	return m_logName;
 }
 
 const std::string& Plugin::GetDependencyName() const
 {
-	return this->dependencyName;
+	return m_dependencyName;
 }
 
 const std::string& Plugin::GetLocation() const
 {
-	return this->location;
+	return m_location;
 }
 
 bool Plugin::ShouldRunOnServer() const
 {
-	return this->runOnServer;
+	return m_runOnServer;
 }
 
 bool Plugin::ShouldRunOnClient() const
 {
-	return this->runOnClient;
+	return m_runOnClient;
 }
 
 void* Plugin::CreateInterface(const char* name, int* status) const
 {
-	return this->m_pCreateInterface(name, status);
+	return m_pCreateInterface(name, status);
 }
 
 void Plugin::Init(bool reloaded) const
 {
-	this->callbacks->Init(g_NorthstarModule, &this->initData, reloaded);
+	m_callbacks->Init(g_NorthstarModule, &m_initData, reloaded);
 }
 
 void Plugin::Finalize() const
 {
-	this->callbacks->Finalize();
+	m_callbacks->Finalize();
 }
 
 void Plugin::OnSqvmCreated(CSquirrelVM* sqvm) const
 {
-	this->callbacks->OnSqvmCreated(sqvm);
+	m_callbacks->OnSqvmCreated(sqvm);
 }
 
 void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm) const
 {
 	NS::log::PLUGINSYS->info("destroying sqvm {}", sqvm->vmContext);
-	this->callbacks->OnSqvmDestroying(sqvm);
+	m_callbacks->OnSqvmDestroying(sqvm);
 }
 
 void Plugin::OnLibraryLoaded(HMODULE module, const char* name) const
 {
-	this->callbacks->OnLibraryLoaded(module, name);
+	m_callbacks->OnLibraryLoaded(module, name);
 }
 
 void Plugin::RunFrame() const
 {
-	this->callbacks->RunFrame();
+	m_callbacks->RunFrame();
 }

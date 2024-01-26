@@ -8,20 +8,23 @@ class Plugin
 {
 private:
 	CreateInterfaceFn m_pCreateInterface;
-	IPluginId* pluginId = 0;
-	IPluginCallbacks* callbacks = 0;
+	IPluginId* m_pluginId = 0;
+	IPluginCallbacks* m_callbacks = 0;
 
-	std::shared_ptr<ColoredLogger> logger;
+	std::shared_ptr<ColoredLogger> m_logger;
 
-	bool valid = false;
-	std::string name;
-	std::string logName;
-	std::string dependencyName;
-	std::string location; // path of the dll
-	bool runOnServer;
-	bool runOnClient;
+	bool m_valid = false;
+	std::string m_name;
+	std::string m_logName;
+	std::string m_dependencyName;
+	std::string m_location; // path of the dll
+	bool m_runOnServer;
+	bool m_runOnClient;
 
 public:
+	HMODULE m_handle;
+	PluginNorthstarData m_initData;
+
 	Plugin(std::string path);
 	bool Unload() const;
 	void Reload() const;
@@ -44,7 +47,4 @@ public:
 	void OnSqvmDestroying(CSquirrelVM* sqvm) const;
 	void OnLibraryLoaded(HMODULE module, const char* name) const;
 	void RunFrame() const;
-
-	HMODULE handle;
-	PluginNorthstarData initData;
 };

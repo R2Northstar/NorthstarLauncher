@@ -15,7 +15,7 @@ const std::vector<Plugin>& PluginManager::GetLoadedPlugins() const
 const std::optional<Plugin> PluginManager::GetPlugin(HMODULE handle) const
 {
 	for (const Plugin& plugin : GetLoadedPlugins())
-		if (plugin.handle == handle)
+		if (plugin.m_handle == handle)
 			return plugin;
 	return std::nullopt;
 }
@@ -123,7 +123,7 @@ void PluginManager::RemovePlugin(HMODULE handle)
 	for (size_t i = 0; i < plugins.size(); i++)
 	{
 		Plugin* plugin = &plugins[i];
-		if (plugin->handle == handle)
+		if (plugin->m_handle == handle)
 		{
 			plugins.erase(plugins.begin() + i);
 			return;
