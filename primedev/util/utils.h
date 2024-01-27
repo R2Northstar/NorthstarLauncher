@@ -2,8 +2,7 @@
 
 void RemoveAsciiControlSequences(char* str, bool allow_color_codes);
 
-template<typename T>
-class ScopeGuard
+template <typename T> class ScopeGuard
 {
 public:
 	auto operator=(ScopeGuard&) = delete;
