@@ -23,18 +23,18 @@ ModDownloader::ModDownloader()
 	if (clachar)
 	{
 		std::string url;
-		int iFlagStringLength = strlen(CUSTOM_MODS_URL_FLAG);
+		size_t iFlagStringLength = strlen(CUSTOM_MODS_URL_FLAG);
 		std::string cla = std::string(clachar);
 		if (strncmp(cla.substr(iFlagStringLength, 1).c_str(), "\"", 1))
 		{
-			int space = cla.find(" ");
+			size_t space = cla.find(" ");
 			url = cla.substr(iFlagStringLength, space - iFlagStringLength);
 		}
 		else
 		{
 			std::string quote = "\"";
-			int quote1 = cla.find(quote);
-			int quote2 = (cla.substr(quote1 + 1)).find(quote);
+			size_t quote1 = cla.find(quote);
+			size_t quote2 = (cla.substr(quote1 + 1)).find(quote);
 			url = cla.substr(quote1 + 1, quote2);
 		}
 		DevMsg(eLog::NS, "Found custom verified mods URL in command line argument: %s\n", url.c_str());
@@ -163,6 +163,11 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 
 	curl_easy_setopt(easyhandle, CURLOPT_URL, url.data());
 	curl_easy_setopt(easyhandle, CURLOPT_FAILONERROR, 1L);
+
+	// abort if slower than 30 bytes/sec during 10 seconds
+	curl_easy_setopt(easyhandle, CURLOPT_LOW_SPEED_TIME, 10L);
+	curl_easy_setopt(easyhandle, CURLOPT_LOW_SPEED_LIMIT, 30L);
+
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, fp);
 	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteData);
 	curl_easy_setopt(easyhandle, CURLOPT_NOPROGRESS, 0L);

@@ -644,7 +644,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 			{
-				char* escapedPassword = curl_easy_escape(curl, passwordStr.c_str(), passwordStr.length());
+				char* escapedPassword = curl_easy_escape(curl, passwordStr.c_str(), (int)passwordStr.length());
 
 				curl_easy_setopt(
 					curl,
@@ -961,7 +961,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
 
-			char* rejectEnc = curl_easy_escape(curl, reject.c_str(), reject.length());
+			char* rejectEnc = curl_easy_escape(curl, reject.c_str(), (int)reject.length());
 			if (!rejectEnc)
 			{
 				Error(eLog::MS, NO_ERROR, "failed to handle Atlas connect request %s: failed to escape reject\n", token.c_str());
@@ -1330,6 +1330,16 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					if (shouldLogError)
 						Error(eLog::MS, NO_ERROR, "Failed reading masterserver authentication response: root object is not an object\n");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
+				}
+
+				// Log request id for easier debugging when combining with logs on masterserver
+				if (serverAddedJson.HasMember("id"))
+				{
+					spdlog::info("Request id: {}", serverAddedJson["id"].GetString());
+				}
+				else
+				{
+					spdlog::error("Couldn't find request id in response");
 				}
 
 				if (serverAddedJson.HasMember("error"))
