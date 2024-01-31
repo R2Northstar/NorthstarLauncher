@@ -110,13 +110,13 @@ Plugin::Plugin(std::string path) : m_location(path)
 
 	if (IsDedicatedServer() && !m_runOnServer)
 	{
-		NS::log::PLUGINSYS->error("Plugin {} did not request to run on dedicated servers", m_name);
+		NS::log::PLUGINSYS->info("Unloading {} because it's not supposed to run on dedicated servers", m_name);
 		return;
 	}
 
 	if (!IsDedicatedServer() && !m_runOnClient)
 	{
-		NS::log::PLUGINSYS->warn("Plugin {} did not request to run on clients", m_name);
+		NS::log::PLUGINSYS->info("Unloading {} because it's only supposed to run on dedicated servers", m_name);
 		return;
 	}
 
