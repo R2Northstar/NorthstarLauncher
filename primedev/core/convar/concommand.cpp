@@ -2,9 +2,6 @@
 #include "shared/misccommands.h"
 #include "engine/r2engine.h"
 
-#include "plugins/pluginbackend.h"
-#include "plugins/plugin_abi.h"
-
 #include <iostream>
 
 //-----------------------------------------------------------------------------
@@ -145,13 +142,11 @@ void RegisterConCommand(
 	ConCommand* newCommand = new ConCommand;
 	ConCommandConstructor(newCommand, name, callback, helpString, flags, nullptr);
 	newCommand->m_pCompletionCallback = completionCallback;
+	newCommand->m_nCallbackFlags |= 0x3; // seems to be correct?; derived from client.dll + 0x737267
 }
 
 ON_DLL_LOAD("engine.dll", ConCommand, (CModule module))
 {
 	ConCommandConstructor = module.Offset(0x415F60).RCast<ConCommandConstructorType>();
 	AddMiscConCommands();
-
-	g_pPluginCommunicationhandler->m_sEngineData.ConCommandConstructor =
-		reinterpret_cast<PluginConCommandConstructorType>(ConCommandConstructor);
 }
