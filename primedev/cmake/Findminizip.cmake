@@ -1,4 +1,8 @@
 if(NOT minizip_FOUND)
+
+    # zlib 1.3.1 had a cmake change that broke stuff, use develop for now where a fix has already been applied
+    set(ZLIB_TAG "develop")
+
     check_init_submodule(${PROJECT_SOURCE_DIR}/primedev/thirdparty/minizip)
 
     set(MZ_ZLIB
