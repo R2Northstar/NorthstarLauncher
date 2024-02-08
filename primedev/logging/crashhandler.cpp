@@ -4,6 +4,7 @@
 #include "util/version.h"
 #include "mods/modmanager.h"
 #include "plugins/plugins.h"
+#include "plugins/pluginmanager.h"
 
 #include <minidumpapiset.h>
 
@@ -526,9 +527,9 @@ void CCrashHandler::FormatLoadedPlugins()
 	if (g_pPluginManager)
 	{
 		Error(eLog::NS, NO_ERROR, "Loaded Plugins:\n");
-		for (const Plugin& plugin : g_pPluginManager->m_vLoadedPlugins)
+		for (const Plugin& plugin : g_pPluginManager->GetLoadedPlugins())
 		{
-			Error(eLog::NS, NO_ERROR, "\t%s\n", plugin.name.c_str());
+			Error(eLog::NS, NO_ERROR, "\t%s\n", plugin.GetName().c_str());
 		}
 	}
 }

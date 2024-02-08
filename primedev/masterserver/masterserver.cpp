@@ -1335,11 +1335,11 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				// Log request id for easier debugging when combining with logs on masterserver
 				if (serverAddedJson.HasMember("id"))
 				{
-					spdlog::info("Request id: {}", serverAddedJson["id"].GetString());
+					DevMsg(eLog::MS, "Request id: %s\n", serverAddedJson["id"].GetString());
 				}
 				else
 				{
-					spdlog::error("Couldn't find request id in response");
+					Error(eLog::MS, NO_ERROR, "Couldn't find request id in response");
 				}
 
 				if (serverAddedJson.HasMember("error"))

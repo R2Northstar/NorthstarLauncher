@@ -3,10 +3,10 @@
 #include "core/memalloc.h"
 #include "core/vanilla.h"
 #include "config/profile.h"
-#include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
-#include "plugins/pluginbackend.h"
+#include "plugins/pluginmanager.h"
 #include "util/version.h"
+#include "util/wininfo.h"
 #include "squirrel/squirrel.h"
 #include "server/serverpresence.h"
 
@@ -23,6 +23,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
 	{
+	case DLL_PROCESS_ATTACH:
+		g_NorthstarModule = hModule;
+		break;
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+		break;
 	case DLL_PROCESS_DETACH:
 		SpdLog_Shutdown();
 		break;
@@ -73,7 +79,6 @@ bool InitialiseNorthstar()
 	g_pServerPresence = new ServerPresenceManager();
 
 	g_pPluginManager = new PluginManager();
-	g_pPluginCommunicationhandler = new PluginCommunicationHandler();
 	g_pPluginManager->LoadPlugins();
 
 	InitialiseSquirrelManagers();

@@ -376,7 +376,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		{
 			if (unzClose(file) != MZ_OK)
 			{
-				spdlog::error("Failed closing mod archive after extraction.");
+				Error(eLog::MODSYS, NO_ERROR, "Failed closing mod archive after extraction.\n");
 			}
 		});
 
@@ -564,11 +564,11 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 					}
 					catch (const std::exception& a)
 					{
-						spdlog::error("Error while removing downloaded archive: {}", a.what());
+						Error(eLog::MODSYS, NO_ERROR, "Error while removing downloaded archive: %s\n", a.what());
 					}
 
 					modState.state = DONE;
-					spdlog::info("Done downloading {}.", modName);
+					DevMsg(eLog::MODSYS, "Done downloading %s.\n", modName.c_str());
 				});
 
 			// Download mod archive
