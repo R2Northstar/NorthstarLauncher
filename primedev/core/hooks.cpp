@@ -386,8 +386,12 @@ void CallAllPendingDLLLoadCallbacks()
 	}
 }
 
-// todo: remove/move all remaining instances of autohook in this file and remove this function
-void InstallInitialHooks()
+void HookSys_Init()
 {
+	if (MH_Initialize() != MH_OK)
+	{
+		spdlog::error("MH_Initialize (minhook initialization) failed");
+	}
+	// todo: remove remaining instances of autohook in this file
 	AUTOHOOK_DISPATCH()
 }

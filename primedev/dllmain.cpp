@@ -36,19 +36,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	return TRUE;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Init minhook
-//-----------------------------------------------------------------------------
-void HookSys_Init()
-{
-	if (MH_Initialize() != MH_OK)
-	{
-		spdlog::error("MH_Initialize (minhook initialization) failed");
-	}
-
-	InstallInitialHooks();
-}
-
 bool InitialiseNorthstar()
 {
 	static bool bInitialised = false;
