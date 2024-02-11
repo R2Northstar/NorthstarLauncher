@@ -24,12 +24,11 @@ void LibSys_RunModuleCallbacks(HMODULE hModule)
 	CHAR szModuleName[MAX_PATH];
 	GetModuleBaseNameA(GetCurrentProcess(), hModule, szModuleName, MAX_PATH);
 
-	//DevMsg(eLog::NONE, "%s\n", szModuleName);
+	// DevMsg(eLog::NONE, "%s\n", szModuleName);
 
 	// Call callbacks
 	CallLoadLibraryACallbacks(szModuleName, hModule);
 }
-
 
 //-----------------------------------------------------------------------------
 // Load library callbacks
@@ -94,7 +93,6 @@ HMODULE WINAPI WLoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlag
 
 	return hModule;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Initilase dll load callbacks
