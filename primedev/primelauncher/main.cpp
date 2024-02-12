@@ -303,7 +303,7 @@ bool LoadNorthstar()
 		}
 
 		wchar_t wStrProfile[4096];
-		MultiByteToWideChar(CP_ACP, 0, strProfile.c_str(), -1, wStrProfile, sizeof(wStrProfile));
+		MultiByteToWideChar(GetConsoleCP(), 0, strProfile.c_str(), -1, wStrProfile, sizeof(wStrProfile));
 
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
 		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, wStrProfile);
