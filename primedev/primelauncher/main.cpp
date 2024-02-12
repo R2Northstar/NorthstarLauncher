@@ -24,8 +24,8 @@ HMODULE hLauncherModule;
 HMODULE hHookModule;
 HMODULE hTier0Module;
 
-wchar_t exePath[4096];
-wchar_t buffer[8192];
+char exePath[4096];
+char buffer[8192];
 
 DWORD GetProcessByName(std::wstring processName)
 {
@@ -53,15 +53,15 @@ DWORD GetProcessByName(std::wstring processName)
 	return 0;
 }
 
-bool GetExePathWide(wchar_t* dest, DWORD destSize)
+bool GetExePath(char* dest, DWORD destSize)
 {
 	if (!dest)
 		return NULL;
 	if (destSize < MAX_PATH)
 		return NULL;
 
-	DWORD length = GetModuleFileNameW(NULL, dest, destSize);
-	return length && PathRemoveFileSpecW(dest);
+	DWORD length = GetModuleFileNameA(NULL, dest, destSize);
+	return length && PathRemoveFileSpecA(dest);
 }
 
 FARPROC GetLauncherMain()
@@ -72,14 +72,14 @@ FARPROC GetLauncherMain()
 	return Launcher_LauncherMain;
 }
 
-void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
+void LibraryLoadError(DWORD dwMessageId, const char* libName, const char* location)
 {
 	char text[8192];
 	std::string message = std::system_category().message(dwMessageId);
 
 	sprintf_s(
 		text,
-		"Failed to load the %ls at \"%ls\" (%lu):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "
+		"Failed to load the %s at \"%s\" (%u):\n\n%hs\n\nMake sure you followed the Northstar installation instructions carefully "
 		"before reaching out for help.",
 		libName,
 		location,
@@ -223,31 +223,31 @@ void EnsureOriginStarted()
 
 void PrependPath()
 {
-	wchar_t* pPath;
+	char* pPath;
 	size_t len;
-	errno_t err = _wdupenv_s(&pPath, &len, L"PATH");
+	errno_t err = _dupenv_s(&pPath, &len, "PATH");
 	if (!err)
 	{
-		swprintf_s(buffer, L"PATH=%s\\bin\\x64_retail\\;%s", exePath, pPath);
-		auto result = _wputenv(buffer);
+		sprintf_s(buffer, "PATH=%s\\bin\\x64_retail\\;%s", exePath, pPath);
+		auto result = _putenv(buffer);
 		if (result == -1)
 		{
-			MessageBoxW(
+			MessageBoxA(
 				GetForegroundWindow(),
-				L"Warning: could not prepend the current directory to app's PATH environment variable. Something may break because of "
-				L"that.",
-				L"Northstar Launcher Warning",
+				"Warning: could not prepend the current directory to app's PATH environment variable. Something may break because of "
+				"that.",
+				"Northstar Launcher Warning",
 				0);
 		}
 		free(pPath);
 	}
 	else
 	{
-		MessageBoxW(
+		MessageBoxA(
 			GetForegroundWindow(),
-			L"Warning: could not get current PATH environment variable in order to prepend the current directory to it. Something may "
-			L"break because of that.",
-			L"Northstar Launcher Warning",
+			"Warning: could not get current PATH environment variable in order to prepend the current directory to it. Something may "
+			"break because of that.",
+			"Northstar Launcher Warning",
 			0);
 	}
 }
@@ -302,23 +302,20 @@ bool LoadNorthstar()
 			strProfile = "R2Northstar";
 		}
 
-		wchar_t wStrProfile[4096];
-		MultiByteToWideChar(CP_ACP, 0, strProfile.c_str(), -1, wStrProfile, sizeof(wStrProfile));
-
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
-		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, wStrProfile);
+		sprintf_s(buffer, "%s\\%s\\Northstar.dll", exePath, strProfile.c_str());
 
 		if (!fs::exists(fs::path(buffer)))
-			swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
+			sprintf_s(buffer, "%s\\Northstar.dll", exePath);
 
-		std::wcout << L"[*] Using: " << buffer << std::endl;
+		std::cout << "[*] Using: " << buffer << std::endl;
 
-		hHookModule = LoadLibraryExW(buffer, 0, 8u);
+		hHookModule = LoadLibraryExA(buffer, 0, 8u);
 		if (hHookModule)
 			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
 		if (!hHookModule || Hook_Init == nullptr)
 		{
-			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
+			LibraryLoadError(GetLastError(), "Northstar.dll", buffer);
 			return false;
 		}
 	}
@@ -331,11 +328,11 @@ HMODULE LoadDediStub(const char* name)
 {
 	// this works because materialsystem_dx11.dll uses relative imports, and even a DLL loaded with an absolute path will take precedence
 	std::cout << "[*]   Loading " << name << std::endl;
-	swprintf_s(buffer, L"%s\\bin\\x64_dedi\\%hs", exePath, name);
-	HMODULE h = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+	sprintf_s(buffer, "%s\\bin\\x64_dedi\\%hs", exePath, name);
+	HMODULE h = LoadLibraryExA(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (!h)
 	{
-		wprintf(L"[*] Failed to load stub %hs from \"%ls\": %hs\n", name, buffer, std::system_category().message(GetLastError()).c_str());
+		printf("[*] Failed to load stub %hs from \"%s\": %hs\n", name, buffer, std::system_category().message(GetLastError()).c_str());
 	}
 	return h;
 }
@@ -352,7 +349,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if (!GetExePathWide(exePath, sizeof(exePath)))
+	if (!GetExePath(exePath, sizeof(exePath)))
 	{
 		MessageBoxA(
 			GetForegroundWindow(),
@@ -362,7 +359,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	SetCurrentDirectoryW(exePath);
+	SetCurrentDirectoryA(exePath);
 
 	bool noOriginStartup = false;
 	bool dedicated = false;
@@ -437,11 +434,11 @@ int main(int argc, char* argv[])
 	}
 
 	std::cout << "[*] Loading tier0.dll" << std::endl;
-	swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
-	hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+	sprintf_s(buffer, "%s\\bin\\x64_retail\\tier0.dll", exePath);
+	hTier0Module = LoadLibraryExA(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (!hTier0Module)
 	{
-		LibraryLoadError(GetLastError(), L"tier0.dll", buffer);
+		LibraryLoadError(GetLastError(), "tier0.dll", buffer);
 		return 1;
 	}
 
@@ -456,11 +453,11 @@ int main(int argc, char* argv[])
 		std::cout << "[*] Going to load the vanilla game" << std::endl;
 
 	std::cout << "[*] Loading launcher.dll" << std::endl;
-	swprintf_s(buffer, L"%s\\bin\\x64_retail\\launcher.dll", exePath);
-	hLauncherModule = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+	sprintf_s(buffer, "%s\\bin\\x64_retail\\launcher.dll", exePath);
+	hLauncherModule = LoadLibraryExA(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if (!hLauncherModule)
 	{
-		LibraryLoadError(GetLastError(), L"launcher.dll", buffer);
+		LibraryLoadError(GetLastError(), "launcher.dll", buffer);
 		return 1;
 	}
 
