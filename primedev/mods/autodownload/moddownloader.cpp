@@ -38,12 +38,12 @@ ModDownloader::ModDownloader()
 			url = cla.substr(quote1 + 1, quote2);
 		}
 		spdlog::info("Found custom verified mods URL in command line argument: {}", url);
-		modsListUrl = strdup(url.c_str());
+		modsListUrl = _strdup(url.c_str());
 	}
 	else
 	{
 		spdlog::info("Custom verified mods URL not found in command line arguments, using default URL.");
-		modsListUrl = strdup(DEFAULT_MODS_LIST_URL);
+		modsListUrl = _strdup(DEFAULT_MODS_LIST_URL);
 	}
 }
 
@@ -124,14 +124,14 @@ size_t WriteData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 }
 
 int ModDownloader::ModFetchingProgressCallback(
-	void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded)
+	void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t /*totalToUpload*/, curl_off_t /*nowUploaded*/)
 {
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
 		ModDownloader* instance = static_cast<ModDownloader*>(ptr);
 		auto currentDownloadProgress = roundf(static_cast<float>(finishedDownloadSize) / totalDownloadSize * 100);
-		instance->modState.progress = finishedDownloadSize;
-		instance->modState.total = totalDownloadSize;
+		instance->modState.progress = (int)finishedDownloadSize;
+		instance->modState.total = (int)totalDownloadSize;
 		instance->modState.ratio = currentDownloadProgress;
 	}
 
@@ -155,7 +155,6 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	modState.state = DOWNLOADING;
 
 	// Download the actual archive
-	bool failed = false;
 	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
 	CURLcode result;
 	CURL* easyhandle;
@@ -288,7 +287,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 		std::streamsize bytesRead = fp.gcount();
 		if (bytesRead > 0)
 		{
-			status = BCryptHashData(hashHandle, (PBYTE)buffer.data(), bytesRead, 0);
+			status = BCryptHashData(hashHandle, (PUCHAR)buffer.data(), (ULONG)bytesRead, 0);
 			if (!NT_SUCCESS(status))
 			{
 				modState.state = MOD_CORRUPTED;
@@ -313,7 +312,7 @@ bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecks
 
 	// Convert hash to string using bytes raw values
 	ss << std::hex << std::setfill('0');
-	for (int i = 0; i < hashLength; i++)
+	for (unsigned int i = 0; i < hashLength; i++)
 	{
 		ss << std::hex << std::setw(2) << static_cast<int>(hash.data()[i]);
 	}
@@ -340,9 +339,9 @@ bool ModDownloader::IsModAuthorized(std::string_view modName, std::string_view m
 	return versions.count(modVersion.data()) != 0;
 }
 
-int GetModArchiveSize(unzFile file, unz_global_info64 info)
+uint64_t GetModArchiveSize(unzFile file, unz_global_info64 info)
 {
-	int totalSize = 0;
+	uint64_t totalSize = 0;
 
 	for (int i = 0; i < info.number_entry; i++)
 	{
@@ -399,7 +398,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 
 	// Update state
 	modState.state = EXTRACTING;
-	modState.total = GetModArchiveSize(file, gi);
+	modState.total = (int)GetModArchiveSize(file, gi);
 	modState.progress = 0;
 
 	// Mod directory name (removing the ".zip" fom the archive name)

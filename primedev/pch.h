@@ -29,6 +29,8 @@ typedef void (*callable_v)(void* v);
 #define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on
 
+#define NOTE_UNUSED(unusedVar) (void)unusedVar;
+
 #include "core/macros.h"
 
 #include "core/math/color.h"

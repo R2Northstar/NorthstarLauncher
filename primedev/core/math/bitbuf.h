@@ -188,7 +188,7 @@ public:
 		return ret;
 	}
 
-	INLINE u32 ReadUBitLong(i32 numBits)
+	INLINE u32 ReadUBitLong(u32 numBits)
 	{
 		if (m_CachedBitsLeft >= numBits)
 		{
@@ -432,7 +432,7 @@ public:
 		float shift = (float)(GetBitForBitnum(numBits));
 
 		i32 i = ReadUBitLong(numBits);
-		float fReturn = (float)i * (360.0 / shift);
+		float fReturn = (float)i * (360.0f / shift);
 
 		return fReturn;
 	}
@@ -531,14 +531,14 @@ public:
 		// read remaining bytes
 		while (bitsLeft >= 8)
 		{
-			*out = ReadUBitLong(8);
+			*out = (u8)ReadUBitLong(8);
 			++out;
 			bitsLeft -= 8;
 		}
 
 		// read remaining bits
 		if (bitsLeft)
-			*out = ReadUBitLong(bitsLeft);
+			*out = (u8)ReadUBitLong(bitsLeft);
 	}
 
 	INLINE bool ReadBytes(uptr outData, u32 byteLength)
@@ -554,7 +554,7 @@ public:
 
 		while (1)
 		{
-			char val = ReadChar();
+			char val = (char)ReadChar();
 
 			if (val == 0)
 				break;
@@ -594,7 +594,7 @@ public:
 
 		// Now copy into the output and return it;
 		char* ret = new char[chars + 1];
-		for (u32 i = 0; i <= chars; i++)
+		for (int i = 0; i <= chars; i++)
 			ret[i] = str[i];
 
 		return ret;
@@ -745,7 +745,7 @@ public:
 
 	INLINE int GetNumBitsLeft()
 	{
-		return m_OutBitsLeft + (32 * (m_DataEnd - m_DataOut - 1));
+		return (int)(m_OutBitsLeft + (32 * (m_DataEnd - m_DataOut - 1)));
 	}
 
 	INLINE void Reset()
@@ -826,7 +826,7 @@ public:
 			Flush();
 	}
 
-	INLINE void WriteUBitLong(u32 data, i32 numBits, bool checkRange = true)
+	INLINE void WriteUBitLong(u32 data, u32 numBits, bool checkRange = true)
 	{
 		if (numBits <= m_OutBitsLeft)
 		{
@@ -918,7 +918,7 @@ public:
 
 	INLINE i32 GetNumBitsWritten()
 	{
-		return (32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data));
+		return (i32)((32 - m_OutBitsLeft) + (32 * (m_DataOut - m_Data)));
 	}
 
 	INLINE i32 GetNumBytesWritten()

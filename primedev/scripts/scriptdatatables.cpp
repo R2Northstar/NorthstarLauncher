@@ -696,7 +696,7 @@ std::string DataTableToString(Datatable* datatable)
 	{
 		sCSVString += '\n';
 
-		bool bShouldComma = false;
+		bShouldComma = false;
 		for (int col = 0; col < datatable->numColumns; col++)
 		{
 			if (bShouldComma)
@@ -779,7 +779,7 @@ void ConCommand_dump_datatable(const CCommand& args)
 	DumpDatatable(args.Arg(1));
 }
 
-void ConCommand_dump_datatables(const CCommand& args)
+void ConCommand_dump_datatables(const CCommand& /*args*/)
 {
 	// likely not a comprehensive list, might be missing a couple?
 	static const std::vector<const char*> VANILLA_DATATABLE_PATHS = {

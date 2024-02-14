@@ -211,7 +211,7 @@ void ConCommand_unban(const CCommand& args)
 	g_pBanSystem->UnbanUID(strtoull(args.Arg(1), nullptr, 10));
 }
 
-void ConCommand_clearbanlist(const CCommand& args)
+void ConCommand_clearbanlist(const CCommand& /*args*/)
 {
 	g_pBanSystem->ClearBanlist();
 }

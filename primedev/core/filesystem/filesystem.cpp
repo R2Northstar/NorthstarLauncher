@@ -117,7 +117,7 @@ FileHandle_t, __fastcall, (VPKData* vpkInfo, uint64_t* b, char* filename))
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
 	{
-		*b = -1;
+		*b = (uint64_t)-1;
 		return b;
 	}
 

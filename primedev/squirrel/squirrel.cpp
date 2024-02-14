@@ -27,7 +27,6 @@ std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context)
 		return NS::log::SCRIPT_SV;
 	default:
 		throw std::runtime_error("getSquirrelLoggerByContext called with invalid context");
-		return nullptr;
 	}
 }
 
@@ -314,7 +313,7 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 }
 
 // hooks
-bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
+bool IsUIVM(ScriptContext /*context*/, HSquirrelVM* pSqvm)
 {
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
@@ -334,6 +333,7 @@ template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirr
 template <ScriptContext context> SQInteger (*SQPrint)(HSquirrelVM* sqvm, const char* fmt);
 template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const char* fmt, ...)
 {
+	NOTE_UNUSED(sqvm)
 	va_list va;
 	va_start(va, fmt);
 
@@ -480,14 +480,14 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 	ScriptContext realContext = context;
 	bool bShouldCallCustomCallbacks = true;
 
-	if (context == ScriptContext::CLIENT)
+	if constexpr (context == ScriptContext::CLIENT)
 	{
 		if (!strcmp(callback, "UICodeCallback_UIInit"))
 			realContext = ScriptContext::UI;
 		else if (strcmp(callback, "ClientCodeCallback_MapSpawn"))
 			bShouldCallCustomCallbacks = false;
 	}
-	else if (context == ScriptContext::SERVER)
+	else if constexpr (context == ScriptContext::SERVER)
 		bShouldCallCustomCallbacks = !strcmp(callback, "CodeCallback_MapSpawn");
 
 	if (bShouldCallCustomCallbacks)

@@ -93,7 +93,6 @@ bool ServerAuthenticationManager::IsDuplicateAccount(CBaseClient* pPlayer, const
 	if (m_bAllowDuplicateAccounts)
 		return false;
 
-	bool bHasUidPlayer = false;
 	for (int i = 0; i < g_pGlobals->m_nMaxClients; i++)
 		if (&g_pClientArray[i] != pPlayer && !strcmp(pPlayerUid, g_pClientArray[i].m_UID))
 			return true;
@@ -331,7 +330,7 @@ void,, (CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...)
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
 }
 
-void ConCommand_ns_resetpersistence(const CCommand& args)
+void ConCommand_ns_resetpersistence(const CCommand& /*args*/)
 {
 	if (*g_pServerState == server_state_t::ss_active)
 	{

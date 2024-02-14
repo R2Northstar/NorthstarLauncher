@@ -6,7 +6,7 @@
 
 SourceInterface<CGameConsole>* g_pSourceGameConsole;
 
-void ConCommand_toggleconsole(const CCommand& arg)
+void ConCommand_toggleconsole(const CCommand& /*arg*/)
 {
 	if ((*g_pSourceGameConsole)->IsConsoleVisible())
 		(*g_pSourceGameConsole)->Hide();
@@ -14,12 +14,12 @@ void ConCommand_toggleconsole(const CCommand& arg)
 		(*g_pSourceGameConsole)->Activate();
 }
 
-void ConCommand_showconsole(const CCommand& arg)
+void ConCommand_showconsole(const CCommand& /*arg*/)
 {
 	(*g_pSourceGameConsole)->Activate();
 }
 
-void ConCommand_hideconsole(const CCommand& arg)
+void ConCommand_hideconsole(const CCommand& /*arg*/)
 {
 	(*g_pSourceGameConsole)->Hide();
 }
@@ -45,7 +45,7 @@ void SourceConsoleSink::custom_sink_it_(const custom_log_msg& msg)
 	(*g_pSourceGameConsole)->m_pConsole->m_pConsolePanel->Print(fmt::to_string(formatted).c_str());
 }
 
-void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
+void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& /*msg*/)
 {
 	throw std::runtime_error("sink_it_ called on SourceConsoleSink with pure log_msg. This is an error!");
 }

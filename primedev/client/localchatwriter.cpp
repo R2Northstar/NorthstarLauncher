@@ -213,7 +213,7 @@ private:
 		}
 		else if (val < 232)
 		{
-			unsigned char code = val - 16;
+			unsigned char code = (unsigned char)(val - 16);
 			unsigned char blue = code % 6;
 			unsigned char green = ((code - blue) / 6) % 6;
 			unsigned char red = (code - blue - (green * 6)) / 36;
@@ -221,7 +221,7 @@ private:
 		}
 		else if (val < UCHAR_MAX)
 		{
-			unsigned char brightness = (val - 232) * 10 + 8;
+			unsigned char brightness = (unsigned char)(val - 232) * 10 + 8;
 			m_writer->InsertColorChange(Color {brightness, brightness, brightness, 255});
 		}
 

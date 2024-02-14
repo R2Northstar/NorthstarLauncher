@@ -175,6 +175,7 @@ void PluginManager::RunFrame() const
 
 void ConCommand_reload_plugins(const CCommand& args)
 {
+	NOTE_UNUSED(args)
 	g_pPluginManager->ReloadPlugins();
 }
 

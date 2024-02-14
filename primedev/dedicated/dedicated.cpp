@@ -33,12 +33,12 @@ struct CDedicatedExports
 	DedicatedRunServerType RunServer;
 };
 
-void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
+void Sys_Printf(CDedicatedExports* /*dedicated*/, const char* msg)
 {
 	spdlog::info("[DEDICATED SERVER] {}", msg);
 }
 
-void RunServer(CDedicatedExports* dedicated)
+void RunServer(CDedicatedExports* /*dedicated*/)
 {
 	spdlog::info("CDedicatedExports::RunServer(): starting");
 	spdlog::info(CommandLine()->GetCmdLine());
@@ -56,7 +56,6 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_Execute();
 
 	// main loop
-	double frameTitle = 0;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
 	{
 		double frameStart = Plat_FloatTime();
@@ -84,7 +83,7 @@ class DedicatedConsoleServerPresence : public ServerPresenceReporter
 };
 
 HANDLE consoleInputThreadHandle = NULL;
-DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
+DWORD WINAPI ConsoleInputThread(PVOID /*pThreadParameter*/)
 {
 	while (!g_pEngine || !g_pHostState || g_pHostState->m_iCurrentState != HostState_t::HS_RUN)
 		Sleep(1000);

@@ -138,11 +138,11 @@ void,, (bool a1, float a2))
 // clang-format on
 {
 	unsigned char v3; // bl
-	int v5; // er14
-	int i; // edi
+	unsigned int v5; // er14
+	unsigned int i; // edi
 	__int64 v7; // rax
 	DWORD* v8; // rbx
-	int v9; // edi
+	unsigned int v9; // edi
 	__int64* v10; // rsi
 	__int64 v11; // rax
 	int v12; // er12
@@ -153,7 +153,7 @@ void,, (bool a1, float a2))
 	int v17; // edx
 	char v18; // r15
 	char v19; // bp
-	int v20; // esi
+	unsigned int v20; // esi
 	__int64* v21; // rdi
 	__int64 v22; // rcx
 	bool v23; // al
@@ -221,7 +221,7 @@ void,, (bool a1, float a2))
 				v14 = *(DWORD*)(globals + 52);
 				do
 				{
-					v15 = RandomIntZeroMax();
+					v15 = (int)RandomIntZeroMax();
 					v16 = v25[v13--];
 					v17 = v15 % v14--;
 					v25[v13 + 1] = v25[v17];

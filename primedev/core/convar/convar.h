@@ -175,7 +175,7 @@ public:
 	struct CVValue_t
 	{
 		const char* m_pszString;
-		int64_t m_iStringLength;
+		uint64_t m_iStringLength;
 		float m_fValue;
 		int m_nValue;
 	};

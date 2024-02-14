@@ -18,6 +18,8 @@ public:
 	virtual void Next(void) = 0; // 1
 	virtual bool IsValid(void) = 0; // 2
 	virtual ConCommandBase* Get(void) = 0; // 3
+
+	virtual ~CCVarIteratorInternal() {}
 };
 
 //-----------------------------------------------------------------------------

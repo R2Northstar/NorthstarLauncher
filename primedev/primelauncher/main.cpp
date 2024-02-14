@@ -382,11 +382,11 @@ int main(int argc, char* argv[])
 	{
 		std::cout << "[*] Loading stubs" << std::endl;
 		HMODULE gssao, gtxaa, d3d11;
-		if (!(gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) && !(gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) &&
-			!(d3d11 = GetModuleHandleA("d3d11.dll")))
+		if ((gssao = GetModuleHandleA("GFSDK_SSAO.win64.dll")) != NULL && (gtxaa = GetModuleHandleA("GFSDK_TXAA.win64.dll")) != NULL &&
+			(d3d11 = GetModuleHandleA("d3d11.dll")) != NULL)
 		{
-			if (!(gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) || !(gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) ||
-				!(d3d11 = LoadDediStub("d3d11.dll")))
+			if ((gssao = LoadDediStub("GFSDK_SSAO.win64.dll")) != NULL || (gtxaa = LoadDediStub("GFSDK_TXAA.win64.dll")) != NULL ||
+				(d3d11 = LoadDediStub("d3d11.dll")) != NULL)
 			{
 				if ((!gssao || FreeLibrary(gssao)) && (!gtxaa || FreeLibrary(gtxaa)) && (!d3d11 || FreeLibrary(d3d11)))
 				{

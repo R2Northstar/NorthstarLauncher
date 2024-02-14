@@ -41,25 +41,25 @@ std::string UnescapeUnicode(const std::string& str)
 		last_match = *i;
 		result.append(last_match.prefix());
 		unsigned int cp = 0;
-		for (int i = 2; i <= 5; ++i)
+		for (int j = 2; j <= 5; ++j)
 		{
 			cp *= 16;
-			cp += hctod(last_match.str()[i]);
+			cp += hctod(last_match.str()[j]);
 		}
 		if (cp <= 0x7F)
 		{
-			result.push_back(cp);
+			result.push_back((char)cp);
 		}
 		else if (cp <= 0x7FF)
 		{
-			result.push_back((cp >> 6) | 0b11000000 & (~(1 << 5)));
-			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
+			result.push_back((char)((cp >> 6) | 0b11000000 & (~(1 << 5))));
+			result.push_back((char)(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6))));
 		}
 		else if (cp <= 0xFFFF)
 		{
-			result.push_back((cp >> 12) | 0b11100000 & (~(1 << 4)));
-			result.push_back((cp >> 6) & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
-			result.push_back(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6)));
+			result.push_back((char)((cp >> 12) | 0b11100000 & (~(1 << 4))));
+			result.push_back((char)((cp >> 6) & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6))));
+			result.push_back((char)(cp & ((1 << 6) - 1) | 0b10000000 & (~(1 << 6))));
 		}
 	}
 
@@ -78,18 +78,18 @@ void ServerPresenceManager::CreateConVars()
 	Cvar_ns_server_presence_update_rate = new ConVar(
 		"ns_server_presence_update_rate", "5000", FCVAR_GAMEDLL, "How often we update our server's presence on server lists in ms");
 
-	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+	Cvar_ns_server_name = new ConVar("ns_server_name", "Unnamed Northstar Server", FCVAR_GAMEDLL, "This server's name", false, 0, false, 0, [](ConVar* /*cvar*/, const char* /*pOldValue*/, float /*flOldValue*/) {
 			g_pServerPresence->SetName(UnescapeUnicode(g_pServerPresence->Cvar_ns_server_name->GetString()));
 
 			// update engine hostname cvar
 			Cvar_hostname->SetValue(g_pServerPresence->Cvar_ns_server_name->GetString());
 		});
 
-	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL, "This server's description", false, 0, false, 0, [](ConVar* /*cvar*/, const char* /*pOldValue*/, float /*flOldValue*/) {
 			g_pServerPresence->SetDescription(UnescapeUnicode(g_pServerPresence->Cvar_ns_server_desc->GetString()));
 		});
 
-	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password", false, 0, false, 0, [](ConVar* /*cvar*/, const char* /*pOldValue*/, float /*flOldValue*/) {
 			g_pServerPresence->SetPassword(g_pServerPresence->Cvar_ns_server_password->GetString());
 		});
 

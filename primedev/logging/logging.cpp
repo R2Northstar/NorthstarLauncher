@@ -68,7 +68,7 @@ void CreateLogFiles()
 	}
 }
 
-void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
+void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& /*msg*/)
 {
 	throw std::runtime_error("sink_it_ called on SourceConsoleSink with pure log_msg. This is an error!");
 }
@@ -281,9 +281,6 @@ void StartupLog()
 	}
 	else
 	{
-		// We are real Windows (hopefully)
-		const char* win_ver = "Unknown";
-
 		RTL_OSVERSIONINFOW osvi;
 		osvi.dwOSVersionInfoSize = sizeof(osvi);
 

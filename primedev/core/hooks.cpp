@@ -141,7 +141,6 @@ uintptr_t ParseDLLOffsetString(const char* pAddrString)
 	uintptr_t iOffset = 0;
 
 	int iOffsetBegin = iDllNameEnd;
-	size_t iOffsetEnd = strlen(pAddrString);
 
 	// seek until we hit the start of the number offset
 	for (; !(pAddrString[iOffsetBegin] >= '0' && pAddrString[iOffsetBegin] <= '9') && pAddrString[iOffsetBegin]; iOffsetBegin++)
@@ -407,8 +406,6 @@ HMODULE, WINAPI, (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
 		{
 			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
 			exit(EXIT_FAILURE);
-
-			return nullptr;
 		}
 	}
 	else

@@ -1119,7 +1119,7 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ConCommand_reload_mods(const CCommand& args)
+void ConCommand_reload_mods(const CCommand& /*args*/)
 {
 	g_pModManager->LoadMods();
 }

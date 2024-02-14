@@ -35,7 +35,7 @@ void DedicatedServerLogToClientSink::custom_sink_it_(const custom_log_msg& msg)
 	}
 }
 
-void DedicatedServerLogToClientSink::sink_it_(const spdlog::details::log_msg& msg)
+void DedicatedServerLogToClientSink::sink_it_(const spdlog::details::log_msg& /*msg*/)
 {
 	throw std::runtime_error("sink_it_ called on DedicatedServerLogToClientSink with pure log_msg. This is an error!");
 }
