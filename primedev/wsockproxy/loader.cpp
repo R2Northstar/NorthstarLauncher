@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-static wchar_t buffer[8192];
+static wchar_t northstarPath[8192];
 static wchar_t exePath[4096];
 
 bool GetExePathWide(wchar_t* dest, DWORD destSize)
@@ -102,19 +102,19 @@ bool LoadNorthstar()
 		}
 
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
-		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
+		swprintf_s(northstarPath, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
 
-		if (!fs::exists(fs::path(buffer)))
-			swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
+		if (!fs::exists(fs::path(northstarPath)))
+			swprintf_s(northstarPath, L"%s\\Northstar.dll", exePath);
 
-		std::wcout << L"[*] Using: " << buffer << std::endl;
+		std::wcout << L"[*] Using: " << northstarPath << std::endl;
 
-		HMODULE hHookModule = LoadLibraryExW(buffer, 0, 8u);
+		HMODULE hHookModule = LoadLibraryExW(northstarPath, 0, 8u);
 		if (hHookModule)
 			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
 		if (!hHookModule || Hook_Init == nullptr)
 		{
-			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
+			LibraryLoadError(GetLastError(), L"Northstar.dll", northstarPath);
 			return false;
 		}
 	}

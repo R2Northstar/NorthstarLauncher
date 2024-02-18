@@ -5,7 +5,7 @@
 FARPROC p[73];
 HMODULE hL = 0;
 
-static wchar_t buffer[4096];
+static wchar_t wsockPath[4096];
 
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 {
@@ -17,13 +17,13 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 		if (!ProvisionNorthstar()) // does not call InitialiseNorthstar yet, will do it on LauncherMain hook
 			return true;
 
-        GetSystemDirectoryW(buffer, 4096);
-		swprintf_s(buffer, 4096, L"%s\\wsock32.dll", buffer);
+        GetSystemDirectoryW(wsockPath, 4096);
+		swprintf_s(wsockPath, 4096, L"%s\\wsock32.dll", wsockPath);
 
-		hL = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+		hL = LoadLibraryExW(wsockPath, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 		if (!hL)
 		{
-			LibraryLoadError(GetLastError(), L"wsock32.dll", buffer);
+			LibraryLoadError(GetLastError(), L"wsock32.dll", wsockPath);
 			return false;
 		}
 
