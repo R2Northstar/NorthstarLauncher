@@ -1,4 +1,5 @@
 #include "loader.h"
+#include <shlwapi.h>
 #include <string>
 #include <system_error>
 #include <sstream>
@@ -7,6 +8,21 @@
 #include <iostream>
 
 namespace fs = std::filesystem;
+
+static wchar_t buffer[8192];
+static wchar_t exePath[4096];
+
+bool GetExePathWide(wchar_t* dest, DWORD destSize)
+{
+	if (!dest)
+		return NULL;
+	if (destSize < MAX_PATH)
+		return NULL;
+
+	DWORD length = GetModuleFileNameW(NULL, dest, destSize);
+	return length && PathRemoveFileSpecW(dest);
+}
+
 
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
@@ -75,7 +91,15 @@ bool LoadNorthstar()
 			strProfile = "R2Northstar";
 		}
 
-		wchar_t buffer[8192];
+		if (!GetExePathWide(exePath, 4096))
+		{
+			MessageBoxA(
+				GetForegroundWindow(),
+				"Failed getting game directory.\nThe game cannot continue and has to exit.",
+				"Northstar Wsock32 Proxy Error",
+				0);
+			return true;
+		}
 
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
 		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
