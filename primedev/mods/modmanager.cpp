@@ -740,8 +740,8 @@ void ModManager::LoadMods()
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
 	bool newModsDetected = false;
 
-	// Detect audio files multi-override
-	std::map<std::string, std::vector<std::string>> audioFiles;
+	// Dictionary mapping audio file name to mod name, used to detect file multi-override
+	std::map<std::string, std::string> audioFiles;
 
 	for (Mod& mod : m_LoadedMods)
 	{
@@ -978,21 +978,19 @@ void ModManager::LoadMods()
 					auto result = audioFiles.find(filename);
 					if (result != audioFiles.end())
 					{
-						audioFiles[filename].push_back(mod.Name);
 						spdlog::warn(
-							"Audio file {} has been overridden by several mods ({}), expect some crashes!",
-							file.path().filename().generic_string(),
-							fmt::join(audioFiles[filename], ", "));
+							"\"{}\" mod attempted to override audio file \"{}\" that was already overriden by \"{}\", skipping.",
+							audioFiles[filename],
+							file.path().filename().generic_string(), mod.Name);
 					}
 					else
 					{
-						audioFiles[filename] = {mod.Name};
-					}
-
-					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
-					{
-						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
-						continue;
+						audioFiles[filename] = mod.Name;
+						if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
+						{
+							spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+							continue;
+						}
 					}
 				}
 			}
