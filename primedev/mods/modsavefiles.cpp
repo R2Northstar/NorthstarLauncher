@@ -78,6 +78,9 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 			{
 				mutex.get().lock();
 
+				// forcefully append .txt to the path
+				file = std::filesystem::path(file.string() + ".txt");
+
 				fs::path dir = file.parent_path();
 				// this actually allows mods to go over the limit, but not by much
 				// the limit is to prevent mods from taking gigabytes of space,
@@ -129,6 +132,9 @@ template <ScriptContext context> int SaveFileManager::LoadFileAsync(fs::path fil
 			{
 				mutex.get().lock();
 
+				// forcefully append .txt to the path
+				file = std::filesystem::path(file.string() + ".txt");
+
 				std::ifstream fileStr(file);
 				if (fileStr.fail())
 				{
@@ -175,6 +181,9 @@ template <ScriptContext context> void SaveFileManager::DeleteFileAsync(fs::path 
 			try
 			{
 				m.get().lock();
+
+				// forcefully append .txt to the path
+				file = std::filesystem::path(file.string() + ".txt");
 
 				fs::remove(file);
 
@@ -266,7 +275,8 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SE
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
 	// this ain't a cloud service.
-	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
+	// ".txt" is appended to the file name when saving/loading/deleting, so mimic that
+	if (GetSizeOfFolderContentsMinusFile(dir, fileName + ".txt") + content.length() > MAX_FOLDER_SIZE)
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
@@ -322,7 +332,8 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext:
 	// this actually allows mods to go over the limit, but not by much
 	// the limit is to prevent mods from taking gigabytes of space,
 	// this ain't a cloud service.
-	if (GetSizeOfFolderContentsMinusFile(dir, fileName) + content.length() > MAX_FOLDER_SIZE)
+	// ".txt" is appended to the file name when saving/loading/deleting, so mimic that
+	if (GetSizeOfFolderContentsMinusFile(dir, fileName + ".txt") + content.length() > MAX_FOLDER_SIZE)
 	{
 		g_pSquirrel<context>->raiseerror(
 			sqvm,
