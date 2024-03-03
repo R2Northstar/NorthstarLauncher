@@ -985,8 +985,7 @@ void ModManager::LoadMods()
 					}
 					else
 					{
-						audioFiles[filename] = mod.Name;
-						if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
+						if (!g_CustomAudioManager.TryLoadAudioOverride(file.path(), mod.Name))
 						{
 							spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
 							continue;
