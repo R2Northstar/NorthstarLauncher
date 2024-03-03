@@ -312,7 +312,9 @@ bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath, std::stri
 		if (m_loadedAudioOverridesRegex.contains(eventIdRegexData.first))
 		{
 			spdlog::warn(
-				"\"{}\" mod tried to override sound event regex \"{}\" but it is already overriden, skipping.", modName, eventIdRegexData.first);
+				"\"{}\" mod tried to override sound event regex \"{}\" but it is already overriden, skipping.",
+				modName,
+				eventIdRegexData.first);
 			continue;
 		}
 		spdlog::info("Registering sound event regex {}", eventIdRegexData.first);
