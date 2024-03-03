@@ -740,9 +740,6 @@ void ModManager::LoadMods()
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
 	bool newModsDetected = false;
 
-	// Dictionary mapping audio file name to mod name, used to detect file multi-override
-	std::map<std::string, std::string> audioFiles;
-
 	for (Mod& mod : m_LoadedMods)
 	{
 		if (!mod.m_bEnabled)
@@ -973,23 +970,10 @@ void ModManager::LoadMods()
 			{
 				if (fs::is_regular_file(file) && file.path().extension().string() == ".json")
 				{
-					// multi-override detection
-					std::string filename = file.path().filename().generic_string();
-					auto result = audioFiles.find(filename);
-					if (result != audioFiles.end())
+					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path(), mod.Name))
 					{
-						spdlog::warn(
-							"\"{}\" mod attempted to override audio file \"{}\" that was already overriden by \"{}\", skipping.",
-							audioFiles[filename],
-							file.path().filename().generic_string(), mod.Name);
-					}
-					else
-					{
-						if (!g_CustomAudioManager.TryLoadAudioOverride(file.path(), mod.Name))
-						{
-							spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
-							continue;
-						}
+						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+						continue;
 					}
 				}
 			}
