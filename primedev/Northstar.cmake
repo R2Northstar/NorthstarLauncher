@@ -71,6 +71,8 @@ add_library(
     "engine/runframe.cpp"
     "logging/crashhandler.cpp"
     "logging/crashhandler.h"
+    "logging/dbg.cpp"
+    "logging/dbg.h"
     "logging/logging.cpp"
     "logging/logging.h"
     "logging/loghooks.cpp"

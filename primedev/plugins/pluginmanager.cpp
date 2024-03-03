@@ -26,7 +26,7 @@ void PluginManager::LoadPlugin(fs::path path, bool reloaded)
 
 	if (!plugin.IsValid())
 	{
-		NS::log::PLUGINSYS->warn("Unloading invalid plugin '{}'", path.string());
+		Warning(eLog::PLUGSYS, "Unloading invalid plugin '%s'\n", path.c_str());
 		plugin.Unload();
 		return;
 	}
@@ -54,7 +54,7 @@ bool PluginManager::LoadPlugins(bool reloaded)
 {
 	if (strstr(GetCommandLineA(), "-noplugins") != NULL)
 	{
-		NS::log::PLUGINSYS->warn("-noplugins detected; skipping loading plugins");
+		Warning(eLog::PLUGSYS, "-noplugins detected; skipping loading plugins\n");
 		return false;
 	}
 
@@ -80,7 +80,7 @@ bool PluginManager::LoadPlugins(bool reloaded)
 		// Use regex to match `AUTHOR-MOD-VERSION` pattern
 		if (!std::regex_match(dir.path().string(), pattern))
 		{
-			spdlog::warn("The following directory did not match 'AUTHOR-MOD-VERSION': {}", dir.path().string());
+			Warning(eLog::MODSYS, "The following directory did not match 'AUTHOR-MOD-VERSION': %s\n", dir.path().c_str());
 			continue; // skip loading package that doesn't match
 		}
 
@@ -93,7 +93,7 @@ bool PluginManager::LoadPlugins(bool reloaded)
 
 	if (paths.empty())
 	{
-		NS::log::PLUGINSYS->warn("Could not find any plugins. Skipped loading plugins");
+		Warning(eLog::PLUGSYS, "Could not find any plugins. Skipped loading plugins\n");
 		return false;
 	}
 

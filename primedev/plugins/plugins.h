@@ -11,8 +11,6 @@ private:
 	IPluginId* m_pluginId = 0;
 	IPluginCallbacks* m_callbacks = 0;
 
-	std::shared_ptr<ColoredLogger> m_logger;
-
 	bool m_valid = false;
 	std::string m_name;
 	std::string m_logName;

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "core/convar/concommand.h"
 #include "shared/keyvalues.h"
 
 // Cbuf

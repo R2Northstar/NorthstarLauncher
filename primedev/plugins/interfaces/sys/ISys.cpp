@@ -19,7 +19,7 @@ public:
 			spdLevel = spdlog::level::level_enum::err;
 			break;
 		default:
-			NS::log::PLUGINSYS->warn("Attempted to log with invalid level {}. Defaulting to info", (int)level);
+			Warning(eLog::PLUGSYS, "Attempted to log with invalid level %i. Defaulting to info\n", (int)level);
 		case LogLevel::INFO:
 			spdLevel = spdlog::level::level_enum::info;
 			break;
@@ -32,7 +32,7 @@ public:
 		}
 		else
 		{
-			NS::log::PLUGINSYS->warn("Attempted to log message '{}' with invalid plugin handle {}", msg, static_cast<void*>(handle));
+			Warning(eLog::PLUGSYS, "Attempted to log message '%s' with invalid plugin handle %p\n", msg, static_cast<void*>(handle));
 		}
 	}
 
@@ -45,7 +45,7 @@ public:
 		}
 		else
 		{
-			NS::log::PLUGINSYS->warn("Attempted to unload plugin with invalid handle {}", static_cast<void*>(handle));
+			Warning(eLog::PLUGSYS, "Attempted to unload plugin with invalid handle %p\n", static_cast<void*>(handle));
 		}
 	}
 
@@ -58,7 +58,7 @@ public:
 		}
 		else
 		{
-			NS::log::PLUGINSYS->warn("Attempted to reload plugin with invalid handle {}", static_cast<void*>(handle));
+			Warning(eLog::PLUGSYS, "Attempted to reload plugin with invalid handle %p\n", static_cast<void*>(handle));
 		}
 	}
 };

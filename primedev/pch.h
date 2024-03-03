@@ -33,10 +33,13 @@ typedef void (*callable_v)(void* v);
 
 #include "core/math/color.h"
 
+#include "logging/dbg.h"
+
 #include "spdlog/spdlog.h"
 #include "logging/logging.h"
 #include "MinHook.h"
 #include "curl/curl.h"
+
 #include "core/hooks.h"
 #include "core/memory.h"
 

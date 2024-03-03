@@ -9,7 +9,7 @@ CMemoryAddress Sys_GetFactoryPtr(const std::string& svModuleName, const std::str
 
 	if (!hModule)
 	{
-		spdlog::error("Failed to get module handle of '{}'!", svModuleName.c_str());
+		Error(eLog::ENGINE, NO_ERROR, "Failed to get module handle of '%s'!\n", svModuleName.c_str());
 		exit(EXIT_FAILURE);
 	}
 

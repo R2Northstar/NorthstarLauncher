@@ -21,7 +21,7 @@ void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 				*pReturnCode = InterfaceStatus::IFACE_OK;
 			}
 
-			NS::log::PLUGINSYS->info("creating interface {}", pName);
+			DevMsg(eLog::PLUGSYS, "creating interface %s\n", pName);
 			return pCur->m_CreateFn();
 		}
 	}
@@ -31,6 +31,6 @@ void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 		*pReturnCode = InterfaceStatus::IFACE_FAILED;
 	}
 
-	NS::log::PLUGINSYS->error("could not find interface {}", pName);
+	Error(eLog::PLUGSYS, NO_ERROR, "could not find interface %s\n", pName);
 	return NULL;
 }

@@ -316,7 +316,7 @@ void LocalChatWriter::InsertChar(wchar_t ch)
 
 void LocalChatWriter::InsertText(const char* str)
 {
-	spdlog::info(str);
+	DevMsg(eLog::CHAT, "%s\n", str);
 
 	WCHAR messageUnicode[288];
 	ConvertANSIToUnicode(str, -1, messageUnicode, 274);

@@ -7,7 +7,7 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 {
 	if (!command)
 	{
-		spdlog::info("unknown command {}", name);
+		DevMsg(eLog::NS, "unknown command %s\n", name);
 		return;
 	}
 
@@ -44,9 +44,9 @@ void PrintCommandHelpDialogue(const ConCommandBase* command, const char* name)
 	}
 
 	if (cvar)
-		spdlog::info("\"{}\" = \"{}\" {}- {}", cvar->GetBaseName(), cvar->GetString(), flagString, cvar->GetHelpText());
+		DevMsg(eLog::NS, "\"%s\" = \"%s\" %s- %s\n", cvar->GetBaseName(), cvar->GetString(), flagString.c_str(), cvar->GetHelpText());
 	else
-		spdlog::info("\"{}\" {} - {}", command->m_pszName, flagString, command->GetHelpText());
+		DevMsg(eLog::NS, "\"%s\" %s - %s\n", command->m_pszName, flagString.c_str(), command->GetHelpText());
 }
 
 void TryPrintCvarHelpForCommand(const char* pCommand)
@@ -77,7 +77,7 @@ void ConCommand_help(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
 	{
-		spdlog::info("Usage: help <cvarname>");
+		DevMsg(eLog::NS, "Usage: help <cvarname>\n");
 		return;
 	}
 
@@ -88,7 +88,7 @@ void ConCommand_find(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
 	{
-		spdlog::info("Usage: find <string> [<string>...]");
+		DevMsg(eLog::NS, "Usage: find <string> [<string>...]\n");
 		return;
 	}
 
@@ -139,9 +139,9 @@ void ConCommand_findflags(const CCommand& arg)
 {
 	if (arg.ArgC() < 2)
 	{
-		spdlog::info("Usage: findflags <string>");
+		DevMsg(eLog::NS, "Usage: findflags <string>\n");
 		for (auto& flagPair : g_PrintCommandFlags)
-			spdlog::info("   - {}", flagPair.second);
+			DevMsg(eLog::NS, "   - %i\n", flagPair.second);
 
 		return;
 	}
@@ -205,7 +205,7 @@ void ConCommand_list(const CCommand& arg)
 	{
 		PrintCommandHelpDialogue(map.second, map.second->m_pszName);
 	}
-	spdlog::info("{} total convars/concommands", sorted.size());
+	DevMsg(eLog::NS, "%z total convars/concommands\n", sorted.size());
 }
 
 void ConCommand_differences(const CCommand& arg)
@@ -255,8 +255,8 @@ void ConCommand_differences(const CCommand& arg)
 			formatted.append(fmt::format(" max. {}", cvar->m_fMaxVal));
 		}
 
-		formatted.append(fmt::format(" - {}", cvar->GetHelpText()));
-		spdlog::info(formatted);
+		formatted.append(fmt::format(" - {}\n", cvar->GetHelpText()));
+		DevMsg(eLog::NS, formatted.c_str());
 	}
 }
 

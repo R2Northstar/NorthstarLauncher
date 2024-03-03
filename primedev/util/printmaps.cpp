@@ -182,8 +182,8 @@ void ConCommand_maps(const CCommand& args)
 {
 	if (args.ArgC() < 2)
 	{
-		spdlog::info("Usage: maps <substring>");
-		spdlog::info("maps * for full listing");
+		DevMsg(eLog::NS, "Usage: maps <substring>\n");
+		DevMsg(eLog::NS, "maps * for full listing\n");
 		return;
 	}
 
@@ -191,7 +191,7 @@ void ConCommand_maps(const CCommand& args)
 
 	for (MapVPKInfo& map : vMapList) // need to figure out a nice way to include parent path without making the formatting awful
 		if ((*args.Arg(1) == '*' && !args.Arg(1)[1]) || strstr(map.name.c_str(), args.Arg(1)))
-			spdlog::info("({}) {}", PrintMapSource.at(map.source), map.name);
+			DevMsg(eLog::NS, "(%s) %s\n", PrintMapSource.at(map.source), map.name.c_str());
 }
 
 // clang-format off
@@ -209,12 +209,12 @@ AUTOHOOK(Host_Map_f, engine.dll + 0x15B340, void, __fastcall, (const CCommand& a
 		args.ArgC() == 2 &&
 		std::find_if(vMapList.begin(), vMapList.end(), [&](MapVPKInfo map) -> bool { return map.name == args.Arg(1); }) == vMapList.end())
 	{
-		spdlog::warn("Map load failed: {} not found or invalid", args.Arg(1));
+		Warning(eLog::NS, "Map load failed: %s not found or invalid\n", args.Arg(1));
 		return;
 	}
 	else if (args.ArgC() == 1)
 	{
-		spdlog::warn("Map load failed: no map name provided");
+		Warning(eLog::NS, "Map load failed: no map name provided\n");
 		return;
 	}
 

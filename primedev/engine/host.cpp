@@ -13,7 +13,7 @@ AUTOHOOK(Host_Init, engine.dll + 0x155EA0,
 void, __fastcall, (bool bDedicated))
 // clang-format on
 {
-	spdlog::info("Host_Init()");
+	DevMsg(eLog::ENGINE, "Host_Init()\n");
 	Host_Init(bDedicated);
 	FixupCvarFlags();
 	// need to initialise these after host_init since they do stuff to preexisting concommands/convars without being client/server specific

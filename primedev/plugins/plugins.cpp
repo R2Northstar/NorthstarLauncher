@@ -29,17 +29,17 @@ Plugin::Plugin(std::string path) : m_location(path)
 	if (pluginModule)
 	{
 		// plugins may refuse to get unloaded for any reason so we need to prevent them getting loaded twice when reloading plugins
-		NS::log::PLUGINSYS->warn("Plugin has already been loaded");
+		Warning(eLog::PLUGSYS, "Plugin has already been loaded\n");
 		return;
 	}
 
 	m_handle = LoadLibraryExA(path.c_str(), 0, LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
-	NS::log::PLUGINSYS->info("loaded plugin handle {}", static_cast<void*>(m_handle));
+	DevMsg(eLog::PLUGSYS, "loaded plugin handle %p\n", static_cast<void*>(m_handle));
 
 	if (!m_handle)
 	{
-		NS::log::PLUGINSYS->error("Failed to load plugin '{}' (Error: {})", path, GetLastError());
+		Error(eLog::PLUGSYS, NO_ERROR, "Failed to load plugin '%s' (Error: %lu)\n", path.c_str(), GetLastError());
 		return;
 	}
 
@@ -49,7 +49,7 @@ Plugin::Plugin(std::string path) : m_location(path)
 
 	if (!CreatePluginInterface)
 	{
-		NS::log::PLUGINSYS->error("Plugin at '{}' does not expose CreateInterface()", path);
+		Error(eLog::PLUGSYS, NO_ERROR, "Plugin at '%s' does not expose CreateInterface()\n", path.c_str());
 		return;
 	}
 
@@ -57,7 +57,7 @@ Plugin::Plugin(std::string path) : m_location(path)
 
 	if (!m_pluginId)
 	{
-		NS::log::PLUGINSYS->error("Could not load IPluginId interface of plugin at '{}'", path);
+		Error(eLog::PLUGSYS, NO_ERROR, "Could not load IPluginId interface of plugin at '%s'\n", path.c_str());
 		return;
 	}
 
@@ -75,25 +75,25 @@ Plugin::Plugin(std::string path) : m_location(path)
 
 	if (!name)
 	{
-		NS::log::PLUGINSYS->error("Could not load name of plugin at '{}'", path);
+		Error(eLog::PLUGSYS, NO_ERROR, "Could not load name of plugin at '%s'\n", path.c_str());
 		return;
 	}
 
 	if (!logName)
 	{
-		NS::log::PLUGINSYS->error("Could not load logName of plugin {}", name);
+		Error(eLog::PLUGSYS, NO_ERROR, "Could not load logName of plugin %s\n", name);
 		return;
 	}
 
 	if (!dependencyName)
 	{
-		NS::log::PLUGINSYS->error("Could not load dependencyName of plugin {}", name);
+		Error(eLog::PLUGSYS, NO_ERROR, "Could not load dependencyName of plugin %s\n", name);
 		return;
 	}
 
 	if (!isValidSquirrelIdentifier(m_dependencyName))
 	{
-		NS::log::PLUGINSYS->error("Dependency name \"{}\" of plugin {} is not valid", dependencyName, name);
+		Error(eLog::PLUGSYS, NO_ERROR, "Dependency name \"%s\" of plugin %s is not valid\n", dependencyName, name);
 		return;
 	}
 
@@ -101,22 +101,19 @@ Plugin::Plugin(std::string path) : m_location(path)
 
 	if (!m_callbacks)
 	{
-		NS::log::PLUGINSYS->error("Could not create callback interface of plugin {}", name);
+		Error(eLog::PLUGSYS, NO_ERROR, "Could not create callback interface of plugin %s\n", name);
 		return;
 	}
 
-	m_logger = std::make_shared<ColoredLogger>(m_logName, NS::Colors::PLUGIN);
-	RegisterLogger(m_logger);
-
 	if (IsDedicatedServer() && !m_runOnServer)
 	{
-		NS::log::PLUGINSYS->info("Unloading {} because it's not supposed to run on dedicated servers", m_name);
+		DevMsg(eLog::PLUGSYS, "Unloading %s because it's not supposed to run on dedicated servers\n", m_name);
 		return;
 	}
 
 	if (!IsDedicatedServer() && !m_runOnClient)
 	{
-		NS::log::PLUGINSYS->info("Unloading {} because it's only supposed to run on dedicated servers", m_name);
+		DevMsg(eLog::PLUGSYS, "Unloading %s because it's only supposed to run on dedicated servers\n", m_name);
 		return;
 	}
 
@@ -138,7 +135,7 @@ bool Plugin::Unload() const
 
 	if (!FreeLibrary(m_handle))
 	{
-		NS::log::PLUGINSYS->error("Failed to unload plugin at '{}'", m_location);
+		Error(eLog::PLUGSYS, NO_ERROR, "Failed to unload plugin at '%s'\n", m_location.c_str());
 		return false;
 	}
 
@@ -158,7 +155,26 @@ void Plugin::Reload() const
 
 void Plugin::Log(spdlog::level::level_enum level, char* msg) const
 {
-	m_logger->log(level, msg);
+	eLogLevel eLevel = eLogLevel::LOG_INFO;
+
+	switch (level)
+	{
+	case spdlog::level::level_enum::debug:
+	case spdlog::level::level_enum::info:
+		eLevel = eLogLevel::LOG_INFO;
+		break;
+	case spdlog::level::level_enum::off:
+	case spdlog::level::level_enum::trace:
+	case spdlog::level::level_enum::warn:
+		eLevel = eLogLevel::LOG_WARN;
+		break;
+	case spdlog::level::level_enum::critical:
+	case spdlog::level::level_enum::err:
+		eLevel = eLogLevel::LOG_ERROR;
+		break;
+	}
+
+	PluginMsg(eLevel, m_name.c_str(), "%s\n", msg);
 }
 
 bool Plugin::IsValid() const
@@ -218,7 +234,7 @@ void Plugin::OnSqvmCreated(CSquirrelVM* sqvm) const
 
 void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm) const
 {
-	NS::log::PLUGINSYS->info("destroying sqvm {}", sqvm->vmContext);
+	DevMsg(eLog::PLUGSYS, "destroying sqvm %i\n", sqvm->vmContext);
 	m_callbacks->OnSqvmDestroying(sqvm);
 }
 

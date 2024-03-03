@@ -41,7 +41,7 @@ bool, __fastcall, (const char* pPlaylistName))
 
 	if (bSuccess)
 	{
-		spdlog::info("Set playlist to {}", R2::GetCurrentPlaylistName());
+		DevMsg(eLog::NS, "Set playlist to %s\n", R2::GetCurrentPlaylistName());
 		g_pServerPresence->SetPlaylist(R2::GetCurrentPlaylistName());
 	}
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "core/convar/convar.h"
 #include "core/memalloc.h"
-#include "squirrel/squirrel.h"
+#include "squirrel/squirrelclasstypes.h"
 
 #include "rapidjson/document.h"
 #include <string>
