@@ -3,7 +3,7 @@
 #include <regex>
 #include "plugins.h"
 #include "config/profile.h"
-#include "core/convar/concommand.h"
+#include "tier1/cmd.h"
 
 PluginManager* g_pPluginManager;
 

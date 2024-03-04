@@ -1,7 +1,7 @@
-#include "core/convar/convar.h"
+#include "tier1/convar.h"
 #include "sourceconsole.h"
 #include "core/sourceinterface.h"
-#include "core/convar/concommand.h"
+#include "tier1/cmd.h"
 #include "util/printcommands.h"
 
 SourceInterface<CGameConsole>* g_pSourceGameConsole;
