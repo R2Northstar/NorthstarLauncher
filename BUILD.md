@@ -37,9 +37,9 @@ Developers who can work a command line may be interested in using [Visual Studio
 
 - Follow the same steps as above for Visual Studio Build Tools, but instead of opening in Visual Studio, run the Command Prompt for VS 2022 and navigate to the NorthstarLauncher.
 
-- Run `cmake . -G "Ninja"` to generate build files.
+- Run `cmake -S "." -B "build" -G "Ninja"` to generate build files.
 
-- Run `cmake --build .` to build the project.
+- Run `cmake --build "build"` to build the project.
   
 ## Linux
 ### Steps
