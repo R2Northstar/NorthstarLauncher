@@ -254,20 +254,41 @@ void PrependPath()
 
 bool ShouldLoadNorthstar(int argc, char* argv[])
 {
+	bool loadNorthstar = true;
 	for (int i = 0; i < argc; i++)
+	{
 		if (!strcmp(argv[i], "-nonorthstardll"))
-			return false;
+		{
+			loadNorthstar = false;
+			break;
+		}
+	}
 
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
 	{
+		std::cout << "[!] `run_northstar.txt` has been deprecated and support for it will be removed in a future release. " << std::endl;
+		std::cout << "[!] Please use the `-northstar` launch argument instead." << std::endl;
+
+		// This is terrible, but good enough for deprecation
+		bool isDedicated = strstr(GetCommandLineA(), "-dedicated");
+		if (!isDedicated)
+		{
+			MessageBoxA(
+				GetForegroundWindow(),
+				"`run_northstar.txt` has been deprecated and support for it will be removed in a future release.\n"
+				"Please use the `-northstar` launch argument instead.",
+				"Northstar Wsock32 Proxy Error",
+				0);
+		}
+
 		std::stringstream runNorthstarFileBuffer;
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
 		if (runNorthstarFileBuffer.str().starts_with("0"))
-			return false;
+			loadNorthstar = false;
 	}
-	return true;
+	return loadNorthstar;
 }
 
 bool LoadNorthstar()
