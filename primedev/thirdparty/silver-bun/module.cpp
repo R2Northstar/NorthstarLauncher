@@ -19,7 +19,8 @@ CModule::CModule(HMODULE hModule)
 
 	CHAR szModuleName[MAX_PATH];
 	DWORD dwSize = GetModuleFileNameA(hModule, szModuleName, sizeof(szModuleName));
-	m_ModuleName = strrchr(szModuleName, '\\') + 1;
+	char* chLast = strrchr(szModuleName, '\\');
+	m_ModuleName = chLast == nullptr ? szModuleName : chLast + 1;
 
 
 	Init();
