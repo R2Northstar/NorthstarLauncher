@@ -15,7 +15,16 @@
 //-----------------------------------------------------------------------------
 CModule::CModule(HMODULE hModule)
 {
-	m_pModuleBase = reinterpret_cast<uintptr_t>(hModule);
+	MODULEINFO mInfo {0};
+
+	if (hModule && hModule != INVALID_HANDLE_VALUE)
+		GetModuleInformation(GetCurrentProcess(), hModule, &mInfo, sizeof(MODULEINFO));
+
+	m_nModuleSize = static_cast<size_t>(mInfo.SizeOfImage);
+	m_pModuleBase = reinterpret_cast<uintptr_t>(mInfo.lpBaseOfDll);
+
+	if (!m_nModuleSize || !m_pModuleBase)
+		return;
 
 	CHAR szModuleName[MAX_PATH];
 	DWORD dwSize = GetModuleFileNameA(hModule, szModuleName, sizeof(szModuleName));
