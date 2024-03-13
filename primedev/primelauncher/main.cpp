@@ -258,6 +258,7 @@ bool ShouldLoadNorthstar(int argc, char* argv[])
 		if (!strcmp(argv[i], "-nonorthstardll"))
 			return false;
 
+#if 0
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
 	{
@@ -267,6 +268,8 @@ bool ShouldLoadNorthstar(int argc, char* argv[])
 		if (runNorthstarFileBuffer.str().starts_with("0"))
 			return false;
 	}
+#endif
+
 	return true;
 }
 
