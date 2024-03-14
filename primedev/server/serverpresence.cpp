@@ -97,7 +97,6 @@ void ServerPresenceManager::CreateConVars()
 
 	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
 			NOTE_UNUSED(cvar);
-			NOTE_UNUSED(cvar);
 			NOTE_UNUSED(pOldValue);
 			NOTE_UNUSED(flOldValue);
 			g_pServerPresence->SetPassword(g_pServerPresence->Cvar_ns_server_password->GetString());
