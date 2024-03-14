@@ -89,10 +89,14 @@ void ServerPresenceManager::CreateConVars()
 		});
 
 	Cvar_ns_server_desc = new ConVar("ns_server_desc", "Default server description", FCVAR_GAMEDLL | FCVAR_REPLICATED, "This server's description", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+			NOTE_UNUSED(cvar);
+			NOTE_UNUSED(pOldValue);
+			NOTE_UNUSED(flOldValue);
 			g_pServerPresence->SetDescription(UnescapeUnicode(g_pServerPresence->Cvar_ns_server_desc->GetString()));
 		});
 
 	Cvar_ns_server_password = new ConVar("ns_server_password", "", FCVAR_GAMEDLL, "This server's password", false, 0, false, 0, [](ConVar* cvar, const char* pOldValue, float flOldValue) {
+			NOTE_UNUSED(cvar);
 			NOTE_UNUSED(cvar);
 			NOTE_UNUSED(pOldValue);
 			NOTE_UNUSED(flOldValue);
