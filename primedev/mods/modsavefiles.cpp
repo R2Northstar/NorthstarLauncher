@@ -75,7 +75,8 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 		[mutex, file, contents]()
 		{
 			// Check if has extension and return early if not
-			if (!file.has_extension()) {
+			if (!file.has_extension())
+			{
 				spdlog::error("SAVE FAILED!");
 				spdlog::error("No file extension specified");
 			}
@@ -85,7 +86,8 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 
 			// Check if file extension is whitelisted
 			std::string extension = file.extension().string();
-			if (whitelist.find(extension) == whitelist.end()) {
+			if (whitelist.find(extension) == whitelist.end())
+			{
 				spdlog::error("SAVE FAILED!");
 				spdlog::error("Disallowed file extension: {}", extension);
 			}
