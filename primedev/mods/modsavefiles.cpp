@@ -74,6 +74,22 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 	std::thread writeThread(
 		[mutex, file, contents]()
 		{
+			// Check if has extension and return early if not
+			if (!file.has_extension()) {
+				spdlog::error("SAVE FAILED!");
+				spdlog::error("No file extension specified");
+			}
+
+			// TODO: move into list of global consts?
+			std::set<std::string> whitelist = {".txt", ".json"};
+
+			// Check if file extension is whitelisted
+			std::string extension = file.extension().string();
+			if (whitelist.find(extension) == whitelist.end()) {
+				spdlog::error("SAVE FAILED!");
+				spdlog::error("Disallowed file extension: {}", extension);
+			}
+
 			try
 			{
 				mutex.get().lock();
