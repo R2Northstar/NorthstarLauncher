@@ -260,11 +260,11 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 		// if mod is not loaded push null instead of a table with all versions
 		if (!bWasFound)
 		{
-			pushstring(m_pSQVM->sqvm, pair.first.c_str(), -1);
-			pushnull(m_pSQVM->sqvm); // this is coerced to SQInteger 0 for some reason in the const table
-			pushinteger(m_pSQVM->sqvm, 0);
-			newslot(m_pSQVM->sqvm, -3, false);
-			// defconst(m_pSQVM, pair.first.c_str(), 0);
+			// pushstring(m_pSQVM->sqvm, pair.first.c_str(), -1);
+			// pushnull(m_pSQVM->sqvm); // TODO null entries get erased for some reason
+			// pushinteger(m_pSQVM->sqvm, 0);
+			// newslot(m_pSQVM->sqvm, -3, false);
+			defconst(m_pSQVM, pair.first.c_str(), 0);
 		}
 	}
 
