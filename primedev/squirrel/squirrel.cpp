@@ -10,6 +10,8 @@
 #include "plugins/pluginmanager.h"
 #include "ns_version.h"
 #include "core/vanilla.h"
+#include "squirrelclasstypes.h"
+#include "squirreldatatypes.h"
 
 #include <any>
 
@@ -162,15 +164,81 @@ template class SquirrelManager<ScriptContext::SERVER>;
 template class SquirrelManager<ScriptContext::CLIENT>;
 template class SquirrelManager<ScriptContext::UI>;
 
+// create a string -> integer slot in table at index -1
+template <ScriptContext context> SQRESULT SquirrelManager<context>::CreateSlot(const char* key, SQInteger val)
+{
+	pushstring(m_pSQVM->sqvm, key, -1);
+	pushinteger(m_pSQVM->sqvm, val);
+	return newslot(m_pSQVM->sqvm, -3, false);
+}
+
+// expects const table to be at stack index -1
+template <ScriptContext context> void SquirrelManager<context>::CreateDependencyConstantsForMod(Mod& mod, const char* dependencyName)
+{
+	std::string version = mod.Version;
+	auto nDots = std::count(version.begin(), version.end(), '.');
+
+	// push mod name as key
+	pushstring(m_pSQVM->sqvm, dependencyName, -1);
+	newtable(m_pSQVM->sqvm);
+
+	// valid semver must at least include 2 dots to seperate versions
+	if (nDots >= 2)
+	{
+		std::string major = version.substr(0, version.find('.'));
+		// std::string minor = version.substr(major.length() + 1, version.find('.', major.length()));
+		std::string minor = version.substr(major.length() + 1, version.length() - version.find('.', major.length() + 1));
+
+		size_t preRelease = version.find('-');
+		size_t build = version.find('+');
+
+		size_t patchEnd = version.length();
+
+		if (build != std::string::npos)
+		{
+			patchEnd = build;
+		}
+
+		// pre-releases are always in front of build meta data
+		if (preRelease != std::string::npos)
+		{
+			patchEnd = preRelease;
+		}
+
+		std::string patch = version.substr(major.length() + minor.length() + 2, patchEnd);
+
+		if (std::all_of(major.begin(), major.end(), ::isdigit))
+		{
+			CreateSlot("major", stoi(major));
+		}
+
+		if (std::all_of(minor.begin(), minor.end(), ::isdigit))
+		{
+			CreateSlot("minor", stoi(minor));
+		}
+
+		if (std::all_of(patch.begin(), patch.end(), ::isdigit))
+		{
+			CreateSlot("patch", stoi(patch));
+		}
+	}
+
+	newslot(m_pSQVM->sqvm, -3, false);
+}
+
 template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquirrelVM* newSqvm)
 {
 	m_pSQVM = newSqvm;
+
+	// pushconsttable(m_pSQVM->sqvm);
 
 	for (SQFuncRegistration* funcReg : m_funcRegistrations)
 	{
 		spdlog::info("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
 		RegisterSquirrelFunc(m_pSQVM, funcReg, 1);
 	}
+
+	pushconsttable(m_pSQVM->sqvm);
 
 	for (auto& pair : g_pModManager->m_DependencyConstants)
 	{
@@ -184,12 +252,23 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 			if (dependency.Name == pair.second)
 			{
 				bWasFound = true;
+				CreateDependencyConstantsForMod(dependency, pair.first.c_str());
 				break;
 			}
 		}
 
-		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
+		// if mod is not loaded push null instead of a table with all versions
+		if (!bWasFound)
+		{
+			pushstring(m_pSQVM->sqvm, pair.first.c_str(), -1);
+			pushnull(m_pSQVM->sqvm); // this is coerced to SQInteger 0 for some reason in the const table
+			pushinteger(m_pSQVM->sqvm, 0);
+			newslot(m_pSQVM->sqvm, -3, false);
+			// defconst(m_pSQVM, pair.first.c_str(), 0);
+		}
 	}
+
+	poptop(m_pSQVM->sqvm);
 
 	std::vector<Plugin> loadedPlugins = g_pPluginManager->GetLoadedPlugins();
 	for (const auto& pluginName : g_pModManager->m_PluginDependencyConstants)
@@ -209,6 +288,8 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 	// define squirrel constant for if we are in vanilla-compatibility mode
 	defconst(m_pSQVM, "VANILLA", g_pVanillaCompatibility->GetVanillaCompatibility());
+
+	// poptop(m_pSQVM->sqvm);
 
 	g_pSquirrel<context>->messageBuffer = new SquirrelMessageBuffer();
 	g_pPluginManager->InformSqvmCreated(newSqvm);
@@ -729,6 +810,13 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 	g_pSquirrel<ScriptContext::UI>->__sq_pushnewstructinstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushnewstructinstance;
 	g_pSquirrel<ScriptContext::UI>->__sq_sealstructslot = g_pSquirrel<ScriptContext::CLIENT>->__sq_sealstructslot;
 
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushconsttable = module.Offset(0x5940).RCast<sq_pushconsttableType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_pushconsttable = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushconsttable;
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_poptop = module.Offset(0x7030).RCast<sq_poptopType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_poptop = g_pSquirrel<ScriptContext::CLIENT>->__sq_poptop;
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_pushnull = module.Offset(0x33d0).RCast<sq_pushnullType>();
+	g_pSquirrel<ScriptContext::UI>->__sq_pushnull = g_pSquirrel<ScriptContext::CLIENT>->__sq_pushnull;
+
 	MAKEHOOK(
 		module.Offset(0x108E0),
 		&RegisterSquirrelFunctionHook<ScriptContext::CLIENT>,
@@ -814,6 +902,10 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 	// Structs
 	g_pSquirrel<ScriptContext::SERVER>->__sq_pushnewstructinstance = module.Offset(0x53e0).RCast<sq_pushnewstructinstanceType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_sealstructslot = module.Offset(0x5510).RCast<sq_sealstructslotType>();
+
+	g_pSquirrel<ScriptContext::SERVER>->__sq_pushconsttable = module.Offset(0x5920).RCast<sq_pushconsttableType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_poptop = module.Offset(0x7000).RCast<sq_poptopType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_pushnull = module.Offset(0x33d0).RCast<sq_pushnullType>();
 
 	MAKEHOOK(
 		module.Offset(0x1DD10),
