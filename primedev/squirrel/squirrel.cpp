@@ -257,13 +257,10 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 			}
 		}
 
-		// if mod is not loaded push null instead of a table with all versions
+		// if the dependency is not loaded, place a falsy value in the map
+		// null would've been cooler but pushing null in the table erased the slot for some reason
 		if (!bWasFound)
 		{
-			// pushstring(m_pSQVM->sqvm, pair.first.c_str(), -1);
-			// pushnull(m_pSQVM->sqvm); // TODO null entries get erased for some reason
-			// pushinteger(m_pSQVM->sqvm, 0);
-			// newslot(m_pSQVM->sqvm, -3, false);
 			defconst(m_pSQVM, pair.first.c_str(), 0);
 		}
 	}
