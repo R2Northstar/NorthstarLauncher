@@ -186,7 +186,6 @@ template <ScriptContext context> void SquirrelManager<context>::CreateDependency
 	if (nDots >= 2)
 	{
 		std::string major = version.substr(0, version.find('.'));
-		// std::string minor = version.substr(major.length() + 1, version.find('.', major.length()));
 		std::string minor = version.substr(major.length() + 1, version.length() - version.find('.', major.length() + 1));
 
 		size_t preRelease = version.find('-');
