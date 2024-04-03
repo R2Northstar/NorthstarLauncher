@@ -228,9 +228,6 @@ template <ScriptContext context> void SquirrelManager<context>::CreateDependency
 template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquirrelVM* newSqvm)
 {
 	m_pSQVM = newSqvm;
-
-	// pushconsttable(m_pSQVM->sqvm);
-
 	for (SQFuncRegistration* funcReg : m_funcRegistrations)
 	{
 		spdlog::info("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
