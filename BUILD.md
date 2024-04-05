@@ -49,3 +49,13 @@ Developers who can work a command line may be interested in using [Visual Studio
 * `docker build --rm -t northstar-build-fedora .`
 * `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build northstar-build-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja"`
 * `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build northstar-build-fedora cmake --build .`
+
+#### Podman
+
+When using [`podman`](https://podman.io/) instead of Docker on an SELinux enabled distro, make sure to add the `Z` flag when mounting the directory to keep SELinux happy.
+
+As such the corresponding commands are
+
+* `podman build --rm -t northstar-build-fedora .`
+* `podman run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build,Z northstar-build-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja"`
+* `podman run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build,Z northstar-build-fedora cmake --build .`
