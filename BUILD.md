@@ -52,7 +52,7 @@ Developers who can work a command line may be interested in using [Visual Studio
 
 #### Podman
 
-When using [`podman`](https://podman.io/) instead of Docker on an SELinux enabled distro, make sure to add the `z` flag when mounting the directory to keep SELinux happy.
+When using [`podman`](https://podman.io/) instead of Docker on an SELinux enabled distro, make sure to add the `z` flag when mounting the directory to correctly label it to avoid SELinux denying access.
 
 As such the corresponding commands are
 
