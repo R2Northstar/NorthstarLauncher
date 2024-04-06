@@ -22,7 +22,6 @@ void, __fastcall, (void* a1))
 	if (g_pVanillaCompatibility->GetVanillaCompatibility())
 	{
 		AuthWithStryder(a1);
-		return;
 	}
 
 	// game will call this forever, until it gets a valid auth key
