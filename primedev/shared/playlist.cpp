@@ -122,6 +122,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (CModule
 	module.Offset(0x18ED8D).Patch("C3");
 
 	// patch to allow setplaylistvaroverride to be called before map init on dedicated and private match launched through the game
-	if(!g_pVanillaCompatibility->GetVanillaCompatibility())
+	if (!g_pVanillaCompatibility->GetVanillaCompatibility())
 		module.Offset(0x18ED17).NOP(6);
 }
