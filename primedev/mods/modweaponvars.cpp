@@ -1,4 +1,6 @@
 
+#include "client/weaponx.h"
+#include "server/weaponx.h"
 #include "modweaponvars.h"
 #include "squirrel/squirrel.h"
 #include "client/r2client.h"
@@ -40,11 +42,13 @@ ADD_SQFUNC("void", ScriptWeaponVars_SetInt, "entity weapon, int weaponVar, int v
 
 	if (context == ScriptContext::SERVER)
 	{
-		*(int*)(ent + 0x1410 + varInfo->offset) = value;
+		CWeaponX* weapon = (CWeaponX*)ent;
+		*(int*)(&weapon->weaponVars[varInfo->offset]) = value;
 	}
 	else // if (context == ScriptContext::CLIENT)
 	{
-		*(int*)(ent + 0x1700 + varInfo->offset) = value;
+		C_WeaponX* weapon = (C_WeaponX*)ent;
+		*(int*)(&weapon->weaponVars[varInfo->offset]) = value;
 	}
 
 	return SQRESULT_NULL;
@@ -73,11 +77,13 @@ ADD_SQFUNC(
 
 	if (context == ScriptContext::SERVER)
 	{
-		*(float*)(ent + 0x1410 + varInfo->offset) = value;
+		CWeaponX* weapon = (CWeaponX*)ent;
+		*(float*)(&weapon->weaponVars[varInfo->offset]) = value;
 	}
 	else // if (context == ScriptContext::CLIENT)
 	{
-		*(float*)(ent + 0x1700 + varInfo->offset) = value;
+		C_WeaponX* weapon = (C_WeaponX*)ent;
+		*(float*)(&weapon->weaponVars[varInfo->offset]) = value;
 	}
 
 	return SQRESULT_NULL;
