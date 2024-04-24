@@ -3,8 +3,8 @@ enum WeaponVarType : __int8
 	// support for other types isnt really needed
 	// and would probably allow for some fucking insane
 	// exploit chain somehow
-	INTEGER = (char)1,
-	FLOAT32 = (char)2
+	INTEGER = 1,
+	FLOAT32 = 2
 };
 
 const int WEAPON_VAR_COUNT = 725;

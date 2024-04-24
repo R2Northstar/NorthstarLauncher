@@ -1,5 +1,7 @@
 #pragma once
 
+inline void* C_WeaponX_vftable = nullptr;
+
 #pragma pack(push, 1)
 struct C_WeaponX
 {
