@@ -88,6 +88,8 @@ add_library(
     "mods/modmanager.h"
     "mods/modsavefiles.cpp"
     "mods/modsavefiles.h"
+    "mods/modweaponvars.cpp"
+    "mods/modweaponvars.h"
     "plugins/interfaces/interface.h"
     "plugins/interfaces/interface.cpp"
     "plugins/interfaces/sys/ISys.h"
