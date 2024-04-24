@@ -19,4 +19,4 @@ public:
 	unsigned short offset;
 };
 #pragma pack(pop)
-static_assert(sizeof(WeaponVarInfo) == 0x20, "Expected 32, what the fuck???");
+static_assert(sizeof(WeaponVarInfo) == 0x20);

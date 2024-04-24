@@ -6,31 +6,18 @@
 
 template <ScriptContext context> WeaponVarInfo* weaponVarArray;
 
-bool fuck = false;
-
 AUTOHOOK_INIT()
 
-// what does this function belong to? who knows?
-// - it gets called every frame
-// - it forces a recalculation of weapon values
-// we dont want that, so we dont let it do anything
-// we might want to look into this, afaik its a virtual func
+// TODO: _actually_ reverse this.
+// Seemingly recalculates weapon variables every tick, figure out what this actually does
+// rn we are "disabling" this function because it seems to make stuff
+// work, figure out why.
+// also ""slight"" performance increase
 AUTOHOOK(Cl_UpdateWeaponVars, client.dll + 0x5B2670, char, __fastcall, (void* a2))
 {
 	return '\0';
 }
 
-ADD_SQFUNC("void", FuckAround, "entity ent, int value, int offset", "god help you", ScriptContext::SERVER | ScriptContext::CLIENT)
-{
-	char* ent = g_pSquirrel<context>->getentity<char>(sqvm, 1);
-	int value = g_pSquirrel<context>->getinteger(sqvm, 2);
-	int offset = g_pSquirrel<context>->getinteger(sqvm, 3);
-	*(int*)(ent + offset) = value;
-	return SQRESULT_NULL;
-}
-
-// sidenote, we need a manager for this + transmitting changes from server to client
-// ideally use remotefuncs cause this shit gonna get transmitted A LOT!!!!
 ADD_SQFUNC("void", ScriptWeaponVars_SetInt, "entity weapon, int weaponVar, int value", "", ScriptContext::SERVER | ScriptContext::CLIENT)
 {
 	char* ent = g_pSquirrel<context>->getentity<char>(sqvm, 1);
@@ -42,21 +29,24 @@ ADD_SQFUNC("void", ScriptWeaponVars_SetInt, "entity weapon, int weaponVar, int v
 		g_pSquirrel<context>->raiseerror(sqvm, "Invalid eWeaponVar!");
 		return SQRESULT_ERROR;
 	}
+
 	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
-	spdlog::info("eWeaponVar type {}", (int)varInfo->type);
 	if (varInfo->type != WeaponVarType::INTEGER)
 	{
 		// invalid type used
 		g_pSquirrel<context>->raiseerror(sqvm, "weaponVar type is not integer!");
 		return SQRESULT_ERROR;
 	}
+
 	if (context == ScriptContext::SERVER)
+	{
 		*(int*)(ent + 0x1410 + varInfo->offset) = value;
+	}
 	else // if (context == ScriptContext::CLIENT)
 	{
 		*(int*)(ent + 0x1700 + varInfo->offset) = value;
-		fuck = true;
 	}
+
 	return SQRESULT_NULL;
 }
 
@@ -72,18 +62,24 @@ ADD_SQFUNC(
 		g_pSquirrel<context>->raiseerror(sqvm, "Invalid eWeaponVar!");
 		return SQRESULT_ERROR;
 	}
+
 	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
-	spdlog::info("eWeaponVar type {}", (int)varInfo->type);
 	if (varInfo->type != WeaponVarType::FLOAT32)
 	{
 		// invalid type used
 		g_pSquirrel<context>->raiseerror(sqvm, "weaponVar type is not float!");
 		return SQRESULT_ERROR;
 	}
+
 	if (context == ScriptContext::SERVER)
+	{
 		*(float*)(ent + 0x1410 + varInfo->offset) = value;
+	}
 	else // if (context == ScriptContext::CLIENT)
+	{
 		*(float*)(ent + 0x1700 + varInfo->offset) = value;
+	}
+
 	return SQRESULT_NULL;
 }
 
