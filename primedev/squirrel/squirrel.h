@@ -115,6 +115,7 @@ public:
 	sq_getfunctionType __sq_getfunction;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
+	sq_createscriptinstanceType __sq_createscriptinstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
 
 	sq_pushnewstructinstanceType __sq_pushnewstructinstance;
@@ -393,6 +394,22 @@ public:
 		for (auto& v : functionVector)
 		{
 			// Execute lambda to push arg to stack
+			v();
+		}
+
+		return _call(m_pSQVM->sqvm, (SQInteger)functionVector.size());
+	}
+
+	template <typename... Args> SQRESULT Call(SQObject* obj, Args... args)
+	{
+		pushobject(m_pSQVM->sqvm, functionobj); // Push the function object
+		pushroottable(m_pSQVM->sqvm); // Push root table
+		
+		FunctionVector functionVector;
+		SqRecurseArgs<context>(functionVector, args...);
+
+		for (auto& v : functionVector)
+		{
 			v();
 		}
 

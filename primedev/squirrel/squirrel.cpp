@@ -22,7 +22,7 @@ std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context)
 	case ScriptContext::UI:
 		return NS::log::SCRIPT_UI;
 	case ScriptContext::CLIENT:
-		return NS::log::SCRIPT_CL;
+		return NS::log::SCRIPT_CL;_CalcWeaponMods
 	case ScriptContext::SERVER:
 		return NS::log::SCRIPT_SV;
 	default:
@@ -712,6 +712,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x3E49B0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance = module.Offset(0x114F0).RCast<sq_getentityfrominstanceType>();
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance = module.Offset(0xC20E0).RCast<sq_createscriptinstanceType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_GetEntityConstant_CBaseEntity =
 		g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity;
 	g_pSquirrel<ScriptContext::UI>->__sq_getentityfrominstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance;
@@ -805,6 +806,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x418AF0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getentityfrominstance = module.Offset(0x1E920).RCast<sq_getentityfrominstanceType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance = module.Offset(0x43F2F0).RCast<sq_createscriptinstanceType>();
 
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff
