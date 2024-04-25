@@ -8,7 +8,7 @@ struct C_WeaponX
 public:
 	void* vftable;
 	const char gap_8[5880];
-	// is a struct in reality. size may be wrong
-	const char weaponVars[0x1000];
+	// is a struct in reality.
+	const char weaponVars[0xCA0];
 };
 #pragma pack(pop)

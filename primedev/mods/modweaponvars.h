@@ -1,13 +1,19 @@
 enum WeaponVarType : __int8
 {
-	// support for other types isnt really needed
-	// and would probably allow for some fucking insane
-	// exploit chain somehow
-	INTEGER = 1,
-	FLOAT32 = 2
+	WVT_INTEGER = 1,
+	WVT_FLOAT32 = 2,
+	WVT_BOOLEAN = 3,
+	// NOT SUPPORTED ATM //
+	WVT_STRING = 4,
+	WVT_ASSET = 5,
+	WVT_VECTOR = 6
 };
 
-const int WEAPON_VAR_COUNT = 725;
+struct WeaponModCallback
+{
+	int priority;
+	SQObject func;
+};
 
 #pragma pack(push, 1)
 class WeaponVarInfo
@@ -20,3 +26,5 @@ public:
 };
 #pragma pack(pop)
 static_assert(sizeof(WeaponVarInfo) == 0x20);
+
+const int WEAPON_VAR_COUNT = 725;

@@ -12,6 +12,6 @@ public:
 	// this is used by the game as the initial offset
 	// for getting eWeaponVar values. No idea about
 	// the actual datatype. Start of another struct?
-	const char weaponVars[0x1000];
+	const char weaponVars[0xCA0];
 };
 #pragma pack(pop)
