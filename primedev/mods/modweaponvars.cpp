@@ -82,8 +82,7 @@ ADD_SQFUNC("void", ModWeaponVars_SetInt, "entity weapon, int weaponVar, int valu
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC(
-	"void", ModWeaponVars_SetFloat, "entity weapon, int weaponVar, float value", "", ScriptContext::SERVER | ScriptContext::CLIENT)
+ADD_SQFUNC("void", ModWeaponVars_SetFloat, "entity weapon, int weaponVar, float value", "", ScriptContext::SERVER | ScriptContext::CLIENT)
 {
 	void** ent = g_pSquirrel<context>->getentity<void*>(sqvm, 1);
 	if (!IsWeapon<context>(ent))
@@ -157,11 +156,6 @@ ADD_SQFUNC("void", ModWeaponVars_SetBool, "entity weapon, int weaponVar, bool va
 		*(bool*)(&weapon->weaponVars[varInfo->offset]) = value;
 	}
 
-	return SQRESULT_NULL;
-}
-
-ADD_SQFUNC("void", AddCallback_ApplyModWeaponVars, "void functionref( entity ) callback, int priority", "", ScriptContext::CLIENT | ScriptContext::SERVER)
-{
 	return SQRESULT_NULL;
 }
 
