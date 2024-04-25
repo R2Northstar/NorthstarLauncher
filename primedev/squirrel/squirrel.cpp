@@ -22,7 +22,7 @@ std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context)
 	case ScriptContext::UI:
 		return NS::log::SCRIPT_UI;
 	case ScriptContext::CLIENT:
-		return NS::log::SCRIPT_CL;_CalcWeaponMods
+		return NS::log::SCRIPT_CL;
 	case ScriptContext::SERVER:
 		return NS::log::SCRIPT_SV;
 	default:

@@ -404,7 +404,7 @@ public:
 	{
 		pushobject(m_pSQVM->sqvm, functionobj); // Push the function object
 		pushroottable(m_pSQVM->sqvm); // Push root table
-		
+
 		FunctionVector functionVector;
 		SqRecurseArgs<context>(functionVector, args...);
 
