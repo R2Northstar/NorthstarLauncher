@@ -400,22 +400,6 @@ public:
 		return _call(m_pSQVM->sqvm, (SQInteger)functionVector.size());
 	}
 
-	template <typename... Args> SQRESULT Call(SQObject* obj, Args... args)
-	{
-		pushobject(m_pSQVM->sqvm, functionobj); // Push the function object
-		pushroottable(m_pSQVM->sqvm); // Push root table
-
-		FunctionVector functionVector;
-		SqRecurseArgs<context>(functionVector, args...);
-
-		for (auto& v : functionVector)
-		{
-			v();
-		}
-
-		return _call(m_pSQVM->sqvm, (SQInteger)functionVector.size());
-	}
-
 #pragma endregion
 
 public:
