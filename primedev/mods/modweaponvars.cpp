@@ -6,6 +6,9 @@
 #include "client/r2client.h"
 #include "server/r2server.h"
 
+typedef bool (*SetWeaponModBitfield)(CWeaponX* weapon, int mods);
+
+SetWeaponModBitfield Sv_SetWeaponModBitfield;
 template <ScriptContext context> WeaponVarInfo* weaponVarArray;
 template <ScriptContext context> std::vector<SQObject> weaponModCallbacks;
 
@@ -25,7 +28,7 @@ AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int unk_0,
 
 	if (IsWeapon<ScriptContext::CLIENT>((void**)(unk_2 - 0x1700)))
 	{
-		SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(unk_2 - 0x1410));
+		SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(unk_2 - 0x1700));
 		g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
 
@@ -161,16 +164,36 @@ ADD_SQFUNC("void", ModWeaponVars_SetBool, "entity weapon, int weaponVar, bool va
 	return SQRESULT_NULL;
 }
 
+// SERVER only because client does this very often
+ADD_SQFUNC("void", RecalculateModsForWeapon, "entity weapon", "", ScriptContext::SERVER)
+{
+	void** ent = g_pSquirrel<context>->getentity<void*>(sqvm, 1);
+	if (!IsWeapon<context>(ent))
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "Entity is not a weapon");
+		return SQRESULT_ERROR;
+	}
+	CWeaponX* weapon = (CWeaponX*)ent;
+	if (!Sv_SetWeaponModBitfield(weapon, weapon->currentModBitfield))
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "Weapon var calculation failed...");
+		return SQRESULT_ERROR;
+	}
+
+	return SQRESULT_NULL;
+}
+
 ON_DLL_LOAD_CLIENT("client.dll", ModWeaponVars_ClientInit, (CModule mod))
 {
-	weaponVarArray<ScriptContext::CLIENT> = (mod.Offset(0x942ca0).RCast<WeaponVarInfo*>());
+	weaponVarArray<ScriptContext::CLIENT> = mod.Offset(0x942ca0).RCast<WeaponVarInfo*>();
 	C_WeaponX_vftable = mod.Offset(0x998638).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(client.dll);
 }
 
 ON_DLL_LOAD("server.dll", ModWeaponVars_ServerInit, (CModule mod))
 {
-	weaponVarArray<ScriptContext::SERVER> = (mod.Offset(0x997dc0).RCast<WeaponVarInfo*>());
+	weaponVarArray<ScriptContext::SERVER> = mod.Offset(0x997dc0).RCast<WeaponVarInfo*>();
+	Sv_SetWeaponModBitfield = mod.Offset(0x6A63C0).RCast<SetWeaponModBitfield>();
 	CWeaponX_vftable = mod.Offset(0x98E2B8).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(server.dll);
 }
