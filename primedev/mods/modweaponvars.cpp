@@ -25,7 +25,8 @@ AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int unk_0,
 
 	if (IsWeapon<ScriptContext::CLIENT>((void**)(unk_2 - 0x1700)))
 	{
-		// TODO: codecallback
+		SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(unk_2 - 0x1410));
+		g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
 
 	return result;
@@ -37,7 +38,8 @@ AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0,
 
 	if (IsWeapon<ScriptContext::SERVER>((void**)(unk_2 - 0x1410)))
 	{
-		// TODO: codecallback
+		SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(unk_2 - 0x1410));
+		g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
 
 	return result;
