@@ -6,9 +6,11 @@
 #include "client/r2client.h"
 #include "server/r2server.h"
 
-typedef bool (*SetWeaponModBitfield)(void* weapon, int mods);
+typedef bool (*calculateWeaponValuesType)(int bitfield, void* weapon, void* weaponVarLocation);
+typedef char* (*get2ndParamForRecalcModFuncType)(void* weapon);
 
-template <ScriptContext context> SetWeaponModBitfield _SetWeaponModBitfield;
+template <ScriptContext context> get2ndParamForRecalcModFuncType get2ndParamForRecalcModFunc;
+template <ScriptContext context> calculateWeaponValuesType _CalculateWeaponValues;
 template <ScriptContext context> WeaponVarInfo* weaponVarArray;
 template <ScriptContext context> std::vector<SQObject> weaponModCallbacks;
 
@@ -22,15 +24,51 @@ template <ScriptContext context> bool IsWeapon(void** ent)
 
 AUTOHOOK_INIT()
 
-AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int unk_0, char* unk_1, char* unk_2, bool unk_3, int unk_4))
+// RENAME THIS BEFORE MERGE (REVIEWERS IF YOU STILL SEE THIS BLOCK IT NOWNOWNOWNOWNOW)
+AUTOHOOK(Thingy, client.dll + 0x59D1E0, bool, __fastcall, (C_WeaponX * weapon))
 {
-	bool result = Cl_CalcWeaponMods(unk_0, unk_1, unk_2, unk_3, unk_4);
+	bool result = Thingy(weapon);
 
-	if (IsWeapon<ScriptContext::CLIENT>((void**)(unk_2 - 0x1700)))
+	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(weapon);
+	g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_PredictWeaponMods", entInstance);
+
+	return result;
+}
+
+// RENAME THIS BEFORE MERGE (REVIEWERS IF YOU STILL SEE THIS BLOCK IT NOWNOWNOWNOWNOW)
+AUTOHOOK(Cl_WeaponTick, client.dll + 0x5B48C0, bool, __fastcall, (C_WeaponX * weapon))
+{
+	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(weapon);
+
+	bool result = Cl_WeaponTick(weapon);
+	g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_PredictWeaponMods", entInstance);
+
+	return result;
+}
+
+// side note, may be an incorrect name
+AUTOHOOK(CPlayerSimulate, server.dll + 0x5A6E50, bool, __fastcall, (CBasePlayer * player, int unk_1, bool unk_2))
+{
+	SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance(player);
+
+	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
+	bool result = CPlayerSimulate(player, unk_1, unk_2);
+	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
+
+	return result;
+}
+
+AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int mods, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
+{
+	bool result;
+	if (IsWeapon<ScriptContext::CLIENT>((void**)(weaponVars - 0x1700)))
 	{
-		SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(unk_2 - 0x1700));
+		SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(weaponVars - 0x1700));
+		result = Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 		g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
+	else
+		result = Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 
 	return result;
 }
@@ -39,7 +77,7 @@ AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0,
 {
 	bool result = Sv_CalcWeaponMods(unk_0, unk_1, unk_2, unk_3, unk_4);
 
-	if (IsWeapon<ScriptContext::SERVER>((void**)(unk_2 - 0x1410)))
+	if (result && IsWeapon<ScriptContext::SERVER>((void**)(unk_2 - 0x1410)))
 	{
 		SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(unk_2 - 0x1410));
 		g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
@@ -133,8 +171,8 @@ ADD_SQFUNC("void", ModWeaponVars_SetBool, "entity weapon, int weaponVar, bool va
 		g_pSquirrel<context>->raiseerror(sqvm, "Entity is not a weapon");
 		return SQRESULT_ERROR;
 	}
-	bool weaponVar = g_pSquirrel<context>->getbool(sqvm, 2);
-	float value = g_pSquirrel<context>->getfloat(sqvm, 3);
+	int weaponVar = g_pSquirrel<context>->getinteger(sqvm, 2);
+	bool value = g_pSquirrel<context>->getbool(sqvm, 3);
 	if (weaponVar < 1 || weaponVar > WEAPON_VAR_COUNT) // weapon vars start at one and end at 725 inclusive
 	{
 		// invalid weapon var index
@@ -168,16 +206,35 @@ ADD_SQFUNC("void", ModWeaponVars_SetBool, "entity weapon, int weaponVar, bool va
 ADD_SQFUNC("void", RecalculateModsForWeapon, "entity weapon", "", ScriptContext::SERVER | ScriptContext::CLIENT)
 {
 	void** ent = g_pSquirrel<context>->getentity<void*>(sqvm, 1);
+	if (ent == nullptr)
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "Entity is not a weapon");
+		return SQRESULT_ERROR;
+	}
 	if (!IsWeapon<context>(ent))
 	{
 		g_pSquirrel<context>->raiseerror(sqvm, "Entity is not a weapon");
 		return SQRESULT_ERROR;
 	}
-	CWeaponX* weapon = (CWeaponX*)ent;
-	if (!_SetWeaponModBitfield<context>(weapon, weapon->currentModBitfield))
+	if (context == ScriptContext::SERVER)
 	{
-		g_pSquirrel<context>->raiseerror(sqvm, "Weapon var calculation failed...");
-		return SQRESULT_ERROR;
+		CWeaponX* weapon = (CWeaponX*)ent;
+		char* secondParamForCalcWeaponValues = get2ndParamForRecalcModFunc<context>(weapon);
+		if (!_CalculateWeaponValues<context>(weapon->currentModBitfield, secondParamForCalcWeaponValues, (void*)&weapon->weaponVars))
+		{
+			g_pSquirrel<context>->raiseerror(sqvm, "Weapon var calculation failed...");
+			return SQRESULT_ERROR;
+		}
+	}
+	else
+	{
+		C_WeaponX* weapon = (C_WeaponX*)ent;
+		char* secondParamForCalcWeaponValues = get2ndParamForRecalcModFunc<context>(weapon);
+		if (!_CalculateWeaponValues<context>(weapon->currentModBitfield, secondParamForCalcWeaponValues, (void*)&weapon->weaponVars))
+		{
+			g_pSquirrel<context>->raiseerror(sqvm, "Weapon var calculation failed...");
+			return SQRESULT_ERROR;
+		}
 	}
 
 	return SQRESULT_NULL;
@@ -185,17 +242,21 @@ ADD_SQFUNC("void", RecalculateModsForWeapon, "entity weapon", "", ScriptContext:
 
 ON_DLL_LOAD_CLIENT("client.dll", ModWeaponVars_ClientInit, (CModule mod))
 {
-	weaponVarArray<ScriptContext::CLIENT> = mod.Offset(0x942ca0).RCast<WeaponVarInfo*>();
+	const ScriptContext context = ScriptContext::CLIENT;
+	weaponVarArray<context> = mod.Offset(0x942ca0).RCast<WeaponVarInfo*>();
 	// requires client prediction, find a way to enforce that(?)
-	_SetWeaponModBitfield<ScriptContext::CLIENT> = mod.Offset(0x5B7B80).RCast<SetWeaponModBitfield>();
+	_CalculateWeaponValues<context> = mod.Offset(0x3CA060).RCast<calculateWeaponValuesType>();
+	get2ndParamForRecalcModFunc<context> = mod.Offset(0xBB4B0).RCast<get2ndParamForRecalcModFuncType>();
 	C_WeaponX_vftable = mod.Offset(0x998638).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(client.dll);
 }
 
 ON_DLL_LOAD("server.dll", ModWeaponVars_ServerInit, (CModule mod))
 {
-	weaponVarArray<ScriptContext::SERVER> = mod.Offset(0x997dc0).RCast<WeaponVarInfo*>();
-	_SetWeaponModBitfield<ScriptContext::SERVER> = mod.Offset(0x6A63C0).RCast<SetWeaponModBitfield>();
+	const ScriptContext context = ScriptContext::SERVER;
+	weaponVarArray<context> = mod.Offset(0x997dc0).RCast<WeaponVarInfo*>();
+	_CalculateWeaponValues<context> = mod.Offset(0x6C8B30).RCast<calculateWeaponValuesType>();
+	get2ndParamForRecalcModFunc <context> = mod.Offset(0xF0CD0).RCast<get2ndParamForRecalcModFuncType>();
 	CWeaponX_vftable = mod.Offset(0x98E2B8).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(server.dll);
 }
