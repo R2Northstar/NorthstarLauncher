@@ -25,23 +25,12 @@ template <ScriptContext context> bool IsWeapon(void** ent)
 AUTOHOOK_INIT()
 
 // RENAME THIS BEFORE MERGE (REVIEWERS IF YOU STILL SEE THIS BLOCK IT NOWNOWNOWNOWNOW)
-AUTOHOOK(Thingy, client.dll + 0x59D1E0, bool, __fastcall, (C_WeaponX * weapon))
+AUTOHOOK(Cl_WeaponTick, client.dll + 0x59D1E0, bool, __fastcall, (C_WeaponX * weapon))
 {
-	bool result = Thingy(weapon);
-
 	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(weapon);
 	g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_PredictWeaponMods", entInstance);
-
-	return result;
-}
-
-// RENAME THIS BEFORE MERGE (REVIEWERS IF YOU STILL SEE THIS BLOCK IT NOWNOWNOWNOWNOW)
-AUTOHOOK(Cl_WeaponTick, client.dll + 0x5B48C0, bool, __fastcall, (C_WeaponX * weapon))
-{
-	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(weapon);
 
 	bool result = Cl_WeaponTick(weapon);
-	g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_PredictWeaponMods", entInstance);
 
 	return result;
 }
@@ -256,7 +245,7 @@ ON_DLL_LOAD("server.dll", ModWeaponVars_ServerInit, (CModule mod))
 	const ScriptContext context = ScriptContext::SERVER;
 	weaponVarArray<context> = mod.Offset(0x997dc0).RCast<WeaponVarInfo*>();
 	_CalculateWeaponValues<context> = mod.Offset(0x6C8B30).RCast<calculateWeaponValuesType>();
-	get2ndParamForRecalcModFunc <context> = mod.Offset(0xF0CD0).RCast<get2ndParamForRecalcModFuncType>();
+	get2ndParamForRecalcModFunc<context> = mod.Offset(0xF0CD0).RCast<get2ndParamForRecalcModFuncType>();
 	CWeaponX_vftable = mod.Offset(0x98E2B8).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(server.dll);
 }
