@@ -6,7 +6,7 @@ inline void* C_WeaponX_vftable = nullptr;
 struct C_WeaponX
 {
 public:
-	void* vftable; 
+	void* vftable;
 	const char gap_8[5552];
 	int currentModBitfield; // 0x15B8
 	const char gap_15BC[324];
