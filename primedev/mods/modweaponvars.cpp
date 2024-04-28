@@ -24,7 +24,7 @@ template <ScriptContext context> bool IsWeapon(void** ent)
 
 AUTOHOOK_INIT()
 
-// RENAME THIS BEFORE MERGE (REVIEWERS IF YOU STILL SEE THIS BLOCK IT NOWNOWNOWNOWNOW)
+// Name might be wrong, we're going off of frequency of calls
 AUTOHOOK(Cl_WeaponTick, client.dll + 0x59D1E0, bool, __fastcall, (C_WeaponX * weapon))
 {
 	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(weapon);
@@ -35,11 +35,13 @@ AUTOHOOK(Cl_WeaponTick, client.dll + 0x59D1E0, bool, __fastcall, (C_WeaponX * we
 	return result;
 }
 
-// side note, may be an incorrect name
+// Name might be wrong, we're going off of frequency of calls
 AUTOHOOK(CPlayerSimulate, server.dll + 0x5A6E50, bool, __fastcall, (CBasePlayer * player, int unk_1, bool unk_2))
 {
 	SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance(player);
 
+	// we have to do it twice, before AND after, or mispredictions happen.
+	// no idea why, unfortunately :/
 	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
 	bool result = CPlayerSimulate(player, unk_1, unk_2);
 	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
@@ -152,6 +154,64 @@ ADD_SQFUNC("void", ModWeaponVars_SetFloat, "entity weapon, int weaponVar, float 
 
 	return SQRESULT_NULL;
 }
+
+ADD_SQFUNC("void", ModWeaponVars_GetType, "int eWeaponVar", "", ScriptContext::SERVER | ScriptContext::CLIENT)
+{
+	int weaponVar = g_pSquirrel<context>->getinteger(sqvm, 1);
+
+	if (weaponVar < 1 || weaponVar > WEAPON_VAR_COUNT) // weapon vars start at one and end at 725 inclusive
+	{
+		// invalid weapon var index
+		g_pSquirrel<context>->raiseerror(sqvm, "Invalid eWeaponVar!");
+		return SQRESULT_ERROR;
+	}
+	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
+	g_pSquirrel<context>->pushinteger(sqvm, varInfo->type);
+
+	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, string value", "", ScriptContext::SERVER | ScriptContext::CLIENT)
+{
+	void** ent = g_pSquirrel<context>->getentity<void*>(sqvm, 1);
+	if (!IsWeapon<context>(ent))
+	{
+		g_pSquirrel<context>->raiseerror(sqvm, "Entity is not a weapon");
+		return SQRESULT_ERROR;
+	}
+	int weaponVar = g_pSquirrel<context>->getinteger(sqvm, 2);
+	std::string value = g_pSquirrel<context>->getstring(sqvm, 3);
+	if (weaponVar < 1 || weaponVar > WEAPON_VAR_COUNT) // weapon vars start at one and end at 725 inclusive
+	{
+		// invalid weapon var index
+		g_pSquirrel<context>->raiseerror(sqvm, "Invalid eWeaponVar!");
+		return SQRESULT_ERROR;
+	}
+
+	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
+	spdlog::info((int)(varInfo->type));
+	
+	if (varInfo->type != WVT_STRING)
+	{
+		// invalid type used
+		g_pSquirrel<context>->raiseerror(sqvm, "eWeaponVar is not a string!");
+		return SQRESULT_ERROR;
+	}
+
+	if (context == ScriptContext::SERVER)
+	{
+		CWeaponX* weapon = (CWeaponX*)ent;
+		*(std::string*)(&weapon->weaponVars[varInfo->offset]) = value;
+	}
+	else // if (context == ScriptContext::CLIENT)
+	{
+		C_WeaponX* weapon = (C_WeaponX*)ent;
+		*(std::string*)(&weapon->weaponVars[varInfo->offset]) = value;
+	}
+
+	return SQRESULT_NULL;
+}
+
 ADD_SQFUNC("void", ModWeaponVars_SetBool, "entity weapon, int weaponVar, bool value", "", ScriptContext::SERVER | ScriptContext::CLIENT)
 {
 	void** ent = g_pSquirrel<context>->getentity<void*>(sqvm, 1);

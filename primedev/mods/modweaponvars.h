@@ -3,8 +3,8 @@ enum WeaponVarType : __int8
 	WVT_INTEGER = 1,
 	WVT_FLOAT32 = 2,
 	WVT_BOOLEAN = 3,
-	// NOT SUPPORTED ATM //
 	WVT_STRING = 4,
+	// NOT SUPPORTED ATM //
 	WVT_ASSET = 5,
 	WVT_VECTOR = 6
 };
