@@ -6,6 +6,7 @@
 AUTOHOOK_INIT()
 
 ConVar* Cvar_ns_has_agreed_to_send_token;
+char* pDummy3P = const_cast<char*>("Protocol 3: Protect the Pilot");
 
 // mirrored in script
 const int NOT_DECIDED_TO_SEND_TOKEN = 0;
@@ -26,6 +27,16 @@ void, __fastcall, (void* a1))
 	}
 
 	AuthWithStryder(a1);
+}
+
+AUTOHOOK(Auth3PToken, engine.dll + 0x183760, char*, __fastcall, ())
+// clang-format on
+{
+	// return a dummy token for northstar servers that don't need the session token stuff
+	if (!g_pVanillaCompatibility->GetVanillaCompatibility() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
+		return const_cast<char*>(pDummy3P);
+
+	return Auth3PToken();
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule module))
