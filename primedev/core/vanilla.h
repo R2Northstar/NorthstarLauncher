@@ -7,19 +7,11 @@
 class VanillaCompatibility
 {
 public:
-	void SetVanillaCompatibility(bool isVanilla)
-	{
-		static bool bInitialised = false;
-		if (bInitialised)
-			return;
-
-		bInitialised = true;
-		m_bIsVanillaCompatible = isVanilla;
-	}
-
 	bool GetVanillaCompatibility()
 	{
-		return m_bIsVanillaCompatible;
+		// since serverfilter is required for vanilla and is set for ns auth you can use this to check if we are in working with vanilla,
+		// might be better to use a replicated cvar but lazy, you do it
+		return std::string(g_pCVar->FindVar("serverfilter")->GetString()).empty();
 	}
 
 private:
