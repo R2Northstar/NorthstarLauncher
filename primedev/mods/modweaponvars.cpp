@@ -190,7 +190,7 @@ ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, strin
 
 	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
 	spdlog::info((int)(varInfo->type));
-	
+
 	if (varInfo->type != WVT_STRING)
 	{
 		// invalid type used
@@ -309,7 +309,3 @@ ON_DLL_LOAD("server.dll", ModWeaponVars_ServerInit, (CModule mod))
 	CWeaponX_vftable = mod.Offset(0x98E2B8).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(server.dll);
 }
-// script try { ModWeaponVars_SetInt(__w(), eWeaponVar.ammo_clip_size, 50) } catch (ex) {print(ex)}
-// script try { ModWeaponVars_SetFloat(__w(), eWeaponVar.spread_stand_hip, 10) } catch (ex) {print(ex)}
-// script_client foreach (string k, int v in eWeaponVar) try { ModWeaponVars_SetFloat(__w(), eWeaponVar.spread_stand_hip,
-// __w().GetWeaponSettingFloat(v)) } catch (e){}
