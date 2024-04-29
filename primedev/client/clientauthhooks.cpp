@@ -29,7 +29,9 @@ void, __fastcall, (void* a1))
 	AuthWithStryder(a1);
 }
 
-AUTOHOOK(Auth3PToken, engine.dll + 0x183760, char*, __fastcall, ())
+// clang-format off
+AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
+char*, __fastcall, ())
 // clang-format on
 {
 	// return a dummy token for northstar servers that don't need the session token stuff
