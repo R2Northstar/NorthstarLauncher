@@ -34,7 +34,7 @@ AUTOHOOK(Auth3PToken, engine.dll + 0x183760, char*, __fastcall, ())
 {
 	// return a dummy token for northstar servers that don't need the session token stuff
 	if (!g_pVanillaCompatibility->GetVanillaCompatibility() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
-		return const_cast<char*>(pDummy3P);
+		return pDummy3P;
 
 	return Auth3PToken();
 }
