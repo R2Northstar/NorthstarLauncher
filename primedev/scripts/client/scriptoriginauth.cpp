@@ -25,7 +25,7 @@ ADD_SQFUNC("void", NSResetToken, "", "", ScriptContext::UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsVanilla, "", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsVanilla, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel<context>->pushbool(sqvm, g_pVanillaCompatibility->GetVanillaCompatibility());
 	return SQRESULT_NOTNULL;
