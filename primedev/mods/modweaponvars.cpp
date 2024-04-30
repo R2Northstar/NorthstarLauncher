@@ -52,7 +52,7 @@ AUTOHOOK(CPlayerSimulate, server.dll + 0x5A6E50, bool, __fastcall, (CBasePlayer 
 AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int mods, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
 {
 	bool result;
-	if (IsWeapon<ScriptContext::CLIENT>((void**)(weaponVars - 0x1700)))
+	if (IsWeapon<ScriptContext::CLIENT>((void**)(weaponVars - offsetof(C_WeaponX, weaponVars))))
 	{
 		SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(weaponVars - 0x1700));
 		result = Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
@@ -68,7 +68,7 @@ AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0,
 {
 	bool result = Sv_CalcWeaponMods(unk_0, unk_1, unk_2, unk_3, unk_4);
 
-	if (result && IsWeapon<ScriptContext::SERVER>((void**)(unk_2 - 0x1410)))
+	if (result && IsWeapon<ScriptContext::SERVER>((void**)(unk_2 - offsetof(CWeaponX, weaponVars))))
 	{
 		SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(unk_2 - 0x1410));
 		g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
@@ -155,7 +155,7 @@ ADD_SQFUNC("void", ModWeaponVars_SetFloat, "entity weapon, int weaponVar, float 
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", ModWeaponVars_GetType, "int eWeaponVar", "", ScriptContext::SERVER | ScriptContext::CLIENT)
+ADD_SQFUNC("int", ModWeaponVars_GetType, "int eWeaponVar", "", ScriptContext::SERVER | ScriptContext::CLIENT)
 {
 	int weaponVar = g_pSquirrel<context>->getinteger(sqvm, 1);
 
@@ -293,7 +293,6 @@ ON_DLL_LOAD_CLIENT("client.dll", ModWeaponVars_ClientInit, (CModule mod))
 {
 	const ScriptContext context = ScriptContext::CLIENT;
 	weaponVarArray<context> = mod.Offset(0x942ca0).RCast<WeaponVarInfo*>();
-	// requires client prediction, find a way to enforce that(?)
 	_CalculateWeaponValues<context> = mod.Offset(0x3CA060).RCast<calculateWeaponValuesType>();
 	get2ndParamForRecalcModFunc<context> = mod.Offset(0xBB4B0).RCast<get2ndParamForRecalcModFuncType>();
 	C_WeaponX_vftable = mod.Offset(0x998638).RCast<void*>();
