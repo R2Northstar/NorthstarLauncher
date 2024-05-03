@@ -1,5 +1,4 @@
 
-#include "winbase.h"
 #include "client/weaponx.h"
 #include "server/weaponx.h"
 #include "modweaponvars.h"
@@ -50,11 +49,28 @@ AUTOHOOK(CPlayerSimulate, server.dll + 0x5A6E50, bool, __fastcall, (CBasePlayer 
 	return result;
 }
 
+bool IsBadReadPtr(void* p)
+{
+	MEMORY_BASIC_INFORMATION mbi = {0};
+	if (::VirtualQuery(p, &mbi, sizeof(mbi)))
+	{
+		DWORD mask =
+			(PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
+		bool b = !(mbi.Protect & mask);
+		// check the page is not a guard page
+		if (mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS))
+			b = true;
+
+		return b;
+	}
+	return true;
+}
+
 AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int mods, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
 {
 	bool result;
 
-	if (IsBadReadPtr(weaponVars - offsetof(C_WeaponX, weaponVars), 8))
+	if (IsBadReadPtr(weaponVars - offsetof(C_WeaponX, weaponVars)))
 		return Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 
 	if (IsWeapon<ScriptContext::CLIENT>((void**)(weaponVars - offsetof(C_WeaponX, weaponVars))))
@@ -76,7 +92,7 @@ AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0,
 {
 	bool result = Sv_CalcWeaponMods(unk_0, unk_1, weaponVars, unk_3, unk_4);
 
-	if (IsBadReadPtr(weaponVars - offsetof(CWeaponX, weaponVars), 8))
+	if (IsBadReadPtr(weaponVars - offsetof(CWeaponX, weaponVars)))
 		return result;
 
 	if (result && IsWeapon<ScriptContext::SERVER>((void**)(weaponVars - offsetof(CWeaponX, weaponVars))))
