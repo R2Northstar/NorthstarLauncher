@@ -1,4 +1,5 @@
 
+#include "winbase.h"
 #include "client/weaponx.h"
 #include "server/weaponx.h"
 #include "modweaponvars.h"
@@ -52,25 +53,36 @@ AUTOHOOK(CPlayerSimulate, server.dll + 0x5A6E50, bool, __fastcall, (CBasePlayer 
 AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int mods, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
 {
 	bool result;
+
+	if (IsBadReadPtr(weaponVars - offsetof(C_WeaponX, weaponVars), 8))
+		return Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
+
 	if (IsWeapon<ScriptContext::CLIENT>((void**)(weaponVars - offsetof(C_WeaponX, weaponVars))))
 	{
-		SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(weaponVars - 0x1700));
+		SQObject* entInstance =
+			g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(weaponVars - offsetof(C_WeaponX, weaponVars)));
 		result = Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 		g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
 	else
-		result = Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
+	{
+		return Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
+	}
 
 	return result;
 }
 
-AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0, char* unk_1, char* unk_2, bool unk_3, int unk_4))
+AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
 {
-	bool result = Sv_CalcWeaponMods(unk_0, unk_1, unk_2, unk_3, unk_4);
+	bool result = Sv_CalcWeaponMods(unk_0, unk_1, weaponVars, unk_3, unk_4);
 
-	if (result && IsWeapon<ScriptContext::SERVER>((void**)(unk_2 - offsetof(CWeaponX, weaponVars))))
+	if (IsBadReadPtr(weaponVars - offsetof(CWeaponX, weaponVars), 8))
+		return result;
+
+	if (result && IsWeapon<ScriptContext::SERVER>((void**)(weaponVars - offsetof(CWeaponX, weaponVars))))
 	{
-		SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(unk_2 - 0x1410));
+		SQObject* entInstance =
+			g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance((void**)(weaponVars - offsetof(CWeaponX, weaponVars)));
 		g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
 
@@ -189,7 +201,6 @@ ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, strin
 	}
 
 	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
-	spdlog::info((int)(varInfo->type));
 
 	if (varInfo->type != WVT_STRING)
 	{
@@ -201,12 +212,12 @@ ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, strin
 	if (context == ScriptContext::SERVER)
 	{
 		CWeaponX* weapon = (CWeaponX*)ent;
-		*(std::string*)(&weapon->weaponVars[varInfo->offset]) = value;
+		*(const char**)(&weapon->weaponVars[varInfo->offset]) = value.c_str();
 	}
 	else // if (context == ScriptContext::CLIENT)
 	{
 		C_WeaponX* weapon = (C_WeaponX*)ent;
-		*(std::string*)(&weapon->weaponVars[varInfo->offset]) = value;
+		*(const char**)(&weapon->weaponVars[varInfo->offset]) = value.c_str();
 	}
 
 	return SQRESULT_NULL;
