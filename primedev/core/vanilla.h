@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/r2engine.h"
+#include "engine/hoststate.h"
 
 /// Determines if we are in vanilla-compatibility mode.
 class VanillaCompatibility
@@ -17,6 +18,9 @@ public:
 				Cbuf_GetCurrentPlayer(),
 				"disconnect \"Validation failed, this server is either outdated or malicious.\"",
 				cmd_source_t::kCommandSrcCode);
+			Cbuf_Execute();
+
+			return false;
 		}
 
 		return g_pCVar->FindVar("ns_is_northstar_server")->GetBool() == 0;
