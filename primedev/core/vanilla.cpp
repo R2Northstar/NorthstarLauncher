@@ -1,4 +1,5 @@
 #include "core/vanilla.h"
+#include "engine/r2engine.h"
 
 VanillaCompatibility* g_pVanillaCompatibility;
 
