@@ -279,7 +279,7 @@ ADD_SQFUNC("void", ModWeaponVars_SetBool, "entity weapon, int weaponVar, bool va
 }
 
 // SERVER only because client does this very often
-ADD_SQFUNC("void", RecalculateModsForWeapon, "entity weapon", "", ScriptContext::SERVER | ScriptContext::CLIENT)
+ADD_SQFUNC("void", ModWeaponVars_CalculateWeaponMods, "entity weapon", "", ScriptContext::SERVER | ScriptContext::CLIENT)
 {
 	void** ent = g_pSquirrel<context>->getentity<void*>(sqvm, 1);
 	if (ent == nullptr)
