@@ -3,6 +3,7 @@
 find_package(minhook REQUIRED)
 find_package(libcurl REQUIRED)
 find_package(minizip REQUIRED)
+find_package(silver-bun REQUIRED)
 
 add_library(
     NorthstarDLL SHARED
@@ -16,6 +17,7 @@ add_library(
     "client/debugoverlay.cpp"
     "client/demofixes.cpp"
     "client/diskvmtfixes.cpp"
+    "client/entity_client_tools.cpp"
     "client/languagehooks.cpp"
     "client/latencyflex.cpp"
     "client/localchatwriter.cpp"
@@ -41,18 +43,20 @@ add_library(
     "core/math/bits.h"
     "core/math/color.cpp"
     "core/math/color.h"
+    "core/math/math_pfns.h"
     "core/math/vector.h"
+    "core/math/vplane.h"
     "core/hooks.cpp"
     "core/hooks.h"
     "core/macros.h"
     "core/memalloc.cpp"
     "core/memalloc.h"
-    "core/memory.cpp"
-    "core/memory.h"
     "core/sourceinterface.cpp"
     "core/sourceinterface.h"
     "core/tier0.cpp"
     "core/tier0.h"
+    "core/tier1.cpp"
+    "core/tier1.h"
     "dedicated/dedicated.cpp"
     "dedicated/dedicated.h"
     "dedicated/dedicatedlogtoclient.cpp"
@@ -116,6 +120,10 @@ add_library(
     "server/auth/serverauthentication.cpp"
     "server/auth/serverauthentication.h"
     "server/alltalk.cpp"
+    "server/ai_helper.cpp"
+    "server/ai_helper.h"
+    "server/ai_navmesh.cpp"
+    "server/ai_navmesh.h"
     "server/buildainfile.cpp"
     "server/r2server.cpp"
     "server/r2server.h"
@@ -163,6 +171,7 @@ target_link_libraries(
     PRIVATE minhook
             libcurl
             minizip
+            silver-bun
             WS2_32.lib
             Crypt32.lib
             Cryptui.lib
