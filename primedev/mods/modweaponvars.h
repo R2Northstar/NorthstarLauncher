@@ -1,3 +1,4 @@
+#pragma once
 enum WeaponVarType : __int8
 {
 	WVT_INTEGER = 1,
@@ -28,3 +29,6 @@ public:
 static_assert(sizeof(WeaponVarInfo) == 0x20);
 
 const int WEAPON_VAR_COUNT = 725;
+extern std::map<size_t, std::string> sv_modWeaponVarStrings;
+extern std::map<size_t, std::string> cl_modWeaponVarStrings;
+extern std::hash<std::string> hasher;

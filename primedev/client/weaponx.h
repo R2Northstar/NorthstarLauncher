@@ -14,3 +14,4 @@ public:
 	const char weaponVars[0xCA0];
 };
 #pragma pack(pop)
+static_assert(offsetof(C_WeaponX, weaponVars) == 0x1700);

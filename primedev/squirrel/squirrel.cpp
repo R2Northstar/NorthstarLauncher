@@ -10,6 +10,7 @@
 #include "plugins/pluginmanager.h"
 #include "ns_version.h"
 #include "core/vanilla.h"
+#include "mods/modweaponvars.h"
 
 #include <any>
 
@@ -238,6 +239,11 @@ template <ScriptContext context> void SquirrelManager<context>::VMDestroyed()
 			}
 		}
 	}
+
+	if (context == ScriptContext::SERVER)
+		sv_modWeaponVarStrings.clear();
+	else if (context == ScriptContext::CLIENT)
+		cl_modWeaponVarStrings.clear();
 
 	g_pPluginManager->InformSqvmDestroying(m_pSQVM);
 

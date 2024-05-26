@@ -6,6 +6,10 @@
 #include "client/r2client.h"
 #include "server/r2server.h"
 
+std::map<size_t, std::string> sv_modWeaponVarStrings;
+std::map<size_t, std::string> cl_modWeaponVarStrings;
+std::hash<std::string> hasher;
+
 typedef bool (*calculateWeaponValuesType)(int bitfield, void* weapon, void* weaponVarLocation);
 typedef char* (*get2ndParamForRecalcModFuncType)(void* weapon);
 
@@ -216,7 +220,7 @@ ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, strin
 		return SQRESULT_ERROR;
 	}
 
-	WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
+	const WeaponVarInfo* varInfo = &weaponVarArray<context>[weaponVar];
 
 	if (varInfo->type != WVT_STRING)
 	{
@@ -225,17 +229,23 @@ ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, strin
 		return SQRESULT_ERROR;
 	}
 
+	size_t valueHash = hasher(value);
 	if (context == ScriptContext::SERVER)
 	{
+		if (sv_modWeaponVarStrings.find(valueHash) == sv_modWeaponVarStrings.end())
+			sv_modWeaponVarStrings.emplace(valueHash, value);
 		CWeaponX* weapon = (CWeaponX*)ent;
-		*(const char**)(&weapon->weaponVars[varInfo->offset]) = value.c_str();
+		*(const char**)(&weapon->weaponVars[varInfo->offset]) = sv_modWeaponVarStrings[valueHash].c_str();
 	}
 	else // if (context == ScriptContext::CLIENT)
 	{
-		C_WeaponX* weapon = (C_WeaponX*)ent;
-		*(const char**)(&weapon->weaponVars[varInfo->offset]) = value.c_str();
-	}
+		if (cl_modWeaponVarStrings.find(valueHash) == cl_modWeaponVarStrings.end())
+			cl_modWeaponVarStrings.emplace(valueHash, value);
 
+		C_WeaponX* weapon = (C_WeaponX*)ent;
+		*(const char**)(&weapon->weaponVars[varInfo->offset]) = cl_modWeaponVarStrings[valueHash].c_str();
+	}
+		
 	return SQRESULT_NULL;
 }
 
