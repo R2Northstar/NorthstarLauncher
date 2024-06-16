@@ -4,6 +4,7 @@
 #include "squirrelautobind.h"
 #include "core/math/vector.h"
 #include "mods/modmanager.h"
+#include "squirreldatatypes.h"
 
 /*
 	definitions from hell
@@ -119,6 +120,10 @@ public:
 
 	sq_pushnewstructinstanceType __sq_pushnewstructinstance;
 	sq_sealstructslotType __sq_sealstructslot;
+
+	sq_pushconsttableType __sq_pushconsttable;
+	sq_poptopType __sq_poptop;
+	sq_pushnullType __sq_pushnull;
 
 #pragma endregion
 
@@ -252,6 +257,21 @@ public:
 	inline long long sq_stackinfos(HSquirrelVM* sqvm, int level, SQStackInfos& out)
 	{
 		return __sq_stackinfos(sqvm, level, &out, sqvm->_callstacksize);
+	}
+
+	inline void pushconsttable(HSquirrelVM* sqvm)
+	{
+		return __sq_pushconsttable(sqvm);
+	}
+
+	inline void poptop(HSquirrelVM* sqvm)
+	{
+		return __sq_poptop(sqvm);
+	}
+
+	inline void pushnull(HSquirrelVM* sqvm)
+	{
+		return __sq_pushnull(sqvm);
 	}
 
 	inline Mod* getcallingmod(HSquirrelVM* sqvm, int depth = 0)
@@ -407,6 +427,8 @@ public:
 		m_pSQVM = nullptr;
 	}
 
+	SQRESULT CreateSlot(const char* key, SQInteger val);
+	void CreateDependencyConstantsForMod(Mod& mod, const char* dependencyName);
 	void VMCreated(CSquirrelVM* newSqvm);
 	void VMDestroyed();
 	void ExecuteCode(const char* code);
