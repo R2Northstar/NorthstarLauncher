@@ -4,6 +4,7 @@ find_package(minhook REQUIRED)
 find_package(libcurl REQUIRED)
 find_package(minizip REQUIRED)
 find_package(silver-bun REQUIRED)
+find_package(yyjson REQUIRED)
 
 add_library(
     NorthstarDLL SHARED
@@ -172,6 +173,7 @@ target_link_libraries(
             libcurl
             minizip
             silver-bun
+            yyjson
             ws2_32.lib
             crypt32.lib
             cryptui.lib

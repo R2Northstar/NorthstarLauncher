@@ -9,3 +9,6 @@
 [submodule "thirdparty/minizip"]
 	path = primedev/thirdparty/minizip
 	url = https://github.com/zlib-ng/minizip-ng.git
+[submodule "primedev/thirdparty/yyjson"]
+	path = primedev/thirdparty/yyjson
+	url = https://github.com/ibireme/yyjson
