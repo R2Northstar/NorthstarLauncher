@@ -4,8 +4,6 @@
 #include "server/serverchathooks.h"
 #include "client/localchatwriter.h"
 
-#include <rapidjson/document.h>
-
 AUTOHOOK_INIT()
 
 // clang-format off

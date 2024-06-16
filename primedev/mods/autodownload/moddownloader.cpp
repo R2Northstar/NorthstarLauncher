@@ -1,6 +1,6 @@
 #include "moddownloader.h"
 #include "util/utils.h"
-#include <rapidjson/fwd.h>
+#include <yyjson.h>
 #include <mz_strm_mem.h>
 #include <mz.h>
 #include <mz_strm.h>
@@ -38,12 +38,12 @@ ModDownloader::ModDownloader()
 			url = cla.substr(quote1 + 1, quote2);
 		}
 		spdlog::info("Found custom verified mods URL in command line argument: {}", url);
-		modsListUrl = strdup(url.c_str());
+		modsListUrl = _strdup(url.c_str());
 	}
 	else
 	{
 		spdlog::info("Custom verified mods URL not found in command line arguments, using default URL.");
-		modsListUrl = strdup(DEFAULT_MODS_LIST_URL);
+		modsListUrl = _strdup(DEFAULT_MODS_LIST_URL);
 	}
 }
 
@@ -60,7 +60,6 @@ void ModDownloader::FetchModsListFromAPI()
 		{
 			CURLcode result;
 			CURL* easyhandle;
-			rapidjson::Document verifiedModsJson;
 			std::string url = modsListUrl;
 
 			curl_global_init(CURL_GLOBAL_ALL);
@@ -89,20 +88,42 @@ void ModDownloader::FetchModsListFromAPI()
 
 			// Load mods list into local state
 			spdlog::info("Loading mods configuration...");
-			verifiedModsJson.Parse(readBuffer);
-			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
+
+			yyjson_read_err err;
+			yyjson_doc* verifiedModsJson = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, NULL, &err);
+
+			if (!verifiedModsJson)
 			{
-				std::string name = i->name.GetString();
-				std::string dependency = i->value["DependencyPrefix"].GetString();
+				spdlog::error(
+					"Failed reading mods configuration: encountered parse error \"{}\" at offset {}",
+					err.msg,
+					err.pos);
+				return;
+			}
+
+			yyjson_val* root = yyjson_doc_get_root(verifiedModsJson);
+			if (!yyjson_is_obj(root))
+			{
+				spdlog::error("Failed reading mods configuration: file is not a JSON object");
+				return;
+			}
+
+			size_t idx, max;
+			yyjson_val* key;
+			yyjson_val* val;
+			yyjson_obj_foreach(root, idx, max, key, val)
+			{
+				std::string name = yyjson_get_str(key);
+				std::string dependency = yyjson_get_str(yyjson_obj_get(val, "DependencyPrefix"));
 
 				std::unordered_map<std::string, VerifiedModVersion> modVersions;
-				rapidjson::Value& versions = i->value["Versions"];
-				assert(versions.IsArray());
-				for (auto& attribute : versions.GetArray())
+				yyjson_val* versions = yyjson_obj_get(val, "Versions");
+				assert(yyjson_is_arr(versions));
+				yyjson_arr_foreach(versions, idx, max, val)
 				{
-					assert(attribute.IsObject());
-					std::string version = attribute["Version"].GetString();
-					std::string checksum = attribute["Checksum"].GetString();
+					assert(yyjson_is_obj(val));
+					std::string version = yyjson_get_str(yyjson_obj_get(val, "Version"));
+					std::string checksum = yyjson_get_str(yyjson_obj_get(val, "Checksum"));
 					modVersions.insert({version, {.checksum = checksum}});
 				}
 

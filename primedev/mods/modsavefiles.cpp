@@ -5,12 +5,10 @@
 #include "util/utils.h"
 #include "mods/modmanager.h"
 #include "modsavefiles.h"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include "yyjson.h"
 #include "config/profile.h"
 #include "core/tier0.h"
-#include "rapidjson/error/en.h"
+#include "core/json.h"
 #include "scripts/scriptjson.h"
 
 SaveFileManager* g_pSaveFileManager;
@@ -539,22 +537,27 @@ ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | Scri
 // again, yet someone will eventually have to maintain this.
 template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 {
-	// new rapidjson
-	rapidjson_document doc;
-	doc.SetObject();
+	// new document
+	yyjson_mut_doc* doc = yyjson_mut_doc_new(&YYJSON_ALLOCATOR);
+	yyjson_mut_val* root = yyjson_mut_obj(doc);
+	yyjson_mut_doc_set_root(doc, root);
 
 	// get the SECOND param
 	SQTable* table = sqvm->_stackOfCurrentFunction[2]._VAL.asTable;
-	// take the table and copy it's contents over into the rapidjson_document
-	EncodeJSONTable<context>(table, &doc, doc.GetAllocator());
+	// take the table and copy it's contents over into the json document
+	EncodeJSONTable<context>(table, doc, root);
 
-	// convert JSON document to string
-	rapidjson::StringBuffer buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	doc.Accept(writer);
+	// convert JSON document to C String
+	const char* pBuffer = yyjson_mut_write(doc, 0, NULL);
+
+	// Turn C String into String
+	std::string buffer = pBuffer;
+
+	_free_base((void*)pBuffer);
+	yyjson_mut_doc_free(doc);
 
 	// return the converted string
-	return buffer.GetString();
+	return buffer;
 }
 
 ON_DLL_LOAD("engine.dll", ModSaveFFiles_Init, (CModule module))

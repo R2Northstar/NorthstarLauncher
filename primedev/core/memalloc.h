@@ -1,9 +1,7 @@
 #pragma once
 
+#include <cstddef>
 #include <malloc.h>
-
-#include "rapidjson/document.h"
-// #include "include/rapidjson/allocators.h"
 
 // The prelude is needed for these to be usable by the CRT
 extern "C" __declspec(noinline) void* __cdecl _malloc_base(size_t const size);
@@ -45,9 +43,3 @@ public:
 		_free_base(ptr);
 	}
 };
-
-typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<SourceAllocator>, SourceAllocator> rapidjson_document;
-// typedef rapidjson::GenericDocument<rapidjson::UTF8<>, SourceAllocator, SourceAllocator> rapidjson_document;
-// typedef rapidjson::Document rapidjson_document;
-// using MyDocument = rapidjson::GenericDocument<rapidjson::UTF8<>, MemoryAllocator>;
-// using rapidjson_document = rapidjson::GenericDocument<rapidjson::UTF8<>, SourceAllocator, SourceAllocator>;

@@ -1,8 +1,9 @@
 #include "audio.h"
 #include "dedicated/dedicated.h"
 #include "core/convar/convar.h"
+#include "core/json.h"
 
-#include "rapidjson/error/en.h"
+#include "yyjson.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -48,53 +49,60 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		return;
 	}
 
-	rapidjson_document dataJson;
-	dataJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(data);
+	yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
+	yyjson_read_err err;
+	yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(data.c_str()), data.length(), flg, &YYJSON_ALLOCATOR, &err);
 
 	// fail if parse error
-	if (dataJson.HasParseError())
+	if (!doc)
 	{
 		spdlog::error(
 			"Failed reading audio override file {}: encountered parse error \"{}\" at offset {}",
 			path.string(),
-			GetParseError_En(dataJson.GetParseError()),
-			dataJson.GetErrorOffset());
+			err.msg,
+			err.pos);
 		return;
 	}
 
+	yyjson_val* root = yyjson_doc_get_root(doc);
+
 	// fail if it's not a json obj (could be an array, string, etc)
-	if (!dataJson.IsObject())
+	if (!yyjson_is_obj(root))
 	{
 		spdlog::error("Failed reading audio override file {}: file is not a JSON object", path.string());
 		return;
 	}
 
+	yyjson_val* eventId = yyjson_obj_get(root, "EventId");
+
 	// fail if no event ids given
-	if (!dataJson.HasMember("EventId"))
+	if (!eventId)
 	{
 		spdlog::error("Failed reading audio override file {}: JSON object does not have the EventId property", path.string());
 		return;
 	}
 
 	// array of event ids
-	if (dataJson["EventId"].IsArray())
+	if (yyjson_is_arr(eventId))
 	{
-		for (auto& eventId : dataJson["EventId"].GetArray())
+		size_t idx, max;
+		yyjson_val* val;
+		yyjson_arr_foreach(eventId, idx, max, val)
 		{
-			if (!eventId.IsString())
+			if (!yyjson_is_str(val))
 			{
 				spdlog::error(
 					"Failed reading audio override file {}: EventId array has a value of invalid type, all must be strings", path.string());
 				return;
 			}
 
-			EventIds.push_back(eventId.GetString());
+			EventIds.push_back(yyjson_get_str(val));
 		}
 	}
 	// singular event id
-	else if (dataJson["EventId"].IsString())
+	else if (yyjson_is_str(eventId))
 	{
-		EventIds.push_back(dataJson["EventId"].GetString());
+		EventIds.push_back(yyjson_get_str(eventId));
 	}
 	// incorrect type
 	else
@@ -105,14 +113,17 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		return;
 	}
 
-	if (dataJson.HasMember("EventIdRegex"))
+	yyjson_val* eventIdRegex = yyjson_obj_get(root, "EventIdRegex");
+	if (eventIdRegex)
 	{
 		// array of event id regex
-		if (dataJson["EventIdRegex"].IsArray())
+		if (yyjson_is_arr(eventIdRegex))
 		{
-			for (auto& eventId : dataJson["EventIdRegex"].GetArray())
+			size_t idx, max;
+			yyjson_val *val;
+			yyjson_arr_foreach(eventIdRegex, idx, max, val)
 			{
-				if (!eventId.IsString())
+				if (!yyjson_is_str(val))
 				{
 					spdlog::error(
 						"Failed reading audio override file {}: EventIdRegex array has a value of invalid type, all must be strings",
@@ -120,7 +131,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					return;
 				}
 
-				const std::string& regex = eventId.GetString();
+				const std::string& regex = yyjson_get_str(val);
 
 				try
 				{
@@ -134,9 +145,9 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 			}
 		}
 		// singular event id regex
-		else if (dataJson["EventIdRegex"].IsString())
+		else if (yyjson_is_str(eventIdRegex))
 		{
-			const std::string& regex = dataJson["EventIdRegex"].GetString();
+			const std::string& regex = yyjson_get_str(eventIdRegex);
 			try
 			{
 				EventIdsRegex.push_back({regex, std::regex(regex)});
@@ -157,15 +168,16 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		}
 	}
 
-	if (dataJson.HasMember("AudioSelectionStrategy"))
+	yyjson_val* audioSelectionStrategy = yyjson_obj_get(root, "AudioSelectionStrategy");
+	if (audioSelectionStrategy)
 	{
-		if (!dataJson["AudioSelectionStrategy"].IsString())
+		if (!yyjson_is_str(audioSelectionStrategy))
 		{
 			spdlog::error("Failed reading audio override file {}: AudioSelectionStrategy property must be a string", path.string());
 			return;
 		}
 
-		std::string strategy = dataJson["AudioSelectionStrategy"].GetString();
+		std::string strategy = yyjson_get_str(audioSelectionStrategy);
 
 		if (strategy == "sequential")
 		{

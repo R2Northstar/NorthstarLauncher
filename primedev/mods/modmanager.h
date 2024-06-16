@@ -3,7 +3,7 @@
 #include "core/memalloc.h"
 #include "squirrel/squirrel.h"
 
-#include "rapidjson/document.h"
+#include "yyjson.h"
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -131,13 +131,13 @@ public:
 	Mod(fs::path modPath, char* jsonBuf);
 
 private:
-	void ParseConVars(rapidjson_document& json);
-	void ParseConCommands(rapidjson_document& json);
-	void ParseScripts(rapidjson_document& json);
-	void ParseLocalization(rapidjson_document& json);
-	void ParseDependencies(rapidjson_document& json);
-	void ParsePluginDependencies(rapidjson_document& json);
-	void ParseInitScript(rapidjson_document& json);
+	void ParseConVars(yyjson_val* json);
+	void ParseConCommands(yyjson_val* json);
+	void ParseScripts(yyjson_val* json);
+	void ParseLocalization(yyjson_val* json);
+	void ParseDependencies(yyjson_val* json);
+	void ParsePluginDependencies(yyjson_val* json);
+	void ParseInitScript(yyjson_val* json);
 };
 
 struct ModOverrideFile
@@ -152,7 +152,7 @@ class ModManager
 private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
-	rapidjson_document m_EnabledModsCfg;
+	yyjson_mut_doc* m_EnabledModsCfg = nullptr;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
@@ -167,6 +167,7 @@ public:
 
 public:
 	ModManager();
+	~ModManager();
 	void LoadMods();
 	void UnloadMods();
 	std::string NormaliseModFilePath(const fs::path path);

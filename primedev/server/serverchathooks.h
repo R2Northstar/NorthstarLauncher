@@ -1,6 +1,4 @@
 #pragma once
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
 
 enum class CustomMessageType : char
 {

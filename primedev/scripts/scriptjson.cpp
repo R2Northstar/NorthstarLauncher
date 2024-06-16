@@ -1,100 +1,120 @@
+#include "core/json.h"
 #include "squirrel/squirrel.h"
 
-#include "rapidjson/error/en.h"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include "yyjson.h"
 
 #ifdef _MSC_VER
 #undef GetObject // fuck microsoft developers
 #endif
 
+// TODO
 template <ScriptContext context> void
-DecodeJsonArray(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
+DecodeJsonArray(HSquirrelVM* sqvm, yyjson_val* arr)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
-	for (auto& itr : arr->GetArray())
+	size_t idx, max;
+	yyjson_val* val;
+	yyjson_arr_foreach(arr, idx, max, val)
 	{
-		switch (itr.GetType())
+		switch (yyjson_get_type(val))
 		{
-		case rapidjson::kObjectType:
-			DecodeJsonTable<context>(sqvm, &itr);
+		case YYJSON_TYPE_OBJ:
+			DecodeJsonTable<context>(sqvm, val);
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 			break;
-		case rapidjson::kArrayType:
-			DecodeJsonArray<context>(sqvm, &itr);
+		case YYJSON_TYPE_ARR:
+			DecodeJsonArray<context>(sqvm, val);
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 			break;
-		case rapidjson::kStringType:
-			g_pSquirrel<context>->pushstring(sqvm, itr.GetString(), -1);
+		case YYJSON_TYPE_STR:
+			g_pSquirrel<context>->pushstring(sqvm, yyjson_get_str(val), -1);
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 			break;
-		case rapidjson::kTrueType:
-		case rapidjson::kFalseType:
-			g_pSquirrel<context>->pushbool(sqvm, itr.GetBool());
+		case YYJSON_TYPE_BOOL:
+			g_pSquirrel<context>->pushbool(sqvm, yyjson_get_bool(val));
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 			break;
-		case rapidjson::kNumberType:
-			if (itr.IsDouble() || itr.IsFloat())
-				g_pSquirrel<context>->pushfloat(sqvm, itr.GetFloat());
-			else
-				g_pSquirrel<context>->pushinteger(sqvm, itr.GetInt());
+		case YYJSON_TYPE_NUM:
+			switch (yyjson_get_subtype(val))
+			{
+				case YYJSON_SUBTYPE_UINT:
+				case YYJSON_SUBTYPE_SINT:
+					g_pSquirrel<context>->pushinteger(sqvm, yyjson_get_int(val));
+					break;
+
+				case YYJSON_SUBTYPE_REAL:
+					g_pSquirrel<context>->pushfloat(sqvm, yyjson_get_real(val));
+					break;
+
+				default:
+					break;
+			}
+
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 			break;
-		case rapidjson::kNullType:
+		case YYJSON_TYPE_NULL:
 			break;
 		}
 	}
 }
 
 template <ScriptContext context> void
-DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
+DecodeJsonTable(HSquirrelVM* sqvm, yyjson_val* obj)
 {
 	g_pSquirrel<context>->newtable(sqvm);
 
-	for (auto itr = obj->MemberBegin(); itr != obj->MemberEnd(); itr++)
+	size_t idx, max;
+	yyjson_val* key;
+	yyjson_val* val;
+	yyjson_obj_foreach(obj, idx, max, key, val)
 	{
-		switch (itr->value.GetType())
+		const char* key_name = yyjson_get_str(key);
+
+		switch (yyjson_get_type(val))
 		{
-		case rapidjson::kObjectType:
-			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-			DecodeJsonTable<context>(
-				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
+		case YYJSON_TYPE_OBJ:
+			g_pSquirrel<context>->pushstring(sqvm, key_name, -1);
+			DecodeJsonTable<context>(sqvm, val);
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
-		case rapidjson::kArrayType:
-			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-			DecodeJsonArray<context>(
-				sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&itr->value);
+		case YYJSON_TYPE_ARR:
+			g_pSquirrel<context>->pushstring(sqvm, key_name, -1);
+			DecodeJsonArray<context>(sqvm, val);
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
-		case rapidjson::kStringType:
-			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-			g_pSquirrel<context>->pushstring(sqvm, itr->value.GetString(), -1);
+		case YYJSON_TYPE_STR:
+			g_pSquirrel<context>->pushstring(sqvm, key_name, -1);
+			g_pSquirrel<context>->pushstring(sqvm, yyjson_get_str(val), -1);
 
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
-		case rapidjson::kTrueType:
-		case rapidjson::kFalseType:
-			g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-			g_pSquirrel<context>->pushbool(sqvm, itr->value.GetBool());
+		case YYJSON_TYPE_BOOL:
+			g_pSquirrel<context>->pushstring(sqvm, key_name, -1);
+			g_pSquirrel<context>->pushbool(sqvm, yyjson_get_bool(val));
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
-		case rapidjson::kNumberType:
-			if (itr->value.IsDouble() || itr->value.IsFloat())
+		case YYJSON_TYPE_NUM:
+			switch (yyjson_get_subtype(val))
 			{
-				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-				g_pSquirrel<context>->pushfloat(sqvm, itr->value.GetFloat());
+				case YYJSON_SUBTYPE_UINT:
+				case YYJSON_SUBTYPE_SINT:
+					g_pSquirrel<context>->pushstring(sqvm, key_name, -1);
+					g_pSquirrel<context>->pushinteger(sqvm, yyjson_get_int(val));
+					break;
+
+				case YYJSON_SUBTYPE_REAL:
+					g_pSquirrel<context>->pushstring(sqvm, key_name, -1);
+					g_pSquirrel<context>->pushfloat(sqvm, yyjson_get_real(val));
+					break;
+
+				default:
+					break;
 			}
-			else
-			{
-				g_pSquirrel<context>->pushstring(sqvm, itr->name.GetString(), -1);
-				g_pSquirrel<context>->pushinteger(sqvm, itr->value.GetInt());
-			}
+
 			g_pSquirrel<context>->newslot(sqvm, -3, false);
 			break;
-		case rapidjson::kNullType:
+		case YYJSON_TYPE_NULL:
 			break;
 		}
 	}
@@ -102,46 +122,42 @@ DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>
 
 template <ScriptContext context> void EncodeJSONTable(
 	SQTable* table,
-	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
-	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
+	yyjson_mut_doc* doc,
+	yyjson_mut_val* root)
 {
 	for (int i = 0; i < table->_numOfNodes; i++)
 	{
 		tableNode* node = &table->_nodes[i];
 		if (node->key._Type == OT_STRING)
 		{
-			rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newObj(rapidjson::kObjectType);
-			rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newArray(rapidjson::kArrayType);
-
 			switch (node->val._Type)
 			{
 			case OT_STRING:
-				obj->AddMember(
-					rapidjson::StringRef(node->key._VAL.asString->_val), rapidjson::StringRef(node->val._VAL.asString->_val), allocator);
+				yyjson_mut_obj_add_str(doc, root, node->key._VAL.asString->_val, node->val._VAL.asString->_val);
 				break;
 			case OT_INTEGER:
-				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asInteger, allocator);
+				yyjson_mut_obj_add_int(doc, root, node->key._VAL.asString->_val, node->val._VAL.asInteger);
 				break;
 			case OT_FLOAT:
-				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), node->val._VAL.asFloat, allocator);
+				yyjson_mut_obj_add_real(doc, root, node->key._VAL.asString->_val, node->val._VAL.asFloat);
 				break;
 			case OT_BOOL:
 				if (node->val._VAL.asInteger)
-				{
-					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), true, allocator);
-				}
+					yyjson_mut_obj_add_true(doc, root, node->key._VAL.asString->_val);
 				else
-				{
-					obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), false, allocator);
-				}
+					yyjson_mut_obj_add_false(doc, root, node->key._VAL.asString->_val);
 				break;
 			case OT_TABLE:
-				EncodeJSONTable<context>(node->val._VAL.asTable, &newObj, allocator);
-				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newObj, allocator);
+				{
+					yyjson_mut_val* new_obj = yyjson_mut_obj_add_obj(doc, root, node->key._VAL.asString->_val);
+					EncodeJSONTable<context>(node->val._VAL.asTable, doc, new_obj);
+				}
 				break;
 			case OT_ARRAY:
-				EncodeJSONArray<context>(node->val._VAL.asArray, &newArray, allocator);
-				obj->AddMember(rapidjson::StringRef(node->key._VAL.asString->_val), newArray, allocator);
+				{
+					yyjson_mut_val* new_arr = yyjson_mut_obj_add_arr(doc, root, node->key._VAL.asString->_val);
+					EncodeJSONArray<context>(node->val._VAL.asArray, doc, new_arr);
+				}
 				break;
 			default:
 				spdlog::warn("SQ_EncodeJSON: squirrel type {} not supported", SQTypeNameFromID(node->val._Type));
@@ -153,40 +169,41 @@ template <ScriptContext context> void EncodeJSONTable(
 
 template <ScriptContext context> void EncodeJSONArray(
 	SQArray* arr,
-	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
-	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator)
+	yyjson_mut_doc* doc,
+	yyjson_mut_val* root)
 {
 	for (int i = 0; i < arr->_usedSlots; i++)
 	{
 		SQObject* node = &arr->_values[i];
 
-		rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newObj(rapidjson::kObjectType);
-		rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>> newArray(rapidjson::kArrayType);
-
 		switch (node->_Type)
 		{
 		case OT_STRING:
-			obj->PushBack(rapidjson::StringRef(node->_VAL.asString->_val), allocator);
+			yyjson_mut_arr_add_str(doc, root, node->_VAL.asString->_val);
 			break;
 		case OT_INTEGER:
-			obj->PushBack(node->_VAL.asInteger, allocator);
+			yyjson_mut_arr_add_sint(doc, root, node->_VAL.asInteger);
 			break;
 		case OT_FLOAT:
-			obj->PushBack(node->_VAL.asFloat, allocator);
+			yyjson_mut_arr_add_real(doc, root, node->_VAL.asFloat);
 			break;
 		case OT_BOOL:
 			if (node->_VAL.asInteger)
-				obj->PushBack(rapidjson::StringRef("true"), allocator);
+				yyjson_mut_arr_add_true(doc, root);
 			else
-				obj->PushBack(rapidjson::StringRef("false"), allocator);
+				yyjson_mut_arr_add_false(doc, root);
 			break;
 		case OT_TABLE:
-			EncodeJSONTable<context>(node->_VAL.asTable, &newObj, allocator);
-			obj->PushBack(newObj, allocator);
+			{
+				yyjson_mut_val* new_obj = yyjson_mut_arr_add_obj(doc, root);
+				EncodeJSONTable<context>(node->_VAL.asTable, doc, new_obj);
+			}
 			break;
 		case OT_ARRAY:
-			EncodeJSONArray<context>(node->_VAL.asArray, &newArray, allocator);
-			obj->PushBack(newArray, allocator);
+			{
+				yyjson_mut_val* new_arr = yyjson_mut_arr_add_arr(doc, root);
+				EncodeJSONArray<context>(node->_VAL.asArray, doc, new_arr);
+			}
 			break;
 		default:
 			spdlog::info("SQ encode Json type {} not supported", SQTypeNameFromID(node->_Type));
@@ -204,16 +221,16 @@ ADD_SQFUNC(
 	const char* pJson = g_pSquirrel<context>->getstring(sqvm, 1);
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
 
-	rapidjson_document doc;
-	doc.Parse(pJson);
-	if (doc.HasParseError())
+	yyjson_read_err err;
+	yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(pJson), strlen(pJson), 9, &YYJSON_ALLOCATOR, &err);
+	if (!doc)
 	{
 		g_pSquirrel<context>->newtable(sqvm);
 
 		std::string sErrorString = fmt::format(
-			"Failed parsing json file: encountered parse error \"{}\" at offset {}",
-			GetParseError_En(doc.GetParseError()),
-			doc.GetErrorOffset());
+			"Failed parsing json string: encountered parse error \"{}\" at offset {}",
+			err.msg,
+			err.pos);
 
 		if (bFatalParseErrors)
 		{
@@ -225,7 +242,26 @@ ADD_SQFUNC(
 		return SQRESULT_NOTNULL;
 	}
 
-	DecodeJsonTable<context>(sqvm, (rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>*)&doc);
+	yyjson_val* root = yyjson_doc_get_root(doc);
+
+	if (!yyjson_is_obj(root))
+	{
+		const char* sErrorString = "given json string is not an object";
+
+		if (bFatalParseErrors)
+		{
+			g_pSquirrel<context>->raiseerror(sqvm, sErrorString);
+			return SQRESULT_ERROR;
+		}
+
+		spdlog::warn(sErrorString);
+		return SQRESULT_NOTNULL;
+	}
+
+	DecodeJsonTable<context>(sqvm, root);
+
+	yyjson_doc_free(doc);
+
 	return SQRESULT_NOTNULL;
 }
 
@@ -236,19 +272,21 @@ ADD_SQFUNC(
 	"converts a squirrel table to a json string",
 	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
-	rapidjson_document doc;
-	doc.SetObject();
+	yyjson_mut_doc* doc = yyjson_mut_doc_new(&YYJSON_ALLOCATOR);
+	yyjson_mut_val* root = yyjson_mut_obj(doc);
+	yyjson_mut_doc_set_root(doc, root);
 
 	// temp until this is just the func parameter type
 	HSquirrelVM* vm = (HSquirrelVM*)sqvm;
 	SQTable* table = vm->_stackOfCurrentFunction[1]._VAL.asTable;
-	EncodeJSONTable<context>(table, &doc, doc.GetAllocator());
+	EncodeJSONTable<context>(table, doc, root);
 
-	rapidjson::StringBuffer buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	doc.Accept(writer);
-	const char* pJsonString = buffer.GetString();
+	const char* pJsonString = yyjson_mut_write(doc, 0, NULL);
 
 	g_pSquirrel<context>->pushstring(sqvm, pJsonString, -1);
+
+	_free_base((void*)pJsonString);
+	yyjson_mut_doc_free(doc);
+
 	return SQRESULT_NOTNULL;
 }

@@ -49,6 +49,8 @@ add_library(
     "core/math/vplane.h"
     "core/hooks.cpp"
     "core/hooks.h"
+    "core/json.cpp"
+    "core/json.h"
     "core/macros.h"
     "core/memalloc.cpp"
     "core/memalloc.h"

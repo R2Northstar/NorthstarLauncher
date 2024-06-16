@@ -4,10 +4,6 @@
 #include "server/r2server.h"
 #include "util/utils.h"
 
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
 AUTOHOOK_INIT()
 
 class CServerGameDLL;

@@ -4,6 +4,7 @@
 #include "server/auth/serverauthentication.h"
 #include "core/tier0.h"
 #include "core/vanilla.h"
+#include "core/json.h"
 #include "engine/r2engine.h"
 #include "mods/modmanager.h"
 #include "shared/misccommands.h"
@@ -12,10 +13,7 @@
 #include "server/auth/bansystem.h"
 #include "dedicated/dedicated.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/error/en.h"
+#include "yyjson.h"
 
 #include <cstring>
 #include <regex>
@@ -131,29 +129,33 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 			{
 				m_bSuccessfullyConnected = true;
 
-				rapidjson_document originAuthInfo;
-				originAuthInfo.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
 
-				if (originAuthInfo.HasParseError())
+				if (!doc)
 				{
 					spdlog::error(
 						"Failed reading origin auth info response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(originAuthInfo.GetParseError()));
+						err.msg);
 					return;
 				}
 
-				if (!originAuthInfo.IsObject() || !originAuthInfo.HasMember("success"))
+				yyjson_val* root = yyjson_doc_get_root(doc);
+
+				yyjson_val* success;
+				if (!yyjson_is_obj(root) || !(success = yyjson_obj_get(root, "success")))
 				{
 					spdlog::error("Failed reading origin auth info response: malformed response object {}", readBuffer);
 					return;
 				}
 
-				if (originAuthInfo["success"].IsTrue() && originAuthInfo.HasMember("token") && originAuthInfo["token"].IsString())
+				yyjson_val* token;
+				if (yyjson_is_true(success) && (token = yyjson_obj_get(root, "token")) && yyjson_is_str(token))
 				{
 					strncpy_s(
 						m_sOwnClientAuthToken,
 						sizeof(m_sOwnClientAuthToken),
-						originAuthInfo["token"].GetString(),
+						yyjson_get_str(token),
 						sizeof(m_sOwnClientAuthToken) - 1);
 					spdlog::info("Northstar origin authentication completed successfully!");
 					m_bOriginAuthWithMasterServerSuccessful = true;
@@ -162,18 +164,16 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 				{
 					spdlog::error("Northstar origin authentication failed");
 
-					if (originAuthInfo.HasMember("error") && originAuthInfo["error"].IsObject())
+					yyjson_val* error = yyjson_obj_get(root, "error");
+					if (error && yyjson_is_obj(error))
 					{
+						yyjson_val* errenum;
+						if ((errenum = yyjson_obj_get(error, "enum")) && yyjson_is_str(errenum))
+							m_sOriginAuthWithMasterServerErrorCode = yyjson_get_str(errenum);
 
-						if (originAuthInfo["error"].HasMember("enum") && originAuthInfo["error"]["enum"].IsString())
-						{
-							m_sOriginAuthWithMasterServerErrorCode = originAuthInfo["error"]["enum"].GetString();
-						}
-
-						if (originAuthInfo["error"].HasMember("msg") && originAuthInfo["error"]["msg"].IsString())
-						{
-							m_sOriginAuthWithMasterServerErrorMessage = originAuthInfo["error"]["msg"].GetString();
-						}
+						yyjson_val* msg;
+						if ((msg = yyjson_obj_get(error, "msg")) && yyjson_is_str(msg))
+							m_sOriginAuthWithMasterServerErrorMessage = yyjson_get_str(msg);
 					}
 				}
 			}
@@ -227,56 +227,67 @@ void MasterServerManager::RequestServerList()
 			{
 				m_bSuccessfullyConnected = true;
 
-				rapidjson_document serverInfoJson;
-				serverInfoJson.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
 
-				if (serverInfoJson.HasParseError())
+				if (!doc)
 				{
 					spdlog::error(
 						"Failed reading masterserver response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(serverInfoJson.GetParseError()));
+						err.msg);
 					return;
 				}
 
-				if (serverInfoJson.IsObject() && serverInfoJson.HasMember("error"))
+				yyjson_val* root = yyjson_doc_get_root(doc);
+
+				if (yyjson_is_obj(root) && yyjson_obj_get(root, "error"))
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
 					return;
 				}
 
-				if (!serverInfoJson.IsArray())
+				if (!yyjson_is_arr(root))
 				{
 					spdlog::error("Failed reading masterserver response: root object is not an array");
 					return;
 				}
 
-				rapidjson::GenericArray<false, rapidjson_document::GenericValue> serverArray = serverInfoJson.GetArray();
+				spdlog::info("Got {} servers", yyjson_arr_size(root));
 
-				spdlog::info("Got {} servers", serverArray.Size());
-
-				for (auto& serverObj : serverArray)
+				size_t idx, max;
+				yyjson_val *val;
+				yyjson_arr_foreach(root, idx, max, val)
 				{
-					if (!serverObj.IsObject())
+					if (!yyjson_is_obj(val))
 					{
 						spdlog::error("Failed reading masterserver response: member of server array is not an object");
 						return;
 					}
 
+					const char* id = yyjson_get_str(yyjson_obj_get(val, "id"));
+					const char* name = yyjson_get_str(yyjson_obj_get(val, "name"));
+					const char* description = yyjson_get_str(yyjson_obj_get(val, "description"));
+					const char* map = yyjson_get_str(yyjson_obj_get(val, "map"));
+					const char* playlist = yyjson_get_str(yyjson_obj_get(val, "playlist"));
+					const char* region = yyjson_get_str(yyjson_obj_get(val, "region"));
+					int playerCount = yyjson_get_int(yyjson_obj_get(val, "playerCount"));
+					int maxPlayers = yyjson_get_int(yyjson_obj_get(val, "maxPlayers"));
+					bool hasPassword = yyjson_get_bool(yyjson_obj_get(val, "hasPassword"));
+					yyjson_val* modInfo = yyjson_obj_get(val, "modInfo");
+					yyjson_val* mods = yyjson_obj_get(modInfo, "Mods");
+
+					if (!region)
+						region = "";
+
 					// todo: verify json props are fine before adding to m_remoteServers
-					if (!serverObj.HasMember("id") || !serverObj["id"].IsString() || !serverObj.HasMember("name") ||
-						!serverObj["name"].IsString() || !serverObj.HasMember("description") || !serverObj["description"].IsString() ||
-						!serverObj.HasMember("map") || !serverObj["map"].IsString() || !serverObj.HasMember("playlist") ||
-						!serverObj["playlist"].IsString() || !serverObj.HasMember("playerCount") || !serverObj["playerCount"].IsNumber() ||
-						!serverObj.HasMember("maxPlayers") || !serverObj["maxPlayers"].IsNumber() || !serverObj.HasMember("hasPassword") ||
-						!serverObj["hasPassword"].IsBool() || !serverObj.HasMember("modInfo") || !serverObj["modInfo"].HasMember("Mods") ||
-						!serverObj["modInfo"]["Mods"].IsArray())
+					if (!id || !name || !description || !map || !playlist || !playerCount ||
+						!maxPlayers || !hasPassword || !yyjson_is_arr(mods))
 					{
 						spdlog::error("Failed reading masterserver response: malformed server object");
 						continue;
 					};
 
-					const char* id = serverObj["id"].GetString();
 
 					RemoteServerInfo* newServer = nullptr;
 
@@ -288,14 +299,14 @@ void MasterServerManager::RequestServerList()
 						{
 							server = RemoteServerInfo(
 								id,
-								serverObj["name"].GetString(),
-								serverObj["description"].GetString(),
-								serverObj["map"].GetString(),
-								serverObj["playlist"].GetString(),
-								(serverObj.HasMember("region") && serverObj["region"].IsString()) ? serverObj["region"].GetString() : "",
-								serverObj["playerCount"].GetInt(),
-								serverObj["maxPlayers"].GetInt(),
-								serverObj["hasPassword"].IsTrue());
+								name,
+								description,
+								map,
+								playlist,
+								region,
+								playerCount,
+								maxPlayers,
+								hasPassword);
 							newServer = &server;
 							createNewServerInfo = false;
 							break;
@@ -306,30 +317,32 @@ void MasterServerManager::RequestServerList()
 					if (createNewServerInfo)
 						newServer = &m_vRemoteServers.emplace_back(
 							id,
-							serverObj["name"].GetString(),
-							serverObj["description"].GetString(),
-							serverObj["map"].GetString(),
-							serverObj["playlist"].GetString(),
-							(serverObj.HasMember("region") && serverObj["region"].IsString()) ? serverObj["region"].GetString() : "",
-							serverObj["playerCount"].GetInt(),
-							serverObj["maxPlayers"].GetInt(),
-							serverObj["hasPassword"].IsTrue());
+							name,
+							description,
+							map,
+							playlist,
+							region,
+							playerCount,
+							maxPlayers,
+							hasPassword);
 
 					newServer->requiredMods.clear();
-					for (auto& requiredMod : serverObj["modInfo"]["Mods"].GetArray())
+					yyjson_arr_foreach(mods, idx, max, val)
 					{
 						RemoteModInfo modInfo;
-
-						if (!requiredMod.HasMember("RequiredOnClient") || !requiredMod["RequiredOnClient"].IsTrue())
+						yyjson_val* requiredOnClient = yyjson_obj_get(val, "RequiredOnClient");
+						if (!yyjson_is_true(requiredOnClient))
 							continue;
 
-						if (!requiredMod.HasMember("Name") || !requiredMod["Name"].IsString())
+						const char* name = yyjson_get_str(yyjson_obj_get(val, "Name"));
+						if (!name)
 							continue;
-						modInfo.Name = requiredMod["Name"].GetString();
+						modInfo.Name = name;
 
-						if (!requiredMod.HasMember("Version") || !requiredMod["Version"].IsString())
+						const char* version = yyjson_get_str(yyjson_obj_get(val, "Version"));
+						if (!version)
 							continue;
-						modInfo.Version = requiredMod["Version"].GetString();
+						modInfo.Version = version;
 
 						newServer->requiredMods.push_back(modInfo);
 					}
@@ -383,74 +396,87 @@ void MasterServerManager::RequestMainMenuPromos()
 			{
 				m_bSuccessfullyConnected = true;
 
-				rapidjson_document mainMenuPromoJson;
-				mainMenuPromoJson.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
 
-				if (mainMenuPromoJson.HasParseError())
+				if (!doc)
 				{
 					spdlog::error(
 						"Failed reading masterserver main menu promos response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(mainMenuPromoJson.GetParseError()));
+						err.msg);
 					return;
 				}
 
-				if (!mainMenuPromoJson.IsObject())
+				yyjson_val* root = yyjson_doc_get_root(doc);
+
+				if (!yyjson_is_obj(root))
 				{
 					spdlog::error("Failed reading masterserver main menu promos response: root object is not an object");
 					return;
 				}
 
-				if (mainMenuPromoJson.HasMember("error"))
+				yyjson_val* error = yyjson_obj_get(root, "error");
+				if (error)
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
 					return;
 				}
 
-				if (!mainMenuPromoJson.HasMember("newInfo") || !mainMenuPromoJson["newInfo"].IsObject() ||
-					!mainMenuPromoJson["newInfo"].HasMember("Title1") || !mainMenuPromoJson["newInfo"]["Title1"].IsString() ||
-					!mainMenuPromoJson["newInfo"].HasMember("Title2") || !mainMenuPromoJson["newInfo"]["Title2"].IsString() ||
-					!mainMenuPromoJson["newInfo"].HasMember("Title3") || !mainMenuPromoJson["newInfo"]["Title3"].IsString() ||
+				yyjson_val* newInfo, *newInfoTitle1;
+				yyjson_val* newInfoTitle2, *newInfoTitle3;
 
-					!mainMenuPromoJson.HasMember("largeButton") || !mainMenuPromoJson["largeButton"].IsObject() ||
-					!mainMenuPromoJson["largeButton"].HasMember("Title") || !mainMenuPromoJson["largeButton"]["Title"].IsString() ||
-					!mainMenuPromoJson["largeButton"].HasMember("Text") || !mainMenuPromoJson["largeButton"]["Text"].IsString() ||
-					!mainMenuPromoJson["largeButton"].HasMember("Url") || !mainMenuPromoJson["largeButton"]["Url"].IsString() ||
-					!mainMenuPromoJson["largeButton"].HasMember("ImageIndex") ||
-					!mainMenuPromoJson["largeButton"]["ImageIndex"].IsNumber() ||
+				yyjson_val* largeButton;
+				yyjson_val* largeButtonTitle, *largeButtonText;
+				yyjson_val* largeButtonUrl, *largeButtonImageIndex;
 
-					!mainMenuPromoJson.HasMember("smallButton1") || !mainMenuPromoJson["smallButton1"].IsObject() ||
-					!mainMenuPromoJson["smallButton1"].HasMember("Title") || !mainMenuPromoJson["smallButton1"]["Title"].IsString() ||
-					!mainMenuPromoJson["smallButton1"].HasMember("Url") || !mainMenuPromoJson["smallButton1"]["Url"].IsString() ||
-					!mainMenuPromoJson["smallButton1"].HasMember("ImageIndex") ||
-					!mainMenuPromoJson["smallButton1"]["ImageIndex"].IsNumber() ||
+				yyjson_val* smallButton1, *smallButton1Title;
+				yyjson_val* smallButton1Url, *smallButton1ImageIndex;
 
-					!mainMenuPromoJson.HasMember("smallButton2") || !mainMenuPromoJson["smallButton2"].IsObject() ||
-					!mainMenuPromoJson["smallButton2"].HasMember("Title") || !mainMenuPromoJson["smallButton2"]["Title"].IsString() ||
-					!mainMenuPromoJson["smallButton2"].HasMember("Url") || !mainMenuPromoJson["smallButton2"]["Url"].IsString() ||
-					!mainMenuPromoJson["smallButton2"].HasMember("ImageIndex") ||
-					!mainMenuPromoJson["smallButton2"]["ImageIndex"].IsNumber())
+				yyjson_val* smallButton2, *smallButton2Title;
+				yyjson_val* smallButton2Url, *smallButton2ImageIndex;
+
+				if (!(newInfo = yyjson_obj_get(root, "newInfo")) || !yyjson_is_obj(newInfo) ||
+					!(newInfoTitle1 = yyjson_obj_get(newInfo, "Title1")) || !yyjson_is_str(newInfoTitle1) ||
+					!(newInfoTitle2 = yyjson_obj_get(newInfo, "Title2")) || !yyjson_is_str(newInfoTitle2) ||
+					!(newInfoTitle3 = yyjson_obj_get(newInfo, "Title3")) || !yyjson_is_str(newInfoTitle3) ||
+
+					!(largeButton = yyjson_obj_get(root, "largeButton")) || !yyjson_is_obj(largeButton) ||
+					!(largeButtonTitle = yyjson_obj_get(largeButton, "Title")) || !yyjson_is_str(largeButtonTitle) || 
+					!(largeButtonText = yyjson_obj_get(largeButton, "Text")) || !yyjson_is_str(largeButtonText) ||
+					!(largeButtonUrl = yyjson_obj_get(largeButton, "Url")) || !yyjson_is_str(largeButtonUrl) ||
+					!(largeButtonImageIndex = yyjson_obj_get(largeButton, "ImageIndex")) || !yyjson_is_num(largeButtonImageIndex) ||
+
+					!(smallButton1 = yyjson_obj_get(root, "smallButton1")) || !yyjson_is_obj(smallButton1) ||
+					!(smallButton1Title = yyjson_obj_get(smallButton1, "Title")) || !yyjson_is_str(smallButton1Title) || 
+					!(smallButton1Url = yyjson_obj_get(smallButton1, "Url")) || !yyjson_is_str(smallButton1Url) ||
+					!(smallButton1ImageIndex = yyjson_obj_get(smallButton1, "ImageIndex")) || !yyjson_is_num(smallButton1ImageIndex) ||
+
+					!(smallButton2 = yyjson_obj_get(root, "smallButton2")) || !yyjson_is_obj(smallButton2) ||
+					!(smallButton2Title = yyjson_obj_get(smallButton2, "Title")) || !yyjson_is_str(smallButton2Title) || 
+					!(smallButton2Url = yyjson_obj_get(smallButton2, "Url")) || !yyjson_is_str(smallButton2Url) ||
+					!(smallButton2ImageIndex = yyjson_obj_get(smallButton2, "ImageIndex")) || !yyjson_is_num(smallButton1ImageIndex))
 				{
 					spdlog::error("Failed reading masterserver main menu promos response: malformed json object");
 					return;
 				}
 
-				m_sMainMenuPromoData.newInfoTitle1 = mainMenuPromoJson["newInfo"]["Title1"].GetString();
-				m_sMainMenuPromoData.newInfoTitle2 = mainMenuPromoJson["newInfo"]["Title2"].GetString();
-				m_sMainMenuPromoData.newInfoTitle3 = mainMenuPromoJson["newInfo"]["Title3"].GetString();
+				m_sMainMenuPromoData.newInfoTitle1 = yyjson_get_str(newInfoTitle1);
+				m_sMainMenuPromoData.newInfoTitle2 = yyjson_get_str(newInfoTitle2);
+				m_sMainMenuPromoData.newInfoTitle3 = yyjson_get_str(newInfoTitle3);
 
-				m_sMainMenuPromoData.largeButtonTitle = mainMenuPromoJson["largeButton"]["Title"].GetString();
-				m_sMainMenuPromoData.largeButtonText = mainMenuPromoJson["largeButton"]["Text"].GetString();
-				m_sMainMenuPromoData.largeButtonUrl = mainMenuPromoJson["largeButton"]["Url"].GetString();
-				m_sMainMenuPromoData.largeButtonImageIndex = mainMenuPromoJson["largeButton"]["ImageIndex"].GetInt();
+				m_sMainMenuPromoData.largeButtonTitle = yyjson_get_str(largeButtonTitle);
+				m_sMainMenuPromoData.largeButtonText = yyjson_get_str(largeButtonText);
+				m_sMainMenuPromoData.largeButtonUrl = yyjson_get_str(largeButtonUrl);
+				m_sMainMenuPromoData.largeButtonImageIndex = yyjson_get_int(largeButtonImageIndex);
 
-				m_sMainMenuPromoData.smallButton1Title = mainMenuPromoJson["smallButton1"]["Title"].GetString();
-				m_sMainMenuPromoData.smallButton1Url = mainMenuPromoJson["smallButton1"]["Url"].GetString();
-				m_sMainMenuPromoData.smallButton1ImageIndex = mainMenuPromoJson["smallButton1"]["ImageIndex"].GetInt();
+				m_sMainMenuPromoData.smallButton1Title = yyjson_get_str(smallButton1Title);
+				m_sMainMenuPromoData.smallButton1Url = yyjson_get_str(smallButton1Url);
+				m_sMainMenuPromoData.smallButton1ImageIndex = yyjson_get_int(smallButton1ImageIndex);
 
-				m_sMainMenuPromoData.smallButton2Title = mainMenuPromoJson["smallButton2"]["Title"].GetString();
-				m_sMainMenuPromoData.smallButton2Url = mainMenuPromoJson["smallButton2"]["Url"].GetString();
-				m_sMainMenuPromoData.smallButton2ImageIndex = mainMenuPromoJson["smallButton2"]["ImageIndex"].GetInt();
+				m_sMainMenuPromoData.smallButton2Title = yyjson_get_str(smallButton2Title);
+				m_sMainMenuPromoData.smallButton2Url = yyjson_get_str(smallButton2Url);
+				m_sMainMenuPromoData.smallButton2ImageIndex = yyjson_get_int(smallButton2ImageIndex);
 
 				m_bHasMainMenuPromoData = true;
 			}
@@ -515,77 +541,85 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 			{
 				m_bSuccessfullyConnected = true;
 
-				rapidjson_document authInfoJson;
-				authInfoJson.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
 
-				if (authInfoJson.HasParseError())
+				if (!doc)
 				{
 					spdlog::error(
 						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(authInfoJson.GetParseError()));
+						err.msg);
 					return;
 				}
 
-				if (!authInfoJson.IsObject())
+				yyjson_val* root = yyjson_doc_get_root(doc);
+
+				if (!yyjson_is_obj(root))
 				{
 					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
 					return;
 				}
 
-				if (authInfoJson.HasMember("error"))
+				yyjson_val* error = yyjson_obj_get(root, "error");
+				if (error)
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
 
-					if (authInfoJson["error"].HasMember("msg"))
-						m_sAuthFailureReason = authInfoJson["error"]["msg"].GetString();
-					else if (authInfoJson["error"].HasMember("enum"))
-						m_sAuthFailureReason = authInfoJson["error"]["enum"].GetString();
+					yyjson_val* val;
+					if ((val = yyjson_obj_get(error, "msg")) ||
+						(val = yyjson_obj_get(error, "enum")))
+						m_sAuthFailureReason = yyjson_get_str(val);
 					else
 						m_sAuthFailureReason = "No error message provided";
 
 					return;
 				}
 
-				if (!authInfoJson["success"].IsTrue())
+				yyjson_val* success = yyjson_obj_get(root, "success");
+				if (!yyjson_is_true(success))
 				{
 					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
 					return;
 				}
 
-				if (!authInfoJson.HasMember("success") || !authInfoJson.HasMember("id") || !authInfoJson["id"].IsString() ||
-					!authInfoJson.HasMember("authToken") || !authInfoJson["authToken"].IsString() ||
-					!authInfoJson.HasMember("persistentData") || !authInfoJson["persistentData"].IsArray())
+				yyjson_val* id;
+				yyjson_val* authToken;
+				yyjson_val* persistentData;
+				if (!success || !(id = yyjson_obj_get(root, "id")) || !yyjson_is_str(id) ||
+					!(authToken = yyjson_obj_get(root, "authToken")) || !yyjson_is_str(authToken) ||
+					!(persistentData = yyjson_obj_get(root, "persistentData")) || !yyjson_is_arr(persistentData))
 				{
 					spdlog::error("Failed reading masterserver authentication response: malformed json object");
 					return;
 				}
 
 				RemoteAuthData newAuthData {};
-				strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), authInfoJson["id"].GetString(), sizeof(newAuthData.uid) - 1);
+				strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), yyjson_get_str(id), sizeof(newAuthData.uid) - 1);
 
-				newAuthData.pdataSize = authInfoJson["persistentData"].GetArray().Size();
+				newAuthData.pdataSize = yyjson_arr_size(persistentData);
 				newAuthData.pdata = new char[newAuthData.pdataSize];
-				// memcpy(newAuthData.pdata, authInfoJson["persistentData"].GetString(), newAuthData.pdataSize);
 
 				int i = 0;
 				// note: persistentData is a uint8array because i had problems getting strings to behave, it sucks but it's just how it be
 				// unfortunately potentially refactor later
-				for (auto& byte : authInfoJson["persistentData"].GetArray())
+				size_t idx, max;
+				yyjson_val* val;
+				yyjson_arr_foreach(persistentData, idx, max, val)
 				{
-					if (!byte.IsUint() || byte.GetUint() > 255)
+					if (!yyjson_is_uint(val) || yyjson_get_uint(val) > 255)
 					{
 						spdlog::error("Failed reading masterserver authentication response: malformed json object");
 						return;
 					}
 
-					newAuthData.pdata[i++] = static_cast<char>(byte.GetUint());
+					newAuthData.pdata[i++] = static_cast<char>(yyjson_get_uint(val));
 				}
 
 				std::lock_guard<std::mutex> guard(g_pServerAuthentication->m_AuthDataMutex);
 				g_pServerAuthentication->m_RemoteAuthenticationData.clear();
 				g_pServerAuthentication->m_RemoteAuthenticationData.insert(
-					std::make_pair(authInfoJson["authToken"].GetString(), newAuthData));
+					std::make_pair(yyjson_get_str(authToken), newAuthData));
 
 				m_bSuccessfullyAuthenticatedWithGameServer = true;
 			}
@@ -665,60 +699,67 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			{
 				m_bSuccessfullyConnected = true;
 
-				rapidjson_document connectionInfoJson;
-				connectionInfoJson.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
 
-				if (connectionInfoJson.HasParseError())
+				if (!doc)
 				{
 					spdlog::error(
 						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-						rapidjson::GetParseError_En(connectionInfoJson.GetParseError()));
+						err.msg);
 					return;
 				}
 
-				if (!connectionInfoJson.IsObject())
+				yyjson_val* root = yyjson_doc_get_root(doc);
+
+				if (!yyjson_is_obj(root))
 				{
 					spdlog::error("Failed reading masterserver authentication response: root object is not an object");
 					return;
 				}
 
-				if (connectionInfoJson.HasMember("error"))
+				yyjson_val* error = yyjson_obj_get(root, "error");
+				if (error)
 				{
 					spdlog::error("Failed reading masterserver response: got fastify error response");
 					spdlog::error(readBuffer);
 
-					if (connectionInfoJson["error"].HasMember("msg"))
-						m_sAuthFailureReason = connectionInfoJson["error"]["msg"].GetString();
-					else if (connectionInfoJson["error"].HasMember("enum"))
-						m_sAuthFailureReason = connectionInfoJson["error"]["enum"].GetString();
+					yyjson_val* val;
+					if ((val = yyjson_obj_get(error, "msg")) ||
+						(val = yyjson_obj_get(error, "enum")))
+						m_sAuthFailureReason = yyjson_get_str(val);
 					else
 						m_sAuthFailureReason = "No error message provided";
 
 					return;
 				}
 
-				if (!connectionInfoJson["success"].IsTrue())
+				yyjson_val* success = yyjson_obj_get(root, "success");
+				if (!yyjson_is_true(success))
 				{
 					spdlog::error("Authentication with masterserver failed: \"success\" is not true");
 					return;
 				}
 
-				if (!connectionInfoJson.HasMember("success") || !connectionInfoJson.HasMember("ip") ||
-					!connectionInfoJson["ip"].IsString() || !connectionInfoJson.HasMember("port") ||
-					!connectionInfoJson["port"].IsNumber() || !connectionInfoJson.HasMember("authToken") ||
-					!connectionInfoJson["authToken"].IsString())
+				yyjson_val* ip;
+				yyjson_val* port;
+				yyjson_val* authToken;
+				if (!success ||
+					!(ip = yyjson_obj_get(root, "ip")) || !yyjson_is_str(ip) ||
+					!(port = yyjson_obj_get(root, "port")) || !yyjson_is_num(port) ||
+					!(authToken = yyjson_obj_get(root, "authToken")) || !yyjson_is_str(authToken))
 				{
 					spdlog::error("Failed reading masterserver authentication response: malformed json object");
 					return;
 				}
 
-				m_pendingConnectionInfo.ip.S_un.S_addr = inet_addr(connectionInfoJson["ip"].GetString());
-				m_pendingConnectionInfo.port = (unsigned short)connectionInfoJson["port"].GetUint();
+				m_pendingConnectionInfo.ip.S_un.S_addr = inet_addr(yyjson_get_str(ip));
+				m_pendingConnectionInfo.port = (unsigned short)yyjson_get_uint(port);
 
 				strncpy_s(
 					m_pendingConnectionInfo.authToken,
 					sizeof(m_pendingConnectionInfo.authToken),
-					connectionInfoJson["authToken"].GetString(),
+					yyjson_get_str(authToken),
 					sizeof(m_pendingConnectionInfo.authToken) - 1);
 
 				m_bHasPendingConnectionInfo = true;
@@ -799,32 +840,36 @@ void MasterServerManager::WritePlayerPersistentData(const char* playerId, const 
 
 void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 {
-	rapidjson_document obj;
-	obj.Parse(data);
+	yyjson_read_err err;
+	yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(data.c_str()), data.length(), 0, &YYJSON_ALLOCATOR, &err);
 
-	if (obj.HasParseError())
+	if (!doc)
 	{
 		// note: it's okay to print the data as-is since we've already checked that it actually came from Atlas
-		spdlog::error("invalid Atlas connectionless packet request ({}): {}", data, GetParseError_En(obj.GetParseError()));
+		spdlog::error("invalid Atlas connectionless packet request ({}): {}", data, err.msg);
 		return;
 	}
 
-	if (!obj.HasMember("type") || !obj["type"].IsString())
+	yyjson_val* root = yyjson_doc_get_root(doc);
+
+	yyjson_val* typeObj = yyjson_obj_get(root, "type");
+	if (!typeObj || !yyjson_is_str(typeObj))
 	{
 		spdlog::error("invalid Atlas connectionless packet request ({}): missing type", data);
 		return;
 	}
 
-	std::string type = obj["type"].GetString();
+	std::string type = yyjson_get_str(typeObj);
 
 	if (type == "connect")
 	{
-		if (!obj.HasMember("token") || !obj["token"].IsString())
+		yyjson_val* tokenObj = yyjson_obj_get(root, "token");
+		if (!tokenObj || !yyjson_is_str(tokenObj))
 		{
 			spdlog::error("failed to handle Atlas connect request: missing or invalid connection token field");
 			return;
 		}
-		std::string token = obj["token"].GetString();
+		std::string token = yyjson_get_str(tokenObj);
 
 		if (!m_handledServerConnections.contains(token))
 			m_handledServerConnections.insert(token);
@@ -833,16 +878,18 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 
 		spdlog::info("handling Atlas connect request {}", data);
 
-		if (!obj.HasMember("uid") || !obj["uid"].IsUint64())
+		yyjson_val* uidObj = yyjson_obj_get(root, "uid");
+		if (!uidObj || !yyjson_is_uint(uidObj))
 		{
 			spdlog::error("failed to handle Atlas connect request {}: missing or invalid uid field", token);
 			return;
 		}
-		uint64_t uid = obj["uid"].GetUint64();
+		uint64_t uid = yyjson_get_uint(uidObj);
 
 		std::string username;
-		if (obj.HasMember("username") && obj["username"].IsString())
-			username = obj["username"].GetString();
+		yyjson_val* usernameVal = yyjson_obj_get(root, "username");
+		if (usernameVal && yyjson_is_str(usernameVal))
+			username = yyjson_get_str(usernameVal);
 
 		std::string reject;
 		if (!g_pBanSystem->IsUIDAllowed(uid))
@@ -880,16 +927,36 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 
 			if (respStatus != 200)
 			{
-				rapidjson_document obj;
-				obj.Parse(pdata.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(pdata.c_str()), pdata.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson_val* root = yyjson_doc_get_root(doc);
 
-				if (!obj.HasParseError() && obj.HasMember("error") && obj["error"].IsObject())
+				yyjson_val* error;
+				if (!doc)
+				{
+					spdlog::error(
+						"failed to parse Atlas connect pdata request: {}",
+						err.msg);
+				}
+				else if ((error = yyjson_obj_get(root, "error")) && yyjson_is_obj(error))
+				{
+					std::string enumstr;
+					yyjson_val* errenum;
+					if ((errenum = yyjson_obj_get(error, "enum")) && yyjson_is_str(errenum))
+						enumstr = yyjson_get_str(errenum);
+
+					std::string msgstr;
+					yyjson_val* msg;
+					if ((msg = yyjson_obj_get(error, "msg")) && yyjson_is_str(msg))
+						msgstr = yyjson_get_str(msg);
+
 					spdlog::error(
 						"failed to make Atlas connect pdata request {}: response status {}, error: {} ({})",
 						token,
 						respStatus,
-						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
-						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
+						enumstr,
+						msgstr);
+				}
 				else
 					spdlog::error("failed to make Atlas connect pdata request {}: response status {}", token, respStatus);
 				return;
@@ -964,16 +1031,36 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 
 			if (respStatus != 200)
 			{
-				rapidjson_document obj;
-				obj.Parse(buf.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(buf.c_str()), buf.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson_val* root = yyjson_doc_get_root(doc);
 
-				if (!obj.HasParseError() && obj.HasMember("error") && obj["error"].IsObject())
+				yyjson_val* error;
+				if (!doc)
+				{
+					spdlog::error(
+						"failed to parse Atlas connect pdata request: {}",
+						err.msg);
+				}
+				else if ((error = yyjson_obj_get(root, "error")) && yyjson_is_obj(error))
+				{
+					std::string enumstr;
+					yyjson_val* errenum;
+					if ((errenum = yyjson_obj_get(error, "enum")) && yyjson_is_str(errenum))
+						enumstr = yyjson_get_str(errenum);
+
+					std::string msgstr;
+					yyjson_val* msg;
+					if ((msg = yyjson_obj_get(error, "msg")) && yyjson_is_str(msg))
+						msgstr = yyjson_get_str(msg);
+
 					spdlog::error(
 						"failed to respond to Atlas connect request {}: response status {}, error: {} ({})",
 						token,
 						respStatus,
-						((obj["error"].HasMember("enum") && obj["error"]["enum"].IsString()) ? obj["error"]["enum"].GetString() : ""),
-						((obj["error"].HasMember("msg") && obj["error"]["msg"].IsString()) ? obj["error"]["msg"].GetString() : ""));
+						enumstr,
+						msgstr);
+				}
 				else
 					spdlog::error("failed to respond to Atlas connect request {}: response status {}", token, respStatus);
 				return;
@@ -1269,21 +1356,23 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				rapidjson_document serverAddedJson;
-				serverAddedJson.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
 
 				// If we could not parse the JSON or it isn't an object, assume the MS is either wrong or we're completely out of date.
 				// No retry.
-				if (serverAddedJson.HasParseError())
+				if (!doc)
 				{
 					if (shouldLogError)
 						spdlog::error(
 							"Failed reading masterserver authentication response: encountered parse error \"{}\"",
-							rapidjson::GetParseError_En(serverAddedJson.GetParseError()));
+							err.msg);
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
-				if (!serverAddedJson.IsObject())
+				yyjson_val* root = yyjson_doc_get_root(doc);
+
+				if (!yyjson_is_obj(root))
 				{
 					if (shouldLogError)
 						spdlog::error("Failed reading masterserver authentication response: root object is not an object");
@@ -1291,16 +1380,18 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				}
 
 				// Log request id for easier debugging when combining with logs on masterserver
-				if (serverAddedJson.HasMember("id"))
+				const char* id = yyjson_get_str(yyjson_obj_get(root, "id"));
+				if (id)
 				{
-					spdlog::info("Request id: {}", serverAddedJson["id"].GetString());
+					spdlog::info("Request id: {}", id);
 				}
 				else
 				{
 					spdlog::error("Couldn't find request id in response");
 				}
 
-				if (serverAddedJson.HasMember("error"))
+				yyjson_val* error = yyjson_obj_get(root, "error");
+				if (error)
 				{
 					if (shouldLogError)
 					{
@@ -1312,8 +1403,9 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					// The master server will only update its internal server list and clean up dead servers on certain events.
 					// And then again, only if a player requests the server list after the cooldown (1 second by default), or a server is
 					// added/updated/removed. In any case this needs to be fixed in the master server rewrite.
-					if (serverAddedJson["error"].HasMember("enum") &&
-						strcmp(serverAddedJson["error"]["enum"].GetString(), "DUPLICATE_SERVER") == 0)
+					yyjson_val* errenum;
+					if (((errenum = yyjson_obj_get(error, "enum"))) &&
+						strcmp(yyjson_get_str(errenum), "DUPLICATE_SERVER") == 0)
 					{
 						if (shouldLogError)
 							spdlog::error("Cooling down while the master server cleans the dead server entry, if any.");
@@ -1324,15 +1416,16 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					return ReturnCleanup(MasterServerReportPresenceResult::Failed);
 				}
 
-				if (!serverAddedJson["success"].IsTrue())
+				yyjson_val* success = yyjson_obj_get(root, "success");
+				if (!yyjson_is_true(success))
 				{
 					if (shouldLogError)
 						spdlog::error("Adding server to masterserver failed: \"success\" is not true");
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
-				if (!serverAddedJson.HasMember("id") || !serverAddedJson["id"].IsString() ||
-					!serverAddedJson.HasMember("serverAuthToken") || !serverAddedJson["serverAuthToken"].IsString())
+				const char* serverAuthToken = yyjson_get_str(yyjson_obj_get(root, "serverAuthToken"));
+				if (!id || !serverAuthToken)
 				{
 					if (shouldLogError)
 						spdlog::error("Failed reading masterserver response: malformed json object");
@@ -1342,8 +1435,8 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				spdlog::info("Successfully registered the local server to the master server.");
 				return ReturnCleanup(
 					MasterServerReportPresenceResult::Success,
-					serverAddedJson["id"].GetString(),
-					serverAddedJson["serverAuthToken"].GetString());
+					id,
+					serverAuthToken);
 			}
 			else
 			{
@@ -1448,23 +1541,22 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 
 			if (result == CURLcode::CURLE_OK)
 			{
-				rapidjson_document serverAddedJson;
-				serverAddedJson.Parse(readBuffer.c_str());
+				yyjson_read_err err;
+				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson_val* root = yyjson_doc_get_root(doc);
 
 				const char* updatedId = nullptr;
 				const char* updatedAuthToken = nullptr;
 
-				if (!serverAddedJson.HasParseError() && serverAddedJson.IsObject())
+				if (doc && yyjson_is_obj(root))
 				{
-					if (serverAddedJson.HasMember("id") && serverAddedJson["id"].IsString())
-					{
-						updatedId = serverAddedJson["id"].GetString();
-					}
+					const char* id = yyjson_get_str(yyjson_obj_get(root, "id"));
+					if (id)
+						updatedId = id;
 
-					if (serverAddedJson.HasMember("serverAuthToken") && serverAddedJson["serverAuthToken"].IsString())
-					{
-						updatedAuthToken = serverAddedJson["serverAuthToken"].GetString();
-					}
+					const char* serverAuthToken = yyjson_get_str(yyjson_obj_get(root, "serverAuthToken"));
+					if (serverAuthToken)
+						updatedAuthToken = serverAuthToken;
 				}
 
 				return ReturnCleanup(MasterServerReportPresenceResult::Success, updatedId, updatedAuthToken);

@@ -10,11 +10,6 @@
 #include "squirrel/squirrel.h"
 #include "server/serverpresence.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/error/en.h"
-
 #include <string.h>
 #include <filesystem>
 

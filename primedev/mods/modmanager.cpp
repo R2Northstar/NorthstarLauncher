@@ -5,13 +5,10 @@
 #include "masterserver/masterserver.h"
 #include "core/filesystem/filesystem.h"
 #include "core/filesystem/rpakfilesystem.h"
+#include "core/json.h"
 #include "config/profile.h"
 
-#include "rapidjson/error/en.h"
-#include "rapidjson/document.h"
-#include "rapidjson/ostreamwrapper.h"
-#include "rapidjson/prettywriter.h"
-#include <filesystem>
+#include "yyjson.h"
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -26,38 +23,43 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	m_ModDirectory = modDir;
 
-	rapidjson_document modJson;
-	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
+	yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
+	yyjson_read_err err;
+	yyjson_doc* doc = yyjson_read_opts(jsonBuf, strlen(jsonBuf), flg, &YYJSON_ALLOCATOR, &err);
 
 	spdlog::info("Loading mod file at path '{}'", modDir.string());
 
 	// fail if parse error
-	if (modJson.HasParseError())
+	if (!doc)
 	{
 		spdlog::error(
 			"Failed reading mod file {}: encountered parse error \"{}\" at offset {}",
 			(modDir / "mod.json").string(),
-			GetParseError_En(modJson.GetParseError()),
-			modJson.GetErrorOffset());
+			err.msg,
+			err.pos);
 		return;
 	}
 
+	yyjson_val* root = yyjson_doc_get_root(doc);
+
 	// fail if it's not a json obj (could be an array, string, etc)
-	if (!modJson.IsObject())
+	if (!yyjson_is_obj(root))
 	{
 		spdlog::error("Failed reading mod file {}: file is not a JSON object", (modDir / "mod.json").string());
 		return;
 	}
 
+	yyjson_val* nameVal = yyjson_obj_get(root, "Name");
+
 	// basic mod info
 	// name is required
-	if (!modJson.HasMember("Name"))
+	if (!nameVal)
 	{
 		spdlog::error("Failed reading mod file {}: missing required member \"Name\"", (modDir / "mod.json").string());
 		return;
 	}
 
-	Name = modJson["Name"].GetString();
+	Name = yyjson_get_str(nameVal);
 	spdlog::info("Loading mod '{}'", Name);
 
 	// Don't load blacklisted mods
@@ -67,31 +69,36 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		return;
 	}
 
-	if (modJson.HasMember("Description"))
-		Description = modJson["Description"].GetString();
+	yyjson_val* descriptionVal = yyjson_obj_get(root, "Description");
+	if (descriptionVal)
+		Description = yyjson_get_str(descriptionVal);
 	else
 		Description = "";
 
-	if (modJson.HasMember("Version"))
-		Version = modJson["Version"].GetString();
+	yyjson_val* versionVal = yyjson_obj_get(root, "Version");
+	if (versionVal)
+		Version = yyjson_get_str(versionVal);
 	else
 	{
 		Version = "0.0.0";
 		spdlog::warn("Mod file {} is missing a version, consider adding a version", (modDir / "mod.json").string());
 	}
 
-	if (modJson.HasMember("DownloadLink"))
-		DownloadLink = modJson["DownloadLink"].GetString();
+	yyjson_val* downloadVal = yyjson_obj_get(root, "DownloadLink");
+	if (downloadVal)
+		DownloadLink = yyjson_get_str(downloadVal);
 	else
 		DownloadLink = "";
 
-	if (modJson.HasMember("RequiredOnClient"))
-		RequiredOnClient = modJson["RequiredOnClient"].GetBool();
+	yyjson_val* requiredVal = yyjson_obj_get(root, "RequiredOnClient");
+	if (requiredVal)
+		RequiredOnClient = yyjson_get_bool(requiredVal);
 	else
 		RequiredOnClient = false;
 
-	if (modJson.HasMember("LoadPriority"))
-		LoadPriority = modJson["LoadPriority"].GetInt();
+	yyjson_val* priorityVal = yyjson_obj_get(root, "LoadPriority");
+	if (priorityVal)
+		LoadPriority = yyjson_get_int(priorityVal);
 	else
 	{
 		spdlog::info("Mod file {} is missing a LoadPriority, consider adding one", (modDir / "mod.json").string());
@@ -99,13 +106,13 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	}
 
 	// Parse all array fields
-	ParseConVars(modJson);
-	ParseConCommands(modJson);
-	ParseScripts(modJson);
-	ParseLocalization(modJson);
-	ParseDependencies(modJson);
-	ParsePluginDependencies(modJson);
-	ParseInitScript(modJson);
+	ParseConVars(root);
+	ParseConCommands(root);
+	ParseScripts(root);
+	ParseLocalization(root);
+	ParseDependencies(root);
+	ParsePluginDependencies(root);
+	ParseInitScript(root);
 
 	// A mod is remote if it's located in the remote mods folder
 	m_bIsRemote = m_ModDirectory.generic_string().find(GetRemoteModFolderPath().generic_string()) != std::string::npos;
@@ -113,59 +120,68 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	m_bWasReadSuccessfully = true;
 }
 
-void Mod::ParseConVars(rapidjson_document& json)
+void Mod::ParseConVars(yyjson_val* json)
 {
-	if (!json.HasMember("ConVars"))
+	yyjson_val* conVarsVal = yyjson_obj_get(json, "ConVars");
+	if (!conVarsVal)
 		return;
 
-	if (!json["ConVars"].IsArray())
+	if (!yyjson_is_arr(conVarsVal))
 	{
 		spdlog::warn("'ConVars' field is not an array, skipping...");
 		return;
 	}
 
-	for (auto& convarObj : json["ConVars"].GetArray())
+	size_t idx, max;
+	yyjson_val* val;
+	yyjson_arr_foreach(conVarsVal, idx, max, val)
 	{
-		if (!convarObj.IsObject())
+		if (!yyjson_is_obj(val))
 		{
 			spdlog::warn("ConVar is not an object, skipping...");
 			continue;
 		}
-		if (!convarObj.HasMember("Name"))
+
+		const char* name = yyjson_get_str(yyjson_obj_get(val, "Name"));
+		if (!name)
 		{
 			spdlog::warn("ConVar does not have a Name, skipping...");
 			continue;
 		}
+
 		// from here on, the ConVar can be referenced by name in logs
-		if (!convarObj.HasMember("DefaultValue"))
+		const char* defaultValue = yyjson_get_str(yyjson_obj_get(val, "DefaultValue"));
+		if (!defaultValue)
 		{
-			spdlog::warn("ConVar '{}' does not have a DefaultValue, skipping...", convarObj["Name"].GetString());
+			spdlog::warn("ConVar '{}' does not have a DefaultValue, skipping...", name);
 			continue;
 		}
 
 		// have to allocate this manually, otherwise convar registration will break
 		// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
 		ModConVar* convar = new ModConVar;
-		convar->Name = convarObj["Name"].GetString();
-		convar->DefaultValue = convarObj["DefaultValue"].GetString();
+		convar->Name = name;
+		convar->DefaultValue = defaultValue;
 
-		if (convarObj.HasMember("HelpString"))
-			convar->HelpString = convarObj["HelpString"].GetString();
+		const char* helpString = yyjson_get_str(yyjson_obj_get(val, "HelpString"));
+		if (helpString)
+			convar->HelpString = helpString;
 		else
 			convar->HelpString = "";
 
 		convar->Flags = FCVAR_NONE;
 
-		if (convarObj.HasMember("Flags"))
+		yyjson_val* flags = yyjson_obj_get(val, "Flags");
+		if (flags)
 		{
 			// read raw integer flags
-			if (convarObj["Flags"].IsInt())
-				convar->Flags = convarObj["Flags"].GetInt();
-			else if (convarObj["Flags"].IsString())
+			if (yyjson_is_int(flags))
+				convar->Flags = yyjson_get_int(flags);
+			else if (yyjson_is_str(flags))
 			{
 				// parse cvar flags from string
 				// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-				convar->Flags |= ParseConVarFlagsString(convar->Name, convarObj["Flags"].GetString());
+				convar->Flags |= ParseConVarFlagsString(convar->Name, yyjson_get_str(flags));
 			}
 		}
 
@@ -175,72 +191,83 @@ void Mod::ParseConVars(rapidjson_document& json)
 	}
 }
 
-void Mod::ParseConCommands(rapidjson_document& json)
+void Mod::ParseConCommands(yyjson_val* json)
 {
-	if (!json.HasMember("ConCommands"))
+	yyjson_val* conCommandsVal = yyjson_obj_get(json, "ConCommands");
+	if (!conCommandsVal)
 		return;
 
-	if (!json["ConCommands"].IsArray())
+	if (!yyjson_is_arr(conCommandsVal))
 	{
 		spdlog::warn("'ConCommands' field is not an array, skipping...");
 		return;
 	}
 
-	for (auto& concommandObj : json["ConCommands"].GetArray())
+	size_t idx, max;
+	yyjson_val* val;
+	yyjson_arr_foreach(conCommandsVal, idx, max, val)
 	{
-		if (!concommandObj.IsObject())
+		if (!yyjson_is_obj(val))
 		{
 			spdlog::warn("ConCommand is not an object, skipping...");
 			continue;
 		}
-		if (!concommandObj.HasMember("Name"))
+
+		const char* name = yyjson_get_str(yyjson_obj_get(val, "Name"));
+		if (!name)
 		{
 			spdlog::warn("ConCommand does not have a Name, skipping...");
 			continue;
 		}
+
 		// from here on, the ConCommand can be referenced by name in logs
-		if (!concommandObj.HasMember("Function"))
+		const char* function = yyjson_get_str(yyjson_obj_get(val, "Function"));
+		if (!function)
 		{
-			spdlog::warn("ConCommand '{}' does not have a Function, skipping...", concommandObj["Name"].GetString());
+			spdlog::warn("ConCommand '{}' does not have a Function, skipping...", name);
 			continue;
 		}
-		if (!concommandObj.HasMember("Context"))
+
+		const char* context = yyjson_get_str(yyjson_obj_get(val, "Context"));
+		if (!context)
 		{
-			spdlog::warn("ConCommand '{}' does not have a Context, skipping...", concommandObj["Name"].GetString());
+			spdlog::warn("ConCommand '{}' does not have a Context, skipping...", name);
 			continue;
 		}
 
 		// have to allocate this manually, otherwise concommand registration will break
 		// unfortunately this causes us to leak memory on reload, unsure of a way around this rn
 		ModConCommand* concommand = new ModConCommand;
-		concommand->Name = concommandObj["Name"].GetString();
-		concommand->Function = concommandObj["Function"].GetString();
-		concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
+		concommand->Name = name;
+		concommand->Function = function;
+		concommand->Context = ScriptContextFromString(context);
 		if (concommand->Context == ScriptContext::INVALID)
 		{
-			spdlog::warn("ConCommand '{}' has invalid context '{}', skipping...", concommand->Name, concommandObj["Context"].GetString());
+			spdlog::warn("ConCommand '{}' has invalid context '{}', skipping...", concommand->Name, context);
 			continue;
 		}
 
-		if (concommandObj.HasMember("HelpString"))
-			concommand->HelpString = concommandObj["HelpString"].GetString();
+		const char* helpString = yyjson_get_str(yyjson_obj_get(val, "HelpString"));
+		if (helpString)
+			concommand->HelpString = helpString;
 		else
 			concommand->HelpString = "";
 
 		concommand->Flags = FCVAR_NONE;
 
-		if (concommandObj.HasMember("Flags"))
+		yyjson_val* flags = yyjson_obj_get(val, "Flags");
+		if (flags)
 		{
 			// read raw integer flags
-			if (concommandObj["Flags"].IsInt())
+			if (yyjson_is_int(flags))
 			{
-				concommand->Flags = concommandObj["Flags"].GetInt();
+				concommand->Flags = yyjson_get_int(flags);
 			}
-			else if (concommandObj["Flags"].IsString())
+			else if (yyjson_is_str(flags))
 			{
 				// parse cvar flags from string
 				// example string: ARCHIVE_PLAYERPROFILE | GAMEDLL
-				concommand->Flags |= ParseConVarFlagsString(concommand->Name, concommandObj["Flags"].GetString());
+				concommand->Flags |= ParseConVarFlagsString(concommand->Name, yyjson_get_str(flags));
 			}
 		}
 
@@ -250,159 +277,178 @@ void Mod::ParseConCommands(rapidjson_document& json)
 	}
 }
 
-void Mod::ParseScripts(rapidjson_document& json)
+void Mod::ParseScripts(yyjson_val* json)
 {
-	if (!json.HasMember("Scripts"))
+	yyjson_val* scriptsVal = yyjson_obj_get(json, "Scripts");
+	if (!scriptsVal)
 		return;
 
-	if (!json["Scripts"].IsArray())
+	if (!yyjson_is_arr(scriptsVal))
 	{
 		spdlog::warn("'Scripts' field is not an array, skipping...");
 		return;
 	}
 
-	for (auto& scriptObj : json["Scripts"].GetArray())
+	size_t idx, max;
+	yyjson_val* val;
+	yyjson_arr_foreach(scriptsVal, idx, max, val)
 	{
-		if (!scriptObj.IsObject())
+		if (!yyjson_is_obj(val))
 		{
 			spdlog::warn("Script is not an object, skipping...");
 			continue;
 		}
-		if (!scriptObj.HasMember("Path"))
+		
+		const char* path = yyjson_get_str(yyjson_obj_get(val, "Path"));
+		if (!path)
 		{
 			spdlog::warn("Script does not have a Path, skipping...");
 			continue;
 		}
+
 		// from here on, the Path for a script is used as it's name in logs
-		if (!scriptObj.HasMember("RunOn"))
+		const char* runOn = yyjson_get_str(yyjson_obj_get(val, "RunOn"));
+		if (!runOn)
 		{
 			// "a RunOn" sounds dumb but anything else doesn't match the format of the warnings...
 			// this is the best i could think of within 20 seconds
-			spdlog::warn("Script '{}' does not have a RunOn field, skipping...", scriptObj["Path"].GetString());
+			spdlog::warn("Script '{}' does not have a RunOn field, skipping...", path);
 			continue;
 		}
 
 		ModScript script;
 
-		script.Path = scriptObj["Path"].GetString();
-		script.RunOn = scriptObj["RunOn"].GetString();
+		script.Path = path;
+		script.RunOn = runOn;
 
-		if (scriptObj.HasMember("ServerCallback"))
+		yyjson_val* serverCallback = yyjson_obj_get(val, "ServerCallback");
+		if (serverCallback)
 		{
-			if (scriptObj["ServerCallback"].IsObject())
+			if (yyjson_is_obj(serverCallback))
 			{
 				ModScriptCallback callback;
 				callback.Context = ScriptContext::SERVER;
 
-				if (scriptObj["ServerCallback"].HasMember("Before"))
+				yyjson_val* callbackBefore = yyjson_obj_get(serverCallback, "Before");
+				if (callbackBefore)
 				{
-					if (scriptObj["ServerCallback"]["Before"].IsString())
-						callback.BeforeCallback = scriptObj["ServerCallback"]["Before"].GetString();
+					if (yyjson_is_str(callbackBefore))
+						callback.BeforeCallback = yyjson_get_str(callbackBefore);
 					else
-						spdlog::warn("'Before' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'Before' ServerCallback for script '{}' is not a string, skipping...", path);
 				}
 
-				if (scriptObj["ServerCallback"].HasMember("After"))
+				yyjson_val* callbackAfter = yyjson_obj_get(serverCallback, "After");
+				if (callbackAfter)
 				{
-					if (scriptObj["ServerCallback"]["After"].IsString())
-						callback.AfterCallback = scriptObj["ServerCallback"]["After"].GetString();
+					if (yyjson_is_str(callbackAfter))
+						callback.AfterCallback = yyjson_get_str(callbackAfter);
 					else
-						spdlog::warn("'After' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'After' ServerCallback for script '{}' is not a string, skipping...", path);
 				}
 
-				if (scriptObj["ServerCallback"].HasMember("Destroy"))
+				yyjson_val* callbackDestroy = yyjson_obj_get(serverCallback, "Destroy");
+				if (callbackDestroy)
 				{
-					if (scriptObj["ServerCallback"]["Destroy"].IsString())
-						callback.DestroyCallback = scriptObj["ServerCallback"]["Destroy"].GetString();
+					if (yyjson_is_str(callbackDestroy))
+						callback.DestroyCallback = yyjson_get_str(callbackDestroy);
 					else
 						spdlog::warn(
-							"'Destroy' ServerCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+							"'Destroy' ServerCallback for script '{}' is not a string, skipping...", path);
 				}
 
 				script.Callbacks.push_back(callback);
 			}
 			else
 			{
-				spdlog::warn("ServerCallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+				spdlog::warn("ServerCallback for script '{}' is not an object, skipping...", path);
 			}
 		}
 
-		if (scriptObj.HasMember("ClientCallback"))
+		yyjson_val* clientCallback = yyjson_obj_get(val, "ClientCallback");
+		if (clientCallback)
 		{
-			if (scriptObj["ClientCallback"].IsObject())
+			if (yyjson_is_obj(clientCallback))
 			{
 				ModScriptCallback callback;
 				callback.Context = ScriptContext::CLIENT;
 
-				if (scriptObj["ClientCallback"].HasMember("Before"))
+				yyjson_val* callbackBefore = yyjson_obj_get(clientCallback, "Before");
+				if (callbackBefore)
 				{
-					if (scriptObj["ClientCallback"]["Before"].IsString())
-						callback.BeforeCallback = scriptObj["ClientCallback"]["Before"].GetString();
+					if (yyjson_is_str(callbackBefore))
+						callback.BeforeCallback = yyjson_get_str(callbackBefore);
 					else
-						spdlog::warn("'Before' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'Before' ClientCallback for script '{}' is not a string, skipping...", path);
 				}
 
-				if (scriptObj["ClientCallback"].HasMember("After"))
+				yyjson_val* callbackAfter = yyjson_obj_get(clientCallback, "After");
+				if (callbackAfter)
 				{
-					if (scriptObj["ClientCallback"]["After"].IsString())
-						callback.AfterCallback = scriptObj["ClientCallback"]["After"].GetString();
+					if (yyjson_is_str(callbackAfter))
+						callback.AfterCallback = yyjson_get_str(callbackAfter);
 					else
-						spdlog::warn("'After' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'After' ClientCallback for script '{}' is not a string, skipping...", path);
 				}
 
-				if (scriptObj["ClientCallback"].HasMember("Destroy"))
+				yyjson_val* callbackDestroy = yyjson_obj_get(clientCallback, "Destroy");
+				if (callbackDestroy)
 				{
-					if (scriptObj["ClientCallback"]["Destroy"].IsString())
-						callback.DestroyCallback = scriptObj["ClientCallback"]["Destroy"].GetString();
+					if (yyjson_is_str(callbackDestroy))
+						callback.DestroyCallback = yyjson_get_str(callbackDestroy);
 					else
 						spdlog::warn(
-							"'Destroy' ClientCallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+							"'Destroy' ClientCallback for script '{}' is not a string, skipping...", path);
 				}
 
 				script.Callbacks.push_back(callback);
 			}
 			else
 			{
-				spdlog::warn("ClientCallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+				spdlog::warn("ClientCallback for script '{}' is not an object, skipping...", path);
 			}
 		}
 
-		if (scriptObj.HasMember("UICallback"))
+		yyjson_val* uiCallback = yyjson_obj_get(val, "UICallback");
+		if (uiCallback)
 		{
-			if (scriptObj["UICallback"].IsObject())
+			if (yyjson_is_obj(uiCallback))
 			{
 				ModScriptCallback callback;
 				callback.Context = ScriptContext::UI;
 
-				if (scriptObj["UICallback"].HasMember("Before"))
+				yyjson_val* callbackBefore = yyjson_obj_get(uiCallback, "Before");
+				if (callbackBefore)
 				{
-					if (scriptObj["UICallback"]["Before"].IsString())
-						callback.BeforeCallback = scriptObj["UICallback"]["Before"].GetString();
+					if (yyjson_is_str(callbackBefore))
+						callback.BeforeCallback = yyjson_get_str(callbackBefore);
 					else
-						spdlog::warn("'Before' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'Before' UICallback for script '{}' is not a string, skipping...", path);
 				}
 
-				if (scriptObj["UICallback"].HasMember("After"))
+				yyjson_val* callbackAfter = yyjson_obj_get(uiCallback, "After");
+				if (callbackAfter)
 				{
-					if (scriptObj["UICallback"]["After"].IsString())
-						callback.AfterCallback = scriptObj["UICallback"]["After"].GetString();
+					if (yyjson_is_str(callbackAfter))
+						callback.AfterCallback = yyjson_get_str(callbackAfter);
 					else
-						spdlog::warn("'After' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'After' UICallback for script '{}' is not a string, skipping...", path);
 				}
 
-				if (scriptObj["UICallback"].HasMember("Destroy"))
+				yyjson_val* callbackDestroy = yyjson_obj_get(uiCallback, "Destroy");
+				if (callbackDestroy)
 				{
-					if (scriptObj["UICallback"]["Destroy"].IsString())
-						callback.DestroyCallback = scriptObj["UICallback"]["Destroy"].GetString();
+					if (yyjson_is_str(callbackDestroy))
+						callback.DestroyCallback = yyjson_get_str(callbackDestroy);
 					else
-						spdlog::warn("'Destroy' UICallback for script '{}' is not a string, skipping...", scriptObj["Path"].GetString());
+						spdlog::warn("'Destroy' UICallback for script '{}' is not a string, skipping...", path);
 				}
 
 				script.Callbacks.push_back(callback);
 			}
 			else
 			{
-				spdlog::warn("UICallback for script '{}' is not an object, skipping...", scriptObj["Path"].GetString());
+				spdlog::warn("UICallback for script '{}' is not an object, skipping...", path);
 			}
 		}
 
@@ -412,58 +458,70 @@ void Mod::ParseScripts(rapidjson_document& json)
 	}
 }
 
-void Mod::ParseLocalization(rapidjson_document& json)
+void Mod::ParseLocalization(yyjson_val* json)
 {
-	if (!json.HasMember("Localisation"))
+	yyjson_val* localisationVal = yyjson_obj_get(json, "Localisation");
+	if (!localisationVal)
 		return;
 
-	if (!json["Localisation"].IsArray())
+	if (!yyjson_is_arr(localisationVal))
 	{
 		spdlog::warn("'Localisation' field is not an array, skipping...");
 		return;
 	}
 
-	for (auto& localisationStr : json["Localisation"].GetArray())
+	size_t idx, max;
+	yyjson_val* val;
+	yyjson_arr_foreach(localisationVal, idx, max, val)
 	{
-		if (!localisationStr.IsString())
+		if (!yyjson_is_str(val))
 		{
 			// not a string but we still GetString() to log it :trol:
-			spdlog::warn("Localisation '{}' is not a string, skipping...", localisationStr.GetString());
+			spdlog::warn("Localisation is not a string, skipping...");
 			continue;
 		}
 
-		LocalisationFiles.push_back(localisationStr.GetString());
+		const char* localisationStr = yyjson_get_str(val);
 
-		spdlog::info("'{}' registered Localisation '{}'", Name, localisationStr.GetString());
+		LocalisationFiles.push_back(localisationStr);
+
+		spdlog::info("'{}' registered Localisation '{}'", Name, localisationStr);
 	}
 }
 
-void Mod::ParseDependencies(rapidjson_document& json)
+void Mod::ParseDependencies(yyjson_val* json)
 {
-	if (!json.HasMember("Dependencies"))
+	yyjson_val* dependenciesVal = yyjson_obj_get(json, "Dependencies");
+	if (!dependenciesVal)
 		return;
 
-	if (!json["Dependencies"].IsObject())
+	if (!yyjson_is_obj(dependenciesVal))
 	{
 		spdlog::warn("'Dependencies' field is not an object, skipping...");
 		return;
 	}
 
-	for (auto v = json["Dependencies"].MemberBegin(); v != json["Dependencies"].MemberEnd(); v++)
+	size_t idx, max;
+	yyjson_val* key;
+	yyjson_val* val;
+	yyjson_obj_foreach(dependenciesVal, idx, max, key, val)
 	{
-		if (!v->name.IsString())
+		if (!yyjson_is_str(key))
 		{
-			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->name.GetString());
-			continue;
-		}
-		if (!v->value.IsString())
-		{
-			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->value.GetString());
+			spdlog::warn("Dependency constant key is not a string, skipping...");
 			continue;
 		}
 
-		if (DependencyConstants.find(v->name.GetString()) != DependencyConstants.end() &&
-			v->value.GetString() != DependencyConstants[v->name.GetString()])
+		std::string key_name = yyjson_get_str(key);
+		if (!yyjson_is_str(val))
+		{
+			spdlog::warn("Dependency constant value for '{}' is not a string, skipping...", key_name);
+			continue;
+		}
+
+		std::string val_name = yyjson_get_str(val);
+		if (DependencyConstants.find(key_name) != DependencyConstants.end() &&
+			val_name != DependencyConstants[key_name])
 		{
 			// this is fatal because otherwise the mod will probably try to use functions that dont exist,
 			// which will cause errors further down the line that are harder to debug
@@ -471,53 +529,59 @@ void Mod::ParseDependencies(rapidjson_document& json)
 				"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
 				"Change the constant name.",
 				Name,
-				v->name.GetString(),
-				v->value.GetString(),
-				DependencyConstants[v->name.GetString()]);
+				key_name,
+				val_name,
+				DependencyConstants[key_name]);
 			return;
 		}
 
-		if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
-			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
+		if (DependencyConstants.find(key_name) == DependencyConstants.end())
+			DependencyConstants.emplace(key_name, val_name);
 
-		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
+		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, key_name, val_name);
 	}
 }
 
-void Mod::ParsePluginDependencies(rapidjson_document& json)
+void Mod::ParsePluginDependencies(yyjson_val* json)
 {
-	if (!json.HasMember("PluginDependencies"))
+	yyjson_val* pluginDependenciesVal = yyjson_obj_get(json, "PluginDependencies");
+	if (!pluginDependenciesVal)
 		return;
 
-	if (!json["PluginDependencies"].IsArray())
+	if (!yyjson_is_arr(pluginDependenciesVal))
 	{
-		spdlog::warn("'PluginDependencies' field is not an object, skipping...");
+		spdlog::warn("'PluginDependencies' field is not an array, skipping...");
 		return;
 	}
 
-	for (auto& name : json["PluginDependencies"].GetArray())
+	size_t idx, max;
+	yyjson_val* val;
+	yyjson_arr_foreach(pluginDependenciesVal, idx, max, val)
 	{
-		if (!name.IsString())
+		if (!yyjson_is_str(val))
 			continue;
 
-		spdlog::info("Plugin Constant {} defined by {}", name.GetString(), Name);
+		const char* name = yyjson_get_str(val);
 
-		PluginDependencyConstants.push_back(name.GetString());
+		spdlog::info("Plugin Constant {} defined by {}", name, Name);
+
+		PluginDependencyConstants.push_back(name);
 	}
 }
 
-void Mod::ParseInitScript(rapidjson_document& json)
+void Mod::ParseInitScript(yyjson_val* json)
 {
-	if (!json.HasMember("InitScript"))
+	yyjson_val* initScriptVal = yyjson_obj_get(json, "InitScript");
+	if (!initScriptVal)
 		return;
 
-	if (!json["InitScript"].IsString())
+	if (!yyjson_is_str(initScriptVal))
 	{
 		spdlog::warn("'InitScript' field is not a string, skipping...");
 		return;
 	}
 
-	initScript = json["InitScript"].GetString();
+	initScript = yyjson_get_str(initScriptVal);
 }
 
 ModManager::ModManager()
@@ -531,6 +595,14 @@ ModManager::ModManager()
 	m_hKBActHash = STR_HASH("scripts\\kb_act.lst");
 
 	LoadMods();
+}
+
+ModManager::~ModManager()
+{
+	if (m_EnabledModsCfg)
+	{
+		yyjson_mut_doc_free(m_EnabledModsCfg);
+	}
 }
 
 struct Test
@@ -630,11 +702,25 @@ void ModManager::LoadMods()
 		while (enabledModsStream.peek() != EOF)
 			enabledModsStringStream << (char)enabledModsStream.get();
 
-		enabledModsStream.close();
-		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-			enabledModsStringStream.str().c_str());
+		std::string enabledModsString = enabledModsStringStream.str();
 
-		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
+		enabledModsStream.close();
+
+		yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
+		if (m_EnabledModsCfg)
+		{
+			yyjson_mut_doc_free(m_EnabledModsCfg);
+		}
+
+		yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(enabledModsString.c_str()), enabledModsString.length(), flg, &YYJSON_ALLOCATOR, NULL);
+
+		m_EnabledModsCfg = yyjson_doc_mut_copy(doc, &YYJSON_ALLOCATOR);
+
+		yyjson_doc_free(doc);
+
+		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+
+		m_bHasEnabledModsCfg = yyjson_mut_is_obj(root);
 	}
 
 	// get mod directories
@@ -718,8 +804,11 @@ void ModManager::LoadMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
+		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+		yyjson_mut_val* hasMod = yyjson_mut_obj_get(root, mod.Name.c_str());
+
+		if (m_bHasEnabledModsCfg && hasMod)
+			mod.m_bEnabled = yyjson_mut_is_true(hasMod);
 		else
 			mod.m_bEnabled = true;
 
@@ -747,10 +836,13 @@ void ModManager::LoadMods()
 		if (!mod.m_bEnabled)
 			continue;
 
+		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+		yyjson_mut_val* hasMod = yyjson_mut_obj_get(root, mod.Name.c_str());
+
 		// Add mod entry to enabledmods.json if it doesn't exist
-		if (!mod.m_bIsRemote && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		if (!mod.m_bIsRemote && !hasMod)
 		{
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), true, m_EnabledModsCfg.GetAllocator());
+			yyjson_mut_obj_add_true(m_EnabledModsCfg, root, mod.Name.c_str());
 			newModsDetected = true;
 		}
 
@@ -786,7 +878,8 @@ void ModManager::LoadMods()
 			std::stringstream vpkJsonStringStream;
 
 			bool bUseVPKJson = false;
-			rapidjson::Document dVpkJson;
+			yyjson_doc* dVpkJson = nullptr;
+			yyjson_val* root = nullptr;
 
 			if (!vpkJsonStream.fail())
 			{
@@ -794,10 +887,14 @@ void ModManager::LoadMods()
 					vpkJsonStringStream << (char)vpkJsonStream.get();
 
 				vpkJsonStream.close();
-				dVpkJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-					vpkJsonStringStream.str().c_str());
 
-				bUseVPKJson = !dVpkJson.HasParseError() && dVpkJson.IsObject();
+				std::string vpkJsonString = vpkJsonStringStream.str();
+
+				yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
+				dVpkJson = yyjson_read_opts(const_cast<char*>(vpkJsonString.c_str()), vpkJsonString.length(), flg, &YYJSON_ALLOCATOR, NULL);
+				root = yyjson_doc_get_root(dVpkJson);
+
+				bUseVPKJson = yyjson_is_obj(root);
 			}
 
 			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "vpk"))
@@ -814,8 +911,11 @@ void ModManager::LoadMods()
 					std::string vpkName = formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3);
 
 					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
-					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
-														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
+
+					yyjson_val* preload = yyjson_obj_get(root, "Preload");
+					yyjson_val* preloadVpk = yyjson_obj_get(preload, vpkName.c_str());
+
+					modVpk.m_bAutoLoad = !bUseVPKJson || (yyjson_is_obj(preload) && yyjson_is_true(preloadVpk));
 					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
 
 					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
@@ -832,7 +932,8 @@ void ModManager::LoadMods()
 			std::stringstream rpakJsonStringStream;
 
 			bool bUseRpakJson = false;
-			rapidjson::Document dRpakJson;
+			yyjson_doc* dRpakJson = nullptr;
+			yyjson_val* root = nullptr;
 
 			if (!rpakJsonStream.fail())
 			{
@@ -840,23 +941,29 @@ void ModManager::LoadMods()
 					rpakJsonStringStream << (char)rpakJsonStream.get();
 
 				rpakJsonStream.close();
-				dRpakJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-					rpakJsonStringStream.str().c_str());
 
-				bUseRpakJson = !dRpakJson.HasParseError() && dRpakJson.IsObject();
+				std::string rpakJsonString = rpakJsonStringStream.str();
+
+				yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
+				dRpakJson = yyjson_read_opts(const_cast<char*>(rpakJsonString.c_str()), rpakJsonString.length(), flg, &YYJSON_ALLOCATOR, 0);
+				root = yyjson_doc_get_root(dRpakJson);
+
+				bUseRpakJson = yyjson_is_obj(root);
 			}
 
 			// read pak aliases
-			if (bUseRpakJson && dRpakJson.HasMember("Aliases") && dRpakJson["Aliases"].IsObject())
+			yyjson_val* aliases = yyjson_obj_get(root, "Aliases");
+			if (bUseRpakJson && yyjson_is_obj(aliases))
 			{
-				for (rapidjson::Value::ConstMemberIterator iterator = dRpakJson["Aliases"].MemberBegin();
-					 iterator != dRpakJson["Aliases"].MemberEnd();
-					 iterator++)
+				size_t idx, max;
+				yyjson_val* key;
+				yyjson_val* val;
+				yyjson_obj_foreach(aliases, idx, max, key, val)
 				{
-					if (!iterator->name.IsString() || !iterator->value.IsString())
+					if (!yyjson_is_str(key)|| !yyjson_is_str(val))
 						continue;
 
-					mod.RpakAliases.insert(std::make_pair(iterator->name.GetString(), iterator->value.GetString()));
+					mod.RpakAliases.insert(std::make_pair(yyjson_get_str(key), yyjson_get_str(val)));
 				}
 			}
 
@@ -868,14 +975,19 @@ void ModManager::LoadMods()
 					std::string pakName(file.path().filename().string());
 
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
+
+					yyjson_val* preload = yyjson_obj_get(root, "Preload");
+					yyjson_val* preloadPak = yyjson_obj_get(preload, pakName.c_str());
+
 					modPak.m_bAutoLoad =
-						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
-										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+						!bUseRpakJson || (yyjson_is_obj(preload) && yyjson_is_true(preloadPak));
+
+					yyjson_val* postload = yyjson_obj_get(root, "Postload");
+					yyjson_val* postloadPak = yyjson_obj_get(postload, pakName.c_str());
 
 					// postload things
-					if (!bUseRpakJson ||
-						(dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName)))
-						modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
+					if (!bUseRpakJson || (yyjson_is_obj(postload) && yyjson_is_str(postloadPak)))
+						modPak.m_sLoadAfterPak = yyjson_get_str(postloadPak);
 
 					modPak.m_sPakName = pakName;
 
@@ -985,10 +1097,8 @@ void ModManager::LoadMods()
 	// If there are new mods, we write entries accordingly in enabledmods.json
 	if (newModsDetected)
 	{
-		std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
-		rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
-		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
-		m_EnabledModsCfg.Accept(writer);
+		std::string outPath = GetNorthstarPrefix() + "/enabledmods.json";
+		yyjson_mut_write_file(outPath.c_str(), m_EnabledModsCfg, 0, NULL, NULL);
 	}
 
 	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
@@ -1015,10 +1125,10 @@ void ModManager::LoadMods()
 	}
 
 	// build modinfo obj for masterserver
-	rapidjson_document modinfoDoc;
-	auto& alloc = modinfoDoc.GetAllocator();
-	modinfoDoc.SetObject();
-	modinfoDoc.AddMember("Mods", rapidjson::kArrayType, alloc);
+	yyjson_mut_doc *doc = yyjson_mut_doc_new(&YYJSON_ALLOCATOR);
+	yyjson_mut_val *root = yyjson_mut_obj(doc);
+	yyjson_mut_doc_set_root(doc, root);
+	yyjson_mut_val* mods = yyjson_mut_obj_add_arr(doc, root, "Mods");
 
 	int currentModIndex = 0;
 	for (Mod& mod : m_LoadedMods)
@@ -1026,20 +1136,21 @@ void ModManager::LoadMods()
 		if (!mod.m_bEnabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
 			continue;
 
-		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
+		yyjson_mut_val* modObj = yyjson_mut_arr_add_obj(doc, mods);
+		yyjson_mut_obj_add_strcpy(doc, modObj, "Name", mod.Name.c_str());
+		yyjson_mut_obj_add_strcpy(doc, modObj, "Version", mod.Version.c_str());
+		yyjson_mut_obj_add_bool(doc, modObj, "RequiredOnClient", mod.RequiredOnClient);
+		yyjson_mut_obj_add_strcpy(doc, modObj, "Pdiff", mod.Pdiff.c_str());
 
 		currentModIndex++;
 	}
 
-	rapidjson::StringBuffer buffer;
-	buffer.Clear();
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	modinfoDoc.Accept(writer);
-	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
+
+	const char *json = yyjson_mut_write(doc, 0, NULL);
+	g_pMasterServerManager->m_sOwnModInfoJson = std::string(json);
+
+	_free_base((void*)json);
+	yyjson_mut_doc_free(doc);
 
 	m_bHasLoadedMods = true;
 }
@@ -1053,7 +1164,10 @@ void ModManager::UnloadMods()
 	g_CustomAudioManager.ClearAudioOverrides();
 
 	if (!m_bHasEnabledModsCfg)
-		m_EnabledModsCfg.SetObject();
+	{
+		yyjson_mut_val* root = yyjson_mut_obj(m_EnabledModsCfg);
+		yyjson_mut_doc_set_root(m_EnabledModsCfg, root);
+	}
 
 	for (Mod& mod : m_LoadedMods)
 	{
@@ -1067,16 +1181,17 @@ void ModManager::UnloadMods()
 		// should we be doing this here or should scripts be doing this manually?
 		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
 		// what we wanna do
-		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
 
-		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
+		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+		yyjson_mut_val* hasMod = yyjson_mut_obj_get(root, mod.Name.c_str());
+		if (!hasMod)
+			yyjson_mut_obj_add_bool(m_EnabledModsCfg, root, mod.Name.c_str(), mod.m_bEnabled);
+		else
+			yyjson_mut_set_bool(hasMod, mod.m_bEnabled);
 	}
 
-	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
-	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
-	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
-	m_EnabledModsCfg.Accept(writer);
+	std::string outPath = GetNorthstarPrefix() + "/enabledmods.json";
+	yyjson_mut_write_file(outPath.c_str(), m_EnabledModsCfg, 0, NULL, NULL);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();

@@ -1,13 +1,11 @@
 #pragma once
 
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include "yyjson.h"
 
 template <ScriptContext context> void EncodeJSONTable(
 	SQTable* table,
-	rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj,
-	rapidjson::MemoryPoolAllocator<SourceAllocator>& allocator);
+	yyjson_mut_doc* doc,
+	yyjson_mut_val* root);
 
 template <ScriptContext context> void
-DecodeJsonTable(HSquirrelVM* sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj);
+DecodeJsonTable(HSquirrelVM* sqvm, yyjson_val* obj);
