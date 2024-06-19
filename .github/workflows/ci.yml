@@ -9,9 +9,17 @@ jobs:
   build:
     runs-on: windows-2022
     needs: [format-check, format-check-cmake-files]
+    strategy:
+      matrix:
+        config:
+          - { name: "MSVC", cc: cl }
+          - { name: "LLVM", cc: clang-cl  }
+    env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cc }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'true'
       - name: Setup msvc
@@ -34,14 +42,14 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: NorthstarLauncher-${{ steps.extract.outputs.commit }}
+          name: NorthstarLauncher-${{ matrix.config.name }}-${{ steps.extract.outputs.commit }}
           path: |
             game/
 
   format-check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: DoozyX/clang-format-lint-action@v0.16.2
       with:
         source: 'primedev'
@@ -53,7 +61,7 @@ jobs:
   format-check-cmake-files:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: puneetmatharu/cmake-format-lint-action@v1.0.4
       with:
         args: "--in-place"
