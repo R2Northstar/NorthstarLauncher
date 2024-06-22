@@ -44,6 +44,32 @@ void* _calloc_base(size_t n, size_t size)
 	return memory;
 }
 
+void* _recalloc_base(void* const block, size_t const count, size_t const size)
+{
+	if (!block)
+		return _calloc_base(count, size);
+
+	const size_t new_size = count * size;
+    const size_t old_size = _msize(block);
+
+    void* const memory = _realloc_base(block, new_size);
+
+    if (memory && old_size < new_size)
+    {
+        memset(static_cast<char*>(memory) + old_size, 0, new_size - old_size);
+    }
+
+    return memory;
+}
+
+size_t _msize(void* const block)
+{
+	if (!g_pMemAllocSingleton)
+		TryCreateGlobalMemAlloc();
+
+	return g_pMemAllocSingleton->m_vtable->GetSize(g_pMemAllocSingleton, block);	
+}
+
 char* _strdup_base(const char* src)
 {
 	char* str;
