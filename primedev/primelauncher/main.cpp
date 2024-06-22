@@ -476,3 +476,8 @@ int main(int argc, char* argv[])
 	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
 		NULL, NULL, NULL, 0); // the parameters aren't really used anyways
 }
+
+int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char*, int nShowCmd)
+{
+	return main(__argc, __argv);
+}

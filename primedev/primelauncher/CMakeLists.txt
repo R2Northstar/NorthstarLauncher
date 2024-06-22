@@ -1,6 +1,6 @@
 # NorthstarLauncher
 
-add_executable(NorthstarLauncher "main.cpp" "resources.rc")
+add_executable(NorthstarLauncher WIN32 "main.cpp" "resources.rc")
 
 target_compile_definitions(NorthstarLauncher PRIVATE UNICODE _UNICODE)
 
