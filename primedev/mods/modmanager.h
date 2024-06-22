@@ -1,9 +1,9 @@
 #pragma once
 #include "core/convar/convar.h"
 #include "core/memalloc.h"
+#include "core/json.h"
 #include "squirrel/squirrel.h"
 
-#include "yyjson.h"
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -152,7 +152,7 @@ class ModManager
 private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
-	yyjson_mut_doc* m_EnabledModsCfg = nullptr;
+	yyjson::MutDocument* m_EnabledModsCfg = nullptr;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;

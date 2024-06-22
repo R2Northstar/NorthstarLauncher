@@ -129,18 +129,19 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 			{
 				m_bSuccessfullyConnected = true;
 
-				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson::Document doc(readBuffer);
 
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"Failed reading origin auth info response: encountered parse error \"{}\"",
 						err.msg);
 					return;
 				}
 
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson_val* root = doc.get_root();
 
 				yyjson_val* success;
 				if (!yyjson_is_obj(root) || !(success = yyjson_obj_get(root, "success")))
@@ -227,18 +228,19 @@ void MasterServerManager::RequestServerList()
 			{
 				m_bSuccessfullyConnected = true;
 
-				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson::Document doc(readBuffer);
 
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"Failed reading masterserver response: encountered parse error \"{}\"",
 						err.msg);
 					return;
 				}
 
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson_val* root = doc.get_root();
 
 				if (yyjson_is_obj(root) && yyjson_obj_get(root, "error"))
 				{
@@ -397,17 +399,19 @@ void MasterServerManager::RequestMainMenuPromos()
 				m_bSuccessfullyConnected = true;
 
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson::Document doc(readBuffer);
 
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"Failed reading masterserver main menu promos response: encountered parse error \"{}\"",
 						err.msg);
 					return;
 				}
 
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson_val* root = doc.get_root();
 
 				if (!yyjson_is_obj(root))
 				{
@@ -542,17 +546,19 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 				m_bSuccessfullyConnected = true;
 
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson::Document doc(readBuffer);
 
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
 						err.msg);
 					return;
 				}
 
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson_val* root = doc.get_root();
 
 				if (!yyjson_is_obj(root))
 				{
@@ -700,17 +706,19 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 				m_bSuccessfullyConnected = true;
 
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson::Document doc(readBuffer);
 
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"Failed reading masterserver authentication response: encountered parse error \"{}\"",
 						err.msg);
 					return;
 				}
 
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson_val* root = doc.get_root();
 
 				if (!yyjson_is_obj(root))
 				{
@@ -840,17 +848,18 @@ void MasterServerManager::WritePlayerPersistentData(const char* playerId, const 
 
 void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 {
-	yyjson_read_err err;
-	yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(data.c_str()), data.length(), 0, &YYJSON_ALLOCATOR, &err);
+	yyjson::Document doc(data);
 
-	if (!doc)
+	if (!doc.is_valid())
 	{
+		yyjson_read_err err = doc.get_err();
+
 		// note: it's okay to print the data as-is since we've already checked that it actually came from Atlas
 		spdlog::error("invalid Atlas connectionless packet request ({}): {}", data, err.msg);
 		return;
 	}
 
-	yyjson_val* root = yyjson_doc_get_root(doc);
+	yyjson_val* root = doc.get_root();
 
 	yyjson_val* typeObj = yyjson_obj_get(root, "type");
 	if (!typeObj || !yyjson_is_str(typeObj))
@@ -928,12 +937,14 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			if (respStatus != 200)
 			{
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(pdata.c_str()), pdata.length(), 0, &YYJSON_ALLOCATOR, &err);
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson::Document doc(pdata);
+				yyjson_val* root = doc.get_root();
 
 				yyjson_val* error;
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"failed to parse Atlas connect pdata request: {}",
 						err.msg);
@@ -1032,12 +1043,14 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 			if (respStatus != 200)
 			{
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(buf.c_str()), buf.length(), 0, &YYJSON_ALLOCATOR, &err);
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson::Document doc(buf);
+				yyjson_val* root = doc.get_root();
 
 				yyjson_val* error;
-				if (!doc)
+				if (!doc.is_valid())
 				{
+					yyjson_read_err err = doc.get_err();
+
 					spdlog::error(
 						"failed to parse Atlas connect pdata request: {}",
 						err.msg);
@@ -1357,20 +1370,24 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 			if (result == CURLcode::CURLE_OK)
 			{
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
+				yyjson::Document doc(readBuffer);
 
 				// If we could not parse the JSON or it isn't an object, assume the MS is either wrong or we're completely out of date.
 				// No retry.
-				if (!doc)
+				if (!doc.is_valid())
 				{
 					if (shouldLogError)
+					{
+						yyjson_read_err err = doc.get_err();
+
 						spdlog::error(
 							"Failed reading masterserver authentication response: encountered parse error \"{}\"",
 							err.msg);
+					}
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson_val* root = doc.get_root();
 
 				if (!yyjson_is_obj(root))
 				{
@@ -1542,13 +1559,13 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 			if (result == CURLcode::CURLE_OK)
 			{
 				yyjson_read_err err;
-				yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, &YYJSON_ALLOCATOR, &err);
-				yyjson_val* root = yyjson_doc_get_root(doc);
+				yyjson::Document doc(readBuffer);
+				yyjson_val* root = doc.get_root();
 
 				const char* updatedId = nullptr;
 				const char* updatedAuthToken = nullptr;
 
-				if (doc && yyjson_is_obj(root))
+				if (doc.is_valid() && yyjson_is_obj(root))
 				{
 					const char* id = yyjson_get_str(yyjson_obj_get(root, "id"));
 					if (id)

@@ -23,15 +23,15 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 
 	m_ModDirectory = modDir;
 
-	yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
-	yyjson_read_err err;
-	yyjson_doc* doc = yyjson_read_opts(jsonBuf, strlen(jsonBuf), flg, &YYJSON_ALLOCATOR, &err);
+	yyjson::Document doc(jsonBuf);
 
 	spdlog::info("Loading mod file at path '{}'", modDir.string());
 
 	// fail if parse error
-	if (!doc)
+	if (!doc.is_valid())
 	{
+		yyjson_read_err err = doc.get_err();
+
 		spdlog::error(
 			"Failed reading mod file {}: encountered parse error \"{}\" at offset {}",
 			(modDir / "mod.json").string(),
@@ -40,7 +40,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 		return;
 	}
 
-	yyjson_val* root = yyjson_doc_get_root(doc);
+	yyjson_val* root = doc.get_root();
 
 	// fail if it's not a json obj (could be an array, string, etc)
 	if (!yyjson_is_obj(root))
@@ -601,7 +601,7 @@ ModManager::~ModManager()
 {
 	if (m_EnabledModsCfg)
 	{
-		yyjson_mut_doc_free(m_EnabledModsCfg);
+		delete m_EnabledModsCfg;
 	}
 }
 
@@ -706,19 +706,15 @@ void ModManager::LoadMods()
 
 		enabledModsStream.close();
 
-		yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
 		if (m_EnabledModsCfg)
 		{
-			yyjson_mut_doc_free(m_EnabledModsCfg);
+			delete m_EnabledModsCfg;
 		}
 
-		yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(enabledModsString.c_str()), enabledModsString.length(), flg, &YYJSON_ALLOCATOR, NULL);
+		yyjson::Document doc(enabledModsString);
 
-		m_EnabledModsCfg = yyjson_doc_mut_copy(doc, &YYJSON_ALLOCATOR);
-
-		yyjson_doc_free(doc);
-
-		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+		m_EnabledModsCfg = new yyjson::MutDocument(doc);
+		yyjson_mut_val* root = m_EnabledModsCfg->get_root();
 
 		m_bHasEnabledModsCfg = yyjson_mut_is_obj(root);
 	}
@@ -804,7 +800,7 @@ void ModManager::LoadMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+		yyjson_mut_val* root = m_EnabledModsCfg->get_root();
 		yyjson_mut_val* hasMod = yyjson_mut_obj_get(root, mod.Name.c_str());
 
 		if (m_bHasEnabledModsCfg && hasMod)
@@ -836,13 +832,15 @@ void ModManager::LoadMods()
 		if (!mod.m_bEnabled)
 			continue;
 
-		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+
+		yyjson_mut_doc* doc = m_EnabledModsCfg->get_doc();
+		yyjson_mut_val* root = m_EnabledModsCfg->get_root();
 		yyjson_mut_val* hasMod = yyjson_mut_obj_get(root, mod.Name.c_str());
 
 		// Add mod entry to enabledmods.json if it doesn't exist
 		if (!mod.m_bIsRemote && !hasMod)
 		{
-			yyjson_mut_obj_add_true(m_EnabledModsCfg, root, mod.Name.c_str());
+			yyjson_mut_obj_add_true(doc, root, mod.Name.c_str());
 			newModsDetected = true;
 		}
 
@@ -878,7 +876,7 @@ void ModManager::LoadMods()
 			std::stringstream vpkJsonStringStream;
 
 			bool bUseVPKJson = false;
-			yyjson_doc* dVpkJson = nullptr;
+			yyjson::Document dVpkJson;
 			yyjson_val* root = nullptr;
 
 			if (!vpkJsonStream.fail())
@@ -890,9 +888,8 @@ void ModManager::LoadMods()
 
 				std::string vpkJsonString = vpkJsonStringStream.str();
 
-				yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
-				dVpkJson = yyjson_read_opts(const_cast<char*>(vpkJsonString.c_str()), vpkJsonString.length(), flg, &YYJSON_ALLOCATOR, NULL);
-				root = yyjson_doc_get_root(dVpkJson);
+				dVpkJson.read(vpkJsonString);
+				root = dVpkJson.get_root();
 
 				bUseVPKJson = yyjson_is_obj(root);
 			}
@@ -932,7 +929,7 @@ void ModManager::LoadMods()
 			std::stringstream rpakJsonStringStream;
 
 			bool bUseRpakJson = false;
-			yyjson_doc* dRpakJson = nullptr;
+			yyjson::Document dRpakJson;
 			yyjson_val* root = nullptr;
 
 			if (!rpakJsonStream.fail())
@@ -944,9 +941,8 @@ void ModManager::LoadMods()
 
 				std::string rpakJsonString = rpakJsonStringStream.str();
 
-				yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
-				dRpakJson = yyjson_read_opts(const_cast<char*>(rpakJsonString.c_str()), rpakJsonString.length(), flg, &YYJSON_ALLOCATOR, 0);
-				root = yyjson_doc_get_root(dRpakJson);
+				dRpakJson.read(rpakJsonString);
+				root = dRpakJson.get_root();
 
 				bUseRpakJson = yyjson_is_obj(root);
 			}
@@ -1097,8 +1093,9 @@ void ModManager::LoadMods()
 	// If there are new mods, we write entries accordingly in enabledmods.json
 	if (newModsDetected)
 	{
+		yyjson_mut_doc* doc = m_EnabledModsCfg->get_doc();
 		std::string outPath = GetNorthstarPrefix() + "/enabledmods.json";
-		yyjson_mut_write_file(outPath.c_str(), m_EnabledModsCfg, 0, NULL, NULL);
+		yyjson_mut_write_file(outPath.c_str(), doc, 0, NULL, NULL);
 	}
 
 	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
@@ -1125,7 +1122,8 @@ void ModManager::LoadMods()
 	}
 
 	// build modinfo obj for masterserver
-	yyjson_mut_doc *doc = yyjson_mut_doc_new(&YYJSON_ALLOCATOR);
+	yyjson::MutDocument ddoc;
+	yyjson_mut_doc *doc = ddoc.get_doc();
 	yyjson_mut_val *root = yyjson_mut_obj(doc);
 	yyjson_mut_doc_set_root(doc, root);
 	yyjson_mut_val* mods = yyjson_mut_obj_add_arr(doc, root, "Mods");
@@ -1150,13 +1148,14 @@ void ModManager::LoadMods()
 	g_pMasterServerManager->m_sOwnModInfoJson = std::string(json);
 
 	_free_base((void*)json);
-	yyjson_mut_doc_free(doc);
 
 	m_bHasLoadedMods = true;
 }
 
 void ModManager::UnloadMods()
 {
+	yyjson_mut_doc* doc = m_EnabledModsCfg->get_doc();
+
 	// clean up stuff from mods before we unload
 	m_ModFiles.clear();
 	fs::remove_all(GetCompiledAssetsPath());
@@ -1165,8 +1164,8 @@ void ModManager::UnloadMods()
 
 	if (!m_bHasEnabledModsCfg)
 	{
-		yyjson_mut_val* root = yyjson_mut_obj(m_EnabledModsCfg);
-		yyjson_mut_doc_set_root(m_EnabledModsCfg, root);
+		yyjson_mut_val* root = yyjson_mut_obj(doc);
+		yyjson_mut_doc_set_root(doc, root);
 	}
 
 	for (Mod& mod : m_LoadedMods)
@@ -1182,16 +1181,16 @@ void ModManager::UnloadMods()
 		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
 		// what we wanna do
 
-		yyjson_mut_val* root = yyjson_mut_doc_get_root(m_EnabledModsCfg);
+		yyjson_mut_val* root = yyjson_mut_doc_get_root(doc);
 		yyjson_mut_val* hasMod = yyjson_mut_obj_get(root, mod.Name.c_str());
 		if (!hasMod)
-			yyjson_mut_obj_add_bool(m_EnabledModsCfg, root, mod.Name.c_str(), mod.m_bEnabled);
+			yyjson_mut_obj_add_bool(doc, root, mod.Name.c_str(), mod.m_bEnabled);
 		else
 			yyjson_mut_set_bool(hasMod, mod.m_bEnabled);
 	}
 
 	std::string outPath = GetNorthstarPrefix() + "/enabledmods.json";
-	yyjson_mut_write_file(outPath.c_str(), m_EnabledModsCfg, 0, NULL, NULL);
+	yyjson_mut_write_file(outPath.c_str(), doc, 0, NULL, NULL);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();

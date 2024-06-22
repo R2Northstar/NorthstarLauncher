@@ -49,13 +49,13 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		return;
 	}
 
-	yyjson_read_flag flg = YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS;
-	yyjson_read_err err;
-	yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(data.c_str()), data.length(), flg, &YYJSON_ALLOCATOR, &err);
+	yyjson::Document doc(data);
 
 	// fail if parse error
-	if (!doc)
+	if (!doc.is_valid())
 	{
+		yyjson_read_err err = doc.get_err();
+
 		spdlog::error(
 			"Failed reading audio override file {}: encountered parse error \"{}\" at offset {}",
 			path.string(),
@@ -64,7 +64,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 		return;
 	}
 
-	yyjson_val* root = yyjson_doc_get_root(doc);
+	yyjson_val* root = doc.get_root();
 
 	// fail if it's not a json obj (could be an array, string, etc)
 	if (!yyjson_is_obj(root))

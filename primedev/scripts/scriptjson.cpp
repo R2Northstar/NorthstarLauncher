@@ -222,8 +222,8 @@ ADD_SQFUNC(
 	const bool bFatalParseErrors = g_pSquirrel<context>->getbool(sqvm, 2);
 
 	yyjson_read_err err;
-	yyjson_doc* doc = yyjson_read_opts(const_cast<char*>(pJson), strlen(pJson), 9, &YYJSON_ALLOCATOR, &err);
-	if (!doc)
+	yyjson::Document doc(pJson);
+	if (!doc.is_valid())
 	{
 		g_pSquirrel<context>->newtable(sqvm);
 
@@ -242,7 +242,7 @@ ADD_SQFUNC(
 		return SQRESULT_NOTNULL;
 	}
 
-	yyjson_val* root = yyjson_doc_get_root(doc);
+	yyjson_val* root = doc.get_root();
 
 	if (!yyjson_is_obj(root))
 	{
@@ -260,8 +260,6 @@ ADD_SQFUNC(
 
 	DecodeJsonTable<context>(sqvm, root);
 
-	yyjson_doc_free(doc);
-
 	return SQRESULT_NOTNULL;
 }
 
@@ -272,7 +270,8 @@ ADD_SQFUNC(
 	"converts a squirrel table to a json string",
 	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
-	yyjson_mut_doc* doc = yyjson_mut_doc_new(&YYJSON_ALLOCATOR);
+	yyjson::MutDocument ddoc;
+	yyjson_mut_doc* doc = ddoc.get_doc();
 	yyjson_mut_val* root = yyjson_mut_obj(doc);
 	yyjson_mut_doc_set_root(doc, root);
 
@@ -286,7 +285,6 @@ ADD_SQFUNC(
 	g_pSquirrel<context>->pushstring(sqvm, pJsonString, -1);
 
 	_free_base((void*)pJsonString);
-	yyjson_mut_doc_free(doc);
 
 	return SQRESULT_NOTNULL;
 }

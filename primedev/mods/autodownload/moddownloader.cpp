@@ -90,9 +90,9 @@ void ModDownloader::FetchModsListFromAPI()
 			spdlog::info("Loading mods configuration...");
 
 			yyjson_read_err err;
-			yyjson_doc* verifiedModsJson = yyjson_read_opts(const_cast<char*>(readBuffer.c_str()), readBuffer.length(), 0, NULL, &err);
+			yyjson::Document verifiedModsJson(readBuffer);
 
-			if (!verifiedModsJson)
+			if (!verifiedModsJson.is_valid())
 			{
 				spdlog::error(
 					"Failed reading mods configuration: encountered parse error \"{}\" at offset {}",
@@ -101,7 +101,7 @@ void ModDownloader::FetchModsListFromAPI()
 				return;
 			}
 
-			yyjson_val* root = yyjson_doc_get_root(verifiedModsJson);
+			yyjson_val* root = verifiedModsJson.get_root();
 			if (!yyjson_is_obj(root))
 			{
 				spdlog::error("Failed reading mods configuration: file is not a JSON object");

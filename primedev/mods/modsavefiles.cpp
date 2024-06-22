@@ -538,7 +538,8 @@ ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | Scri
 template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 {
 	// new document
-	yyjson_mut_doc* doc = yyjson_mut_doc_new(&YYJSON_ALLOCATOR);
+	yyjson::MutDocument ddoc;
+	yyjson_mut_doc* doc = ddoc.get_doc();
 	yyjson_mut_val* root = yyjson_mut_obj(doc);
 	yyjson_mut_doc_set_root(doc, root);
 
@@ -554,7 +555,6 @@ template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
 	std::string buffer = pBuffer;
 
 	_free_base((void*)pBuffer);
-	yyjson_mut_doc_free(doc);
 
 	// return the converted string
 	return buffer;
