@@ -62,7 +62,7 @@ void* _recalloc_base(void* const block, size_t const count, size_t const size)
 	return memory;
 }
 
-size_t _msize_base(void* const block)
+size_t _msize(void* const block)
 {
 	if (!g_pMemAllocSingleton)
 		TryCreateGlobalMemAlloc();
@@ -111,11 +111,6 @@ extern "C" __declspec(noinline) void* __cdecl _recalloc_dbg(void* const block, s
 extern "C" __declspec(noinline) void __cdecl _free_dbg(void* const block, int const)
 {
     return _free_base(block);
-}
-
-extern "C" __declspec(noinline) size_t __cdecl _msize_dbg(void* const block, int const)
-{
-    return _msize_base(block);
 }
 
 void* operator new(size_t n)
