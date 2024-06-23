@@ -62,7 +62,7 @@ void* _recalloc_base(void* const block, size_t const count, size_t const size)
 	return memory;
 }
 
-size_t _msize(void* const block)
+size_t _msize_base(void* const block)
 {
 	if (!g_pMemAllocSingleton)
 		TryCreateGlobalMemAlloc();
@@ -84,6 +84,38 @@ char* _strdup_base(const char* src)
 		*p++ = *src++;
 	*p = '\0';
 	return str;
+}
+
+
+// Needed to redirect allocations for debug builds
+extern "C" __declspec(noinline) void* __cdecl _malloc_dbg(size_t const size, int const, char const* const, int const)
+{ 
+    return _malloc_base(size);
+}
+
+extern "C" __declspec(noinline) void* __cdecl _calloc_dbg(size_t const count, size_t const element_size, int const, char const* const, int const)
+{
+    return _calloc_base(count, element_size);
+}
+
+extern "C" __declspec(noinline) void* __cdecl _realloc_dbg(void* const block, size_t const requested_size, int const, char const* const, int const)
+{
+    return _realloc_base(block, requested_size);
+}
+
+extern "C" __declspec(noinline) void* __cdecl _recalloc_dbg(void* const block, size_t const count, size_t const element_size, int const, char const* const, int const)
+{
+    return _recalloc_base(block, count, element_size);
+}
+
+extern "C" __declspec(noinline) void __cdecl _free_dbg(void* const block, int const)
+{
+    return _free_base(block);
+}
+
+extern "C" __declspec(noinline) size_t __cdecl _msize_dbg(void* const block, int const)
+{
+    return _msize_base(block);
 }
 
 void* operator new(size_t n)
