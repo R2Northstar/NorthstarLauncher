@@ -135,7 +135,7 @@ FileHandle_t, __fastcall, (IFileSystem* filesystem, const char* pPath, const cha
 
 HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* pVpkPath))
 {
-	NS::log::fs->info("MountVPK {}", pVpkPath);
+	NS::log::fs->debug("MountVPK {}", pVpkPath);
 	VPKData* ret = MountVPK(fileSystem, pVpkPath);
 
 	for (Mod mod : g_pModManager->m_LoadedMods)

@@ -61,14 +61,14 @@ char*, __fastcall, ())
 	{
 		if (!CheckLangAudioExists((char*)forcedLanguage))
 		{
-			spdlog::info(
+			spdlog::debug(
 				"User tried to force the language (-language) to \"{}\", but audio for this language doesn't exist and the game is bound "
 				"to error, falling back to next option...",
 				forcedLanguage);
 		}
 		else
 		{
-			spdlog::info("User forcing the language (-language) to: {}", forcedLanguage);
+			spdlog::debug("User forcing the language (-language) to: {}", forcedLanguage);
 			strncpy(ingameLang1, forcedLanguage, 256);
 			return ingameLang1;
 		}
@@ -81,12 +81,12 @@ char*, __fastcall, ())
 		{
 			if (strcmp(lang, "russian") !=
 				0) // don't log for "russian" since it's the default and that means Origin detection just didn't change it most likely
-				spdlog::info(
+				spdlog::debug(
 					"Origin detected language \"{}\", but we do not have audio for it installed, falling back to the next option", lang);
 		}
 		else
 		{
-			spdlog::info("Origin detected language: {}", lang);
+			spdlog::debug("Origin detected language: {}", lang);
 			return lang;
 		}
 	}

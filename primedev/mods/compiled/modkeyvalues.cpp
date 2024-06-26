@@ -7,7 +7,7 @@ AUTOHOOK_INIT()
 
 void ModManager::TryBuildKeyValues(const char* filename)
 {
-	spdlog::info("Building KeyValues for file {}", filename);
+	spdlog::debug("Building KeyValues for file {}", filename);
 
 	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(filename));
 	fs::path compiledPath = GetCompiledAssetsPath() / filename;

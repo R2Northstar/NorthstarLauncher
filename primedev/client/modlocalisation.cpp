@@ -14,7 +14,7 @@ bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, bo
 
 	bool ret = CLocalize__AddFile(pVguiLocalize, path, pathId, bIncludeFallbackSearchPaths);
 	if (ret)
-		spdlog::info("Loaded localisation file {} successfully", path);
+		spdlog::debug("Loaded localisation file {} successfully", path);
 
 	return true;
 }

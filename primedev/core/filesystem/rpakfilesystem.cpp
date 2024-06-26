@@ -221,7 +221,7 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 	}
 
 	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
-	NS::log::rpak->info("LoadPakAsync {} {}", pPath, iPakHandle);
+	NS::log::rpak->debug("LoadPakAsync {} {}", pPath, iPakHandle);
 
 	// trak the pak
 	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
@@ -326,7 +326,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		}
 
 	LOG_STARPAK:
-		NS::log::rpak->info("LoadStreamPak: {}", filename.string());
+		NS::log::rpak->debug("LoadStreamPak: {}", filename.string());
 	}
 
 	return ReadFileAsync(pPath, pCallback);

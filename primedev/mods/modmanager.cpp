@@ -29,7 +29,7 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	rapidjson_document modJson;
 	modJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(jsonBuf);
 
-	spdlog::info("Loading mod file at path '{}'", modDir.string());
+	spdlog::debug("Loading mod file at path '{}'", modDir.string());
 
 	// fail if parse error
 	if (modJson.HasParseError())
@@ -171,7 +171,7 @@ void Mod::ParseConVars(rapidjson_document& json)
 
 		ConVars.push_back(convar);
 
-		spdlog::info("'{}' contains ConVar '{}'", Name, convar->Name);
+		spdlog::debug("'{}' contains ConVar '{}'", Name, convar->Name);
 	}
 }
 
@@ -408,7 +408,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 
 		Scripts.push_back(script);
 
-		spdlog::info("'{}' contains Script '{}'", Name, script.Path);
+		spdlog::debug("'{}' contains Script '{}'", Name, script.Path);
 	}
 }
 
@@ -434,7 +434,7 @@ void Mod::ParseLocalization(rapidjson_document& json)
 
 		LocalisationFiles.push_back(localisationStr.GetString());
 
-		spdlog::info("'{}' registered Localisation '{}'", Name, localisationStr.GetString());
+		spdlog::debug("'{}' registered Localisation '{}'", Name, localisationStr.GetString());
 	}
 }
 
@@ -480,7 +480,7 @@ void Mod::ParseDependencies(rapidjson_document& json)
 		if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
 			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
 
-		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
+		spdlog::debug("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
 	}
 }
 
@@ -500,7 +500,7 @@ void Mod::ParsePluginDependencies(rapidjson_document& json)
 		if (!name.IsString())
 			continue;
 
-		spdlog::info("Plugin Constant {} defined by {}", name.GetString(), Name);
+		spdlog::debug("Plugin Constant {} defined by {}", name.GetString(), Name);
 
 		PluginDependencyConstants.push_back(name.GetString());
 	}
@@ -913,7 +913,7 @@ void ModManager::LoadMods()
 							if (!str.empty())
 							{
 								mod.StarpakPaths.push_back(STR_HASH(str));
-								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
+								spdlog::debug("Mod {} registered starpak '{}'", mod.Name, str);
 								str = "";
 							}
 						}

@@ -110,7 +110,7 @@ bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
 	{
 		if (MH_EnableHook(addr) == MH_OK)
 		{
-			spdlog::info("Enabling hook {}", pFuncName);
+			spdlog::debug("Enabling hook {}", pFuncName);
 			return true;
 		}
 		else
@@ -215,7 +215,7 @@ void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFun
 	if (MH_CreateHook(pTarget, pDetour, (LPVOID*)ppOriginal) == MH_OK)
 	{
 		if (MH_EnableHook(pTarget) == MH_OK)
-			spdlog::info("Enabling hook {}", pStrippedFuncName);
+			spdlog::debug("Enabling hook {}", pStrippedFuncName);
 		else
 			spdlog::error("MH_EnableHook failed for function {}", pStrippedFuncName);
 	}

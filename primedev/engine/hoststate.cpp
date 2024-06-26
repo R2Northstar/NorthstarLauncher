@@ -58,7 +58,7 @@ AUTOHOOK(CHostState__State_NewGame, engine.dll + 0x16E7D0,
 void, __fastcall, (CHostState* self))
 // clang-format on
 {
-	spdlog::info("HostState: NewGame");
+	spdlog::debug("HostState: NewGame");
 
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
@@ -71,7 +71,7 @@ void, __fastcall, (CHostState* self))
 
 	double dStartTime = Plat_FloatTime();
 	CHostState__State_NewGame(self);
-	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
+	spdlog::debug("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	// setup server presence
 	g_pServerPresence->CreatePresence();
@@ -90,7 +90,7 @@ void, __fastcall, (CHostState* self))
 	// singleplayer server starting
 	// useless in 99% of cases but without it things could potentially break very much
 
-	spdlog::info("HostState: LoadGame");
+	spdlog::debug("HostState: LoadGame");
 
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "exec autoexec_ns_server", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
@@ -101,7 +101,7 @@ void, __fastcall, (CHostState* self))
 
 	double dStartTime = Plat_FloatTime();
 	CHostState__State_LoadGame(self);
-	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
+	spdlog::debug("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	// no server presence, can't do it because no map name in hoststate
 	// and also not super important for sp saves really
@@ -114,13 +114,13 @@ AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
 void, __fastcall, (CHostState* self))
 // clang-format on
 {
-	spdlog::info("HostState: ChangeLevelMP");
+	spdlog::debug("HostState: ChangeLevelMP");
 
 	ServerStartingOrChangingMap();
 
 	double dStartTime = Plat_FloatTime();
 	CHostState__State_ChangeLevelMP(self);
-	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
+	spdlog::debug("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
@@ -130,7 +130,7 @@ AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E640,
 void, __fastcall, (CHostState* self))
 // clang-format on
 {
-	spdlog::info("HostState: GameShutdown");
+	spdlog::debug("HostState: GameShutdown");
 
 	g_pServerPresence->DestroyPresence();
 

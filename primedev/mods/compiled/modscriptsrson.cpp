@@ -9,7 +9,7 @@ const char* VPK_SCRIPTS_RSON_PATH = "scripts\\vscripts\\scripts.rson";
 
 void ModManager::BuildScriptsRson()
 {
-	spdlog::info("Building custom scripts.rson");
+	spdlog::debug("Building custom scripts.rson");
 	fs::path MOD_SCRIPTS_RSON_PATH = fs::path(GetCompiledAssetsPath() / MOD_SCRIPTS_RSON_SUFFIX);
 	fs::remove(MOD_SCRIPTS_RSON_PATH);
 
