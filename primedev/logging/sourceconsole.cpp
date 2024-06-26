@@ -6,6 +6,8 @@
 
 SourceInterface<CGameConsole>* g_pSourceGameConsole;
 
+ConVar* Cvar_console_loglevel;
+
 void ConCommand_toggleconsole(const CCommand& arg)
 {
 	NOTE_UNUSED(arg);
@@ -30,6 +32,8 @@ void ConCommand_hideconsole(const CCommand& arg)
 void SourceConsoleSink::custom_sink_it_(const custom_log_msg& msg)
 {
 	if (!(*g_pSourceGameConsole)->m_bInitialized)
+		return;
+	else if (msg.level < Cvar_console_loglevel->GetInt())
 		return;
 
 	spdlog::memory_buf_t formatted;
@@ -83,6 +87,12 @@ void InitialiseConsoleOnInterfaceCreation()
 	else
 		consoleSink->set_pattern("[%n] [%l] %v"); // no colour, so we should show the level for colourblind people
 	RegisterCustomSink(consoleSink);
+}
+
+ON_DLL_LOAD_RELIESON("engine.dll", ConsoleLogLevel, ConVar, (CModule module))
+{
+	// loglevel 2 = SPDLOG_LEVEL_INFO
+	Cvar_console_loglevel = new ConVar("ns_console_log_level", "2", FCVAR_NONE, "Specifies which log messages should put put into the in-game console");
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", SourceConsole, ConCommand, (CModule module))
