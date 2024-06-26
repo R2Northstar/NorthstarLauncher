@@ -8,7 +8,6 @@
 
 ADD_SQFUNC("void", NSRequestServerList, "", "", ScriptContext::UI)
 {
-	NOTE_UNUSED(sqvm);
 	g_pMasterServerManager->RequestServerList();
 	return SQRESULT_NULL;
 }
@@ -33,7 +32,6 @@ ADD_SQFUNC("int", NSGetServerCount, "", "", ScriptContext::UI)
 
 ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext::UI)
 {
-	NOTE_UNUSED(sqvm);
 	g_pMasterServerManager->ClearServerList();
 	return SQRESULT_NULL;
 }
@@ -116,7 +114,6 @@ ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext::UI)
 
 ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext::UI)
 {
-	NOTE_UNUSED(sqvm);
 	// do auth request
 	g_pMasterServerManager->AuthenticateWithOwnServer(g_pLocalPlayerUserID, g_pMasterServerManager->m_sOwnClientAuthToken);
 
@@ -125,7 +122,6 @@ ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext::UI)
 
 ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext::UI)
 {
-	NOTE_UNUSED(sqvm);
 	// literally just set serverfilter
 	// note: this assumes we have no authdata other than our own
 	if (g_pServerAuthentication->m_RemoteAuthenticationData.size())

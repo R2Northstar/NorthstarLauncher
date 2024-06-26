@@ -986,9 +986,8 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 	spdlog::error("invalid Atlas connectionless packet request: unknown type {}", type);
 }
 
-void ConCommand_ns_fetchservers(const CCommand& args)
+void ConCommand_ns_fetchservers([[maybe_unused]] const CCommand& args)
 {
-	NOTE_UNUSED(args);
 	g_pMasterServerManager->RequestServerList();
 }
 
@@ -1007,9 +1006,8 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (
 	g_pServerPresence->AddPresenceReporter(presenceReporter);
 }
 
-void MasterServerPresenceReporter::CreatePresence(const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::CreatePresence([[maybe_unused]] const ServerPresence* pServerPresence)
 {
-	NOTE_UNUSED(pServerPresence);
 	m_nNumRegistrationAttempts = 0;
 }
 
@@ -1051,9 +1049,8 @@ void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerP
 	}
 }
 
-void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::DestroyPresence([[maybe_unused]] const ServerPresence* pServerPresence)
 {
-	NOTE_UNUSED(pServerPresence);
 	// Don't call this if we don't have a server id.
 	if (!*g_pMasterServerManager->m_sOwnServerId)
 	{
@@ -1087,10 +1084,8 @@ void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServer
 	requestThread.detach();
 }
 
-void MasterServerPresenceReporter::RunFrame(double flCurrentTime, const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::RunFrame([[maybe_unused]] double flCurrentTime, [[maybe_unused]] const ServerPresence* pServerPresence)
 {
-	NOTE_UNUSED(flCurrentTime);
-	NOTE_UNUSED(pServerPresence);
 	// Check if we're already running an InternalAddServer() call in the background.
 	// If so, grab the result if it's ready.
 	if (addServerFuture.valid())

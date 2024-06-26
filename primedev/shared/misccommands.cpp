@@ -19,17 +19,15 @@ void ConCommand_force_newgame(const CCommand& arg)
 	strncpy(g_pHostState->m_levelName, arg.Arg(1), sizeof(g_pHostState->m_levelName));
 }
 
-void ConCommand_ns_start_reauth_and_leave_to_lobby(const CCommand& arg)
+void ConCommand_ns_start_reauth_and_leave_to_lobby([[maybe_unused]] const CCommand& arg)
 {
-	NOTE_UNUSED(arg);
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
 	g_pMasterServerManager->m_bNewgameAfterSelfAuth = true;
 	g_pMasterServerManager->AuthenticateWithOwnServer(g_pLocalPlayerUserID, g_pMasterServerManager->m_sOwnClientAuthToken);
 }
 
-void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
+void ConCommand_ns_end_reauth_and_leave_to_lobby([[maybe_unused]] const CCommand& arg)
 {
-	NOTE_UNUSED(arg);
 	if (g_pServerAuthentication->m_RemoteAuthenticationData.size())
 		g_pCVar->FindVar("serverfilter")->SetValue(g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first.c_str());
 
