@@ -126,7 +126,7 @@ void InitialiseConsole()
 {
 	if (GetConsoleWindow() == NULL && AllocConsole() == FALSE)
 	{
-		std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
+		std::cout << "[*] Failed to create a console window" << std::endl;
 	}
 	else
 	{
