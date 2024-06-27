@@ -193,6 +193,12 @@ target_compile_definitions(
     PRIVATE UNICODE
             _UNICODE
             CURL_STATICLIB
+            WIN32_LEAN_AND_MEAN
+            _CRT_SECURE_NO_WARNINGS
+            NOMINMAX
+            _WINSOCK_DEPRECATED_NO_WARNINGS
+            RAPIDJSON_NOMEMBERITERATORCLASS
+            RAPIDJSON_HAS_STDSTRING=1
     )
 
 set_target_properties(
