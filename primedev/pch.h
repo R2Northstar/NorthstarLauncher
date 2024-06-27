@@ -20,7 +20,6 @@
 
 namespace fs = std::filesystem;
 
-
 // clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on
