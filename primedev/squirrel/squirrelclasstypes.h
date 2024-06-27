@@ -235,4 +235,7 @@ typedef int (*sq_getfunctionType)(HSquirrelVM* sqvm, const char* name, SQObject*
 typedef SQRESULT (*sq_pushnewstructinstanceType)(HSquirrelVM* sqvm, int fieldCount);
 typedef SQRESULT (*sq_sealstructslotType)(HSquirrelVM* sqvm, int slotIndex);
 
+typedef void (*sq_poptopType)(HSquirrelVM* sqvm);
+typedef void (*sq_pushconsttableType)(HSquirrelVM* sqvm);
+
 #pragma endregion
