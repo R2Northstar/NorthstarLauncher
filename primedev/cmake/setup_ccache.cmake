@@ -1,4 +1,3 @@
-
 list(
     APPEND
     COMPILERS
@@ -16,14 +15,25 @@ if(CCACHE_PROGRAM)
         set(COMPILER_VAR "CMAKE_${compiler}_COMPILER")
 
         # Resolve any links to the currently used compiler
-        get_filename_component(compiler_path "${COMPILER_VAR}" REALPATH)
+        get_filename_component(
+            compiler_path
+            "${COMPILER_VAR}"
+            REALPATH
+            )
 
         # Get the executable name of the compiler
-        get_filename_component(compiler_name "${compiler_path}" NAME)
+        get_filename_component(
+            compiler_name
+            "${compiler_path}"
+            NAME
+            )
 
         if (NOT ${compiler_name} MATCHES "ccache")
             message(STATUS "Using ccache for ${compiler} compiler")
-            set("${COMPILER_VAR}_LAUNCHER" "${CCACHE_PROGRAM}" CACHE FILEPATH "Path to compiler launch program, e.g. ccache")
+            set("${COMPILER_VAR}_LAUNCHER"
+                "${CCACHE_PROGRAM}"
+                CACHE FILEPATH "Path to compiler launch program, e.g. ccache"
+                )
         endif()
     endforeach()
 else()
