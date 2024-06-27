@@ -173,12 +173,16 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 		for (Mod& dependency : g_pModManager->m_LoadedMods)
 		{
-			if (!dependency.m_bEnabled)
-				continue;
-
 			if (dependency.Name == pair.second)
 			{
-				bWasFound = true;
+				if (dependency.m_bEnabled)
+				{
+					bWasFound = true;
+				}
+				else
+				{
+					spdlog::warn("dependency '{}' is disabled, some mods may not work correctly", pair.second);
+				}
 				break;
 			}
 		}
