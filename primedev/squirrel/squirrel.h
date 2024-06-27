@@ -120,6 +120,9 @@ public:
 	sq_pushnewstructinstanceType __sq_pushnewstructinstance;
 	sq_sealstructslotType __sq_sealstructslot;
 
+	sq_pushconsttableType __sq_pushconsttable;
+	sq_poptopType __sq_poptop;
+
 #pragma endregion
 
 #pragma region SQVM func wrappers
@@ -311,6 +314,16 @@ public:
 	{
 		return __sq_sealstructslot(sqvm, fieldIndex);
 	}
+
+	inline void pushconsttable(HSquirrelVM* sqvm)
+	{
+		return __sq_pushconsttable(sqvm);
+	}
+
+	inline void poptop(HSquirrelVM* sqvm)
+	{
+		return __sq_poptop(sqvm);
+	}
 #pragma endregion
 };
 
@@ -409,6 +422,7 @@ public:
 
 	void VMCreated(CSquirrelVM* newSqvm);
 	void VMDestroyed();
+	void InjectDependencyConstants(Mod& dependency, std::string name);
 	void ExecuteCode(const char* code);
 	void AddFuncRegistration(std::string returnType, std::string name, std::string argTypes, std::string helpText, SQFunction func);
 	SQRESULT setupfunc(const SQChar* funcname);
