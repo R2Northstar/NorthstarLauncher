@@ -28,7 +28,11 @@ if(CCACHE_PROGRAM)
             NAME
             )
 
-        if (NOT ${compiler_name} MATCHES "ccache")
+        if(NOT
+           ${compiler_name}
+           MATCHES
+           "ccache"
+           )
             message(STATUS "Using ccache for ${compiler} compiler")
             set("${COMPILER_VAR}_LAUNCHER"
                 "${CCACHE_PROGRAM}"
