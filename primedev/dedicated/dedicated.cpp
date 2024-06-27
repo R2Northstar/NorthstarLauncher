@@ -222,6 +222,8 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	CommandLine()->AppendParm("-nosound", 0);
 	CommandLine()->AppendParm("-windowed", 0);
 	CommandLine()->AppendParm("-nomessagebox", 0);
+	CommandLine()->AppendParm("-nojoy", 0);
+	CommandLine()->AppendParm("-nosteamcontroller", 0);
 	CommandLine()->AppendParm("+host_preload_shaders", "0");
 	CommandLine()->AppendParm("+net_usesocketsforloopback", "1");
 	CommandLine()->AppendParm("+community_frame_run", "0");
