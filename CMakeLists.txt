@@ -44,6 +44,7 @@ list(
     "${CMAKE_CURRENT_SOURCE_DIR}/primedev/cmake"
     )
 include(utils)
+include(setup_ccache)
 
 include_directories(primedev)
 include_directories(primedev/thirdparty)
