@@ -46,12 +46,24 @@ bool ShouldLoadNorthstar()
 {
 	bool loadNorthstar = strstr(GetCommandLineA(), "-northstar");
 
-	if (loadNorthstar)
-		return loadNorthstar;
-
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
 	{
+		std::cout << "[!] `run_northstar.txt` has been deprecated and support for it will be removed in a future release. " << std::endl;
+		std::cout << "[!] Please use the `-northstar` launch argument instead." << std::endl;
+
+		// This is terrible, but good enough for deprecation
+		bool isDedicated = strstr(GetCommandLineA(), "-dedicated");
+		if (!isDedicated)
+		{
+			MessageBoxA(
+				GetForegroundWindow(),
+				"`run_northstar.txt` has been deprecated and support for it will be removed in a future release.\n"
+				"Please use the `-northstar` launch argument instead.",
+				"Northstar Wsock32 Proxy Error",
+				0);
+		}
+
 		std::stringstream runNorthstarFileBuffer;
 		runNorthstarFileBuffer << runNorthstarFile.rdbuf();
 		runNorthstarFile.close();
