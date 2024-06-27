@@ -49,6 +49,7 @@ bool ShouldLoadNorthstar()
 	if (loadNorthstar)
 		return loadNorthstar;
 
+#if 0
 	auto runNorthstarFile = std::ifstream("run_northstar.txt");
 	if (runNorthstarFile)
 	{
@@ -58,6 +59,8 @@ bool ShouldLoadNorthstar()
 		if (!runNorthstarFileBuffer.str().starts_with("0"))
 			loadNorthstar = true;
 	}
+#endif
+
 	return loadNorthstar;
 }
 
