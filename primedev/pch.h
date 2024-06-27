@@ -20,7 +20,6 @@
 
 namespace fs = std::filesystem;
 
-#define EXPORT extern "C" __declspec(dllexport)
 
 // clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
