@@ -24,8 +24,6 @@ namespace fs = std::filesystem;
 #define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on
 
-#define NOTE_UNUSED(var) do { (void)var; } while(false)
-
 #include "core/macros.h"
 
 #include "core/math/color.h"

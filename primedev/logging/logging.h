@@ -23,9 +23,8 @@ class CustomSink : public spdlog::sinks::base_sink<std::mutex>
 {
 public:
 	void custom_log(const custom_log_msg& msg);
-	virtual void custom_sink_it_(const custom_log_msg& msg)
+	virtual void custom_sink_it_([[maybe_unused]] const custom_log_msg& msg)
 	{
-		NOTE_UNUSED(msg);
 		throw std::runtime_error("Pure virtual call to CustomSink::custom_sink_it_");
 	}
 };
@@ -132,6 +131,6 @@ private:
 
 protected:
 	void sink_it_(const spdlog::details::log_msg& msg) override;
-	void custom_sink_it_(const custom_log_msg& msg);
+	void custom_sink_it_(const custom_log_msg& msg) override;
 	void flush_() override;
 };

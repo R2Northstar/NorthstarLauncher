@@ -309,9 +309,8 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 }
 
 // hooks
-bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
+bool IsUIVM([[maybe_unused]] ScriptContext context, HSquirrelVM* pSqvm)
 {
-	NOTE_UNUSED(context);
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
@@ -328,10 +327,8 @@ template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirr
 }
 
 template <ScriptContext context> SQInteger (*SQPrint)(HSquirrelVM* sqvm, const char* fmt);
-template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const char* fmt, ...)
+template <ScriptContext context> SQInteger SQPrintHook([[maybe_unused]] HSquirrelVM* sqvm, const char* fmt, ...)
 {
-	NOTE_UNUSED(sqvm);
-
 	va_list va;
 	va_start(va, fmt);
 

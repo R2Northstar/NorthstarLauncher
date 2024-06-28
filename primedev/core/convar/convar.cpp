@@ -361,9 +361,8 @@ void ConVar::SetValue(Color clValue)
 // Purpose: changes the ConVar string value.
 // Input  : *pszTempVal - flOldValue
 //-----------------------------------------------------------------------------
-void ConVar::ChangeStringValue(const char* pszTempVal, float flOldValue)
+void ConVar::ChangeStringValue(const char* pszTempVal, [[maybe_unused]] float flOldValue)
 {
-	NOTE_UNUSED(flOldValue);
 	assert(!(m_ConCommandBase.m_nFlags & FCVAR_NEVER_AS_STRING));
 
 	char* pszOldValue = (char*)_malloca(m_Value.m_iStringLength);

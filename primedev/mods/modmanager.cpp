@@ -1121,9 +1121,8 @@ void ModManager::CompileAssetsForFile(const char* filename)
 	}
 }
 
-void ConCommand_reload_mods(const CCommand& args)
+void ConCommand_reload_mods([[maybe_unused]] const CCommand& args)
 {
-	NOTE_UNUSED(args);
 	g_pModManager->LoadMods();
 }
 

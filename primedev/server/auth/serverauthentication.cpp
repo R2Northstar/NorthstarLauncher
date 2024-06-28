@@ -331,9 +331,8 @@ void,, (CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...)
 	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
 }
 
-void ConCommand_ns_resetpersistence(const CCommand& args)
+void ConCommand_ns_resetpersistence([[maybe_unused]] const CCommand& args)
 {
-	NOTE_UNUSED(args);
 	if (*g_pServerState == server_state_t::ss_active)
 	{
 		spdlog::error("ns_resetpersistence must be entered from the main menu");

@@ -18,10 +18,8 @@
 #include <string.h>
 #include <filesystem>
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain([[maybe_unused]] HMODULE hModule, DWORD ul_reason_for_call, [[maybe_unused]] LPVOID lpReserved)
 {
-	NOTE_UNUSED(hModule);
-	NOTE_UNUSED(lpReserved);
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:

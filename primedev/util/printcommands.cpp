@@ -186,9 +186,8 @@ void ConCommand_findflags(const CCommand& arg)
 	delete[] upperFlag;
 }
 
-void ConCommand_list(const CCommand& arg)
+void ConCommand_list([[maybe_unused]] const CCommand& arg)
 {
-	NOTE_UNUSED(arg);
 	ConCommandBase* var;
 	CCVarIteratorInternal* itint = g_pCVar->FactoryInternalIterator();
 	std::map<std::string, ConCommandBase*> sorted;
@@ -209,9 +208,8 @@ void ConCommand_list(const CCommand& arg)
 	spdlog::info("{} total convars/concommands", sorted.size());
 }
 
-void ConCommand_differences(const CCommand& arg)
+void ConCommand_differences([[maybe_unused]] const CCommand& arg)
 {
-	NOTE_UNUSED(arg);
 	CCVarIteratorInternal* itint = g_pCVar->FactoryInternalIterator();
 	std::map<std::string, ConCommandBase*> sorted;
 
