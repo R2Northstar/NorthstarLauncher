@@ -20,11 +20,6 @@
 
 namespace fs = std::filesystem;
 
-#define EXPORT extern "C" __declspec(dllexport)
-
-typedef void (*callable)();
-typedef void (*callable_v)(void* v);
-
 // clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
 //clang-format on
