@@ -21,7 +21,7 @@ void* CreateInterface(const char* pName, InterfaceStatus* pReturnCode)
 				*pReturnCode = InterfaceStatus::IFACE_OK;
 			}
 
-			NS::log::PLUGINSYS->info("creating interface {}", pName);
+			NS::log::PLUGINSYS->debug("creating interface {}", pName);
 			return pCur->m_CreateFn();
 		}
 	}

@@ -10,7 +10,7 @@ const char* VPK_PDEF_PATH = "cfg/server/persistent_player_data_version_231.pdef"
 
 void ModManager::BuildPdef()
 {
-	spdlog::info("Building persistent_player_data_version_231.pdef...");
+	spdlog::debug("Building persistent_player_data_version_231.pdef...");
 
 	fs::path MOD_PDEF_PATH = fs::path(GetCompiledAssetsPath() / MOD_PDEF_SUFFIX);
 

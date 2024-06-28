@@ -105,7 +105,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 	std::thread requestThread(
 		[this, uidStr, tokenStr]()
 		{
-			spdlog::info("Trying to authenticate with northstar masterserver for user {}", uidStr);
+			spdlog::debug("Trying to authenticate with northstar masterserver for user {}", uidStr);
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -155,7 +155,7 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, co
 						sizeof(m_sOwnClientAuthToken),
 						originAuthInfo["token"].GetString(),
 						sizeof(m_sOwnClientAuthToken) - 1);
-					spdlog::info("Northstar origin authentication completed successfully!");
+					spdlog::debug("Northstar origin authentication completed successfully!");
 					m_bOriginAuthWithMasterServerSuccessful = true;
 				}
 				else
@@ -203,7 +203,7 @@ void MasterServerManager::RequestServerList()
 			m_bRequestingServerList = true;
 			m_bScriptRequestingServerList = true;
 
-			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->GetString());
+			spdlog::debug("Requesting server list from {}", Cvar_ns_masterserver_hostname->GetString());
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -253,7 +253,7 @@ void MasterServerManager::RequestServerList()
 
 				rapidjson::GenericArray<false, rapidjson_document::GenericValue> serverArray = serverInfoJson.GetArray();
 
-				spdlog::info("Got {} servers", serverArray.Size());
+				spdlog::debug("Got {} servers", serverArray.Size());
 
 				for (auto& serverObj : serverArray)
 				{
@@ -624,7 +624,7 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 			while (m_bSavingPersistentData)
 				Sleep(100);
 
-			spdlog::info("Attempting authentication with server of id \"{}\"", serverIdStr);
+			spdlog::debug("Attempting authentication with server of id \"{}\"", serverIdStr);
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -831,7 +831,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		else
 			return; // already handled
 
-		spdlog::info("handling Atlas connect request {}", data);
+		spdlog::debug("handling Atlas connect request {}", data);
 
 		if (!obj.HasMember("uid") || !obj["uid"].IsUint64())
 		{
@@ -851,7 +851,7 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		std::string pdata;
 		if (reject == "")
 		{
-			spdlog::info("getting pdata for connection {} (uid={} username={})", token, uid, username);
+			spdlog::debug("getting pdata for connection {} (uid={} username={})", token, uid, username);
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -913,9 +913,9 @@ void MasterServerManager::ProcessConnectionlessPacketSigreq1(std::string data)
 		}
 
 		if (reject == "")
-			spdlog::info("accepting connection {} (uid={} username={}) with {} bytes of pdata", token, uid, username, pdata.length());
+			spdlog::debug("accepting connection {} (uid={} username={}) with {} bytes of pdata", token, uid, username, pdata.length());
 		else
-			spdlog::info("rejecting connection {} (uid={} username={}) with reason \"{}\"", token, uid, username, reject);
+			spdlog::debug("rejecting connection {} (uid={} username={}) with reason \"{}\"", token, uid, username, reject);
 
 		if (reject == "")
 			g_pServerAuthentication->AddRemotePlayer(token, uid, username, pdata);
@@ -1190,7 +1190,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 	std::string modInfo = g_pMasterServerManager->m_sOwnModInfoJson;
 	std::string hostname = Cvar_ns_masterserver_hostname->GetString();
 
-	spdlog::info("Attempting to register the local server to the master server.");
+	spdlog::debug("Attempting to register the local server to the master server.");
 
 	addServerFuture = std::async(
 		std::launch::async,
@@ -1293,7 +1293,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 				// Log request id for easier debugging when combining with logs on masterserver
 				if (serverAddedJson.HasMember("id"))
 				{
-					spdlog::info("Request id: {}", serverAddedJson["id"].GetString());
+					spdlog::debug("Request id: {}", serverAddedJson["id"].GetString());
 				}
 				else
 				{
@@ -1339,7 +1339,7 @@ void MasterServerPresenceReporter::InternalAddServer(const ServerPresence* pServ
 					return ReturnCleanup(MasterServerReportPresenceResult::FailedNoRetry);
 				}
 
-				spdlog::info("Successfully registered the local server to the master server.");
+				spdlog::debug("Successfully registered the local server to the master server.");
 				return ReturnCleanup(
 					MasterServerReportPresenceResult::Success,
 					serverAddedJson["id"].GetString(),

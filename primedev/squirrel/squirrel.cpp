@@ -163,7 +163,7 @@ template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquir
 
 	for (SQFuncRegistration* funcReg : m_funcRegistrations)
 	{
-		spdlog::info("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
+		spdlog::debug("Registering {} function {}", GetContextName(context), funcReg->squirrelFuncName);
 		RegisterSquirrelFunc(m_pSQVM, funcReg, 1);
 	}
 
@@ -251,19 +251,19 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 		return;
 	}
 
-	spdlog::info("Executing {} script code {} ", GetContextName(context), pCode);
+	spdlog::debug("Executing {} script code {} ", GetContextName(context), pCode);
 
 	std::string strCode(pCode);
 	CompileBufferState bufferState = CompileBufferState(strCode);
 
 	SQRESULT compileResult = compilebuffer(&bufferState, "console");
-	spdlog::info("sq_compilebuffer returned {}", PrintSQRESULT.at(compileResult));
+	spdlog::debug("sq_compilebuffer returned {}", PrintSQRESULT.at(compileResult));
 
 	if (compileResult != SQRESULT_ERROR)
 	{
 		pushroottable(m_pSQVM->sqvm);
 		SQRESULT callResult = _call(m_pSQVM->sqvm, 0);
-		spdlog::info("sq_call returned {}", PrintSQRESULT.at(callResult));
+		spdlog::debug("sq_call returned {}", PrintSQRESULT.at(callResult));
 	}
 }
 
@@ -358,7 +358,7 @@ template <ScriptContext context> CSquirrelVM* __fastcall CreateNewVMHook(void* a
 	else
 		g_pSquirrel<context>->VMCreated(sqvm);
 
-	spdlog::info("CreateNewVM {} {}", GetContextName(realContext), (void*)sqvm);
+	spdlog::debug("CreateNewVM {} {}", GetContextName(realContext), (void*)sqvm);
 	return sqvm;
 }
 
@@ -395,7 +395,7 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirr
 		DestroyVM<context>(a1, sqvm);
 	}
 
-	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
+	spdlog::debug("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
 
 template <ScriptContext context> void (*SQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
@@ -456,7 +456,7 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 		{
 			g_pSquirrel<ScriptContext::UI>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
 			funcReg->funcPtr = g_pSquirrel<ScriptContext::UI>->m_funcOverrides[funcReg->squirrelFuncName];
-			spdlog::info("Replacing {} in UI", std::string(funcReg->squirrelFuncName));
+			spdlog::debug("Replacing {} in UI", std::string(funcReg->squirrelFuncName));
 		}
 
 		return g_pSquirrel<ScriptContext::UI>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
@@ -466,7 +466,7 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 	{
 		g_pSquirrel<context>->m_funcOriginals[funcReg->squirrelFuncName] = funcReg->funcPtr;
 		funcReg->funcPtr = g_pSquirrel<context>->m_funcOverrides[funcReg->squirrelFuncName];
-		spdlog::info("Replacing {} in Client", std::string(funcReg->squirrelFuncName));
+		spdlog::debug("Replacing {} in Client", std::string(funcReg->squirrelFuncName));
 	}
 
 	return g_pSquirrel<context>->RegisterSquirrelFunc(sqvm, funcReg, unknown);
@@ -501,7 +501,7 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 				{
 					if (modCallback.Context == realContext && modCallback.BeforeCallback.length())
 					{
-						spdlog::info("Running custom {} script callback \"{}\"", GetContextName(realContext), modCallback.BeforeCallback);
+						spdlog::debug("Running custom {} script callback \"{}\"", GetContextName(realContext), modCallback.BeforeCallback);
 						CallScriptInitCallback<context>(sqvm, modCallback.BeforeCallback.c_str());
 					}
 				}
@@ -509,9 +509,9 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 		}
 	}
 
-	spdlog::info("{} CodeCallback {} called", GetContextName(realContext), callback);
+	spdlog::debug("{} CodeCallback {} called", GetContextName(realContext), callback);
 	if (!bShouldCallCustomCallbacks)
-		spdlog::info("Not executing custom callbacks for CodeCallback {}", callback);
+		spdlog::debug("Not executing custom callbacks for CodeCallback {}", callback);
 	bool ret = CallScriptInitCallback<context>(sqvm, callback);
 
 	// run after callbacks
@@ -528,7 +528,7 @@ template <ScriptContext context> bool __fastcall CallScriptInitCallbackHook(void
 				{
 					if (modCallback.Context == realContext && modCallback.AfterCallback.length())
 					{
-						spdlog::info("Running custom {} script callback \"{}\"", GetContextName(realContext), modCallback.AfterCallback);
+						spdlog::debug("Running custom {} script callback \"{}\"", GetContextName(realContext), modCallback.AfterCallback);
 						CallScriptInitCallback<context>(sqvm, modCallback.AfterCallback.c_str());
 					}
 				}

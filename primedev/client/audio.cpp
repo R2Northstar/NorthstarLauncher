@@ -231,7 +231,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					wavStream.read(reinterpret_cast<char*>(data), fileSize);
 					wavStream.close();
 
-					spdlog::info("Finished async read of audio sample {}", pathString);
+					spdlog::debug("Finished async read of audio sample {}", pathString);
 				});
 
 			readThread.detach();
@@ -254,7 +254,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	if (Samples.size() == 0)
 		spdlog::warn("Audio override {} has no valid samples! Sounds will not play for this event.", path.string());
 
-	spdlog::info("Loaded audio override file {}", path.string());
+	spdlog::debug("Loaded audio override file {}", path.string());
 
 	LoadedSuccessfully = true;
 }
@@ -286,13 +286,13 @@ bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath)
 
 	for (const std::string& eventId : data->EventIds)
 	{
-		spdlog::info("Registering sound event {}", eventId);
+		spdlog::debug("Registering sound event {}", eventId);
 		m_loadedAudioOverrides.insert({eventId, data});
 	}
 
 	for (const auto& eventIdRegexData : data->EventIdsRegex)
 	{
-		spdlog::info("Registering sound event regex {}", eventIdRegexData.first);
+		spdlog::debug("Registering sound event regex {}", eventIdRegexData.first);
 		m_loadedAudioOverridesRegex.insert({eventIdRegexData.first, data});
 	}
 
@@ -374,7 +374,7 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 	const char* eventName = pszAudioEventName;
 
 	if (Cvar_ns_print_played_sounds->GetInt() > 0)
-		spdlog::info("[AUDIO] Playing event {}", eventName);
+		spdlog::debug("[AUDIO] Playing event {}", eventName);
 
 	auto iter = g_CustomAudioManager.m_loadedAudioOverrides.find(eventName);
 	std::shared_ptr<EventOverrideData> overrideData;
@@ -487,7 +487,7 @@ void, __fastcall, (int level, const char* string))
 	if (!Cvar_mileslog_enable->GetBool())
 		return;
 
-	spdlog::info("[MSS] {} - {}", level, string);
+	spdlog::debug("[MSS] {} - {}", level, string);
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))

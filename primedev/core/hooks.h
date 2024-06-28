@@ -206,7 +206,7 @@ public:
 		else if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
 		{
 			if (MH_EnableHook(targetAddr) == MH_OK)
-				spdlog::info("Enabling hook {}", pFuncName);
+				spdlog::debug("Enabling hook {}", pFuncName);
 			else
 				spdlog::error("MH_EnableHook failed for function {}", pFuncName);
 		}

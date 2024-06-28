@@ -57,6 +57,7 @@ void CreateLogFiles()
 			{
 				logger->sinks().push_back(sink);
 			}
+			spdlog::set_level(spdlog::level::debug);
 			spdlog::flush_on(spdlog::level::info);
 		}
 		catch (...)

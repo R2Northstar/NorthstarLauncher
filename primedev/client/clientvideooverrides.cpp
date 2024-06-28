@@ -8,7 +8,7 @@ void*, __fastcall, (const char* path, uint32_t flags))
 // clang-format on
 {
 	std::string filename(fs::path(path).filename().string());
-	spdlog::info("BinkOpen {}", filename);
+	spdlog::debug("BinkOpen {}", filename);
 
 	// figure out which mod is handling the bink
 	Mod* fileOwner = nullptr;
