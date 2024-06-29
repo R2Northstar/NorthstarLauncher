@@ -1,13 +1,17 @@
 #pragma once
 #include "core/convar/convar.h"
 #include "core/memalloc.h"
-#include "squirrel/squirrel.h"
+#include "core/hooks.h"
+#include "squirrel/squirrelclasstypes.h"
 
 #include "rapidjson/document.h"
 #include <string>
 #include <vector>
-#include <filesystem>
 #include <unordered_set>
+#include <set>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 const std::string MOD_FOLDER_SUFFIX = "\\mods";
 const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\packages";

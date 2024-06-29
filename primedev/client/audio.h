@@ -4,6 +4,10 @@
 #include <filesystem>
 #include <regex>
 #include <shared_mutex>
+#include <unordered_map>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 enum class AudioSelectionStrategy
 {

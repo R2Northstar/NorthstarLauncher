@@ -3,6 +3,10 @@
 #include <string>
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+#include "silver-bun/module.h"
+#include "MinHook.h"
+
 void InstallInitialHooks();
 
 typedef void (*DllLoadCallbackFuncType)(CModule moduleAddress);

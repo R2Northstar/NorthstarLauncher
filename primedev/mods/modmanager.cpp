@@ -6,6 +6,7 @@
 #include "core/filesystem/filesystem.h"
 #include "core/filesystem/rpakfilesystem.h"
 #include "config/profile.h"
+#include "squirrel/squirrel.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"

@@ -5,7 +5,10 @@
 #include "engine/hoststate.h"
 
 #include "core/math/vplane.h"
+#include "core/hooks.h"
+#include "core/convar/convar.h"
 
+#include <unordered_set>
 #include <fstream>
 
 const int AINET_VERSION_NUMBER = 57;

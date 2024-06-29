@@ -1,5 +1,7 @@
 #include "keyvalues.h"
-#include <winnt.h>
+#include "core/hooks.h"
+#include <windows.h>
+#include <cassert>
 
 // implementation of the ConVar class
 // heavily based on https://github.com/Mauler125/r5sdk/blob/master/r5dev/vpc/keyvalues.cpp

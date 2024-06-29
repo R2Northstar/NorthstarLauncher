@@ -2,6 +2,14 @@
 #include "squirreldatatypes.h"
 
 #include <queue>
+#include <map>
+#include <unordered_map>
+#include <string>
+#include <optional>
+#include <mutex>
+#include <functional>
+
+#include "spdlog/spdlog.h"
 
 enum SQRESULT : SQInteger
 {

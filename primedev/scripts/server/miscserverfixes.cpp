@@ -1,3 +1,4 @@
+#include "core/hooks.h"
 
 ON_DLL_LOAD("server.dll", MiscServerFixes, (CModule module))
 {

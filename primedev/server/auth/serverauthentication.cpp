@@ -2,6 +2,7 @@
 #include "shared/exploit_fixes/ns_limits.h"
 #include "core/convar/cvar.h"
 #include "core/convar/convar.h"
+#include "core/hooks.h"
 #include "masterserver/masterserver.h"
 #include "server/serverpresence.h"
 #include "engine/hoststate.h"

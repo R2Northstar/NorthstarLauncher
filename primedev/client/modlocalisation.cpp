@@ -1,4 +1,5 @@
 #include "mods/modmanager.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

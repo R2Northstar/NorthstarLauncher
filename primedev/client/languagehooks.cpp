@@ -1,7 +1,11 @@
 #include "core/tier0.h"
+#include "core/hooks.h"
 
 #include <filesystem>
 #include <regex>
+#include <vector>
+
+namespace fs = std::filesystem;
 
 AUTOHOOK_INIT()
 

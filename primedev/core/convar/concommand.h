@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 // From Source SDK
 class ConCommandBase;

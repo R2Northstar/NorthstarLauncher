@@ -3,7 +3,10 @@
 #include "bits.h"
 #include "math_pfns.h"
 
+#include <string>
 #include <cmath>
+#include <windows.h>
+#include <winnt.h>
 
 #define DEG2RAD(a) (a) * (3.14159265358979323846f / 180.0f)
 #define RAD2DEG(a) (a) * (180.0f / 3.14159265358979323846f)

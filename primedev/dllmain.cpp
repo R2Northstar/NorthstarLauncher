@@ -14,6 +14,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
+#include "curl/curl.h"
 
 #include <string.h>
 #include <filesystem>

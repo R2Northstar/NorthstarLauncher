@@ -1,9 +1,14 @@
 #include "pluginmanager.h"
 
 #include <regex>
+#include <string>
+#include <vector>
+#include <filesystem>
 #include "plugins.h"
 #include "config/profile.h"
 #include "core/convar/concommand.h"
+
+namespace fs = std::filesystem;
 
 PluginManager* g_pPluginManager;
 

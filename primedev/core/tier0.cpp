@@ -1,4 +1,5 @@
 #include "tier0.h"
+#include "core/hooks.h"
 
 IMemAlloc* g_pMemAllocSingleton = nullptr;
 

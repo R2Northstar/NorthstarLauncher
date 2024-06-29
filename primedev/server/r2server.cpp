@@ -1,4 +1,5 @@
 #include "r2server.h"
+#include "core/hooks.h"
 
 CBaseEntity* (*Server_GetEntityByIndex)(int index);
 CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);

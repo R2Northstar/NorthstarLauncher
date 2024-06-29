@@ -1,6 +1,7 @@
 #include "config/profile.h"
 #include "dedicated/dedicated.h"
 #include <string>
+#include <windows.h>
 
 std::string GetNorthstarPrefix()
 {

@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <windows.h>
+#include "spdlog/spdlog.h"
 
 // interface return status
 enum class InterfaceStatus : int

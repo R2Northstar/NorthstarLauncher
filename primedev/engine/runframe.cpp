@@ -2,6 +2,7 @@
 #include "server/r2server.h"
 #include "hoststate.h"
 #include "server/serverpresence.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

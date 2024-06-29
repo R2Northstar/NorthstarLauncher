@@ -1,6 +1,8 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
+#include "core/sourceinterface.h"
+
 typedef void* (*InstantiateInterfaceFn)();
 
 // Used internally to register classes.

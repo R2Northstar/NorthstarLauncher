@@ -1,4 +1,5 @@
 #pragma once
+#include <xmmintrin.h>
 
 inline float FastSqrt(float x)
 {

@@ -1,4 +1,5 @@
 #include "core/convar/convar.h"
+#include "core/hooks.h"
 #include "engine/r2engine.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "masterserver/masterserver.h"

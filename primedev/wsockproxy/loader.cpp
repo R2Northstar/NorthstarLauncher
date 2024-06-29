@@ -6,6 +6,9 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include <windows.h>
+
+#include "MinHook.h"
 
 #include "MinHook.h"
 

@@ -5,6 +5,7 @@
 #include "shared/misccommands.h"
 #include "r2engine.h"
 #include "core/tier0.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

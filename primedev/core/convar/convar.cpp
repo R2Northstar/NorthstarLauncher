@@ -2,6 +2,7 @@
 #include "cvar.h"
 #include "convar.h"
 #include "core/sourceinterface.h"
+#include "core/hooks.h"
 
 #include <float.h>
 

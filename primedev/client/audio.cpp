@@ -1,12 +1,17 @@
 #include "audio.h"
 #include "dedicated/dedicated.h"
 #include "core/convar/convar.h"
+#include "core/hooks.h"
+#include "core/memalloc.h"
 
+#include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <random>
+
+namespace fs = std::filesystem;
 
 AUTOHOOK_INIT()
 

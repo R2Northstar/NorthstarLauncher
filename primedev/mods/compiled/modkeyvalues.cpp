@@ -1,5 +1,6 @@
 #include "mods/modmanager.h"
 #include "core/filesystem/filesystem.h"
+#include "core/hooks.h"
 
 #include <fstream>
 

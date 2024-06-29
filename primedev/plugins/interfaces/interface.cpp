@@ -1,5 +1,6 @@
 #include <string.h>
 #include "interface.h"
+#include "logging/logging.h"
 
 InterfaceReg* s_pInterfaceRegs;
 

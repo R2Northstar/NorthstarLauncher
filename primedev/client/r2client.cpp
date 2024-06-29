@@ -1,4 +1,5 @@
 #include "r2client.h"
+#include "core/hooks.h"
 
 char* g_pLocalPlayerUserID;
 char* g_pLocalPlayerOriginToken;

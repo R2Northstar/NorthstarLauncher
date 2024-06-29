@@ -1,7 +1,12 @@
+#include <string>
+#include <unordered_map>
+#include <atomic>
 #include "scripthttprequesthandler.h"
 #include "util/version.h"
 #include "squirrel/squirrel.h"
 #include "core/tier0.h"
+
+#include "curl/curl.h"
 
 HttpRequestHandler* g_httpRequestHandler;
 

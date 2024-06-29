@@ -2,6 +2,7 @@
 #include "sourceconsole.h"
 #include "core/sourceinterface.h"
 #include "core/convar/concommand.h"
+#include "core/hooks.h"
 #include "util/printcommands.h"
 
 SourceInterface<CGameConsole>* g_pSourceGameConsole;

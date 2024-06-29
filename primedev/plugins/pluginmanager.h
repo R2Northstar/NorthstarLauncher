@@ -2,6 +2,13 @@
 #define PLUGIN_MANAGER_H
 
 #include <windows.h>
+#include <string>
+#include <optional>
+#include <vector>
+#include <filesystem>
+#include "squirrel/squirreldatatypes.h"
+
+namespace fs = std::filesystem;
 
 class Plugin;
 

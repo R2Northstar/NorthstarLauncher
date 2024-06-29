@@ -4,6 +4,7 @@
 #include "server/serverpresence.h"
 #include "shared/playlist.h"
 #include "core/tier0.h"
+#include "core/hooks.h"
 #include "engine/r2engine.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "squirrel/squirrel.h"

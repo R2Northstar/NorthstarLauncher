@@ -1,6 +1,7 @@
 #pragma once
 #include "core/sourceinterface.h"
 #include "spdlog/sinks/base_sink.h"
+#include "logging/logging.h"
 #include <map>
 
 class EditablePanel

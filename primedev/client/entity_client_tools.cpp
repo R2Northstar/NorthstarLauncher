@@ -1,6 +1,7 @@
 #include "toolframework/itoolentity.h"
 #include "client/cdll_client_int.h"
 #include "core/tier1.h"
+#include "core/hooks.h"
 
 class CClientTools : public IClientTools
 {

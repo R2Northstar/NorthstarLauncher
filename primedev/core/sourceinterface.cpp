@@ -1,5 +1,6 @@
 #include "sourceinterface.h"
 #include "logging/sourceconsole.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

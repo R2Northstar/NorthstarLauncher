@@ -1,4 +1,5 @@
 #include "squirrelautobind.h"
+#include "core/hooks.h"
 
 SquirrelAutoBindContainer* g_pSqAutoBindContainer;
 
