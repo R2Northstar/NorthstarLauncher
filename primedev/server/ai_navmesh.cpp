@@ -1,4 +1,5 @@
 #include "ai_navmesh.h"
+#include "core/hooks.h"
 
 ON_DLL_LOAD("server.dll", ServerAiNavMesh, (CModule module))
 {

@@ -4,6 +4,7 @@
 // I am following the existing "pattern" and putting this here
 
 #include "memory.h"
+#include "silver-bun/memaddr.h"
 
 #define CREATEINTERFACE_PROCNAME "CreateInterface"
 

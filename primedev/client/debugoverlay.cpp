@@ -3,6 +3,7 @@
 #include "dedicated/dedicated.h"
 #include "core/convar/cvar.h"
 #include "core/math/vector.h"
+#include "core/hooks.h"
 #include "server/ai_helper.h"
 
 AUTOHOOK_INIT()

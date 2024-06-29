@@ -1,6 +1,7 @@
 #include "dedicated.h"
 #include "dedicatedlogtoclient.h"
 #include "core/tier0.h"
+#include "core/hooks.h"
 #include "shared/playlist.h"
 #include "engine/r2engine.h"
 #include "engine/hoststate.h"

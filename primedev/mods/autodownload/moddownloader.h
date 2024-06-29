@@ -1,3 +1,12 @@
+#pragma once
+#include "curl/curl.h"
+#include <unordered_map>
+#include <string>
+#include <optional>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 class ModDownloader
 {
 private:

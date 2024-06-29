@@ -1,4 +1,6 @@
 #pragma once
+#include <map>
+#include <unordered_map>
 
 enum class ePakLoadSource
 {

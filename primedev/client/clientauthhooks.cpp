@@ -2,6 +2,7 @@
 #include "core/convar/convar.h"
 #include "client/r2client.h"
 #include "core/vanilla.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

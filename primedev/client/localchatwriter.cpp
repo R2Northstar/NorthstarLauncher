@@ -1,4 +1,5 @@
 #include "localchatwriter.h"
+#include "core/hooks.h"
 
 class vgui_BaseRichText_vtable;
 

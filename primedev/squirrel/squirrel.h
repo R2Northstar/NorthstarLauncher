@@ -1,9 +1,13 @@
 #pragma once
 
+#include <map>
+#include <filesystem>
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
 #include "core/math/vector.h"
 #include "mods/modmanager.h"
+
+namespace fs = std::filesystem;
 
 /*
 	definitions from hell

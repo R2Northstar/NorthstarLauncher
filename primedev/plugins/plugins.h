@@ -3,6 +3,7 @@
 #include "plugins/interfaces/interface.h"
 #include "plugins/interfaces/IPluginId.h"
 #include "plugins/interfaces/IPluginCallbacks.h"
+#include "logging/logging.h"
 
 class Plugin
 {

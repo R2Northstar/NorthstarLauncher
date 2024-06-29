@@ -1,5 +1,6 @@
 #pragma once
 #include "convar.h"
+#include "core/macros.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations

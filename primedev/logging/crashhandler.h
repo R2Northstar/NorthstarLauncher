@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <windows.h>
 
 //-----------------------------------------------------------------------------
 // Purpose: Exception handling

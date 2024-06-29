@@ -1,3 +1,4 @@
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

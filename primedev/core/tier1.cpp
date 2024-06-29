@@ -1,4 +1,7 @@
 #include "tier1.h"
+#include "spdlog/spdlog.h"
+#include <string>
+#include <windows.h>
 
 // Note: this file is tier1/interface.cpp in primedev, but given that tier0 is yet to be split
 // I am following the existing "pattern" and putting this here

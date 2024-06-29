@@ -1,11 +1,16 @@
 #include "moddownloader.h"
 #include "util/utils.h"
+#include "core/hooks.h"
+#include "squirrel/squirrelautobind.h"
+#include "squirrel/squirrel.h"
 #include <rapidjson/fwd.h>
+#include <rapidjson/document.h>
 #include <mz_strm_mem.h>
 #include <mz.h>
 #include <mz_strm.h>
 #include <mz_zip.h>
 #include <mz_compat.h>
+#include <curl/curl.h>
 #include <thread>
 #include <future>
 #include <bcrypt.h>

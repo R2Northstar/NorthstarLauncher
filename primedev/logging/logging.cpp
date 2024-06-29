@@ -3,6 +3,7 @@
 #include "core/convar/concommand.h"
 #include "config/profile.h"
 #include "core/tier0.h"
+#include "core/hooks.h"
 #include "util/version.h"
 #include "spdlog/sinks/basic_file_sink.h"
 

@@ -1,4 +1,5 @@
 #include "core/tier0.h"
+#include "core/hooks.h"
 #include "maxplayers.h"
 
 AUTOHOOK_INIT()

@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <filesystem>
+#include <windows.h>
 
 FARPROC p[73];
 HMODULE hL = 0;

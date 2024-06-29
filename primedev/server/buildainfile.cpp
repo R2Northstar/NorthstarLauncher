@@ -1,9 +1,12 @@
 #include "core/convar/convar.h"
+#include "core/hooks.h"
 #include "engine/hoststate.h"
 #include "engine/r2engine.h"
 
 #include <fstream>
 #include <filesystem>
+
+namespace fs = std::filesystem;
 
 AUTOHOOK_INIT()
 

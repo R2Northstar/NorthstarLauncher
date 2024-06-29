@@ -1,4 +1,5 @@
 #include "engine/r2engine.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

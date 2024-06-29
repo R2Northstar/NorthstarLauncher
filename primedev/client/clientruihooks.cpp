@@ -1,4 +1,5 @@
 #include "core/convar/convar.h"
+#include "core/hooks.h"
 
 AUTOHOOK_INIT()
 

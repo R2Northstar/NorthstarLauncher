@@ -1,5 +1,6 @@
 #pragma once
 #include "shared/keyvalues.h"
+#include "core/convar/concommand.h"
 
 // Cbuf
 enum class ECommandTarget_t

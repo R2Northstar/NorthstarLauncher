@@ -1,5 +1,6 @@
 #include "dedicatedlogtoclient.h"
 #include "engine/r2engine.h"
+#include "core/hooks.h"
 
 void (*CGameClient__ClientPrintf)(CBaseClient* pClient, const char* fmt, ...);
 

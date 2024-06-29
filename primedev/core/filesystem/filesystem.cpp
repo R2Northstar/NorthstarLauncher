@@ -1,6 +1,8 @@
 #include "filesystem.h"
 #include "core/sourceinterface.h"
+#include "core/hooks.h"
 #include "mods/modmanager.h"
+#include "logging/logging.h"
 
 #include <iostream>
 #include <sstream>

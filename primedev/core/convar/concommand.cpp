@@ -1,6 +1,7 @@
 #include "concommand.h"
 #include "shared/misccommands.h"
 #include "engine/r2engine.h"
+#include "core/hooks.h"
 
 #include <iostream>
 

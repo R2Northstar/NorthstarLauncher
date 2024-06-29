@@ -1,4 +1,5 @@
 #include "core/convar/convar.h"
+#include "core/hooks.h"
 
 ON_DLL_LOAD_CLIENT("engine.dll", EngineDemoFixes, (CModule module))
 {

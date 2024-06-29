@@ -1,7 +1,9 @@
 #include "serverpresence.h"
 #include "shared/playlist.h"
 #include "core/tier0.h"
+#include "core/hooks.h"
 #include "core/convar/convar.h"
+#include "server/serverpresence.h"
 
 #include <regex>
 

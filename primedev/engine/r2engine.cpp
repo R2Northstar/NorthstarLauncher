@@ -1,4 +1,7 @@
 #include "r2engine.h"
+#include "core/convar/concommand.h"
+#include "core/hooks.h"
+#include "engine/r2engine.h"
 
 Cbuf_GetCurrentPlayerType Cbuf_GetCurrentPlayer;
 Cbuf_AddTextType Cbuf_AddText;

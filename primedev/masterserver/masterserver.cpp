@@ -4,6 +4,7 @@
 #include "server/auth/serverauthentication.h"
 #include "core/tier0.h"
 #include "core/vanilla.h"
+#include "core/hooks.h"
 #include "engine/r2engine.h"
 #include "mods/modmanager.h"
 #include "shared/misccommands.h"
@@ -16,6 +17,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/error/en.h"
+#include "curl/curl.h"
 
 #include <cstring>
 #include <regex>

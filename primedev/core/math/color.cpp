@@ -1,3 +1,4 @@
+#include "color.h"
 
 // clang-format off
 namespace NS::Colors

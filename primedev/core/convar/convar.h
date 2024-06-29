@@ -3,6 +3,7 @@
 #include "core/math/color.h"
 #include "cvar.h"
 #include "concommand.h"
+#include <map>
 
 // taken directly from iconvar.h
 

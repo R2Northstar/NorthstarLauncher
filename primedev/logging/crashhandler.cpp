@@ -6,6 +6,7 @@
 #include "plugins/plugins.h"
 #include "plugins/pluginmanager.h"
 
+#include <windows.h>
 #include <minidumpapiset.h>
 
 #define CRASHHANDLER_MAX_FRAMES 32

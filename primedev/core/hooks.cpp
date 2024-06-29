@@ -1,5 +1,6 @@
 #include "dedicated/dedicated.h"
 #include "plugins/pluginmanager.h"
+#include "core/hooks.h"
 
 #include <iostream>
 #include <wchar.h>
@@ -11,6 +12,8 @@
 #include <Psapi.h>
 
 #define XINPUT1_3_DLL "XInput1_3.dll"
+
+namespace fs = std::filesystem;
 
 AUTOHOOK_INIT()
 
