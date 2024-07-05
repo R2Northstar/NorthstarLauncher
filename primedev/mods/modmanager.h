@@ -10,6 +10,7 @@
 #include <unordered_set>
 
 const std::string CORE_MOD_FOLDER_SUFFIX = "\\mods\\core";
+const std::string MANUAL_MOD_FOLDER_SUFFIX = "\\mods\\manual";
 const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\mods\\thunderstore-legacy";
 const std::string REMOTE_MOD_FOLDER_SUFFIX = "\\runtime\\remote\\mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
@@ -180,6 +181,7 @@ public:
 };
 
 fs::path GetCoreModFolderPath();
+fs::path GetManualModFolderPath();
 fs::path GetRemoteModFolderPath();
 fs::path GetThunderstoreLegacyModFolderPath();
 fs::path GetCompiledAssetsPath();
