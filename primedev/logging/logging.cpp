@@ -70,6 +70,7 @@ void CreateLogFiles()
 
 void ExternalConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 {
+	NOTE_UNUSED(msg);
 	throw std::runtime_error("sink_it_ called on SourceConsoleSink with pure log_msg. This is an error!");
 }
 
@@ -123,9 +124,9 @@ void CustomSink::custom_log(const custom_log_msg& msg)
 
 void InitialiseConsole()
 {
-	if (AllocConsole() == FALSE)
+	if (GetConsoleWindow() == NULL && AllocConsole() == FALSE)
 	{
-		std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
+		std::cout << "[*] Failed to create a console window" << std::endl;
 	}
 	else
 	{
