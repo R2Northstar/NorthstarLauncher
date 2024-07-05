@@ -644,9 +644,20 @@ void ModManager::LoadMods()
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
 	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreLegacyModFolderPath());
 
+	// Set up regex for `Northstar.*` pattern
+	std::regex northstar_pattern(R"(.*\\Northstar\..+)");
 	for (fs::directory_entry dir : coreModsDir)
+	{
+		if (!std::regex_match(dir.path().string(), northstar_pattern))
+		{
+			spdlog::warn(
+				"The following directory did not match 'Northstar.*' and is most likely an incorrectly manually installed mod: {}",
+				dir.path().string());
+			continue; // skip loading mod that doesn't match
+		}
 		if (fs::exists(dir.path() / "mod.json"))
 			modDirs.push_back(dir.path());
+	}
 
 	for (fs::directory_entry dir : manualModsDir)
 		if (fs::exists(dir.path() / "mod.json"))
