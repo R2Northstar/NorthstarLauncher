@@ -615,7 +615,7 @@ void ModManager::LoadMods()
 
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
-	fs::create_directories(GetModFolderPath());
+	fs::create_directories(GetCoreModFolderPath());
 	fs::create_directories(GetThunderstoreLegacyModFolderPath());
 	fs::create_directories(GetRemoteModFolderPath());
 
@@ -638,11 +638,11 @@ void ModManager::LoadMods()
 	}
 
 	// get mod directories
-	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
+	std::filesystem::directory_iterator coreModsDir = fs::directory_iterator(GetCoreModFolderPath());
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
 	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreLegacyModFolderPath());
 
-	for (fs::directory_entry dir : classicModsDir)
+	for (fs::directory_entry dir : coreModsDir)
 		if (fs::exists(dir.path() / "mod.json"))
 			modDirs.push_back(dir.path());
 
@@ -1127,9 +1127,9 @@ void ConCommand_reload_mods(const CCommand& args)
 	g_pModManager->LoadMods();
 }
 
-fs::path GetModFolderPath()
+fs::path GetCoreModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix() + CORE_MOD_FOLDER_SUFFIX);
 }
 fs::path GetThunderstoreLegacyModFolderPath()
 {
