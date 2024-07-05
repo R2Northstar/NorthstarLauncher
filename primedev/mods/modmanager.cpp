@@ -1143,7 +1143,7 @@ fs::path GetManualModFolderPath()
 }
 fs::path GetThunderstoreLegacyModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + THUNDERSTORE_MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix() + THUNDERSTORE_LEGACY_MOD_FOLDER_SUFFIX);
 }
 fs::path GetRemoteModFolderPath()
 {

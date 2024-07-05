@@ -11,7 +11,7 @@
 
 const std::string CORE_MOD_FOLDER_SUFFIX = "\\mods\\core";
 const std::string MANUAL_MOD_FOLDER_SUFFIX = "\\mods\\manual";
-const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\mods\\thunderstore-legacy";
+const std::string THUNDERSTORE_LEGACY_MOD_FOLDER_SUFFIX = "\\mods\\thunderstore-legacy";
 const std::string REMOTE_MOD_FOLDER_SUFFIX = "\\runtime\\remote\\mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
 const std::string COMPILED_ASSETS_SUFFIX = "\\runtime\\compiled";
