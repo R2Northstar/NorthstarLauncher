@@ -8,6 +8,8 @@
 #include <sstream>
 #include <random>
 
+namespace fs = std::filesystem;
+
 AUTOHOOK_INIT()
 
 static const char* pszAudioEventName;
