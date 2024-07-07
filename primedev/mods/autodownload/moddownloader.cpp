@@ -145,13 +145,6 @@ int ModDownloader::ModFetchingProgressCallback(
 
 std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, VerifiedModVersion version)
 {
-	/*
-	// Retrieve mod prefix from local mods list, or use mod name as mod prefix if bypass flag is set
-	std::string modPrefix = strstr(GetCommandLineA(), VERIFICATION_FLAG) ? modName.data() : verifiedMods[modName.data()].dependencyPrefix;
-	// Build archive distant URI
-	std::string archiveName = std::format("{}-{}.zip", modPrefix, modVersion.data());
-	std::string url = STORE_URL + archiveName;*/
-
 	std::string url = version.downloadLink;
 	std::string archiveName = fs::path(url).filename().generic_string();
 	spdlog::info(std::format("Fetching mod archive from {}", url));
