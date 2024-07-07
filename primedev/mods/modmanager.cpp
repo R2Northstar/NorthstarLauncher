@@ -601,6 +601,8 @@ auto ModConCommandCallback(const CCommand& command)
 	case ScriptContext::UI:
 		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
 		break;
+	default:
+		spdlog::error("ModConCommandCallback on invalid Context {}", found->Context);
 	};
 }
 
@@ -746,7 +748,7 @@ void ModManager::LoadMods()
 			continue;
 
 		// Add mod entry to enabledmods.json if it doesn't exist
-		if (!mod.m_bIsRemote && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		if (!mod.m_bIsRemote && m_bHasEnabledModsCfg && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
 		{
 			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), true, m_EnabledModsCfg.GetAllocator());
 			newModsDetected = true;
@@ -970,7 +972,7 @@ void ModManager::LoadMods()
 			{
 				if (fs::is_regular_file(file) && file.path().extension().string() == ".json")
 				{
-					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path()))
+					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path(), mod.Name))
 					{
 						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
 						continue;
@@ -1121,6 +1123,7 @@ void ModManager::CompileAssetsForFile(const char* filename)
 
 void ConCommand_reload_mods(const CCommand& args)
 {
+	NOTE_UNUSED(args);
 	g_pModManager->LoadMods();
 }
 

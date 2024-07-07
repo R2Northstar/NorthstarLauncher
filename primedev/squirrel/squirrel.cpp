@@ -157,11 +157,6 @@ const char* SQTypeNameFromID(int type)
 	return "";
 }
 
-// needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
-template class SquirrelManager<ScriptContext::SERVER>;
-template class SquirrelManager<ScriptContext::CLIENT>;
-template class SquirrelManager<ScriptContext::UI>;
-
 template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquirrelVM* newSqvm)
 {
 	m_pSQVM = newSqvm;
@@ -316,6 +311,7 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 // hooks
 bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
 {
+	NOTE_UNUSED(context);
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
@@ -334,6 +330,8 @@ template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirr
 template <ScriptContext context> SQInteger (*SQPrint)(HSquirrelVM* sqvm, const char* fmt);
 template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const char* fmt, ...)
 {
+	NOTE_UNUSED(sqvm);
+
 	va_list va;
 	va_start(va, fmt);
 
@@ -715,7 +713,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	// Message buffer stuff
 	g_pSquirrel<ScriptContext::UI>->messageBuffer = g_pSquirrel<ScriptContext::CLIENT>->messageBuffer;
-	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x572FB0).RCast<sq_getfunctionType>();
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x6CB0).RCast<sq_getfunctionType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_getfunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction;
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_stackinfos = module.Offset(0x35970).RCast<sq_stackinfosType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_stackinfos = g_pSquirrel<ScriptContext::CLIENT>->__sq_stackinfos;
@@ -756,9 +754,6 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	StubUnsafeSQFuncs<ScriptContext::CLIENT>();
 	StubUnsafeSQFuncs<ScriptContext::UI>();
-
-	g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction = module.Offset(0x6CB0).RCast<sq_getfunctionType>();
-	g_pSquirrel<ScriptContext::UI>->__sq_getfunction = g_pSquirrel<ScriptContext::CLIENT>->__sq_getfunction;
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
@@ -808,7 +803,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff
-	g_pSquirrel<ScriptContext::SERVER>->__sq_getfunction = module.Offset(0x6C85).RCast<sq_getfunctionType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_getfunction = module.Offset(0x6C80).RCast<sq_getfunctionType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_stackinfos = module.Offset(0x35920).RCast<sq_stackinfosType>();
 
 	// Structs
@@ -845,3 +840,12 @@ void InitialiseSquirrelManagers()
 	g_pSquirrel<ScriptContext::UI> = new SquirrelManager<ScriptContext::UI>;
 	g_pSquirrel<ScriptContext::SERVER> = new SquirrelManager<ScriptContext::SERVER>;
 }
+
+// needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
+template class SquirrelManager<ScriptContext::SERVER>;
+template class SquirrelManager<ScriptContext::CLIENT>;
+template class SquirrelManager<ScriptContext::UI>;
+
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::SERVER>();
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::CLIENT>();
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::UI>();
