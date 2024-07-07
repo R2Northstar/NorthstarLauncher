@@ -93,9 +93,8 @@ void ModDownloader::FetchModsListFromAPI()
 			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
 			{
 				std::string name = i->name.GetString();
-				std::string dependency = i->value["DependencyPrefix"].GetString();
-
 				std::unordered_map<std::string, VerifiedModVersion> modVersions;
+
 				rapidjson::Value& versions = i->value["Versions"];
 				assert(versions.IsArray());
 				for (auto& attribute : versions.GetArray())
@@ -103,10 +102,14 @@ void ModDownloader::FetchModsListFromAPI()
 					assert(attribute.IsObject());
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
-					modVersions.insert({version, {.checksum = checksum}});
+					std::string downloadLink = attribute["DownloadLink"].GetString();
+					VerifiedModPlatform platform = strcmp(attribute["DownloadLink"].GetString(), "thunderstore") == 0
+													   ? VerifiedModPlatform::Thunderstore
+													   : VerifiedModPlatform::Unknown;
+					modVersions.insert({version, {.checksum = checksum, .downloadLink = downloadLink, .platform = platform}});
 				}
 
-				VerifiedModDetails modConfig = {.dependencyPrefix = dependency, .versions = modVersions};
+				VerifiedModDetails modConfig = {.versions = modVersions};
 				verifiedMods.insert({name, modConfig});
 				spdlog::info("==> Loaded configuration for mod \"" + name + "\"");
 			}
@@ -140,14 +143,17 @@ int ModDownloader::ModFetchingProgressCallback(
 	return 0;
 }
 
-// TODO use link from mod version
-std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, std::string_view modVersion)
+std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, VerifiedModVersion version)
 {
+	/*
 	// Retrieve mod prefix from local mods list, or use mod name as mod prefix if bypass flag is set
 	std::string modPrefix = strstr(GetCommandLineA(), VERIFICATION_FLAG) ? modName.data() : verifiedMods[modName.data()].dependencyPrefix;
 	// Build archive distant URI
 	std::string archiveName = std::format("{}-{}.zip", modPrefix, modVersion.data());
-	std::string url = STORE_URL + archiveName;
+	std::string url = STORE_URL + archiveName;*/
+
+	std::string url = version.downloadLink;
+	std::string archiveName = fs::path(url).filename().generic_string();
 	spdlog::info(std::format("Fetching mod archive from {}", url));
 
 	// Download destination
@@ -575,8 +581,9 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				});
 
 			// Download mod archive
-			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
-			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), std::string_view(modVersion));
+			VerifiedModVersion fullVersion = verifiedMods[modName].versions[modVersion];
+			std::string expectedHash = fullVersion.checksum;
+			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), fullVersion);
 			if (!fetchingResult.has_value())
 			{
 				spdlog::error("Something went wrong while fetching archive, aborting.");

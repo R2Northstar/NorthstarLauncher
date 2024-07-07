@@ -8,15 +8,19 @@ private:
 	const char* DEFAULT_MODS_LIST_URL = "https://raw.githubusercontent.com/R2Northstar/VerifiedMods/main/verified-mods.json";
 	char* modsListUrl;
 
-	// TODO create platform enum
-	// TODO complete below strucs
+	enum class VerifiedModPlatform
+	{
+		Thunderstore,
+		Unknown
+	};
 	struct VerifiedModVersion
 	{
 		std::string checksum;
+		std::string downloadLink;
+		VerifiedModPlatform platform;
 	};
 	struct VerifiedModDetails
 	{
-		std::string dependencyPrefix;
 		std::unordered_map<std::string, VerifiedModVersion> versions = {};
 	};
 	std::unordered_map<std::string, VerifiedModDetails> verifiedMods = {};
@@ -46,7 +50,7 @@ private:
 	 * @param modVersion version of the mod to be downloaded
 	 * @returns location of the downloaded archive
 	 */
-	std::optional<fs::path> FetchModFromDistantStore(std::string_view modName, std::string_view modVersion);
+	std::optional<fs::path> FetchModFromDistantStore(std::string_view modName, VerifiedModVersion modVersion);
 
 	/**
 	 * Tells if a mod archive has not been corrupted.
