@@ -3,10 +3,13 @@ class ModDownloader
 private:
 	const char* VERIFICATION_FLAG = "-disablemodverification";
 	const char* CUSTOM_MODS_URL_FLAG = "-customverifiedurl=";
+	// TODO remove
 	const char* STORE_URL = "https://gcdn.thunderstore.io/live/repository/packages/";
 	const char* DEFAULT_MODS_LIST_URL = "https://raw.githubusercontent.com/R2Northstar/VerifiedMods/main/verified-mods.json";
 	char* modsListUrl;
 
+	// TODO create platform enum
+	// TODO complete below strucs
 	struct VerifiedModVersion
 	{
 		std::string checksum;

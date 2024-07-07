@@ -140,6 +140,7 @@ int ModDownloader::ModFetchingProgressCallback(
 	return 0;
 }
 
+// TODO use link from mod version
 std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, std::string_view modVersion)
 {
 	// Retrieve mod prefix from local mods list, or use mod name as mod prefix if bypass flag is set
