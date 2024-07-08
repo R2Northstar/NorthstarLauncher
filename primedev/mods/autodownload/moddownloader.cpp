@@ -103,7 +103,8 @@ void ModDownloader::FetchModsListFromAPI()
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
 					std::string downloadLink = attribute["DownloadLink"].GetString();
-					VerifiedModPlatform platform = strcmp(attribute["DownloadLink"].GetString(), "thunderstore") == 0
+					std::string platformValue = attribute["Platform"].GetString();
+					VerifiedModPlatform platform = platformValue.compare("thunderstore") == 0
 													   ? VerifiedModPlatform::Thunderstore
 													   : VerifiedModPlatform::Unknown;
 					modVersions.insert({version, {.checksum = checksum, .downloadLink = downloadLink, .platform = platform}});
@@ -366,7 +367,7 @@ int GetModArchiveSize(unzFile file, unz_global_info64 info)
 	return totalSize;
 }
 
-void ModDownloader::ExtractMod(fs::path modPath)
+void ModDownloader::ExtractMod(fs::path modPath, VerifiedModPlatform platform)
 {
 	unzFile file;
 	std::string name;
@@ -403,6 +404,14 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	modState.state = EXTRACTING;
 	modState.total = GetModArchiveSize(file, gi);
 	modState.progress = 0;
+
+	// Right now, we only know how to extract Thunderstore mods
+	if (platform != VerifiedModPlatform::Thunderstore)
+	{
+		spdlog::error("Failed extracting mod from unknown platform (value: {}).", platform);
+		modState.state = UNKNOWN_PLATFORM;
+		return;
+	}
 
 	// Mod directory name (removing the ".zip" fom the archive name)
 	name = modPath.filename().string();
@@ -592,7 +601,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			}
 
 			// Extract downloaded mod archive
-			ExtractMod(archiveLocation);
+			ExtractMod(archiveLocation, fullVersion.platform);
 		});
 
 	requestThread.detach();

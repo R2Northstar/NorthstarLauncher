@@ -8,8 +8,8 @@ private:
 
 	enum class VerifiedModPlatform
 	{
-		Thunderstore,
-		Unknown
+		Unknown,
+		Thunderstore
 	};
 	struct VerifiedModVersion
 	{
@@ -68,12 +68,13 @@ private:
 	 * Extracts a mod archive to the game folder.
 	 *
 	 * This extracts a downloaded mod archive from its original location to the
-	 * current game profile, in the remote mods folder.
+	 * current game profile; the install folder is defined by the platform parameter.
 	 *
 	 * @param modPath location of the downloaded archive
+	 * @param platform origin of the downloaded archive
 	 * @returns nothing
 	 */
-	void ExtractMod(fs::path modPath);
+	void ExtractMod(fs::path modPath, VerifiedModPlatform platform);
 
 public:
 	ModDownloader();
@@ -132,7 +133,8 @@ public:
 		MOD_FETCHING_FAILED,
 		MOD_CORRUPTED, // Downloaded archive checksum does not match verified hash
 		NO_DISK_SPACE_AVAILABLE,
-		NOT_FOUND // Mod is not currently being auto-downloaded
+		NOT_FOUND, // Mod is not currently being auto-downloaded
+		UNKNOWN_PLATFORM
 	};
 
 	struct MOD_STATE
