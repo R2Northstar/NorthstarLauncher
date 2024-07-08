@@ -104,9 +104,8 @@ void ModDownloader::FetchModsListFromAPI()
 					std::string checksum = attribute["Checksum"].GetString();
 					std::string downloadLink = attribute["DownloadLink"].GetString();
 					std::string platformValue = attribute["Platform"].GetString();
-					VerifiedModPlatform platform = platformValue.compare("thunderstore") == 0
-													   ? VerifiedModPlatform::Thunderstore
-													   : VerifiedModPlatform::Unknown;
+					VerifiedModPlatform platform =
+						platformValue.compare("thunderstore") == 0 ? VerifiedModPlatform::Thunderstore : VerifiedModPlatform::Unknown;
 					modVersions.insert({version, {.checksum = checksum, .downloadLink = downloadLink, .platform = platform}});
 				}
 
