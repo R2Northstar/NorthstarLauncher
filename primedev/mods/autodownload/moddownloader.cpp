@@ -92,6 +92,13 @@ void ModDownloader::FetchModsListFromAPI()
 			verifiedModsJson.Parse(readBuffer);
 			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
 			{
+				// Format testing
+				if (!i->value.HasMember("DependencyPrefix") || !i->value.HasMember("Versions"))
+				{
+					spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
+					return;
+				}
+
 				std::string name = i->name.GetString();
 				std::string dependency = i->value["DependencyPrefix"].GetString();
 
@@ -101,6 +108,13 @@ void ModDownloader::FetchModsListFromAPI()
 				for (auto& attribute : versions.GetArray())
 				{
 					assert(attribute.IsObject());
+					// Format testing
+					if (!attribute.HasMember("Version") || !attribute.HasMember("Checksum"))
+					{
+						spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
+						return;
+					}
+
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
 					modVersions.insert({version, {.checksum = checksum}});
@@ -126,6 +140,8 @@ size_t WriteData(void* ptr, size_t size, size_t nmemb, FILE* stream)
 int ModDownloader::ModFetchingProgressCallback(
 	void* ptr, curl_off_t totalDownloadSize, curl_off_t finishedDownloadSize, curl_off_t totalToUpload, curl_off_t nowUploaded)
 {
+	NOTE_UNUSED(totalToUpload);
+	NOTE_UNUSED(nowUploaded);
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
 		ModDownloader* instance = static_cast<ModDownloader*>(ptr);

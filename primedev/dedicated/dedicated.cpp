@@ -35,11 +35,14 @@ struct CDedicatedExports
 
 void Sys_Printf(CDedicatedExports* dedicated, const char* msg)
 {
+	NOTE_UNUSED(dedicated);
 	spdlog::info("[DEDICATED SERVER] {}", msg);
 }
 
 void RunServer(CDedicatedExports* dedicated)
 {
+	NOTE_UNUSED(dedicated);
+
 	spdlog::info("CDedicatedExports::RunServer(): starting");
 	spdlog::info(CommandLine()->GetCmdLine());
 
@@ -86,6 +89,8 @@ class DedicatedConsoleServerPresence : public ServerPresenceReporter
 HANDLE consoleInputThreadHandle = NULL;
 DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 {
+	NOTE_UNUSED(pThreadParameter);
+
 	while (!g_pEngine || !g_pHostState || g_pHostState->m_iCurrentState != HostState_t::HS_RUN)
 		Sleep(1000);
 
@@ -135,7 +140,7 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	{
 		// CModAppSystemGroup::Create
 		// force the engine into dedicated mode by changing the first comparison to IsServerOnly to an assignment
-		CMemoryAddress base = module.Offset(0x1C4EBD);
+		CMemory base = module.Offset(0x1C4EBD);
 
 		// cmp => mov
 		base.Offset(1).Patch("C6 87");
@@ -262,7 +267,7 @@ ON_DLL_LOAD_DEDI("tier0.dll", DedicatedServerOrigin, (CModule module))
 	// disable origin on dedicated
 	// for any big ea lawyers, this can't be used to play the game without origin, game will throw a fit if you try to do anything without
 	// an origin id as a client for dedi it's fine though, game doesn't care if origin is disabled as long as there's only a server
-	module.GetExport("Tier0_InitOrigin").Patch("C3");
+	module.GetExportedFunction("Tier0_InitOrigin").Patch("C3");
 }
 
 // clang-format off

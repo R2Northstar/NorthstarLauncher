@@ -5,6 +5,8 @@
 #include "core/math/vector.h"
 #include "mods/modmanager.h"
 
+namespace fs = std::filesystem;
+
 /*
 	definitions from hell
 	required to function
@@ -136,7 +138,7 @@ public:
 
 	inline SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args)
 	{
-		return __sq_call(sqvm, args + 1, false, false);
+		return __sq_call(sqvm, args + 1, false, true);
 	}
 
 	inline SQInteger raiseerror(HSquirrelVM* sqvm, const SQChar* sError)
@@ -447,7 +449,7 @@ inline VoidFunction SQMessageBufferPushArg(Vector3& arg) {
 // Vectors
 template <ScriptContext context>
 inline VoidFunction SQMessageBufferPushArg(SQObject* arg) {
-	return [arg]{ g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, arg); };
+	return [arg]{ g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, arg); };
 }
 // Ints
 template <ScriptContext context, typename T>

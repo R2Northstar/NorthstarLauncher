@@ -511,7 +511,7 @@ bool KeyValues::IsEmpty(const char* pszKeyName)
 KeyValues* KeyValues::GetFirstTrueSubKey(void) const
 {
 	assert_msg(this, "Member function called on NULL KeyValues");
-	KeyValues* pRet = this ? m_pSub : nullptr;
+	KeyValues* pRet = m_pSub;
 	while (pRet && pRet->m_iDataType != TYPE_NONE)
 		pRet = pRet->m_pPeer;
 
@@ -525,7 +525,7 @@ KeyValues* KeyValues::GetFirstTrueSubKey(void) const
 KeyValues* KeyValues::GetNextTrueSubKey(void) const
 {
 	assert_msg(this, "Member function called on NULL KeyValues");
-	KeyValues* pRet = this ? m_pPeer : nullptr;
+	KeyValues* pRet = m_pPeer;
 	while (pRet && pRet->m_iDataType != TYPE_NONE)
 		pRet = pRet->m_pPeer;
 
@@ -539,7 +539,7 @@ KeyValues* KeyValues::GetNextTrueSubKey(void) const
 KeyValues* KeyValues::GetFirstValue(void) const
 {
 	assert_msg(this, "Member function called on NULL KeyValues");
-	KeyValues* pRet = this ? m_pSub : nullptr;
+	KeyValues* pRet = m_pSub;
 	while (pRet && pRet->m_iDataType == TYPE_NONE)
 		pRet = pRet->m_pPeer;
 
@@ -553,7 +553,7 @@ KeyValues* KeyValues::GetFirstValue(void) const
 KeyValues* KeyValues::GetNextValue(void) const
 {
 	assert_msg(this, "Member function called on NULL KeyValues");
-	KeyValues* pRet = this ? m_pPeer : nullptr;
+	KeyValues* pRet = m_pPeer;
 	while (pRet && pRet->m_iDataType == TYPE_NONE)
 		pRet = pRet->m_pPeer;
 
@@ -566,7 +566,7 @@ KeyValues* KeyValues::GetNextValue(void) const
 KeyValues* KeyValues::GetFirstSubKey() const
 {
 	assert_msg(this, "Member function called on NULL KeyValues");
-	return this ? m_pSub : nullptr;
+	return m_pSub;
 }
 
 //-----------------------------------------------------------------------------
@@ -575,7 +575,7 @@ KeyValues* KeyValues::GetFirstSubKey() const
 KeyValues* KeyValues::GetNextKey() const
 {
 	assert_msg(this, "Member function called on NULL KeyValues");
-	return this ? m_pPeer : nullptr;
+	return m_pPeer;
 }
 
 //-----------------------------------------------------------------------------
@@ -1289,9 +1289,9 @@ KeyValues* KeyValues::MakeCopy(void) const
 
 ON_DLL_LOAD("vstdlib.dll", KeyValues, (CModule module))
 {
-	V_UTF8ToUnicode = module.GetExport("V_UTF8ToUnicode").RCast<int (*)(const char*, wchar_t*, int)>();
-	V_UnicodeToUTF8 = module.GetExport("V_UnicodeToUTF8").RCast<int (*)(const wchar_t*, char*, int)>();
-	KeyValuesSystem = module.GetExport("KeyValuesSystem").RCast<CKeyValuesSystem* (*)()>();
+	V_UTF8ToUnicode = module.GetExportedFunction("V_UTF8ToUnicode").RCast<int (*)(const char*, wchar_t*, int)>();
+	V_UnicodeToUTF8 = module.GetExportedFunction("V_UnicodeToUTF8").RCast<int (*)(const wchar_t*, char*, int)>();
+	KeyValuesSystem = module.GetExportedFunction("KeyValuesSystem").RCast<CKeyValuesSystem* (*)()>();
 }
 
 AUTOHOOK_INIT()

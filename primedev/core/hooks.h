@@ -1,5 +1,4 @@
 #pragma once
-#include "memory.h"
 
 #include <string>
 #include <iostream>
@@ -202,7 +201,9 @@ public:
 		}
 		}
 
-		if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
+		if (!targetAddr)
+			spdlog::error("Address for hook {} is invalid", pFuncName);
+		else if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
 		{
 			if (MH_EnableHook(targetAddr) == MH_OK)
 				spdlog::info("Enabling hook {}", pFuncName);
