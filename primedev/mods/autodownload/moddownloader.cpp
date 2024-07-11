@@ -617,7 +617,6 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
-	g_pModDownloader->FetchModsListFromAPI();
 }
 
 ADD_SQFUNC(
