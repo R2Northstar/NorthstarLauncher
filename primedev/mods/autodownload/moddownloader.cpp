@@ -63,6 +63,9 @@ void ModDownloader::FetchModsListFromAPI()
 			rapidjson::Document verifiedModsJson;
 			std::string url = modsListUrl;
 
+			// Empty verified mods manifesto
+			verifiedMods = {};
+
 			curl_global_init(CURL_GLOBAL_ALL);
 			easyhandle = curl_easy_init();
 			std::string readBuffer;
