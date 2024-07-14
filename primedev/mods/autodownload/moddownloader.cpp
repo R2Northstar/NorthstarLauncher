@@ -619,6 +619,12 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 	g_pModDownloader = new ModDownloader();
 }
 
+ADD_SQFUNC("void", NSFetchVerifiedModsManifesto, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	g_pModDownloader->FetchModsListFromAPI();
+	return SQRESULT_NULL;
+}
+
 ADD_SQFUNC(
 	"bool", NSIsModDownloadable, "string name, string version", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
