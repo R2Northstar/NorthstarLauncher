@@ -55,6 +55,8 @@ size_t WriteToString(void* ptr, size_t size, size_t count, void* stream)
 
 void ModDownloader::FetchModsListFromAPI()
 {
+	modState.state = MANIFESTO_FETCHING;
+
 	std::thread requestThread(
 		[this]()
 		{
