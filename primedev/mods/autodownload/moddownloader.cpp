@@ -80,7 +80,12 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteToString);
 			result = curl_easy_perform(easyhandle);
-			ScopeGuard cleanup([&] { curl_easy_cleanup(easyhandle); });
+			ScopeGuard cleanup(
+				[&]
+				{
+					curl_easy_cleanup(easyhandle);
+					modState.state = DOWNLOADING;
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
