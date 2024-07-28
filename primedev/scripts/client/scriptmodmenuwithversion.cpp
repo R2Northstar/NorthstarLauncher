@@ -1,0 +1,21 @@
+#include "mods/modmanager.h"
+#include "squirrel/squirrel.h"
+
+ADD_SQFUNC("void", NSSetModEnabledWithVersion, "string modName, string modVersion, bool enabled", "", ScriptContext::UI)
+{
+	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 1);
+	const SQBool enabled = g_pSquirrel<context>->getbool(sqvm, 3);
+
+	// manual lookup, not super performant but eh not a big deal
+	for (Mod& mod : g_pModManager->m_LoadedMods)
+	{
+		if (mod.Name.compare(modName) && mod.Version.compare(modVersion))
+		{
+			mod.m_bEnabled = enabled;
+			return SQRESULT_NULL;
+		}
+	}
+
+	return SQRESULT_NULL;
+}
