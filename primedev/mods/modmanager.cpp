@@ -637,6 +637,22 @@ void ModManager::LoadMods()
 		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
 	}
 
+	// read enabled versioned mods cfg
+	std::ifstream enabledModsStream2(GetNorthstarPrefix() + "/enabledversionedmods.json");
+	std::stringstream enabledModsStringStream2;
+
+	if (!enabledModsStream2.fail())
+	{
+		while (enabledModsStream2.peek() != EOF)
+			enabledModsStringStream2 << (char)enabledModsStream2.get();
+
+		enabledModsStream2.close();
+		m_EnabledVersionedModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+			enabledModsStringStream2.str().c_str());
+
+		m_bHasEnabledVersionedModsCfg = m_EnabledVersionedModsCfg.IsObject();
+	}
+
 	// get mod directories
 	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
@@ -1055,6 +1071,9 @@ void ModManager::UnloadMods()
 	if (!m_bHasEnabledModsCfg)
 		m_EnabledModsCfg.SetObject();
 
+	if (!m_bHasEnabledVersionedModsCfg)
+		m_EnabledVersionedModsCfg.SetObject();
+
 	for (Mod& mod : m_LoadedMods)
 	{
 		// remove all built kvs
@@ -1071,12 +1090,38 @@ void ModManager::UnloadMods()
 			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
 
 		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
+
+
+		if (!m_useNewManifestoFormat)
+			continue;
+
+		// Creating mod key (with name)
+		if (!m_EnabledVersionedModsCfg.HasMember(mod.Name.c_str()))
+		{
+			m_EnabledVersionedModsCfg.AddMember(
+				rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledVersionedModsCfg.GetAllocator());
+			m_EnabledVersionedModsCfg[mod.Name.c_str()].SetObject();
+		}
+
+		// Creating version key
+		if (!m_EnabledVersionedModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str()))
+			m_EnabledVersionedModsCfg[mod.Name.c_str()].AddMember(
+				rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledVersionedModsCfg.GetAllocator());
+		m_EnabledVersionedModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
 	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
 	m_EnabledModsCfg.Accept(writer);
+
+	if (m_useNewManifestoFormat)
+	{
+		std::ofstream writeStream2(GetNorthstarPrefix() + "/enabledversionedmods.json");
+		rapidjson::OStreamWrapper writeStreamWrapper2(writeStream2);
+		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer2(writeStreamWrapper2);
+		m_EnabledVersionedModsCfg.Accept(writer2);
+	}
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();
