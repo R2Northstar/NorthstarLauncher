@@ -65,7 +65,12 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsModEnabledWithVersion, "string modName, string modVersion", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"bool",
+	NSIsModEnabledWithVersion,
+	"string modName, string modVersion",
+	"",
+	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);

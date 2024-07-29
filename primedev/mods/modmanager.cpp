@@ -1100,7 +1100,6 @@ void ModManager::UnloadMods()
 
 		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
 
-
 		if (!m_useNewManifestoFormat)
 			continue;
 
