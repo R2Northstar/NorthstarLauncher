@@ -734,8 +734,17 @@ void ModManager::LoadMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		if (m_bHasEnabledVersionedModsCfg && m_EnabledVersionedModsCfg.HasMember(mod.Name.c_str()) &&
+			m_EnabledVersionedModsCfg[mod.Name.c_str()].HasMember(mod.Version))
+		{
+			mod.m_bEnabled = m_EnabledVersionedModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
+			spdlog::info("Using new manifesto format to load mods state.");
+		}
+		else if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		{
 			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
+			spdlog::info("Using old manifesto format to load mods state.");
+		}
 		else
 			mod.m_bEnabled = true;
 
