@@ -103,7 +103,7 @@ void ModDownloader::FetchModsListFromAPI()
 			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
 			{
 				// Format testing
-				if (!i->value.HasMember("DependencyPrefix") || !i->value.HasMember("Versions"))
+				if (!i->value.HasMember("Repository") || !i->value.HasMember("Versions"))
 				{
 					spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
 					return;
@@ -118,7 +118,8 @@ void ModDownloader::FetchModsListFromAPI()
 				{
 					assert(attribute.IsObject());
 					// Format testing
-					if (!attribute.HasMember("Version") || !attribute.HasMember("Checksum"))
+					if (!attribute.HasMember("Version") || !attribute.HasMember("Checksum") || !attribute.HasMember("DownloadLink") ||
+						!attribute.HasMember("Platform"))
 					{
 						spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
 						return;
