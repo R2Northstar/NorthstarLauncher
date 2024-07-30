@@ -1,29 +1,6 @@
 #include "mods/modmanager.h"
 #include "squirrel/squirrel.h"
 
-ADD_SQFUNC(
-	"bool",
-	NSIsModRequiredOnClientWithVersion,
-	"string modName, string modVersion",
-	"",
-	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
-{
-	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
-	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
-
-	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.Name.compare(modName) && !mod.Version.compare(modVersion))
-		{
-			g_pSquirrel<context>->pushbool(sqvm, mod.RequiredOnClient);
-			return SQRESULT_NOTNULL;
-		}
-	}
-
-	return SQRESULT_NULL;
-}
-
 ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
