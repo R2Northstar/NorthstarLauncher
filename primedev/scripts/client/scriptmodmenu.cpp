@@ -87,23 +87,6 @@ ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptConte
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("int", NSGetModLoadPriority, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
-{
-	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
-
-	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.Name.compare(modName))
-		{
-			g_pSquirrel<context>->pushinteger(sqvm, mod.LoadPriority);
-			return SQRESULT_NOTNULL;
-		}
-	}
-
-	return SQRESULT_NULL;
-}
-
 ADD_SQFUNC(
 	"bool",
 	NSIsModRequiredOnClient,
