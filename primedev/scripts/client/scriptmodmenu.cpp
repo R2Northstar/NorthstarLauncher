@@ -70,23 +70,6 @@ ADD_SQFUNC("bool", NSIsModRemote, "string modName, string modVersion", "", Scrip
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string", NSGetModDescriptionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
-{
-	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
-
-	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.Name.compare(modName))
-		{
-			g_pSquirrel<context>->pushstring(sqvm, mod.Description.c_str());
-			return SQRESULT_NOTNULL;
-		}
-	}
-
-	return SQRESULT_NULL;
-}
-
 ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);

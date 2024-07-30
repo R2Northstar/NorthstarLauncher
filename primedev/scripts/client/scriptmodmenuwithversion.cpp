@@ -7,31 +7,35 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER
 
 	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		g_pSquirrel<context>->pushnewstructinstance(sqvm, 7);
+		g_pSquirrel<context>->pushnewstructinstance(sqvm, 8);
 
 		// name
 		g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
 		g_pSquirrel<context>->sealstructslot(sqvm, 0);
 
+		// description
+		g_pSquirrel<context>->pushstring(sqvm, mod.Description.c_str(), -1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 1);
+
 		// version
 		g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str(), -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 1);
+		g_pSquirrel<context>->sealstructslot(sqvm, 2);
 
 		// download link
 		g_pSquirrel<context>->pushstring(sqvm, mod.DownloadLink.c_str(), -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 2);
+		g_pSquirrel<context>->sealstructslot(sqvm, 3);
 
 		// load priority
 		g_pSquirrel<context>->pushinteger(sqvm, mod.LoadPriority);
-		g_pSquirrel<context>->sealstructslot(sqvm, 3);
+		g_pSquirrel<context>->sealstructslot(sqvm, 4);
 
 		// enabled
 		g_pSquirrel<context>->pushbool(sqvm, mod.m_bEnabled);
-		g_pSquirrel<context>->sealstructslot(sqvm, 4);
+		g_pSquirrel<context>->sealstructslot(sqvm, 5);
 
 		// required on client
 		g_pSquirrel<context>->pushbool(sqvm, mod.RequiredOnClient);
-		g_pSquirrel<context>->sealstructslot(sqvm, 5);
+		g_pSquirrel<context>->sealstructslot(sqvm, 6);
 
 		// convars
 		g_pSquirrel<context>->newarray(sqvm);
@@ -40,7 +44,7 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER
 			g_pSquirrel<context>->pushstring(sqvm, cvar->Name.c_str());
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 		}
-		g_pSquirrel<context>->sealstructslot(sqvm, 6);
+		g_pSquirrel<context>->sealstructslot(sqvm, 7);
 
 		// add current object to squirrel array
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
