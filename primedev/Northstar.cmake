@@ -103,7 +103,6 @@ add_library(
     "scripts/client/scriptbrowserhooks.cpp"
     "scripts/client/scriptmainmenupromos.cpp"
     "scripts/client/scriptmodmenu.cpp"
-    "scripts/client/scriptmodmenuwithversion.cpp"
     "scripts/client/scriptoriginauth.cpp"
     "scripts/client/scriptserverbrowser.cpp"
     "scripts/client/scriptservertoclientstringcommand.cpp"
