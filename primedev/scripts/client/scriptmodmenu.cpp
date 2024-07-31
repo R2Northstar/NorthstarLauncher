@@ -128,9 +128,10 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC("array<string>", NSGetModVersions, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
+	g_pSquirrel<context>->newarray(sqvm, 0);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_LoadedMods)
@@ -138,11 +139,11 @@ ADD_SQFUNC("string", NSGetModVersionByModName, "string modName", "", ScriptConte
 		if (!mod.Name.compare(modName))
 		{
 			g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str());
-			return SQRESULT_NOTNULL;
+			g_pSquirrel<context>->arrayappend(sqvm, -2);
 		}
 	}
 
-	return SQRESULT_NULL;
+	return SQRESULT_NOTNULL;
 }
 
 ADD_SQFUNC(
