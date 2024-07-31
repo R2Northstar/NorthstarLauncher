@@ -110,30 +110,6 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC(
-	"array<string>", NSGetModConvarsByModName, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
-{
-	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
-	g_pSquirrel<context>->newarray(sqvm, 0);
-
-	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.Name.compare(modName))
-		{
-			for (ModConVar* cvar : mod.ConVars)
-			{
-				g_pSquirrel<context>->pushstring(sqvm, cvar->Name.c_str());
-				g_pSquirrel<context>->arrayappend(sqvm, -2);
-			}
-
-			return SQRESULT_NOTNULL;
-		}
-	}
-
-	return SQRESULT_NOTNULL; // return empty array
-}
-
 ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
