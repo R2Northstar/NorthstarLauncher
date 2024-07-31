@@ -85,7 +85,12 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSSetModEnabled, "string modName, string modVersion, bool enabled", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"void",
+	NSSetModEnabled,
+	"string modName, string modVersion, bool enabled",
+	"",
+	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
@@ -104,7 +109,8 @@ ADD_SQFUNC("void", NSSetModEnabled, "string modName, string modVersion, bool ena
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsModRemote, "string modName, string modVersion", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"bool", NSIsModRemote, "string modName, string modVersion", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
