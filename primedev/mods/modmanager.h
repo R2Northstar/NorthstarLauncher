@@ -172,6 +172,9 @@ public:
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
 	std::unordered_set<std::string> m_PluginDependencyConstants;
 
+private:
+	void GenerateModsConfigurationFile();
+
 public:
 	ModManager();
 	void LoadMods();

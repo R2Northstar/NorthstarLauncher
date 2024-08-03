@@ -1077,12 +1077,6 @@ void ModManager::UnloadMods()
 
 	g_CustomAudioManager.ClearAudioOverrides();
 
-	if (!m_bHasEnabledModsCfg)
-		m_EnabledModsCfg.SetObject();
-
-	if (!m_bHasEnabledVersionedModsCfg)
-		m_EnabledVersionedModsCfg.SetObject();
-
 	for (Mod& mod : m_LoadedMods)
 	{
 		// remove all built kvs
@@ -1090,19 +1084,22 @@ void ModManager::UnloadMods()
 			fs::remove(GetCompiledAssetsPath() / fs::path(kvPaths.second).lexically_relative(mod.m_ModDirectory));
 
 		mod.KeyValues.clear();
+	}
 
-		// write to m_enabledModsCfg
-		// should we be doing this here or should scripts be doing this manually?
-		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
-		// what we wanna do
-		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+	// save mods configuration to disk
+	GenerateModsConfigurationFile();
 
-		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
+	// do we need to dealloc individual entries in m_loadedMods? idk, rework
+	m_LoadedMods.clear();
+}
 
-		if (!m_useNewManifestoFormat)
-			continue;
+void ModManager::GenerateModsConfigurationFile()
+{
+	if (!m_bHasEnabledVersionedModsCfg)
+		m_EnabledVersionedModsCfg.SetObject();
 
+	for (Mod& mod : m_LoadedMods)
+	{
 		// Creating mod key (with name)
 		if (!m_EnabledVersionedModsCfg.HasMember(mod.Name.c_str()))
 		{
@@ -1118,21 +1115,10 @@ void ModManager::UnloadMods()
 		m_EnabledVersionedModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
-	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
-	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
-	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
-	m_EnabledModsCfg.Accept(writer);
-
-	if (m_useNewManifestoFormat)
-	{
-		std::ofstream writeStream2(GetNorthstarPrefix() + "/enabledversionedmods.json");
-		rapidjson::OStreamWrapper writeStreamWrapper2(writeStream2);
-		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer2(writeStreamWrapper2);
-		m_EnabledVersionedModsCfg.Accept(writer2);
-	}
-
-	// do we need to dealloc individual entries in m_loadedMods? idk, rework
-	m_LoadedMods.clear();
+	std::ofstream writeStream2(GetNorthstarPrefix() + "/enabledversionedmods.json");
+	rapidjson::OStreamWrapper writeStreamWrapper2(writeStream2);
+	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer2(writeStreamWrapper2);
+	m_EnabledVersionedModsCfg.Accept(writer2);
 }
 
 std::string ModManager::NormaliseModFilePath(const fs::path path)
