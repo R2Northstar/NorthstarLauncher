@@ -173,6 +173,7 @@ public:
 	std::unordered_set<std::string> m_PluginDependencyConstants;
 
 private:
+	void SearchFilesystemForMods();
 	void GenerateModsConfigurationFile();
 
 public:
