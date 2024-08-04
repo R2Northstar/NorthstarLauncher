@@ -669,8 +669,7 @@ void ModManager::LoadMods()
 			// Creating mod key (with name)
 			if (!modEntryExists)
 			{
-				m_EnabledModsCfg.AddMember(
-					rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+				m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
 				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
 			}
 
@@ -1123,8 +1122,7 @@ void ModManager::ExportModsConfigurationToFile()
 		// Creating mod key (with name)
 		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
 		{
-			m_EnabledModsCfg.AddMember(
-				rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
 			m_EnabledModsCfg[mod.Name.c_str()].SetObject();
 		}
 
