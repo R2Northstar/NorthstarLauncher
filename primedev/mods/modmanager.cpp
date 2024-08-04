@@ -661,9 +661,6 @@ void ModManager::LoadMods()
 
 	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// Add mod entry to enabledmods.json if it doesn't exist
 		bool isModRemote = mod.m_bIsRemote;
 		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
@@ -690,6 +687,10 @@ void ModManager::LoadMods()
 			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 			newModsDetected = true;
 		}
+
+		// Don't register stuff coming from disabled mods
+		if (!mod.m_bEnabled)
+			continue;
 
 		// register convars
 		// for reloads, this is sorta barebones, when we have a good findconvar method, we could probably reset flags and stuff on
@@ -999,7 +1000,7 @@ void ModManager::UnloadMods()
 	}
 
 	// save mods configuration to disk
-	// GenerateModsConfigurationFile(false);
+	GenerateModsConfigurationFile(false);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();
