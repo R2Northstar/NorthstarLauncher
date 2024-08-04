@@ -629,7 +629,8 @@ void ModManager::LoadMods()
 	// TODO generation might not be needed here as it may be done ~L666
 	if (enabledModsStream.fail())
 	{
-		GenerateModsConfigurationFile();
+		// GenerateModsConfigurationFile();
+		m_EnabledModsCfg.SetObject();
 	}
 	else
 	{
@@ -644,14 +645,13 @@ void ModManager::LoadMods()
 		if (!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client"))
 		{
 			// TODO if unknown mod config format, rename current file + regenerate config
-			GenerateModsConfigurationFile();
+			// GenerateModsConfigurationFile();
+			m_EnabledModsCfg.SetObject();
 		}
 
 		bool isUsingOldFormat = m_EnabledModsCfg["Northstar.Client"].IsBool();
 		spdlog::info("==> Using old mods manifesto format: {}", isUsingOldFormat);
 		// TODO if old mod config format, rename current file + regenerate config
-
-		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
 	}
 
 	SearchFilesystemForMods();
@@ -665,10 +665,29 @@ void ModManager::LoadMods()
 			continue;
 
 		// Add mod entry to enabledmods.json if it doesn't exist
-		// TODO adapt to new configuration
-		if (!mod.m_bIsRemote && m_bHasEnabledModsCfg && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		bool isModRemote = mod.m_bIsRemote;
+		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
+		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
+
+		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
 		{
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), true, m_EnabledModsCfg.GetAllocator());
+			// Creating mod key (with name)
+			if (!modEntryExists)
+			{
+				m_EnabledModsCfg.AddMember(
+					rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
+			}
+
+			// Creating version key
+			if (!modVersionEntryExists)
+			{
+				m_EnabledModsCfg[mod.Name.c_str()].AddMember(
+					rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			}
+
+			// Add mod entry
+			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 			newModsDetected = true;
 		}
 
@@ -980,7 +999,7 @@ void ModManager::UnloadMods()
 	}
 
 	// save mods configuration to disk
-	GenerateModsConfigurationFile(false);
+	// GenerateModsConfigurationFile(false);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();
@@ -1072,8 +1091,7 @@ void ModManager::SearchFilesystemForMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()) &&
-			m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version))
+		if (m_EnabledModsCfg.HasMember(mod.Name.c_str()) && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version))
 		{
 			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
 		}
@@ -1102,8 +1120,7 @@ void ModManager::GenerateModsConfigurationFile(bool requiresFilesystemSearch)
 	if (requiresFilesystemSearch)
 		SearchFilesystemForMods();
 
-	if (!m_bHasEnabledModsCfg)
-		m_EnabledModsCfg.SetObject();
+	m_EnabledModsCfg.SetObject();
 
 	for (Mod& mod : m_LoadedMods)
 	{
