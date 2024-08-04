@@ -625,7 +625,12 @@ void ModManager::LoadMods()
 	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/enabledmods.json");
 	std::stringstream enabledModsStringStream;
 
-	if (!enabledModsStream.fail())
+	// create configuration file if does not exist
+	if (enabledModsStream.fail())
+	{
+		GenerateModsConfigurationFile();
+	}
+	else
 	{
 		while (enabledModsStream.peek() != EOF)
 			enabledModsStringStream << (char)enabledModsStream.get();
@@ -633,6 +638,17 @@ void ModManager::LoadMods()
 		enabledModsStream.close();
 		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 			enabledModsStringStream.str().c_str());
+
+		// Check file format
+		if (!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client"))
+		{
+			// TODO if unknown mod config format, rename current file + regenerate config
+			GenerateModsConfigurationFile();
+		}
+
+		bool isUsingOldFormat = m_EnabledModsCfg["Northstar.Client"].IsBool();
+		spdlog::info("==> Using old mods manifesto format: {}", isUsingOldFormat);
+		// TODO if old mod config format, rename current file + regenerate config
 
 		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
 	}
