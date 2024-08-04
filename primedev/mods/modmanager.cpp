@@ -624,6 +624,7 @@ void ModManager::LoadMods()
 	std::stringstream enabledModsStringStream;
 
 	// create configuration file if does not exist
+	// TODO generation might not be needed here as it may be done ~L666
 	if (enabledModsStream.fail())
 	{
 		GenerateModsConfigurationFile();
@@ -651,22 +652,6 @@ void ModManager::LoadMods()
 		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
 	}
 
-	// read enabled versioned mods cfg
-	std::ifstream enabledModsStream2(GetNorthstarPrefix() + "/enabledversionedmods.json");
-	std::stringstream enabledModsStringStream2;
-
-	if (!enabledModsStream2.fail())
-	{
-		while (enabledModsStream2.peek() != EOF)
-			enabledModsStringStream2 << (char)enabledModsStream2.get();
-
-		enabledModsStream2.close();
-		m_EnabledVersionedModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-			enabledModsStringStream2.str().c_str());
-
-		m_bHasEnabledVersionedModsCfg = m_EnabledVersionedModsCfg.IsObject();
-	}
-
 	SearchFilesystemForMods();
 
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
@@ -678,6 +663,7 @@ void ModManager::LoadMods()
 			continue;
 
 		// Add mod entry to enabledmods.json if it doesn't exist
+		// TODO adapt to new configuration
 		if (!mod.m_bIsRemote && m_bHasEnabledModsCfg && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
 		{
 			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), true, m_EnabledModsCfg.GetAllocator());
@@ -1084,16 +1070,10 @@ void ModManager::SearchFilesystemForMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		if (m_bHasEnabledVersionedModsCfg && m_EnabledVersionedModsCfg.HasMember(mod.Name.c_str()) &&
-			m_EnabledVersionedModsCfg[mod.Name.c_str()].HasMember(mod.Version))
+		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()) &&
+			m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version))
 		{
-			mod.m_bEnabled = m_EnabledVersionedModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
-			spdlog::info("Using new manifesto format to load mods state.");
-		}
-		else if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-		{
-			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
-			spdlog::info("Using old manifesto format to load mods state.");
+			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
 		}
 		else
 			mod.m_bEnabled = true;
@@ -1120,30 +1100,30 @@ void ModManager::GenerateModsConfigurationFile(bool requiresFilesystemSearch)
 	if (requiresFilesystemSearch)
 		SearchFilesystemForMods();
 
-	if (!m_bHasEnabledVersionedModsCfg)
-		m_EnabledVersionedModsCfg.SetObject();
+	if (!m_bHasEnabledModsCfg)
+		m_EnabledModsCfg.SetObject();
 
 	for (Mod& mod : m_LoadedMods)
 	{
 		// Creating mod key (with name)
-		if (!m_EnabledVersionedModsCfg.HasMember(mod.Name.c_str()))
+		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
 		{
-			m_EnabledVersionedModsCfg.AddMember(
-				rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledVersionedModsCfg.GetAllocator());
-			m_EnabledVersionedModsCfg[mod.Name.c_str()].SetObject();
+			m_EnabledModsCfg.AddMember(
+				rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			m_EnabledModsCfg[mod.Name.c_str()].SetObject();
 		}
 
 		// Creating version key
-		if (!m_EnabledVersionedModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str()))
-			m_EnabledVersionedModsCfg[mod.Name.c_str()].AddMember(
-				rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledVersionedModsCfg.GetAllocator());
-		m_EnabledVersionedModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
+		if (!m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str()))
+			m_EnabledModsCfg[mod.Name.c_str()].AddMember(
+				rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
+		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
-	std::ofstream writeStream2(GetNorthstarPrefix() + "/enabledversionedmods.json");
-	rapidjson::OStreamWrapper writeStreamWrapper2(writeStream2);
-	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer2(writeStreamWrapper2);
-	m_EnabledVersionedModsCfg.Accept(writer2);
+	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
+	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
+	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
+	m_EnabledModsCfg.Accept(writer);
 }
 
 std::string ModManager::NormaliseModFilePath(const fs::path path)

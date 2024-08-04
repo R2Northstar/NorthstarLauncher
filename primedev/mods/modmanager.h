@@ -156,11 +156,6 @@ private:
 	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
 
-	// new mods manifesto format
-	rapidjson_document m_EnabledVersionedModsCfg;
-	bool m_useNewManifestoFormat = true;
-	bool m_bHasEnabledVersionedModsCfg;
-
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
 	size_t m_hPdefHash;
