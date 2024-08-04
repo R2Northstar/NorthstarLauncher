@@ -522,6 +522,8 @@ void Mod::ParseInitScript(rapidjson_document& json)
 
 ModManager::ModManager()
 {
+	cfgPath = GetNorthstarPrefix() + "/enabledmods.json";
+
 	// precaculated string hashes
 	// note: use backslashes for these, since we use lexically_normal for file paths which uses them
 	m_hScriptsRsonHash = STR_HASH("scripts\\vscripts\\scripts.rson");
@@ -620,7 +622,7 @@ void ModManager::LoadMods()
 	m_DependencyConstants.clear();
 
 	// read enabled mods cfg
-	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/enabledmods.json");
+	std::ifstream enabledModsStream(cfgPath);
 	std::stringstream enabledModsStringStream;
 
 	// create configuration file if does not exist
@@ -901,7 +903,7 @@ void ModManager::LoadMods()
 	// If there are new mods, we write entries accordingly in enabledmods.json
 	if (newModsDetected)
 	{
-		std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
+		std::ofstream writeStream(cfgPath);
 		rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
 		m_EnabledModsCfg.Accept(writer);
@@ -1120,7 +1122,7 @@ void ModManager::GenerateModsConfigurationFile(bool requiresFilesystemSearch)
 		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
-	std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
+	std::ofstream writeStream(cfgPath);
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
 	m_EnabledModsCfg.Accept(writer);
