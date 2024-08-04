@@ -174,7 +174,7 @@ public:
 
 private:
 	void SearchFilesystemForMods();
-	void GenerateModsConfigurationFile();
+	void GenerateModsConfigurationFile(bool requiresFilesystemSearch = true);
 
 public:
 	ModManager();

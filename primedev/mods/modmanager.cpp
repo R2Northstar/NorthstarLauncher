@@ -992,7 +992,7 @@ void ModManager::UnloadMods()
 	}
 
 	// save mods configuration to disk
-	GenerateModsConfigurationFile();
+	GenerateModsConfigurationFile(false);
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();
@@ -1001,7 +1001,8 @@ void ModManager::UnloadMods()
 void ModManager::SearchFilesystemForMods()
 {
 	std::vector<fs::path> modDirs;
-	
+	m_LoadedMods.clear();
+
 	// get mod directories
 	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
@@ -1114,8 +1115,11 @@ void ModManager::SearchFilesystemForMods()
 	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
 }
 
-void ModManager::GenerateModsConfigurationFile()
+void ModManager::GenerateModsConfigurationFile(bool requiresFilesystemSearch)
 {
+	if (requiresFilesystemSearch)
+		SearchFilesystemForMods();
+
 	if (!m_bHasEnabledVersionedModsCfg)
 		m_EnabledVersionedModsCfg.SetObject();
 
