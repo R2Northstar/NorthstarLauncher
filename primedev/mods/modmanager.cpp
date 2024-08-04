@@ -629,7 +629,6 @@ void ModManager::LoadMods()
 	// TODO generation might not be needed here as it may be done ~L666
 	if (enabledModsStream.fail())
 	{
-		// GenerateModsConfigurationFile();
 		m_EnabledModsCfg.SetObject();
 	}
 	else
@@ -645,7 +644,6 @@ void ModManager::LoadMods()
 		if (!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client"))
 		{
 			// TODO if unknown mod config format, rename current file + regenerate config
-			// GenerateModsConfigurationFile();
 			m_EnabledModsCfg.SetObject();
 		}
 
@@ -1000,7 +998,7 @@ void ModManager::UnloadMods()
 	}
 
 	// save mods configuration to disk
-	GenerateModsConfigurationFile(false);
+	ExportModsConfigurationToFile();
 
 	// do we need to dealloc individual entries in m_loadedMods? idk, rework
 	m_LoadedMods.clear();
@@ -1116,11 +1114,8 @@ void ModManager::SearchFilesystemForMods()
 	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
 }
 
-void ModManager::GenerateModsConfigurationFile(bool requiresFilesystemSearch)
+void ModManager::ExportModsConfigurationToFile()
 {
-	if (requiresFilesystemSearch)
-		SearchFilesystemForMods();
-
 	m_EnabledModsCfg.SetObject();
 
 	for (Mod& mod : m_LoadedMods)

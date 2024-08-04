@@ -169,7 +169,7 @@ public:
 
 private:
 	void SearchFilesystemForMods();
-	void GenerateModsConfigurationFile(bool requiresFilesystemSearch = true);
+	void ExportModsConfigurationToFile();
 
 public:
 	ModManager();
