@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <unordered_set>
 
+namespace fs = std::filesystem;
+
 const std::string CORE_MOD_FOLDER_SUFFIX = "\\mods\\core";
 const std::string MANUAL_MOD_FOLDER_SUFFIX = "\\mods\\manual";
 const std::string THUNDERSTORE_LEGACY_MOD_FOLDER_SUFFIX = "\\mods\\thunderstore-legacy";
