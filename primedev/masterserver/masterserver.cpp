@@ -1,21 +1,21 @@
 #include "masterserver/masterserver.h"
 #include "core/convar/concommand.h"
-#include "shared/playlist.h"
-#include "server/auth/serverauthentication.h"
 #include "core/tier0.h"
 #include "core/vanilla.h"
+#include "dedicated/dedicated.h"
 #include "engine/r2engine.h"
 #include "mods/modmanager.h"
+#include "server/auth/bansystem.h"
+#include "server/auth/serverauthentication.h"
 #include "shared/misccommands.h"
+#include "shared/playlist.h"
 #include "util/utils.h"
 #include "util/version.h"
-#include "server/auth/bansystem.h"
-#include "dedicated/dedicated.h"
 
 #include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#include "rapidjson/error/en.h"
 
 #include <cstring>
 #include <regex>
@@ -90,7 +90,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 
 void MasterServerManager::AuthenticateOriginWithMasterServer(const char* uid, const char* originToken)
 {
-	if (m_bOriginAuthWithMasterServerInProgress || g_pVanillaCompatibility->GetVanillaCompatibility())
+	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
 
 	// do this here so it's instantly set
@@ -467,7 +467,7 @@ void MasterServerManager::RequestMainMenuPromos()
 void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char* playerToken)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
+	if (m_bAuthenticatingWithGameServer)
 		return;
 
 	m_bAuthenticatingWithGameServer = true;
@@ -604,7 +604,7 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 void MasterServerManager::AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password)
 {
 	// dont wait, just stop if we're trying to do 2 auth requests at once
-	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
+	if (m_bAuthenticatingWithGameServer)
 		return;
 
 	m_bAuthenticatingWithGameServer = true;

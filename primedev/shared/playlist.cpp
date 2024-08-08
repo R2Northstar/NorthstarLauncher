@@ -119,7 +119,4 @@ ON_DLL_LOAD_RELIESON("engine.dll", PlaylistHooks, (ConCommand, ConVar), (CModule
 	// patch to prevent clc_SetPlaylistVarOverride from being able to crash servers if we reach max overrides due to a call to Error (why is
 	// this possible respawn, wtf) todo: add a warning for this
 	module.Offset(0x18ED8D).Patch("C3");
-
-	// patch to allow setplaylistvaroverride to be called before map init on dedicated and private match launched through the game
-	module.Offset(0x18ED17).NOP(6);
 }
