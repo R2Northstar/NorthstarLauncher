@@ -63,6 +63,7 @@ void ModDownloader::FetchModsListFromAPI()
 			CURLcode result;
 			CURL* easyhandle;
 			rapidjson::Document verifiedModsJson;
+			rapidjson::Value verifiedModsJsonThunderstore;
 			std::string url = modsListUrl;
 
 			// Empty verified mods manifesto
@@ -100,7 +101,14 @@ void ModDownloader::FetchModsListFromAPI()
 			// Load mods list into local state
 			spdlog::info("Loading mods configuration...");
 			verifiedModsJson.Parse(readBuffer);
-			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
+			assert(verifiedModsJson.HasMember("thunderstore"));
+
+			// Check if the "thunderstore" key exists
+			verifiedModsJsonThunderstore = verifiedModsJson["thunderstore"];
+
+			assert(verifiedModsJsonThunderstore->value.IsObject());
+
+			for (auto i = verifiedModsJsonThunderstore.MemberBegin(); i != verifiedModsJsonThunderstore.MemberEnd(); ++i)
 			{
 				// Format testing
 				if (!i->value.HasMember("DependencyPrefix") || !i->value.HasMember("Versions"))
