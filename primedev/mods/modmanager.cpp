@@ -865,8 +865,6 @@ void ModManager::LoadMods()
 				// ensure we're only loading rpaks
 				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
 				{
-
-
 					std::string pakName(file.path().filename().string());
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
 
