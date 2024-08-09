@@ -1,3 +1,5 @@
+namespace fs = std::filesystem;
+
 class ModDownloader
 {
 private:
@@ -114,6 +116,8 @@ public:
 
 	enum ModInstallState
 	{
+		MANIFESTO_FETCHING,
+
 		// Normal installation process
 		DOWNLOADING,
 		CHECKSUMING,
