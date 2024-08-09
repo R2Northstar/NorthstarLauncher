@@ -865,8 +865,6 @@ void ModManager::LoadMods()
 				// ensure we're only loading rpaks
 				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
 				{
-
-
 					std::string pakName(file.path().filename().string());
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
 
@@ -876,12 +874,12 @@ void ModManager::LoadMods()
 					}
 					else
 					{
-						modPak.m_bAutoLoad = (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
-							dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+						modPak.m_bAutoLoad =
+							(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
+							 dRpakJson["Preload"][pakName].IsTrue());
 
 						// postload things
-						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() &&
-							dRpakJson["Postload"].HasMember(pakName))
+						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
 						{
 							modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
 						}
