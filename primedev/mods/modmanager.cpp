@@ -863,7 +863,7 @@ void ModManager::LoadMods()
 			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "paks"))
 			{
 				// ensure we're only loading rpaks
-				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
+				if (fs::is_regular_file(file) && file.path().extension() == ".rpak" && bUseRpakJson)
 				{
 					std::string pakName(file.path().filename().string());
 
