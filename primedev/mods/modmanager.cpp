@@ -882,7 +882,9 @@ void ModManager::LoadMods()
 						// postload things
 						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() &&
 							dRpakJson["Postload"].HasMember(pakName))
+						{
 							modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
+						}
 					}
 
 					modPak.m_sPakName = pakName;
