@@ -873,7 +873,7 @@ void ModManager::LoadMods()
 										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
 
 					// postload things
-					if (!bUseRpakJson ||
+					if (bUseRpakJson &&
 						(dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName)))
 						modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
 
