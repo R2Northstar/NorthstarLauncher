@@ -872,7 +872,7 @@ void ModManager::LoadMods()
 
 					if (!bUseRpakJson)
 					{
-						spdlog::warn("Mod {} contains rpaks without valid rpaks.json, rpaks might not be loaded", mod.Name);
+						spdlog::warn("Mod {} contains rpaks without valid rpak.json, rpaks might not be loaded", mod.Name);
 					}
 					else
 					{
