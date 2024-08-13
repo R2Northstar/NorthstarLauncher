@@ -56,6 +56,8 @@ size_t WriteToString(void* ptr, size_t size, size_t count, void* stream)
 
 void ModDownloader::FetchModsListFromAPI()
 {
+	modState.state = MANIFESTO_FETCHING;
+
 	std::thread requestThread(
 		[this]()
 		{
@@ -63,6 +65,9 @@ void ModDownloader::FetchModsListFromAPI()
 			CURL* easyhandle;
 			rapidjson::Document verifiedModsJson;
 			std::string url = modsListUrl;
+
+			// Empty verified mods manifesto
+			verifiedMods = {};
 
 			curl_global_init(CURL_GLOBAL_ALL);
 			easyhandle = curl_easy_init();
@@ -76,7 +81,12 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteToString);
 			result = curl_easy_perform(easyhandle);
-			ScopeGuard cleanup([&] { curl_easy_cleanup(easyhandle); });
+			ScopeGuard cleanup(
+				[&]
+				{
+					curl_easy_cleanup(easyhandle);
+					modState.state = DOWNLOADING;
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -93,6 +103,13 @@ void ModDownloader::FetchModsListFromAPI()
 			verifiedModsJson.Parse(readBuffer);
 			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
 			{
+				// Format testing
+				if (!i->value.HasMember("DependencyPrefix") || !i->value.HasMember("Versions"))
+				{
+					spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
+					return;
+				}
+
 				std::string name = i->name.GetString();
 				std::string dependency = i->value["DependencyPrefix"].GetString();
 
@@ -102,6 +119,13 @@ void ModDownloader::FetchModsListFromAPI()
 				for (auto& attribute : versions.GetArray())
 				{
 					assert(attribute.IsObject());
+					// Format testing
+					if (!attribute.HasMember("Version") || !attribute.HasMember("Checksum"))
+					{
+						spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
+						return;
+					}
+
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
 					modVersions.insert({version, {.checksum = checksum}});
@@ -604,7 +628,12 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 		return;
 
 	g_pModDownloader = new ModDownloader();
+}
+
+ADD_SQFUNC("void", NSFetchVerifiedModsManifesto, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
 	g_pModDownloader->FetchModsListFromAPI();
+	return SQRESULT_NULL;
 }
 
 ADD_SQFUNC(
