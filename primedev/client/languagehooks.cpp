@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <regex>
 
+namespace fs = std::filesystem;
+
 AUTOHOOK_INIT()
 
 typedef LANGID (*Tier0_DetectDefaultLanguageType)();
@@ -41,7 +43,7 @@ std::vector<std::string> file_list(fs::path dir, std::regex ext_pattern)
 std::string GetAnyInstalledAudioLanguage()
 {
 	for (const auto& lang : file_list("r2\\sound\\", std::regex(".*?general_([a-z]+)_patch_1\\.mstr")))
-		if (lang != "general" || lang != "")
+		if (lang != "general" && lang != "" && lang != "stream")
 			return lang;
 	return "NO LANGUAGE DETECTED";
 }
