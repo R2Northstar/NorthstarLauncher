@@ -20,20 +20,27 @@ void TryCreateGlobalMemAlloc()
 	g_pMemAllocSingleton = CreateGlobalMemAlloc(); // if it already exists, this returns the preexisting IMemAlloc instance
 }
 
+HRESULT WINAPI _SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription)
+{
+	// need to grab it dynamically as this function was only introduced at some point in Windows 10
+	static decltype(&SetThreadDescription) _SetThreadDescription =
+		CModule("KernelBase.dll").GetExportedFunction("SetThreadDescription").RCast<decltype(&SetThreadDescription)>();
+
+	if (_SetThreadDescription)
+		return _SetThreadDescription(hThread, lpThreadDescription);
+
+	return ERROR_OLD_WIN_VERSION;
+}
+
 AUTOHOOK_PROCADDRESS(ThreadSetDebugName, tier0.dll, ThreadSetDebugName, void, __fastcall, (HANDLE threadHandle, const char* name))
 {
 	if (threadHandle == 0)
 		threadHandle = GetCurrentThread();
 
-	// need to grab it dynamically as this function was only introduced at some point in Windows 10
-	static decltype(&SetThreadDescription) _SetThreadDescription =
-		CModule("KernelBase.dll").GetExportedFunction("SetThreadDescription").RCast<decltype(&SetThreadDescription)>();
-
 	// TODO: This "method" of "charset conversion" from string to wstring is abhorrent. Change it to a proper one
 	// as soon as Northstar has some helper function to do proper charset conversions.
 	auto tmp = std::string(name);
-	if (_SetThreadDescription)
-		_SetThreadDescription(threadHandle, std::wstring(tmp.begin(), tmp.end()).c_str());
+	_SetThreadDescription(threadHandle, std::wstring(tmp.begin(), tmp.end()).c_str());
 
 	ThreadSetDebugName(threadHandle, name);
 }

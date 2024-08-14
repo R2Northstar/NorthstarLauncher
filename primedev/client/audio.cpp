@@ -517,6 +517,44 @@ void, __fastcall, (int level, const char* string))
 	spdlog::info("[MSS] {} - {}", level, string);
 }
 
+// clang-format off
+AUTOHOOK(sub_18003EBD0, mileswin64.dll + 0x3EBD0,
+void, __fastcall, (DWORD dwThreadID, const char* threadName))
+// clang-format on
+{
+	HANDLE hThread = OpenThread(THREAD_SET_LIMITED_INFORMATION, FALSE, dwThreadID);
+
+	if (hThread != NULL)
+	{
+		// TODO: This "method" of "charset conversion" from string to wstring is abhorrent. Change it to a proper one
+		// as soon as Northstar has some helper function to do proper charset conversions.
+		auto tmp = std::string(threadName);
+		HRESULT WINAPI _SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription);
+		_SetThreadDescription(hThread, std::wstring(tmp.begin(), tmp.end()).c_str());
+
+		CloseHandle(hThread);
+	}
+
+	sub_18003EBD0(dwThreadID, threadName);
+}
+
+// clang-format off
+AUTOHOOK(sub_18003BC10, mileswin64.dll + 0x3BC10,
+char*, __fastcall, (void* a1, void* a2, void* a3, void* a4, void* a5, int a6))
+// clang-format on
+{
+	HANDLE hThread;
+	char* ret = sub_18003BC10(a1, a2, a3, a4, a5, a6);
+
+	if (ret != NULL && (hThread = reinterpret_cast<HANDLE>(*((uint64_t*)ret + 55))) != NULL)
+	{
+		HRESULT WINAPI _SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription);
+		_SetThreadDescription(hThread, L"[Miles] WASAPI Service Thread");
+	}
+
+	return ret;
+}
+
 ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
 {
 	Cvar_mileslog_enable = new ConVar("mileslog_enable", "0", FCVAR_NONE, "Enables/disables whether the mileslog func should be logged");
