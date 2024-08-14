@@ -10,6 +10,10 @@
 #include <filesystem>
 #include <Psapi.h>
 
+#define XINPUT1_3_DLL "XInput1_3.dll"
+
+namespace fs = std::filesystem;
+
 AUTOHOOK_INIT()
 
 // called from the ON_DLL_LOAD macros
@@ -102,7 +106,9 @@ bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
 	if (orig)
 		ppOrigFunc = orig;
 
-	if (MH_CreateHook(addr, pHookFunc, ppOrigFunc) == MH_OK)
+	if (!addr)
+		spdlog::error("Address for hook {} is invalid", pFuncName);
+	else if (MH_CreateHook(addr, pHookFunc, ppOrigFunc) == MH_OK)
 	{
 		if (MH_EnableHook(addr) == MH_OK)
 		{

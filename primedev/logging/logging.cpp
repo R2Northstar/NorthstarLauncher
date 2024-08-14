@@ -124,11 +124,7 @@ void CustomSink::custom_log(const custom_log_msg& msg)
 
 void InitialiseConsole()
 {
-	if (AllocConsole() == FALSE)
-	{
-		std::cout << "[*] Failed to create a console window, maybe a console already exists?" << std::endl;
-	}
-	else
+	if (AllocConsole() != FALSE)
 	{
 		freopen("CONOUT$", "w", stdout);
 		freopen("CONOUT$", "w", stderr);
