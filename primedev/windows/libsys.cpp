@@ -1,5 +1,7 @@
 #include "libsys.h"
 
+#define XINPUT1_3_DLL "XInput1_3.dll"
+
 typedef HMODULE (*WINAPI ILoadLibraryA)(LPCSTR lpLibFileName);
 typedef HMODULE (*WINAPI ILoadLibraryExA)(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
 typedef HMODULE (*WINAPI ILoadLibraryW)(LPCWSTR lpLibFileName);
@@ -46,8 +48,11 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 {
 	HMODULE hModule;
 
+	LPCSTR lpLibFileNameEnd = lpLibFileName + strlen(lpLibFileName);
+	LPCSTR lpLibName = lpLibFileNameEnd - strlen(XINPUT1_3_DLL);
+
 	// replace xinput dll with one that has ASLR
-	if (!strncmp(lpLibFileName, "XInput1_3.dll", 14))
+	if (lpLibFileName <= lpLibName && !strncmp(lpLibName, XINPUT1_3_DLL, strlen(XINPUT1_3_DLL) + 1))
 	{
 		hModule = o_LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
 
