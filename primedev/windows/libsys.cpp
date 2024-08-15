@@ -70,8 +70,8 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 		hModule = o_LoadLibraryExA(lpLibFileName, hFile, dwFlags);
 	}
 
-	bool bShouldRunCalbacks = !(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
-	if (bShouldRunCalbacks)
+	bool bShouldRunCallbacks = !(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
+	if (bShouldRunCallbacks)
 	{
 		LibSys_RunModuleCallbacks(hModule);
 	}
@@ -92,8 +92,8 @@ HMODULE WINAPI WLoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlag
 {
 	HMODULE hModule = o_LoadLibraryExW(lpLibFileName, hFile, dwFlags);
 
-	bool bShouldRunCalbacks = !(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
-	if (bShouldRunCalbacks)
+	bool bShouldRunCallbacks = !(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
+	if (bShouldRunCallbacks)
 	{
 		LibSys_RunModuleCallbacks(hModule);
 	}
