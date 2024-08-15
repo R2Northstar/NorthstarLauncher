@@ -71,7 +71,8 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 	}
 
 	bool bShouldRunCallbacks =
-		!(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));	if (bShouldRunCallbacks)
+		!(dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE));
+	if (bShouldRunCallbacks)
 	{
 		LibSys_RunModuleCallbacks(hModule);
 	}
