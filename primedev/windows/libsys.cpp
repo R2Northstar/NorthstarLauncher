@@ -1,4 +1,5 @@
 #include "libsys.h"
+#include "plugins/pluginmanager.h"
 
 #define XINPUT1_3_DLL "XInput1_3.dll"
 
