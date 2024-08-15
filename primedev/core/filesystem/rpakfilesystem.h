@@ -23,8 +23,8 @@ private:
 
 public:
 	int LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource);
-	void UnloadPak(const int nPakHandle);
-	void UnloadMapPaks();
+	void UnloadPak(const int nPakHandle, void* pCallback);
+	void UnloadMapPaks(void* pCallback);
 	void* LoadFile(const char* path); // this is a guess
 
 	LoadedPak* TrackLoadedPak(ePakLoadSource nLoadSource, int nPakHandle, size_t nPakNameHash);

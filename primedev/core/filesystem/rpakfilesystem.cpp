@@ -9,7 +9,7 @@ AUTOHOOK_INIT()
 struct PakLoadFuncs
 {
 	void* unk0[3];
-	int (*LoadPakAsync)(const char* pPath, void* unknownSingleton, int flags, void* callback0, void* callback1);
+	int (*LoadPakAsync)(const char* pPath, void* memoryAllocator, int flags);
 	void* unk1[2];
 	void* (*UnloadPak)(int iPakHandle, void* callback);
 	void* unk2[6];
@@ -25,7 +25,7 @@ void** pUnknownPakLoadSingleton;
 
 int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
 {
-	int nHandle = g_pakLoadApi->LoadPakAsync(pPath, *pUnknownPakLoadSingleton, 2, nullptr, nullptr);
+	int nHandle = g_pakLoadApi->LoadPakAsync(pPath, *pUnknownPakLoadSingleton, 2);
 
 	// set the load source of the pak we just loaded
 	if (nHandle != -1)
@@ -34,16 +34,18 @@ int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSo
 	return nHandle;
 }
 
-void PakLoadManager::UnloadPak(const int nPakHandle)
+void PakLoadManager::UnloadPak(const int nPakHandle, void* pCallback)
 {
-	g_pakLoadApi->UnloadPak(nPakHandle, nullptr);
+	g_pakLoadApi->UnloadPak(nPakHandle, pCallback);
 }
 
-void PakLoadManager::UnloadMapPaks()
+void PakLoadManager::UnloadMapPaks(void* pCallback)
 {
-	for (auto& pair : m_vLoadedPaks)
+	// copy since UnloadPak removes from the map
+	std::map<int, LoadedPak> loadedPaksCopy = m_vLoadedPaks;
+	for (auto& pair : loadedPaksCopy)
 		if (pair.second.m_nLoadSource == ePakLoadSource::MAP)
-			UnloadPak(pair.first);
+			UnloadPak(pair.first, pCallback);
 }
 
 LoadedPak* PakLoadManager::TrackLoadedPak(ePakLoadSource nLoadSource, int nPakHandle, size_t nPakNameHash)
@@ -84,6 +86,79 @@ int PakLoadManager::GetPakHandle(const char* pPath)
 void* PakLoadManager::LoadFile(const char* path)
 {
 	return g_pakLoadApi->LoadFile(path);
+}
+
+static char* currentMapRpakPath = nullptr;
+static int* currentMapRpakHandle = nullptr;
+static int* currentMapPatchRpakHandle = nullptr;
+static /*CModelLoader*/ void** modelLoader = nullptr;
+static void** rpakMemoryAllocator = nullptr;
+
+static __int64 (*o_LoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
+static __int64 (**o_cleanMaterialSystemStuff)() = nullptr;
+static __int64 (**o_CModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
+static char* (*o_loadlevelLoadscreen)(const char* levelName) = nullptr;
+
+bool (*o_LoadMapRpaks)(char* mapPath) = nullptr;
+bool h_LoadMapRpaks(char* mapPath)
+{
+	// strip file extension
+	std::string mapName = fs::path(mapPath).replace_extension().string();
+
+	spdlog::warn("Loading map rpaks for {}", mapName.c_str());
+
+	o_LoadGametypeSpecificRpaks(mapName.c_str());
+
+	if (!strcmp("mp_lobby", mapName.c_str())) // nothing to load for mp_lobby
+		return false;
+
+	char mapRpakStr[272];
+	snprintf(mapRpakStr, 272, "%s.rpak", mapName.c_str());
+	// if level being loaded is the same as current level, do nothing
+	if (!strcmp(mapRpakStr, currentMapRpakPath))
+		return true;
+
+	strcpy(currentMapRpakPath, mapRpakStr);
+
+	(*o_cleanMaterialSystemStuff)();
+	// todo: call loadLevelLoadscreen here
+	int curHandle = *currentMapRpakHandle;
+	int curPatchHandle = *currentMapPatchRpakHandle;
+	if (curHandle != -1)
+	{
+		spdlog::warn("Cleaning old map rpak");
+
+		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
+		(*o_cleanMaterialSystemStuff)();
+		g_pakLoadApi->UnloadPak(curHandle, *o_cleanMaterialSystemStuff);
+		*currentMapRpakHandle = -1;
+	}
+	if (curPatchHandle != -1)
+	{
+		spdlog::warn("Cleaning old map patch rpak");
+
+		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
+		(*o_cleanMaterialSystemStuff)();
+		g_pakLoadApi->UnloadPak(curPatchHandle, *o_cleanMaterialSystemStuff);
+		*currentMapPatchRpakHandle = -1;
+	}
+
+	spdlog::warn("Loading new rpaks oh god this is where we crash probably");
+
+	*currentMapRpakHandle = g_pakLoadApi->LoadPakAsync(mapRpakStr, *rpakMemoryAllocator, 7);
+	char levelPatchRpakStr[272];
+	snprintf(levelPatchRpakStr, 272, "%s_patch.rpak", mapName.c_str());
+	*currentMapPatchRpakHandle = g_pakLoadApi->LoadPakAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
+
+	return true;
+}
+
+unsigned int (*o_pGetPakPatchNumber)(char* pPakPath) = nullptr;
+unsigned int h_GetPakPatchNumber(char* pPakPath)
+{
+	__int64 ret = o_pGetPakPatchNumber(pPakPath);
+	NS::log::rpak->info("Highest patch number for {} is {}", pPakPath, ret);
+	return ret;
 }
 
 void HandlePakAliases(char** map)
@@ -137,10 +212,30 @@ void LoadPostloadPaks(const char* pPath)
 	}
 }
 
+// whether the vanilla game has this rpak
+bool VanillaHasPak(char* pakName)
+{
+	fs::path originalPath = fs::path("./r2/paks/Win64") / pakName;
+	unsigned int highestPatch = h_GetPakPatchNumber(pakName);
+	if (highestPatch)
+	{
+		// add the patch path to the extension
+		char buf[16];
+		snprintf(buf, sizeof(buf), "(%02u).rpak", highestPatch);
+		// remove the .rpak and add the new suffix
+		originalPath = originalPath.replace_extension().string() + buf;
+	}
+	else
+	{
+		originalPath /= pakName;
+	}
+
+	return fs::exists(originalPath);
+}
+
 void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 {
-	// whether the vanilla game has this rpak
-	bool bHasOriginalPak = fs::exists(fs::path("r2/paks/Win64/") / *pakName);
+	bool bHasOriginalPak = VanillaHasPak(*pakName);
 
 	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
 	for (Mod& mod : g_pModManager->m_LoadedMods)
@@ -176,7 +271,7 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 
 // clang-format off
 HOOK(LoadPakAsyncHook, LoadPakAsync,
-int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
+int, __fastcall, (char* pPath, void* memoryAllocator, int flags))
 // clang-format on
 {
 	HandlePakAliases(&pPath);
@@ -220,7 +315,7 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 		}
 	}
 
-	int iPakHandle = LoadPakAsync(pPath, unknownSingleton, flags, pCallback0, pCallback1);
+	int iPakHandle = LoadPakAsync(pPath, memoryAllocator, flags);
 	NS::log::rpak->info("LoadPakAsync {} {}", pPath, iPakHandle);
 
 	// trak the pak
@@ -238,6 +333,7 @@ HOOK(UnloadPakHook, UnloadPak,
 void*, __fastcall, (int nPakHandle, void* pCallback))
 // clang-format on
 {
+	ePakLoadSource loadSource = g_pPakLoadManager->GetPakInfo(nPakHandle)->m_nLoadSource;
 	// stop tracking the pak
 	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);
 
@@ -245,7 +341,8 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 	if (bShouldUnloadPaks)
 	{
 		bShouldUnloadPaks = false;
-		g_pPakLoadManager->UnloadMapPaks();
+		if (loadSource == ePakLoadSource::MAP)
+			g_pPakLoadManager->UnloadMapPaks(pCallback);
 		bShouldUnloadPaks = true;
 	}
 
@@ -344,4 +441,22 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 	LoadPakAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->LoadPakAsync);
 	UnloadPakHook.Dispatch((LPVOID*)g_pakLoadApi->UnloadPak);
 	ReadFileAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->ReadFileAsync);
+
+	currentMapRpakPath = module.Offset(0x1315C3E0).RCast<decltype(currentMapRpakPath)>();
+	currentMapRpakHandle = module.Offset(0x7CB5A0).RCast<decltype(currentMapRpakHandle)>();
+	currentMapPatchRpakHandle = module.Offset(0x7CB5A4).RCast<decltype(currentMapPatchRpakHandle)>();
+	modelLoader = module.Offset(0x7C4AC0).RCast<decltype(modelLoader)>();
+	rpakMemoryAllocator = module.Offset(0x7C5E20).RCast<decltype(rpakMemoryAllocator)>();
+
+	o_LoadGametypeSpecificRpaks = module.Offset(0x15AD20).RCast<decltype(o_LoadGametypeSpecificRpaks)>();
+	o_cleanMaterialSystemStuff = module.Offset(0x12A11F00).RCast<decltype(o_cleanMaterialSystemStuff)>();
+	o_CModelLoader_UnreferenceAllModels = module.Offset(0x5ED580).RCast<decltype(o_CModelLoader_UnreferenceAllModels)>(); // this is part of a vftable, todo: map it in a different file
+	o_loadlevelLoadscreen = module.Offset(0x15A810).RCast<decltype(o_loadlevelLoadscreen)>();
+
+	o_LoadMapRpaks = module.Offset(0x15A8C0).RCast<decltype(o_LoadMapRpaks)>();
+	HookAttach(&(PVOID&)o_LoadMapRpaks, (PVOID)h_LoadMapRpaks);
+
+	CModule rtechModule(GetModuleHandleA("rtech_game.dll"));
+	o_pGetPakPatchNumber = rtechModule.Offset(0x9A00).RCast<decltype(o_pGetPakPatchNumber)>();
+	HookAttach(&(PVOID&)o_pGetPakPatchNumber, (PVOID)h_GetPakPatchNumber);
 }
