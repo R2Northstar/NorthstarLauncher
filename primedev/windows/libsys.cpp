@@ -60,7 +60,8 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 
 		if (!hModule)
 		{
-			spdlog::error("Could not find XInput9_1_0.dll");
+			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
+			exit(EXIT_FAILURE);
 
 			return nullptr;
 		}
