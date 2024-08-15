@@ -30,6 +30,7 @@ void LibSys_RunModuleCallbacks(HMODULE hModule)
 
 	// Call callbacks
 	CallLoadLibraryACallbacks(szModuleName, hModule);
+	g_pPluginManager->InformDllLoad(hModule, fs::path(szModuleName));
 }
 
 //-----------------------------------------------------------------------------
