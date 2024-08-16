@@ -53,9 +53,9 @@ struct ModPak
 
 /*
 * [X] on mod reload, mark all paks for unloading
-* [ ] on mod load, read rpak.json and track rpaks
-* [ ] on map change, load the correct mod rpaks
-* [ ] on map change, unload paks that are marked for unloading
+* [-] on mod load, read rpak.json and track rpaks
+* [X] on map change, load the correct mod rpaks
+* [X] on map change, unload paks that are marked for unloading
 * [ ] on pak load, add to vanilla tracked paks (if static bool is true)
 * [ ] on pak unload, unload dependent rpaks first
 * [ ] on pak unload, if pak was aliasing a vanilla pak away, load the vanilla pak (if static bool is false)
@@ -94,6 +94,7 @@ private:
 
 	// All paks that vanilla has attempted to load. (they may have been aliased away)
 	// Also known as a list of rpaks that the vanilla game would have loaded at this point in time.
+	// todo: to get if a pak was aliasing a vanilla rpak, check the pakHandle here against the pak that is being unloaded then load the string
 	std::vector<std::pair<std::string, int>> m_vanillaPaks;
 
 	// All mod Paks

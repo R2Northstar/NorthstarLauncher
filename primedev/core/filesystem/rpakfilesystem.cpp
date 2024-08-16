@@ -186,7 +186,6 @@ void NewPakLoadManager::UnloadMarkedPaks()
 
 void NewPakLoadManager::LoadMapPaks(const char* mapName)
 {
-	spdlog::warn("Loading map rpaks for map {}", mapName);
 	m_vanillaCall = false;
 	for (auto& modPak : m_modPaks)
 	{
@@ -204,7 +203,6 @@ void NewPakLoadManager::LoadMapPaks(const char* mapName)
 
 void NewPakLoadManager::UnloadMapPaks()
 {
-	spdlog::warn("Unloading old map rpaks :)");
 	m_vanillaCall = false;
 	for (auto& modPak : m_modPaks)
 	{
