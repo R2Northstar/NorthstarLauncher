@@ -45,6 +45,17 @@ PakLoadManager* g_pPakLoadManager;
 NewPakLoadManager* g_pNewPakLoadManager;
 void** pUnknownPakLoadSingleton;
 
+static char* currentMapRpakPath = nullptr;
+static int* currentMapRpakHandle = nullptr;
+static int* currentMapPatchRpakHandle = nullptr;
+static /*CModelLoader*/ void** modelLoader = nullptr;
+static void** rpakMemoryAllocator = nullptr;
+
+static __int64 (*o_LoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
+static __int64 (**o_cleanMaterialSystemStuff)() = nullptr;
+static __int64 (**o_CModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
+static char* (*o_loadlevelLoadscreen)(const char* levelName) = nullptr;
+
 int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
 {
 	int nHandle = g_pakLoadApi->loadRpakFileAsync(pPath, *pUnknownPakLoadSingleton, 2);
@@ -110,28 +121,118 @@ void* PakLoadManager::LoadFile(const char* path)
 	return g_pakLoadApi->openFile(path);
 }
 
-void NewPakLoadManager::TrackModPaks(Mod& mod)
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void NewPakLoadManager::UnloadAllModdedPaks()
 {
-	fs::path rpakJsonPath = mod.m_ModDirectory / "paks/rpak.json";
+	NS::log::rpak->info("Reloading RPaks on next map load...");
+	for (auto& modPak : m_modPaks)
+	{
+		modPak.m_markedForUnload = true;
+	}
+	// clean up any paks that are both marked for unload and already unloaded
+	CleanUpUnloadedPaks();
 }
 
-static char* currentMapRpakPath = nullptr;
-static int* currentMapRpakHandle = nullptr;
-static int* currentMapPatchRpakHandle = nullptr;
-static /*CModelLoader*/ void** modelLoader = nullptr;
-static void** rpakMemoryAllocator = nullptr;
+void NewPakLoadManager::TrackModPaks(Mod& mod)
+{
+	fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
-static __int64 (*o_LoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
-static __int64 (**o_cleanMaterialSystemStuff)() = nullptr;
-static __int64 (**o_CModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
-static char* (*o_loadlevelLoadscreen)(const char* levelName) = nullptr;
+	for (auto& modRpakEntry : mod.Rpaks)
+	{
+		ModPak pak;
+		pak.m_modName = mod.Name;
+		pak.m_path = (modPakPath / modRpakEntry.m_sPakName).string();
+		pak.m_pathHash = STR_HASH(pak.m_path);
+
+		pak.m_loadOnMultiplayerMaps = modRpakEntry.m_loadOnMP;
+		pak.m_loadOnSingleplayerMaps = modRpakEntry.m_loadOnSP;
+		pak.m_targetMap = modRpakEntry.m_targetMap;
+
+		// todo: prevent duplicates?
+
+		m_modPaks.push_back(pak);
+	}
+}
+
+void NewPakLoadManager::CleanUpUnloadedPaks()
+{
+	auto predicate = [](ModPak& pak) -> bool
+	{
+		return pak.m_markedForUnload && pak.m_handle == -1;
+	};
+
+	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), predicate), m_modPaks.end());
+}
+
+void NewPakLoadManager::UnloadMarkedPaks()
+{
+	m_vanillaCall = false;
+
+	(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
+	(*o_cleanMaterialSystemStuff)();
+
+	for (auto& modPak : m_modPaks)
+	{
+		if (modPak.m_handle == -1 || !modPak.m_markedForUnload)
+			continue;
+
+		g_pakLoadApi->UnloadPak(modPak.m_handle, *o_cleanMaterialSystemStuff);
+		modPak.m_handle = -1;
+	}
+
+	m_vanillaCall = true;
+}
+
+void NewPakLoadManager::LoadMapPaks(const char* mapName)
+{
+	spdlog::warn("Loading map rpaks for map {}", mapName);
+	m_vanillaCall = false;
+	for (auto& modPak : m_modPaks)
+	{
+		// don't load paks that are already loaded
+		if (modPak.m_handle != -1)
+			continue;
+		if (modPak.m_targetMap != mapName)
+			continue;
+
+		modPak.m_handle = g_pakLoadApi->loadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
+		m_mapPaks.push_back(modPak.m_pathHash);
+	}
+	m_vanillaCall = true;
+}
+
+void NewPakLoadManager::UnloadMapPaks()
+{
+	spdlog::warn("Unloading old map rpaks :)");
+	m_vanillaCall = false;
+	for (auto& modPak : m_modPaks)
+	{
+		for (auto it = m_mapPaks.begin(); it != m_mapPaks.end(); ++it)
+		{
+			if (*it != modPak.m_pathHash)
+				continue;
+
+			m_mapPaks.erase(it, it + 1);
+			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_cleanMaterialSystemStuff);
+			modPak.m_handle = -1;
+			break;
+		}
+	}
+	m_vanillaCall = true;
+}
 
 bool (*o_LoadMapRpaks)(char* mapPath) = nullptr;
 bool h_LoadMapRpaks(char* mapPath)
 {
-	// strip file extension
-	std::string mapName = fs::path(mapPath).replace_extension().string();
+	// unload all mod rpaks that are marked for unload
+	g_pNewPakLoadManager->UnloadMarkedPaks();
+	g_pNewPakLoadManager->CleanUpUnloadedPaks();
 
+	// strip file extension
+	const std::string mapName = fs::path(mapPath).replace_extension().string();
+
+	// todo: load modded gametype specific rpaks here as well
 	o_LoadGametypeSpecificRpaks(mapName.c_str());
 
 	if (!strcmp("mp_lobby", mapName.c_str())) // nothing to load for mp_lobby
@@ -140,19 +241,22 @@ bool h_LoadMapRpaks(char* mapPath)
 	char mapRpakStr[272];
 	snprintf(mapRpakStr, 272, "%s.rpak", mapName.c_str());
 	// if level being loaded is the same as current level, do nothing
+	// todo: do stuff if we have reloaded mods
 	if (!strcmp(mapRpakStr, currentMapRpakPath))
 		return true;
 
 	strcpy(currentMapRpakPath, mapRpakStr);
 
 	(*o_cleanMaterialSystemStuff)();
-	// todo: call loadLevelLoadscreen here
+	o_loadlevelLoadscreen(mapName.c_str());
 	int curHandle = *currentMapRpakHandle;
 	int curPatchHandle = *currentMapPatchRpakHandle;
 	if (curHandle != -1)
 	{
 		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
 		(*o_cleanMaterialSystemStuff)();
+
+		g_pNewPakLoadManager->UnloadMapPaks();
 		g_pakLoadApi->UnloadPak(curHandle, *o_cleanMaterialSystemStuff);
 		*currentMapRpakHandle = -1;
 	}
@@ -165,8 +269,12 @@ bool h_LoadMapRpaks(char* mapPath)
 	}
 
 	*currentMapRpakHandle = g_pakLoadApi->loadRpakFileAsync(mapRpakStr, *rpakMemoryAllocator, 7);
+	g_pNewPakLoadManager->LoadMapPaks(mapName.c_str());
+
+	// load special _patch rpak (seemingly used for dev things?)
 	char levelPatchRpakStr[272];
 	snprintf(levelPatchRpakStr, 272, "%s_patch.rpak", mapName.c_str());
+	// todo: do we need to do modded map patch rpaks? they can just be modded map rpaks
 	*currentMapPatchRpakHandle = g_pakLoadApi->loadRpakFileAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
 
 	return true;
@@ -448,12 +556,20 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 	return o_OpenFile(pPath, pCallback);
 }
 
+//void ConCommand_reload_models(const CCommand& args)
+//{
+//	//(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
+//	(*o_cleanMaterialSystemStuff)();
+//}
+
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 {
 	AUTOHOOK_DISPATCH();
 
 	g_pPakLoadManager = new PakLoadManager;
 	g_pNewPakLoadManager = new NewPakLoadManager;
+
+	//RegisterConCommand("reload_models", ConCommand_reload_models, "test, absolutely crashes the game", FCVAR_CLIENTDLL);
 
 	g_pakLoadApi = module.Offset(0x5BED78).Deref().RCast<PakLoadFuncs*>();
 	pUnknownPakLoadSingleton = module.Offset(0x7C5E20).RCast<void**>();

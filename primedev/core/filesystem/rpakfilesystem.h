@@ -46,9 +46,9 @@ struct ModPak
 	bool m_loadOnSingleplayerMaps;
 	std::string m_targetMap;
 
-	int m_pakHandle = -1;
 	// if this is set, the Pak will be unloaded on next map load
-	bool m_markedForUnload;
+	bool m_markedForUnload = false;
+	int m_handle = -1;
 };
 
 /*
@@ -66,7 +66,7 @@ class NewPakLoadManager
 public:
 	// Marks all mod Paks to be unloaded on next map load.
 	// Also cleans up any mod Paks that are already unloaded.
-	void UnloadAllModdedPaks() {}
+	void UnloadAllModdedPaks();
 
 	// Tracks all Paks related to a mod.
 	void TrackModPaks(Mod& mod);
@@ -74,22 +74,33 @@ public:
 	// Tracks a Pak that vanilla attempted to load.
 	void TrackVanillaPak(const char* originalPath, int pakHandle);
 
+	// Untracks all paks that aren't currently loaded and are marked for unload.
+	void CleanUpUnloadedPaks();
+
+	// Unloads all paks that are marked for unload.
+	void UnloadMarkedPaks();
+
+	// Loads all modded paks for the given map.
+	void LoadMapPaks(const char* mapName);
+	// Unloads all modded map paks
+	void UnloadMapPaks();
 
 private:
 	// Loads Paks that depend on this Pak.
 	void LoadDependentPaks(const char* pakPath);
-	// Untracks all paks that aren't currently loaded.
-	void CleanUpUnloadedPaks();
 
 	// Finds a Pak by hash.
-	ModRpakEntry* FindPak(size_t pathHash);
+	ModPak* FindPak(size_t pathHash);
 
 	// All paks that vanilla has attempted to load. (they may have been aliased away)
 	// Also known as a list of rpaks that the vanilla game would have loaded at this point in time.
 	std::vector<std::pair<std::string, int>> m_vanillaPaks;
 
 	// All mod Paks
-	std::vector<std::pair<ModPak&, int>> m_modPaks;
+	std::vector<ModPak> m_modPaks;
+
+	// Currently loaded map mod paks
+	std::vector<size_t> m_mapPaks;
 
 	// todo: deprecate these?
 	// Paks that are always loaded (Preload)
@@ -98,6 +109,8 @@ private:
 	std::vector<std::pair<size_t, size_t>> m_dependentPaks;
 	// Paks that fully replace (Alias) a target Pak
 	std::vector<std::pair<size_t, size_t>> m_aliasPaks;
+
+	bool m_vanillaCall = true;
 };
 
 extern PakLoadManager* g_pPakLoadManager;

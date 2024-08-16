@@ -723,9 +723,6 @@ void ModManager::LoadMods()
 		else
 			mod.m_bEnabled = true;
 
-		if (g_pNewPakLoadManager != nullptr)
-			g_pNewPakLoadManager->TrackModPaks(mod);
-
 		if (mod.m_bWasReadSuccessfully)
 		{
 			if (mod.m_bEnabled)
@@ -886,9 +883,23 @@ void ModManager::LoadMods()
 						{
 							modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
 						}
+
+						if (dRpakJson.HasMember("Maps") && dRpakJson["Maps"].IsObject() && dRpakJson["Maps"].HasMember(pakName))
+						{
+							if (!dRpakJson["Maps"][pakName].IsString())
+							{
+								spdlog::error("Mod {} has invalid rpak.json. \"Maps\" entries must be strings.", mod.Name);
+								continue;
+							}
+							else
+							{
+								modPak.m_targetMap = dRpakJson["Maps"][pakName].GetString();
+							}
+						}
 					}
 
 					modPak.m_sPakName = pakName;
+
 
 					// read header of file and get the starpak paths
 					// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
@@ -935,6 +946,9 @@ void ModManager::LoadMods()
 					//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
+
+			if (g_pNewPakLoadManager != nullptr)
+				g_pNewPakLoadManager->TrackModPaks(mod);
 		}
 
 		// read keyvalues paths
