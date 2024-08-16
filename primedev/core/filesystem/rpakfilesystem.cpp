@@ -5,27 +5,49 @@
 
 AUTOHOOK_INIT()
 
-// there are more i'm just too lazy to add
 struct PakLoadFuncs
 {
-	void* unk0[3];
-	int (*LoadPakAsync)(const char* pPath, void* memoryAllocator, int flags);
-	void* unk1[2];
-	void* (*UnloadPak)(int iPakHandle, void* callback);
-	void* unk2[6];
-	void* (*LoadFile)(const char* path); // unsure
-	void* unk3[10];
-	void* (*ReadFileAsync)(const char* pPath, void* a2);
+	void(__fastcall* initRpakSystem)();
+	void(__fastcall* addAssetLoaderWithJobDetails)(/*assetTypeHeader*/ void*, uint32_t, int);
+	void(__fastcall* addAssetLoader)(/*assetTypeHeader*/ void*);
+	__int64(__fastcall* loadRpakFileAsync)(const char* pPath, void* allocator, int flags);
+	void(__fastcall* loadRpakFile)(const char*, __int64(__fastcall*)(), __int64, void(__cdecl*)());
+	__int64 qword28;
+	void (*UnloadPak)(int iPakHandle, void* callback);
+	__int64 qword38;
+	__int64 qword40;
+	__int64 qword48;
+	__int64 qword50;
+	FARPROC(__fastcall* getDllCallback)(__int16 a1, const CHAR* a2);
+	__int64(__fastcall* getAssetByHash)(__int64 hash);
+	__int64(__fastcall* getAssetByName)(const char* a1);
+	__int64 qword70;
+	__int64 qword78;
+	__int64 qword80;
+	__int64 qword88;
+	__int64 qword90;
+	char gap98[40];
+	void* (*openFile)(const char* pPath);
+	__int64 closeFile;
+	__int64 qwordD0;
+	__int64 fileReadAsync;
+	__int64 complexFileReadAsync;
+	__int64 getReadJobState;
+	__int64 waitForFileReadJobComplete;
+	__int64 cancelFileReadJob;
+	__int64 cancelFileReadJobAsync;
+	__int64 qword108;
 };
 
 PakLoadFuncs* g_pakLoadApi;
 
 PakLoadManager* g_pPakLoadManager;
+NewPakLoadManager* g_pNewPakLoadManager;
 void** pUnknownPakLoadSingleton;
 
 int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
 {
-	int nHandle = g_pakLoadApi->LoadPakAsync(pPath, *pUnknownPakLoadSingleton, 2);
+	int nHandle = g_pakLoadApi->loadRpakFileAsync(pPath, *pUnknownPakLoadSingleton, 2);
 
 	// set the load source of the pak we just loaded
 	if (nHandle != -1)
@@ -85,7 +107,12 @@ int PakLoadManager::GetPakHandle(const char* pPath)
 
 void* PakLoadManager::LoadFile(const char* path)
 {
-	return g_pakLoadApi->LoadFile(path);
+	return g_pakLoadApi->openFile(path);
+}
+
+void NewPakLoadManager::TrackModPaks(Mod& mod)
+{
+	fs::path rpakJsonPath = mod.m_ModDirectory / "paks/rpak.json";
 }
 
 static char* currentMapRpakPath = nullptr;
@@ -104,8 +131,6 @@ bool h_LoadMapRpaks(char* mapPath)
 {
 	// strip file extension
 	std::string mapName = fs::path(mapPath).replace_extension().string();
-
-	spdlog::warn("Loading map rpaks for {}", mapName.c_str());
 
 	o_LoadGametypeSpecificRpaks(mapName.c_str());
 
@@ -126,8 +151,6 @@ bool h_LoadMapRpaks(char* mapPath)
 	int curPatchHandle = *currentMapPatchRpakHandle;
 	if (curHandle != -1)
 	{
-		spdlog::warn("Cleaning old map rpak");
-
 		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
 		(*o_cleanMaterialSystemStuff)();
 		g_pakLoadApi->UnloadPak(curHandle, *o_cleanMaterialSystemStuff);
@@ -135,20 +158,16 @@ bool h_LoadMapRpaks(char* mapPath)
 	}
 	if (curPatchHandle != -1)
 	{
-		spdlog::warn("Cleaning old map patch rpak");
-
 		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
 		(*o_cleanMaterialSystemStuff)();
 		g_pakLoadApi->UnloadPak(curPatchHandle, *o_cleanMaterialSystemStuff);
 		*currentMapPatchRpakHandle = -1;
 	}
 
-	spdlog::warn("Loading new rpaks oh god this is where we crash probably");
-
-	*currentMapRpakHandle = g_pakLoadApi->LoadPakAsync(mapRpakStr, *rpakMemoryAllocator, 7);
+	*currentMapRpakHandle = g_pakLoadApi->loadRpakFileAsync(mapRpakStr, *rpakMemoryAllocator, 7);
 	char levelPatchRpakStr[272];
 	snprintf(levelPatchRpakStr, 272, "%s_patch.rpak", mapName.c_str());
-	*currentMapPatchRpakHandle = g_pakLoadApi->LoadPakAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
+	*currentMapPatchRpakHandle = g_pakLoadApi->loadRpakFileAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
 
 	return true;
 }
@@ -353,7 +372,7 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
 // tbh this actually might be for memory mapped files or something, would make sense i think
 // clang-format off
-HOOK(ReadFileAsyncHook, ReadFileAsync, 
+HOOK(OpenFileHook, o_OpenFile, 
 void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
@@ -426,7 +445,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		NS::log::rpak->info("LoadStreamPak: {}", filename.string());
 	}
 
-	return ReadFileAsync(pPath, pCallback);
+	return o_OpenFile(pPath, pCallback);
 }
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
@@ -434,13 +453,14 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 	AUTOHOOK_DISPATCH();
 
 	g_pPakLoadManager = new PakLoadManager;
+	g_pNewPakLoadManager = new NewPakLoadManager;
 
 	g_pakLoadApi = module.Offset(0x5BED78).Deref().RCast<PakLoadFuncs*>();
 	pUnknownPakLoadSingleton = module.Offset(0x7C5E20).RCast<void**>();
 
-	LoadPakAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->LoadPakAsync);
+	LoadPakAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->loadRpakFileAsync);
 	UnloadPakHook.Dispatch((LPVOID*)g_pakLoadApi->UnloadPak);
-	ReadFileAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->ReadFileAsync);
+	OpenFileHook.Dispatch((LPVOID*)g_pakLoadApi->openFile);
 
 	currentMapRpakPath = module.Offset(0x1315C3E0).RCast<decltype(currentMapRpakPath)>();
 	currentMapRpakHandle = module.Offset(0x7CB5A0).RCast<decltype(currentMapRpakHandle)>();

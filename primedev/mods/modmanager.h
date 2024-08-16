@@ -19,6 +19,8 @@ const std::string COMPILED_ASSETS_SUFFIX = "\\runtime\\compiled";
 
 const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
 
+class Mod;
+
 struct ModConVar
 {
 public:
@@ -71,9 +73,15 @@ public:
 struct ModRpakEntry
 {
 public:
+	ModRpakEntry(Mod& parent) : m_parent(parent) {}
 	bool m_bAutoLoad;
 	std::string m_sPakName;
 	std::string m_sLoadAfterPak;
+
+	Mod& m_parent;
+	bool m_loadOnMP = false;
+	bool m_loadOnSP = false;
+	std::string m_targetMap;
 };
 
 class Mod

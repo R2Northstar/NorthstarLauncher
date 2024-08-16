@@ -723,6 +723,9 @@ void ModManager::LoadMods()
 		else
 			mod.m_bEnabled = true;
 
+		if (g_pNewPakLoadManager != nullptr)
+			g_pNewPakLoadManager->TrackModPaks(mod);
+
 		if (mod.m_bWasReadSuccessfully)
 		{
 			if (mod.m_bEnabled)
@@ -866,7 +869,7 @@ void ModManager::LoadMods()
 				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
 				{
 					std::string pakName(file.path().filename().string());
-					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
+					ModRpakEntry& modPak = mod.Rpaks.emplace_back(mod);
 
 					if (!bUseRpakJson)
 					{
@@ -1059,6 +1062,8 @@ void ModManager::UnloadMods()
 	fs::remove_all(GetCompiledAssetsPath());
 
 	g_CustomAudioManager.ClearAudioOverrides();
+	if (g_pNewPakLoadManager != nullptr)
+		g_pNewPakLoadManager->UnloadAllModdedPaks();
 
 	if (!m_bHasEnabledModsCfg)
 		m_EnabledModsCfg.SetObject();

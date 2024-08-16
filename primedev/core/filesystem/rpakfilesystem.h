@@ -36,4 +36,69 @@ public:
 	int GetPakHandle(const char* pPath);
 };
 
+struct ModPak
+{
+	std::string m_modName;
+	std::string m_path;
+	size_t m_pathHash;
+
+	bool m_loadOnMultiplayerMaps;
+	bool m_loadOnSingleplayerMaps;
+	std::string m_targetMap;
+
+	int m_pakHandle = -1;
+	// if this is set, the Pak will be unloaded on next map load
+	bool m_markedForUnload;
+};
+
+/*
+* [X] on mod reload, mark all paks for unloading
+* [ ] on mod load, read rpak.json and track rpaks
+* [ ] on map change, load the correct mod rpaks
+* [ ] on map change, unload paks that are marked for unloading
+* [ ] on pak load, add to vanilla tracked paks (if static bool is true)
+* [ ] on pak unload, unload dependent rpaks first
+* [ ] on pak unload, if pak was aliasing a vanilla pak away, load the vanilla pak (if static bool is false)
+*/
+
+class NewPakLoadManager
+{
+public:
+	// Marks all mod Paks to be unloaded on next map load.
+	// Also cleans up any mod Paks that are already unloaded.
+	void UnloadAllModdedPaks() {}
+
+	// Tracks all Paks related to a mod.
+	void TrackModPaks(Mod& mod);
+
+	// Tracks a Pak that vanilla attempted to load.
+	void TrackVanillaPak(const char* originalPath, int pakHandle);
+
+
+private:
+	// Loads Paks that depend on this Pak.
+	void LoadDependentPaks(const char* pakPath);
+	// Untracks all paks that aren't currently loaded.
+	void CleanUpUnloadedPaks();
+
+	// Finds a Pak by hash.
+	ModRpakEntry* FindPak(size_t pathHash);
+
+	// All paks that vanilla has attempted to load. (they may have been aliased away)
+	// Also known as a list of rpaks that the vanilla game would have loaded at this point in time.
+	std::vector<std::pair<std::string, int>> m_vanillaPaks;
+
+	// All mod Paks
+	std::vector<std::pair<ModPak&, int>> m_modPaks;
+
+	// todo: deprecate these?
+	// Paks that are always loaded (Preload)
+	std::vector<size_t> m_constantPaks;
+	// Paks that are dependent on another Pak being loaded (Postload)
+	std::vector<std::pair<size_t, size_t>> m_dependentPaks;
+	// Paks that fully replace (Alias) a target Pak
+	std::vector<std::pair<size_t, size_t>> m_aliasPaks;
+};
+
 extern PakLoadManager* g_pPakLoadManager;
+extern NewPakLoadManager* g_pNewPakLoadManager;
