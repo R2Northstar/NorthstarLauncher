@@ -1,5 +1,7 @@
 #pragma once
 
+#include <regex>
+
 enum class ePakLoadSource
 {
 	UNTRACKED = -1, // not a pak we loaded, we shouldn't touch this one
@@ -42,12 +44,10 @@ struct ModPak
 	std::string m_path;
 	size_t m_pathHash;
 
-	bool m_loadOnMultiplayerMaps;
-	bool m_loadOnSingleplayerMaps;
-	std::string m_targetMap;
+	std::regex m_mapRegex;
 
 	// if this is set, the Pak will be unloaded on next map load
-	bool m_markedForUnload = false;
+	bool m_markedForDelete = false;
 	int m_handle = -1;
 };
 
@@ -66,7 +66,7 @@ class NewPakLoadManager
 public:
 	// Marks all mod Paks to be unloaded on next map load.
 	// Also cleans up any mod Paks that are already unloaded.
-	void UnloadAllModdedPaks();
+	void UnloadAllModPaks();
 
 	// Tracks all Paks related to a mod.
 	void TrackModPaks(Mod& mod);
@@ -81,9 +81,15 @@ public:
 	void UnloadMarkedPaks();
 
 	// Loads all modded paks for the given map.
-	void LoadMapPaks(const char* mapName);
+	void LoadModPaksForMap(const char* mapName);
 	// Unloads all modded map paks
-	void UnloadMapPaks();
+	void UnloadModPaks();
+
+	// Whether the current context is a vanilla call to a function, or a modded one
+	bool IsVanillaCall() const { return m_reentranceCounter == 0; }
+	// Whether paks will be forced to reload on the next map load
+	bool GetForceReloadOnMapLoad() const { return m_forceReloadOnMapLoad; }
+	void SetForceReloadOnMapLoad(bool value) { m_forceReloadOnMapLoad = value; }
 
 private:
 	// Loads Paks that depend on this Pak.
@@ -97,10 +103,10 @@ private:
 	// todo: to get if a pak was aliasing a vanilla rpak, check the pakHandle here against the pak that is being unloaded then load the string
 	std::vector<std::pair<std::string, int>> m_vanillaPaks;
 
-	// All mod Paks
+	// All mod Paks that are currently tracked
 	std::vector<ModPak> m_modPaks;
 
-	// Currently loaded map mod paks
+	// Hashes of the currently loaded map mod paks
 	std::vector<size_t> m_mapPaks;
 
 	// todo: deprecate these?
@@ -111,7 +117,12 @@ private:
 	// Paks that fully replace (Alias) a target Pak
 	std::vector<std::pair<size_t, size_t>> m_aliasPaks;
 
-	bool m_vanillaCall = true;
+	// Used to force rpaks to be unloaded and reloaded on the next map load.
+	// Vanilla behaviour is to not do this when loading into mp_lobby, or loading into the same map you were last in
+	bool m_forceReloadOnMapLoad = false;
+	// Used to track if the current hook call is a vanilla call or not.
+	// When loading/unloading a mod Pak, increment this before doing so, and decrement afterwards
+	int m_reentranceCounter = 0;
 };
 
 extern PakLoadManager* g_pPakLoadManager;

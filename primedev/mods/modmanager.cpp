@@ -884,16 +884,23 @@ void ModManager::LoadMods()
 							modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
 						}
 
-						if (dRpakJson.HasMember("Maps") && dRpakJson["Maps"].IsObject() && dRpakJson["Maps"].HasMember(pakName))
+						if (dRpakJson.HasMember(pakName))
 						{
-							if (!dRpakJson["Maps"][pakName].IsString())
+							if (!dRpakJson[pakName].IsString())
 							{
-								spdlog::error("Mod {} has invalid rpak.json. \"Maps\" entries must be strings.", mod.Name);
+								spdlog::error("Mod {} has invalid rpak.json. Rpak entries must be strings.", mod.Name);
 								continue;
 							}
-							else
+
+							std::string loadStr = dRpakJson[pakName].GetString();
+							try
 							{
-								modPak.m_targetMap = dRpakJson["Maps"][pakName].GetString();
+								modPak.m_loadRegex = std::regex(loadStr);
+							}
+							catch (...)
+							{
+								spdlog::error("Mod {} has invalid rpak.json. Malformed regex \"{}\" for {}", mod.Name, loadStr, pakName);
+								return;
 							}
 						}
 					}
@@ -1077,7 +1084,7 @@ void ModManager::UnloadMods()
 
 	g_CustomAudioManager.ClearAudioOverrides();
 	if (g_pNewPakLoadManager != nullptr)
-		g_pNewPakLoadManager->UnloadAllModdedPaks();
+		g_pNewPakLoadManager->UnloadAllModPaks();
 
 	if (!m_bHasEnabledModsCfg)
 		m_EnabledModsCfg.SetObject();

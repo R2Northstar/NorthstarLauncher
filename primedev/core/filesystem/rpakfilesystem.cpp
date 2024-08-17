@@ -2,42 +2,61 @@
 #include "mods/modmanager.h"
 #include "dedicated/dedicated.h"
 #include "core/tier0.h"
+#include "util/utils.h"
 
 AUTOHOOK_INIT()
 
 struct PakLoadFuncs
 {
-	void(__fastcall* initRpakSystem)();
-	void(__fastcall* addAssetLoaderWithJobDetails)(/*assetTypeHeader*/ void*, uint32_t, int);
-	void(__fastcall* addAssetLoader)(/*assetTypeHeader*/ void*);
-	__int64(__fastcall* loadRpakFileAsync)(const char* pPath, void* allocator, int flags);
-	void(__fastcall* loadRpakFile)(const char*, __int64(__fastcall*)(), __int64, void(__cdecl*)());
+	void (*InitRpakSystem)();
+	void (*AddAssetLoaderWithJobDetails)(/*assetTypeHeader*/ void*, uint32_t, int);
+	void (*AddAssetLoader)(/*assetTypeHeader*/ void*);
+	__int64 (*LoadRpakFileAsync)(const char* pPath, void* allocator, int flags);
+	void (*LoadRpakFile)(const char*, __int64(__fastcall*)(), __int64, void(__cdecl*)());
 	__int64 qword28;
 	void (*UnloadPak)(int iPakHandle, void* callback);
 	__int64 qword38;
 	__int64 qword40;
 	__int64 qword48;
 	__int64 qword50;
-	FARPROC(__fastcall* getDllCallback)(__int16 a1, const CHAR* a2);
-	__int64(__fastcall* getAssetByHash)(__int64 hash);
-	__int64(__fastcall* getAssetByName)(const char* a1);
+	FARPROC (*GetDllCallback)(__int16 a1, const CHAR* a2);
+	__int64 (*GetAssetByHash)(__int64 hash);
+	__int64 (*GetAssetByName)(const char* a1);
 	__int64 qword70;
 	__int64 qword78;
 	__int64 qword80;
 	__int64 qword88;
 	__int64 qword90;
-	char gap98[40];
-	void* (*openFile)(const char* pPath);
-	__int64 closeFile;
+	char gap98[0x28];
+	void* (*OpenFile)(const char* pPath);
+	__int64 CloseFile;
 	__int64 qwordD0;
-	__int64 fileReadAsync;
-	__int64 complexFileReadAsync;
-	__int64 getReadJobState;
-	__int64 waitForFileReadJobComplete;
-	__int64 cancelFileReadJob;
-	__int64 cancelFileReadJobAsync;
+	__int64 FileReadAsync;
+	__int64 ComplexFileReadAsync;
+	__int64 GetReadJobState;
+	__int64 WaitForFileReadJobComplete;
+	__int64 CancelFileReadJob;
+	__int64 CancelFileReadJobAsync;
 	__int64 qword108;
 };
+static_assert(sizeof(PakLoadFuncs) == 0x110);
+static_assert(offsetof(PakLoadFuncs, InitRpakSystem) == 0x0);
+static_assert(offsetof(PakLoadFuncs, AddAssetLoaderWithJobDetails) == 0x8);
+static_assert(offsetof(PakLoadFuncs, AddAssetLoader) == 0x10);
+static_assert(offsetof(PakLoadFuncs, LoadRpakFileAsync) == 0x18);
+static_assert(offsetof(PakLoadFuncs, LoadRpakFile) == 0x20);
+static_assert(offsetof(PakLoadFuncs, UnloadPak) == 0x30);
+static_assert(offsetof(PakLoadFuncs, GetDllCallback) == 0x58);
+static_assert(offsetof(PakLoadFuncs, GetAssetByHash) == 0x60);
+static_assert(offsetof(PakLoadFuncs, GetAssetByName) == 0x68);
+static_assert(offsetof(PakLoadFuncs, OpenFile) == 0xC0);
+static_assert(offsetof(PakLoadFuncs, CloseFile) == 0xC8);
+static_assert(offsetof(PakLoadFuncs, FileReadAsync) == 0xD8);
+static_assert(offsetof(PakLoadFuncs, ComplexFileReadAsync) == 0xE0);
+static_assert(offsetof(PakLoadFuncs, GetReadJobState) == 0xE8);
+static_assert(offsetof(PakLoadFuncs, WaitForFileReadJobComplete) == 0xF0);
+static_assert(offsetof(PakLoadFuncs, CancelFileReadJob) == 0xF8);
+static_assert(offsetof(PakLoadFuncs, CancelFileReadJobAsync) == 0x100);
 
 PakLoadFuncs* g_pakLoadApi;
 
@@ -58,7 +77,7 @@ static char* (*o_loadlevelLoadscreen)(const char* levelName) = nullptr;
 
 int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
 {
-	int nHandle = g_pakLoadApi->loadRpakFileAsync(pPath, *pUnknownPakLoadSingleton, 2);
+	int nHandle = g_pakLoadApi->LoadRpakFileAsync(pPath, *pUnknownPakLoadSingleton, 2);
 
 	// set the load source of the pak we just loaded
 	if (nHandle != -1)
@@ -118,20 +137,21 @@ int PakLoadManager::GetPakHandle(const char* pPath)
 
 void* PakLoadManager::LoadFile(const char* path)
 {
-	return g_pakLoadApi->openFile(path);
+	return g_pakLoadApi->OpenFile(path);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void NewPakLoadManager::UnloadAllModdedPaks()
+void NewPakLoadManager::UnloadAllModPaks()
 {
 	NS::log::rpak->info("Reloading RPaks on next map load...");
 	for (auto& modPak : m_modPaks)
 	{
-		modPak.m_markedForUnload = true;
+		modPak.m_markedForDelete = true;
 	}
 	// clean up any paks that are both marked for unload and already unloaded
 	CleanUpUnloadedPaks();
+	m_forceReloadOnMapLoad = true;
 }
 
 void NewPakLoadManager::TrackModPaks(Mod& mod)
@@ -145,9 +165,7 @@ void NewPakLoadManager::TrackModPaks(Mod& mod)
 		pak.m_path = (modPakPath / modRpakEntry.m_sPakName).string();
 		pak.m_pathHash = STR_HASH(pak.m_path);
 
-		pak.m_loadOnMultiplayerMaps = modRpakEntry.m_loadOnMP;
-		pak.m_loadOnSingleplayerMaps = modRpakEntry.m_loadOnSP;
-		pak.m_targetMap = modRpakEntry.m_targetMap;
+		pak.m_mapRegex = modRpakEntry.m_loadRegex;
 
 		// todo: prevent duplicates?
 
@@ -159,7 +177,7 @@ void NewPakLoadManager::CleanUpUnloadedPaks()
 {
 	auto predicate = [](ModPak& pak) -> bool
 	{
-		return pak.m_markedForUnload && pak.m_handle == -1;
+		return pak.m_markedForDelete && pak.m_handle == -1;
 	};
 
 	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), predicate), m_modPaks.end());
@@ -167,43 +185,46 @@ void NewPakLoadManager::CleanUpUnloadedPaks()
 
 void NewPakLoadManager::UnloadMarkedPaks()
 {
-	m_vanillaCall = false;
+	++m_reentranceCounter;
+	ScopeGuard guard([&](){ --m_reentranceCounter; });
 
 	(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
 	(*o_cleanMaterialSystemStuff)();
 
 	for (auto& modPak : m_modPaks)
 	{
-		if (modPak.m_handle == -1 || !modPak.m_markedForUnload)
+		if (modPak.m_handle == -1 || !modPak.m_markedForDelete)
 			continue;
 
 		g_pakLoadApi->UnloadPak(modPak.m_handle, *o_cleanMaterialSystemStuff);
 		modPak.m_handle = -1;
 	}
-
-	m_vanillaCall = true;
 }
 
-void NewPakLoadManager::LoadMapPaks(const char* mapName)
+void NewPakLoadManager::LoadModPaksForMap(const char* mapName)
 {
-	m_vanillaCall = false;
+	++m_reentranceCounter;
+	ScopeGuard guard([&]() { --m_reentranceCounter; });
+
 	for (auto& modPak : m_modPaks)
 	{
 		// don't load paks that are already loaded
 		if (modPak.m_handle != -1)
 			continue;
-		if (modPak.m_targetMap != mapName)
+		std::cmatch matches;
+		if (!std::regex_match(mapName, matches, modPak.m_mapRegex))
 			continue;
 
-		modPak.m_handle = g_pakLoadApi->loadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
+		modPak.m_handle = g_pakLoadApi->LoadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
 		m_mapPaks.push_back(modPak.m_pathHash);
 	}
-	m_vanillaCall = true;
 }
 
-void NewPakLoadManager::UnloadMapPaks()
+void NewPakLoadManager::UnloadModPaks()
 {
-	m_vanillaCall = false;
+	++m_reentranceCounter;
+	ScopeGuard guard([&]() { --m_reentranceCounter; });
+
 	for (auto& modPak : m_modPaks)
 	{
 		for (auto it = m_mapPaks.begin(); it != m_mapPaks.end(); ++it)
@@ -217,7 +238,10 @@ void NewPakLoadManager::UnloadMapPaks()
 			break;
 		}
 	}
-	m_vanillaCall = true;
+
+	// If this has happened, we may have leaked a pak?
+	// It basically means that none of the entries in m_modPaks matched the hash in m_mapPaks so we didn't end up unloading it
+	assert_msg(m_mapPaks.size() == 0, "Not all map paks were unloaded?");
 }
 
 bool (*o_LoadMapRpaks)(char* mapPath) = nullptr;
@@ -233,14 +257,15 @@ bool h_LoadMapRpaks(char* mapPath)
 	// todo: load modded gametype specific rpaks here as well
 	o_LoadGametypeSpecificRpaks(mapName.c_str());
 
-	if (!strcmp("mp_lobby", mapName.c_str())) // nothing to load for mp_lobby
+	// don't load/unload anything when going to the lobby, presumably to save load times when going back to the same map
+	if (!g_pNewPakLoadManager->GetForceReloadOnMapLoad() && !strcmp("mp_lobby", mapName.c_str()))
 		return false;
 
 	char mapRpakStr[272];
 	snprintf(mapRpakStr, 272, "%s.rpak", mapName.c_str());
+
 	// if level being loaded is the same as current level, do nothing
-	// todo: do stuff if we have reloaded mods
-	if (!strcmp(mapRpakStr, currentMapRpakPath))
+	if (!g_pNewPakLoadManager->GetForceReloadOnMapLoad() && !strcmp(mapRpakStr, currentMapRpakPath))
 		return true;
 
 	strcpy(currentMapRpakPath, mapRpakStr);
@@ -254,7 +279,9 @@ bool h_LoadMapRpaks(char* mapPath)
 		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
 		(*o_cleanMaterialSystemStuff)();
 
-		g_pNewPakLoadManager->UnloadMapPaks();
+		// unload old modded map paks
+		g_pNewPakLoadManager->UnloadModPaks();
+
 		g_pakLoadApi->UnloadPak(curHandle, *o_cleanMaterialSystemStuff);
 		*currentMapRpakHandle = -1;
 	}
@@ -266,19 +293,23 @@ bool h_LoadMapRpaks(char* mapPath)
 		*currentMapPatchRpakHandle = -1;
 	}
 
-	*currentMapRpakHandle = g_pakLoadApi->loadRpakFileAsync(mapRpakStr, *rpakMemoryAllocator, 7);
-	g_pNewPakLoadManager->LoadMapPaks(mapName.c_str());
+	*currentMapRpakHandle = g_pakLoadApi->LoadRpakFileAsync(mapRpakStr, *rpakMemoryAllocator, 7);
+	// load modded map paks
+	g_pNewPakLoadManager->LoadModPaksForMap(mapName.c_str());
 
 	// load special _patch rpak (seemingly used for dev things?)
 	char levelPatchRpakStr[272];
 	snprintf(levelPatchRpakStr, 272, "%s_patch.rpak", mapName.c_str());
 	// todo: do we need to do modded map patch rpaks? they can just be modded map rpaks
-	*currentMapPatchRpakHandle = g_pakLoadApi->loadRpakFileAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
+	*currentMapPatchRpakHandle = g_pakLoadApi->LoadRpakFileAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
 
+	// we just reloaded the paks, so we don't need to force it again
+	g_pNewPakLoadManager->SetForceReloadOnMapLoad(false);
 	return true;
 }
 
 unsigned int (*o_pGetPakPatchNumber)(char* pPakPath) = nullptr;
+// todo: remove this hook and just call the original elsewhere
 unsigned int h_GetPakPatchNumber(char* pPakPath)
 {
 	__int64 ret = o_pGetPakPatchNumber(pPakPath);
@@ -572,9 +603,9 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 	g_pakLoadApi = module.Offset(0x5BED78).Deref().RCast<PakLoadFuncs*>();
 	pUnknownPakLoadSingleton = module.Offset(0x7C5E20).RCast<void**>();
 
-	LoadPakAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->loadRpakFileAsync);
+	LoadPakAsyncHook.Dispatch((LPVOID*)g_pakLoadApi->LoadRpakFileAsync);
 	UnloadPakHook.Dispatch((LPVOID*)g_pakLoadApi->UnloadPak);
-	OpenFileHook.Dispatch((LPVOID*)g_pakLoadApi->openFile);
+	OpenFileHook.Dispatch((LPVOID*)g_pakLoadApi->OpenFile);
 
 	currentMapRpakPath = module.Offset(0x1315C3E0).RCast<decltype(currentMapRpakPath)>();
 	currentMapRpakHandle = module.Offset(0x7CB5A0).RCast<decltype(currentMapRpakHandle)>();

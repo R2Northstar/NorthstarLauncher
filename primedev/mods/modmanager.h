@@ -8,6 +8,7 @@
 #include <vector>
 #include <filesystem>
 #include <unordered_set>
+#include <regex>
 
 namespace fs = std::filesystem;
 
@@ -73,7 +74,11 @@ public:
 struct ModRpakEntry
 {
 public:
-	ModRpakEntry(Mod& parent) : m_parent(parent) {}
+	ModRpakEntry(Mod& parent)
+		: m_parent(parent)
+		, m_loadRegex("^thisMatchesNothing^") // discord couldnt give me a funny string
+	{}
+
 	bool m_bAutoLoad;
 	std::string m_sPakName;
 	std::string m_sLoadAfterPak;
@@ -82,6 +87,7 @@ public:
 	bool m_loadOnMP = false;
 	bool m_loadOnSP = false;
 	std::string m_targetMap;
+	std::regex m_loadRegex;
 };
 
 class Mod
