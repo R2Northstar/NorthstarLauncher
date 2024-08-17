@@ -244,6 +244,47 @@ void NewPakLoadManager::UnloadModPaks()
 	assert_msg(m_mapPaks.size() == 0, "Not all map paks were unloaded?");
 }
 
+void NewPakLoadManager::OnPakLoaded(std::string& originalPath, int resultingHandle)
+{
+	if (IsVanillaCall())
+	{
+		// add entry to loaded vanilla rpaks
+		m_vanillaPaks.emplace_back(originalPath, resultingHandle);
+		// temp
+		spdlog::warn("Vanilla loaded pak {}", originalPath);
+	}
+}
+
+void NewPakLoadManager::OnPakUnloading(int handle)
+{
+	// todo: unload all rpaks that depend on this one
+
+	if (IsVanillaCall())
+	{
+		// remove entry from loaded vanilla rpaks
+		auto predicate = [handle](std::pair<std::string, int>& pair) -> bool
+		{
+			// temp
+			if (pair.second == handle)
+				spdlog::warn("Vanilla unloaded pak {}", pair.first);
+			return pair.second == handle;
+		};
+
+		m_vanillaPaks.erase(std::remove_if(m_vanillaPaks.begin(), m_vanillaPaks.end(), predicate), m_vanillaPaks.end());
+	}
+	else
+	{
+		// handle the potential unloading of an aliased vanilla rpak (we aliased it, and we are now unloading the alias, so we should load the vanilla one again)
+	}
+
+	// set handle of the mod pak (if any) that has this handle for proper tracking
+	for (auto& modPak : m_modPaks)
+	{
+		if (modPak.m_handle == handle)
+			modPak.m_handle = -1;
+	}
+}
+
 bool (*o_LoadMapRpaks)(char* mapPath) = nullptr;
 bool h_LoadMapRpaks(char* mapPath)
 {
@@ -430,6 +471,10 @@ HOOK(LoadPakAsyncHook, LoadPakAsync,
 int, __fastcall, (char* pPath, void* memoryAllocator, int flags))
 // clang-format on
 {
+	// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by
+	// LoadCustomMapPaks or HandlePakAliases
+	std::string originalPath(pPath);
+
 	HandlePakAliases(&pPath);
 
 	// dont load the pak if it's currently loaded already
@@ -442,9 +487,7 @@ int, __fastcall, (char* pPath, void* memoryAllocator, int flags))
 	static bool bShouldLoadPaks = true;
 	if (bShouldLoadPaks)
 	{
-		// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by
-		// LoadCustomMapPaks
-		std::string originalPath(pPath);
+
 
 		// disable preloading while we're doing this
 		bShouldLoadPaks = false;
@@ -477,6 +520,7 @@ int, __fastcall, (char* pPath, void* memoryAllocator, int flags))
 	// trak the pak
 	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
 	LoadPostloadPaks(pPath);
+	g_pNewPakLoadManager->OnPakLoaded(originalPath, iPakHandle);
 
 	if (bNeedToFreePakName)
 		delete[] pPath;
@@ -489,6 +533,8 @@ HOOK(UnloadPakHook, UnloadPak,
 void*, __fastcall, (int nPakHandle, void* pCallback))
 // clang-format on
 {
+	g_pNewPakLoadManager->OnPakUnloading(nPakHandle);
+
 	ePakLoadSource loadSource = g_pPakLoadManager->GetPakInfo(nPakHandle)->m_nLoadSource;
 	// stop tracking the pak
 	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);

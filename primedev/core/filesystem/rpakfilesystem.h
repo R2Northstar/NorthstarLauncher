@@ -91,6 +91,9 @@ public:
 	bool GetForceReloadOnMapLoad() const { return m_forceReloadOnMapLoad; }
 	void SetForceReloadOnMapLoad(bool value) { m_forceReloadOnMapLoad = value; }
 
+	void OnPakLoaded(std::string& originalPath, int resultingHandle);
+	void OnPakUnloading(int handle);
+
 private:
 	// Loads Paks that depend on this Pak.
 	void LoadDependentPaks(const char* pakPath);
