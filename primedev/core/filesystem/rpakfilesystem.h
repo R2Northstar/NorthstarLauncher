@@ -44,10 +44,19 @@ public:
 	void UnloadModPaks();
 
 	// Whether the current context is a vanilla call to a function, or a modded one
-	bool IsVanillaCall() const { return m_reentranceCounter == 0; }
+	bool IsVanillaCall() const
+	{
+		return m_reentranceCounter == 0;
+	}
 	// Whether paks will be forced to reload on the next map load
-	bool GetForceReloadOnMapLoad() const { return m_forceReloadOnMapLoad; }
-	void SetForceReloadOnMapLoad(bool value) { m_forceReloadOnMapLoad = value; }
+	bool GetForceReloadOnMapLoad() const
+	{
+		return m_forceReloadOnMapLoad;
+	}
+	void SetForceReloadOnMapLoad(bool value)
+	{
+		m_forceReloadOnMapLoad = value;
+	}
 
 	// Called after a Pak was loaded.
 	void OnPakLoaded(std::string& originalPath, std::string& resultingPath, int resultingHandle);

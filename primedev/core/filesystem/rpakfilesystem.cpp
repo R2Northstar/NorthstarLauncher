@@ -104,10 +104,7 @@ void PakLoadManager::TrackModPaks(Mod& mod)
 
 void PakLoadManager::CleanUpUnloadedPaks()
 {
-	auto predicate = [](ModPak& pak) -> bool
-	{
-		return pak.m_markedForDelete && pak.m_handle == -1;
-	};
+	auto predicate = [](ModPak& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == -1; };
 
 	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), predicate), m_modPaks.end());
 }
@@ -115,7 +112,7 @@ void PakLoadManager::CleanUpUnloadedPaks()
 void PakLoadManager::UnloadMarkedPaks()
 {
 	++m_reentranceCounter;
-	const ScopeGuard guard([&](){ --m_reentranceCounter; });
+	const ScopeGuard guard([&]() { --m_reentranceCounter; });
 
 	(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
 	(*o_pcleanMaterialSystemStuff)();
@@ -203,8 +200,9 @@ void PakLoadManager::OnPakUnloading(int handle)
 	else
 	{
 		// note: aliasing is handled the old way, long term todo: move it over to the PakLoadManager
-		// handle the potential unloading of an aliased vanilla rpak (we aliased it, and we are now unloading the alias, so we should load the vanilla one again)
-		//for (auto& [path, resultingHandle] : m_vanillaPaks)
+		// handle the potential unloading of an aliased vanilla rpak (we aliased it, and we are now unloading the alias, so we should load
+		// the vanilla one again)
+		// for (auto& [path, resultingHandle] : m_vanillaPaks)
 		//{
 		//	if (resultingHandle != handle)
 		//		continue;

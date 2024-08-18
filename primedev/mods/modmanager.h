@@ -74,10 +74,9 @@ public:
 struct ModRpakEntry
 {
 public:
-	ModRpakEntry(Mod& parent)
-		: m_parent(parent)
-		, m_loadRegex("^thisMatchesNothing^") // discord couldnt give me a funny string
-	{}
+	ModRpakEntry(Mod& parent) : m_parent(parent), m_loadRegex("^thisMatchesNothing^") // discord couldnt give me a funny string
+	{
+	}
 
 	Mod& m_parent;
 	std::string m_pakName;
@@ -136,7 +135,7 @@ public:
 
 	std::vector<ModRpakEntry> Rpaks;
 	// paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
-	std::unordered_map<std::string, std::string> RpakAliases; 
+	std::unordered_map<std::string, std::string> RpakAliases;
 	// starpaks that this mod contains
 	// there seems to be no nice way to get the rpak that is causing the load of a starpak?
 	// hashed with STR_HASH
