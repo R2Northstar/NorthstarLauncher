@@ -60,7 +60,6 @@ static_assert(offsetof(PakLoadFuncs, CancelFileReadJobAsync) == 0x100);
 
 PakLoadFuncs* g_pakLoadApi;
 
-PakLoadManager* g_pPakLoadManager;
 NewPakLoadManager* g_pNewPakLoadManager;
 void** pUnknownPakLoadSingleton;
 
@@ -74,73 +73,7 @@ static __int64 (*o_LoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
 static __int64 (**o_cleanMaterialSystemStuff)() = nullptr;
 static __int64 (**o_CModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
 static char* (*o_loadlevelLoadscreen)(const char* levelName) = nullptr;
-
-int PakLoadManager::LoadPakAsync(const char* pPath, const ePakLoadSource nLoadSource)
-{
-	int nHandle = g_pakLoadApi->LoadRpakFileAsync(pPath, *pUnknownPakLoadSingleton, 2);
-
-	// set the load source of the pak we just loaded
-	if (nHandle != -1)
-		GetPakInfo(nHandle)->m_nLoadSource = nLoadSource;
-
-	return nHandle;
-}
-
-void PakLoadManager::UnloadPak(const int nPakHandle, void* pCallback)
-{
-	g_pakLoadApi->UnloadPak(nPakHandle, pCallback);
-}
-
-void PakLoadManager::UnloadMapPaks(void* pCallback)
-{
-	// copy since UnloadPak removes from the map
-	std::map<int, LoadedPak> loadedPaksCopy = m_vLoadedPaks;
-	for (auto& pair : loadedPaksCopy)
-		if (pair.second.m_nLoadSource == ePakLoadSource::MAP)
-			UnloadPak(pair.first, pCallback);
-}
-
-LoadedPak* PakLoadManager::TrackLoadedPak(ePakLoadSource nLoadSource, int nPakHandle, size_t nPakNameHash)
-{
-	LoadedPak pak;
-	pak.m_nLoadSource = nLoadSource;
-	pak.m_nPakHandle = nPakHandle;
-	pak.m_nPakNameHash = nPakNameHash;
-
-	m_vLoadedPaks.insert(std::make_pair(nPakHandle, pak));
-	return &m_vLoadedPaks.at(nPakHandle);
-}
-
-void PakLoadManager::RemoveLoadedPak(int nPakHandle)
-{
-	m_vLoadedPaks.erase(nPakHandle);
-}
-
-LoadedPak* PakLoadManager::GetPakInfo(const int nPakHandle)
-{
-	return &m_vLoadedPaks.at(nPakHandle);
-}
-
-int PakLoadManager::GetPakHandle(const size_t nPakNameHash)
-{
-	for (auto& pair : m_vLoadedPaks)
-		if (pair.second.m_nPakNameHash == nPakNameHash)
-			return pair.first;
-
-	return -1;
-}
-
-int PakLoadManager::GetPakHandle(const char* pPath)
-{
-	return GetPakHandle(STR_HASH(pPath));
-}
-
-void* PakLoadManager::LoadFile(const char* path)
-{
-	return g_pakLoadApi->OpenFile(path);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+unsigned int (*o_pGetPakPatchNumber)(const char* pPakPath) = nullptr;
 
 void NewPakLoadManager::UnloadAllModPaks()
 {
@@ -344,6 +277,66 @@ void NewPakLoadManager::UnloadDependentPaks(int handle)
 	m_dependentPaks.erase(std::remove_if(m_dependentPaks.begin(), m_dependentPaks.end(), predicate), m_dependentPaks.end());
 }
 
+void NewPakLoadManager::LoadPreloadPaks()
+{
+	++m_reentranceCounter;
+	ScopeGuard guard([&]() { --m_reentranceCounter; });
+
+	for (auto& modPak : m_modPaks)
+	{
+		if (modPak.m_markedForDelete || !modPak.m_preload)
+			continue;
+
+		modPak.m_handle = g_pakLoadApi->LoadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
+	}
+}
+
+void* NewPakLoadManager::OpenFile(const char* path)
+{
+	return g_pakLoadApi->OpenFile(path);
+}
+
+// whether the vanilla game has this rpak
+static bool VanillaHasPak(const char* pakName)
+{
+	fs::path originalPath = fs::path("./r2/paks/Win64") / pakName;
+	unsigned int highestPatch = o_pGetPakPatchNumber(pakName);
+	if (highestPatch)
+	{
+		// add the patch path to the extension
+		char buf[16];
+		snprintf(buf, sizeof(buf), "(%02u).rpak", highestPatch);
+		// remove the .rpak and add the new suffix
+		originalPath = originalPath.replace_extension().string() + buf;
+	}
+	else
+	{
+		originalPath /= pakName;
+	}
+
+	return fs::exists(originalPath);
+}
+
+void NewPakLoadManager::FixupPakPath(std::string& pakPath)
+{
+	if (VanillaHasPak(pakPath.c_str()))
+		return;
+
+	// todo: this doesn't adhere to load priority. Does it need to?
+	for (ModPak& modPak : m_modPaks)
+	{
+		if (modPak.m_markedForDelete)
+			continue;
+
+		fs::path modPakFilename = fs::path(modPak.m_path).filename();
+		if (pakPath == modPakFilename.string())
+		{
+			pakPath = modPak.m_path;
+			return;
+		}
+	}
+}
+
 bool (*o_LoadMapRpaks)(char* mapPath) = nullptr;
 bool h_LoadMapRpaks(char* mapPath)
 {
@@ -408,16 +401,8 @@ bool h_LoadMapRpaks(char* mapPath)
 	return true;
 }
 
-unsigned int (*o_pGetPakPatchNumber)(char* pPakPath) = nullptr;
-// todo: remove this hook and just call the original elsewhere
-unsigned int h_GetPakPatchNumber(char* pPakPath)
-{
-	__int64 ret = o_pGetPakPatchNumber(pPakPath);
-	NS::log::rpak->info("Highest patch number for {} is {}", pPakPath, ret);
-	return ret;
-}
-
-void HandlePakAliases(char** map)
+// todo: deprecate?
+static void HandlePakAliases(std::string& originalPath)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
 	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > -1; i--)
@@ -426,118 +411,29 @@ void HandlePakAliases(char** map)
 		if (!mod->m_bEnabled)
 			continue;
 
-		if (mod->RpakAliases.find(*map) != mod->RpakAliases.end())
+		if (mod->RpakAliases.find(originalPath) != mod->RpakAliases.end())
 		{
-			*map = &mod->RpakAliases[*map][0];
+			originalPath = &mod->RpakAliases[originalPath][0];
 			return;
-		}
-	}
-}
-
-void LoadPreloadPaks()
-{
-	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.m_bEnabled)
-			continue;
-
-		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
-
-		for (ModRpakEntry& pak : mod.Rpaks)
-			if (pak.m_bAutoLoad)
-				g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_pakName).string().c_str(), ePakLoadSource::CONSTANT);
-	}
-}
-
-// whether the vanilla game has this rpak
-bool VanillaHasPak(char* pakName)
-{
-	fs::path originalPath = fs::path("./r2/paks/Win64") / pakName;
-	unsigned int highestPatch = h_GetPakPatchNumber(pakName);
-	if (highestPatch)
-	{
-		// add the patch path to the extension
-		char buf[16];
-		snprintf(buf, sizeof(buf), "(%02u).rpak", highestPatch);
-		// remove the .rpak and add the new suffix
-		originalPath = originalPath.replace_extension().string() + buf;
-	}
-	else
-	{
-		originalPath /= pakName;
-	}
-
-	return fs::exists(originalPath);
-}
-
-void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
-{
-	bool bHasOriginalPak = VanillaHasPak(*pakName);
-
-	// note, loading from ./ is necessary otherwise paks will load from gamedir/r2/paks
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.m_bEnabled)
-			continue;
-
-		// need to get a relative path of mod to mod folder
-		fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
-
-		for (ModRpakEntry& pak : mod.Rpaks)
-		{
-			if (!pak.m_bAutoLoad && !pak.m_pakName.compare(*pakName))
-			{
-				// if the game doesn't have the original pak, let it handle loading this one as if it was the one it was loading originally
-				if (!bHasOriginalPak)
-				{
-					std::string path = (modPakPath / pak.m_pakName).string();
-					*pakName = new char[path.size() + 1];
-					strcpy(*pakName, &path[0]);
-					(*pakName)[path.size()] = '\0';
-
-					bHasOriginalPak = true;
-					*bNeedToFreePakName =
-						true; // we can't free this memory until we're done with the pak, so let whatever's calling this deal with it
-				}
-				else
-					g_pPakLoadManager->LoadPakAsync((modPakPath / pak.m_pakName).string().c_str(), ePakLoadSource::MAP);
-			}
 		}
 	}
 }
 
 // clang-format off
 HOOK(LoadPakAsyncHook, LoadPakAsync,
-int, __fastcall, (char* pPath, void* memoryAllocator, int flags))
+int, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 // clang-format on
 {
-	// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten by
-	// LoadCustomMapPaks or HandlePakAliases
+	// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten
 	std::string originalPath(pPath);
 
-	HandlePakAliases(&pPath);
+	std::string resultingPath(pPath);
+	HandlePakAliases(resultingPath);
 
-	// dont load the pak if it's currently loaded already
-	size_t nPathHash = STR_HASH(pPath);
-	if (g_pPakLoadManager->GetPakHandle(nPathHash) != -1)
-		return -1;
-
-	bool bNeedToFreePakName = false;
-
-	static bool bShouldLoadPaks = true;
-	if (bShouldLoadPaks)
+	if (g_pNewPakLoadManager->IsVanillaCall())
 	{
-
-
-		// disable preloading while we're doing this
-		bShouldLoadPaks = false;
-
-		LoadPreloadPaks();
-		LoadCustomMapPaks(&pPath, &bNeedToFreePakName);
-
-		bShouldLoadPaks = true;
+		g_pNewPakLoadManager->LoadPreloadPaks();
+		g_pNewPakLoadManager->FixupPakPath(resultingPath);
 
 		// do this after custom paks load and in bShouldLoadPaks so we only ever call this on the root pakload call
 		// todo: could probably add some way to flag custom paks to not be loaded on dedicated servers in rpak.json
@@ -548,24 +444,15 @@ int, __fastcall, (char* pPath, void* memoryAllocator, int flags))
 		if (IsDedicatedServer() &&
 			(CommandLine()->CheckParm("-nopakdedi") || strncmp(&originalPath[0], "common", 6) && strncmp(&originalPath[0], "sp_", 3)))
 		{
-			if (bNeedToFreePakName)
-				delete[] pPath;
-
 			NS::log::rpak->info("Not loading pak {} for dedicated server", originalPath);
 			return -1;
 		}
 	}
 
-	int iPakHandle = LoadPakAsync(pPath, memoryAllocator, flags);
-	NS::log::rpak->info("LoadPakAsync {} {}", pPath, iPakHandle);
+	int iPakHandle = LoadPakAsync(resultingPath.c_str(), memoryAllocator, flags);
+	NS::log::rpak->info("LoadPakAsync {} {}", resultingPath, iPakHandle);
 
-	// trak the pak
-	g_pPakLoadManager->TrackLoadedPak(ePakLoadSource::UNTRACKED, iPakHandle, nPathHash);
-	std::string resultingPath(pPath);
 	g_pNewPakLoadManager->OnPakLoaded(originalPath, resultingPath, iPakHandle);
-
-	if (bNeedToFreePakName)
-		delete[] pPath;
 
 	return iPakHandle;
 }
@@ -576,19 +463,6 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 // clang-format on
 {
 	g_pNewPakLoadManager->OnPakUnloading(nPakHandle);
-
-	ePakLoadSource loadSource = g_pPakLoadManager->GetPakInfo(nPakHandle)->m_nLoadSource;
-	// stop tracking the pak
-	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);
-
-	static bool bShouldUnloadPaks = true;
-	if (bShouldUnloadPaks)
-	{
-		bShouldUnloadPaks = false;
-		if (loadSource == ePakLoadSource::MAP)
-			g_pPakLoadManager->UnloadMapPaks(pCallback);
-		bShouldUnloadPaks = true;
-	}
 
 	NS::log::rpak->info("UnloadPak {}", nPakHandle);
 	return UnloadPak(nPakHandle, pCallback);
@@ -673,20 +547,11 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 	return o_OpenFile(pPath, pCallback);
 }
 
-//void ConCommand_reload_models(const CCommand& args)
-//{
-//	//(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
-//	(*o_cleanMaterialSystemStuff)();
-//}
-
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 {
 	AUTOHOOK_DISPATCH();
 
-	g_pPakLoadManager = new PakLoadManager;
 	g_pNewPakLoadManager = new NewPakLoadManager;
-
-	//RegisterConCommand("reload_models", ConCommand_reload_models, "test, absolutely crashes the game", FCVAR_CLIENTDLL);
 
 	g_pakLoadApi = module.Offset(0x5BED78).Deref().RCast<PakLoadFuncs*>();
 	pUnknownPakLoadSingleton = module.Offset(0x7C5E20).RCast<void**>();
@@ -709,7 +574,7 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 	o_LoadMapRpaks = module.Offset(0x15A8C0).RCast<decltype(o_LoadMapRpaks)>();
 	HookAttach(&(PVOID&)o_LoadMapRpaks, (PVOID)h_LoadMapRpaks);
 
+	// kinda bad, hooking things in rtech in an engine callback but it seems fine for now
 	CModule rtechModule(GetModuleHandleA("rtech_game.dll"));
 	o_pGetPakPatchNumber = rtechModule.Offset(0x9A00).RCast<decltype(o_pGetPakPatchNumber)>();
-	HookAttach(&(PVOID&)o_pGetPakPatchNumber, (PVOID)h_GetPakPatchNumber);
 }

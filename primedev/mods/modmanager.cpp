@@ -877,14 +877,11 @@ void ModManager::LoadMods()
 						modPak.m_bAutoLoad =
 							(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
 							 dRpakJson["Preload"][pakName].IsTrue());
-						if (modPak.m_bAutoLoad)
-							spdlog::warn("Mod {} has rpak.json that uses Preload. Use of Preload will be deprecated Soon(tm).", mod.Name);
 
 						// postload things
 						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
 						{
 							modPak.m_dependentPakHash = STR_HASH(dRpakJson["Postload"][pakName].GetString());
-							spdlog::warn("Mod {} has rpak.json that uses Postload. Use of Postload will be deprecated Soon(tm).", mod.Name);
 						}
 
 						// this is the only bit of rpak.json that isn't really deprecated. Even so, it will be moved over to the mod.json eventually
@@ -950,10 +947,6 @@ void ModManager::LoadMods()
 							}
 						}
 					}
-
-					// not using atm because we need to resolve path to rpak
-					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
-					//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
 
