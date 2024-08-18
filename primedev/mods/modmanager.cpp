@@ -868,6 +868,8 @@ void ModManager::LoadMods()
 					std::string pakName(file.path().filename().string());
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back(mod);
 
+					modPak.m_pakName = pakName;
+
 					if (!bUseRpakJson)
 					{
 						spdlog::warn("Mod {} contains rpaks without valid rpak.json, rpaks might not be loaded", mod.Name);
@@ -912,8 +914,6 @@ void ModManager::LoadMods()
 							}
 						}
 					}
-
-					modPak.m_pakName = pakName;
 
 					// read header of file and get the starpak paths
 					// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
