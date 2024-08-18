@@ -957,8 +957,8 @@ void ModManager::LoadMods()
 				}
 			}
 
-			if (g_pNewPakLoadManager != nullptr)
-				g_pNewPakLoadManager->TrackModPaks(mod);
+			if (g_pPakLoadManager != nullptr)
+				g_pPakLoadManager->TrackModPaks(mod);
 		}
 
 		// read keyvalues paths
@@ -1086,8 +1086,8 @@ void ModManager::UnloadMods()
 	fs::remove_all(GetCompiledAssetsPath());
 
 	g_CustomAudioManager.ClearAudioOverrides();
-	if (g_pNewPakLoadManager != nullptr)
-		g_pNewPakLoadManager->UnloadAllModPaks();
+	if (g_pPakLoadManager != nullptr)
+		g_pPakLoadManager->UnloadAllModPaks();
 
 	if (!m_bHasEnabledModsCfg)
 		m_EnabledModsCfg.SetObject();

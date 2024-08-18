@@ -22,7 +22,7 @@ struct ModPak
 	int m_handle = -1;
 };
 
-class NewPakLoadManager
+class PakLoadManager
 {
 public:
 	// Marks all mod Paks to be unloaded on next map load.
@@ -88,4 +88,4 @@ private:
 	int m_reentranceCounter = 0;
 };
 
-extern NewPakLoadManager* g_pNewPakLoadManager;
+extern PakLoadManager* g_pPakLoadManager;
