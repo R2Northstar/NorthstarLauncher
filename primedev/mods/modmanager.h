@@ -79,15 +79,16 @@ public:
 		, m_loadRegex("^thisMatchesNothing^") // discord couldnt give me a funny string
 	{}
 
-	bool m_bAutoLoad;
-	std::string m_sPakName;
-	std::string m_sLoadAfterPak;
-
 	Mod& m_parent;
-	bool m_loadOnMP = false;
-	bool m_loadOnSP = false;
-	std::string m_targetMap;
+	std::string m_pakName;
 	std::regex m_loadRegex;
+
+	// these exist purely for backwards compatibility, i don't really like them anymore
+
+	// Preload, loads before the first rpak is loaded
+	bool m_bAutoLoad = false;
+	// Postload, this rpak depends on an rpak with this hash
+	size_t m_dependentPakHash;
 };
 
 class Mod
@@ -134,11 +135,12 @@ public:
 	std::string Pdiff; // only need one per mod
 
 	std::vector<ModRpakEntry> Rpaks;
-	std::unordered_map<std::string, std::string>
-		RpakAliases; // paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
-	std::vector<size_t> StarpakPaths; // starpaks that this mod contains
+	// paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
+	std::unordered_map<std::string, std::string> RpakAliases; 
+	// starpaks that this mod contains
 	// there seems to be no nice way to get the rpak that is causing the load of a starpak?
 	// hashed with STR_HASH
+	std::vector<size_t> StarpakPaths;
 
 	std::unordered_map<std::string, std::string> DependencyConstants;
 	std::vector<std::string> PluginDependencyConstants;

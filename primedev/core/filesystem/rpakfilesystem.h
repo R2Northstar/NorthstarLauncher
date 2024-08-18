@@ -45,6 +45,7 @@ struct ModPak
 	size_t m_pathHash;
 
 	std::regex m_mapRegex;
+	size_t m_dependentPakHash;
 
 	// if this is set, the Pak will be unloaded on next map load
 	bool m_markedForDelete = false;
@@ -53,11 +54,12 @@ struct ModPak
 
 /*
 * [X] on mod reload, mark all paks for unloading
-* [-] on mod load, read rpak.json and track rpaks
+* [X] on mod load, read rpak.json and track rpaks
 * [X] on map change, load the correct mod rpaks
 * [X] on map change, unload paks that are marked for unloading
-* [ ] on pak load, add to vanilla tracked paks (if static bool is true)
-* [ ] on pak unload, unload dependent rpaks first
+* [X] on pak load, add to vanilla tracked paks (if static bool is true)
+* [ ] on pak load, load dependent rpaks after
+* [X] on pak unload, unload dependent rpaks first
 * [ ] on pak unload, if pak was aliasing a vanilla pak away, load the vanilla pak (if static bool is false)
 */
 
@@ -82,7 +84,7 @@ public:
 
 	// Loads all modded paks for the given map.
 	void LoadModPaksForMap(const char* mapName);
-	// Unloads all modded map paks
+	// Unloads all modded map paks.
 	void UnloadModPaks();
 
 	// Whether the current context is a vanilla call to a function, or a modded one
@@ -91,15 +93,14 @@ public:
 	bool GetForceReloadOnMapLoad() const { return m_forceReloadOnMapLoad; }
 	void SetForceReloadOnMapLoad(bool value) { m_forceReloadOnMapLoad = value; }
 
-	void OnPakLoaded(std::string& originalPath, int resultingHandle);
+	void OnPakLoaded(std::string& originalPath, std::string& resultingPath, int resultingHandle);
 	void OnPakUnloading(int handle);
 
 private:
 	// Loads Paks that depend on this Pak.
-	void LoadDependentPaks(const char* pakPath);
-
-	// Finds a Pak by hash.
-	ModPak* FindPak(size_t pathHash);
+	void LoadDependentPaks(std::string& path, int handle);
+	// Unloads Paks that depend on this Pak.
+	void UnloadDependentPaks(int handle);
 
 	// All paks that vanilla has attempted to load. (they may have been aliased away)
 	// Also known as a list of rpaks that the vanilla game would have loaded at this point in time.
@@ -112,19 +113,14 @@ private:
 	// Hashes of the currently loaded map mod paks
 	std::vector<size_t> m_mapPaks;
 
-	// todo: deprecate these?
-	// Paks that are always loaded (Preload)
-	std::vector<size_t> m_constantPaks;
-	// Paks that are dependent on another Pak being loaded (Postload)
-	std::vector<std::pair<size_t, size_t>> m_dependentPaks;
-	// Paks that fully replace (Alias) a target Pak
-	std::vector<std::pair<size_t, size_t>> m_aliasPaks;
+	// Currently loaded Pak path hashes that depend on a handle to remain loaded (Postload)
+	std::vector<std::pair<int, size_t>> m_dependentPaks;
 
 	// Used to force rpaks to be unloaded and reloaded on the next map load.
-	// Vanilla behaviour is to not do this when loading into mp_lobby, or loading into the same map you were last in
+	// Vanilla behaviour is to not do this when loading into mp_lobby, or loading into the same map you were last in.
 	bool m_forceReloadOnMapLoad = false;
 	// Used to track if the current hook call is a vanilla call or not.
-	// When loading/unloading a mod Pak, increment this before doing so, and decrement afterwards
+	// When loading/unloading a mod Pak, increment this before doing so, and decrement afterwards.
 	int m_reentranceCounter = 0;
 };
 
