@@ -69,10 +69,10 @@ static int* currentMapPatchRpakHandle = nullptr;
 static /*CModelLoader*/ void** modelLoader = nullptr;
 static void** rpakMemoryAllocator = nullptr;
 
-static __int64 (*o_LoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
-static __int64 (**o_cleanMaterialSystemStuff)() = nullptr;
-static __int64 (**o_CModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
-static char* (*o_loadlevelLoadscreen)(const char* levelName) = nullptr;
+static __int64 (*o_pLoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
+static __int64 (**o_pcleanMaterialSystemStuff)() = nullptr;
+static __int64 (**o_pCModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
+static char* (*o_ploadlevelLoadscreen)(const char* levelName) = nullptr;
 unsigned int (*o_pGetPakPatchNumber)(const char* pPakPath) = nullptr;
 
 void NewPakLoadManager::UnloadAllModPaks()
@@ -98,10 +98,9 @@ void NewPakLoadManager::TrackModPaks(Mod& mod)
 		pak.m_path = (modPakPath / modRpakEntry.m_pakName).string();
 		pak.m_pathHash = STR_HASH(pak.m_path);
 
-		pak.m_mapRegex = modRpakEntry.m_loadRegex;
+		pak.m_preload = modRpakEntry.m_preload;
 		pak.m_dependentPakHash = modRpakEntry.m_dependentPakHash;
-
-		// todo: prevent duplicates?
+		pak.m_mapRegex = modRpakEntry.m_loadRegex;
 
 		m_modPaks.push_back(pak);
 	}
@@ -122,15 +121,15 @@ void NewPakLoadManager::UnloadMarkedPaks()
 	++m_reentranceCounter;
 	ScopeGuard guard([&](){ --m_reentranceCounter; });
 
-	(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
-	(*o_cleanMaterialSystemStuff)();
+	(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
+	(*o_pcleanMaterialSystemStuff)();
 
 	for (auto& modPak : m_modPaks)
 	{
 		if (modPak.m_handle == -1 || !modPak.m_markedForDelete)
 			continue;
 
-		g_pakLoadApi->UnloadPak(modPak.m_handle, *o_cleanMaterialSystemStuff);
+		g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pcleanMaterialSystemStuff);
 		modPak.m_handle = -1;
 	}
 }
@@ -159,8 +158,8 @@ void NewPakLoadManager::UnloadModPaks()
 	++m_reentranceCounter;
 	ScopeGuard guard([&]() { --m_reentranceCounter; });
 
-	(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
-	(*o_cleanMaterialSystemStuff)();
+	(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
+	(*o_pcleanMaterialSystemStuff)();
 
 	for (auto& modPak : m_modPaks)
 	{
@@ -170,7 +169,7 @@ void NewPakLoadManager::UnloadModPaks()
 				continue;
 
 			m_mapPaks.erase(it, it + 1);
-			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_cleanMaterialSystemStuff);
+			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pcleanMaterialSystemStuff);
 			modPak.m_handle = -1;
 			break;
 		}
@@ -208,13 +207,13 @@ void NewPakLoadManager::OnPakUnloading(int handle)
 	else
 	{
 		// handle the potential unloading of an aliased vanilla rpak (we aliased it, and we are now unloading the alias, so we should load the vanilla one again)
-		for (auto& [path, resultingHandle] : m_vanillaPaks)
-		{
-			if (resultingHandle != handle)
-				continue;
+		//for (auto& [path, resultingHandle] : m_vanillaPaks)
+		//{
+		//	if (resultingHandle != handle)
+		//		continue;
 
-			// load vanilla rpak
-		}
+		//	// load vanilla rpak
+		//}
 	}
 
 	// set handle of the mod pak (if any) that has this handle for proper tracking
@@ -260,7 +259,7 @@ void NewPakLoadManager::UnloadDependentPaks(int handle)
 				continue;
 
 			// unload pak
-			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_cleanMaterialSystemStuff);
+			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pcleanMaterialSystemStuff);
 			modPak.m_handle = -1;
 		}
 
@@ -314,7 +313,6 @@ void NewPakLoadManager::FixupPakPath(std::string& pakPath)
 	if (VanillaHasPak(pakPath.c_str()))
 		return;
 
-	// todo: this doesn't adhere to load priority. Does it need to?
 	for (ModPak& modPak : m_modPaks)
 	{
 		if (modPak.m_markedForDelete)
@@ -329,7 +327,7 @@ void NewPakLoadManager::FixupPakPath(std::string& pakPath)
 	}
 }
 
-bool (*o_LoadMapRpaks)(char* mapPath) = nullptr;
+bool (*o_pLoadMapRpaks)(char* mapPath) = nullptr;
 bool h_LoadMapRpaks(char* mapPath)
 {
 	// unload all mod rpaks that are marked for unload
@@ -340,7 +338,7 @@ bool h_LoadMapRpaks(char* mapPath)
 	const std::string mapName = fs::path(mapPath).replace_extension().string();
 
 	// load mp_common, sp_common etc.
-	o_LoadGametypeSpecificRpaks(mapName.c_str());
+	o_pLoadGametypeSpecificRpaks(mapName.c_str());
 
 	// unload old modded map paks
 	g_pNewPakLoadManager->UnloadModPaks();
@@ -360,24 +358,24 @@ bool h_LoadMapRpaks(char* mapPath)
 
 	strcpy(currentMapRpakPath, mapRpakStr);
 
-	(*o_cleanMaterialSystemStuff)();
-	o_loadlevelLoadscreen(mapName.c_str());
+	(*o_pcleanMaterialSystemStuff)();
+	o_ploadlevelLoadscreen(mapName.c_str());
 
 	// unload old map rpaks
 	int curHandle = *currentMapRpakHandle;
 	int curPatchHandle = *currentMapPatchRpakHandle;
 	if (curHandle != -1)
 	{
-		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
-		(*o_cleanMaterialSystemStuff)();
-		g_pakLoadApi->UnloadPak(curHandle, *o_cleanMaterialSystemStuff);
+		(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
+		(*o_pcleanMaterialSystemStuff)();
+		g_pakLoadApi->UnloadPak(curHandle, *o_pcleanMaterialSystemStuff);
 		*currentMapRpakHandle = -1;
 	}
 	if (curPatchHandle != -1)
 	{
-		(*o_CModelLoader_UnreferenceAllModels)(*modelLoader);
-		(*o_cleanMaterialSystemStuff)();
-		g_pakLoadApi->UnloadPak(curPatchHandle, *o_cleanMaterialSystemStuff);
+		(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
+		(*o_pcleanMaterialSystemStuff)();
+		g_pakLoadApi->UnloadPak(curPatchHandle, *o_pcleanMaterialSystemStuff);
 		*currentMapPatchRpakHandle = -1;
 	}
 
@@ -393,7 +391,6 @@ bool h_LoadMapRpaks(char* mapPath)
 	return true;
 }
 
-// todo: deprecate?
 static void HandlePakAliases(std::string& originalPath)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
@@ -405,7 +402,7 @@ static void HandlePakAliases(std::string& originalPath)
 
 		if (mod->RpakAliases.find(originalPath) != mod->RpakAliases.end())
 		{
-			originalPath = &mod->RpakAliases[originalPath][0];
+			originalPath = mod->RpakAliases[originalPath];
 			return;
 		}
 	}
@@ -463,7 +460,7 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
 // tbh this actually might be for memory mapped files or something, would make sense i think
 // clang-format off
-HOOK(OpenFileHook, o_OpenFile, 
+HOOK(OpenFileHook, o_pOpenFile, 
 void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
@@ -536,7 +533,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 		NS::log::rpak->info("LoadStreamPak: {}", filename.string());
 	}
 
-	return o_OpenFile(pPath, pCallback);
+	return o_pOpenFile(pPath, pCallback);
 }
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
@@ -558,13 +555,13 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 	modelLoader = module.Offset(0x7C4AC0).RCast<decltype(modelLoader)>();
 	rpakMemoryAllocator = module.Offset(0x7C5E20).RCast<decltype(rpakMemoryAllocator)>();
 
-	o_LoadGametypeSpecificRpaks = module.Offset(0x15AD20).RCast<decltype(o_LoadGametypeSpecificRpaks)>();
-	o_cleanMaterialSystemStuff = module.Offset(0x12A11F00).RCast<decltype(o_cleanMaterialSystemStuff)>();
-	o_CModelLoader_UnreferenceAllModels = module.Offset(0x5ED580).RCast<decltype(o_CModelLoader_UnreferenceAllModels)>(); // this is part of a vftable, todo: map it in a different file
-	o_loadlevelLoadscreen = module.Offset(0x15A810).RCast<decltype(o_loadlevelLoadscreen)>();
+	o_pLoadGametypeSpecificRpaks = module.Offset(0x15AD20).RCast<decltype(o_pLoadGametypeSpecificRpaks)>();
+	o_pcleanMaterialSystemStuff = module.Offset(0x12A11F00).RCast<decltype(o_pcleanMaterialSystemStuff)>();
+	o_pCModelLoader_UnreferenceAllModels = module.Offset(0x5ED580).RCast<decltype(o_pCModelLoader_UnreferenceAllModels)>();
+	o_ploadlevelLoadscreen = module.Offset(0x15A810).RCast<decltype(o_ploadlevelLoadscreen)>();
 
-	o_LoadMapRpaks = module.Offset(0x15A8C0).RCast<decltype(o_LoadMapRpaks)>();
-	HookAttach(&(PVOID&)o_LoadMapRpaks, (PVOID)h_LoadMapRpaks);
+	o_pLoadMapRpaks = module.Offset(0x15A8C0).RCast<decltype(o_pLoadMapRpaks)>();
+	HookAttach(&(PVOID&)o_pLoadMapRpaks, (PVOID)h_LoadMapRpaks);
 
 	// kinda bad, hooking things in rtech in an engine callback but it seems fine for now
 	CModule rtechModule(GetModuleHandleA("rtech_game.dll"));

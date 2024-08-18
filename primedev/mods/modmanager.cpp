@@ -874,14 +874,21 @@ void ModManager::LoadMods()
 					}
 					else
 					{
-						modPak.m_bAutoLoad =
+						modPak.m_preload =
 							(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
 							 dRpakJson["Preload"][pakName].IsTrue());
+
+						// only one load method can be used for an rpak. 
+						if (modPak.m_preload)
+							continue;
 
 						// postload things
 						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
 						{
 							modPak.m_dependentPakHash = STR_HASH(dRpakJson["Postload"][pakName].GetString());
+
+							// only one load method can be used for an rpak. 
+							continue;
 						}
 
 						// this is the only bit of rpak.json that isn't really deprecated. Even so, it will be moved over to the mod.json eventually

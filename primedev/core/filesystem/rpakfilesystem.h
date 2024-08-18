@@ -5,28 +5,22 @@
 struct ModPak
 {
 	std::string m_modName;
-	std::string m_path;
-	size_t m_pathHash;
 
+	std::string m_path;
+	size_t m_pathHash = 0;
+
+	// If the map being loaded matches this regex, this pak will be loaded.
 	std::regex m_mapRegex;
-	size_t m_dependentPakHash;
+	// If a pak with a hash matching this is loaded, this pak will be loaded.
+	size_t m_dependentPakHash = 0;
+	// If this is set, this pak will be loaded whenever any other pak is loaded.
 	bool m_preload = false;
 
-	// if this is set, the Pak will be unloaded on next map load
+	// If this is set, the Pak will be unloaded on next map load
 	bool m_markedForDelete = false;
+	// The current rpak handle associated with this Pak
 	int m_handle = -1;
 };
-
-/*
-* [X] on mod reload, mark all paks for unloading
-* [X] on mod load, read rpak.json and track rpaks
-* [X] on map change, load the correct mod rpaks
-* [X] on map change, unload paks that are marked for unloading
-* [X] on pak load, add to vanilla tracked paks (if static bool is true)
-* [ ] on pak load, load dependent rpaks after
-* [X] on pak unload, unload dependent rpaks first
-* [ ] on pak unload, if pak was aliasing a vanilla pak away, load the vanilla pak (if static bool is false)
-*/
 
 class NewPakLoadManager
 {
@@ -63,7 +57,7 @@ public:
 	// If vanilla doesn't have an rpak for this path, tries to map it to a modded rpak of the same name.
 	void FixupPakPath(std::string& path);
 
-	// Loads all "Preload" Paks. todo: deprecate.
+	// Loads all "Preload" Paks. todo: deprecate Preload.
 	void LoadPreloadPaks();
 
 	// Wrapper for Pak load API.

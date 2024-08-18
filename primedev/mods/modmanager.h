@@ -86,7 +86,7 @@ public:
 	// these exist purely for backwards compatibility, i don't really like them anymore
 
 	// Preload, loads before the first rpak is loaded
-	bool m_bAutoLoad = false;
+	bool m_preload = false;
 	// Postload, this rpak depends on an rpak with this hash
 	size_t m_dependentPakHash;
 };
