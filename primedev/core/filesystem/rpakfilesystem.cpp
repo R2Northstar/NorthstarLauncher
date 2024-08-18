@@ -187,8 +187,6 @@ void NewPakLoadManager::OnPakLoaded(std::string& originalPath, std::string& resu
 	{
 		// add entry to loaded vanilla rpaks
 		m_vanillaPaks.emplace_back(originalPath, resultingHandle);
-		// temp
-		spdlog::warn("Vanilla loaded pak {}", originalPath);
 	}
 
 	LoadDependentPaks(resultingPath, resultingHandle);
@@ -201,13 +199,7 @@ void NewPakLoadManager::OnPakUnloading(int handle)
 	if (IsVanillaCall())
 	{
 		// remove entry from loaded vanilla rpaks
-		auto predicate = [handle](std::pair<std::string, int>& pair) -> bool
-		{
-			// temp
-			if (pair.second == handle)
-				spdlog::warn("Vanilla unloaded pak {}", pair.first);
-			return pair.second == handle;
-		};
+		auto predicate = [handle](std::pair<std::string, int>& pair) -> bool { return pair.second == handle; };
 
 		m_vanillaPaks.erase(std::remove_if(m_vanillaPaks.begin(), m_vanillaPaks.end(), predicate), m_vanillaPaks.end());
 
