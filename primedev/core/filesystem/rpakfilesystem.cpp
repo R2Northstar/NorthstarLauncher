@@ -272,7 +272,7 @@ void PakLoadManager::LoadPreloadPaks()
 
 	for (auto& modPak : m_modPaks)
 	{
-		if (modPak.m_markedForDelete || !modPak.m_preload)
+		if (modPak.m_markedForDelete || modPak.m_handle != -1 || !modPak.m_preload)
 			continue;
 
 		modPak.m_handle = g_pakLoadApi->LoadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
@@ -553,7 +553,7 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 
 	o_pLoadGametypeSpecificRpaks = module.Offset(0x15AD20).RCast<decltype(o_pLoadGametypeSpecificRpaks)>();
 	o_pcleanMaterialSystemStuff = module.Offset(0x12A11F00).RCast<decltype(o_pcleanMaterialSystemStuff)>();
-	o_pCModelLoader_UnreferenceAllModels = module.Offset(0x5ED580).Deref().RCast<decltype(o_pCModelLoader_UnreferenceAllModels)>();
+	o_pCModelLoader_UnreferenceAllModels = module.Offset(0x5ED580).RCast<decltype(o_pCModelLoader_UnreferenceAllModels)>();
 	o_ploadlevelLoadscreen = module.Offset(0x15A810).RCast<decltype(o_ploadlevelLoadscreen)>();
 
 	o_pLoadMapRpaks = module.Offset(0x15A8C0).RCast<decltype(o_pLoadMapRpaks)>();
