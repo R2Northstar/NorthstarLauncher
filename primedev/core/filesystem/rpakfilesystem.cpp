@@ -4,8 +4,6 @@
 #include "core/tier0.h"
 #include "util/utils.h"
 
-AUTOHOOK_INIT()
-
 struct PakLoadFuncs
 {
 	void (*InitRpakSystem)();
@@ -538,8 +536,6 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 
 ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 {
-	AUTOHOOK_DISPATCH();
-
 	g_pNewPakLoadManager = new NewPakLoadManager;
 
 	g_pakLoadApi = module.Offset(0x5BED78).Deref().RCast<PakLoadFuncs*>();
