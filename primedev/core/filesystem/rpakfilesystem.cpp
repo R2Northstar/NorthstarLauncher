@@ -333,7 +333,7 @@ static void HandlePakAliases(std::string& originalPath)
 
 		if (mod->RpakAliases.find(originalPath) != mod->RpakAliases.end())
 		{
-			originalPath = mod->RpakAliases[originalPath];
+			originalPath = (mod->m_ModDirectory / "paks" / mod->RpakAliases[originalPath]).string();
 			return;
 		}
 	}
