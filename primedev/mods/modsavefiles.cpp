@@ -82,7 +82,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 			}
 
 			// TODO: move into list of global consts?
-			std::set<std::string> whitelist = {".txt", ".json"};
+			static const std::set<std::string> whitelist = {".txt", ".json"};
 
 			// Check if file extension is whitelisted
 			std::string extension = file.extension().string();
