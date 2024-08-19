@@ -70,10 +70,7 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 		{
 			spdlog::error("Couldn't load XInput9_1_0.dll");
 			MessageBoxA(
-				0,
-				"Could not load a replacement for XInput1_3.dll\nTried: XInput1_4.dll and XInput9_1_0.dll",
-				"Northstar",
-				MB_ICONERROR);
+				0, "Could not load a replacement for XInput1_3.dll\nTried: XInput1_4.dll and XInput9_1_0.dll", "Northstar", MB_ICONERROR);
 			exit(EXIT_FAILURE);
 
 			return nullptr;
