@@ -157,11 +157,6 @@ const char* SQTypeNameFromID(int type)
 	return "";
 }
 
-// needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
-template class SquirrelManager<ScriptContext::SERVER>;
-template class SquirrelManager<ScriptContext::CLIENT>;
-template class SquirrelManager<ScriptContext::UI>;
-
 template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquirrelVM* newSqvm)
 {
 	m_pSQVM = newSqvm;
@@ -712,6 +707,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x3E49B0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance = module.Offset(0x114F0).RCast<sq_getentityfrominstanceType>();
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance = module.Offset(0xC20E0).RCast<sq_createscriptinstanceType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_GetEntityConstant_CBaseEntity =
 		g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity;
 	g_pSquirrel<ScriptContext::UI>->__sq_getentityfrominstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance;
@@ -805,6 +801,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x418AF0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getentityfrominstance = module.Offset(0x1E920).RCast<sq_getentityfrominstanceType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance = module.Offset(0x43F2F0).RCast<sq_createscriptinstanceType>();
 
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff
@@ -845,3 +842,12 @@ void InitialiseSquirrelManagers()
 	g_pSquirrel<ScriptContext::UI> = new SquirrelManager<ScriptContext::UI>;
 	g_pSquirrel<ScriptContext::SERVER> = new SquirrelManager<ScriptContext::SERVER>;
 }
+
+// needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
+template class SquirrelManager<ScriptContext::SERVER>;
+template class SquirrelManager<ScriptContext::CLIENT>;
+template class SquirrelManager<ScriptContext::UI>;
+
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::SERVER>();
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::CLIENT>();
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::UI>();
