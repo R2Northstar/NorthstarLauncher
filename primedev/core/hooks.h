@@ -3,7 +3,33 @@
 #include <string>
 #include <iostream>
 
-void InstallInitialHooks();
+//-----------------------------------------------------------------------------
+// Purpose: Init minhook
+//-----------------------------------------------------------------------------
+void HookSys_Init();
+
+//-----------------------------------------------------------------------------
+// Purpose: MH_MakeHook wrapper
+// Input  : *ppOriginal - Original function being detoured
+//          pDetour - Detour function
+//-----------------------------------------------------------------------------
+inline void HookAttach(PVOID* ppOriginal, PVOID pDetour)
+{
+	PVOID pAddr = *ppOriginal;
+	if (MH_CreateHook(pAddr, pDetour, ppOriginal) == MH_OK)
+	{
+		if (MH_EnableHook(pAddr) != MH_OK)
+		{
+			spdlog::error("Failed enabling a function hook!");
+		}
+	}
+	else
+	{
+		spdlog::error("Failed creating a function hook!");
+	}
+}
+
+void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress);
 
 typedef void (*DllLoadCallbackFuncType)(CModule moduleAddress);
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
@@ -201,7 +227,9 @@ public:
 		}
 		}
 
-		if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
+		if (!targetAddr)
+			spdlog::error("Address for hook {} is invalid", pFuncName);
+		else if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
 		{
 			if (MH_EnableHook(targetAddr) == MH_OK)
 				spdlog::info("Enabling hook {}", pFuncName);
