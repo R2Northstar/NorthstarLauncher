@@ -136,9 +136,9 @@ int, __fastcall, (const char *const cmdname, const char *const partial, char com
 	RefreshMapList();
 
 	// use a custom autocomplete func for all map loading commands
-	const int cmdLength = strlen(cmdname);
+	const size_t cmdLength = strlen(cmdname);
 	const char* query = partial + cmdLength;
-	const int queryLength = strlen(query);
+	const size_t queryLength = strlen(query);
 
 	int numMaps = 0;
 	for (int i = 0; i < vMapList.size() && numMaps < COMMAND_COMPLETION_MAXITEMS; i++)
@@ -200,7 +200,13 @@ AUTOHOOK(Host_Map_f, engine.dll + 0x15B340, void, __fastcall, (const CCommand& a
 {
 	RefreshMapList();
 
-	if (args.ArgC() > 1 &&
+	if (args.ArgC() > 2)
+	{
+		spdlog::warn("Map load failed: too many arguments provided");
+		return;
+	}
+	else if (
+		args.ArgC() == 2 &&
 		std::find_if(vMapList.begin(), vMapList.end(), [&](MapVPKInfo map) -> bool { return map.name == args.Arg(1); }) == vMapList.end())
 	{
 		spdlog::warn("Map load failed: {} not found or invalid", args.Arg(1));

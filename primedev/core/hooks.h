@@ -1,10 +1,35 @@
 #pragma once
-#include "memory.h"
 
 #include <string>
 #include <iostream>
 
-void InstallInitialHooks();
+//-----------------------------------------------------------------------------
+// Purpose: Init minhook
+//-----------------------------------------------------------------------------
+void HookSys_Init();
+
+//-----------------------------------------------------------------------------
+// Purpose: MH_MakeHook wrapper
+// Input  : *ppOriginal - Original function being detoured
+//          pDetour - Detour function
+//-----------------------------------------------------------------------------
+inline void HookAttach(PVOID* ppOriginal, PVOID pDetour)
+{
+	PVOID pAddr = *ppOriginal;
+	if (MH_CreateHook(pAddr, pDetour, ppOriginal) == MH_OK)
+	{
+		if (MH_EnableHook(pAddr) != MH_OK)
+		{
+			spdlog::error("Failed enabling a function hook!");
+		}
+	}
+	else
+	{
+		spdlog::error("Failed creating a function hook!");
+	}
+}
+
+void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress);
 
 typedef void (*DllLoadCallbackFuncType)(CModule moduleAddress);
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
@@ -119,7 +144,7 @@ public:
 	{
 		iAddressResolutionMode = ABSOLUTE_ADDR;
 
-		const int iFuncNameStrlen = strlen(funcName) + 1;
+		const size_t iFuncNameStrlen = strlen(funcName) + 1;
 		pFuncName = new char[iFuncNameStrlen];
 		memcpy(pFuncName, funcName, iFuncNameStrlen);
 
@@ -131,11 +156,11 @@ public:
 	{
 		iAddressResolutionMode = OFFSET_STRING;
 
-		const int iFuncNameStrlen = strlen(funcName) + 1;
+		const size_t iFuncNameStrlen = strlen(funcName) + 1;
 		pFuncName = new char[iFuncNameStrlen];
 		memcpy(pFuncName, funcName, iFuncNameStrlen);
 
-		const int iAddrStrlen = strlen(addrString) + 1;
+		const size_t iAddrStrlen = strlen(addrString) + 1;
 		pAddrString = new char[iAddrStrlen];
 		memcpy(pAddrString, addrString, iAddrStrlen);
 
@@ -147,15 +172,15 @@ public:
 	{
 		iAddressResolutionMode = PROCADDRESS;
 
-		const int iFuncNameStrlen = strlen(funcName) + 1;
+		const size_t iFuncNameStrlen = strlen(funcName) + 1;
 		pFuncName = new char[iFuncNameStrlen];
 		memcpy(pFuncName, funcName, iFuncNameStrlen);
 
-		const int iModuleNameStrlen = strlen(moduleName) + 1;
+		const size_t iModuleNameStrlen = strlen(moduleName) + 1;
 		pModuleName = new char[iModuleNameStrlen];
 		memcpy(pModuleName, moduleName, iModuleNameStrlen);
 
-		const int iProcNameStrlen = strlen(procName) + 1;
+		const size_t iProcNameStrlen = strlen(procName) + 1;
 		pProcName = new char[iProcNameStrlen];
 		memcpy(pProcName, procName, iProcNameStrlen);
 
@@ -202,7 +227,9 @@ public:
 		}
 		}
 
-		if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
+		if (!targetAddr)
+			spdlog::error("Address for hook {} is invalid", pFuncName);
+		else if (MH_CreateHook(targetAddr, pHookFunc, ppOrigFunc) == MH_OK)
 		{
 			if (MH_EnableHook(targetAddr) == MH_OK)
 				spdlog::info("Enabling hook {}", pFuncName);
@@ -293,7 +320,7 @@ public:
 	{
 		m_pTarget = pTarget;
 
-		const int iAddrStrlen = strlen(pAddrString) + 1;
+		const size_t iAddrStrlen = strlen(pAddrString) + 1;
 		m_pAddrString = new char[iAddrStrlen];
 		memcpy(m_pAddrString, pAddrString, iAddrStrlen);
 

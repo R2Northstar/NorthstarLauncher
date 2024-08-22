@@ -5,6 +5,8 @@
 #include <regex>
 #include <shared_mutex>
 
+namespace fs = std::filesystem;
+
 enum class AudioSelectionStrategy
 {
 	INVALID = -1,
@@ -15,7 +17,7 @@ enum class AudioSelectionStrategy
 class EventOverrideData
 {
 public:
-	EventOverrideData(const std::string&, const fs::path&);
+	EventOverrideData(const std::string&, const fs::path&, const std::vector<std::string>& registeredEvents);
 	EventOverrideData();
 
 public:
@@ -35,7 +37,7 @@ public:
 class CustomAudioManager
 {
 public:
-	bool TryLoadAudioOverride(const fs::path&);
+	bool TryLoadAudioOverride(const fs::path&, std::string modName);
 	void ClearAudioOverrides();
 
 	std::shared_mutex m_loadingMutex;

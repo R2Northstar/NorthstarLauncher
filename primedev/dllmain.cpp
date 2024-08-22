@@ -3,12 +3,14 @@
 #include "core/memalloc.h"
 #include "core/vanilla.h"
 #include "config/profile.h"
-#include "plugins/plugin_abi.h"
 #include "plugins/plugins.h"
-#include "plugins/pluginbackend.h"
+#include "plugins/pluginmanager.h"
 #include "util/version.h"
+#include "util/wininfo.h"
 #include "squirrel/squirrel.h"
 #include "server/serverpresence.h"
+
+#include "windows/libsys.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -20,9 +22,13 @@
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
+	NOTE_UNUSED(hModule);
+	NOTE_UNUSED(lpReserved);
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
+		g_NorthstarModule = hModule;
+		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
@@ -60,12 +66,15 @@ bool InitialiseNorthstar()
 	// Write launcher version to log
 	StartupLog();
 
-	InstallInitialHooks();
+	// Init minhook
+	HookSys_Init();
+
+	// Init loadlibrary callbacks
+	LibSys_Init();
 
 	g_pServerPresence = new ServerPresenceManager();
 
 	g_pPluginManager = new PluginManager();
-	g_pPluginCommunicationhandler = new PluginCommunicationHandler();
 	g_pPluginManager->LoadPlugins();
 
 	InitialiseSquirrelManagers();

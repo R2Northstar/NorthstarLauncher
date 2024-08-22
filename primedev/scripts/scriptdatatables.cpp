@@ -59,42 +59,6 @@ struct CSVData
 
 std::unordered_map<std::string, CSVData> CSVCache;
 
-Vector3 StringToVector(char* pString)
-{
-	Vector3 vRet;
-
-	int length = 0;
-	while (pString[length])
-	{
-		if ((pString[length] == '<') || (pString[length] == '>'))
-			pString[length] = '\0';
-		length++;
-	}
-
-	int startOfFloat = 1;
-	int currentIndex = 1;
-
-	while (pString[currentIndex] && (pString[currentIndex] != ','))
-		currentIndex++;
-	pString[currentIndex] = '\0';
-	vRet.x = std::stof(&pString[startOfFloat]);
-	startOfFloat = ++currentIndex;
-
-	while (pString[currentIndex] && (pString[currentIndex] != ','))
-		currentIndex++;
-	pString[currentIndex] = '\0';
-	vRet.y = std::stof(&pString[startOfFloat]);
-	startOfFloat = ++currentIndex;
-
-	while (pString[currentIndex] && (pString[currentIndex] != ','))
-		currentIndex++;
-	pString[currentIndex] = '\0';
-	vRet.z = std::stof(&pString[startOfFloat]);
-	startOfFloat = ++currentIndex;
-
-	return vRet;
-}
-
 // var function GetDataTable( asset path )
 REPLACE_SQFUNC(GetDataTable, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
@@ -308,7 +272,7 @@ REPLACE_SQFUNC(GetDataTableRowCount, (ScriptContext::UI | ScriptContext::CLIENT 
 		return g_pSquirrel<context>->m_funcOriginals["GetDatatableRowCount"](sqvm);
 
 	CSVData* csv = *pData;
-	g_pSquirrel<context>->pushinteger(sqvm, csv->dataPointers.size());
+	g_pSquirrel<context>->pushinteger(sqvm, (SQInteger)csv->dataPointers.size());
 	return SQRESULT_NOTNULL;
 }
 
@@ -817,6 +781,7 @@ void ConCommand_dump_datatable(const CCommand& args)
 
 void ConCommand_dump_datatables(const CCommand& args)
 {
+	NOTE_UNUSED(args);
 	// likely not a comprehensive list, might be missing a couple?
 	static const std::vector<const char*> VANILLA_DATATABLE_PATHS = {
 		"datatable/burn_meter_rewards.rpak",

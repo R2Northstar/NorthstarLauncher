@@ -3,8 +3,9 @@
 #include "squirrelclasstypes.h"
 #include "squirrelautobind.h"
 #include "core/math/vector.h"
-#include "plugins/plugin_abi.h"
 #include "mods/modmanager.h"
+
+namespace fs = std::filesystem;
 
 /*
 	definitions from hell
@@ -50,8 +51,6 @@ const char* GetContextName(ScriptContext context);
 const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
 const char* SQTypeNameFromID(const int iTypeId);
-
-void AsyncCall_External(ScriptContext context, const char* func_name, SquirrelMessage_External_Pop function, void* userdata);
 
 ScriptContext ScriptContextFromString(std::string string);
 
@@ -118,6 +117,7 @@ public:
 	sq_getfunctionType __sq_getfunction;
 
 	sq_getentityfrominstanceType __sq_getentityfrominstance;
+	sq_createscriptinstanceType __sq_createscriptinstance;
 	sq_GetEntityConstantType __sq_GetEntityConstant_CBaseEntity;
 
 	sq_pushnewstructinstanceType __sq_pushnewstructinstance;
@@ -139,7 +139,7 @@ public:
 
 	inline SQRESULT _call(HSquirrelVM* sqvm, const SQInteger args)
 	{
-		return __sq_call(sqvm, args + 1, false, false);
+		return __sq_call(sqvm, args + 1, false, true);
 	}
 
 	inline SQInteger raiseerror(HSquirrelVM* sqvm, const SQChar* sError)
@@ -399,7 +399,7 @@ public:
 			v();
 		}
 
-		return _call(m_pSQVM->sqvm, functionVector.size());
+		return _call(m_pSQVM->sqvm, (SQInteger)functionVector.size());
 	}
 
 #pragma endregion
@@ -417,7 +417,6 @@ public:
 	SQRESULT setupfunc(const SQChar* funcname);
 	void AddFuncOverride(std::string name, SQFunction func);
 	void ProcessMessageBuffer();
-	void GenerateSquirrelFunctionsStruct(SquirrelFunctions* s);
 };
 
 template <ScriptContext context> SquirrelManager<context>* g_pSquirrel;
@@ -451,7 +450,7 @@ inline VoidFunction SQMessageBufferPushArg(Vector3& arg) {
 // Vectors
 template <ScriptContext context>
 inline VoidFunction SQMessageBufferPushArg(SQObject* arg) {
-	return [arg]{ g_pSquirrel<context>->pushSQObject(g_pSquirrel<context>->m_pSQVM->sqvm, arg); };
+	return [arg]{ g_pSquirrel<context>->pushobject(g_pSquirrel<context>->m_pSQVM->sqvm, arg); };
 }
 // Ints
 template <ScriptContext context, typename T>
@@ -470,7 +469,7 @@ template <ScriptContext context, typename T>
 requires (std::convertible_to<T, std::string> || std::is_constructible_v<std::string, T>)
 inline VoidFunction SQMessageBufferPushArg(T& arg) {
 	auto converted = std::string(arg);
-	return [converted]{ g_pSquirrel<context>->pushstring(g_pSquirrel<context>->m_pSQVM->sqvm, converted.c_str(), converted.length()); };
+	return [converted]{ g_pSquirrel<context>->pushstring(g_pSquirrel<context>->m_pSQVM->sqvm, converted.c_str(), (int)converted.length()); };
 }
 // Assets
 template <ScriptContext context>
@@ -483,7 +482,7 @@ requires is_iterable<T>
 inline VoidFunction SQMessageBufferPushArg(T& arg) {
 	FunctionVector localv = {};
 	localv.push_back([]{g_pSquirrel<context>->newarray(g_pSquirrel<context>->m_pSQVM->sqvm, 0);});
-	
+
 	for (const auto& item : arg) {
 		localv.push_back(SQMessageBufferPushArg<context>(item));
 		localv.push_back([]{g_pSquirrel<context>->arrayappend(g_pSquirrel<context>->m_pSQVM->sqvm, -2);});
@@ -497,7 +496,7 @@ requires is_map<T>
 inline VoidFunction SQMessageBufferPushArg(T& map) {
 	FunctionVector localv = {};
 	localv.push_back([]{g_pSquirrel<context>->newtable(g_pSquirrel<context>->m_pSQVM->sqvm);});
-	
+
 	for (const auto& item : map) {
 		localv.push_back(SQMessageBufferPushArg<context>(item.first));
 		localv.push_back(SQMessageBufferPushArg<context>(item.second));

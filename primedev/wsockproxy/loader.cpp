@@ -1,4 +1,5 @@
 #include "loader.h"
+#include <shlwapi.h>
 #include <string>
 #include <system_error>
 #include <sstream>
@@ -6,7 +7,24 @@
 #include <filesystem>
 #include <iostream>
 
+#include "MinHook.h"
+
 namespace fs = std::filesystem;
+
+static wchar_t northstarPath[8192];
+static wchar_t exePath[4096];
+
+bool GetExePathWide(wchar_t* dest, DWORD destSize)
+{
+	if (!dest)
+		return NULL;
+	if (destSize < MAX_PATH)
+		return NULL;
+
+	DWORD length = GetModuleFileNameW(NULL, dest, destSize);
+	return length && PathRemoveFileSpecW(dest);
+}
+
 
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
@@ -54,7 +72,7 @@ bool LoadNorthstar()
 			std::string cla = std::string(clachar);
 			if (strncmp(cla.substr(9, 1).c_str(), "\"", 1))
 			{
-				int space = cla.find(" ");
+				size_t space = cla.find(" ");
 				std::string dirname = cla.substr(9, space - 9);
 				std::cout << "[*] Found profile in command line arguments: " << dirname << std::endl;
 				strProfile = dirname.c_str();
@@ -62,8 +80,8 @@ bool LoadNorthstar()
 			else
 			{
 				std::string quote = "\"";
-				int quote1 = cla.find(quote);
-				int quote2 = (cla.substr(quote1 + 1)).find(quote);
+				size_t quote1 = cla.find(quote);
+				size_t quote2 = (cla.substr(quote1 + 1)).find(quote);
 				std::string dirname = cla.substr(quote1 + 1, quote2);
 				std::cout << "[*] Found profile in command line arguments: " << dirname << std::endl;
 				strProfile = dirname;
@@ -75,22 +93,30 @@ bool LoadNorthstar()
 			strProfile = "R2Northstar";
 		}
 
-		wchar_t buffer[8192];
+		if (!GetExePathWide(exePath, 4096))
+		{
+			MessageBoxA(
+				GetForegroundWindow(),
+				"Failed getting game directory.\nThe game cannot continue and has to exit.",
+				"Northstar Wsock32 Proxy Error",
+				0);
+			return true;
+		}
 
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
-		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
+		swprintf_s(northstarPath, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
 
-		if (!fs::exists(fs::path(buffer)))
-			swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
+		if (!fs::exists(fs::path(northstarPath)))
+			swprintf_s(northstarPath, L"%s\\Northstar.dll", exePath);
 
-		std::wcout << L"[*] Using: " << buffer << std::endl;
+		std::wcout << L"[*] Using: " << northstarPath << std::endl;
 
-		HMODULE hHookModule = LoadLibraryExW(buffer, 0, 8u);
+		HMODULE hHookModule = LoadLibraryExW(northstarPath, 0, 8u);
 		if (hHookModule)
 			Hook_Init = GetProcAddress(hHookModule, "InitialiseNorthstar");
 		if (!hHookModule || Hook_Init == nullptr)
 		{
-			LibraryLoadError(GetLastError(), L"Northstar.dll", buffer);
+			LibraryLoadError(GetLastError(), L"Northstar.dll", northstarPath);
 			return false;
 		}
 	}
