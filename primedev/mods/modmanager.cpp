@@ -882,7 +882,7 @@ void ModManager::LoadMods()
 
 						// only one load method can be used for an rpak.
 						if (modPak.m_preload)
-							continue;
+							goto REGISTER_STARPAK;
 
 						// postload things
 						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
@@ -890,7 +890,7 @@ void ModManager::LoadMods()
 							modPak.m_dependentPakHash = STR_HASH(dRpakJson["Postload"][pakName].GetString());
 
 							// only one load method can be used for an rpak.
-							continue;
+							goto REGISTER_STARPAK;
 						}
 
 						// this is the only bit of rpak.json that isn't really deprecated. Even so, it will be moved over to the mod.json
@@ -916,6 +916,7 @@ void ModManager::LoadMods()
 						}
 					}
 
+				REGISTER_STARPAK:
 					// read header of file and get the starpak paths
 					// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
 					// and there is seemingly no good way to tell which rpak is causing the load of a starpak :/
