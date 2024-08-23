@@ -2,7 +2,7 @@
 
 #include <regex>
 
-struct ModPak
+struct ModPak_t
 {
 	std::string m_modName;
 
@@ -25,22 +25,13 @@ struct ModPak
 class PakLoadManager
 {
 public:
-	// Marks all mod Paks to be unloaded on next map load.
-	// Also cleans up any mod Paks that are already unloaded.
 	void UnloadAllModPaks();
-
-	// Tracks all Paks related to a mod.
 	void TrackModPaks(Mod& mod);
 
-	// Untracks all paks that aren't currently loaded and are marked for unload.
 	void CleanUpUnloadedPaks();
-
-	// Unloads all paks that are marked for unload.
 	void UnloadMarkedPaks();
 
-	// Loads all modded paks for the given map.
 	void LoadModPaksForMap(const char* mapName);
-	// Unloads all modded map paks.
 	void UnloadModPaks();
 
 	// Whether the current context is a vanilla call to a function, or a modded one
@@ -58,24 +49,17 @@ public:
 		m_forceReloadOnMapLoad = value;
 	}
 
-	// Called after a Pak was loaded.
 	void OnPakLoaded(std::string& originalPath, std::string& resultingPath, int resultingHandle);
-	// Called before a Pak was unloaded.
 	void OnPakUnloading(int handle);
 
-	// If vanilla doesn't have an rpak for this path, tries to map it to a modded rpak of the same name.
 	void FixupPakPath(std::string& path);
 
-	// Loads all "Preload" Paks. todo: deprecate Preload.
 	void LoadPreloadPaks();
 
-	// Wrapper for Pak load API.
 	void* OpenFile(const char* path);
 
 private:
-	// Loads Paks that depend on this Pak.
 	void LoadDependentPaks(std::string& path, int handle);
-	// Unloads Paks that depend on this Pak.
 	void UnloadDependentPaks(int handle);
 
 	// All paks that vanilla has attempted to load. (they may have been aliased away)
@@ -83,7 +67,7 @@ private:
 	std::vector<std::pair<std::string, int>> m_vanillaPaks;
 
 	// All mod Paks that are currently tracked
-	std::vector<ModPak> m_modPaks;
+	std::vector<ModPak_t> m_modPaks;
 	// Hashes of the currently loaded map mod paks
 	std::vector<size_t> m_mapPaks;
 	// Currently loaded Pak path hashes that depend on a handle to remain loaded (Postload)

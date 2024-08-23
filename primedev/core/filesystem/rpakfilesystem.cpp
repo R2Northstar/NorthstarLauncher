@@ -60,6 +60,8 @@ static __int64 (**o_pCModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a
 static char* (*o_ploadlevelLoadscreen)(const char* levelName) = nullptr;
 static unsigned int (*o_pGetPakPatchNumber)(const char* pPakPath) = nullptr;
 
+// Marks all mod Paks to be unloaded on next map load.
+// Also cleans up any mod Paks that are already unloaded.
 void PakLoadManager::UnloadAllModPaks()
 {
 	NS::log::rpak->info("Reloading RPaks on next map load...");
@@ -72,13 +74,14 @@ void PakLoadManager::UnloadAllModPaks()
 	m_forceReloadOnMapLoad = true;
 }
 
+// Tracks all Paks related to a mod.
 void PakLoadManager::TrackModPaks(Mod& mod)
 {
 	const fs::path modPakPath("./" / mod.m_ModDirectory / "paks");
 
 	for (auto& modRpakEntry : mod.Rpaks)
 	{
-		ModPak pak;
+		ModPak_t pak;
 		pak.m_modName = mod.Name;
 		pak.m_path = (modPakPath / modRpakEntry.m_pakName).string();
 		pak.m_pathHash = STR_HASH(pak.m_path);
@@ -91,13 +94,15 @@ void PakLoadManager::TrackModPaks(Mod& mod)
 	}
 }
 
+// Untracks all paks that aren't currently loaded and are marked for unload.
 void PakLoadManager::CleanUpUnloadedPaks()
 {
-	auto predicate = [](ModPak& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == -1; };
+	auto predicate = [](ModPak_t& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == -1; };
 
 	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), predicate), m_modPaks.end());
 }
 
+// Unloads all paks that are marked for unload.
 void PakLoadManager::UnloadMarkedPaks()
 {
 	++m_reentranceCounter;
@@ -116,6 +121,7 @@ void PakLoadManager::UnloadMarkedPaks()
 	}
 }
 
+// Loads all modded paks for the given map.
 void PakLoadManager::LoadModPaksForMap(const char* mapName)
 {
 	++m_reentranceCounter;
@@ -135,6 +141,7 @@ void PakLoadManager::LoadModPaksForMap(const char* mapName)
 	}
 }
 
+// Unloads all modded map paks.
 void PakLoadManager::UnloadModPaks()
 {
 	++m_reentranceCounter;
@@ -162,6 +169,7 @@ void PakLoadManager::UnloadModPaks()
 	assert_msg(m_mapPaks.size() == 0, "Not all map paks were unloaded?");
 }
 
+// Called after a Pak was loaded.
 void PakLoadManager::OnPakLoaded(std::string& originalPath, std::string& resultingPath, int resultingHandle)
 {
 	if (IsVanillaCall())
@@ -173,6 +181,7 @@ void PakLoadManager::OnPakLoaded(std::string& originalPath, std::string& resulti
 	LoadDependentPaks(resultingPath, resultingHandle);
 }
 
+// Called before a Pak was unloaded.
 void PakLoadManager::OnPakUnloading(int handle)
 {
 	UnloadDependentPaks(handle);
@@ -208,6 +217,69 @@ void PakLoadManager::OnPakUnloading(int handle)
 	}
 }
 
+// Whether the vanilla game has this rpak
+static bool VanillaHasPak(const char* pakName)
+{
+	fs::path originalPath = fs::path("./r2/paks/Win64") / pakName;
+	unsigned int highestPatch = o_pGetPakPatchNumber(pakName);
+	if (highestPatch)
+	{
+		// add the patch path to the extension
+		char buf[16];
+		snprintf(buf, sizeof(buf), "(%02u).rpak", highestPatch);
+		// remove the .rpak and add the new suffix
+		originalPath = originalPath.replace_extension().string() + buf;
+	}
+	else
+	{
+		originalPath /= pakName;
+	}
+
+	return fs::exists(originalPath);
+}
+
+// If vanilla doesn't have an rpak for this path, tries to map it to a modded rpak of the same name.
+void PakLoadManager::FixupPakPath(std::string& pakPath)
+{
+	if (VanillaHasPak(pakPath.c_str()))
+		return;
+
+	for (ModPak_t& modPak : m_modPaks)
+	{
+		if (modPak.m_markedForDelete)
+			continue;
+
+		fs::path modPakFilename = fs::path(modPak.m_path).filename();
+		if (pakPath == modPakFilename.string())
+		{
+			pakPath = modPak.m_path;
+			return;
+		}
+	}
+}
+
+// Loads all "Preload" Paks. todo: deprecate Preload.
+void PakLoadManager::LoadPreloadPaks()
+{
+	++m_reentranceCounter;
+	const ScopeGuard guard([&]() { --m_reentranceCounter; });
+
+	for (auto& modPak : m_modPaks)
+	{
+		if (modPak.m_markedForDelete || modPak.m_handle != -1 || !modPak.m_preload)
+			continue;
+
+		modPak.m_handle = g_pakLoadApi->LoadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
+	}
+}
+
+// Wrapper for Pak load API.
+void* PakLoadManager::OpenFile(const char* path)
+{
+	return g_pakLoadApi->OpenFile(path);
+}
+
+// Loads Paks that depend on this Pak.
 void PakLoadManager::LoadDependentPaks(std::string& path, int handle)
 {
 	++m_reentranceCounter;
@@ -227,6 +299,7 @@ void PakLoadManager::LoadDependentPaks(std::string& path, int handle)
 	}
 }
 
+// Unloads Paks that depend on this Pak.
 void PakLoadManager::UnloadDependentPaks(int handle)
 {
 	++m_reentranceCounter;
@@ -250,65 +323,6 @@ void PakLoadManager::UnloadDependentPaks(int handle)
 		return true;
 	};
 	m_dependentPaks.erase(std::remove_if(m_dependentPaks.begin(), m_dependentPaks.end(), predicate), m_dependentPaks.end());
-}
-
-void PakLoadManager::LoadPreloadPaks()
-{
-	++m_reentranceCounter;
-	const ScopeGuard guard([&]() { --m_reentranceCounter; });
-
-	for (auto& modPak : m_modPaks)
-	{
-		if (modPak.m_markedForDelete || modPak.m_handle != -1 || !modPak.m_preload)
-			continue;
-
-		modPak.m_handle = g_pakLoadApi->LoadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
-	}
-}
-
-void* PakLoadManager::OpenFile(const char* path)
-{
-	return g_pakLoadApi->OpenFile(path);
-}
-
-// whether the vanilla game has this rpak
-static bool VanillaHasPak(const char* pakName)
-{
-	fs::path originalPath = fs::path("./r2/paks/Win64") / pakName;
-	unsigned int highestPatch = o_pGetPakPatchNumber(pakName);
-	if (highestPatch)
-	{
-		// add the patch path to the extension
-		char buf[16];
-		snprintf(buf, sizeof(buf), "(%02u).rpak", highestPatch);
-		// remove the .rpak and add the new suffix
-		originalPath = originalPath.replace_extension().string() + buf;
-	}
-	else
-	{
-		originalPath /= pakName;
-	}
-
-	return fs::exists(originalPath);
-}
-
-void PakLoadManager::FixupPakPath(std::string& pakPath)
-{
-	if (VanillaHasPak(pakPath.c_str()))
-		return;
-
-	for (ModPak& modPak : m_modPaks)
-	{
-		if (modPak.m_markedForDelete)
-			continue;
-
-		fs::path modPakFilename = fs::path(modPak.m_path).filename();
-		if (pakPath == modPakFilename.string())
-		{
-			pakPath = modPak.m_path;
-			return;
-		}
-	}
 }
 
 static void HandlePakAliases(std::string& originalPath)
