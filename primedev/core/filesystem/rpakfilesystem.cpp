@@ -10,10 +10,10 @@ struct PakLoadFuncs
 	void (*InitRpakSystem)();
 	void (*AddAssetLoaderWithJobDetails)(/*assetTypeHeader*/ void*, uint32_t, int);
 	void (*AddAssetLoader)(/*assetTypeHeader*/ void*);
-	__int64 (*LoadRpakFileAsync)(const char* pPath, void* allocator, int flags);
+	PakHandle (*LoadRpakFileAsync)(const char* pPath, void* allocator, int flags);
 	void (*LoadRpakFile)(const char*, __int64(__fastcall*)(), __int64, void(__cdecl*)());
 	__int64 qword28;
-	void (*UnloadPak)(int iPakHandle, void* callback);
+	void (*UnloadPak)(PakHandle iPakHandle, void* callback);
 	__int64 qword38;
 	__int64 qword40;
 	__int64 qword48;
@@ -43,21 +43,21 @@ struct PakLoadFuncs
 	__int64 qword108;
 };
 static_assert(sizeof(PakLoadFuncs) == 0x110);
-#pragma pop
+#pragma pack(pop)
 
 PakLoadFuncs* g_pakLoadApi;
 PakLoadManager* g_pPakLoadManager;
 
-static char* currentMapRpakPath = nullptr;
-static int* currentMapRpakHandle = nullptr;
-static int* currentMapPatchRpakHandle = nullptr;
-static /*CModelLoader*/ void** modelLoader = nullptr;
+static char* pszCurrentMapRpakPath = nullptr;
+static PakHandle* piCurrentMapRpakHandle = nullptr;
+static PakHandle* piCurrentMapPatchRpakHandle = nullptr;
+static /*CModelLoader*/ void** ppModelLoader = nullptr;
 static void** rpakMemoryAllocator = nullptr;
 
 static __int64 (*o_pLoadGametypeSpecificRpaks)(const char* levelName) = nullptr;
-static __int64 (**o_pcleanMaterialSystemStuff)() = nullptr;
+static __int64 (**o_pCleanMaterialSystemStuff)() = nullptr;
 static __int64 (**o_pCModelLoader_UnreferenceAllModels)(/*CModelLoader*/ void* a1) = nullptr;
-static char* (*o_ploadlevelLoadscreen)(const char* levelName) = nullptr;
+static char* (*o_pLoadlevelLoadscreen)(const char* levelName) = nullptr;
 static unsigned int (*o_pGetPakPatchNumber)(const char* pPakPath) = nullptr;
 
 // Marks all mod Paks to be unloaded on next map load.
@@ -97,7 +97,7 @@ void PakLoadManager::TrackModPaks(Mod& mod)
 // Untracks all paks that aren't currently loaded and are marked for unload.
 void PakLoadManager::CleanUpUnloadedPaks()
 {
-	auto predicate = [](ModPak_t& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == -1; };
+	auto predicate = [](ModPak_t& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == PakHandle::INVALID; };
 
 	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), predicate), m_modPaks.end());
 }
@@ -108,16 +108,16 @@ void PakLoadManager::UnloadMarkedPaks()
 	++m_reentranceCounter;
 	const ScopeGuard guard([&]() { --m_reentranceCounter; });
 
-	(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
-	(*o_pcleanMaterialSystemStuff)();
+	(*o_pCModelLoader_UnreferenceAllModels)(*ppModelLoader);
+	(*o_pCleanMaterialSystemStuff)();
 
 	for (auto& modPak : m_modPaks)
 	{
-		if (modPak.m_handle == -1 || !modPak.m_markedForDelete)
+		if (modPak.m_handle == PakHandle::INVALID || !modPak.m_markedForDelete)
 			continue;
 
-		g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pcleanMaterialSystemStuff);
-		modPak.m_handle = -1;
+		g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pCleanMaterialSystemStuff);
+		modPak.m_handle = PakHandle::INVALID;
 	}
 }
 
@@ -130,7 +130,7 @@ void PakLoadManager::LoadModPaksForMap(const char* mapName)
 	for (auto& modPak : m_modPaks)
 	{
 		// don't load paks that are already loaded
-		if (modPak.m_handle != -1)
+		if (modPak.m_handle != PakHandle::INVALID)
 			continue;
 		std::cmatch matches;
 		if (!std::regex_match(mapName, matches, modPak.m_mapRegex))
@@ -147,8 +147,8 @@ void PakLoadManager::UnloadModPaks()
 	++m_reentranceCounter;
 	const ScopeGuard guard([&]() { --m_reentranceCounter; });
 
-	(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
-	(*o_pcleanMaterialSystemStuff)();
+	(*o_pCModelLoader_UnreferenceAllModels)(*ppModelLoader);
+	(*o_pCleanMaterialSystemStuff)();
 
 	for (auto& modPak : m_modPaks)
 	{
@@ -158,8 +158,8 @@ void PakLoadManager::UnloadModPaks()
 				continue;
 
 			m_mapPaks.erase(it, it + 1);
-			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pcleanMaterialSystemStuff);
-			modPak.m_handle = -1;
+			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pCleanMaterialSystemStuff);
+			modPak.m_handle = PakHandle::INVALID;
 			break;
 		}
 	}
@@ -170,7 +170,7 @@ void PakLoadManager::UnloadModPaks()
 }
 
 // Called after a Pak was loaded.
-void PakLoadManager::OnPakLoaded(std::string& originalPath, std::string& resultingPath, int resultingHandle)
+void PakLoadManager::OnPakLoaded(std::string& originalPath, std::string& resultingPath, PakHandle resultingHandle)
 {
 	if (IsVanillaCall())
 	{
@@ -182,14 +182,14 @@ void PakLoadManager::OnPakLoaded(std::string& originalPath, std::string& resulti
 }
 
 // Called before a Pak was unloaded.
-void PakLoadManager::OnPakUnloading(int handle)
+void PakLoadManager::OnPakUnloading(PakHandle handle)
 {
 	UnloadDependentPaks(handle);
 
 	if (IsVanillaCall())
 	{
 		// remove entry from loaded vanilla rpaks
-		auto predicate = [handle](std::pair<std::string, int>& pair) -> bool { return pair.second == handle; };
+		auto predicate = [handle](std::pair<std::string, PakHandle>& pair) -> bool { return pair.second == handle; };
 
 		m_vanillaPaks.erase(std::remove_if(m_vanillaPaks.begin(), m_vanillaPaks.end(), predicate), m_vanillaPaks.end());
 
@@ -213,7 +213,7 @@ void PakLoadManager::OnPakUnloading(int handle)
 	for (auto& modPak : m_modPaks)
 	{
 		if (modPak.m_handle == handle)
-			modPak.m_handle = -1;
+			modPak.m_handle = PakHandle::INVALID;
 	}
 }
 
@@ -266,7 +266,7 @@ void PakLoadManager::LoadPreloadPaks()
 
 	for (auto& modPak : m_modPaks)
 	{
-		if (modPak.m_markedForDelete || modPak.m_handle != -1 || !modPak.m_preload)
+		if (modPak.m_markedForDelete || modPak.m_handle != PakHandle::INVALID || !modPak.m_preload)
 			continue;
 
 		modPak.m_handle = g_pakLoadApi->LoadRpakFileAsync(modPak.m_path.c_str(), *rpakMemoryAllocator, 7);
@@ -280,7 +280,7 @@ void* PakLoadManager::OpenFile(const char* path)
 }
 
 // Loads Paks that depend on this Pak.
-void PakLoadManager::LoadDependentPaks(std::string& path, int handle)
+void PakLoadManager::LoadDependentPaks(std::string& path, PakHandle handle)
 {
 	++m_reentranceCounter;
 	const ScopeGuard guard([&]() { --m_reentranceCounter; });
@@ -288,7 +288,7 @@ void PakLoadManager::LoadDependentPaks(std::string& path, int handle)
 	const size_t hash = STR_HASH(path);
 	for (auto& modPak : m_modPaks)
 	{
-		if (modPak.m_handle != -1)
+		if (modPak.m_handle != PakHandle::INVALID)
 			continue;
 		if (modPak.m_dependentPakHash != hash)
 			continue;
@@ -300,24 +300,24 @@ void PakLoadManager::LoadDependentPaks(std::string& path, int handle)
 }
 
 // Unloads Paks that depend on this Pak.
-void PakLoadManager::UnloadDependentPaks(int handle)
+void PakLoadManager::UnloadDependentPaks(PakHandle handle)
 {
 	++m_reentranceCounter;
 	const ScopeGuard guard([&]() { --m_reentranceCounter; });
 
-	auto predicate = [&](std::pair<int, size_t>& pair) -> bool
+	auto predicate = [&](std::pair<PakHandle, size_t>& pair) -> bool
 	{
 		if (pair.first != handle)
 			return false;
 
 		for (auto& modPak : m_modPaks)
 		{
-			if (modPak.m_pathHash != pair.second || modPak.m_handle == -1)
+			if (modPak.m_pathHash != pair.second || modPak.m_handle == PakHandle::INVALID)
 				continue;
 
 			// unload pak
-			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pcleanMaterialSystemStuff);
-			modPak.m_handle = -1;
+			g_pakLoadApi->UnloadPak(modPak.m_handle, *o_pCleanMaterialSystemStuff);
+			modPak.m_handle = PakHandle::INVALID;
 		}
 
 		return true;
@@ -328,7 +328,7 @@ void PakLoadManager::UnloadDependentPaks(int handle)
 static void HandlePakAliases(std::string& originalPath)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > -1; i--)
+	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > PakHandle::INVALID; i--)
 	{
 		Mod* mod = &g_pModManager->m_LoadedMods[i];
 		if (!mod->m_bEnabled)
@@ -370,38 +370,38 @@ static bool h_LoadMapRpaks(char* mapPath)
 	snprintf(mapRpakStr, 272, "%s.rpak", mapName.c_str());
 
 	// if level being loaded is the same as current level, do nothing
-	if (!g_pPakLoadManager->GetForceReloadOnMapLoad() && !strcmp(mapRpakStr, currentMapRpakPath))
+	if (!g_pPakLoadManager->GetForceReloadOnMapLoad() && !strcmp(mapRpakStr, pszCurrentMapRpakPath))
 		return true;
 
-	strcpy(currentMapRpakPath, mapRpakStr);
+	strcpy(pszCurrentMapRpakPath, mapRpakStr);
 
-	(*o_pcleanMaterialSystemStuff)();
-	o_ploadlevelLoadscreen(mapName.c_str());
+	(*o_pCleanMaterialSystemStuff)();
+	o_pLoadlevelLoadscreen(mapName.c_str());
 
 	// unload old map rpaks
-	int curHandle = *currentMapRpakHandle;
-	int curPatchHandle = *currentMapPatchRpakHandle;
-	if (curHandle != -1)
+	PakHandle curHandle = *piCurrentMapRpakHandle;
+	PakHandle curPatchHandle = *piCurrentMapPatchRpakHandle;
+	if (curHandle != PakHandle::INVALID)
 	{
-		(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
-		(*o_pcleanMaterialSystemStuff)();
-		g_pakLoadApi->UnloadPak(curHandle, *o_pcleanMaterialSystemStuff);
-		*currentMapRpakHandle = -1;
+		(*o_pCModelLoader_UnreferenceAllModels)(*ppModelLoader);
+		(*o_pCleanMaterialSystemStuff)();
+		g_pakLoadApi->UnloadPak(curHandle, *o_pCleanMaterialSystemStuff);
+		*piCurrentMapRpakHandle = PakHandle::INVALID;
 	}
-	if (curPatchHandle != -1)
+	if (curPatchHandle != PakHandle::INVALID)
 	{
-		(*o_pCModelLoader_UnreferenceAllModels)(*modelLoader);
-		(*o_pcleanMaterialSystemStuff)();
-		g_pakLoadApi->UnloadPak(curPatchHandle, *o_pcleanMaterialSystemStuff);
-		*currentMapPatchRpakHandle = -1;
+		(*o_pCModelLoader_UnreferenceAllModels)(*ppModelLoader);
+		(*o_pCleanMaterialSystemStuff)();
+		g_pakLoadApi->UnloadPak(curPatchHandle, *o_pCleanMaterialSystemStuff);
+		*piCurrentMapPatchRpakHandle = PakHandle::INVALID;
 	}
 
-	*currentMapRpakHandle = g_pakLoadApi->LoadRpakFileAsync(mapRpakStr, *rpakMemoryAllocator, 7);
+	*piCurrentMapRpakHandle = g_pakLoadApi->LoadRpakFileAsync(mapRpakStr, *rpakMemoryAllocator, 7);
 
 	// load special _patch rpak (seemingly used for dev things?)
 	char levelPatchRpakStr[272];
 	snprintf(levelPatchRpakStr, 272, "%s_patch.rpak", mapName.c_str());
-	*currentMapPatchRpakHandle = g_pakLoadApi->LoadRpakFileAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
+	*piCurrentMapPatchRpakHandle = g_pakLoadApi->LoadRpakFileAsync(levelPatchRpakStr, *rpakMemoryAllocator, 7);
 
 	// we just reloaded the paks, so we don't need to force it again
 	g_pPakLoadManager->SetForceReloadOnMapLoad(false);
@@ -410,7 +410,7 @@ static bool h_LoadMapRpaks(char* mapPath)
 
 // clang-format off
 HOOK(LoadPakAsyncHook, LoadPakAsync,
-int, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
+PakHandle, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 // clang-format on
 {
 	// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten
@@ -434,11 +434,11 @@ int, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 			(CommandLine()->CheckParm("-nopakdedi") || strncmp(&originalPath[0], "common", 6) && strncmp(&originalPath[0], "sp_", 3)))
 		{
 			NS::log::rpak->info("Not loading pak {} for dedicated server", originalPath);
-			return -1;
+			return PakHandle::INVALID;
 		}
 	}
 
-	int iPakHandle = LoadPakAsync(resultingPath.c_str(), memoryAllocator, flags);
+	PakHandle iPakHandle = LoadPakAsync(resultingPath.c_str(), memoryAllocator, flags);
 	NS::log::rpak->info("LoadPakAsync {} {}", resultingPath, iPakHandle);
 
 	g_pPakLoadManager->OnPakLoaded(originalPath, resultingPath, iPakHandle);
@@ -448,7 +448,7 @@ int, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 
 // clang-format off
 HOOK(UnloadPakHook, UnloadPak,
-void*, __fastcall, (int nPakHandle, void* pCallback))
+void*, __fastcall, (PakHandle nPakHandle, void* pCallback))
 // clang-format on
 {
 	g_pPakLoadManager->OnPakUnloading(nPakHandle);
@@ -546,16 +546,16 @@ ON_DLL_LOAD("engine.dll", RpakFilesystem, (CModule module))
 	UnloadPakHook.Dispatch((LPVOID*)g_pakLoadApi->UnloadPak);
 	OpenFileHook.Dispatch((LPVOID*)g_pakLoadApi->OpenFile);
 
-	currentMapRpakPath = module.Offset(0x1315C3E0).RCast<decltype(currentMapRpakPath)>();
-	currentMapRpakHandle = module.Offset(0x7CB5A0).RCast<decltype(currentMapRpakHandle)>();
-	currentMapPatchRpakHandle = module.Offset(0x7CB5A4).RCast<decltype(currentMapPatchRpakHandle)>();
-	modelLoader = module.Offset(0x7C4AC0).RCast<decltype(modelLoader)>();
+	pszCurrentMapRpakPath = module.Offset(0x1315C3E0).RCast<decltype(pszCurrentMapRpakPath)>();
+	piCurrentMapRpakHandle = module.Offset(0x7CB5A0).RCast<decltype(piCurrentMapRpakHandle)>();
+	piCurrentMapPatchRpakHandle = module.Offset(0x7CB5A4).RCast<decltype(piCurrentMapPatchRpakHandle)>();
+	ppModelLoader = module.Offset(0x7C4AC0).RCast<decltype(ppModelLoader)>();
 	rpakMemoryAllocator = module.Offset(0x7C5E20).RCast<decltype(rpakMemoryAllocator)>();
 
 	o_pLoadGametypeSpecificRpaks = module.Offset(0x15AD20).RCast<decltype(o_pLoadGametypeSpecificRpaks)>();
-	o_pcleanMaterialSystemStuff = module.Offset(0x12A11F00).RCast<decltype(o_pcleanMaterialSystemStuff)>();
+	o_pCleanMaterialSystemStuff = module.Offset(0x12A11F00).RCast<decltype(o_pCleanMaterialSystemStuff)>();
 	o_pCModelLoader_UnreferenceAllModels = module.Offset(0x5ED580).RCast<decltype(o_pCModelLoader_UnreferenceAllModels)>();
-	o_ploadlevelLoadscreen = module.Offset(0x15A810).RCast<decltype(o_ploadlevelLoadscreen)>();
+	o_pLoadlevelLoadscreen = module.Offset(0x15A810).RCast<decltype(o_pLoadlevelLoadscreen)>();
 
 	o_pLoadMapRpaks = module.Offset(0x15A8C0).RCast<decltype(o_pLoadMapRpaks)>();
 	HookAttach(&(PVOID&)o_pLoadMapRpaks, (PVOID)h_LoadMapRpaks);

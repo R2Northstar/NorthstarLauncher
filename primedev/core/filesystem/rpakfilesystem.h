@@ -2,6 +2,11 @@
 
 #include <regex>
 
+enum PakHandle : int
+{
+	INVALID = -1,
+};
+
 struct ModPak_t
 {
 	std::string m_modName;
@@ -19,7 +24,7 @@ struct ModPak_t
 	// If this is set, the Pak will be unloaded on next map load
 	bool m_markedForDelete = false;
 	// The current rpak handle associated with this Pak
-	int m_handle = -1;
+	PakHandle m_handle = PakHandle::INVALID;
 };
 
 class PakLoadManager
@@ -49,8 +54,8 @@ public:
 		m_forceReloadOnMapLoad = value;
 	}
 
-	void OnPakLoaded(std::string& originalPath, std::string& resultingPath, int resultingHandle);
-	void OnPakUnloading(int handle);
+	void OnPakLoaded(std::string& originalPath, std::string& resultingPath, PakHandle resultingHandle);
+	void OnPakUnloading(PakHandle handle);
 
 	void FixupPakPath(std::string& path);
 
@@ -59,19 +64,19 @@ public:
 	void* OpenFile(const char* path);
 
 private:
-	void LoadDependentPaks(std::string& path, int handle);
-	void UnloadDependentPaks(int handle);
+	void LoadDependentPaks(std::string& path, PakHandle handle);
+	void UnloadDependentPaks(PakHandle handle);
 
 	// All paks that vanilla has attempted to load. (they may have been aliased away)
 	// Also known as a list of rpaks that the vanilla game would have loaded at this point in time.
-	std::vector<std::pair<std::string, int>> m_vanillaPaks;
+	std::vector<std::pair<std::string, PakHandle>> m_vanillaPaks;
 
 	// All mod Paks that are currently tracked
 	std::vector<ModPak_t> m_modPaks;
 	// Hashes of the currently loaded map mod paks
 	std::vector<size_t> m_mapPaks;
 	// Currently loaded Pak path hashes that depend on a handle to remain loaded (Postload)
-	std::vector<std::pair<int, size_t>> m_dependentPaks;
+	std::vector<std::pair<PakHandle, size_t>> m_dependentPaks;
 
 	// Used to force rpaks to be unloaded and reloaded on the next map load.
 	// Vanilla behaviour is to not do this when loading into mp_lobby, or loading into the same map you were last in.
