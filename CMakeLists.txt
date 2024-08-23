@@ -20,8 +20,7 @@ if(NOT CMAKE_BUILD_TYPE)
         )
 endif()
 
-# Set minimum OS version to Windows 7
-# Forces Minizip to not use functions that are not available in Windows 7 libraries.
+# Set minimum OS version to Windows 7. Forces Minizip to not use functions that are not available in Windows 7 libraries.
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=0x0601")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WIN32_WINNT=0x0601")
