@@ -20,12 +20,6 @@ if(NOT CMAKE_BUILD_TYPE)
         )
 endif()
 
-# Set minimum OS version to Windows 7. Forces Minizip to not use functions that are not available in Windows 7 libraries.
-if(WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=0x0601")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WIN32_WINNT=0x0601")
-endif()
-
 # Language specs
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)
@@ -56,3 +50,7 @@ include_directories(primedev/thirdparty)
 
 # Targets
 add_subdirectory(primedev)
+# Forces Minizip to not use functions that are not available in Win 7 libraries.
+if(WIN32)
+    target_compile_definitions(minizip PUBLIC -D_WIN32_WINNT=0x0601)
+endif()
