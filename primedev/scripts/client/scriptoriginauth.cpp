@@ -1,7 +1,8 @@
-#include "squirrel/squirrel.h"
-#include "masterserver/masterserver.h"
-#include "engine/r2engine.h"
 #include "client/r2client.h"
+#include "core/vanilla.h"
+#include "engine/r2engine.h"
+#include "masterserver/masterserver.h"
+#include "squirrel/squirrel.h"
 
 ADD_SQFUNC("bool", NSIsMasterServerAuthenticated, "", "", ScriptContext::UI)
 {
@@ -17,6 +18,18 @@ global struct MasterServerAuthResult
 	string errorMessage
 }
 */
+
+ADD_SQFUNC("void", NSResetToken, "", "", ScriptContext::UI)
+{
+	g_pCVar->FindVar("serverfilter")->SetValue("");
+	return SQRESULT_NULL;
+}
+
+ADD_SQFUNC("bool", NSIsVanilla, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	g_pSquirrel<context>->pushbool(sqvm, g_pVanillaCompatibility->GetVanillaCompatibility());
+	return SQRESULT_NOTNULL;
+}
 
 ADD_SQFUNC("MasterServerAuthResult", NSGetMasterServerAuthResult, "", "", ScriptContext::UI)
 {

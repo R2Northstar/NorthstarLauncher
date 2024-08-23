@@ -1,11 +1,12 @@
-#include "masterserver/masterserver.h"
-#include "core/convar/convar.h"
 #include "client/r2client.h"
+#include "core/convar/convar.h"
 #include "core/vanilla.h"
+#include "masterserver/masterserver.h"
 
 AUTOHOOK_INIT()
 
 ConVar* Cvar_ns_has_agreed_to_send_token;
+char* pDummy3P = const_cast<char*>("Protocol 3: Protect the Pilot");
 
 // mirrored in script
 const int NOT_DECIDED_TO_SEND_TOKEN = 0;
@@ -17,42 +18,27 @@ AUTOHOOK(AuthWithStryder, engine.dll + 0x1843A0,
 void, __fastcall, (void* a1))
 // clang-format on
 {
-	// don't attempt to do Atlas auth if we are in vanilla compatibility mode
-	// this prevents users from joining untrustworthy servers (unless they use a concommand or something)
-	if (g_pVanillaCompatibility->GetVanillaCompatibility())
-	{
-		AuthWithStryder(a1);
-		return;
-	}
-
-	// game will call this forever, until it gets a valid auth key
-	// so, we need to manually invalidate our key until we're authed with northstar, then we'll allow game to auth with stryder
 	if (!g_pMasterServerManager->m_bOriginAuthWithMasterServerDone && Cvar_ns_has_agreed_to_send_token->GetInt() != DISAGREED_TO_SEND_TOKEN)
 	{
 		// if player has agreed to send token and we aren't already authing, try to auth
 		if (Cvar_ns_has_agreed_to_send_token->GetInt() == AGREED_TO_SEND_TOKEN &&
 			!g_pMasterServerManager->m_bOriginAuthWithMasterServerInProgress)
 			g_pMasterServerManager->AuthenticateOriginWithMasterServer(g_pLocalPlayerUserID, g_pLocalPlayerOriginToken);
-
-		// invalidate key so auth will fail
-		*g_pLocalPlayerOriginToken = 0;
 	}
 
 	AuthWithStryder(a1);
 }
-
-char* p3PToken;
 
 // clang-format off
 AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
 char*, __fastcall, ())
 // clang-format on
 {
-	if (!g_pVanillaCompatibility->GetVanillaCompatibility() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
-	{
-		memset(p3PToken, 0x0, 1024);
-		strcpy(p3PToken, "Protocol 3: Protect the Pilot");
-	}
+	// return a dummy token for northstar servers that don't need the session token stuff
+	// base it off serverfilter cvar since ns_is_northstar_server could be unset by an evil server
+	// we'll get dropped if they're faking it
+	if (g_pCVar->FindVar("serverfilter")->GetBool() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
+		return pDummy3P;
 
 	return Auth3PToken();
 }
@@ -60,8 +46,6 @@ char*, __fastcall, ())
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
-
-	p3PToken = module.Offset(0x13979D80).RCast<char*>();
 
 	// this cvar will save to cfg once initially agreed with
 	Cvar_ns_has_agreed_to_send_token = new ConVar(

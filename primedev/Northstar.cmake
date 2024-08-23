@@ -57,6 +57,8 @@ add_library(
     "core/tier0.h"
     "core/tier1.cpp"
     "core/tier1.h"
+    "core/vanilla.h"
+    "core/vanilla.cpp"
     "dedicated/dedicated.cpp"
     "dedicated/dedicated.h"
     "dedicated/dedicatedlogtoclient.cpp"

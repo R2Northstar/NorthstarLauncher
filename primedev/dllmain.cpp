@@ -1,24 +1,24 @@
-#include "logging/logging.h"
-#include "logging/crashhandler.h"
+#include "config/profile.h"
 #include "core/memalloc.h"
 #include "core/vanilla.h"
-#include "config/profile.h"
-#include "plugins/plugins.h"
+#include "logging/crashhandler.h"
+#include "logging/logging.h"
 #include "plugins/pluginmanager.h"
+#include "plugins/plugins.h"
+#include "server/serverpresence.h"
+#include "squirrel/squirrel.h"
 #include "util/version.h"
 #include "util/wininfo.h"
-#include "squirrel/squirrel.h"
-#include "server/serverpresence.h"
 
 #include "windows/libsys.h"
 
 #include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#include "rapidjson/error/en.h"
 
-#include <string.h>
 #include <filesystem>
+#include <string.h>
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -61,8 +61,6 @@ bool InitialiseNorthstar()
 
 	// determine if we are in vanilla-compatibility mode
 	g_pVanillaCompatibility = new VanillaCompatibility();
-	g_pVanillaCompatibility->SetVanillaCompatibility(strstr(GetCommandLineA(), "-vanilla") != NULL);
-
 	// Write launcher version to log
 	StartupLog();
 

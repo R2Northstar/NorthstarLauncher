@@ -1,17 +1,19 @@
 #include "engine/hoststate.h"
-#include "masterserver/masterserver.h"
-#include "server/auth/serverauthentication.h"
-#include "server/serverpresence.h"
-#include "shared/playlist.h"
 #include "core/tier0.h"
 #include "engine/r2engine.h"
-#include "shared/exploit_fixes/ns_limits.h"
-#include "squirrel/squirrel.h"
+#include "masterserver/masterserver.h"
 #include "plugins/pluginmanager.h"
+#include "server/auth/serverauthentication.h"
+#include "server/serverpresence.h"
+#include "shared/exploit_fixes/ns_limits.h"
+#include "shared/playlist.h"
+#include "squirrel/squirrel.h"
 
 AUTOHOOK_INIT()
 
 CHostState* g_pHostState;
+
+ConVar* Cvar_ns_is_northstar_server;
 
 std::string sLastMode;
 
@@ -21,6 +23,7 @@ FUNCTION_AT(engine.dll + 0x1232C0, void, __fastcall, _Cmd_Exec_f, (const CComman
 void ServerStartingOrChangingMap()
 {
 	ConVar* Cvar_mp_gamemode = g_pCVar->FindVar("mp_gamemode");
+	Cvar_ns_is_northstar_server->SetValue(true);
 
 	// directly call _Cmd_Exec_f to avoid weirdness with ; being in mp_gamemode potentially
 	// if we ran exec {mp_gamemode} and mp_gamemode contained semicolons, this could be used to execute more commands
@@ -135,6 +138,7 @@ void, __fastcall, (CHostState* self))
 	g_pServerPresence->DestroyPresence();
 
 	CHostState__State_GameShutdown(self);
+	Cvar_ns_is_northstar_server->SetValue(false);
 
 	// run gamemode cleanup cfg now instead of when we start next map
 	if (sLastMode.length())
@@ -186,5 +190,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
 
+	Cvar_ns_is_northstar_server = new ConVar("ns_is_northstar_server", "0", FCVAR_REPLICATED, "Whether the server is a northstar server");
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
