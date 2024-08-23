@@ -56,14 +56,14 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 	// replace xinput dll with one that has ASLR
 	if (lpLibFileName <= lpLibName && !strncmp(lpLibName, XINPUT1_3_DLL, strlen(XINPUT1_3_DLL) + 1))
 	{
-		const char* replacementDll = "XInput1_4.dll";
-		hModule = o_LoadLibraryExA(replacementDll, hFile, dwFlags);
+		const char* pszReplacementDll = "XInput1_4.dll";
+		hModule = o_LoadLibraryExA(pszReplacementDll, hFile, dwFlags);
 
 		if (!hModule)
 		{
-			replacementDll = "XInput9_1_0.dll";
+			pszReplacementDll = "XInput9_1_0.dll";
 			spdlog::warn("Couldn't load XInput1_4.dll. Will try XInput9_1_0.dll. If on Windows 7 this is expected");
-			hModule = o_LoadLibraryExA(replacementDll, hFile, dwFlags);
+			hModule = o_LoadLibraryExA(pszReplacementDll, hFile, dwFlags);
 		}
 
 		if (!hModule)
@@ -76,7 +76,7 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 			return nullptr;
 		}
 
-		spdlog::info("Successfully loaded {} as a replacement for XInput1_3.dll", replacementDll);
+		spdlog::info("Successfully loaded {} as a replacement for XInput1_3.dll", pszReplacementDll);
 	}
 	else
 	{
