@@ -325,6 +325,7 @@ void PakLoadManager::UnloadDependentPaks(PakHandle handle)
 	m_dependentPaks.erase(std::remove_if(m_dependentPaks.begin(), m_dependentPaks.end(), predicate), m_dependentPaks.end());
 }
 
+// Handles aliases for rpaks defined in rpak.json, effectively redirecting an rpak load to a different path.
 static void HandlePakAliases(std::string& originalPath)
 {
 	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
