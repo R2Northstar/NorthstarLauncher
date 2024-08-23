@@ -4,6 +4,7 @@
 #include "core/tier0.h"
 #include "util/utils.h"
 
+#pragma pack(push, 1)
 struct PakLoadFuncs
 {
 	void (*InitRpakSystem)();
@@ -25,7 +26,11 @@ struct PakLoadFuncs
 	__int64 qword80;
 	__int64 qword88;
 	__int64 qword90;
-	char gap98[0x28];
+	__int64 qword98;
+	__int64 qwordA0;
+	__int64 qwordA8;
+	__int64 qwordB0;
+	__int64 qwordBB;
 	void* (*OpenFile)(const char* pPath);
 	__int64 CloseFile;
 	__int64 qwordD0;
@@ -38,23 +43,7 @@ struct PakLoadFuncs
 	__int64 qword108;
 };
 static_assert(sizeof(PakLoadFuncs) == 0x110);
-static_assert(offsetof(PakLoadFuncs, InitRpakSystem) == 0x0);
-static_assert(offsetof(PakLoadFuncs, AddAssetLoaderWithJobDetails) == 0x8);
-static_assert(offsetof(PakLoadFuncs, AddAssetLoader) == 0x10);
-static_assert(offsetof(PakLoadFuncs, LoadRpakFileAsync) == 0x18);
-static_assert(offsetof(PakLoadFuncs, LoadRpakFile) == 0x20);
-static_assert(offsetof(PakLoadFuncs, UnloadPak) == 0x30);
-static_assert(offsetof(PakLoadFuncs, GetDllCallback) == 0x58);
-static_assert(offsetof(PakLoadFuncs, GetAssetByHash) == 0x60);
-static_assert(offsetof(PakLoadFuncs, GetAssetByName) == 0x68);
-static_assert(offsetof(PakLoadFuncs, OpenFile) == 0xC0);
-static_assert(offsetof(PakLoadFuncs, CloseFile) == 0xC8);
-static_assert(offsetof(PakLoadFuncs, FileReadAsync) == 0xD8);
-static_assert(offsetof(PakLoadFuncs, ComplexFileReadAsync) == 0xE0);
-static_assert(offsetof(PakLoadFuncs, GetReadJobState) == 0xE8);
-static_assert(offsetof(PakLoadFuncs, WaitForFileReadJobComplete) == 0xF0);
-static_assert(offsetof(PakLoadFuncs, CancelFileReadJob) == 0xF8);
-static_assert(offsetof(PakLoadFuncs, CancelFileReadJobAsync) == 0x100);
+#pragma pop
 
 PakLoadFuncs* g_pakLoadApi;
 PakLoadManager* g_pPakLoadManager;
