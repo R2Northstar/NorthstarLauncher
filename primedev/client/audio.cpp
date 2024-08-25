@@ -387,7 +387,7 @@ bool ShouldPlayAudioEvent(const char* eventName, const std::shared_ptr<EventOver
 	return true; // good to go
 }
 
-static bool (__fastcall* o_pLoadSampleMetadata)(void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType) = nullptr;
+static bool(__fastcall* o_pLoadSampleMetadata)(void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType) = nullptr;
 static bool __fastcall h_LoadSampleMetadata(void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType)
 {
 	// Raw source, used for voice data only
@@ -493,14 +493,14 @@ static bool __fastcall h_LoadSampleMetadata(void* sample, void* audioBuffer, uns
 	return res;
 }
 
-static void* (__fastcall* o_pSub_1800294C0)(void* a1, void* a2) = nullptr;
+static void*(__fastcall* o_pSub_1800294C0)(void* a1, void* a2) = nullptr;
 static void* __fastcall h_Sub_1800294C0(void* a1, void* a2)
 {
 	pszAudioEventName = reinterpret_cast<const char*>((*((__int64*)a2 + 6)));
 	return o_pSub_1800294C0(a1, a2);
 }
 
-static void (__fastcall* o_pMilesLog)(int level, const char* string) = nullptr;
+static void(__fastcall* o_pMilesLog)(int level, const char* string) = nullptr;
 static void __fastcall h_MilesLog(int level, const char* string)
 {
 	if (!Cvar_mileslog_enable->GetBool())
