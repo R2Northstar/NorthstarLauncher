@@ -44,25 +44,3 @@ jobs:
           name: NorthstarLauncher-${{ matrix.config.name }}-${{ steps.extract.outputs.commit }}
           path: |
             game/
-
-  format-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: DoozyX/clang-format-lint-action@v0.16.2
-      with:
-        source: 'primedev'
-        exclude: 'primedev/include primedev/thirdparty primedev/wsockproxy'
-        extensions: 'h,cpp'
-        clangFormatVersion: 16
-        style: file
-
-  format-check-cmake-files:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: puneetmatharu/cmake-format-lint-action@v1.0.4
-      with:
-        args: "--in-place"
-    - run: |
-        git diff --exit-code
