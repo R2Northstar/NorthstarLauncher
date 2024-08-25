@@ -502,10 +502,8 @@ static void* __fastcall h_Sub_1800294C0(void* a1, void* a2)
 	return o_pSub_1800294C0(a1, a2);
 }
 
-// clang-format off
-AUTOHOOK(MilesLog, client.dll + 0x57DAD0, 
-void, __fastcall, (int level, const char* string))
-// clang-format on
+static void (__fastcall* o_pMilesLog)(int level, const char* string) = nullptr;
+static void __fastcall h_MilesLog(int level, const char* string)
 {
 	if (!Cvar_mileslog_enable->GetBool())
 		return;
@@ -530,6 +528,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+
+	o_pMilesLog = module.Offset(0x57DAD0).RCast<decltype(o_pMilesLog)>();
+	HookAttach(&(PVOID&)o_pMilesLog, (PVOID)h_MilesLog);
 
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
 	MilesStopAll = module.Offset(0x580850).RCast<MilesStopAll_Type>();
