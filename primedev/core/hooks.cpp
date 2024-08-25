@@ -87,14 +87,14 @@ void __fileAutohook::DispatchForModule(const char* pModuleName)
 
 ManualHook::ManualHook(const char* funcName, LPVOID func) : pHookFunc(func), ppOrigFunc(nullptr)
 {
-	const size_t iFuncNameStrlen = strlen(funcName);
+	const size_t iFuncNameStrlen = strlen(funcName) + 1;
 	pFuncName = new char[iFuncNameStrlen];
 	memcpy(pFuncName, funcName, iFuncNameStrlen);
 }
 
 ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) : pHookFunc(func), ppOrigFunc(orig)
 {
-	const size_t iFuncNameStrlen = strlen(funcName);
+	const size_t iFuncNameStrlen = strlen(funcName) + 1;
 	pFuncName = new char[iFuncNameStrlen];
 	memcpy(pFuncName, funcName, iFuncNameStrlen);
 }
