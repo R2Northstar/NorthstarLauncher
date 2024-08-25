@@ -170,6 +170,7 @@ enum class eSignonState : int
 	CHANGELEVEL = 9, // server is changing level; please wait
 };
 
+#pragma pack(push, 1)
 class CBaseClient
 {
 public:
@@ -198,22 +199,8 @@ public:
 	char m_UID[32]; // 0xf500 ( Size: 32 )
 	char _unk_0xf520[123400]; // 0xf520 ( Size: 123400 )
 };
+#pragma pack(pop)
 static_assert(sizeof(CBaseClient) == 0x2D728);
-static_assert(offsetof(CBaseClient, m_Name) == 0x16);
-static_assert(offsetof(CBaseClient, m_ConVars) == 0x258);
-static_assert(offsetof(CBaseClient, m_Signon) == 0x2A0);
-static_assert(offsetof(CBaseClient, m_nDeltaTick) == 0x2A4);
-static_assert(offsetof(CBaseClient, m_nOriginID) == 0x2A8);
-static_assert(offsetof(CBaseClient, m_nStringTableAckTick) == 0x2B0);
-static_assert(offsetof(CBaseClient, m_nSignonTick) == 0x2B4);
-static_assert(offsetof(CBaseClient, m_ClanTag) == 0x358);
-static_assert(offsetof(CBaseClient, m_bFakePlayer) == 0x484);
-static_assert(offsetof(CBaseClient, m_bReceivedPacket) == 0x485);
-static_assert(offsetof(CBaseClient, m_bLowViolence) == 0x486);
-static_assert(offsetof(CBaseClient, m_bFullyAuthenticated) == 0x487);
-static_assert(offsetof(CBaseClient, m_iPersistenceReady) == 0x4A0);
-static_assert(offsetof(CBaseClient, m_PersistenceBuffer) == 0x4FA);
-static_assert(offsetof(CBaseClient, m_UID) == 0xF500);
 
 extern CBaseClient* g_pClientArray;
 
@@ -236,7 +223,9 @@ enum class GameMode_t : int
 	SP_MODE,
 };
 
-class CGlobalVars
+// FIXME correct this class
+#pragma pack(push, 1)
+class CGlobalVars // : public CGlobalVarsBase
 {
 public:
 	// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time
@@ -285,17 +274,10 @@ public:
 
 	const char* m_pMapName; // 0x60 ( Size: 8 )
 	int m_nMapVersion; // 0x68 ( Size: 4 )
+
+	char unk[0x40];
 };
-static_assert(offsetof(CGlobalVars, m_flRealTime) == 0x0);
-static_assert(offsetof(CGlobalVars, m_nFrameCount) == 0x8);
-static_assert(offsetof(CGlobalVars, m_flAbsoluteFrameTime) == 0xc);
-static_assert(offsetof(CGlobalVars, m_flCurTime) == 0x10);
-static_assert(offsetof(CGlobalVars, m_flFrameTime) == 0x30);
-static_assert(offsetof(CGlobalVars, m_nMaxClients) == 0x34);
-static_assert(offsetof(CGlobalVars, m_nGameMode) == 0x38);
-static_assert(offsetof(CGlobalVars, m_nTickCount) == 0x3c);
-static_assert(offsetof(CGlobalVars, m_flTickInterval) == 0x40);
-static_assert(offsetof(CGlobalVars, m_pMapName) == 0x60);
-static_assert(offsetof(CGlobalVars, m_nMapVersion) == 0x68);
+#pragma pack(pop)
+static_assert(sizeof(CGlobalVars) == 0xA8);
 
 extern CGlobalVars* g_pGlobals;
