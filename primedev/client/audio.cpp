@@ -11,8 +11,6 @@
 
 namespace fs = std::filesystem;
 
-AUTOHOOK_INIT()
-
 static const char* pszAudioEventName;
 
 ConVar* Cvar_mileslog_enable;
@@ -527,8 +525,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pMilesLog = module.Offset(0x57DAD0).RCast<decltype(o_pMilesLog)>();
 	HookAttach(&(PVOID&)o_pMilesLog, (PVOID)h_MilesLog);
 
