@@ -73,7 +73,6 @@ std::string UnescapeUnicode(const std::string& str)
 
 void ServerPresenceManager::CreateConVars()
 {
-	// clang-format off
 	// register convars
 	Cvar_ns_server_presence_update_rate = new ConVar(
 		"ns_server_presence_update_rate", "5000", FCVAR_GAMEDLL, "How often we update our server's presence on server lists in ms");
@@ -104,7 +103,6 @@ void ServerPresenceManager::CreateConVars()
 
 	Cvar_ns_report_server_to_masterserver = new ConVar("ns_report_server_to_masterserver", "1", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver");
 	Cvar_ns_report_sp_server_to_masterserver = new ConVar("ns_report_sp_server_to_masterserver", "0", FCVAR_GAMEDLL, "Whether we should report this server to the masterserver, when started in singleplayer");
-	// clang-format on
 }
 
 void ServerPresenceManager::AddPresenceReporter(ServerPresenceReporter* reporter)

@@ -389,10 +389,8 @@ bool ShouldPlayAudioEvent(const char* eventName, const std::shared_ptr<EventOver
 	return true; // good to go
 }
 
-// clang-format off
 AUTOHOOK(LoadSampleMetadata, mileswin64.dll + 0xF110, 
 bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType))
-// clang-format on
 {
 	// Raw source, used for voice data only
 	if (audioType == 0)
@@ -497,19 +495,15 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 	return res;
 }
 
-// clang-format off
 AUTOHOOK(sub_1800294C0, mileswin64.dll + 0x294C0,
 void*, __fastcall, (void* a1, void* a2))
-// clang-format on
 {
 	pszAudioEventName = reinterpret_cast<const char*>((*((__int64*)a2 + 6)));
 	return sub_1800294C0(a1, a2);
 }
 
-// clang-format off
 AUTOHOOK(MilesLog, client.dll + 0x57DAD0, 
 void, __fastcall, (int level, const char* string))
-// clang-format on
 {
 	if (!Cvar_mileslog_enable->GetBool())
 		return;

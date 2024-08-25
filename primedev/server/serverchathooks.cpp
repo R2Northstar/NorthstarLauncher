@@ -35,10 +35,8 @@ void(__fastcall* MessageWriteString)(const char* sz);
 void(__fastcall* MessageWriteBool)(bool bValue);
 
 bool bShouldCallSayTextHook = false;
-// clang-format off
 AUTOHOOK(_CServerGameDLL__OnReceivedSayTextMessage, server.dll + 0x1595C0,
 void, __fastcall, (CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam))
-// clang-format on
 {
 	RemoveAsciiControlSequences(const_cast<char*>(text), true);
 

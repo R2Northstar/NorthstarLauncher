@@ -2,10 +2,8 @@
 
 AUTOHOOK_INIT()
 
-// clang-format off
 AUTOHOOK_PROCADDRESS(BinkOpen, bink2w64.dll, BinkOpen, 
 void*, __fastcall, (const char* path, uint32_t flags))
-// clang-format on
 {
 	std::string filename(fs::path(path).filename().string());
 	spdlog::info("BinkOpen {}", filename);

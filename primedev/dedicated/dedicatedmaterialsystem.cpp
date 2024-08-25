@@ -3,7 +3,6 @@
 
 AUTOHOOK_INIT()
 
-// clang-format off
 AUTOHOOK(D3D11CreateDevice, materialsystem_dx11.dll + 0xD9A0E,
 HRESULT, __stdcall, (
 	void* pAdapter,
@@ -16,7 +15,6 @@ HRESULT, __stdcall, (
 	void** ppDevice,
 	int* pFeatureLevel,
 	void** ppImmediateContext))
-// clang-format on
 {
 	// note: this is super duper temp pretty much just messing around with it
 	// does run surprisingly well on dedi for a software driver tho if you ignore the +1gb ram usage at times, seems like dedi doesn't

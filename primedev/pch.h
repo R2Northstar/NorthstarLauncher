@@ -20,9 +20,7 @@
 
 namespace fs = std::filesystem;
 
-// clang-format off
 #define assert_msg(exp, msg) assert((exp, msg))
-//clang-format on
 
 #define NOTE_UNUSED(var) do { (void)var; } while(false)
 

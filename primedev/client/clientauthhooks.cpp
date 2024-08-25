@@ -12,10 +12,8 @@ const int NOT_DECIDED_TO_SEND_TOKEN = 0;
 const int AGREED_TO_SEND_TOKEN = 1;
 const int DISAGREED_TO_SEND_TOKEN = 2;
 
-// clang-format off
 AUTOHOOK(AuthWithStryder, engine.dll + 0x1843A0,
 void, __fastcall, (void* a1))
-// clang-format on
 {
 	// don't attempt to do Atlas auth if we are in vanilla compatibility mode
 	// this prevents users from joining untrustworthy servers (unless they use a concommand or something)
@@ -43,10 +41,8 @@ void, __fastcall, (void* a1))
 
 char* p3PToken;
 
-// clang-format off
 AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
 char*, __fastcall, ())
-// clang-format on
 {
 	if (!g_pVanillaCompatibility->GetVanillaCompatibility() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
 	{

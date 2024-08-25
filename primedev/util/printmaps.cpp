@@ -128,10 +128,8 @@ void RefreshMapList()
 	}
 }
 
-// clang-format off
 AUTOHOOK(_Host_Map_f_CompletionFunc, engine.dll + 0x161AE0,
 int, __fastcall, (const char *const cmdname, const char *const partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]))
-// clang-format on
 {
 	RefreshMapList();
 
@@ -194,9 +192,7 @@ void ConCommand_maps(const CCommand& args)
 			spdlog::info("({}) {}", PrintMapSource.at(map.source), map.name);
 }
 
-// clang-format off
 AUTOHOOK(Host_Map_f, engine.dll + 0x15B340, void, __fastcall, (const CCommand& args))
-// clang-format on
 {
 	RefreshMapList();
 

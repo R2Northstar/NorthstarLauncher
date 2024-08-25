@@ -152,7 +152,6 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 	}
 
 	// Fast checks for private ranges of IPv4.
-	// clang-format off
 	{
 		auto addrBytes = sockaddr_ipv4->sin_addr.S_un.S_un_b;
 
@@ -182,9 +181,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 			return false;
 		}
 	}
-
-	// clang-format on
-
+	
 	char resolvedStr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &sockaddr_ipv4->sin_addr, resolvedStr, INET_ADDRSTRLEN);
 

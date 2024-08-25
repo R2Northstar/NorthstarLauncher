@@ -81,7 +81,6 @@ enum class ScriptContext : int
 typedef std::vector<std::function<void()>> FunctionVector;
 typedef std::function<void()> VoidFunction;
 
-// clang-format off
 template <typename T>
 concept is_map =
 	// Simple maps
@@ -113,8 +112,6 @@ concept is_iterable = requires(std::ranges::range_value_t<T> x)
     x.begin();          // must have `x.begin()`
     x.end();            // and `x.end()`
 };
-
-// clang-format on
 
 class SquirrelMessage
 {

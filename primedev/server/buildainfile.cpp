@@ -359,20 +359,16 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writeStream.close();
 }
 
-// clang-format off
 AUTOHOOK(CAI_NetworkBuilder__Build, server.dll + 0x385E20,
 void, __fastcall, (void* builder, CAI_Network* aiNetwork, void* unknown))
-// clang-format on
 {
 	CAI_NetworkBuilder__Build(builder, aiNetwork, unknown);
 
 	DumpAINInfo(aiNetwork);
 }
 
-// clang-format off
 AUTOHOOK(LoadAINFile, server.dll + 0x3933A0,
 void, __fastcall, (void* aimanager, void* buf, const char* filename))
-// clang-format on
 {
 	LoadAINFile(aimanager, buf, filename);
 

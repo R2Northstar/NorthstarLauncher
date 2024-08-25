@@ -207,7 +207,6 @@ void ServerAuthenticationManager::WritePersistentData(CBaseClient* pPlayer)
 char* pNextPlayerToken;
 uint64_t iNextPlayerUid;
 
-// clang-format off
 AUTOHOOK(CBaseServer__ConnectClient, engine.dll + 0x114430,
 void*,, (
 	void* self,
@@ -227,7 +226,6 @@ void*,, (
 	int64_t uid,
 	uint32_t a16,
 	uint32_t a17))
-// clang-format on
 {
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	pNextPlayerToken = serverFilter;
@@ -238,10 +236,8 @@ void*,, (
 
 ConVar* Cvar_ns_allowuserclantags;
 
-// clang-format off
 AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
 bool,, (CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, void* a5, char pDisconnectReason[256], void* a7))
-// clang-format on
 {
 	const char* pAuthenticationFailure = nullptr;
 	char pVerifiedName[64];
@@ -279,10 +275,8 @@ bool,, (CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, voi
 	return true;
 }
 
-// clang-format off
 AUTOHOOK(CBaseClient__ActivatePlayer, engine.dll + 0x100F80,
 void,, (CBaseClient* self))
-// clang-format on
 {
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
@@ -297,10 +291,8 @@ void,, (CBaseClient* self))
 	CBaseClient__ActivatePlayer(self);
 }
 
-// clang-format off
 AUTOHOOK(_CBaseClient__Disconnect, engine.dll + 0x1012C0,
 void,, (CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...))
-// clang-format on
 {
 	// have to manually format message because can't pass varargs to original func
 	char buf[1024];

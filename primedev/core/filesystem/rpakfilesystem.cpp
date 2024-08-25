@@ -174,10 +174,8 @@ void LoadCustomMapPaks(char** pakName, bool* bNeedToFreePakName)
 	}
 }
 
-// clang-format off
 HOOK(LoadPakAsyncHook, LoadPakAsync,
 int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallback0, void* pCallback1))
-// clang-format on
 {
 	HandlePakAliases(&pPath);
 
@@ -233,10 +231,8 @@ int, __fastcall, (char* pPath, void* unknownSingleton, int flags, void* pCallbac
 	return iPakHandle;
 }
 
-// clang-format off
 HOOK(UnloadPakHook, UnloadPak,
 void*, __fastcall, (int nPakHandle, void* pCallback))
-// clang-format on
 {
 	// stop tracking the pak
 	g_pPakLoadManager->RemoveLoadedPak(nPakHandle);
@@ -255,10 +251,8 @@ void*, __fastcall, (int nPakHandle, void* pCallback))
 
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
 // tbh this actually might be for memory mapped files or something, would make sense i think
-// clang-format off
 HOOK(ReadFileAsyncHook, ReadFileAsync, 
 void*, __fastcall, (const char* pPath, void* pCallback))
-// clang-format on
 {
 	fs::path path(pPath);
 	std::string newPath = "";

@@ -3,10 +3,8 @@ AUTOHOOK_INIT()
 
 bool* bIsOriginOverlayEnabled;
 
-// clang-format off
 AUTOHOOK(OpenExternalWebBrowser, engine.dll + 0x184E40, 
 void, __fastcall, (char* pUrl, char flags))
-// clang-format on
 {
 	bool bIsOriginOverlayEnabledOriginal = *bIsOriginOverlayEnabled;
 	bool isHttp = !strncmp(pUrl, "http://", 7) || !strncmp(pUrl, "https://", 8);

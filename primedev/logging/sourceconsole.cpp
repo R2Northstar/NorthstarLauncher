@@ -56,10 +56,8 @@ void SourceConsoleSink::sink_it_(const spdlog::details::log_msg& msg)
 
 void SourceConsoleSink::flush_() {}
 
-// clang-format off
 HOOK(OnCommandSubmittedHook, OnCommandSubmitted, 
 void, __fastcall, (CConsoleDialog* consoleDialog, const char* pCommand))
-// clang-format on
 {
 	consoleDialog->m_pConsolePanel->Print("] ");
 	consoleDialog->m_pConsolePanel->Print(pCommand);

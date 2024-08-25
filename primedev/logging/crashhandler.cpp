@@ -212,7 +212,6 @@ const CHAR* CCrashHandler::GetExceptionString() const
 //-----------------------------------------------------------------------------
 const CHAR* CCrashHandler::GetExceptionString(DWORD dwExceptionCode) const
 {
-	// clang-format off
 	switch (dwExceptionCode)
 	{
 	case EXCEPTION_ACCESS_VIOLATION:         return "EXCEPTION_ACCESS_VIOLATION";
@@ -239,7 +238,6 @@ const CHAR* CCrashHandler::GetExceptionString(DWORD dwExceptionCode) const
 	case EXCEPTION_INVALID_HANDLE:           return "EXCEPTION_INVALID_HANDLE";
 	case 3765269347:                         return "RUNTIME_EXCEPTION";
 	}
-	// clang-format on
 	return "UNKNOWN_EXCEPTION";
 }
 
@@ -256,7 +254,6 @@ bool CCrashHandler::IsExceptionFatal() const
 //-----------------------------------------------------------------------------
 bool CCrashHandler::IsExceptionFatal(DWORD dwExceptionCode) const
 {
-	// clang-format off
 	switch (dwExceptionCode)
 	{
 	case EXCEPTION_ACCESS_VIOLATION:
@@ -283,7 +280,6 @@ bool CCrashHandler::IsExceptionFatal(DWORD dwExceptionCode) const
 	case EXCEPTION_INVALID_HANDLE:
 		return true;
 	}
-	// clang-format on
 	return false;
 }
 
