@@ -275,7 +275,7 @@ public:
 	const char* m_pMapName; // 0x60 ( Size: 8 )
 	int m_nMapVersion; // 0x68 ( Size: 4 )
 
-	char unk[0x40];
+	char unk[0x3C];
 };
 #pragma pack(pop)
 static_assert(sizeof(CGlobalVars) == 0xA8);
