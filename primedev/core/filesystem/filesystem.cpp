@@ -44,10 +44,8 @@ std::string ReadVPKOriginalFile(const char* path)
 	return ret;
 }
 
-// clang-format off
 HOOK(AddSearchPathHook, AddSearchPath,
 void, __fastcall, (IFileSystem * fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType))
-// clang-format on
 {
 	AddSearchPath(fileSystem, pPath, pathID, addType);
 
@@ -97,10 +95,8 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 }
 
 // force modded files to be read from mods, not cache
-// clang-format off
 HOOK(ReadFromCacheHook, ReadFromCache,
 bool, __fastcall, (IFileSystem * filesystem, char* pPath, void* result))
-// clang-format off
 {
 	if (TryReplaceFile(pPath, true))
 		return false;
@@ -109,10 +105,8 @@ bool, __fastcall, (IFileSystem * filesystem, char* pPath, void* result))
 }
 
 // force modded files to be read from mods, not vpk
-// clang-format off
 AUTOHOOK(ReadFileFromVPK, filesystem_stdio.dll + 0x5CBA0,
 FileHandle_t, __fastcall, (VPKData* vpkInfo, uint64_t* b, char* filename))
-// clang-format on
 {
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
@@ -124,10 +118,8 @@ FileHandle_t, __fastcall, (VPKData* vpkInfo, uint64_t* b, char* filename))
 	return ReadFileFromVPK(vpkInfo, b, filename);
 }
 
-// clang-format off
 AUTOHOOK(CBaseFileSystem__OpenEx, filesystem_stdio.dll + 0x15F50,
 FileHandle_t, __fastcall, (IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename))
-// clang-format on
 {
 	TryReplaceFile(pPath, true);
 	return CBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);

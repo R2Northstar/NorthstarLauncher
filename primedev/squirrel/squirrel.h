@@ -356,9 +356,6 @@ void InitialiseSquirrelManagers();
 
 #pragma region MessageBuffer templates
 
-// Clang-formatting makes this whole thing unreadable
-// clang-format off
-
 #ifndef MessageBufferFuncs
 #define MessageBufferFuncs
 // Bools
@@ -444,7 +441,6 @@ inline void SqRecurseArgs(FunctionVector& v, T& arg, Args... args) {
 	SqRecurseArgs<context>(v, args...);
 }
 
-// clang-format on
 #endif
 
 #pragma endregion

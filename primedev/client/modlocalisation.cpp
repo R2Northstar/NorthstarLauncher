@@ -4,10 +4,8 @@ AUTOHOOK_INIT()
 
 void* g_pVguiLocalize;
 
-// clang-format off
 AUTOHOOK(CLocalize__AddFile, localize.dll + 0x6D80,
 bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, bool bIncludeFallbackSearchPaths))
-// clang-format on
 {
 	// save this for later
 	g_pVguiLocalize = pVguiLocalize;
@@ -19,10 +17,8 @@ bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, bo
 	return true;
 }
 
-// clang-format off
 AUTOHOOK(CLocalize__ReloadLocalizationFiles, localize.dll + 0xB830,
 void, __fastcall, (void* pVguiLocalize))
-// clang-format on
 {
 	// load all mod localization manually, so we keep track of all files, not just previously loaded ones
 	for (Mod mod : g_pModManager->m_LoadedMods)
@@ -34,10 +30,8 @@ void, __fastcall, (void* pVguiLocalize))
 	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
 }
 
-// clang-format off
 AUTOHOOK(CEngineVGui__Init, engine.dll + 0x247E10,
 void, __fastcall, (void* self))
-// clang-format on
 {
 	CEngineVGui__Init(self); // this loads r1_english, valve_english, dev_english
 

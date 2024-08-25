@@ -1296,10 +1296,8 @@ ON_DLL_LOAD("vstdlib.dll", KeyValues, (CModule module))
 
 AUTOHOOK_INIT()
 
-// clang-format off
 AUTOHOOK(KeyValues__LoadFromBuffer, engine.dll + 0x426C30,
 char, __fastcall, (KeyValues* self, const char* pResourceName, const char* pBuffer, void* pFileSystem, void* a5, void* a6, int a7))
-// clang-format on
 {
 	static void* pSavedFilesystemPtr = nullptr;
 

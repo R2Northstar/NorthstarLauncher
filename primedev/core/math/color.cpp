@@ -1,5 +1,4 @@
 
-// clang-format off
 namespace NS::Colors
 {
 	Color SCRIPT_UI		(100, 255, 255);
@@ -24,4 +23,3 @@ namespace NS::Colors
 	Color CRIT		(255, 0  , 0  );
 	Color OFF		(0  , 0  , 0  );
 };
-// clang-format on

@@ -122,10 +122,8 @@ OverlayBase_t** s_pOverlays;
 int* g_nRenderTickCount;
 int* g_nOverlayTickCount;
 
-// clang-format off
 AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
 void, __fastcall, (OverlayBase_t * pOverlay))
-// clang-format on
 {
 	EnterCriticalSection(s_OverlayMutex);
 
@@ -205,10 +203,8 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	LeaveCriticalSection(s_OverlayMutex);
 }
 
-// clang-format off
 AUTOHOOK(DrawAllOverlays, engine.dll + 0xAB780, 
 void, __fastcall, (bool bRender))
-// clang-format on
 {
 	EnterCriticalSection(s_OverlayMutex);
 

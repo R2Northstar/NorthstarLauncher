@@ -3,10 +3,8 @@
 AUTOHOOK_INIT()
 
 // this is called from  when our connection is rejected, this is the only case we're hooking this for
-// clang-format off
 AUTOHOOK(COM_ExplainDisconnection, engine.dll + 0x1342F0,
 void,, (bool a1, const char* fmt, ...))
-// clang-format on
 {
 	va_list va;
 	va_start(va, fmt);

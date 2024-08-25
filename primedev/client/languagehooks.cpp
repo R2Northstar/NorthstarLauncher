@@ -48,10 +48,8 @@ std::string GetAnyInstalledAudioLanguage()
 	return "NO LANGUAGE DETECTED";
 }
 
-// clang-format off
 AUTOHOOK(GetGameLanguage, tier0.dll + 0xF560,
 char*, __fastcall, ())
-// clang-format on
 {
 	auto tier0Handle = GetModuleHandleA("tier0.dll");
 	auto Tier0_DetectDefaultLanguageType = GetProcAddress(tier0Handle, "Tier0_DetectDefaultLanguage");
