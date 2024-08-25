@@ -3,7 +3,33 @@
 #include <string>
 #include <iostream>
 
-void InstallInitialHooks();
+//-----------------------------------------------------------------------------
+// Purpose: Init minhook
+//-----------------------------------------------------------------------------
+void HookSys_Init();
+
+//-----------------------------------------------------------------------------
+// Purpose: MH_MakeHook wrapper
+// Input  : *ppOriginal - Original function being detoured
+//          pDetour - Detour function
+//-----------------------------------------------------------------------------
+inline void HookAttach(PVOID* ppOriginal, PVOID pDetour)
+{
+	PVOID pAddr = *ppOriginal;
+	if (MH_CreateHook(pAddr, pDetour, ppOriginal) == MH_OK)
+	{
+		if (MH_EnableHook(pAddr) != MH_OK)
+		{
+			spdlog::error("Failed enabling a function hook!");
+		}
+	}
+	else
+	{
+		spdlog::error("Failed creating a function hook!");
+	}
+}
+
+void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress);
 
 typedef void (*DllLoadCallbackFuncType)(CModule moduleAddress);
 void AddDllLoadCallback(std::string dll, DllLoadCallbackFuncType callback, std::string tag = "", std::vector<std::string> reliesOn = {});
@@ -301,10 +327,7 @@ public:
 		pAutohook->vars.push_back(this);
 	}
 
-	void Dispatch()
-	{
-		*m_pTarget = (void*)ParseDLLOffsetString(m_pAddrString);
-	}
+	void Dispatch() { *m_pTarget = (void*)ParseDLLOffsetString(m_pAddrString); }
 };
 
 // VAR_AT(engine.dll+0x404, ConVar*, Cvar_host_timescale)
