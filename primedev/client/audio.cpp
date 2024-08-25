@@ -495,13 +495,11 @@ static bool __fastcall h_LoadSampleMetadata(void* sample, void* audioBuffer, uns
 	return res;
 }
 
-// clang-format off
-AUTOHOOK(sub_1800294C0, mileswin64.dll + 0x294C0,
-void*, __fastcall, (void* a1, void* a2))
-// clang-format on
+static void* (__fastcall* o_pSub_1800294C0)(void* a1, void* a2) = nullptr;
+static void* __fastcall h_Sub_1800294C0(void* a1, void* a2)
 {
 	pszAudioEventName = reinterpret_cast<const char*>((*((__int64*)a2 + 6)));
-	return sub_1800294C0(a1, a2);
+	return o_pSub_1800294C0(a1, a2);
 }
 
 // clang-format off
@@ -519,6 +517,9 @@ ON_DLL_LOAD("mileswin64.dll", MilesWin64_Audio, (CModule module))
 {
 	o_pLoadSampleMetadata = module.Offset(0xF110).RCast<decltype(o_pLoadSampleMetadata)>();
 	HookAttach(&(PVOID&)o_pLoadSampleMetadata, (PVOID)h_LoadSampleMetadata);
+
+	o_pSub_1800294C0 = module.Offset(0x294C0).RCast<decltype(o_pSub_1800294C0)>();
+	HookAttach(&(PVOID&)o_pSub_1800294C0, (PVOID)h_Sub_1800294C0);
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
