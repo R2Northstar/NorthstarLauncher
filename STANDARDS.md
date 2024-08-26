@@ -2,6 +2,10 @@
 
 There are exceptions, ask for them!
 
+### Preamble
+
+You are more than welcome to reformat any existing files using these rules should they fail to match them but please SPLIT your formatting changes from the rest by making a separate PR!
+
 ### General rules
 
 > Basic rules that apply all the time.
