@@ -2,10 +2,8 @@
 
 AUTOHOOK_INIT()
 
-// clang-format off
-AUTOHOOK_PROCADDRESS(BinkOpen, bink2w64.dll, BinkOpen, 
-void*, __fastcall, (const char* path, uint32_t flags))
-// clang-format on
+static void* (*__fastcall o_pBinkOpen)(const char* path, uint32_t flags) = nullptr;
+static void* __fastcall h_BinkOpen(const char* path, uint32_t flags)
 {
 	std::string filename(fs::path(path).filename().string());
 	spdlog::info("BinkOpen {}", filename);
@@ -25,10 +23,16 @@ void*, __fastcall, (const char* path, uint32_t flags))
 	{
 		// create new path
 		fs::path binkPath(fileOwner->m_ModDirectory / "media" / filename);
-		return BinkOpen(binkPath.string().c_str(), flags);
+		return o_pBinkOpen(binkPath.string().c_str(), flags);
 	}
 	else
-		return BinkOpen(path, flags);
+		return o_pBinkOpen(path, flags);
+}
+
+ON_DLL_LOAD_CLIENT("bink2w64.dll", BinkRead, (CModule module))
+{
+	o_pBinkOpen = module.GetExportedFunction("BinkOpen").RCast<decltype(o_pBinkOpen)>();
+	HookAttach(&(PVOID&)o_pBinkOpen, (PVOID)h_BinkOpen);
 }
 
 ON_DLL_LOAD_CLIENT("engine.dll", BinkVideo, (CModule module))
