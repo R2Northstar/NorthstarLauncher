@@ -1,7 +1,5 @@
 #include "core/convar/convar.h"
 
-AUTOHOOK_INIT()
-
 ConVar* Cvar_rui_drawEnable;
 
 static bool (*__fastcall o_pDrawRUIFunc)(void* a1, float* a2) = nullptr;
@@ -15,8 +13,6 @@ static bool __fastcall h_DrawRUIFunc(void* a1, float* a2)
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", RUI, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pDrawRUIFunc = module.Offset(0xFC500).RCast<decltype(o_pDrawRUIFunc)>();
 	HookAttach(&(PVOID&)o_pDrawRUIFunc, (PVOID)h_DrawRUIFunc);
 
