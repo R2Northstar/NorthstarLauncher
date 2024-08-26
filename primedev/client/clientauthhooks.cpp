@@ -3,8 +3,6 @@
 #include "client/r2client.h"
 #include "core/vanilla.h"
 
-AUTOHOOK_INIT()
-
 ConVar* Cvar_ns_has_agreed_to_send_token;
 
 // mirrored in script
@@ -55,7 +53,6 @@ static char* __fastcall h_Auth3PToken()
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
 	o_pAuthWithStryder = module.Offset(0x1843A0).RCast<decltype(o_pAuthWithStryder)>();
 	HookAttach(&(PVOID&)o_pAuthWithStryder, (PVOID)h_AuthWithStryder);
 
