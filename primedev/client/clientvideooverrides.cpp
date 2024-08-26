@@ -1,7 +1,5 @@
 #include "mods/modmanager.h"
 
-AUTOHOOK_INIT()
-
 static void* (*__fastcall o_pBinkOpen)(const char* path, uint32_t flags) = nullptr;
 static void* __fastcall h_BinkOpen(const char* path, uint32_t flags)
 {
@@ -37,8 +35,6 @@ ON_DLL_LOAD_CLIENT("bink2w64.dll", BinkRead, (CModule module))
 
 ON_DLL_LOAD_CLIENT("engine.dll", BinkVideo, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	// remove engine check for whether the bik we're trying to load exists in r2/media, as this will fail for biks in mods
 	// note: the check in engine is actually unnecessary, so it's just useless in practice and we lose nothing by removing it
 	module.Offset(0x459AD).NOP(6);
