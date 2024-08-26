@@ -41,10 +41,8 @@ static void __fastcall h_AuthWithStryder(void* a1)
 
 char* p3PToken;
 
-// clang-format off
-AUTOHOOK(Auth3PToken, engine.dll + 0x183760,
-char*, __fastcall, ())
-// clang-format on
+static char* (*__fastcall o_pAuth3PToken)() = nullptr;
+static char* __fastcall h_Auth3PToken()
 {
 	if (!g_pVanillaCompatibility->GetVanillaCompatibility() && g_pMasterServerManager->m_sOwnClientAuthToken[0])
 	{
@@ -52,7 +50,7 @@ char*, __fastcall, ())
 		strcpy(p3PToken, "Protocol 3: Protect the Pilot");
 	}
 
-	return Auth3PToken();
+	return o_pAuth3PToken();
 }
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule module))
@@ -60,6 +58,9 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule modu
 	AUTOHOOK_DISPATCH()
 	o_pAuthWithStryder = module.Offset(0x1843A0).RCast<decltype(o_pAuthWithStryder)>();
 	HookAttach(&(PVOID&)o_pAuthWithStryder, (PVOID)h_AuthWithStryder);
+
+	o_pAuth3PToken = module.Offset(0x183760).RCast<decltype(o_pAuth3PToken)>();
+	HookAttach(&(PVOID&)o_pAuth3PToken, (PVOID)h_Auth3PToken);
 
 	p3PToken = module.Offset(0x13979D80).RCast<char*>();
 
