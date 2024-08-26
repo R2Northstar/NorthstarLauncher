@@ -12,16 +12,14 @@ const int NOT_DECIDED_TO_SEND_TOKEN = 0;
 const int AGREED_TO_SEND_TOKEN = 1;
 const int DISAGREED_TO_SEND_TOKEN = 2;
 
-// clang-format off
-AUTOHOOK(AuthWithStryder, engine.dll + 0x1843A0,
-void, __fastcall, (void* a1))
-// clang-format on
+static void (*__fastcall o_pAuthWithStryder)(void* a1) = nullptr;
+static void __fastcall h_AuthWithStryder(void* a1)
 {
 	// don't attempt to do Atlas auth if we are in vanilla compatibility mode
 	// this prevents users from joining untrustworthy servers (unless they use a concommand or something)
 	if (g_pVanillaCompatibility->GetVanillaCompatibility())
 	{
-		AuthWithStryder(a1);
+		o_pAuthWithStryder(a1);
 		return;
 	}
 
@@ -38,7 +36,7 @@ void, __fastcall, (void* a1))
 		*g_pLocalPlayerOriginToken = 0;
 	}
 
-	AuthWithStryder(a1);
+	o_pAuthWithStryder(a1);
 }
 
 char* p3PToken;
@@ -60,6 +58,8 @@ char*, __fastcall, ())
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", ClientAuthHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+	o_pAuthWithStryder = module.Offset(0x1843A0).RCast<decltype(o_pAuthWithStryder)>();
+	HookAttach(&(PVOID&)o_pAuthWithStryder, (PVOID)h_AuthWithStryder);
 
 	p3PToken = module.Offset(0x13979D80).RCast<char*>();
 
