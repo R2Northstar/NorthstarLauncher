@@ -5,8 +5,6 @@
 #include "core/math/vector.h"
 #include "server/ai_helper.h"
 
-AUTOHOOK_INIT()
-
 enum OverlayType_t
 {
 	OVERLAY_BOX = 0,
@@ -273,8 +271,6 @@ static void __fastcall h_DrawAllOverlays(bool bRender)
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pDrawOverlay = module.Offset(0xABCB0).RCast<decltype(o_pDrawOverlay)>();
 	HookAttach(&(PVOID&)o_pDrawOverlay, (PVOID)h_DrawOverlay);
 
