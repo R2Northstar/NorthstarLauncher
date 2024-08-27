@@ -97,9 +97,9 @@ void PakLoadManager::TrackModPaks(Mod& mod)
 // Untracks all paks that aren't currently loaded and are marked for unload.
 void PakLoadManager::CleanUpUnloadedPaks()
 {
-	auto predicate = [](ModPak_t& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == PakHandle::INVALID; };
+	auto fnPredicate = [](ModPak_t& pak) -> bool { return pak.m_markedForDelete && pak.m_handle == PakHandle::INVALID; };
 
-	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), predicate), m_modPaks.end());
+	m_modPaks.erase(std::remove_if(m_modPaks.begin(), m_modPaks.end(), fnPredicate), m_modPaks.end());
 }
 
 // Unloads all paks that are marked for unload.
@@ -189,9 +189,9 @@ void PakLoadManager::OnPakUnloading(PakHandle handle)
 	if (IsVanillaCall())
 	{
 		// remove entry from loaded vanilla rpaks
-		auto predicate = [handle](std::pair<std::string, PakHandle>& pair) -> bool { return pair.second == handle; };
+		auto fnPredicate = [handle](std::pair<std::string, PakHandle>& pair) -> bool { return pair.second == handle; };
 
-		m_vanillaPaks.erase(std::remove_if(m_vanillaPaks.begin(), m_vanillaPaks.end(), predicate), m_vanillaPaks.end());
+		m_vanillaPaks.erase(std::remove_if(m_vanillaPaks.begin(), m_vanillaPaks.end(), fnPredicate), m_vanillaPaks.end());
 
 		// no need to handle aliasing here, if vanilla wants it gone, it's gone
 	}
@@ -305,7 +305,7 @@ void PakLoadManager::UnloadDependentPaks(PakHandle handle)
 	++m_reentranceCounter;
 	const ScopeGuard guard([&]() { --m_reentranceCounter; });
 
-	auto predicate = [&](std::pair<PakHandle, size_t>& pair) -> bool
+	auto fnPredicate = [&](std::pair<PakHandle, size_t>& pair) -> bool
 	{
 		if (pair.first != handle)
 			return false;
@@ -322,7 +322,7 @@ void PakLoadManager::UnloadDependentPaks(PakHandle handle)
 
 		return true;
 	};
-	m_dependentPaks.erase(std::remove_if(m_dependentPaks.begin(), m_dependentPaks.end(), predicate), m_dependentPaks.end());
+	m_dependentPaks.erase(std::remove_if(m_dependentPaks.begin(), m_dependentPaks.end(), fnPredicate), m_dependentPaks.end());
 }
 
 // Handles aliases for rpaks defined in rpak.json, effectively redirecting an rpak load to a different path.
