@@ -151,7 +151,6 @@ add_library(
     "squirrel/squirrelautobind.cpp"
     "squirrel/squirrelautobind.h"
     "squirrel/squirrelclasstypes.h"
-    "squirrel/squirreldatatypes.h"
     "util/printcommands.cpp"
     "util/printcommands.h"
     "util/printmaps.cpp"
@@ -167,7 +166,7 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-    )
+     "vscript/vscript.h" "vscript/languages/squirrel_re/squirrel/sqvm.h" "vscript/languages/squirrel_re/vsquirrel.h")
 
 target_link_libraries(
     NorthstarDLL
