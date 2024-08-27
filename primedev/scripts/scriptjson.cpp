@@ -9,8 +9,8 @@
 #undef GetObject // fuck microsoft developers
 #endif
 
-template <ScriptContext context> void
-DecodeJsonArray(HSQUIRRELVM sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
+template <ScriptContext context>
+void DecodeJsonArray(HSQUIRRELVM sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* arr)
 {
 	g_pSquirrel<context>->newarray(sqvm, 0);
 
@@ -48,8 +48,8 @@ DecodeJsonArray(HSQUIRRELVM sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>,
 	}
 }
 
-template <ScriptContext context> void
-DecodeJsonTable(HSQUIRRELVM sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
+template <ScriptContext context>
+void DecodeJsonTable(HSQUIRRELVM sqvm, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<SourceAllocator>>* obj)
 {
 	g_pSquirrel<context>->newtable(sqvm);
 
