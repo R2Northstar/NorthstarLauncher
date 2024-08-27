@@ -203,10 +203,8 @@ static void __fastcall h_DrawOverlay(OverlayBase_t* pOverlay)
 	LeaveCriticalSection(s_OverlayMutex);
 }
 
-// clang-format off
-AUTOHOOK(DrawAllOverlays, engine.dll + 0xAB780, 
-void, __fastcall, (bool bRender))
-// clang-format on
+static void (__fastcall *o_pDrawAllOverlays)(bool bRender) = nullptr;
+static void __fastcall h_DrawAllOverlays(bool bRender)
 {
 	EnterCriticalSection(s_OverlayMutex);
 
@@ -279,6 +277,9 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module)
 
 	o_pDrawOverlay = module.Offset(0xABCB0).RCast<decltype(o_pDrawOverlay)>();
 	HookAttach(&(PVOID&)o_pDrawOverlay, (PVOID)h_DrawOverlay);
+
+	o_pDrawAllOverlays = module.Offset(0xAB780).RCast<decltype(o_pDrawAllOverlays)>();
+	HookAttach(&(PVOID&)o_pDrawAllOverlays, (PVOID)h_DrawAllOverlays);
 
 	OverlayBase_t__IsDead = module.Offset(0xACAC0).RCast<decltype(OverlayBase_t__IsDead)>();
 	OverlayBase_t__DestroyOverlay = module.Offset(0xAB680).RCast<decltype(OverlayBase_t__DestroyOverlay)>();
