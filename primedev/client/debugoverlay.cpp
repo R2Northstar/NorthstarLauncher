@@ -122,10 +122,8 @@ OverlayBase_t** s_pOverlays;
 int* g_nRenderTickCount;
 int* g_nOverlayTickCount;
 
-// clang-format off
-AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
-void, __fastcall, (OverlayBase_t * pOverlay))
-// clang-format on
+static void(__fastcall* o_pDrawOverlay)(OverlayBase_t* pOverlay) = nullptr;
+static void __fastcall h_DrawOverlay(OverlayBase_t* pOverlay)
 {
 	EnterCriticalSection(s_OverlayMutex);
 
@@ -259,10 +257,7 @@ void, __fastcall, (bool bRender))
 
 			if (bShouldDraw && bRender && (Cvar_enable_debug_overlays->GetBool() || pCurrOverlay->m_Type == OVERLAY_SMARTAMMO))
 			{
-				// call the new function, not the original
-				// note: if there is a beter way to call the hooked version of an
-				// autohook func then that would be better than this
-				__autohookfuncDrawOverlay(pCurrOverlay);
+				h_DrawOverlay(pCurrOverlay);
 			}
 
 			pPrevOverlay = pCurrOverlay;
@@ -281,6 +276,9 @@ void, __fastcall, (bool bRender))
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+
+	o_pDrawOverlay = module.Offset(0xABCB0).RCast<decltype(o_pDrawOverlay)>();
+	HookAttach(&(PVOID&)o_pDrawOverlay, (PVOID)h_DrawOverlay);
 
 	OverlayBase_t__IsDead = module.Offset(0xACAC0).RCast<decltype(OverlayBase_t__IsDead)>();
 	OverlayBase_t__DestroyOverlay = module.Offset(0xAB680).RCast<decltype(OverlayBase_t__DestroyOverlay)>();
