@@ -161,12 +161,29 @@ add_library(
     "util/version.h"
     "util/wininfo.cpp"
     "util/wininfo.h"
+	"vscript/languages/squirrel_re/include/squirrel.h"
+	"vscript/languages/squirrel_re/squirrel/sqarray.h"
+	"vscript/languages/squirrel_re/squirrel/sqclosure.h"
+	"vscript/languages/squirrel_re/squirrel/sqcompiler.h"
+	"vscript/languages/squirrel_re/squirrel/sqfunctionproto.h"
+	"vscript/languages/squirrel_re/squirrel/sqlexer.h"
+	"vscript/languages/squirrel_re/squirrel/sqobject.h"
+	"vscript/languages/squirrel_re/squirrel/sqopcodes.h"
+	"vscript/languages/squirrel_re/squirrel/sqstate.h"
+	"vscript/languages/squirrel_re/squirrel/sqstring.h"
+	"vscript/languages/squirrel_re/squirrel/sqstruct.h"
+	"vscript/languages/squirrel_re/squirrel/sqtable.h"
+	"vscript/languages/squirrel_re/squirrel/squserdata.h"
+	"vscript/languages/squirrel_re/squirrel/sqvector.h"
+	"vscript/languages/squirrel_re/squirrel/sqvm.h"
+	"vscript/languages/squirrel_re/vsquirrel.h"
+    "vscript/vscript.h"
     "windows/libsys.cpp"
     "windows/libsys.h"
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-     "vscript/vscript.h" "vscript/languages/squirrel_re/squirrel/sqvm.h" "vscript/languages/squirrel_re/vsquirrel.h")
+    )
 
 target_link_libraries(
     NorthstarDLL

@@ -12,4 +12,4 @@ struct SQUserData : public SQDelegable
 	long long typeId;
 	char data[1];
 };
-static_assert(sizeof(SQUserData) == 88);  // [Fifty]: Game allocates 87 + size (passed to the function)
+static_assert(sizeof(SQUserData) == 88); // [Fifty]: Game allocates 87 + size (passed to the function)

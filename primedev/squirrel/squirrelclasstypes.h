@@ -4,7 +4,6 @@
 
 #include <queue>
 
-
 const std::map<SQRESULT, const char*> PrintSQRESULT = {
 	{SQRESULT::SQRESULT_ERROR, "SQRESULT_ERROR"},
 	{SQRESULT::SQRESULT_NULL, "SQRESULT_NULL"},
