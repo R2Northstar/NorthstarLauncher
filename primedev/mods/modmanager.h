@@ -74,7 +74,9 @@ public:
 struct ModRpakEntry
 {
 public:
-	ModRpakEntry(Mod& parent) : m_parent(parent), m_loadRegex("^thisMatchesNothing^") // discord couldnt give me a funny string
+	ModRpakEntry(Mod& parent)
+		: m_parent(parent)
+		, m_loadRegex("^thisMatchesNothing^") // discord couldnt give me a funny string
 	{
 	}
 
