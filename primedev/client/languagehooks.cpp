@@ -46,7 +46,7 @@ std::string GetAnyInstalledAudioLanguage()
 	return "NO LANGUAGE DETECTED";
 }
 
-static char* (__fastcall* o_pGetGameLanguage)() = nullptr;
+static char*(__fastcall* o_pGetGameLanguage)() = nullptr;
 static char* __fastcall h_GetGameLanguage()
 {
 	auto tier0Handle = GetModuleHandleA("tier0.dll");
