@@ -1,7 +1,5 @@
 #include "core/convar/convar.h"
 
-AUTOHOOK_INIT()
-
 ConVar* Cvar_r_latencyflex;
 
 void (*m_winelfx_WaitAndBeginFrame)();
@@ -34,7 +32,6 @@ ON_DLL_LOAD_CLIENT_RELIESON("client.dll", LatencyFlex, ConVar, (CModule module))
 		return;
 	}
 
-	AUTOHOOK_DISPATCH()
 	o_pOnRenderStart = module.Offset(0x1952C0).RCast<decltype(o_pOnRenderStart)>();
 	HookAttach(&(PVOID&)o_pOnRenderStart, (PVOID)h_OnRenderStart);
 
