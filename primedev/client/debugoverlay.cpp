@@ -201,7 +201,7 @@ static void __fastcall h_DrawOverlay(OverlayBase_t* pOverlay)
 	LeaveCriticalSection(s_OverlayMutex);
 }
 
-static void (__fastcall *o_pDrawAllOverlays)(bool bRender) = nullptr;
+static void(__fastcall* o_pDrawAllOverlays)(bool bRender) = nullptr;
 static void __fastcall h_DrawAllOverlays(bool bRender)
 {
 	EnterCriticalSection(s_OverlayMutex);
