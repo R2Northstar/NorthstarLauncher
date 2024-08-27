@@ -415,7 +415,7 @@ PakHandle, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 // clang-format on
 {
 	// make a copy of the path for comparing to determine whether we should load this pak on dedi, before it could get overwritten
-	std::string originalPath(pPath);
+	std::string svOriginalPath(pPath);
 
 	std::string resultingPath(pPath);
 	HandlePakAliases(resultingPath);
@@ -432,9 +432,9 @@ PakHandle, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 		// sp_<map> rpaks contain tutorial ghost data
 		// sucks to have to load the entire rpak for that but sp was never meant to be done on dedi
 		if (IsDedicatedServer() &&
-			(CommandLine()->CheckParm("-nopakdedi") || strncmp(&originalPath[0], "common", 6) && strncmp(&originalPath[0], "sp_", 3)))
+			(CommandLine()->CheckParm("-nopakdedi") || strncmp(&svOriginalPath[0], "common", 6) && strncmp(&svOriginalPath[0], "sp_", 3)))
 		{
-			NS::log::rpak->info("Not loading pak {} for dedicated server", originalPath);
+			NS::log::rpak->info("Not loading pak {} for dedicated server", svOriginalPath);
 			return PakHandle::INVALID;
 		}
 	}
@@ -442,7 +442,7 @@ PakHandle, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 	PakHandle iPakHandle = LoadPakAsync(resultingPath.c_str(), memoryAllocator, flags);
 	NS::log::rpak->info("LoadPakAsync {} {}", resultingPath, iPakHandle);
 
-	g_pPakLoadManager->OnPakLoaded(originalPath, resultingPath, iPakHandle);
+	g_pPakLoadManager->OnPakLoaded(svOriginalPath, resultingPath, iPakHandle);
 
 	return iPakHandle;
 }
