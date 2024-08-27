@@ -52,7 +52,6 @@ public:
 	ModuleSections_t GetSectionByName(const char* szSectionName) const;
 
 	inline const std::vector<CModule::ModuleSections_t>& GetSections() const { return m_ModuleSections; }
-	inline const std::vector<std::string>& GetImportedModules() const { return m_vImportedModules; }
 	inline uintptr_t     GetModuleBase(void) const { return m_pModuleBase; }
 	inline DWORD         GetModuleSize(void) const { return m_nModuleSize; }
 	inline const std::string& GetModuleName(void) const { return m_ModuleName; }
@@ -74,5 +73,4 @@ private:
 	uintptr_t                     m_pModuleBase;
 	DWORD                         m_nModuleSize;
 	std::vector<ModuleSections_t> m_ModuleSections;
-	std::vector<std::string> m_vImportedModules;
 };
