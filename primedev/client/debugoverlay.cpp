@@ -5,8 +5,6 @@
 #include "core/math/vector.h"
 #include "server/ai_helper.h"
 
-AUTOHOOK_INIT()
-
 enum OverlayType_t
 {
 	OVERLAY_BOX = 0,
@@ -41,10 +39,7 @@ struct OverlayBase_t
 
 struct OverlayLine_t : public OverlayBase_t
 {
-	OverlayLine_t()
-	{
-		m_Type = OVERLAY_LINE;
-	}
+	OverlayLine_t() { m_Type = OVERLAY_LINE; }
 
 	Vector3 origin;
 	Vector3 dest;
@@ -57,10 +52,7 @@ struct OverlayLine_t : public OverlayBase_t
 
 struct OverlayBox_t : public OverlayBase_t
 {
-	OverlayBox_t()
-	{
-		m_Type = OVERLAY_BOX;
-	}
+	OverlayBox_t() { m_Type = OVERLAY_BOX; }
 
 	Vector3 origin;
 	Vector3 mins;
@@ -74,10 +66,7 @@ struct OverlayBox_t : public OverlayBase_t
 
 struct OverlayTriangle_t : public OverlayBase_t
 {
-	OverlayTriangle_t()
-	{
-		m_Type = OVERLAY_TRIANGLE;
-	}
+	OverlayTriangle_t() { m_Type = OVERLAY_TRIANGLE; }
 
 	Vector3 p1;
 	Vector3 p2;
@@ -91,10 +80,7 @@ struct OverlayTriangle_t : public OverlayBase_t
 
 struct OverlaySweptBox_t : public OverlayBase_t
 {
-	OverlaySweptBox_t()
-	{
-		m_Type = OVERLAY_SWEPT_BOX;
-	}
+	OverlaySweptBox_t() { m_Type = OVERLAY_SWEPT_BOX; }
 
 	Vector3 start;
 	Vector3 end;
@@ -109,10 +95,7 @@ struct OverlaySweptBox_t : public OverlayBase_t
 
 struct OverlaySphere_t : public OverlayBase_t
 {
-	OverlaySphere_t()
-	{
-		m_Type = OVERLAY_SPHERE;
-	}
+	OverlaySphere_t() { m_Type = OVERLAY_SPHERE; }
 
 	Vector3 vOrigin;
 	float flRadius;
@@ -137,10 +120,8 @@ OverlayBase_t** s_pOverlays;
 int* g_nRenderTickCount;
 int* g_nOverlayTickCount;
 
-// clang-format off
-AUTOHOOK(DrawOverlay, engine.dll + 0xABCB0, 
-void, __fastcall, (OverlayBase_t * pOverlay))
-// clang-format on
+static void(__fastcall* o_pDrawOverlay)(OverlayBase_t* pOverlay) = nullptr;
+static void __fastcall h_DrawOverlay(OverlayBase_t* pOverlay)
 {
 	EnterCriticalSection(s_OverlayMutex);
 
@@ -220,10 +201,8 @@ void, __fastcall, (OverlayBase_t * pOverlay))
 	LeaveCriticalSection(s_OverlayMutex);
 }
 
-// clang-format off
-AUTOHOOK(DrawAllOverlays, engine.dll + 0xAB780, 
-void, __fastcall, (bool bRender))
-// clang-format on
+static void(__fastcall* o_pDrawAllOverlays)(bool bRender) = nullptr;
+static void __fastcall h_DrawAllOverlays(bool bRender)
 {
 	EnterCriticalSection(s_OverlayMutex);
 
@@ -274,10 +253,7 @@ void, __fastcall, (bool bRender))
 
 			if (bShouldDraw && bRender && (Cvar_enable_debug_overlays->GetBool() || pCurrOverlay->m_Type == OVERLAY_SMARTAMMO))
 			{
-				// call the new function, not the original
-				// note: if there is a beter way to call the hooked version of an
-				// autohook func then that would be better than this
-				__autohookfuncDrawOverlay(pCurrOverlay);
+				h_DrawOverlay(pCurrOverlay);
 			}
 
 			pPrevOverlay = pCurrOverlay;
@@ -295,7 +271,11 @@ void, __fastcall, (bool bRender))
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", DebugOverlay, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
+	o_pDrawOverlay = module.Offset(0xABCB0).RCast<decltype(o_pDrawOverlay)>();
+	HookAttach(&(PVOID&)o_pDrawOverlay, (PVOID)h_DrawOverlay);
+
+	o_pDrawAllOverlays = module.Offset(0xAB780).RCast<decltype(o_pDrawAllOverlays)>();
+	HookAttach(&(PVOID&)o_pDrawAllOverlays, (PVOID)h_DrawAllOverlays);
 
 	OverlayBase_t__IsDead = module.Offset(0xACAC0).RCast<decltype(OverlayBase_t__IsDead)>();
 	OverlayBase_t__DestroyOverlay = module.Offset(0xAB680).RCast<decltype(OverlayBase_t__DestroyOverlay)>();
