@@ -1,7 +1,5 @@
 #include "engine/r2engine.h"
 
-AUTOHOOK_INIT()
-
 // this is called from  when our connection is rejected, this is the only case we're hooking this for
 static void (*o_pCOM_ExplainDisconnection)(bool a1, const char* fmt, ...) = nullptr;
 static void h_COM_ExplainDisconnection(bool a1, const char* fmt, ...)
@@ -28,7 +26,6 @@ static void h_COM_ExplainDisconnection(bool a1, const char* fmt, ...)
 
 ON_DLL_LOAD_CLIENT("engine.dll", RejectConnectionFixes, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
 	o_pCOM_ExplainDisconnection = module.Offset(0x1342F0).RCast<decltype(o_pCOM_ExplainDisconnection)>();
 	HookAttach(&(PVOID&)o_pCOM_ExplainDisconnection, (PVOID)h_COM_ExplainDisconnection);
 }
