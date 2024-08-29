@@ -31,12 +31,10 @@ static void __fastcall h_CLocalize__ReloadLocalizationFiles(void* pVguiLocalize)
 	o_pCLocalize__ReloadLocalizationFiles(pVguiLocalize);
 }
 
-// clang-format off
-AUTOHOOK(CEngineVGui__Init, engine.dll + 0x247E10,
-void, __fastcall, (void* self))
-// clang-format on
+static void(__fastcall* o_pCEngineVGui__Init)(void* self) = nullptr;
+static void __fastcall h_CEngineVGui__Init(void* self)
 {
-	CEngineVGui__Init(self); // this loads r1_english, valve_english, dev_english
+	o_pCEngineVGui__Init(self); // this loads r1_english, valve_english, dev_english
 
 	// previously we did this in CLocalize::AddFile, but for some reason it won't properly overwrite localization from
 	// files loaded previously if done there, very weird but this works so whatever
@@ -44,6 +42,12 @@ void, __fastcall, (void* self))
 		if (mod.m_bEnabled)
 			for (std::string& localisationFile : mod.LocalisationFiles)
 				o_pCLocalise__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
+}
+
+ON_DLL_LOAD_CLIENT("engine.dll", VGuiInit, (CModule module))
+{
+	o_pCEngineVGui__Init = module.Offset(0x247E10).RCast<decltype(o_pCEngineVGui__Init)>();
+	HookAttach(&(PVOID&)o_pCEngineVGui__Init, (PVOID)h_CEngineVGui__Init);
 }
 
 ON_DLL_LOAD_CLIENT("localize.dll", Localize, (CModule module))
