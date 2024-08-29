@@ -18,10 +18,8 @@ static bool __fastcall h_CLocalise__AddFile(void* pVguiLocalize, const char* pat
 	return true;
 }
 
-// clang-format off
-AUTOHOOK(CLocalize__ReloadLocalizationFiles, localize.dll + 0xB830,
-void, __fastcall, (void* pVguiLocalize))
-// clang-format on
+static void(__fastcall* o_pCLocalize__ReloadLocalizationFiles)(void* pVguiLocalize) = nullptr;
+static void __fastcall h_CLocalize__ReloadLocalizationFiles(void* pVguiLocalize)
 {
 	// load all mod localization manually, so we keep track of all files, not just previously loaded ones
 	for (Mod mod : g_pModManager->m_LoadedMods)
@@ -30,7 +28,7 @@ void, __fastcall, (void* pVguiLocalize))
 				o_pCLocalise__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 
 	spdlog::info("reloading localization...");
-	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
+	o_pCLocalize__ReloadLocalizationFiles(pVguiLocalize);
 }
 
 // clang-format off
@@ -53,4 +51,7 @@ ON_DLL_LOAD_CLIENT("localize.dll", Localize, (CModule module))
 	AUTOHOOK_DISPATCH()
 	o_pCLocalise__AddFile = module.Offset(0x6D80).RCast<decltype(o_pCLocalise__AddFile)>();
 	HookAttach(&(PVOID&)o_pCLocalise__AddFile, (PVOID)h_CLocalise__AddFile);
+
+	o_pCLocalize__ReloadLocalizationFiles = module.Offset(0xB830).RCast<decltype(o_pCLocalize__ReloadLocalizationFiles)>();
+	HookAttach(&(PVOID&)o_pCLocalize__ReloadLocalizationFiles, (PVOID)h_CLocalize__ReloadLocalizationFiles);
 }
