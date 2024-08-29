@@ -36,10 +36,10 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER
 		// required on client
 		g_pSquirrel<context>->pushbool(sqvm, mod.RequiredOnClient);
 		g_pSquirrel<context>->sealstructslot(sqvm, 6);
-		g_pSquirrel<context>->sealstructslot(sqvm, 7);
 
 		// is remote
 		g_pSquirrel<context>->pushbool(sqvm, mod.m_bIsRemote);
+		g_pSquirrel<context>->sealstructslot(sqvm, 7);
 
 		// convars
 		g_pSquirrel<context>->newarray(sqvm);
