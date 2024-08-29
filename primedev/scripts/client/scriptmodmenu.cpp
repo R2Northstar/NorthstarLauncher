@@ -7,7 +7,7 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER
 
 	for (Mod& mod : g_pModManager->m_LoadedMods)
 	{
-		g_pSquirrel<context>->pushnewstructinstance(sqvm, 8);
+		g_pSquirrel<context>->pushnewstructinstance(sqvm, 9);
 
 		// name
 		g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
@@ -36,6 +36,10 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER
 		// required on client
 		g_pSquirrel<context>->pushbool(sqvm, mod.RequiredOnClient);
 		g_pSquirrel<context>->sealstructslot(sqvm, 6);
+		g_pSquirrel<context>->sealstructslot(sqvm, 7);
+
+		// is remote
+		g_pSquirrel<context>->pushbool(sqvm, mod.m_bIsRemote);
 
 		// convars
 		g_pSquirrel<context>->newarray(sqvm);
@@ -44,7 +48,7 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER
 			g_pSquirrel<context>->pushstring(sqvm, cvar->Name.c_str());
 			g_pSquirrel<context>->arrayappend(sqvm, -2);
 		}
-		g_pSquirrel<context>->sealstructslot(sqvm, 7);
+		g_pSquirrel<context>->sealstructslot(sqvm, 8);
 
 		// add current object to squirrel array
 		g_pSquirrel<context>->arrayappend(sqvm, -2);
@@ -103,25 +107,6 @@ ADD_SQFUNC(
 		{
 			mod.m_bEnabled = enabled;
 			return SQRESULT_NULL;
-		}
-	}
-
-	return SQRESULT_NULL;
-}
-
-ADD_SQFUNC(
-	"bool", NSIsModRemote, "string modName, string modVersion", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
-{
-	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
-	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
-
-	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.Name.compare(modName) && !mod.Version.compare(modVersion))
-		{
-			g_pSquirrel<context>->pushbool(sqvm, mod.m_bIsRemote);
-			return SQRESULT_NOTNULL;
 		}
 	}
 
