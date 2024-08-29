@@ -4,15 +4,14 @@ AUTOHOOK_INIT()
 
 void* g_pVguiLocalize;
 
-// clang-format off
-AUTOHOOK(CLocalize__AddFile, localize.dll + 0x6D80,
-bool, __fastcall, (void* pVguiLocalize, const char* path, const char* pathId, bool bIncludeFallbackSearchPaths))
-// clang-format on
+static bool(__fastcall* o_pCLocalise__AddFile)(
+	void* pVguiLocalize, const char* path, const char* pathId, bool bIncludeFallbackSearchPaths) = nullptr;
+static bool __fastcall h_CLocalise__AddFile(void* pVguiLocalize, const char* path, const char* pathId, bool bIncludeFallbackSearchPaths)
 {
 	// save this for later
 	g_pVguiLocalize = pVguiLocalize;
 
-	bool ret = CLocalize__AddFile(pVguiLocalize, path, pathId, bIncludeFallbackSearchPaths);
+	bool ret = o_pCLocalise__AddFile(pVguiLocalize, path, pathId, bIncludeFallbackSearchPaths);
 	if (ret)
 		spdlog::info("Loaded localisation file {} successfully", path);
 
@@ -28,7 +27,7 @@ void, __fastcall, (void* pVguiLocalize))
 	for (Mod mod : g_pModManager->m_LoadedMods)
 		if (mod.m_bEnabled)
 			for (std::string& localisationFile : mod.LocalisationFiles)
-				CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
+				o_pCLocalise__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 
 	spdlog::info("reloading localization...");
 	CLocalize__ReloadLocalizationFiles(pVguiLocalize);
@@ -46,10 +45,12 @@ void, __fastcall, (void* self))
 	for (Mod mod : g_pModManager->m_LoadedMods)
 		if (mod.m_bEnabled)
 			for (std::string& localisationFile : mod.LocalisationFiles)
-				CLocalize__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
+				o_pCLocalise__AddFile(g_pVguiLocalize, localisationFile.c_str(), nullptr, false);
 }
 
 ON_DLL_LOAD_CLIENT("localize.dll", Localize, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+	o_pCLocalise__AddFile = module.Offset(0x6D80).RCast<decltype(o_pCLocalise__AddFile)>();
+	HookAttach(&(PVOID&)o_pCLocalise__AddFile, (PVOID)h_CLocalise__AddFile);
 }
