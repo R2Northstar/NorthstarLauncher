@@ -1,7 +1,5 @@
 #include "mods/modmanager.h"
 
-AUTOHOOK_INIT()
-
 void* g_pVguiLocalize;
 
 static bool(__fastcall* o_pCLocalise__AddFile)(
@@ -52,7 +50,6 @@ ON_DLL_LOAD_CLIENT("engine.dll", VGuiInit, (CModule module))
 
 ON_DLL_LOAD_CLIENT("localize.dll", Localize, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
 	o_pCLocalise__AddFile = module.Offset(0x6D80).RCast<decltype(o_pCLocalise__AddFile)>();
 	HookAttach(&(PVOID&)o_pCLocalise__AddFile, (PVOID)h_CLocalise__AddFile);
 
