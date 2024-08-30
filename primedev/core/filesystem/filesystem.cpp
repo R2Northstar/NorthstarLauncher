@@ -97,15 +97,13 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 }
 
 // force modded files to be read from mods, not cache
-// clang-format off
-HOOK(ReadFromCacheHook, ReadFromCache,
-bool, __fastcall, (IFileSystem * filesystem, char* pPath, void* result))
-// clang-format off
+static bool(__fastcall* o_pReadFromCache)(IFileSystem * filesystem, char* pPath, void* result) = nullptr;
+static bool __fastcall h_ReadFromCache(IFileSystem * filesystem, char* pPath, void* result)
 {
 	if (TryReplaceFile(pPath, true))
 		return false;
 
-	return ReadFromCache(filesystem, pPath, result);
+	return o_pReadFromCache(filesystem, pPath, result);
 }
 
 static FileHandle_t(__fastcall* o_pReadFileFromVPK)(VPKData* vpkInfo, uint64_t* b, char* filename) = nullptr;
@@ -172,6 +170,9 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 	g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
 	AddSearchPathHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->AddSearchPath);
-	ReadFromCacheHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->ReadFromCache);
+
+	o_pReadFromCache = reinterpret_cast<decltype(o_pReadFromCache)>((*g_pFilesystem)->m_vtable->ReadFromCache);
+	HookAttach(&(PVOID&)o_pReadFromCache, (PVOID)h_ReadFromCache);
+
 	MountVPKHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->MountVPK);
 }
