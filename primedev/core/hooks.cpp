@@ -12,8 +12,6 @@
 
 namespace fs = std::filesystem;
 
-AUTOHOOK_INIT()
-
 // called from the ON_DLL_LOAD macros
 __dllLoadCallback::__dllLoadCallback(
 	eDllLoadCallbackSide side, const std::string dllName, DllLoadCallbackFuncType callback, std::string uniqueStr, std::string reliesOn)
@@ -395,8 +393,7 @@ void HookSys_Init()
 	{
 		spdlog::error("MH_Initialize (minhook initialization) failed");
 	}
-	// todo: remove remaining instances of autohook in this file
-	AUTOHOOK_DISPATCH()
+
 	o_pGetCommandLineA = GetCommandLineA;
 	HookAttach(&(PVOID&)o_pGetCommandLineA, (PVOID)h_GetCommandLineA);
 }
