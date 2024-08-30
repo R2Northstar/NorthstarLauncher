@@ -121,13 +121,11 @@ static FileHandle_t __fastcall h_ReadFileFromVPK(VPKData* vpkInfo, uint64_t* b, 
 	return o_pReadFileFromVPK(vpkInfo, b, filename);
 }
 
-// clang-format off
-AUTOHOOK(CBaseFileSystem__OpenEx, filesystem_stdio.dll + 0x15F50,
-FileHandle_t, __fastcall, (IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename))
-// clang-format on
+static FileHandle_t(__fastcall* o_pCBaseFileSystem__OpenEx)(IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename) = nullptr;
+static FileHandle_t __fastcall h_CBaseFileSystem__OpenEx(IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename)
 {
 	TryReplaceFile(pPath, true);
-	return CBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
+	return o_pCBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
 }
 
 HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* pVpkPath))
@@ -167,6 +165,9 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 	AUTOHOOK_DISPATCH()
 	o_pReadFileFromVPK = module.Offset(0x5CBA0).RCast<decltype(o_pReadFileFromVPK)>();
 	HookAttach(&(PVOID&)o_pReadFileFromVPK, (PVOID)h_ReadFileFromVPK);
+
+	o_pCBaseFileSystem__OpenEx = module.Offset(0x15F50).RCast<decltype(o_pCBaseFileSystem__OpenEx)>();
+	HookAttach(&(PVOID&)o_pCBaseFileSystem__OpenEx, (PVOID)h_CBaseFileSystem__OpenEx);
 
 	g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
