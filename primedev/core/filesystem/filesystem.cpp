@@ -44,18 +44,16 @@ std::string ReadVPKOriginalFile(const char* path)
 	return ret;
 }
 
-// clang-format off
-HOOK(AddSearchPathHook, AddSearchPath,
-void, __fastcall, (IFileSystem * fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType))
-// clang-format on
+static void(__fastcall* o_pAddSearchPath)(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType) = nullptr;
+static void __fastcall h_AddSearchPath(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType)
 {
-	AddSearchPath(fileSystem, pPath, pathID, addType);
+	o_pAddSearchPath(fileSystem, pPath, pathID, addType);
 
 	// make sure current mod paths are at head
 	if (!strcmp(pathID, "GAME") && sCurrentModPath.compare(pPath) && addType == PATH_ADD_TO_HEAD)
 	{
-		AddSearchPath(fileSystem, sCurrentModPath.c_str(), "GAME", PATH_ADD_TO_HEAD);
-		AddSearchPath(fileSystem, GetCompiledAssetsPath().string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+		o_pAddSearchPath(fileSystem, sCurrentModPath.c_str(), "GAME", PATH_ADD_TO_HEAD);
+		o_pAddSearchPath(fileSystem, GetCompiledAssetsPath().string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 	}
 }
 
@@ -67,13 +65,13 @@ void SetNewModSearchPaths(Mod* mod)
 	{
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
-			AddSearchPath(
+			o_pAddSearchPath(
 				&*(*g_pFilesystem), (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
 		}
 	}
 	else // push compiled to head
-		AddSearchPath(&*(*g_pFilesystem), fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+		o_pAddSearchPath(&*(*g_pFilesystem), fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 }
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile)
@@ -169,7 +167,8 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 
 	g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
-	AddSearchPathHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->AddSearchPath);
+	o_pAddSearchPath = reinterpret_cast<decltype(o_pAddSearchPath)>((*g_pFilesystem)->m_vtable->AddSearchPath);
+	HookAttach(&(PVOID&)o_pAddSearchPath, (PVOID)h_AddSearchPath);
 
 	o_pReadFromCache = reinterpret_cast<decltype(o_pReadFromCache)>((*g_pFilesystem)->m_vtable->ReadFromCache);
 	HookAttach(&(PVOID&)o_pReadFromCache, (PVOID)h_ReadFromCache);
