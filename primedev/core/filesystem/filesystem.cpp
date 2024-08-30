@@ -42,7 +42,8 @@ std::string ReadVPKOriginalFile(const char* path)
 	return ret;
 }
 
-static void(__fastcall* o_pAddSearchPath)(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType) = nullptr;
+static void(__fastcall* o_pAddSearchPath)(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType) =
+	nullptr;
 static void __fastcall h_AddSearchPath(IFileSystem* fileSystem, const char* pPath, const char* pathID, SearchPathAdd_t addType)
 {
 	o_pAddSearchPath(fileSystem, pPath, pathID, addType);
@@ -93,8 +94,8 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 }
 
 // force modded files to be read from mods, not cache
-static bool(__fastcall* o_pReadFromCache)(IFileSystem * filesystem, char* pPath, void* result) = nullptr;
-static bool __fastcall h_ReadFromCache(IFileSystem * filesystem, char* pPath, void* result)
+static bool(__fastcall* o_pReadFromCache)(IFileSystem* filesystem, char* pPath, void* result) = nullptr;
+static bool __fastcall h_ReadFromCache(IFileSystem* filesystem, char* pPath, void* result)
 {
 	if (TryReplaceFile(pPath, true))
 		return false;
@@ -115,8 +116,11 @@ static FileHandle_t __fastcall h_ReadFileFromVPK(VPKData* vpkInfo, uint64_t* b, 
 	return o_pReadFileFromVPK(vpkInfo, b, filename);
 }
 
-static FileHandle_t(__fastcall* o_pCBaseFileSystem__OpenEx)(IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename) = nullptr;
-static FileHandle_t __fastcall h_CBaseFileSystem__OpenEx(IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char **ppszResolvedFilename)
+static FileHandle_t(__fastcall* o_pCBaseFileSystem__OpenEx)(
+	IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char** ppszResolvedFilename) =
+	nullptr;
+static FileHandle_t __fastcall h_CBaseFileSystem__OpenEx(
+	IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char** ppszResolvedFilename)
 {
 	TryReplaceFile(pPath, true);
 	return o_pCBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
