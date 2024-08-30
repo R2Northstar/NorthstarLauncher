@@ -71,7 +71,7 @@ void PakLoadManager::UnloadAllModPaks()
 	}
 	// clean up any paks that are both marked for unload and already unloaded
 	CleanUpUnloadedPaks();
-	m_forceReloadOnMapLoad = true;
+	SetForceReloadOnMapLoad(true);
 }
 
 // Tracks all Paks related to a mod.
@@ -273,6 +273,19 @@ void PakLoadManager::LoadPreloadPaks()
 	}
 }
 
+// Causes all "Postload" paks to be loaded again.
+void PakLoadManager::ReloadPostloadPaks()
+{
+	++m_reentranceCounter;
+	const ScopeGuard guard([&]() { --m_reentranceCounter; });
+
+	// pretend that we just loaded all of these vanilla paks
+	for (auto& [path, handle] : m_vanillaPaks)
+	{
+		LoadDependentPaks(path, handle);
+	}
+}
+
 // Wrapper for Pak load API.
 void* PakLoadManager::OpenFile(const char* path)
 {
@@ -366,6 +379,12 @@ static bool h_LoadMapRpaks(char* mapPath)
 	// don't load/unload anything when going to the lobby, presumably to save load times when going back to the same map
 	if (!g_pPakLoadManager->GetForceReloadOnMapLoad() && !strcmp("mp_lobby", mapName.c_str()))
 		return false;
+
+	if (g_pPakLoadManager->GetForceReloadOnMapLoad())
+	{
+		g_pPakLoadManager->LoadPreloadPaks();
+		g_pPakLoadManager->ReloadPostloadPaks();
+	}
 
 	char mapRpakStr[272];
 	snprintf(mapRpakStr, 272, "%s.rpak", mapName.c_str());

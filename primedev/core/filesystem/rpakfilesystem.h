@@ -51,6 +51,7 @@ public:
 	void FixupPakPath(std::string& path);
 
 	void LoadPreloadPaks();
+	void ReloadPostloadPaks();
 
 	void* OpenFile(const char* path);
 
