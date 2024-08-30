@@ -108,11 +108,8 @@ bool, __fastcall, (IFileSystem * filesystem, char* pPath, void* result))
 	return ReadFromCache(filesystem, pPath, result);
 }
 
-// force modded files to be read from mods, not vpk
-// clang-format off
-AUTOHOOK(ReadFileFromVPK, filesystem_stdio.dll + 0x5CBA0,
-FileHandle_t, __fastcall, (VPKData* vpkInfo, uint64_t* b, char* filename))
-// clang-format on
+static FileHandle_t(__fastcall* o_pReadFileFromVPK)(VPKData* vpkInfo, uint64_t* b, char* filename) = nullptr;
+static FileHandle_t __fastcall h_ReadFileFromVPK(VPKData* vpkInfo, uint64_t* b, char* filename)
 {
 	// don't compile here because this is only ever called from OpenEx, which already compiles
 	if (TryReplaceFile(filename, false))
@@ -121,7 +118,7 @@ FileHandle_t, __fastcall, (VPKData* vpkInfo, uint64_t* b, char* filename))
 		return b;
 	}
 
-	return ReadFileFromVPK(vpkInfo, b, filename);
+	return o_pReadFileFromVPK(vpkInfo, b, filename);
 }
 
 // clang-format off
@@ -168,6 +165,8 @@ HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* 
 ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+	o_pReadFileFromVPK = module.Offset(0x5CBA0).RCast<decltype(o_pReadFileFromVPK)>();
+	HookAttach(&(PVOID&)o_pReadFileFromVPK, (PVOID)h_ReadFileFromVPK);
 
 	g_pFilesystem = new SourceInterface<IFileSystem>("filesystem_stdio.dll", "VFileSystem017");
 
