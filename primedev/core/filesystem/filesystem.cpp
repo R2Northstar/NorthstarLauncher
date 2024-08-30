@@ -124,10 +124,11 @@ static FileHandle_t __fastcall h_CBaseFileSystem__OpenEx(IFileSystem* filesystem
 	return o_pCBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
 }
 
-HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* pVpkPath))
+static VPKData* (*o_pMountVPK)(IFileSystem* fileSystem, const char* pVpkPath) = nullptr;
+static VPKData* h_MountVPK(IFileSystem* fileSystem, const char* pVpkPath)
 {
 	NS::log::fs->info("MountVPK {}", pVpkPath);
-	VPKData* ret = MountVPK(fileSystem, pVpkPath);
+	VPKData* ret = o_pMountVPK(fileSystem, pVpkPath);
 
 	for (Mod mod : g_pModManager->m_LoadedMods)
 	{
@@ -147,7 +148,7 @@ HOOK(MountVPKHook, MountVPK, VPKData*, , (IFileSystem * fileSystem, const char* 
 					continue;
 			}
 
-			VPKData* loaded = MountVPK(fileSystem, vpkEntry.m_sVpkPath.c_str());
+			VPKData* loaded = o_pMountVPK(fileSystem, vpkEntry.m_sVpkPath.c_str());
 			if (!ret) // this is primarily for map vpks and stuff, so the map's vpk is what gets returned from here
 				ret = loaded;
 		}
@@ -169,9 +170,8 @@ ON_DLL_LOAD("filesystem_stdio.dll", Filesystem, (CModule module))
 
 	o_pAddSearchPath = reinterpret_cast<decltype(o_pAddSearchPath)>((*g_pFilesystem)->m_vtable->AddSearchPath);
 	HookAttach(&(PVOID&)o_pAddSearchPath, (PVOID)h_AddSearchPath);
-
 	o_pReadFromCache = reinterpret_cast<decltype(o_pReadFromCache)>((*g_pFilesystem)->m_vtable->ReadFromCache);
 	HookAttach(&(PVOID&)o_pReadFromCache, (PVOID)h_ReadFromCache);
-
-	MountVPKHook.Dispatch((LPVOID)(*g_pFilesystem)->m_vtable->MountVPK);
+	o_pMountVPK = reinterpret_cast<decltype(o_pMountVPK)>((*g_pFilesystem)->m_vtable->MountVPK);
+	HookAttach(&(PVOID&)o_pMountVPK, (PVOID)h_MountVPK);
 }
