@@ -672,13 +672,19 @@ void ModManager::LoadMods()
 		// Add mod entry to enabledmods.json if it doesn't exist
 		bool isModRemote = mod.m_bIsRemote;
 		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
+		bool modEntryHasCorrectFormat = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].IsObject();
 		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
 
 		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
 		{
 			// Creating mod key (with name)
-			if (!modEntryExists)
+			if (!modEntryHasCorrectFormat)
 			{
+				// Adjust wrong format (string instead of object)
+				if (modEntryExists)
+				{
+					m_EnabledModsCfg.RemoveMember(mod.Name.c_str());
+				}
 				m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
 				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
 			}
