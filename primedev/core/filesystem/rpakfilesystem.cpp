@@ -341,7 +341,7 @@ void PakLoadManager::UnloadDependentPaks(PakHandle handle)
 // Handles aliases for rpaks defined in rpak.json, effectively redirecting an rpak load to a different path.
 static void HandlePakAliases(std::string& originalPath)
 {
-	// convert the pak being loaded to it's aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
+	// convert the pak being loaded to its aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
 	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > PakHandle::INVALID; i--)
 	{
 		Mod* mod = &g_pModManager->m_LoadedMods[i];
