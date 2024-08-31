@@ -659,6 +659,9 @@ void ModManager::LoadMods()
 				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
 				return;
 			}
+
+			// Reset current configuration
+			m_EnabledModsCfg.SetObject();
 		}
 	}
 
