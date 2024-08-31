@@ -114,10 +114,8 @@ DWORD WINAPI ConsoleInputThread(PVOID pThreadParameter)
 	return 0;
 }
 
-// clang-format off
-AUTOHOOK(IsGameActiveWindow, engine.dll + 0x1CDC80,
-bool,, ())
-// clang-format on
+static bool (*o_pIsGameActiveWindow)() = nullptr;
+static bool h_IsGameActiveWindow()
 {
 	return true;
 }
@@ -127,6 +125,9 @@ ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModul
 	spdlog::info("InitialiseDedicated");
 
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
+
+	o_pIsGameActiveWindow = module.Offset(0x1CDC80).RCast<decltype(o_pIsGameActiveWindow)>();
+	HookAttach(&(PVOID&)o_pIsGameActiveWindow, (PVOID)h_IsGameActiveWindow);
 
 	// Host_Init
 	// prevent a particle init that relies on client dll
