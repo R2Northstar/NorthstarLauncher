@@ -1,8 +1,6 @@
 #include "dedicated.h"
 #include "core/tier0.h"
 
-AUTOHOOK_INIT()
-
 static HRESULT(__stdcall* o_pD3D11CreateDevice)(
 	void* pAdapter,
 	int DriverType,
@@ -40,7 +38,6 @@ static HRESULT __stdcall h_D3D11CreateDevice(
 
 ON_DLL_LOAD_DEDI("materialsystem_dx11.dll", DedicatedServerMaterialSystem, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
 	o_pD3D11CreateDevice = module.Offset(0xD9A0E).RCast<decltype(o_pD3D11CreateDevice)>();
 	HookAttach(&(PVOID&)o_pD3D11CreateDevice, (PVOID)h_D3D11CreateDevice);
 
