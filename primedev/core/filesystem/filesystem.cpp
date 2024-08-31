@@ -26,7 +26,7 @@ std::string ReadVPKFile(const char* path)
 		fileStream.write(data, bytesRead);
 	} while (bytesRead == std::size(data));
 
-	g_pFilesystem->m_vtable2->Close(*g_pFilesystem, fileHandle);
+	g_pFilesystem->m_vtable2->Close(&*g_pFilesystem, fileHandle);
 
 	return fileStream.str();
 }
