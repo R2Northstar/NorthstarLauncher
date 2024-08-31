@@ -8,8 +8,6 @@
 #include "masterserver/masterserver.h"
 #include "util/printcommands.h"
 
-AUTOHOOK_INIT()
-
 bool IsDedicatedServer()
 {
 	static bool result = strstr(GetCommandLineA(), "-dedicated");
@@ -123,8 +121,6 @@ static bool h_IsGameActiveWindow()
 ON_DLL_LOAD_DEDI_RELIESON("engine.dll", DedicatedServer, ServerPresence, (CModule module))
 {
 	spdlog::info("InitialiseDedicated");
-
-	AUTOHOOK_DISPATCH_MODULE(engine.dll)
 
 	o_pIsGameActiveWindow = module.Offset(0x1CDC80).RCast<decltype(o_pIsGameActiveWindow)>();
 	HookAttach(&(PVOID&)o_pIsGameActiveWindow, (PVOID)h_IsGameActiveWindow);
@@ -288,8 +284,6 @@ static void __fastcall h_PrintSquirrelError(void* sqvm)
 
 ON_DLL_LOAD_DEDI("server.dll", DedicatedServerGameDLL, (CModule module))
 {
-	AUTOHOOK_DISPATCH_MODULE(server.dll)
-
 	o_pPrintSquirrelError = module.Offset(0x794D0).RCast<decltype(o_pPrintSquirrelError)>();
 	HookAttach(&(PVOID&)o_pPrintSquirrelError, (PVOID)h_PrintSquirrelError);
 
