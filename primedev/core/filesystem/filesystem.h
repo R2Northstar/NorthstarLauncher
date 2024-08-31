@@ -1,5 +1,4 @@
 #pragma once
-#include "core/sourceinterface.h"
 
 // taken from ttf2sdk
 typedef void* FileHandle_t;
@@ -47,8 +46,6 @@ public:
 	VTable* m_vtable;
 	VTable2* m_vtable2;
 };
-
-extern SourceInterface<IFileSystem>* g_pFilesystem;
 
 std::string ReadVPKFile(const char* path);
 std::string ReadVPKOriginalFile(const char* path);
