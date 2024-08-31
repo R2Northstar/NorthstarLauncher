@@ -649,7 +649,17 @@ void ModManager::LoadMods()
 
 		bool isUsingOldFormat = m_EnabledModsCfg["Northstar.Client"].IsBool();
 		spdlog::info("==> Using old mods manifesto format: {}", isUsingOldFormat);
-		// TODO if old mod config format, rename current file + regenerate config
+		// If old mod config format, rename current file
+		if (isUsingOldFormat)
+		{
+			spdlog::info("==> Old manifesto format detected, renaming it to enabledmods.old.json");
+			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
+			if (ret)
+			{
+				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
+				return;
+			}
+		}
 	}
 
 	SearchFilesystemForMods();
