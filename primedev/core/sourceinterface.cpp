@@ -33,20 +33,20 @@ static void* __fastcall h_EngineCreateInterface(const char* pName, const int* pR
 	return ret;
 }
 
-// clang-format off
 ON_DLL_LOAD("client.dll", ClientInterface, (CModule module))
 {
 	o_pClientCreateInterface = module.GetExportedFunction("CreateInterface").RCast<decltype(o_pClientCreateInterface)>();
 	HookAttach(&(PVOID&)o_pClientCreateInterface, (PVOID)h_ClientCreateInterface);
 }
+
 ON_DLL_LOAD("server.dll", ServerInterface, (CModule module))
 {
 	o_pServerCreateInterface = module.GetExportedFunction("CreateInterface").RCast<decltype(o_pServerCreateInterface)>();
 	HookAttach(&(PVOID&)o_pServerCreateInterface, (PVOID)h_ServerCreateInterface);
 }
+
 ON_DLL_LOAD("engine.dll", EngineInterface, (CModule module))
 {
 	o_pEngineCreateInterface = module.GetExportedFunction("CreateInterface").RCast<decltype(o_pEngineCreateInterface)>();
 	HookAttach(&(PVOID&)o_pEngineCreateInterface, (PVOID)h_EngineCreateInterface);
 }
-// clang-format on
