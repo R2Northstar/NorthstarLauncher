@@ -35,7 +35,7 @@ ON_DLL_LOAD("engine.dll", ConVar, (CModule module))
 	g_pConVar_Vtable = module.Offset(0x67FD28);
 	g_pIConVar_Vtable = module.Offset(0x67FDC8);
 
-	g_pCVar = Sys_GetFactoryPtr("vstdlib.dll", "VEngineCvar007").RCast<CCVar*>();
+	g_pCVar = Sys_GetFactoryPtr("vstdlib.dll", "VEngineCvar007").RCast<CCvar*>();
 }
 
 //-----------------------------------------------------------------------------
