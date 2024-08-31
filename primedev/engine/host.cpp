@@ -8,13 +8,11 @@
 
 AUTOHOOK_INIT()
 
-// clang-format off
-AUTOHOOK(Host_Init, engine.dll + 0x155EA0,
-void, __fastcall, (bool bDedicated))
-// clang-format on
+static void(__fastcall* o_pHost_Init)(bool bDedicated) = nullptr;
+static void __fastcall h_Host_Init(bool bDedicated)
 {
 	spdlog::info("Host_Init()");
-	Host_Init(bDedicated);
+	o_pHost_Init(bDedicated);
 	FixupCvarFlags();
 	// need to initialise these after host_init since they do stuff to preexisting concommands/convars without being client/server specific
 	InitialiseCommandPrint();
@@ -30,4 +28,7 @@ void, __fastcall, (bool bDedicated))
 ON_DLL_LOAD("engine.dll", Host_Init, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+
+	o_pHost_Init = module.Offset(0x155EA0).RCast<decltype(o_pHost_Init)>();
+	HookAttach(&(PVOID&)o_pHost_Init, (PVOID)h_Host_Init);
 }
