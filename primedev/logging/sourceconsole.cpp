@@ -1,6 +1,6 @@
 #include "core/convar/convar.h"
 #include "sourceconsole.h"
-#include "core/tier0.h"
+#include "core/tier1.h"
 #include "core/convar/concommand.h"
 #include "util/printcommands.h"
 
