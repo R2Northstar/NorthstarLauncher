@@ -1,5 +1,5 @@
 #include "filesystem.h"
-#include "core/tier0.h"
+#include "core/tier1.h"
 #include "mods/modmanager.h"
 
 #include <iostream>
