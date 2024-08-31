@@ -47,5 +47,7 @@ public:
 	VTable2* m_vtable2;
 };
 
+extern IFileSystem* g_pFilesystem;
+
 std::string ReadVPKFile(const char* path);
 std::string ReadVPKOriginalFile(const char* path);
