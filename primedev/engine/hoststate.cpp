@@ -145,12 +145,10 @@ static void __fastcall h_CHostState__State_GameShutdown(CHostState* self)
 	}
 }
 
-// clang-format off
-AUTOHOOK(CHostState__FrameUpdate, engine.dll + 0x16DB00,
-void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
-// clang-format on
+static void(__fastcall* o_pCHostState__FrameUpdate)(CHostState* self, double flCurrentTime, float flFrameTime) = nullptr;
+static void __fastcall h_CHostState__FrameUpdate(CHostState* self, double flCurrentTime, float flFrameTime)
 {
-	CHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
+	o_pCHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
 
 	if (*g_pServerState == server_state_t::ss_active)
 	{
@@ -188,6 +186,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 
 	o_pCHostState__State_GameShutdown = module.Offset(0x16E640).RCast<decltype(o_pCHostState__State_GameShutdown)>();
 	HookAttach(&(PVOID&)o_pCHostState__State_GameShutdown, (PVOID)h_CHostState__State_GameShutdown);
+
+	o_pCHostState__FrameUpdate = module.Offset(0x16DB00).RCast<decltype(o_pCHostState__FrameUpdate)>();
+	HookAttach(&(PVOID&)o_pCHostState__FrameUpdate, (PVOID)h_CHostState__FrameUpdate);
 
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
