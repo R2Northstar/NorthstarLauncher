@@ -9,8 +9,6 @@
 #include "squirrel/squirrel.h"
 #include "plugins/pluginmanager.h"
 
-AUTOHOOK_INIT()
-
 CHostState* g_pHostState;
 
 std::string sLastMode;
@@ -174,7 +172,6 @@ static void __fastcall h_CHostState__FrameUpdate(CHostState* self, double flCurr
 
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
 	o_pCHostState__State_NewGame = module.Offset(0x16E7D0).RCast<decltype(o_pCHostState__State_NewGame)>();
 	HookAttach(&(PVOID&)o_pCHostState__State_NewGame, (PVOID)h_CHostState__State_NewGame);
 
