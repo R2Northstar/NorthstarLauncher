@@ -80,10 +80,8 @@ static void __fastcall h_CHostState__State_NewGame(CHostState* self)
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
-// clang-format off
-AUTOHOOK(CHostState__State_LoadGame, engine.dll + 0x16E730,
-void, __fastcall, (CHostState* self))
-// clang-format on
+static void(__fastcall* o_pCHostState__State_LoadGame)(CHostState* self) = nullptr;
+static void __fastcall h_CHostState__State_LoadGame(CHostState* self)
 {
 	// singleplayer server starting
 	// useless in 99% of cases but without it things could potentially break very much
@@ -98,7 +96,7 @@ void, __fastcall, (CHostState* self))
 	g_pServerAuthentication->m_bStartingLocalSPGame = true;
 
 	double dStartTime = Plat_FloatTime();
-	CHostState__State_LoadGame(self);
+	o_pCHostState__State_LoadGame(self);
 	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	// no server presence, can't do it because no map name in hoststate
@@ -185,6 +183,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 	AUTOHOOK_DISPATCH()
 	o_pCHostState__State_NewGame = module.Offset(0x16E7D0).RCast<decltype(o_pCHostState__State_NewGame)>();
 	HookAttach(&(PVOID&)o_pCHostState__State_NewGame, (PVOID)h_CHostState__State_NewGame);
+
+	o_pCHostState__State_LoadGame = module.Offset(0x16E730).RCast<decltype(o_pCHostState__State_LoadGame)>();
+	HookAttach(&(PVOID&)o_pCHostState__State_LoadGame, (PVOID)h_CHostState__State_LoadGame);
 
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
