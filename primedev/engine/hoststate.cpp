@@ -53,10 +53,8 @@ void ServerStartingOrChangingMap()
 		g_pServerAuthentication->m_bStartingLocalSPGame = false;
 }
 
-// clang-format off
-AUTOHOOK(CHostState__State_NewGame, engine.dll + 0x16E7D0,
-void, __fastcall, (CHostState* self))
-// clang-format on
+static void(__fastcall* o_pCHostState__State_NewGame)(CHostState* self) = nullptr;
+static void __fastcall h_CHostState__State_NewGame(CHostState* self)
 {
 	spdlog::info("HostState: NewGame");
 
@@ -70,7 +68,7 @@ void, __fastcall, (CHostState* self))
 	ServerStartingOrChangingMap();
 
 	double dStartTime = Plat_FloatTime();
-	CHostState__State_NewGame(self);
+	o_pCHostState__State_NewGame(self);
 	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	// setup server presence
@@ -185,6 +183,8 @@ void, __fastcall, (CHostState* self, double flCurrentTime, float flFrameTime))
 ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+	o_pCHostState__State_NewGame = module.Offset(0x16E7D0).RCast<decltype(o_pCHostState__State_NewGame)>();
+	HookAttach(&(PVOID&)o_pCHostState__State_NewGame, (PVOID)h_CHostState__State_NewGame);
 
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
