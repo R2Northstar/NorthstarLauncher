@@ -15,8 +15,8 @@ CHostState* g_pHostState;
 
 std::string sLastMode;
 
-VAR_AT(engine.dll + 0x13FA6070, ConVar*, Cvar_hostport);
-FUNCTION_AT(engine.dll + 0x1232C0, void, __fastcall, _Cmd_Exec_f, (const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists));
+static ConVar* Cvar_hostport = nullptr;
+static void(__fastcall* _Cmd_Exec_f)(const CCommand& arg, bool bOnlyIfExists, bool bUseWhitelists) = nullptr;
 
 void ServerStartingOrChangingMap()
 {
@@ -189,6 +189,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 
 	o_pCHostState__FrameUpdate = module.Offset(0x16DB00).RCast<decltype(o_pCHostState__FrameUpdate)>();
 	HookAttach(&(PVOID&)o_pCHostState__FrameUpdate, (PVOID)h_CHostState__FrameUpdate);
+
+	Cvar_hostport = module.Offset(0x13FA6070).RCast<decltype(Cvar_hostport)>();
+	_Cmd_Exec_f = module.Offset(0x1232C0).RCast<decltype(_Cmd_Exec_f)>();
 
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
