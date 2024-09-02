@@ -105,17 +105,15 @@ static void __fastcall h_CHostState__State_LoadGame(CHostState* self)
 	g_pServerAuthentication->m_bNeedLocalAuthForNewgame = false;
 }
 
-// clang-format off
-AUTOHOOK(CHostState__State_ChangeLevelMP, engine.dll + 0x16E520,
-void, __fastcall, (CHostState* self))
-// clang-format on
+static void(__fastcall* o_pCHostState__State_ChangeLevelMP)(CHostState* self) = nullptr;
+static void __fastcall h_CHostState__State_ChangeLevelMP(CHostState* self)
 {
 	spdlog::info("HostState: ChangeLevelMP");
 
 	ServerStartingOrChangingMap();
 
 	double dStartTime = Plat_FloatTime();
-	CHostState__State_ChangeLevelMP(self);
+	o_pCHostState__State_ChangeLevelMP(self);
 	spdlog::info("loading took {}s", Plat_FloatTime() - dStartTime);
 
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
@@ -186,6 +184,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 
 	o_pCHostState__State_LoadGame = module.Offset(0x16E730).RCast<decltype(o_pCHostState__State_LoadGame)>();
 	HookAttach(&(PVOID&)o_pCHostState__State_LoadGame, (PVOID)h_CHostState__State_LoadGame);
+
+	o_pCHostState__State_ChangeLevelMP = module.Offset(0x16E520).RCast<decltype(o_pCHostState__State_ChangeLevelMP)>();
+	HookAttach(&(PVOID&)o_pCHostState__State_ChangeLevelMP, (PVOID)h_CHostState__State_ChangeLevelMP);
 
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
