@@ -26,7 +26,7 @@ std::string ReadVPKFile(const char* path)
 		fileStream.write(data, bytesRead);
 	} while (bytesRead == std::size(data));
 
-	g_pFilesystem->m_vtable2->Close(&*g_pFilesystem, fileHandle);
+	g_pFilesystem->m_vtable2->Close(g_pFilesystem, fileHandle);
 
 	return fileStream.str();
 }
@@ -65,12 +65,12 @@ void SetNewModSearchPaths(Mod* mod)
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
 			o_pAddSearchPath(
-				&*g_pFilesystem, (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+				g_pFilesystem, (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
 		}
 	}
 	else // push compiled to head
-		o_pAddSearchPath(&*g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+		o_pAddSearchPath(g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 }
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile)
