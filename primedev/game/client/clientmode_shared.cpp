@@ -8,7 +8,7 @@
 //   -> IPureCall::Ok()
 //        -> IPureCall::CallMeIDareYou()
 //             -> purecall_handler
-//                  -> crash :( 
+//                  -> crash :(
 class IPureCall
 {
 public:
