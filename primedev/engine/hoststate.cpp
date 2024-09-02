@@ -119,16 +119,14 @@ static void __fastcall h_CHostState__State_ChangeLevelMP(CHostState* self)
 	g_pServerPresence->SetMap(g_pHostState->m_levelName);
 }
 
-// clang-format off
-AUTOHOOK(CHostState__State_GameShutdown, engine.dll + 0x16E640,
-void, __fastcall, (CHostState* self))
-// clang-format on
+static void(__fastcall* o_pCHostState__State_GameShutdown)(CHostState* self) = nullptr;
+static void __fastcall h_CHostState__State_GameShutdown(CHostState* self)
 {
 	spdlog::info("HostState: GameShutdown");
 
 	g_pServerPresence->DestroyPresence();
 
-	CHostState__State_GameShutdown(self);
+	o_pCHostState__State_GameShutdown(self);
 
 	// run gamemode cleanup cfg now instead of when we start next map
 	if (sLastMode.length())
@@ -187,6 +185,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", HostState, ConVar, (CModule module))
 
 	o_pCHostState__State_ChangeLevelMP = module.Offset(0x16E520).RCast<decltype(o_pCHostState__State_ChangeLevelMP)>();
 	HookAttach(&(PVOID&)o_pCHostState__State_ChangeLevelMP, (PVOID)h_CHostState__State_ChangeLevelMP);
+
+	o_pCHostState__State_GameShutdown = module.Offset(0x16E640).RCast<decltype(o_pCHostState__State_GameShutdown)>();
+	HookAttach(&(PVOID&)o_pCHostState__State_GameShutdown, (PVOID)h_CHostState__State_GameShutdown);
 
 	g_pHostState = module.Offset(0x7CF180).RCast<CHostState*>();
 }
