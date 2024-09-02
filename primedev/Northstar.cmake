@@ -168,7 +168,8 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-     "game/client/clientmode_shared.cpp")
+    "game/client/clientmode_shared.cpp"
+    )
 
 target_link_libraries(
     NorthstarDLL
