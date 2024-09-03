@@ -621,6 +621,10 @@ void ModManager::LoadMods()
 
 	m_DependencyConstants.clear();
 
+	// File format checks
+	bool isUsingOldFormat = false;
+	rapidjson_document oldEnabledModsCfg;
+
 	// read enabled mods cfg
 	std::ifstream enabledModsStream(cfgPath);
 	std::stringstream enabledModsStringStream;
@@ -642,7 +646,8 @@ void ModManager::LoadMods()
 
 		// Check file format, and rename file if it is not using new format
 		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
-		bool isUsingOldFormat = m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
+		isUsingOldFormat =
+			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
 		if (isUsingUnknownFormat || isUsingOldFormat)
 		{
 			spdlog::info("==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
@@ -651,6 +656,12 @@ void ModManager::LoadMods()
 			{
 				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
 				return;
+			}
+
+			// Copy old configuration to migrate manifesto to new format
+			if (isUsingOldFormat)
+			{
+				oldEnabledModsCfg.CopyFrom(m_EnabledModsCfg, oldEnabledModsCfg.GetAllocator());
 			}
 
 			// Reset current configuration
@@ -693,7 +704,15 @@ void ModManager::LoadMods()
 			}
 
 			// Add mod entry
-			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
+			bool modIsEnabled = mod.m_bEnabled;
+			// Try to use old manifesto if currently migrating from old format
+			if (isUsingOldFormat && oldEnabledModsCfg.HasMember(mod.Name.c_str()) && oldEnabledModsCfg[mod.Name.c_str()].IsBool())
+			{
+				modIsEnabled = oldEnabledModsCfg[mod.Name.c_str()].GetBool();
+				mod.m_bEnabled = modIsEnabled;
+			}
+			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(modIsEnabled);
+
 			newModsDetected = true;
 		}
 
