@@ -640,19 +640,12 @@ void ModManager::LoadMods()
 		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 			enabledModsStringStream.str().c_str());
 
-		// Check file format
-		if (!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client"))
+		// Check file format, and rename file if it is not using new format
+		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
+		bool isUsingOldFormat = m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
+		if (isUsingUnknownFormat || isUsingOldFormat)
 		{
-			// TODO if unknown mod config format, rename current file + regenerate config
-			m_EnabledModsCfg.SetObject();
-		}
-
-		bool isUsingOldFormat = m_EnabledModsCfg["Northstar.Client"].IsBool();
-		spdlog::info("==> Using old mods manifesto format: {}", isUsingOldFormat);
-		// If old mod config format, rename current file
-		if (isUsingOldFormat)
-		{
-			spdlog::info("==> Old manifesto format detected, renaming it to enabledmods.old.json");
+			spdlog::info("==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
 			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
 			if (ret)
 			{
