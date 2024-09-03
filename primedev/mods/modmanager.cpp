@@ -650,7 +650,8 @@ void ModManager::LoadMods()
 			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
 		if (isUsingUnknownFormat || isUsingOldFormat)
 		{
-			spdlog::info("==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
+			spdlog::info(
+				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
 			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
 			if (ret)
 			{
