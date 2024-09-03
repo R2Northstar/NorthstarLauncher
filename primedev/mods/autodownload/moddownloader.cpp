@@ -621,6 +621,12 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	requestThread.detach();
 }
 
+void ModDownloader::CancelDownload()
+{
+	modState.state = ABORTED;
+}
+
+
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
