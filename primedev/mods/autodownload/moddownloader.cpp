@@ -683,3 +683,9 @@ ADD_SQFUNC("ModInstallState", NSGetModInstallState, "", "", ScriptContext::SERVE
 
 	return SQRESULT_NOTNULL;
 }
+
+ADD_SQFUNC("void", NSCancelModDownload, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	g_pModDownloader->CancelDownload();
+	return SQRESULT_NULL;
+}
