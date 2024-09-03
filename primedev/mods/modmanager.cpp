@@ -630,7 +630,6 @@ void ModManager::LoadMods()
 	std::stringstream enabledModsStringStream;
 
 	// create configuration file if does not exist
-	// TODO generation might not be needed here as it may be done ~L666
 	if (enabledModsStream.fail())
 	{
 		m_EnabledModsCfg.SetObject();
