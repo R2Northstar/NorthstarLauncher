@@ -21,9 +21,7 @@ jobs:
       - name: Setup msvc
         uses: ilammy/msvc-dev-cmd@v1
       - name: Configure cmake
-        run: |
-          mkdir build/
-          cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE:STRING="Release"
+        run: cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE:STRING="Release"
       - name: Setup resource file version
         shell: bash
         run: |
