@@ -608,8 +608,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 						spdlog::error("Error while removing downloaded archive: {}", a.what());
 					}
 
-					modState.state = DONE;
-					spdlog::info("Done downloading {}.", modName);
+					spdlog::info("Done cleaning after downloading {}.", modName);
 				});
 
 			// Download mod archive
@@ -634,6 +633,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 
 			// Extract downloaded mod archive
 			ExtractMod(archiveLocation);
+			modState.state = DONE;
 		});
 
 	requestThread.detach();
