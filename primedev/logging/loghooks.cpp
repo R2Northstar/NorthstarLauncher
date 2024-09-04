@@ -123,10 +123,8 @@ static int h_fprintf(void* const stream, const char* const format, ...)
 	return 0;
 }
 
-// clang-format off
-AUTOHOOK(ConCommand_echo, engine.dll + 0x123680,
-void,, (const CCommand& arg))
-// clang-format on
+static void (*o_pConCommand_echo)(const CCommand& arg) = nullptr;
+static void h_ConCommand_echo(const CCommand& arg)
 {
 	if (arg.ArgC() >= 2)
 		NS::log::echo->info("{}", arg.ArgS());
@@ -252,6 +250,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module)
 
 	o_pfprintf = module.Offset(0x51B1F0).RCast<decltype(o_pfprintf)>();
 	HookAttach(&(PVOID&)o_pfprintf, (PVOID)h_fprintf);
+
+	o_pConCommand_echo = module.Offset(0x123680).RCast<decltype(o_pConCommand_echo)>();
+	HookAttach(&(PVOID&)o_pConCommand_echo, (PVOID)h_ConCommand_echo);
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "0", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
