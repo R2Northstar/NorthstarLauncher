@@ -101,10 +101,8 @@ static void h_TextMsg(BFRead* msg)
 	}
 }
 
-// clang-format off
-AUTOHOOK(Hook_fprintf, engine.dll + 0x51B1F0,
-int,, (void* const stream, const char* const format, ...))
-// clang-format on
+static int (*o_pfprintf)(void* const stream, const char* const format, ...) = nullptr;
+static int h_fprintf(void* const stream, const char* const format, ...)
 {
 	NOTE_UNUSED(stream);
 
@@ -251,6 +249,9 @@ bool,, (void* thisptr, uintptr_t msg))
 ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(engine.dll)
+
+	o_pfprintf = module.Offset(0x51B1F0).RCast<decltype(o_pfprintf)>();
+	HookAttach(&(PVOID&)o_pfprintf, (PVOID)h_fprintf);
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "0", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
