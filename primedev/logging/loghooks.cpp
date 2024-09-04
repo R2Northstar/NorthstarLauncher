@@ -9,8 +9,6 @@
 #include <iomanip>
 #include <sstream>
 
-AUTOHOOK_INIT()
-
 ConVar* Cvar_spewlog_enable;
 ConVar* Cvar_cl_showtextmsg;
 
@@ -240,8 +238,6 @@ static bool h_CClientState_ProcessPrint(void* thisptr, uintptr_t msg)
 
 ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH_MODULE(engine.dll)
-
 	o_pfprintf = module.Offset(0x51B1F0).RCast<decltype(o_pfprintf)>();
 	HookAttach(&(PVOID&)o_pfprintf, (PVOID)h_fprintf);
 
@@ -262,8 +258,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module)
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH_MODULE(client.dll)
-
 	o_pTextMsg = module.Offset(0x198710).RCast<decltype(o_pTextMsg)>();
 	HookAttach(&(PVOID&)o_pTextMsg, (PVOID)h_TextMsg);
 
