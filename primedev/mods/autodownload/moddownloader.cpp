@@ -152,6 +152,14 @@ int ModDownloader::ModFetchingProgressCallback(
 {
 	NOTE_UNUSED(totalToUpload);
 	NOTE_UNUSED(nowUploaded);
+
+	// Abort download
+	ModDownloader* instance = static_cast<ModDownloader*>(ptr);
+	if (instance->modState.state == ABORTED)
+	{
+		return 1;
+	}
+
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
 		ModDownloader* instance = static_cast<ModDownloader*>(ptr);
@@ -603,7 +611,10 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			if (!fetchingResult.has_value())
 			{
 				spdlog::error("Something went wrong while fetching archive, aborting.");
-				modState.state = MOD_FETCHING_FAILED;
+				if (modState.state != ABORTED)
+				{
+					modState.state = MOD_FETCHING_FAILED;
+				}
 				return;
 			}
 			archiveLocation = fetchingResult.value();
