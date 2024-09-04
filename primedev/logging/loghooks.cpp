@@ -70,10 +70,8 @@ const std::unordered_map<SpewType_t, const char> PrintSpewTypes_Short = {
 
 ICenterPrint* pInternalCenterPrint = NULL;
 
-// clang-format off
-AUTOHOOK(TextMsg, client.dll + 0x198710,
-void,, (BFRead* msg))
-// clang-format on
+static void (*o_pTextMsg)(BFRead* msg) = nullptr;
+static void h_TextMsg(BFRead* msg)
 {
 	TextMsgPrintType_t msg_dest = (TextMsgPrintType_t)msg->ReadByte();
 
@@ -260,6 +258,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module)
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", ClientPrintHooks, ConVar, (CModule module))
 {
 	AUTOHOOK_DISPATCH_MODULE(client.dll)
+
+	o_pTextMsg = module.Offset(0x198710).RCast<decltype(o_pTextMsg)>();
+	HookAttach(&(PVOID&)o_pTextMsg, (PVOID)h_TextMsg);
 
 	Cvar_cl_showtextmsg = new ConVar("cl_showtextmsg", "1", FCVAR_NONE, "Enable/disable text messages printing on the screen.");
 	pInternalCenterPrint = module.Offset(0x216E940).RCast<ICenterPrint*>();
