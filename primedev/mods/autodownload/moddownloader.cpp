@@ -562,6 +562,13 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			}
 		}
 
+		// Abort mod extraction if needed
+		if (modState.state == ABORTED)
+		{
+			spdlog::info("User cancelled mod installation, aborting mod extraction.");
+			return;
+		}
+
 		// Go to next file
 		if ((i + 1) < gi.number_entry)
 		{
