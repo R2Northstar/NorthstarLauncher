@@ -223,10 +223,8 @@ static void h_Status_ConMsg(const char* text, ...)
 	spdlog::info(formatted);
 }
 
-// clang-format off
-AUTOHOOK(CClientState_ProcessPrint, engine.dll + 0x1A1530, 
-bool,, (void* thisptr, uintptr_t msg))
-// clang-format on
+static bool (*o_pCClientState_ProcessPrint)(void* thisptr, uintptr_t msg) = nullptr;
+static bool h_CClientState_ProcessPrint(void* thisptr, uintptr_t msg)
 {
 	NOTE_UNUSED(thisptr);
 
@@ -255,6 +253,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module)
 	
 	o_pStatus_ConMsg = module.Offset(0x15ABD0).RCast<decltype(o_pStatus_ConMsg)>();
 	HookAttach(&(PVOID&)o_pStatus_ConMsg, (PVOID)h_Status_ConMsg);
+		
+	o_pCClientState_ProcessPrint = module.Offset(0x1A1530).RCast<decltype(o_pCClientState_ProcessPrint)>();
+	HookAttach(&(PVOID&)o_pCClientState_ProcessPrint, (PVOID)h_CClientState_ProcessPrint);
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "0", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
