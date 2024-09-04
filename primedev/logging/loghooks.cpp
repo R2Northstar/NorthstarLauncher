@@ -206,10 +206,8 @@ static void __fastcall h_EngineSpewFunc(void* pEngineServer, SpewType_t type, co
 }
 
 // used for printing the output of status
-// clang-format off
-AUTOHOOK(Status_ConMsg, engine.dll + 0x15ABD0,
-void,, (const char* text, ...))
-// clang-format on
+static void (*o_pStatus_ConMsg)(const char* text, ...) = nullptr;
+static void h_Status_ConMsg(const char* text, ...)
 {
 	char formatted[2048];
 	va_list list;
@@ -254,6 +252,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module)
 
 	o_pEngineSpewFunc = module.Offset(0x11CA80).RCast<decltype(o_pEngineSpewFunc)>();
 	HookAttach(&(PVOID&)o_pEngineSpewFunc, (PVOID)h_EngineSpewFunc);
+	
+	o_pStatus_ConMsg = module.Offset(0x15ABD0).RCast<decltype(o_pStatus_ConMsg)>();
+	HookAttach(&(PVOID&)o_pStatus_ConMsg, (PVOID)h_Status_ConMsg);
 
 	Cvar_spewlog_enable = new ConVar("spewlog_enable", "0", FCVAR_NONE, "Enables/disables whether the engine spewfunc should be logged");
 }
