@@ -246,10 +246,10 @@ ON_DLL_LOAD_RELIESON("engine.dll", EngineSpewFuncHooks, ConVar, (CModule module)
 
 	o_pEngineSpewFunc = module.Offset(0x11CA80).RCast<decltype(o_pEngineSpewFunc)>();
 	HookAttach(&(PVOID&)o_pEngineSpewFunc, (PVOID)h_EngineSpewFunc);
-	
+
 	o_pStatus_ConMsg = module.Offset(0x15ABD0).RCast<decltype(o_pStatus_ConMsg)>();
 	HookAttach(&(PVOID&)o_pStatus_ConMsg, (PVOID)h_Status_ConMsg);
-		
+
 	o_pCClientState_ProcessPrint = module.Offset(0x1A1530).RCast<decltype(o_pCClientState_ProcessPrint)>();
 	HookAttach(&(PVOID&)o_pCClientState_ProcessPrint, (PVOID)h_CClientState_ProcessPrint);
 
