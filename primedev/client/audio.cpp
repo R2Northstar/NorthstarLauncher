@@ -550,7 +550,7 @@ ON_DLL_LOAD("mileswin64.dll", MilesWin64_Audio, (CModule module))
 
 	o_pSub_1800294C0 = module.Offset(0x294C0).RCast<decltype(o_pSub_1800294C0)>();
 	HookAttach(&(PVOID&)o_pSub_1800294C0, (PVOID)h_Sub_1800294C0);
-  
+
 	o_pSub_18003EBD0 = module.Offset(0x3EBD0).RCast<decltype(o_pSub_18003EBD0)>();
 	HookAttach(&(PVOID&)o_pSub_18003EBD0, (PVOID)h_Sub_18003EBD0);
 
