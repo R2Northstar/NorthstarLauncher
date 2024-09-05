@@ -1,7 +1,5 @@
 #include "tier0.h"
 
-AUTOHOOK_INIT()
-
 IMemAlloc* g_pMemAllocSingleton = nullptr;
 
 CommandLineType CommandLine;
@@ -32,7 +30,8 @@ HRESULT WINAPI _SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription)
 	return ERROR_OLD_WIN_VERSION;
 }
 
-AUTOHOOK_PROCADDRESS(ThreadSetDebugName, tier0.dll, ThreadSetDebugName, void, __fastcall, (HANDLE threadHandle, const char* name))
+static void(__fastcall* o_pThreadSetDebugName)(HANDLE threadHandle, const char* name) = nullptr;
+static void __fastcall h_ThreadSetDebugName(HANDLE threadHandle, const char* name)
 {
 	if (threadHandle == 0)
 		threadHandle = GetCurrentThread();
@@ -42,7 +41,7 @@ AUTOHOOK_PROCADDRESS(ThreadSetDebugName, tier0.dll, ThreadSetDebugName, void, __
 	auto tmp = std::string(name);
 	_SetThreadDescription(threadHandle, std::wstring(tmp.begin(), tmp.end()).c_str());
 
-	ThreadSetDebugName(threadHandle, name);
+	o_pThreadSetDebugName(threadHandle, name);
 }
 
 ON_DLL_LOAD("tier0.dll", Tier0GameFuncs, (CModule module))
@@ -50,7 +49,8 @@ ON_DLL_LOAD("tier0.dll", Tier0GameFuncs, (CModule module))
 	// shouldn't be necessary, but do this just in case
 	TryCreateGlobalMemAlloc();
 
-	AUTOHOOK_DISPATCH()
+	o_pThreadSetDebugName = module.GetExportedFunction("ThreadSetDebugName").RCast<decltype(o_pThreadSetDebugName)>();
+	HookAttach(&(PVOID&)o_pThreadSetDebugName, (PVOID)h_ThreadSetDebugName);
 
 	// setup tier0 funcs
 	CommandLine = module.GetExportedFunction("CommandLine").RCast<CommandLineType>();
