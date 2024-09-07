@@ -558,6 +558,9 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath)
 			}
 		}
 	}
+
+	// Mod extraction went fine
+	modState.state = DONE;
 }
 
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
@@ -615,7 +618,6 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 
 			// Extract downloaded mod archive
 			ExtractMod(archiveLocation, modDirectory);
-			modState.state = DONE;
 		});
 
 	requestThread.detach();
