@@ -599,11 +599,10 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 						{
 							remove(modDirectory);
 						}
-						catch(const std::exception& e)
+						catch (const std::exception& e)
 						{
 							spdlog::error("Error while removing downloaded mod: {}", e.what());
 						}
-						
 					}
 
 					spdlog::info("Done cleaning after downloading {}.", modName);
