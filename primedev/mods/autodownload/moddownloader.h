@@ -64,13 +64,14 @@ private:
 	/**
 	 * Extracts a mod archive to the game folder.
 	 *
-	 * This extracts a downloaded mod archive from its original location to the
-	 * current game profile, in the remote mods folder.
+	 * This extracts a downloaded mod archive from its original location, `modPath`,
+	 * to the specified `destinationPath`.
 	 *
 	 * @param modPath location of the downloaded archive
+	 * @param destinationPath destination of the extraction
 	 * @returns nothing
 	 */
-	void ExtractMod(fs::path modPath);
+	void ExtractMod(fs::path modPath, fs::path destinationPath);
 
 public:
 	ModDownloader();

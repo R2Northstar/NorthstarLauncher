@@ -390,11 +390,9 @@ int GetModArchiveSize(unzFile file, unz_global_info64 info)
 	return totalSize;
 }
 
-void ModDownloader::ExtractMod(fs::path modPath)
+void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath)
 {
 	unzFile file;
-	std::string name;
-	fs::path modDirectory;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	ScopeGuard cleanup(
@@ -428,11 +426,6 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	modState.total = GetModArchiveSize(file, gi);
 	modState.progress = 0;
 
-	// Mod directory name (removing the ".zip" fom the archive name)
-	name = modPath.filename().string();
-	name = name.substr(0, name.length() - 4);
-	modDirectory = GetRemoteModFolderPath() / name;
-
 	for (int i = 0; i < gi.number_entry; i++)
 	{
 		char zipFilename[256];
@@ -442,7 +435,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		// Extract file
 		{
 			std::error_code ec;
-			fs::path fileDestination = modDirectory / zipFilename;
+			fs::path fileDestination = destinationPath / zipFilename;
 			spdlog::info("=> {}", fileDestination.generic_string());
 
 			// Create parent directory if needed
@@ -579,7 +572,9 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	std::thread requestThread(
 		[this, modName, modVersion]()
 		{
+			std::string name;
 			fs::path archiveLocation;
+			fs::path modDirectory;
 
 			ScopeGuard cleanup(
 				[&]
@@ -613,8 +608,13 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				return;
 			}
 
+			// Mod directory name (removing the ".zip" fom the archive name)
+			name = archiveLocation.filename().string();
+			name = name.substr(0, name.length() - 4);
+			modDirectory = GetRemoteModFolderPath() / name;
+
 			// Extract downloaded mod archive
-			ExtractMod(archiveLocation);
+			ExtractMod(archiveLocation, modDirectory);
 			modState.state = DONE;
 		});
 
