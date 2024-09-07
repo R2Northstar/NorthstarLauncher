@@ -582,6 +582,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			ScopeGuard cleanup(
 				[&]
 				{
+					// Remove downloaded archive
 					try
 					{
 						remove(archiveLocation);
@@ -589,6 +590,20 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 					catch (const std::exception& a)
 					{
 						spdlog::error("Error while removing downloaded archive: {}", a.what());
+					}
+
+					// Remove mod if auto-download process failed
+					if (modState.state != DONE)
+					{
+						try
+						{
+							remove(modDirectory);
+						}
+						catch(const std::exception& e)
+						{
+							spdlog::error("Error while removing downloaded mod: {}", e.what());
+						}
+						
 					}
 
 					spdlog::info("Done cleaning after downloading {}.", modName);
