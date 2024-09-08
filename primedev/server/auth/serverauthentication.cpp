@@ -310,10 +310,8 @@ static void h_CBaseClient__ActivatePlayer(CBaseClient* self)
 	o_pCBaseClient__ActivatePlayer(self);
 }
 
-// clang-format off
-AUTOHOOK(_CBaseClient__Disconnect, engine.dll + 0x1012C0,
-void,, (CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...))
-// clang-format on
+static void (*o_pCBaseClient__Disconnect)(CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...) = nullptr;
+static void h_CBaseClient__Disconnect(CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...)
 {
 	// have to manually format message because can't pass varargs to original func
 	char buf[1024];
@@ -341,7 +339,7 @@ void,, (CBaseClient* self, uint32_t unknownButAlways1, const char* pReason, ...)
 
 	g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 
-	_CBaseClient__Disconnect(self, unknownButAlways1, buf);
+	o_pCBaseClient__Disconnect(self, unknownButAlways1, buf);
 }
 
 void ConCommand_ns_resetpersistence(const CCommand& args)
@@ -369,6 +367,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 
 	o_pCBaseClient__ActivatePlayer = module.Offset(0x100F80).RCast<decltype(o_pCBaseClient__ActivatePlayer)>();
 	HookAttach(&(PVOID&)o_pCBaseClient__ActivatePlayer, (PVOID)h_CBaseClient__ActivatePlayer);
+
+	o_pCBaseClient__Disconnect = module.Offset(0x1012C0).RCast<decltype(o_pCBaseClient__Disconnect)>();
+	HookAttach(&(PVOID&)o_pCBaseClient__Disconnect, (PVOID)h_CBaseClient__Disconnect);
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
