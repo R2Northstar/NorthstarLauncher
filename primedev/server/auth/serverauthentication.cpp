@@ -207,9 +207,7 @@ void ServerAuthenticationManager::WritePersistentData(CBaseClient* pPlayer)
 char* pNextPlayerToken;
 uint64_t iNextPlayerUid;
 
-// clang-format off
-AUTOHOOK(CBaseServer__ConnectClient, engine.dll + 0x114430,
-void*,, (
+static void* (*o_pCBaseServer__ConnectClient)(
 	void* self,
 	void* addr,
 	void* a3,
@@ -226,14 +224,31 @@ void*,, (
 	char a14,
 	int64_t uid,
 	uint32_t a16,
-	uint32_t a17))
-// clang-format on
+	uint32_t a17) = nullptr;
+static void* h_CBaseServer__ConnectClient(
+	void* self,
+	void* addr,
+	void* a3,
+	uint32_t a4,
+	uint32_t a5,
+	int32_t a6,
+	void* a7,
+	char* playerName,
+	char* serverFilter,
+	void* a10,
+	char a11,
+	void* a12,
+	char a13,
+	char a14,
+	int64_t uid,
+	uint32_t a16,
+	uint32_t a17)
 {
 	// auth tokens are sent with serverfilter, can't be accessed from player struct to my knowledge, so have to do this here
 	pNextPlayerToken = serverFilter;
 	iNextPlayerUid = uid;
 
-	return CBaseServer__ConnectClient(self, addr, a3, a4, a5, a6, a7, playerName, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
+	return o_pCBaseServer__ConnectClient(self, addr, a3, a4, a5, a6, a7, playerName, serverFilter, a10, a11, a12, a13, a14, uid, a16, a17);
 }
 
 ConVar* Cvar_ns_allowuserclantags;
@@ -347,6 +362,9 @@ void ConCommand_ns_resetpersistence(const CCommand& args)
 ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+
+	o_pCBaseServer__ConnectClient = module.Offset(0x114430).RCast<decltype(o_pCBaseServer__ConnectClient)>();
+	HookAttach(&(PVOID&)o_pCBaseServer__ConnectClient, (PVOID)h_CBaseServer__ConnectClient);
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
