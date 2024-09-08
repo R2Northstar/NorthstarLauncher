@@ -19,8 +19,6 @@
 #include <string>
 #include <thread>
 
-AUTOHOOK_INIT()
-
 // global vars
 ServerAuthenticationManager* g_pServerAuthentication;
 CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
@@ -357,8 +355,6 @@ void ConCommand_ns_resetpersistence(const CCommand& args)
 
 ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pCBaseServer__ConnectClient = module.Offset(0x114430).RCast<decltype(o_pCBaseServer__ConnectClient)>();
 	HookAttach(&(PVOID&)o_pCBaseServer__ConnectClient, (PVOID)h_CBaseServer__ConnectClient);
 
