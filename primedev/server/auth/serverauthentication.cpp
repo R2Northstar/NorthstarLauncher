@@ -294,10 +294,8 @@ h_CBaseClient__Connect(CBaseClient* self, char* pName, void* pNetChannel, char b
 	return true;
 }
 
-// clang-format off
-AUTOHOOK(CBaseClient__ActivatePlayer, engine.dll + 0x100F80,
-void,, (CBaseClient* self))
-// clang-format on
+static void (*o_pCBaseClient__ActivatePlayer)(CBaseClient* self) = nullptr;
+static void h_CBaseClient__ActivatePlayer(CBaseClient* self)
 {
 	// if we're authed, write our persistent data
 	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
@@ -309,7 +307,7 @@ void,, (CBaseClient* self))
 		g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 	}
 
-	CBaseClient__ActivatePlayer(self);
+	o_pCBaseClient__ActivatePlayer(self);
 }
 
 // clang-format off
@@ -368,6 +366,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 
 	o_pCBaseClient__Connect = module.Offset(0x101740).RCast<decltype(o_pCBaseClient__Connect)>();
 	HookAttach(&(PVOID&)o_pCBaseClient__Connect, (PVOID)h_CBaseClient__Connect);
+
+	o_pCBaseClient__ActivatePlayer = module.Offset(0x100F80).RCast<decltype(o_pCBaseClient__ActivatePlayer)>();
+	HookAttach(&(PVOID&)o_pCBaseClient__ActivatePlayer, (PVOID)h_CBaseClient__ActivatePlayer);
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
