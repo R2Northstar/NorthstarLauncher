@@ -253,10 +253,10 @@ static void* h_CBaseServer__ConnectClient(
 
 ConVar* Cvar_ns_allowuserclantags;
 
-// clang-format off
-AUTOHOOK(CBaseClient__Connect, engine.dll + 0x101740,
-bool,, (CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, void* a5, char pDisconnectReason[256], void* a7))
-// clang-format on
+static bool (*o_pCBaseClient__Connect)(
+	CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, void* a5, char pDisconnectReason[256], void* a7) = nullptr;
+static bool
+h_CBaseClient__Connect(CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, void* a5, char pDisconnectReason[256], void* a7)
 {
 	const char* pAuthenticationFailure = nullptr;
 	char pVerifiedName[64];
@@ -282,7 +282,7 @@ bool,, (CBaseClient* self, char* pName, void* pNetChannel, char bFakePlayer, voi
 	}
 
 	// try to actually connect the player
-	if (!CBaseClient__Connect(self, pVerifiedName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7))
+	if (!o_pCBaseClient__Connect(self, pVerifiedName, pNetChannel, bFakePlayer, a5, pDisconnectReason, a7))
 		return false;
 
 	// we already know this player's authentication data is legit, actually write it to them now
@@ -365,6 +365,9 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 
 	o_pCBaseServer__ConnectClient = module.Offset(0x114430).RCast<decltype(o_pCBaseServer__ConnectClient)>();
 	HookAttach(&(PVOID&)o_pCBaseServer__ConnectClient, (PVOID)h_CBaseServer__ConnectClient);
+
+	o_pCBaseClient__Connect = module.Offset(0x101740).RCast<decltype(o_pCBaseClient__Connect)>();
+	HookAttach(&(PVOID&)o_pCBaseClient__Connect, (PVOID)h_CBaseClient__Connect);
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
