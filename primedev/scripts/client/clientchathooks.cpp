@@ -6,8 +6,6 @@
 
 #include <rapidjson/document.h>
 
-AUTOHOOK_INIT()
-
 static void(__fastcall* o_pCHudChat__AddGameLine)(void* self, const char* message, int inboxId, bool isTeam, bool isDead) = nullptr;
 static void __fastcall h_CHudChat__AddGameLine(void* self, const char* message, int inboxId, bool isTeam, bool isDead)
 {
@@ -66,8 +64,6 @@ ADD_SQFUNC("void", NSChatWriteLine, "int context, string text", "", ScriptContex
 
 ON_DLL_LOAD_CLIENT("client.dll", ClientChatHooks, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pCHudChat__AddGameLine = module.Offset(0x22E580).RCast<decltype(o_pCHudChat__AddGameLine)>();
 	HookAttach(&(PVOID&)o_pCHudChat__AddGameLine, (PVOID)h_CHudChat__AddGameLine);
 }
