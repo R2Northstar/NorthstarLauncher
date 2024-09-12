@@ -70,6 +70,12 @@ Plugin::Plugin(std::string path)
 	m_runOnServer = context & PluginContext::DEDICATED;
 	m_runOnClient = context & PluginContext::CLIENT;
 
+	int64_t logColor = m_pluginId->GetField(PluginField::COLOR);
+	if (logColor != 0)
+	{
+		m_logColor = Color((int)(logColor & IPluginId::COLOR_R_MASK), (int)((logColor & IPluginId::COLOR_G_MASK) >> 8), (int)((logColor & IPluginId::COLOR_B_MASK) >> 16));
+	}
+
 	if (!name)
 	{
 		NS::log::PLUGINSYS->error("Could not load name of plugin at '{}'", path);
@@ -106,7 +112,7 @@ Plugin::Plugin(std::string path)
 		return;
 	}
 
-	m_logger = std::make_shared<ColoredLogger>(m_logName, NS::Colors::PLUGIN);
+	m_logger = std::make_shared<ColoredLogger>(m_logName, m_logColor);
 	RegisterLogger(m_logger);
 
 	if (IsDedicatedServer() && !m_runOnServer)
