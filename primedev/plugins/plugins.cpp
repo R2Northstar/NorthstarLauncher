@@ -73,7 +73,10 @@ Plugin::Plugin(std::string path)
 	int64_t logColor = m_pluginId->GetField(PluginField::COLOR);
 	if (logColor != 0)
 	{
-		m_logColor = Color((int)(logColor & IPluginId::COLOR_R_MASK), (int)((logColor & IPluginId::COLOR_G_MASK) >> 8), (int)((logColor & IPluginId::COLOR_B_MASK) >> 16));
+		m_logColor = Color(
+			(int)(logColor & IPluginId::COLOR_R_MASK),
+			(int)((logColor & IPluginId::COLOR_G_MASK) >> 8),
+			(int)((logColor & IPluginId::COLOR_B_MASK) >> 16));
 	}
 
 	if (!name)
