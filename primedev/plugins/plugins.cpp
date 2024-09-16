@@ -74,9 +74,9 @@ Plugin::Plugin(std::string path)
 	if ((logColor & 0xFFFFFF) != 0)
 	{
 		m_logColor = Color(
-			(int)(logColor & IPluginId::COLOR_R_MASK),
-			(int)((logColor & IPluginId::COLOR_G_MASK) >> 8),
-			(int)((logColor & IPluginId::COLOR_B_MASK) >> 16));
+			(int)(logColor & 0xFF),
+			(int)((logColor >> 8) & 0xFF),
+			(int)((logColor >> 16) & 0xFF));
 	}
 	else
 	{

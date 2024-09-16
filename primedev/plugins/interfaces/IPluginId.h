@@ -27,10 +27,6 @@ class IPluginId
 public:
 	virtual const char* GetString(PluginString prop) = 0;
 	virtual int64_t GetField(PluginField prop) = 0;
-
-	static const int64_t COLOR_R_MASK = 0xFF;
-	static const int64_t COLOR_G_MASK = COLOR_R_MASK << 8;
-	static const int64_t COLOR_B_MASK = COLOR_G_MASK << 8;
 };
 
 #endif
