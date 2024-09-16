@@ -20,7 +20,7 @@ private:
 	std::string m_location; // path of the dll
 	bool m_runOnServer;
 	bool m_runOnClient;
-	Color m_logColor = NS::Colors::PLUGIN;
+	Color m_logColor;
 
 public:
 	HMODULE m_handle;

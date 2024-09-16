@@ -78,6 +78,10 @@ Plugin::Plugin(std::string path)
 			(int)((logColor & IPluginId::COLOR_G_MASK) >> 8),
 			(int)((logColor & IPluginId::COLOR_B_MASK) >> 16));
 	}
+	else
+	{
+		m_logColor = NS::Colors::PLUGIN;
+	}
 
 	if (!name)
 	{
