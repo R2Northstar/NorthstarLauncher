@@ -7,8 +7,6 @@
 
 namespace fs = std::filesystem;
 
-AUTOHOOK_INIT()
-
 const int AINET_VERSION_NUMBER = 57;
 const int AINET_SCRIPT_VERSION_NUMBER = 21;
 const int PLACEHOLDER_CRC = 0;
@@ -381,8 +379,6 @@ static void __fastcall h_LoadAINFile(void* aimanager, void* buf, const char* fil
 
 ON_DLL_LOAD("server.dll", BuildAINFile, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pCAI_NetworkBuilder__Build = module.Offset(0x385E20).RCast<decltype(o_pCAI_NetworkBuilder__Build)>();
 	HookAttach(&(PVOID&)o_pCAI_NetworkBuilder__Build, (PVOID)h_CAI_NetworkBuilder__Build);
 
