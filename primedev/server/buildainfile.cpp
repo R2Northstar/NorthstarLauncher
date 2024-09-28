@@ -359,12 +359,10 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writeStream.close();
 }
 
-// clang-format off
-AUTOHOOK(CAI_NetworkBuilder__Build, server.dll + 0x385E20,
-void, __fastcall, (void* builder, CAI_Network* aiNetwork, void* unknown))
-// clang-format on
+static void(__fastcall* o_pCAI_NetworkBuilder__Build)(void* builder, CAI_Network* aiNetwork, void* unknown) = nullptr;
+static void __fastcall h_CAI_NetworkBuilder__Build(void* builder, CAI_Network* aiNetwork, void* unknown)
 {
-	CAI_NetworkBuilder__Build(builder, aiNetwork, unknown);
+	o_pCAI_NetworkBuilder__Build(builder, aiNetwork, unknown);
 
 	DumpAINInfo(aiNetwork);
 }
@@ -386,6 +384,9 @@ void, __fastcall, (void* aimanager, void* buf, const char* filename))
 ON_DLL_LOAD("server.dll", BuildAINFile, (CModule module))
 {
 	AUTOHOOK_DISPATCH()
+
+	o_pCAI_NetworkBuilder__Build = module.Offset(0x385E20).RCast<decltype(o_pCAI_NetworkBuilder__Build)>();
+	HookAttach(&(PVOID&)o_pCAI_NetworkBuilder__Build, (PVOID)h_CAI_NetworkBuilder__Build);
 
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
 		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
