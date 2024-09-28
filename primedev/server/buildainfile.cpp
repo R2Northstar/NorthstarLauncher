@@ -367,12 +367,10 @@ static void __fastcall h_CAI_NetworkBuilder__Build(void* builder, CAI_Network* a
 	DumpAINInfo(aiNetwork);
 }
 
-// clang-format off
-AUTOHOOK(LoadAINFile, server.dll + 0x3933A0,
-void, __fastcall, (void* aimanager, void* buf, const char* filename))
-// clang-format on
+static void(__fastcall* o_pLoadAINFile)(void* aimanager, void* buf, const char* filename) = nullptr;
+static void __fastcall h_LoadAINFile(void* aimanager, void* buf, const char* filename)
 {
-	LoadAINFile(aimanager, buf, filename);
+	o_pLoadAINFile(aimanager, buf, filename);
 
 	if (Cvar_ns_ai_dumpAINfileFromLoad->GetBool())
 	{
@@ -387,6 +385,9 @@ ON_DLL_LOAD("server.dll", BuildAINFile, (CModule module))
 
 	o_pCAI_NetworkBuilder__Build = module.Offset(0x385E20).RCast<decltype(o_pCAI_NetworkBuilder__Build)>();
 	HookAttach(&(PVOID&)o_pCAI_NetworkBuilder__Build, (PVOID)h_CAI_NetworkBuilder__Build);
+
+	o_pLoadAINFile = module.Offset(0x3933A0).RCast<decltype(o_pLoadAINFile)>();
+	HookAttach(&(PVOID&)o_pLoadAINFile, (PVOID)h_LoadAINFile);
 
 	Cvar_ns_ai_dumpAINfileFromLoad = new ConVar(
 		"ns_ai_dumpAINfileFromLoad", "0", FCVAR_NONE, "For debugging: whether we should dump ain data for ains loaded from disk");
