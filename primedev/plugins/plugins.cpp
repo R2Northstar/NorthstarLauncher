@@ -22,7 +22,8 @@ bool isValidSquirrelIdentifier(std::string s)
 	return true;
 }
 
-Plugin::Plugin(std::string path) : m_location(path)
+Plugin::Plugin(std::string path)
+	: m_location(path)
 {
 	HMODULE pluginModule = GetModuleHandleA(path.c_str());
 
@@ -218,7 +219,6 @@ void Plugin::OnSqvmCreated(CSquirrelVM* sqvm) const
 
 void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm) const
 {
-	NS::log::PLUGINSYS->info("destroying sqvm {}", sqvm->vmContext);
 	m_callbacks->OnSqvmDestroying(sqvm);
 }
 

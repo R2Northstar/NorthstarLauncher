@@ -819,7 +819,7 @@ void ModManager::LoadMods()
 					modVpk.m_sVpkPath = (file.path().parent_path() / vpkName).string();
 
 					if (m_bHasLoadedMods && modVpk.m_bAutoLoad)
-						(*g_pFilesystem)->m_vtable->MountVPK(*g_pFilesystem, vpkName.c_str());
+						g_pFilesystem->m_vtable->MountVPK(g_pFilesystem, vpkName.c_str());
 				}
 			}
 		}
@@ -866,19 +866,57 @@ void ModManager::LoadMods()
 				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
 				{
 					std::string pakName(file.path().filename().string());
+					ModRpakEntry& modPak = mod.Rpaks.emplace_back(mod);
 
-					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
-					modPak.m_bAutoLoad =
-						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
-										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+					modPak.m_pakName = pakName;
 
-					// postload things
-					if (!bUseRpakJson ||
-						(dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName)))
-						modPak.m_sLoadAfterPak = dRpakJson["Postload"][pakName].GetString();
+					if (!bUseRpakJson)
+					{
+						spdlog::warn("Mod {} contains rpaks without valid rpak.json, rpaks might not be loaded", mod.Name);
+					}
+					else
+					{
+						modPak.m_preload =
+							(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
+							 dRpakJson["Preload"][pakName].IsTrue());
 
-					modPak.m_sPakName = pakName;
+						// only one load method can be used for an rpak.
+						if (modPak.m_preload)
+							goto REGISTER_STARPAK;
 
+						// postload things
+						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
+						{
+							modPak.m_dependentPakHash = STR_HASH(dRpakJson["Postload"][pakName].GetString());
+
+							// only one load method can be used for an rpak.
+							goto REGISTER_STARPAK;
+						}
+
+						// this is the only bit of rpak.json that isn't really deprecated. Even so, it will be moved over to the mod.json
+						// eventually
+						if (dRpakJson.HasMember(pakName))
+						{
+							if (!dRpakJson[pakName].IsString())
+							{
+								spdlog::error("Mod {} has invalid rpak.json. Rpak entries must be strings.", mod.Name);
+								continue;
+							}
+
+							std::string loadStr = dRpakJson[pakName].GetString();
+							try
+							{
+								modPak.m_loadRegex = std::regex(loadStr);
+							}
+							catch (...)
+							{
+								spdlog::error("Mod {} has invalid rpak.json. Malformed regex \"{}\" for {}", mod.Name, loadStr, pakName);
+								return;
+							}
+						}
+					}
+
+				REGISTER_STARPAK:
 					// read header of file and get the starpak paths
 					// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
 					// and there is seemingly no good way to tell which rpak is causing the load of a starpak :/
@@ -918,12 +956,11 @@ void ModManager::LoadMods()
 							}
 						}
 					}
-
-					// not using atm because we need to resolve path to rpak
-					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
-					//	g_pPakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
+
+			if (g_pPakLoadManager != nullptr)
+				g_pPakLoadManager->TrackModPaks(mod);
 		}
 
 		// read keyvalues paths
@@ -1051,6 +1088,8 @@ void ModManager::UnloadMods()
 	fs::remove_all(GetCompiledAssetsPath());
 
 	g_CustomAudioManager.ClearAudioOverrides();
+	if (g_pPakLoadManager != nullptr)
+		g_pPakLoadManager->UnloadAllModPaks();
 
 	if (!m_bHasEnabledModsCfg)
 		m_EnabledModsCfg.SetObject();
