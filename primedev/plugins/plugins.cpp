@@ -24,6 +24,7 @@ bool isValidSquirrelIdentifier(std::string s)
 
 Plugin::Plugin(std::string path)
 	: m_location(path)
+	, m_logColor(NS::Colors::PLUGIN)
 {
 	HMODULE pluginModule = GetModuleHandleA(path.c_str());
 
@@ -73,14 +74,7 @@ Plugin::Plugin(std::string path)
 	int64_t logColor = m_pluginId->GetField(PluginField::COLOR);
 	if ((logColor & 0xFFFFFF) != 0)
 	{
-		m_logColor = Color(
-			(int)(logColor & 0xFF),
-			(int)((logColor >> 8) & 0xFF),
-			(int)((logColor >> 16) & 0xFF));
-	}
-	else
-	{
-		m_logColor = NS::Colors::PLUGIN;
+		m_logColor = Color((int)(logColor & 0xFF), (int)((logColor >> 8) & 0xFF), (int)((logColor >> 16) & 0xFF));
 	}
 
 	if (!name)
