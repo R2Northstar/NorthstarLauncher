@@ -342,7 +342,7 @@ void PakLoadManager::UnloadDependentPaks(PakHandle handle)
 static void HandlePakAliases(std::string& originalPath)
 {
 	// convert the pak being loaded to its aliased one, e.g. aliasing mp_hub_timeshift => sp_hub_timeshift
-	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > PakHandle::INVALID; i--)
+	for (int64_t i = g_pModManager->m_LoadedMods.size() - 1; i > -1; i--)
 	{
 		Mod* mod = &g_pModManager->m_LoadedMods[i];
 		if (!mod->m_bEnabled)
