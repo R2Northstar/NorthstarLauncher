@@ -69,14 +69,16 @@ private:
 	/**
 	 * Extracts a mod archive to the game folder.
 	 *
-	 * This extracts a downloaded mod archive from its original location to the
-	 * current game profile; the install folder is defined by the platform parameter.
+	 * This extracts a downloaded mod archive from its original location, `modPath`,
+	 * to the specified `destinationPath`; the way to decompress the archive is
+	 * defined by the `platform` parameter.
 	 *
 	 * @param modPath location of the downloaded archive
+	 * @param destinationPath destination of the extraction
 	 * @param platform origin of the downloaded archive
 	 * @returns nothing
 	 */
-	void ExtractMod(fs::path modPath, VerifiedModPlatform platform);
+	void ExtractMod(fs::path modPath, fs::path destinationPath, VerifiedModPlatform platform);
 
 public:
 	ModDownloader();
