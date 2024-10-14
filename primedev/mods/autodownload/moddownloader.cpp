@@ -391,11 +391,9 @@ int GetModArchiveSize(unzFile file, unz_global_info64 info)
 	return totalSize;
 }
 
-void ModDownloader::ExtractMod(fs::path modPath, VerifiedModPlatform platform)
+void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, VerifiedModPlatform platform)
 {
 	unzFile file;
-	std::string name;
-	fs::path modDirectory;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	ScopeGuard cleanup(
@@ -437,11 +435,6 @@ void ModDownloader::ExtractMod(fs::path modPath, VerifiedModPlatform platform)
 		return;
 	}
 
-	// Mod directory name (removing the ".zip" fom the archive name)
-	name = modPath.filename().string();
-	name = name.substr(0, name.length() - 4);
-	modDirectory = GetRemoteModFolderPath() / name;
-
 	for (int i = 0; i < gi.number_entry; i++)
 	{
 		char zipFilename[256];
@@ -451,7 +444,7 @@ void ModDownloader::ExtractMod(fs::path modPath, VerifiedModPlatform platform)
 		// Extract file
 		{
 			std::error_code ec;
-			fs::path fileDestination = modDirectory / zipFilename;
+			fs::path fileDestination = destinationPath / zipFilename;
 			spdlog::info("=> {}", fileDestination.generic_string());
 
 			// Create parent directory if needed
@@ -574,6 +567,9 @@ void ModDownloader::ExtractMod(fs::path modPath, VerifiedModPlatform platform)
 			}
 		}
 	}
+
+	// Mod extraction went fine
+	modState.state = DONE;
 }
 
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
@@ -588,11 +584,14 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	std::thread requestThread(
 		[this, modName, modVersion]()
 		{
+			std::string name;
 			fs::path archiveLocation;
+			fs::path modDirectory;
 
 			ScopeGuard cleanup(
 				[&]
 				{
+					// Remove downloaded archive
 					try
 					{
 						remove(archiveLocation);
@@ -602,8 +601,20 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 						spdlog::error("Error while removing downloaded archive: {}", a.what());
 					}
 
-					modState.state = DONE;
-					spdlog::info("Done downloading {}.", modName);
+					// Remove mod if auto-download process failed
+					if (modState.state != DONE)
+					{
+						try
+						{
+							remove(modDirectory);
+						}
+						catch (const std::exception& e)
+						{
+							spdlog::error("Error while removing downloaded mod: {}", e.what());
+						}
+					}
+
+					spdlog::info("Done cleaning after downloading {}.", modName);
 				});
 
 			// Download mod archive
@@ -624,8 +635,13 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				return;
 			}
 
+			// Mod directory name (removing the ".zip" fom the archive name)
+			name = archiveLocation.filename().string();
+			name = name.substr(0, name.length() - 4);
+			modDirectory = GetRemoteModFolderPath() / name;
+
 			// Extract downloaded mod archive
-			ExtractMod(archiveLocation, fullVersion.platform);
+			ExtractMod(archiveLocation, modDirectory, fullVersion.platform);
 		});
 
 	requestThread.detach();
