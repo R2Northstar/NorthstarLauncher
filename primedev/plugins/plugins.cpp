@@ -71,6 +71,7 @@ Plugin::Plugin(std::string path)
 	m_runOnClient = context & PluginContext::CLIENT;
 
 	int64_t logColor = m_pluginId->GetField(PluginField::COLOR);
+	// Apply custom colour if plugin has specified one
 	if ((logColor & 0xFFFFFF) != 0)
 	{
 		m_logColor = Color((int)(logColor & 0xFF), (int)((logColor >> 8) & 0xFF), (int)((logColor >> 16) & 0xFF));
