@@ -2,7 +2,6 @@
 #include "pluginmanager.h"
 #include "squirrel/squirrel.h"
 #include "util/wininfo.h"
-#include "core/sourceinterface.h"
 #include "logging/logging.h"
 #include "dedicated/dedicated.h"
 
@@ -24,6 +23,7 @@ bool isValidSquirrelIdentifier(std::string s)
 
 Plugin::Plugin(std::string path)
 	: m_location(path)
+	, m_logColor(NS::Colors::PLUGIN)
 {
 	HMODULE pluginModule = GetModuleHandleA(path.c_str());
 
@@ -70,6 +70,13 @@ Plugin::Plugin(std::string path)
 	m_runOnServer = context & PluginContext::DEDICATED;
 	m_runOnClient = context & PluginContext::CLIENT;
 
+	int64_t logColor = m_pluginId->GetField(PluginField::COLOR);
+	// Apply custom colour if plugin has specified one
+	if ((logColor & 0xFFFFFF) != 0)
+	{
+		m_logColor = Color((int)(logColor & 0xFF), (int)((logColor >> 8) & 0xFF), (int)((logColor >> 16) & 0xFF));
+	}
+
 	if (!name)
 	{
 		NS::log::PLUGINSYS->error("Could not load name of plugin at '{}'", path);
@@ -106,7 +113,7 @@ Plugin::Plugin(std::string path)
 		return;
 	}
 
-	m_logger = std::make_shared<ColoredLogger>(m_logName, NS::Colors::PLUGIN);
+	m_logger = std::make_shared<ColoredLogger>(m_logName, m_logColor);
 	RegisterLogger(m_logger);
 
 	if (IsDedicatedServer() && !m_runOnServer)
@@ -219,7 +226,6 @@ void Plugin::OnSqvmCreated(CSquirrelVM* sqvm) const
 
 void Plugin::OnSqvmDestroying(CSquirrelVM* sqvm) const
 {
-	NS::log::PLUGINSYS->info("destroying sqvm {}", sqvm->vmContext);
 	m_callbacks->OnSqvmDestroying(sqvm);
 }
 
