@@ -37,15 +37,25 @@ Developers who can work a command line may be interested in using [Visual Studio
 
 - Follow the same steps as above for Visual Studio Build Tools, but instead of opening in Visual Studio, run the Command Prompt for VS 2022 and navigate to the NorthstarLauncher.
 
-- Run `cmake . -G "Ninja"` to generate build files.
+- Run `cmake . -G "Ninja" -B build` to generate build files.
 
-- Run `cmake --build .` to build the project.
-  
+- Run `cmake --build build/` to build the project.
+
 ## Linux
 ### Steps
 1. Clone the GitHub repo
 2. Use `cd` to navigate to the cloned repo's directory
 3. Then, run the following commands in order:
 * `docker build --rm -t northstar-build-fedora .`
-* `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build northstar-build-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja"`
-* `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build northstar-build-fedora cmake --build .`
+* `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build northstar-build-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja" -B build`
+* `docker run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build northstar-build-fedora cmake --build build/`
+
+#### Podman
+
+When using [`podman`](https://podman.io/) instead of Docker on an SELinux enabled distro, make sure to add the `z` flag when mounting the directory to correctly label it to avoid SELinux denying access.
+
+As such the corresponding commands are
+
+* `podman build --rm -t northstar-build-fedora .`
+* `podman run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build,z northstar-build-fedora cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -G "Ninja" -B build`
+* `podman run --rm -it -e CC=cl -e CXX=cl --mount type=bind,source="$(pwd)",destination=/build,z northstar-build-fedora cmake --build build/`

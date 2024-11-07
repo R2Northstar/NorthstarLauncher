@@ -3,10 +3,11 @@ Standard: Cpp11
 IndentWidth: 4
 TabWidth: 4
 UseCRLF: false
+AccessModifierOffset: -4
 AlignTrailingComments: false
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortFunctionsOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Inline
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: No
@@ -34,3 +35,5 @@ IndentExternBlock: Indent
 PointerAlignment: Left
 SortIncludes: false
 NamespaceIndentation: All
+PackConstructorInitializers: Never
+BreakConstructorInitializers: BeforeComma
