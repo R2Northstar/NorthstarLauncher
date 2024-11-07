@@ -198,7 +198,7 @@ public:
 	void BuildPdef();
 	void BuildKBActionsList();
 
-  private:
+private:
 	void VerifyModManifestLocation(fs::directory_entry modDir);
 };
 
