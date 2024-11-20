@@ -44,7 +44,7 @@ struct Datatable
 
 ConVar* Cvar_ns_prefer_datatable_from_disk;
 
-template <ScriptContext context> Datatable* (*SQ_GetDatatableInternal)(HSquirrelVM* sqvm);
+template <ScriptContext context> Datatable* (*SQ_GetDatatableInternal)(HSQUIRRELVM sqvm);
 
 struct CSVData
 {
@@ -70,10 +70,11 @@ REPLACE_SQFUNC(GetDataTable, (ScriptContext::UI | ScriptContext::CLIENT | Script
 		g_pSquirrel<context>->raiseerror(sqvm, fmt::format("Asset \"{}\" doesn't start with \"datatable/\"", pAssetName).c_str());
 		return SQRESULT_ERROR;
 	}
-	else if (!Cvar_ns_prefer_datatable_from_disk->GetBool() && g_pPakLoadManager->LoadFile(pAssetName))
+	else if (!Cvar_ns_prefer_datatable_from_disk->GetBool() && g_pPakLoadManager->OpenFile(pAssetName))
+	{
 		return g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
-	// either we prefer disk datatables, or we're loading a datatable that wasn't found in rpak
-	else
+	}
+	else // either we prefer disk datatables, or we're loading a datatable that wasn't found in rpak
 	{
 		std::string sAssetPath(fmt::format("scripts/{}", pAssetName));
 
@@ -96,7 +97,7 @@ REPLACE_SQFUNC(GetDataTable, (ScriptContext::UI | ScriptContext::CLIENT | Script
 			diskAssetPath /= fs::path(pAssetName);
 
 		std::string sDiskAssetPath(diskAssetPath.string());
-		if ((*g_pFilesystem)->m_vtable2->FileExists(&(*g_pFilesystem)->m_vtable2, sDiskAssetPath.c_str(), "GAME"))
+		if (g_pFilesystem->m_vtable2->FileExists(&g_pFilesystem->m_vtable2, sDiskAssetPath.c_str(), "GAME"))
 		{
 			std::string sTableCSV = ReadVPKFile(sDiskAssetPath.c_str());
 			if (!sTableCSV.size())
@@ -223,7 +224,7 @@ REPLACE_SQFUNC(GetDataTable, (ScriptContext::UI | ScriptContext::CLIENT | Script
 			return SQRESULT_NOTNULL;
 		}
 		// the file doesn't exist on disk, check rpak if we haven't already
-		else if (Cvar_ns_prefer_datatable_from_disk->GetBool() && g_pPakLoadManager->LoadFile(pAssetName))
+		else if (Cvar_ns_prefer_datatable_from_disk->GetBool() && g_pPakLoadManager->OpenFile(pAssetName))
 			return g_pSquirrel<context>->m_funcOriginals["GetDataTable"](sqvm);
 		// the file doesn't exist at all, error
 		else
@@ -750,7 +751,7 @@ std::string DataTableToString(Datatable* datatable)
 
 void DumpDatatable(const char* pDatatablePath)
 {
-	Datatable* pDatatable = (Datatable*)g_pPakLoadManager->LoadFile(pDatatablePath);
+	Datatable* pDatatable = (Datatable*)g_pPakLoadManager->OpenFile(pDatatablePath);
 	if (!pDatatable)
 	{
 		spdlog::error("couldn't load datatable {} (rpak containing it may not be loaded?)", pDatatablePath);
@@ -852,12 +853,12 @@ void ConCommand_dump_datatables(const CCommand& args)
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CModule module))
 {
-	SQ_GetDatatableInternal<ScriptContext::SERVER> = module.Offset(0x1250f0).RCast<Datatable* (*)(HSquirrelVM*)>();
+	SQ_GetDatatableInternal<ScriptContext::SERVER> = module.Offset(0x1250f0).RCast<Datatable* (*)(HSQUIRRELVM)>();
 }
 
 ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CModule module))
 {
-	SQ_GetDatatableInternal<ScriptContext::CLIENT> = module.Offset(0x1C9070).RCast<Datatable* (*)(HSquirrelVM*)>();
+	SQ_GetDatatableInternal<ScriptContext::CLIENT> = module.Offset(0x1C9070).RCast<Datatable* (*)(HSQUIRRELVM)>();
 	SQ_GetDatatableInternal<ScriptContext::UI> = SQ_GetDatatableInternal<ScriptContext::CLIENT>;
 }
 
