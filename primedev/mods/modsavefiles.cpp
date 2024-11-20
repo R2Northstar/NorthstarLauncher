@@ -79,6 +79,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 			{
 				spdlog::error("A mod failed to save a file via Safe I/O due to the following error:");
 				spdlog::error("No file extension specified");
+				return;
 			}
 
 			// If there's a file extension missing here that you need, feel free to make a PR adding it
@@ -90,6 +91,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 			{
 				spdlog::error("A mod failed to save a file via Safe I/O due to the following error:");
 				spdlog::error("Disallowed file extension: {}", extension);
+				return;
 			}
 
 			try
