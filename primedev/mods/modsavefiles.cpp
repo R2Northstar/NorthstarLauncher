@@ -81,7 +81,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 				spdlog::error("No file extension specified");
 			}
 
-			// TODO: move into list of global consts?
+			// If there's a file extension missing here that you need, feel free to make a PR adding it
 			static const std::set<std::string> whitelist = {".txt", ".json"};
 
 			// Check if file extension is whitelisted
