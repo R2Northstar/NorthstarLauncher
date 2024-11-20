@@ -132,23 +132,6 @@ ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::SERVER | Scrip
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSIsModEnabled, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
-{
-	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
-
-	// manual lookup, not super performant but eh not a big deal
-	for (Mod& mod : g_pModManager->m_LoadedMods)
-	{
-		if (!mod.Name.compare(modName))
-		{
-			g_pSquirrel<context>->pushbool(sqvm, mod.m_bEnabled);
-			return SQRESULT_NOTNULL;
-		}
-	}
-
-	return SQRESULT_NULL;
-}
-
 ADD_SQFUNC("void", NSSetModEnabled, "string modName, bool enabled", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
