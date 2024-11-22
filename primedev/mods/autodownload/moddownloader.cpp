@@ -176,7 +176,7 @@ int ModDownloader::ModFetchingProgressCallback(
 	return 0;
 }
 
-std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, VerifiedModVersion version)
+std::tuple<fs::path, bool> ModDownloader::FetchModFromDistantStore(std::string_view modName, VerifiedModVersion version)
 {
 	std::string url = version.downloadLink;
 	std::string archiveName = fs::path(url).filename().generic_string();
@@ -190,7 +190,7 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	modState.state = DOWNLOADING;
 
 	// Download the actual archive
-	bool failed = false;
+	bool success = false;
 	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
 	CURLcode result;
 	CURL* easyhandle;
@@ -219,13 +219,14 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	if (result == CURLcode::CURLE_OK)
 	{
 		spdlog::info("Mod archive successfully fetched.");
-		return std::optional<fs::path>(downloadPath);
+		success = true;
 	}
 	else
 	{
 		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
-		return std::optional<fs::path>();
 	}
+
+	return {downloadPath, success};
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecksum)
@@ -621,7 +622,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 					{
 						try
 						{
-							remove(modDirectory);
+							remove_all(modDirectory);
 						}
 						catch (const std::exception& e)
 						{
@@ -635,8 +636,12 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			// Download mod archive
 			VerifiedModVersion fullVersion = verifiedMods[modName].versions[modVersion];
 			std::string expectedHash = fullVersion.checksum;
-			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), fullVersion);
-			if (!fetchingResult.has_value())
+
+			const std::tuple<fs::path, bool> downloadResult = FetchModFromDistantStore(std::string_view(modName), fullVersion);
+			archiveLocation = get<0>(downloadResult);
+			bool downloadSuccessful = get<1>(downloadResult);
+
+			if (!downloadSuccessful)
 			{
 				spdlog::error("Something went wrong while fetching archive, aborting.");
 				if (modState.state != ABORTED)
@@ -645,7 +650,7 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				}
 				return;
 			}
-			archiveLocation = fetchingResult.value();
+
 			if (!IsModLegit(archiveLocation, std::string_view(expectedHash)))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
@@ -660,7 +665,6 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 
 			// Extract downloaded mod archive
 			ExtractMod(archiveLocation, modDirectory, fullVersion.platform);
-			modState.state = DONE;
 		});
 
 	requestThread.detach();

@@ -43,14 +43,12 @@ private:
 	 * input mod name as mod dependency string if bypass flag is set up; fetched
 	 * archive is then stored in a temporary location.
 	 *
-	 * If something went wrong during archive download, this will return an empty
-	 * optional object.
 	 *
 	 * @param modName name of the mod to be downloaded
 	 * @param modVersion version of the mod to be downloaded
-	 * @returns location of the downloaded archive
+	 * @returns tuple containing location of the downloaded archive and whether download completed successfully
 	 */
-	std::optional<fs::path> FetchModFromDistantStore(std::string_view modName, VerifiedModVersion modVersion);
+	std::tuple<fs::path, bool> FetchModFromDistantStore(std::string_view modName, VerifiedModVersion modVersion);
 
 	/**
 	 * Tells if a mod archive has not been corrupted.
