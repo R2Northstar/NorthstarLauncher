@@ -92,7 +92,12 @@ ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::SERVER | Scrip
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSSetModEnabled, "string modName, string modVersion, bool enabled", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+ADD_SQFUNC(
+	"void",
+	NSSetModEnabled,
+	"string modName, string modVersion, bool enabled",
+	"",
+	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel<context>->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel<context>->getstring(sqvm, 2);
