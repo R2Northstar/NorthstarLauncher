@@ -172,6 +172,7 @@ private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
+	std::string cfgPath;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
@@ -183,6 +184,10 @@ public:
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
 	std::unordered_set<std::string> m_PluginDependencyConstants;
+
+private:
+	void SearchFilesystemForMods();
+	void ExportModsConfigurationToFile();
 
 public:
 	ModManager();

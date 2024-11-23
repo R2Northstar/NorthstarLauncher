@@ -522,6 +522,8 @@ void Mod::ParseInitScript(rapidjson_document& json)
 
 ModManager::ModManager()
 {
+	cfgPath = GetNorthstarPrefix() + "/enabledmods.json";
+
 	// precaculated string hashes
 	// note: use backslashes for these, since we use lexically_normal for file paths which uses them
 	m_hScriptsRsonHash = STR_HASH("scripts\\vscripts\\scripts.rson");
@@ -621,20 +623,52 @@ void ModManager::LoadMods()
 
 	m_DependencyConstants.clear();
 
+	// File format checks
+	bool isUsingOldFormat = false;
+	rapidjson_document oldEnabledModsCfg;
+
 	// read enabled mods cfg
-	std::ifstream enabledModsStream(GetNorthstarPrefix() + "/enabledmods.json");
+	std::ifstream enabledModsStream(cfgPath);
 	std::stringstream enabledModsStringStream;
 
-	if (!enabledModsStream.fail())
+	// create configuration file if does not exist
+	if (enabledModsStream.fail())
+	{
+		m_EnabledModsCfg.SetObject();
+	}
+	else
 	{
 		while (enabledModsStream.peek() != EOF)
 			enabledModsStringStream << (char)enabledModsStream.get();
-
 		enabledModsStream.close();
 		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 			enabledModsStringStream.str().c_str());
 
-		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
+		// Check file format, and rename file if it is not using new format
+		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
+		isUsingOldFormat =
+			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
+
+		if (isUsingUnknownFormat || isUsingOldFormat)
+		{
+			spdlog::info(
+				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
+			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
+			if (ret)
+			{
+				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
+				return;
+			}
+
+			// Copy old configuration to migrate manifesto to new format
+			if (isUsingOldFormat)
+			{
+				oldEnabledModsCfg.CopyFrom(m_EnabledModsCfg, oldEnabledModsCfg.GetAllocator());
+			}
+
+			// Reset current configuration
+			m_EnabledModsCfg.SetObject();
+		}
 	}
 
 	// get mod directories
