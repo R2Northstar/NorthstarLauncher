@@ -678,13 +678,43 @@ void ModManager::LoadMods()
 
 	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// Add mod entry to enabledmods.json if it doesn't exist
-		if (!mod.m_bIsRemote && m_bHasEnabledModsCfg && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		bool isModRemote = mod.m_bIsRemote;
+		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
+		bool modEntryHasCorrectFormat = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].IsObject();
+		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
+
+		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
 		{
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), true, m_EnabledModsCfg.GetAllocator());
+			// Creating mod key (with name)
+			if (!modEntryHasCorrectFormat)
+			{
+				// Adjust wrong format (string instead of object)
+				if (modEntryExists)
+				{
+					m_EnabledModsCfg.RemoveMember(mod.Name.c_str());
+				}
+				m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
+			}
+
+			// Creating version key
+			if (!modVersionEntryExists)
+			{
+				m_EnabledModsCfg[mod.Name.c_str()].AddMember(
+					rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			}
+
+			// Add mod entry
+			bool modIsEnabled = mod.m_bEnabled;
+			// Try to use old manifesto if currently migrating from old format
+			if (isUsingOldFormat && oldEnabledModsCfg.HasMember(mod.Name.c_str()) && oldEnabledModsCfg[mod.Name.c_str()].IsBool())
+			{
+				modIsEnabled = oldEnabledModsCfg[mod.Name.c_str()].GetBool();
+				mod.m_bEnabled = modIsEnabled;
+			}
+			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(modIsEnabled);
+
 			newModsDetected = true;
 		}
 
@@ -956,7 +986,7 @@ void ModManager::LoadMods()
 	// If there are new mods, we write entries accordingly in enabledmods.json
 	if (newModsDetected)
 	{
-		std::ofstream writeStream(GetNorthstarPrefix() + "/enabledmods.json");
+		std::ofstream writeStream(cfgPath);
 		rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
 		m_EnabledModsCfg.Accept(writer);
