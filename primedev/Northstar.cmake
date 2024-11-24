@@ -183,7 +183,7 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-    )
+     "mods/mod.cpp" "mods/mod.h")
 
 target_link_libraries(
     NorthstarDLL
