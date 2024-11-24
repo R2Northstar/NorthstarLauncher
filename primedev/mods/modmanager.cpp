@@ -1077,7 +1077,7 @@ void ModManager::LoadMods()
 	int currentModIndex = 0;
 	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.m_bEnabled || (!mod.RequiredOnClient && !mod.Pdiff.size()))
+		if (!mod.m_bEnabled)
 			continue;
 
 		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
