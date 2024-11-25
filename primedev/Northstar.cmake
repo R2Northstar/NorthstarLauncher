@@ -184,7 +184,8 @@ add_library(
     "windows/libsys.h"
     "dllmain.cpp"
     "ns_version.h"
-    "Northstar.def")
+    "Northstar.def"
+)
 
 target_link_libraries(
     NorthstarDLL
