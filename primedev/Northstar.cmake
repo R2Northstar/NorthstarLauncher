@@ -85,6 +85,8 @@ add_library(
     "mods/compiled/modkeyvalues.cpp"
     "mods/compiled/modpdef.cpp"
     "mods/compiled/modscriptsrson.cpp"
+    "mods/mod.cpp"
+    "mods/mod.h"
     "mods/modmanager.cpp"
     "mods/modmanager.h"
     "mods/modsavefiles.cpp"
@@ -182,8 +184,7 @@ add_library(
     "windows/libsys.h"
     "dllmain.cpp"
     "ns_version.h"
-    "Northstar.def"
-     "mods/mod.cpp" "mods/mod.h")
+    "Northstar.def")
 
 target_link_libraries(
     NorthstarDLL
