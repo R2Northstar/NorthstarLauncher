@@ -53,7 +53,7 @@ private:
 	 * This looks for mods in several directories (expecting them to be formatted in
 	 * some way); it then uses respective `mod.json` manifest files to create `Mod`
 	 * instances, which are then stored in the `m_LoadedMods` variable.
-	 * 
+	 *
 	 * @returns nothing
 	 **/
 	void SearchFilesystemForMods();
