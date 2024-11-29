@@ -111,8 +111,6 @@ void ModManager::LoadMods()
 	if (m_bHasLoadedMods)
 		UnloadMods();
 
-	std::vector<fs::path> modDirs;
-
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
 	fs::create_directories(GetModFolderPath());
