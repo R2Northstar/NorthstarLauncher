@@ -113,8 +113,6 @@ void ModManager::LoadMods()
 	if (m_bHasLoadedMods)
 		UnloadMods();
 
-	std::vector<fs::path> modDirs;
-
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
 	fs::create_directories(GetModFolderPath());
@@ -171,6 +169,7 @@ void ModManager::LoadMods()
 		}
 	}
 
+	// Load mod info from filesystem into `m_LoadedMods`
 	SearchFilesystemForMods();
 
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
@@ -664,6 +663,8 @@ void ModManager::SearchFilesystemForMods()
 		{
 			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
 		}
+		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
 		else
 			mod.m_bEnabled = true;
 
