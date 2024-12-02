@@ -34,6 +34,7 @@ private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
+	std::string cfgPath;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
