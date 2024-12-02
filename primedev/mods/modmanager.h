@@ -49,6 +49,17 @@ public:
 
 private:
 	/**
+	 * Saves mod enabled state to enabledmods.json file.
+	 *
+	 * This loops over loaded mods (stored in `m_LoadedMods` list), exports their
+	 * state (enabled or disabled) to a local JSON document, then exports this
+	 * document to local profile.
+	 *
+	 * @returns nothing
+	 **/
+	void ExportModsConfigurationToFile();
+
+	/**
 	 * Load information for all mods from filesystem.
 	 *
 	 * This looks for mods in several directories (expecting them to be formatted in
