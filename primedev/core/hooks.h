@@ -140,7 +140,9 @@ public:
 	__autohook() = delete;
 
 	__autohook(__fileAutohook* autohook, const char* funcName, LPVOID absoluteAddress, LPVOID* orig, LPVOID func)
-		: pHookFunc(func), ppOrigFunc(orig), iAbsoluteAddress(absoluteAddress)
+		: pHookFunc(func)
+		, ppOrigFunc(orig)
+		, iAbsoluteAddress(absoluteAddress)
 	{
 		iAddressResolutionMode = ABSOLUTE_ADDR;
 
@@ -152,7 +154,8 @@ public:
 	}
 
 	__autohook(__fileAutohook* autohook, const char* funcName, const char* addrString, LPVOID* orig, LPVOID func)
-		: pHookFunc(func), ppOrigFunc(orig)
+		: pHookFunc(func)
+		, ppOrigFunc(orig)
 	{
 		iAddressResolutionMode = OFFSET_STRING;
 
@@ -168,7 +171,8 @@ public:
 	}
 
 	__autohook(__fileAutohook* autohook, const char* funcName, const char* moduleName, const char* procName, LPVOID* orig, LPVOID func)
-		: pHookFunc(func), ppOrigFunc(orig)
+		: pHookFunc(func)
+		, ppOrigFunc(orig)
 	{
 		iAddressResolutionMode = PROCADDRESS;
 
@@ -278,7 +282,7 @@ public:
 class ManualHook
 {
 public:
-	char* pFuncName;
+	std::string svFuncName;
 
 	LPVOID pHookFunc;
 	LPVOID* ppOrigFunc;
@@ -327,10 +331,7 @@ public:
 		pAutohook->vars.push_back(this);
 	}
 
-	void Dispatch()
-	{
-		*m_pTarget = (void*)ParseDLLOffsetString(m_pAddrString);
-	}
+	void Dispatch() { *m_pTarget = (void*)ParseDLLOffsetString(m_pAddrString); }
 };
 
 // VAR_AT(engine.dll+0x404, ConVar*, Cvar_host_timescale)

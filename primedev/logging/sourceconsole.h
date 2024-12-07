@@ -1,5 +1,4 @@
 #pragma once
-#include "core/sourceinterface.h"
 #include "spdlog/sinks/base_sink.h"
 #include <map>
 
@@ -60,8 +59,6 @@ public:
 	bool m_bInitialized;
 	CConsoleDialog* m_pConsole;
 };
-
-extern SourceInterface<CGameConsole>* g_pSourceGameConsole;
 
 // spdlog logger
 class SourceConsoleSink : public CustomSink

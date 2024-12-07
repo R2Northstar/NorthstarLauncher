@@ -18,14 +18,30 @@ ILoadLibraryExW o_LoadLibraryExW = nullptr;
 //-----------------------------------------------------------------------------
 void LibSys_RunModuleCallbacks(HMODULE hModule)
 {
+	// Modules that we have already ran callbacks for.
+	// Note: If we ever hook unloading modules, then this will need updating to handle removal etc.
+	static std::vector<HMODULE> vCalledModules;
+
 	if (!hModule)
 	{
 		return;
 	}
 
+	// If we have already ran callbacks for this module, don't run them again.
+	if (std::find(vCalledModules.begin(), vCalledModules.end(), hModule) != vCalledModules.end())
+	{
+		return;
+	}
+	vCalledModules.push_back(hModule);
+
 	// Get module base name in ASCII as noone wants to deal with unicode
 	CHAR szModuleName[MAX_PATH];
 	GetModuleBaseNameA(GetCurrentProcess(), hModule, szModuleName, MAX_PATH);
+
+	// Run calllbacks for all imported modules
+	CModule cModule(hModule);
+	for (const std::string& svImport : cModule.GetImportedModules())
+		LibSys_RunModuleCallbacks(GetModuleHandleA(svImport.c_str()));
 
 	// DevMsg(eLog::NONE, "%s\n", szModuleName);
 
@@ -56,15 +72,27 @@ HMODULE WINAPI WLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags
 	// replace xinput dll with one that has ASLR
 	if (lpLibFileName <= lpLibName && !strncmp(lpLibName, XINPUT1_3_DLL, strlen(XINPUT1_3_DLL) + 1))
 	{
-		hModule = o_LoadLibraryExA("XInput9_1_0.dll", hFile, dwFlags);
+		const char* pszReplacementDll = "XInput1_4.dll";
+		hModule = o_LoadLibraryExA(pszReplacementDll, hFile, dwFlags);
 
 		if (!hModule)
 		{
-			MessageBoxA(0, "Could not find XInput9_1_0.dll", "Northstar", MB_ICONERROR);
+			pszReplacementDll = "XInput9_1_0.dll";
+			spdlog::warn("Couldn't load XInput1_4.dll. Will try XInput9_1_0.dll. If on Windows 7 this is expected");
+			hModule = o_LoadLibraryExA(pszReplacementDll, hFile, dwFlags);
+		}
+
+		if (!hModule)
+		{
+			spdlog::error("Couldn't load XInput9_1_0.dll");
+			MessageBoxA(
+				0, "Could not load a replacement for XInput1_3.dll\nTried: XInput1_4.dll and XInput9_1_0.dll", "Northstar", MB_ICONERROR);
 			exit(EXIT_FAILURE);
 
 			return nullptr;
 		}
+
+		spdlog::info("Successfully loaded {} as a replacement for XInput1_3.dll", pszReplacementDll);
 	}
 	else
 	{

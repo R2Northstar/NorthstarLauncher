@@ -66,6 +66,25 @@ void CModule::Init()
 		m_ModuleSections.push_back(ModuleSections_t(reinterpret_cast<const char*>(hCurrentSection.Name),
 			static_cast<uintptr_t>(m_pModuleBase + hCurrentSection.VirtualAddress), hCurrentSection.SizeOfRawData)); // Push back a struct with the section data.
 	}
+
+	// Get the location of IMAGE_IMPORT_DESCRIPTOR for this module by adding the IMAGE_DIRECTORY_ENTRY_IMPORT relative virtual address onto our
+	// module base address.
+
+	if (m_pNTHeaders->FileHeader.SizeOfOptionalHeader == 0)
+		return;
+
+	IMAGE_DATA_DIRECTORY& imageDirectory = m_pNTHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+	if (imageDirectory.Size == 0 || imageDirectory.VirtualAddress == 0)
+		return;
+
+	IMAGE_IMPORT_DESCRIPTOR* pImageImportDescriptors = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(m_pModuleBase + imageDirectory.VirtualAddress);
+	for (IMAGE_IMPORT_DESCRIPTOR* pIID = pImageImportDescriptors; pIID->Name != 0; pIID++)
+	{
+		// Get virtual relative Address of the imported module name. Then add module base Address to get the actual location.
+		const char* szImportedModuleName = reinterpret_cast<char*>(reinterpret_cast<DWORD*>(m_pModuleBase + pIID->Name));
+
+		m_vImportedModules.push_back(szImportedModuleName);
+	}
 }
 
 //-----------------------------------------------------------------------------

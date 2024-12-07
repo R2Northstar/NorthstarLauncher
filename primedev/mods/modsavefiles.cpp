@@ -74,6 +74,26 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 	std::thread writeThread(
 		[mutex, file, contents]()
 		{
+			// Check if has extension and return early if not
+			if (!file.has_extension())
+			{
+				spdlog::error("A mod failed to save a file via Safe I/O due to the following error:");
+				spdlog::error("No file extension specified");
+				return;
+			}
+
+			// If there's a file extension missing here that you need, feel free to make a PR adding it
+			static const std::set<std::string> whitelist = {".txt", ".json"};
+
+			// Check if file extension is whitelisted
+			std::string extension = file.extension().string();
+			if (whitelist.find(extension) == whitelist.end())
+			{
+				spdlog::error("A mod failed to save a file via Safe I/O due to the following error:");
+				spdlog::error("Disallowed file extension: {}", extension);
+				return;
+			}
+
 			try
 			{
 				mutex.get().lock();
@@ -537,7 +557,7 @@ ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | Scri
 // ok, I'm just gonna explain what the fuck is going on here because this
 // is the pinnacle of my stupidity and I do not want to touch this ever
 // again, yet someone will eventually have to maintain this.
-template <ScriptContext context> std::string EncodeJSON(HSquirrelVM* sqvm)
+template <ScriptContext context> std::string EncodeJSON(HSQUIRRELVM sqvm)
 {
 	// new rapidjson
 	rapidjson_document doc;
