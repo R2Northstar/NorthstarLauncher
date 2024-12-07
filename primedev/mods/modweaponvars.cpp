@@ -28,29 +28,21 @@ template <ScriptContext context> bool IsWeapon(void** ent)
 
 AUTOHOOK_INIT()
 
-// Name might be wrong, we're going off of frequency of calls
-AUTOHOOK(Cl_WeaponTick, client.dll + 0x59D1E0, bool, __fastcall, (C_WeaponX * weapon))
+// Names might be wrong? Correct if needed
+AUTOHOOK(CWeaponX__RegenerateAmmo, server.dll + 0x69E7A0, int, , (CWeaponX * self, CBasePlayer* player, int offhandSlot))
 {
-	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(weapon);
-	g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_PredictWeaponMods", entInstance);
+	SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance(self);
 
-	bool result = Cl_WeaponTick(weapon);
-
-	return result;
+	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
+	return CWeaponX__RegenerateAmmo(self, player, offhandSlot);
 }
 
-// Name might be wrong, we're going off of frequency of calls
-AUTOHOOK(CPlayerSimulate, server.dll + 0x5A6E50, bool, __fastcall, (CBasePlayer * player, int unk_1, bool unk_2))
+AUTOHOOK(C_WeaponX__RegenerateAmmo, client.dll + 0x5B6020, int, , (C_WeaponX * self, CBasePlayer* player, int offhandSlot))
 {
-	SQObject* entInstance = g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance(player);
+	SQObject* entInstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance(self);
 
-	// we have to do it twice, before AND after, or mispredictions happen.
-	// no idea why, unfortunately :/
-	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
-	bool result = CPlayerSimulate(player, unk_1, unk_2);
-	g_pSquirrel<ScriptContext::SERVER>->Call("CodeCallback_DoWeaponModsForPlayer", entInstance);
-
-	return result;
+	g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_PredictWeaponMods", entInstance);
+	return C_WeaponX__RegenerateAmmo(self, player, offhandSlot);
 }
 
 bool IsBadReadPtr(void* p)
@@ -70,31 +62,33 @@ bool IsBadReadPtr(void* p)
 	return true;
 }
 
-AUTOHOOK(Cl_CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int mods, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
+AUTOHOOK(
+	C_WeaponX__CalcWeaponMods, client.dll + 0x3CA0B0, bool, __fastcall, (int mods, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
 {
 	bool result;
 
 	if (IsBadReadPtr(weaponVars - offsetof(C_WeaponX, weaponVars)))
-		return Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
+		return C_WeaponX__CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 
 	if (IsWeapon<ScriptContext::CLIENT>((void**)(weaponVars - offsetof(C_WeaponX, weaponVars))))
 	{
+		result = C_WeaponX__CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 		SQObject* entInstance =
 			g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance((void**)(weaponVars - offsetof(C_WeaponX, weaponVars)));
-		result = Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 		g_pSquirrel<ScriptContext::CLIENT>->Call("CodeCallback_ApplyModWeaponVars", entInstance);
 	}
 	else
 	{
-		return Cl_CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
+		return C_WeaponX__CalcWeaponMods(mods, unk_1, weaponVars, unk_3, unk_4);
 	}
 
 	return result;
 }
 
-AUTOHOOK(Sv_CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
+AUTOHOOK(
+	CWeaponX__CalcWeaponMods, server.dll + 0x6C8B80, bool, __fastcall, (int unk_0, char* unk_1, char* weaponVars, bool unk_3, int unk_4))
 {
-	bool result = Sv_CalcWeaponMods(unk_0, unk_1, weaponVars, unk_3, unk_4);
+	bool result = CWeaponX__CalcWeaponMods(unk_0, unk_1, weaponVars, unk_3, unk_4);
 
 	if (IsBadReadPtr(weaponVars - offsetof(CWeaponX, weaponVars)))
 		return result;
@@ -245,7 +239,7 @@ ADD_SQFUNC("void", ModWeaponVars_SetString, "entity weapon, int weaponVar, strin
 		C_WeaponX* weapon = (C_WeaponX*)ent;
 		*(const char**)(&weapon->weaponVars[varInfo->offset]) = cl_modWeaponVarStrings[valueHash].c_str();
 	}
-		
+
 	return SQRESULT_NULL;
 }
 
@@ -326,16 +320,6 @@ ADD_SQFUNC("void", ModWeaponVars_CalculateWeaponMods, "entity weapon", "", Scrip
 	return SQRESULT_NULL;
 }
 
-ON_DLL_LOAD_CLIENT("client.dll", ModWeaponVars_ClientInit, (CModule mod))
-{
-	const ScriptContext context = ScriptContext::CLIENT;
-	weaponVarArray<context> = mod.Offset(0x942ca0).RCast<WeaponVarInfo*>();
-	_CalculateWeaponValues<context> = mod.Offset(0x3CA060).RCast<calculateWeaponValuesType>();
-	get2ndParamForRecalcModFunc<context> = mod.Offset(0xBB4B0).RCast<get2ndParamForRecalcModFuncType>();
-	C_WeaponX_vftable = mod.Offset(0x998638).RCast<void*>();
-	AUTOHOOK_DISPATCH_MODULE(client.dll);
-}
-
 ON_DLL_LOAD("server.dll", ModWeaponVars_ServerInit, (CModule mod))
 {
 	const ScriptContext context = ScriptContext::SERVER;
@@ -344,4 +328,14 @@ ON_DLL_LOAD("server.dll", ModWeaponVars_ServerInit, (CModule mod))
 	get2ndParamForRecalcModFunc<context> = mod.Offset(0xF0CD0).RCast<get2ndParamForRecalcModFuncType>();
 	CWeaponX_vftable = mod.Offset(0x98E2B8).RCast<void*>();
 	AUTOHOOK_DISPATCH_MODULE(server.dll);
+}
+
+ON_DLL_LOAD_CLIENT("client.dll", ModWeaponVars_ClientInit, (CModule mod))
+{
+	const ScriptContext context = ScriptContext::CLIENT;
+	weaponVarArray<context> = mod.Offset(0x942ca0).RCast<WeaponVarInfo*>();
+	_CalculateWeaponValues<context> = mod.Offset(0x3CA060).RCast<calculateWeaponValuesType>();
+	get2ndParamForRecalcModFunc<context> = mod.Offset(0xBB4B0).RCast<get2ndParamForRecalcModFuncType>();
+	C_WeaponX_vftable = mod.Offset(0x998638).RCast<void*>();
+	AUTOHOOK_DISPATCH_MODULE(client.dll);
 }
