@@ -175,6 +175,16 @@ void ModManager::LoadMods()
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
 	bool newModsDetected = false;
 
+	// Set manifest version
+	const char* versionMember = "Version";
+	if (!m_EnabledModsCfg.HasMember(versionMember))
+	{
+		m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), "1", m_EnabledModsCfg.GetAllocator());
+
+		// Force manifesto write to disk
+		newModsDetected = true;
+	}
+
 	for (Mod& mod : m_LoadedMods)
 	{
 		// Add mod entry to enabledmods.json if it doesn't exist
