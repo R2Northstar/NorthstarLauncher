@@ -179,7 +179,7 @@ void ModManager::LoadMods()
 	const char* versionMember = "Version";
 	if (!m_EnabledModsCfg.HasMember(versionMember))
 	{
-		m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), "1", m_EnabledModsCfg.GetAllocator());
+		m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), 1, m_EnabledModsCfg.GetAllocator());
 
 		// Force manifesto write to disk
 		newModsDetected = true;
