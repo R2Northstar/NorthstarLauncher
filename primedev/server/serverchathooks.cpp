@@ -59,7 +59,7 @@ static void __fastcall h_CServerGameDLL__OnReceivedSayTextMessage(CServerGameDLL
 void ChatSendMessage(unsigned int playerIndex, const char* text, bool isTeam)
 {
 	bShouldCallSayTextHook = true;
-	o_pCServerGameDLL__OnReceivedSayTextMessage(
+	h_CServerGameDLL__OnReceivedSayTextMessage(
 		g_pServerGameDLL,
 		// Ensure the first bit isn't set, since this indicates a custom message
 		(playerIndex + 1) & CUSTOM_MESSAGE_INDEX_MASK,
