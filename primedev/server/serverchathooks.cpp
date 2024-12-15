@@ -8,8 +8,6 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
-AUTOHOOK_INIT()
-
 class CServerGameDLL;
 
 class CRecipientFilter
@@ -152,8 +150,6 @@ ON_DLL_LOAD("engine.dll", EngineServerChatHooks, (CModule module))
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule module))
 {
-	AUTOHOOK_DISPATCH_MODULE(server.dll)
-
 	o_pCServerGameDLL__OnReceivedSayTextMessage = module.Offset(0x1595C0).RCast<decltype(o_pCServerGameDLL__OnReceivedSayTextMessage)>();
 	HookAttach(&(PVOID&)o_pCServerGameDLL__OnReceivedSayTextMessage, (PVOID)h_CServerGameDLL__OnReceivedSayTextMessage);
 
