@@ -31,8 +31,10 @@ void(__fastcall* MessageWriteBool)(bool bValue);
 
 bool bShouldCallSayTextHook = false;
 
-static void (__fastcall* o_pCServerGameDLL__OnReceivedSayTextMessage)(CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam) = nullptr;
-static void __fastcall h_CServerGameDLL__OnReceivedSayTextMessage(CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam)
+static void(__fastcall* o_pCServerGameDLL__OnReceivedSayTextMessage)(
+	CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam) = nullptr;
+static void __fastcall h_CServerGameDLL__OnReceivedSayTextMessage(
+	CServerGameDLL* self, unsigned int senderPlayerId, const char* text, bool isTeam)
 {
 	RemoveAsciiControlSequences(const_cast<char*>(text), true);
 
