@@ -1,6 +1,4 @@
 
-AUTOHOOK_INIT()
-
 bool* bIsOriginOverlayEnabled;
 
 static void(__fastcall* o_pOpenExternalWebBrowser)(char* pUrl, char flags) = nullptr;
@@ -17,8 +15,6 @@ static void __fastcall h_OpenExternalWebBrowser(char* pUrl, char flags)
 
 ON_DLL_LOAD_CLIENT("engine.dll", ScriptExternalBrowserHooks, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
-
 	o_pOpenExternalWebBrowser = module.Offset(0x184E40).RCast<decltype(o_pOpenExternalWebBrowser)>();
 	HookAttach(&(PVOID&)o_pOpenExternalWebBrowser, (PVOID)h_OpenExternalWebBrowser);
 
