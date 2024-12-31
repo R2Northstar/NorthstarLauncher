@@ -118,7 +118,7 @@ void PluginManager::ReloadPlugins()
 	{
 		std::string name = plugin.GetName();
 		if (plugin.Reload())
-			NS::log::PLUGINSYS->warn("Reloaded {}", name);
+			NS::log::PLUGINSYS->info("Reloaded {}", name);
 	}
 }
 
