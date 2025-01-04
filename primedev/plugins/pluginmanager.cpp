@@ -188,10 +188,11 @@ void ConCommand_unload_plugins(const CCommand& args)
 	{
 		std::string name = plugin.GetName();
 
-		if (args.ArgC() < 2 && name != args.Arg(1))
+		if (args.ArgC() >= 1 && name != args.Arg(1))
 			continue;
 
-		plugin.Unload();
+		if (plugin.Unload())
+			NS::log::PLUGINSYS->info("Unloaded {}", name);
 	}
 }
 
