@@ -188,7 +188,7 @@ void ConCommand_unload_plugins(const CCommand& args)
 	{
 		std::string name = plugin.GetName();
 
-		if (args.ArgC() >= 1 && name != args.Arg(1))
+		if (args.ArgC() >= 2 && !strcmp(name.c_str(), args.Arg(1)))
 			continue;
 
 		if (plugin.Unload())
