@@ -365,8 +365,7 @@ void FixupCvarFlags()
 
 	const std::vector<std::tuple<const char*, const char*>> CVAR_FIXUP_DEFAULT_VALUES = {
 		{"sv_stressbots", "0"}, // not currently used but this is probably a bad default if we get bots working
-		{"cl_pred_optimize", "0"}, // fixes issues with animation prediction in thirdperson
-		{"cl_gib_lifetime", "10"} // default value (3) is too low
+		{"cl_pred_optimize", "0"} // fixes issues with animation prediction in thirdperson
 	};
 
 	for (auto& fixup : CVAR_FIXUP_ADD_FLAGS)
