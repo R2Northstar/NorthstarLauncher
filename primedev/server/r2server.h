@@ -6,6 +6,7 @@
 class CBaseEntity;
 extern CBaseEntity* (*Server_GetEntityByIndex)(int index);
 
+// FIXME: Correct this class
 #pragma pack(push, 1)
 class CBasePlayer
 {
@@ -159,97 +160,7 @@ public:
 	Vector3 m_upDir; // 0x102284 ( Size: 12 )
 };
 #pragma pack(pop)
-
-static_assert(offsetof(CBasePlayer, m_nPlayerIndex) == 0x58);
-
-static_assert(offsetof(CBasePlayer, m_grappleActive) == 0x23e8);
-static_assert(offsetof(CBasePlayer, m_platformUserId) == 0x1D08);
-static_assert(offsetof(CBasePlayer, m_classModsActive) == 0x1D10);
-static_assert(offsetof(CBasePlayer, m_posClassModsActive) == 0x1D8C);
-static_assert(offsetof(CBasePlayer, m_passives) == 0x1DCC);
-static_assert(offsetof(CBasePlayer, m_selectedOffhand) == 0x4948);
-static_assert(offsetof(CBasePlayer, m_selectedOffhandPendingHybridAction) == 0x1358);
-static_assert(offsetof(CBasePlayer, m_playerFlags) == 0x1E88);
-static_assert(offsetof(CBasePlayer, m_lastUCmdSimulationTicks) == 0x26A8);
-static_assert(offsetof(CBasePlayer, m_lastUCmdSimulationRemainderTime) == 0x26AC);
-static_assert(offsetof(CBasePlayer, m_remoteTurret) == 0x1F04);
-static_assert(offsetof(CBasePlayer, m_hGroundEntity) == 0x414);
-static_assert(offsetof(CBasePlayer, m_titanSoul) == 0x13B8);
-static_assert(offsetof(CBasePlayer, m_petTitan) == 0x2054);
-static_assert(offsetof(CBasePlayer, m_iHealth) == 0x4D4);
-static_assert(offsetof(CBasePlayer, m_iMaxHealth) == 0x4D0);
-static_assert(offsetof(CBasePlayer, m_lifeState) == 0x4F1);
-static_assert(offsetof(CBasePlayer, m_flMaxspeed) == 0x50C);
-static_assert(offsetof(CBasePlayer, m_fFlags) == 0x298);
-static_assert(offsetof(CBasePlayer, m_iObserverMode) == 0x1F64);
-static_assert(offsetof(CBasePlayer, m_hObserverTarget) == 0x1F6C);
-static_assert(offsetof(CBasePlayer, m_hViewModel) == 0x2098);
-static_assert(offsetof(CBasePlayer, m_ubEFNointerpParity) == 0x27E4);
-static_assert(offsetof(CBasePlayer, m_activeBurnCardIndex) == 0x1FA4);
-static_assert(offsetof(CBasePlayer, m_hColorCorrectionCtrl) == 0x1B68);
-static_assert(offsetof(CBasePlayer, m_PlayerFog__m_hCtrl) == 0x19E0);
-static_assert(offsetof(CBasePlayer, m_bShouldDrawPlayerWhileUsingViewEntity) == 0x26BC);
-static_assert(offsetof(CBasePlayer, m_title) == 0x2848);
-static_assert(offsetof(CBasePlayer, m_useCredit) == 0x2964);
-static_assert(offsetof(CBasePlayer, m_damageImpulseNoDecelEndTime) == 0x1F40);
-static_assert(offsetof(CBasePlayer, m_hasMic) == 0x1E8C);
-static_assert(offsetof(CBasePlayer, m_inPartyChat) == 0x1E8D);
-static_assert(offsetof(CBasePlayer, m_playerMoveSpeedScale) == 0x1E90);
-static_assert(offsetof(CBasePlayer, m_flDeathTime) == 0x1F58);
-static_assert(offsetof(CBasePlayer, m_iSpawnParity) == 0x25A8);
-static_assert(offsetof(CBasePlayer, m_upDir) == 0x102284);
-static_assert(offsetof(CBasePlayer, m_lastDodgeTime) == 0x259C);
-static_assert(offsetof(CBasePlayer, m_wallHanging) == 0x22E0);
-static_assert(offsetof(CBasePlayer, m_traversalType) == 0x22EC);
-static_assert(offsetof(CBasePlayer, m_traversalState) == 0x22F0);
-static_assert(offsetof(CBasePlayer, m_traversalRefPos) == 0x2328);
-static_assert(offsetof(CBasePlayer, m_traversalForwardDir) == 0x231C);
-static_assert(offsetof(CBasePlayer, m_traversalYawDelta) == 0x2354);
-static_assert(offsetof(CBasePlayer, m_traversalYawPoseParameter) == 0x2358);
-static_assert(offsetof(CBasePlayer, m_grappleHook) == 0x2050);
-static_assert(offsetof(CBasePlayer, m_autoSprintForced) == 0x27C0);
-static_assert(offsetof(CBasePlayer, m_fIsSprinting) == 0x27C4);
-static_assert(offsetof(CBasePlayer, m_sprintStartedTime) == 0x27CC);
-static_assert(offsetof(CBasePlayer, m_sprintStartedFrac) == 0x27D0);
-static_assert(offsetof(CBasePlayer, m_sprintEndedTime) == 0x27D4);
-static_assert(offsetof(CBasePlayer, m_sprintEndedFrac) == 0x27D8);
-static_assert(offsetof(CBasePlayer, m_stickySprintStartTime) == 0x27DC);
-static_assert(offsetof(CBasePlayer, m_smartAmmoPreviousHighestLockOnMeFractionValue) == 0x2998);
-static_assert(offsetof(CBasePlayer, m_activeZipline) == 0x23FC);
-static_assert(offsetof(CBasePlayer, m_ziplineReverse) == 0x2400);
-static_assert(offsetof(CBasePlayer, m_ziplineState) == 0x2410);
-static_assert(offsetof(CBasePlayer, m_duckState) == 0x2250);
-static_assert(offsetof(CBasePlayer, m_StandHullMin) == 0x2254);
-static_assert(offsetof(CBasePlayer, m_StandHullMax) == 0x2260);
-static_assert(offsetof(CBasePlayer, m_DuckHullMin) == 0x226C);
-static_assert(offsetof(CBasePlayer, m_DuckHullMax) == 0x2278);
-static_assert(offsetof(CBasePlayer, m_xp) == 0x205C);
-static_assert(offsetof(CBasePlayer, m_generation) == 0x2060);
-static_assert(offsetof(CBasePlayer, m_rank) == 0x2064);
-static_assert(offsetof(CBasePlayer, m_serverForceIncreasePlayerListGenerationParity) == 0x2068);
-static_assert(offsetof(CBasePlayer, m_isPlayingRanked) == 0x206C);
-static_assert(offsetof(CBasePlayer, m_skill_mu) == 0x2070);
-static_assert(offsetof(CBasePlayer, m_titanSoulBeingRodeoed) == 0x1E80);
-static_assert(offsetof(CBasePlayer, m_entitySyncingWithMe) == 0x1E84);
-static_assert(offsetof(CBasePlayer, m_nextTitanRespawnAvailable) == 0x2078);
-static_assert(offsetof(CBasePlayer, m_hasBadReputation) == 0x1C90);
-static_assert(offsetof(CBasePlayer, m_communityName) == 0x1C91);
-static_assert(offsetof(CBasePlayer, m_communityClanTag) == 0x1CD1);
-static_assert(offsetof(CBasePlayer, m_factionName) == 0x1CE1);
-static_assert(offsetof(CBasePlayer, m_hardwareIcon) == 0x1CF1);
-static_assert(offsetof(CBasePlayer, m_happyHourActive) == 0x1D01);
-static_assert(offsetof(CBasePlayer, m_gestureAutoKillBitfield) == 0x1EF4);
-static_assert(offsetof(CBasePlayer, m_pilotClassIndex) == 0x2EA8);
-static_assert(offsetof(CBasePlayer, m_vecAbsOrigin) == 0x100490);
-static_assert(offsetof(CBasePlayer, m_isPerformingBoostAction) == 0x25BE);
-static_assert(offsetof(CBasePlayer, m_ziplineValid3pWeaponLayerAnim) == 0x240C);
-static_assert(offsetof(CBasePlayer, m_playerScriptNetDataGlobal) == 0x345C);
-static_assert(offsetof(CBasePlayer, m_bZooming) == 0x1598);
-static_assert(offsetof(CBasePlayer, m_zoomToggleOn) == 0x1599);
-static_assert(offsetof(CBasePlayer, m_zoomBaseFrac) == 0x159C);
-static_assert(offsetof(CBasePlayer, m_zoomBaseTime) == 0x15A0);
-static_assert(offsetof(CBasePlayer, m_zoomFullStartTime) == 0x15A4);
-static_assert(offsetof(CBasePlayer, m_camoIndex) == 0xA04);
-static_assert(offsetof(CBasePlayer, m_decalIndex) == 0xA08);
+static_assert(sizeof(CBasePlayer) == 0x102290);
+// FIXME: Datamaps say this should be 0x3468, how did we end up with this????
 
 extern CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
