@@ -3,7 +3,7 @@
 #include "resource1.h"
 #include "../ns_version.h"
 
-#define USE_LGBT_LOGO 0
+#define USE_LGBT_LOGO 1
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
