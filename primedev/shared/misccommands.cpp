@@ -225,7 +225,10 @@ void FixupCvarFlags()
 
 		// fcvars that should be saved
 		{"cl_gib_lifetime", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"cl_ragdoll_force_fade_time", FCVAR_ARCHIVE_PLAYERPROFILE},
 		{"cl_ragdoll_force_fade_time_local_view_player", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"cl_ragdoll_force_fade_time_on_moving_geo", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"cl_ragdoll_force_fade_time_titan", FCVAR_ARCHIVE_PLAYERPROFILE},
 		{"sound_volume_dialogue_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
 		{"sound_volume_music_game_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
 		{"sound_volume_sfx_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
