@@ -484,6 +484,14 @@ HOOK(OpenFileHook, o_pOpenFile,
 void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
+	// NOTE [Fifty]: For some reason some users are getting pPath as null when
+	//               loading a server, ReadFileAsync uses CreateFileA and checks
+	//               its return value so this is completely safe
+	if (pPath == NULL)
+	{
+		return ReadFileAsync(pPath, pCallback);
+	}
+	
 	fs::path path(pPath);
 	std::string newPath = "";
 	fs::path filename = path.filename();
