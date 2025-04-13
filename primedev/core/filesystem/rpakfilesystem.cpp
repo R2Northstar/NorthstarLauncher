@@ -489,7 +489,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 	//               its return value so this is completely safe
 	if (pPath == NULL)
 	{
-		return ReadFileAsync(pPath, pCallback);
+		return o_pOpenFile(pPath, pCallback);
 	}
 	
 	fs::path path(pPath);
