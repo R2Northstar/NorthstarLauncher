@@ -485,7 +485,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
 	// NOTE [Fifty]: For some reason some users are getting pPath as null when
-	//               loading a server, ReadFileAsync uses CreateFileA and checks
+	//               loading a server, o_pOpenFile uses CreateFileA and checks
 	//               its return value so this is completely safe
 	if (pPath == NULL)
 	{
