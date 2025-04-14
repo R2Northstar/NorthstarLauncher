@@ -491,6 +491,7 @@ void*, __fastcall, (const char* pPath, void* pCallback))
 	{
 		return o_pOpenFile(pPath, pCallback);
 	}
+
 	fs::path path(pPath);
 	std::string newPath = "";
 	fs::path filename = path.filename();
