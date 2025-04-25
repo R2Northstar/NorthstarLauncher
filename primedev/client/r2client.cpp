@@ -12,11 +12,6 @@ static int h_CBaseClientState_ProcessStringCmd(int64_t a1, int64_t a2) {
 
 	const char* cmd = *(const char**)(a2 + 32);
 
-	if (!strcmp(cmd + 1, "remote_view"))
-	{
-		return o_CBaseClientState_ProcessStringCmd(a1, a2);
-	}
-
 	if (g_pVanillaCompatibility->GetVanillaCompatibility())
 	{
 		return o_CBaseClientState_ProcessStringCmd(a1, a2);
