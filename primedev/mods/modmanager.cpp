@@ -619,6 +619,23 @@ void ModManager::SearchFilesystemForMods()
 	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
 }
 
+void ModManager::DisableMultipleModVersions()
+{
+	// Stores mod versions under the form { "modName": ["1.2.1", "1.2.3"] }
+	std::map<std::string, std::vector<std::string>> modVersions;
+
+	// Load up the dictionary
+	for (Mod& mod : m_LoadedMods)
+	{
+		// todo: Store versions for enabled mods only, as disabled mods are not loaded and won't collide
+	}
+
+	// todo: Find duplicate mods
+	// todo: If none, early exit
+	// todo: Disable older mod versions
+	// todo: Log everything
+}
+
 void ModManager::ExportModsConfigurationToFile()
 {
 	m_EnabledModsCfg.SetObject();
