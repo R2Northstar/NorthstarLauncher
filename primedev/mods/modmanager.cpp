@@ -140,6 +140,9 @@ void ModManager::LoadMods()
 	// Load mod info from filesystem into `m_LoadedMods`
 	SearchFilesystemForMods();
 
+	// Do not activate the same mod multiple times
+	DisableMultipleModVersions();
+
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
 	bool newModsDetected = false;
 
@@ -627,11 +630,41 @@ void ModManager::DisableMultipleModVersions()
 	// Load up the dictionary
 	for (Mod& mod : m_LoadedMods)
 	{
-		// todo: Store versions for enabled mods only, as disabled mods are not loaded and won't collide
+		// Store versions for enabled mods only, as disabled mods are not loaded and won't collide
+		if (!mod.m_bEnabled)
+		{
+			continue;
+		}
+
+		modVersions[mod.Name].push_back(mod.Version);
 	}
 
-	// todo: Find duplicate mods
-	// todo: If none, early exit
+	// Find duplicate mods
+	std::map<std::string, std::vector<std::string>> conflictingModVersions;
+	for (const auto& pair : modVersions)
+	{
+		if (pair.second.size() > 1)
+		{
+			conflictingModVersions[pair.first] = pair.second;
+		}
+	}
+
+	// If none, early exit
+	if (conflictingModVersions.size() == 0)
+	{
+		spdlog::info("No conflicting mod versions detected.");
+		return;
+	}
+	spdlog::warn("Conflicting mod versions were found.");
+	for (const auto& pair : conflictingModVersions)
+	{
+		spdlog::warn("Mod '{}' has several versions enabled:", pair.first);
+		for (const std::string version : pair.second)
+		{
+			spdlog::warn("	-> {}", version);
+		}
+	}
+
 	// todo: Disable older mod versions
 	// todo: Log everything
 }
