@@ -11,6 +11,9 @@
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
+
+#include "semver/semver.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -655,13 +658,53 @@ void ModManager::DisableMultipleModVersions()
 		spdlog::info("No conflicting mod versions detected.");
 		return;
 	}
-	spdlog::warn("Conflicting mod versions were found.");
+
 	for (const auto& pair : conflictingModVersions)
 	{
-		spdlog::warn("Mod '{}' has several versions enabled:", pair.first);
+		spdlog::warn("Mod '{}' has several versions enabled.", pair.first);
+
+		// This version will be enabled in the end
+		std::string versionToActivate = pair.second.front();
+
+		// This semantic version range is used to check whether a mod version is higher than `versionToActivate`
+		semver::range_set range;
+		const auto [ptr, ec] = semver::parse(">"+versionToActivate, range);
+		if (ec != std::errc{}) {
+			spdlog::error("Could not parse mod version range, skipping.");
+			continue;
+		}
+
+		// For each mod version, check if it is higher than current version
 		for (const std::string version : pair.second)
 		{
-			spdlog::warn("	-> {}", version);
+			semver::version modVersion;
+			const auto [ptr, ec] = semver::parse(version, modVersion);
+			if (ec != std::errc{}) {
+				spdlog::error("Could not parse mod version '{}', skipping.", version);
+				continue;
+			}
+
+			// Update parameters if a higher version is found
+			if (range.contains(modVersion))
+			{
+				semver::parse(">"+version, range);
+				versionToActivate = version;
+			}
+		}
+
+		// Loop over mod versions again to disable versions
+		for (const std::string version : pair.second)
+		{
+			if (version.compare(versionToActivate) == 0)
+			{
+				//NSSetModEnabled(pair.first, version, true);
+				spdlog::warn("	-> v{} is now enabled.", version);
+			}
+			else
+			{
+				//NSSetModEnabled(pair.first, version, false);
+				spdlog::warn("	-> v{} is now disabled.", version);
+			}
 		}
 	}
 
