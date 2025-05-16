@@ -627,10 +627,19 @@ void ModManager::SearchFilesystemForMods()
 
 void ModManager::DisableMultipleModVersions()
 {
-	// Stores mod versions under the form { "modName": ["1.2.1", "1.2.3"] }
-	std::map<std::string, std::vector<std::string>> modVersions;
+	// Stores versions, for each mod, associated to their position in the `m_LoadedMods` array, *e.g.*:
+	//
+	// {
+	//     "Northstar.Client": [ {"1.30.2", 0} ],
+	//     "Northstar.Custom": [ {"1.30.2", 1} ],
+	//     "Northstar.CustomServers": [ {"1.30.2", 2} ],
+	//     "Extraction": [ {"1.2.0", 3}, {"1.2.1", 4}, {"1.3.0", 5} ]
+	// }
+	//
+	std::map<std::string, std::vector<std::tuple<std::string, int>>> modVersions;
 
 	// Load up the dictionary
+	int i = 0;
 	for (Mod& mod : m_LoadedMods)
 	{
 		// Store versions for enabled mods only, as disabled mods are not loaded and won't collide
@@ -639,11 +648,12 @@ void ModManager::DisableMultipleModVersions()
 			continue;
 		}
 
-		modVersions[mod.Name].push_back(mod.Version);
+		modVersions[mod.Name].push_back({mod.Version, i});
+		i++;
 	}
 
 	// Find duplicate mods
-	std::map<std::string, std::vector<std::string>> conflictingModVersions;
+	std::map<std::string, std::vector<std::tuple<std::string, int>>> conflictingModVersions;
 	for (const auto& pair : modVersions)
 	{
 		if (pair.second.size() > 1)
@@ -664,7 +674,7 @@ void ModManager::DisableMultipleModVersions()
 		spdlog::warn("Mod '{}' has several versions enabled.", pair.first);
 
 		// This version will be enabled in the end
-		std::string versionToActivate = pair.second.front();
+		std::string versionToActivate = std::get<std::string>(pair.second.front());
 
 		// This semantic version range is used to check whether a mod version is higher than `versionToActivate`
 		semver::range_set range;
@@ -674,9 +684,10 @@ void ModManager::DisableMultipleModVersions()
 			continue;
 		}
 
-		// For each mod version, check if it is higher than current version
-		for (const std::string version : pair.second)
+		// Look for the latest (according to semantic versioning) version
+		for (const std::tuple<std::string, int> tVersion : pair.second)
 		{
+			std::string version = std::get<std::string>(tVersion);
 			semver::version modVersion;
 			const auto [ptr, ec] = semver::parse(version, modVersion);
 			if (ec != std::errc{}) {
@@ -692,24 +703,24 @@ void ModManager::DisableMultipleModVersions()
 			}
 		}
 
-		// Loop over mod versions again to disable versions
-		for (const std::string version : pair.second)
+		// Loop over mod versions again to enable/disable them
+		for (const std::tuple<std::string, int> tVersion : pair.second)
 		{
+			std::string version = std::get<std::string>(tVersion);
+			int versionIndex = std::get<int>(tVersion);
+
 			if (version.compare(versionToActivate) == 0)
 			{
-				//NSSetModEnabled(pair.first, version, true);
+				m_LoadedMods[versionIndex].m_bEnabled = true;
 				spdlog::warn("	-> v{} is now enabled.", version);
 			}
 			else
 			{
-				//NSSetModEnabled(pair.first, version, false);
+				m_LoadedMods[versionIndex].m_bEnabled = false;
 				spdlog::warn("	-> v{} is now disabled.", version);
 			}
 		}
 	}
-
-	// todo: Disable older mod versions
-	// todo: Log everything
 }
 
 void ModManager::ExportModsConfigurationToFile()
