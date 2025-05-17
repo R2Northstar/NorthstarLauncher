@@ -11,6 +11,9 @@
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
+
+#include "semver/semver.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -139,6 +142,9 @@ void ModManager::LoadMods()
 
 	// Load mod info from filesystem into `m_LoadedMods`
 	SearchFilesystemForMods();
+
+	// Do not activate the same mod multiple times
+	DisableMultipleModVersions();
 
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
 	bool newModsDetected = false;
@@ -617,6 +623,106 @@ void ModManager::SearchFilesystemForMods()
 
 	// sort by load prio, lowest-highest
 	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
+}
+
+void ModManager::DisableMultipleModVersions()
+{
+	// Stores versions, for each mod, associated to their position in the `m_LoadedMods` array, *e.g.*:
+	//
+	// {
+	//     "Northstar.Client": [ {"1.30.2", 0} ],
+	//     "Northstar.Custom": [ {"1.30.2", 1} ],
+	//     "Northstar.CustomServers": [ {"1.30.2", 2} ],
+	//     "Extraction": [ {"1.2.0", 3}, {"1.2.1", 4}, {"1.3.0", 5} ]
+	// }
+	//
+	std::map<std::string, std::vector<std::tuple<std::string, int>>> modVersions;
+
+	// Load up the dictionary
+	int i = 0;
+	for (Mod& mod : m_LoadedMods)
+	{
+		// Store versions for enabled mods only, as disabled mods are not loaded and won't collide
+		if (!mod.m_bEnabled)
+		{
+			continue;
+		}
+
+		modVersions[mod.Name].push_back({mod.Version, i});
+		i++;
+	}
+
+	// Find duplicate mods
+	std::map<std::string, std::vector<std::tuple<std::string, int>>> conflictingModVersions;
+	for (const auto& pair : modVersions)
+	{
+		if (pair.second.size() > 1)
+		{
+			conflictingModVersions[pair.first] = pair.second;
+		}
+	}
+
+	// If none, early exit
+	if (conflictingModVersions.size() == 0)
+	{
+		spdlog::info("No conflicting mod versions detected.");
+		return;
+	}
+
+	for (const auto& pair : conflictingModVersions)
+	{
+		spdlog::warn("Mod '{}' has several versions enabled.", pair.first);
+
+		// This version will be enabled in the end
+		std::string versionToActivate = std::get<std::string>(pair.second.front());
+
+		// This semantic version range is used to check whether a mod version is higher than `versionToActivate`
+		semver::range_set range;
+		const auto [ptr, ec] = semver::parse(">" + versionToActivate, range);
+		if (ec != std::errc {})
+		{
+			spdlog::error("Could not parse mod version range, skipping.");
+			continue;
+		}
+
+		// Look for the latest (according to semantic versioning) version
+		for (const std::tuple<std::string, int> tVersion : pair.second)
+		{
+			std::string version = std::get<std::string>(tVersion);
+			semver::version modVersion;
+			const auto [ptr, ec] = semver::parse(version, modVersion);
+			if (ec != std::errc {})
+			{
+				spdlog::error("Could not parse mod version '{}', skipping.", version);
+				continue;
+			}
+
+			// Update parameters if a higher version is found
+			if (range.contains(modVersion))
+			{
+				semver::parse(">" + version, range);
+				versionToActivate = version;
+			}
+		}
+
+		// Loop over mod versions again to enable/disable them
+		for (const std::tuple<std::string, int> tVersion : pair.second)
+		{
+			std::string version = std::get<std::string>(tVersion);
+			int versionIndex = std::get<int>(tVersion);
+
+			if (version.compare(versionToActivate) == 0)
+			{
+				m_LoadedMods[versionIndex].m_bEnabled = true;
+				spdlog::warn("	-> v{} is now enabled.", version);
+			}
+			else
+			{
+				m_LoadedMods[versionIndex].m_bEnabled = false;
+				spdlog::warn("	-> v{} is now disabled.", version);
+			}
+		}
+	}
 }
 
 void ModManager::ExportModsConfigurationToFile()
