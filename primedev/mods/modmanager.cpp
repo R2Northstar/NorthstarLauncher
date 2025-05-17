@@ -678,8 +678,9 @@ void ModManager::DisableMultipleModVersions()
 
 		// This semantic version range is used to check whether a mod version is higher than `versionToActivate`
 		semver::range_set range;
-		const auto [ptr, ec] = semver::parse(">"+versionToActivate, range);
-		if (ec != std::errc{}) {
+		const auto [ptr, ec] = semver::parse(">" + versionToActivate, range);
+		if (ec != std::errc {})
+		{
 			spdlog::error("Could not parse mod version range, skipping.");
 			continue;
 		}
@@ -690,7 +691,8 @@ void ModManager::DisableMultipleModVersions()
 			std::string version = std::get<std::string>(tVersion);
 			semver::version modVersion;
 			const auto [ptr, ec] = semver::parse(version, modVersion);
-			if (ec != std::errc{}) {
+			if (ec != std::errc {})
+			{
 				spdlog::error("Could not parse mod version '{}', skipping.", version);
 				continue;
 			}
@@ -698,7 +700,7 @@ void ModManager::DisableMultipleModVersions()
 			// Update parameters if a higher version is found
 			if (range.contains(modVersion))
 			{
-				semver::parse(">"+version, range);
+				semver::parse(">" + version, range);
 				versionToActivate = version;
 			}
 		}
