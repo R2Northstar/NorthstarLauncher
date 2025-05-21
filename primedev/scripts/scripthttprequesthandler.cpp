@@ -143,6 +143,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 			spdlog::error("Failed to resolve http request destination {} into a valid IPv4 address.", urlHostname);
 		}
 
+		freeaddrinfo(result);
 		curl_free(urlHostname);
 		curl_free(urlScheme);
 		curl_free(urlPort);
@@ -174,6 +175,7 @@ bool IsHttpDestinationHostAllowed(const std::string& host, std::string& outHostn
 			|| addrBytes.s_b1 == 233 && addrBytes.s_b2 == 252 && addrBytes.s_b3 == 0	// 233.252.0.0		- 233.252.0.255			(MCAST-TEST-NET)
 			|| addrBytes.s_b1 >= 240 && addrBytes.s_b4 <= 254)							// 240.0.0.0		- 255.255.255.254		(Future Use Class E)
 		{
+			freeaddrinfo(result);
 			curl_free(urlHostname);
 			curl_free(urlScheme);
 			curl_free(urlPort);
@@ -450,7 +452,7 @@ template <ScriptContext context> int HttpRequestHandler::MakeHttpRequest(const H
 
 // int NS_InternalMakeHttpRequest(int method, string baseUrl, table<string, string> headers, table<string, string> queryParams,
 //	string contentType, string body, int timeout, string userAgent)
-template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSQUIRRELVM sqvm)
 {
 	if (!g_httpRequestHandler || !g_httpRequestHandler->IsRunning())
 	{
@@ -475,7 +477,7 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	SQTable* headerTable = sqvm->_stackOfCurrentFunction[3]._VAL.asTable;
 	for (int idx = 0; idx < headerTable->_numOfNodes; ++idx)
 	{
-		tableNode* node = &headerTable->_nodes[idx];
+		SQTable::_HashNode* node = &headerTable->_nodes[idx];
 
 		if (node->key._Type == OT_STRING && node->val._Type == OT_ARRAY)
 		{
@@ -497,7 +499,7 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 	SQTable* queryTable = sqvm->_stackOfCurrentFunction[4]._VAL.asTable;
 	for (int idx = 0; idx < queryTable->_numOfNodes; ++idx)
 	{
-		tableNode* node = &queryTable->_nodes[idx];
+		SQTable::_HashNode* node = &queryTable->_nodes[idx];
 
 		if (node->key._Type == OT_STRING && node->val._Type == OT_ARRAY)
 		{
@@ -527,14 +529,14 @@ template <ScriptContext context> SQRESULT SQ_InternalMakeHttpRequest(HSquirrelVM
 }
 
 // bool NSIsHttpEnabled()
-template <ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_IsHttpEnabled(HSQUIRRELVM sqvm)
 {
 	g_pSquirrel<context>->pushbool(sqvm, !IsHttpDisabled());
 	return SQRESULT_NOTNULL;
 }
 
 // bool NSIsLocalHttpAllowed()
-template <ScriptContext context> SQRESULT SQ_IsLocalHttpAllowed(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_IsLocalHttpAllowed(HSQUIRRELVM sqvm)
 {
 	g_pSquirrel<context>->pushbool(sqvm, IsLocalHttpAllowed());
 	return SQRESULT_NOTNULL;

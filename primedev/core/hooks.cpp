@@ -12,8 +12,6 @@
 
 namespace fs = std::filesystem;
 
-AUTOHOOK_INIT()
-
 // called from the ON_DLL_LOAD macros
 __dllLoadCallback::__dllLoadCallback(
 	eDllLoadCallbackSide side, const std::string dllName, DllLoadCallbackFuncType callback, std::string uniqueStr, std::string reliesOn)
@@ -85,18 +83,18 @@ void __fileAutohook::DispatchForModule(const char* pModuleName)
 			hook->Dispatch();
 }
 
-ManualHook::ManualHook(const char* funcName, LPVOID func) : pHookFunc(func), ppOrigFunc(nullptr)
+ManualHook::ManualHook(const char* funcName, LPVOID func)
+	: svFuncName(funcName)
+	, pHookFunc(func)
+	, ppOrigFunc(nullptr)
 {
-	const size_t iFuncNameStrlen = strlen(funcName);
-	pFuncName = new char[iFuncNameStrlen];
-	memcpy(pFuncName, funcName, iFuncNameStrlen);
 }
 
-ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func) : pHookFunc(func), ppOrigFunc(orig)
+ManualHook::ManualHook(const char* funcName, LPVOID* orig, LPVOID func)
+	: svFuncName(funcName)
+	, pHookFunc(func)
+	, ppOrigFunc(orig)
 {
-	const size_t iFuncNameStrlen = strlen(funcName);
-	pFuncName = new char[iFuncNameStrlen];
-	memcpy(pFuncName, funcName, iFuncNameStrlen);
 }
 
 bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
@@ -105,19 +103,19 @@ bool ManualHook::Dispatch(LPVOID addr, LPVOID* orig)
 		ppOrigFunc = orig;
 
 	if (!addr)
-		spdlog::error("Address for hook {} is invalid", pFuncName);
+		spdlog::error("Address for hook {} is invalid", svFuncName);
 	else if (MH_CreateHook(addr, pHookFunc, ppOrigFunc) == MH_OK)
 	{
 		if (MH_EnableHook(addr) == MH_OK)
 		{
-			spdlog::info("Enabling hook {}", pFuncName);
+			spdlog::info("Enabling hook {}", svFuncName);
 			return true;
 		}
 		else
-			spdlog::error("MH_EnableHook failed for function {}", pFuncName);
+			spdlog::error("MH_EnableHook failed for function {}", svFuncName);
 	}
 	else
-		spdlog::error("MH_CreateHook failed for function {}", pFuncName);
+		spdlog::error("MH_CreateHook failed for function {}", svFuncName);
 
 	return false;
 }
@@ -223,14 +221,15 @@ void MakeHook(LPVOID pTarget, LPVOID pDetour, void* ppOriginal, const char* pFun
 		spdlog::error("MH_CreateHook failed for function {}", pStrippedFuncName);
 }
 
-AUTOHOOK_ABSOLUTEADDR(_GetCommandLineA, (LPVOID)GetCommandLineA, LPSTR, WINAPI, ())
+static LPSTR(WINAPI* o_pGetCommandLineA)() = nullptr;
+static LPSTR WINAPI h_GetCommandLineA()
 {
 	static char* cmdlineModified;
 	static char* cmdlineOrg;
 
 	if (cmdlineOrg == nullptr || cmdlineModified == nullptr)
 	{
-		cmdlineOrg = _GetCommandLineA();
+		cmdlineOrg = o_pGetCommandLineA();
 		bool isDedi = strstr(cmdlineOrg, "-dedicated"); // well, this one has to be a real argument
 		bool ignoreStartupArgs = strstr(cmdlineOrg, "-nostartupargs");
 
@@ -328,8 +327,6 @@ void CallLoadLibraryACallbacks(LPCSTR lpLibFileName, HMODULE moduleAddress)
 
 void CallLoadLibraryWCallbacks(LPCWSTR lpLibFileName, HMODULE moduleAddress)
 {
-	CModule cModule(moduleAddress);
-
 	while (true)
 	{
 		bool bDoneCalling = true;
@@ -396,6 +393,7 @@ void HookSys_Init()
 	{
 		spdlog::error("MH_Initialize (minhook initialization) failed");
 	}
-	// todo: remove remaining instances of autohook in this file
-	AUTOHOOK_DISPATCH()
+
+	o_pGetCommandLineA = GetCommandLineA;
+	HookAttach(&(PVOID&)o_pGetCommandLineA, (PVOID)h_GetCommandLineA);
 }
