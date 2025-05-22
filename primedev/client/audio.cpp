@@ -7,8 +7,9 @@
 #include <iostream>
 #include <sstream>
 #include <random>
+#include <ranges>
 
-AUTOHOOK_INIT()
+namespace fs = std::filesystem;
 
 static const char* pszAudioEventName;
 
@@ -28,7 +29,7 @@ unsigned char EMPTY_WAVE[45] = {0x52, 0x49, 0x46, 0x46, 0x25, 0x00, 0x00, 0x00, 
 								0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x44, 0xAC, 0x00, 0x00, 0x88, 0x58,
 								0x01, 0x00, 0x02, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61, 0x74, 0x00, 0x00, 0x00, 0x00};
 
-EventOverrideData::EventOverrideData(const std::string& data, const fs::path& path)
+EventOverrideData::EventOverrideData(const std::string& data, const fs::path& path, const std::vector<std::string>& registeredEvents)
 {
 	if (data.length() <= 0)
 	{
@@ -189,14 +190,24 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	{
 		if (file.is_regular_file() && file.path().extension().string() == ".wav")
 		{
-			std::string pathString = file.path().string();
+			std::wstring pathString = file.path().wstring();
+
+			// Retrieve event id from path (standard?)
+			const fs::path eventFilename = file.path().parent_path().filename();
+			std::string eventId = eventFilename.string();
+			if (std::find(registeredEvents.begin(), registeredEvents.end(), eventId) != registeredEvents.end())
+			{
+				spdlog::warn(
+					L"{} couldn't be loaded because {} event has already been overrided, skipping.", pathString, eventFilename.wstring());
+				continue;
+			}
 
 			// Open the file.
 			std::ifstream wavStream(pathString, std::ios::binary);
 
 			if (wavStream.fail())
 			{
-				spdlog::error("Failed reading audio sample {}", file.path().string());
+				spdlog::error(L"Failed reading audio sample {}", pathString);
 				continue;
 			}
 
@@ -222,7 +233,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					// would be weird if this got hit, since it would've worked previously
 					if (wavStream.fail())
 					{
-						spdlog::error("Failed async read of audio sample {}", pathString);
+						spdlog::error(L"Failed async read of audio sample {}", pathString);
 						return;
 					}
 
@@ -231,7 +242,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 					wavStream.read(reinterpret_cast<char*>(data), fileSize);
 					wavStream.close();
 
-					spdlog::info("Finished async read of audio sample {}", pathString);
+					spdlog::info(L"Finished async read of audio sample {}", pathString);
 				});
 
 			readThread.detach();
@@ -259,7 +270,7 @@ EventOverrideData::EventOverrideData(const std::string& data, const fs::path& pa
 	LoadedSuccessfully = true;
 }
 
-bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath)
+bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath, std::string modName)
 {
 	if (IsDedicatedServer())
 		return true; // silently fail
@@ -279,19 +290,35 @@ bool CustomAudioManager::TryLoadAudioOverride(const fs::path& defPath)
 
 	jsonStream.close();
 
-	std::shared_ptr<EventOverrideData> data = std::make_shared<EventOverrideData>(jsonStringStream.str(), defPath);
+	// Pass the list of overriden events to avoid multiple event registrations crash
+	auto kv = std::views::keys(m_loadedAudioOverrides);
+	std::vector<std::string> keys {kv.begin(), kv.end()};
+	std::shared_ptr<EventOverrideData> data = std::make_shared<EventOverrideData>(jsonStringStream.str(), defPath, keys);
 
 	if (!data->LoadedSuccessfully)
 		return false; // no logging, the constructor has probably already logged
 
 	for (const std::string& eventId : data->EventIds)
 	{
+		if (m_loadedAudioOverrides.contains(eventId))
+		{
+			spdlog::warn("\"{}\" mod tried to override sound event \"{}\" but it is already overriden, skipping.", modName, eventId);
+			continue;
+		}
 		spdlog::info("Registering sound event {}", eventId);
 		m_loadedAudioOverrides.insert({eventId, data});
 	}
 
 	for (const auto& eventIdRegexData : data->EventIdsRegex)
 	{
+		if (m_loadedAudioOverridesRegex.contains(eventIdRegexData.first))
+		{
+			spdlog::warn(
+				"\"{}\" mod tried to override sound event regex \"{}\" but it is already overriden, skipping.",
+				modName,
+				eventIdRegexData.first);
+			continue;
+		}
 		spdlog::info("Registering sound event regex {}", eventIdRegexData.first);
 		m_loadedAudioOverridesRegex.insert({eventIdRegexData.first, data});
 	}
@@ -362,14 +389,12 @@ bool ShouldPlayAudioEvent(const char* eventName, const std::shared_ptr<EventOver
 	return true; // good to go
 }
 
-// clang-format off
-AUTOHOOK(LoadSampleMetadata, mileswin64.dll + 0xF110, 
-bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType))
-// clang-format on
+static bool(__fastcall* o_pLoadSampleMetadata)(void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType) = nullptr;
+static bool __fastcall h_LoadSampleMetadata(void* sample, void* audioBuffer, unsigned int audioBufferLength, int audioType)
 {
 	// Raw source, used for voice data only
 	if (audioType == 0)
-		return LoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
+		return o_pLoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
 
 	const char* eventName = pszAudioEventName;
 
@@ -396,7 +421,7 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 
 			if (!overrideData)
 				// not found either
-				return LoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
+				return o_pLoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
 			else
 			{
 				// cache found pattern to improve performance
@@ -410,7 +435,7 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 		overrideData = iter->second;
 
 	if (!ShouldPlayAudioEvent(eventName, overrideData))
-		return LoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
+		return o_pLoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
 
 	void* data = 0;
 	unsigned int dataLength = 0;
@@ -452,7 +477,7 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 	if (!data)
 	{
 		spdlog::warn("Could not fetch override sample data for event {}! Using original data instead.", eventName);
-		return LoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
+		return o_pLoadSampleMetadata(sample, audioBuffer, audioBufferLength, audioType);
 	}
 
 	audioBuffer = data;
@@ -463,31 +488,76 @@ bool, __fastcall, (void* sample, void* audioBuffer, unsigned int audioBufferLeng
 	*(unsigned int*)((uintptr_t)sample + 0xF0) = audioBufferLength;
 
 	// 64 - Auto-detect sample type
-	bool res = LoadSampleMetadata(sample, audioBuffer, audioBufferLength, 64);
+	bool res = o_pLoadSampleMetadata(sample, audioBuffer, audioBufferLength, 64);
 	if (!res)
 		spdlog::error("LoadSampleMetadata failed! The game will crash :(");
 
 	return res;
 }
 
-// clang-format off
-AUTOHOOK(sub_1800294C0, mileswin64.dll + 0x294C0,
-void*, __fastcall, (void* a1, void* a2))
-// clang-format on
+static void*(__fastcall* o_pSub_1800294C0)(void* a1, void* a2) = nullptr;
+static void* __fastcall h_Sub_1800294C0(void* a1, void* a2)
 {
 	pszAudioEventName = reinterpret_cast<const char*>((*((__int64*)a2 + 6)));
-	return sub_1800294C0(a1, a2);
+	return o_pSub_1800294C0(a1, a2);
 }
 
-// clang-format off
-AUTOHOOK(MilesLog, client.dll + 0x57DAD0, 
-void, __fastcall, (int level, const char* string))
-// clang-format on
+static void(__fastcall* o_pMilesLog)(int level, const char* string) = nullptr;
+static void __fastcall h_MilesLog(int level, const char* string)
 {
 	if (!Cvar_mileslog_enable->GetBool())
 		return;
 
 	spdlog::info("[MSS] {} - {}", level, string);
+}
+
+static void(__fastcall* o_pSub_18003EBD0)(DWORD dwThreadID, const char* threadName) = nullptr;
+static void __fastcall h_Sub_18003EBD0(DWORD dwThreadID, const char* threadName)
+{
+	HANDLE hThread = OpenThread(THREAD_SET_LIMITED_INFORMATION, FALSE, dwThreadID);
+
+	if (hThread != NULL)
+	{
+		// TODO: This "method" of "charset conversion" from string to wstring is abhorrent. Change it to a proper one
+		// as soon as Northstar has some helper function to do proper charset conversions.
+		auto tmp = std::string(threadName);
+		HRESULT WINAPI _SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription);
+		_SetThreadDescription(hThread, std::wstring(tmp.begin(), tmp.end()).c_str());
+
+		CloseHandle(hThread);
+	}
+
+	o_pSub_18003EBD0(dwThreadID, threadName);
+}
+
+static char*(__fastcall* o_pSub_18003BC10)(void* a1, void* a2, void* a3, void* a4, void* a5, int a6) = nullptr;
+static char* __fastcall h_Sub_18003BC10(void* a1, void* a2, void* a3, void* a4, void* a5, int a6)
+{
+	HANDLE hThread;
+	char* ret = o_pSub_18003BC10(a1, a2, a3, a4, a5, a6);
+
+	if (ret != NULL && (hThread = reinterpret_cast<HANDLE>(*((uint64_t*)ret + 55))) != NULL)
+	{
+		HRESULT WINAPI _SetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription);
+		_SetThreadDescription(hThread, L"[Miles] WASAPI Service Thread");
+	}
+
+	return ret;
+}
+
+ON_DLL_LOAD("mileswin64.dll", MilesWin64_Audio, (CModule module))
+{
+	o_pLoadSampleMetadata = module.Offset(0xF110).RCast<decltype(o_pLoadSampleMetadata)>();
+	HookAttach(&(PVOID&)o_pLoadSampleMetadata, (PVOID)h_LoadSampleMetadata);
+
+	o_pSub_1800294C0 = module.Offset(0x294C0).RCast<decltype(o_pSub_1800294C0)>();
+	HookAttach(&(PVOID&)o_pSub_1800294C0, (PVOID)h_Sub_1800294C0);
+
+	o_pSub_18003EBD0 = module.Offset(0x3EBD0).RCast<decltype(o_pSub_18003EBD0)>();
+	HookAttach(&(PVOID&)o_pSub_18003EBD0, (PVOID)h_Sub_18003EBD0);
+
+	o_pSub_18003BC10 = module.Offset(0x3BC10).RCast<decltype(o_pSub_18003BC10)>();
+	HookAttach(&(PVOID&)o_pSub_18003BC10, (PVOID)h_Sub_18003BC10);
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
@@ -497,7 +567,8 @@ ON_DLL_LOAD_RELIESON("engine.dll", MilesLogFuncHooks, ConVar, (CModule module))
 
 ON_DLL_LOAD_CLIENT_RELIESON("client.dll", AudioHooks, ConVar, (CModule module))
 {
-	AUTOHOOK_DISPATCH()
+	o_pMilesLog = module.Offset(0x57DAD0).RCast<decltype(o_pMilesLog)>();
+	HookAttach(&(PVOID&)o_pMilesLog, (PVOID)h_MilesLog);
 
 	Cvar_ns_print_played_sounds = new ConVar("ns_print_played_sounds", "0", FCVAR_NONE, "");
 	MilesStopAll = module.Offset(0x580850).RCast<MilesStopAll_Type>();

@@ -11,6 +11,8 @@
 #include "ns_version.h"
 #include "core/vanilla.h"
 
+#include "vscript/vscript.h"
+
 #include <any>
 
 AUTOHOOK_INIT()
@@ -157,11 +159,6 @@ const char* SQTypeNameFromID(int type)
 	return "";
 }
 
-// needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
-template class SquirrelManager<ScriptContext::SERVER>;
-template class SquirrelManager<ScriptContext::CLIENT>;
-template class SquirrelManager<ScriptContext::UI>;
-
 template <ScriptContext context> void SquirrelManager<context>::VMCreated(CSquirrelVM* newSqvm)
 {
 	m_pSQVM = newSqvm;
@@ -258,8 +255,8 @@ template <ScriptContext context> void SquirrelManager<context>::ExecuteCode(cons
 
 	spdlog::info("Executing {} script code {} ", GetContextName(context), pCode);
 
-	std::string strCode(pCode);
-	CompileBufferState bufferState = CompileBufferState(strCode);
+	// NOTE: SQBufferState doesn't strdup pCode!
+	SQBufferState bufferState = SQBufferState(pCode);
 
 	SQRESULT compileResult = compilebuffer(&bufferState, "console");
 	spdlog::info("sq_compilebuffer returned {}", PrintSQRESULT.at(compileResult));
@@ -314,14 +311,14 @@ template <ScriptContext context> void SquirrelManager<context>::AddFuncOverride(
 }
 
 // hooks
-bool IsUIVM(ScriptContext context, HSquirrelVM* pSqvm)
+bool IsUIVM(ScriptContext context, HSQUIRRELVM pSqvm)
 {
 	NOTE_UNUSED(context);
 	return ScriptContext(pSqvm->sharedState->cSquirrelVM->vmContext) == ScriptContext::UI;
 }
 
-template <ScriptContext context> void* (*sq_compiler_create)(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError);
-template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirrelVM* sqvm, void* a2, void* a3, SQBool bShouldThrowError)
+template <ScriptContext context> void* (*sq_compiler_create)(HSQUIRRELVM sqvm, void* a2, void* a3, SQBool bShouldThrowError);
+template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSQUIRRELVM sqvm, void* a2, void* a3, SQBool bShouldThrowError)
 {
 	// store whether errors generated from this compile should be fatal
 	if (IsUIVM(context, sqvm))
@@ -332,8 +329,8 @@ template <ScriptContext context> void* __fastcall sq_compiler_createHook(HSquirr
 	return sq_compiler_create<context>(sqvm, a2, a3, bShouldThrowError);
 }
 
-template <ScriptContext context> SQInteger (*SQPrint)(HSquirrelVM* sqvm, const char* fmt);
-template <ScriptContext context> SQInteger SQPrintHook(HSquirrelVM* sqvm, const char* fmt, ...)
+template <ScriptContext context> SQInteger (*SQPrint)(HSQUIRRELVM sqvm, const char* fmt);
+template <ScriptContext context> SQInteger SQPrintHook(HSQUIRRELVM sqvm, const char* fmt, ...)
 {
 	NOTE_UNUSED(sqvm);
 
@@ -403,9 +400,9 @@ template <ScriptContext context> void __fastcall DestroyVMHook(void* a1, CSquirr
 	spdlog::info("DestroyVM {} {}", GetContextName(realContext), (void*)sqvm);
 }
 
-template <ScriptContext context> void (*SQCompileError)(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column);
+template <ScriptContext context> void (*SQCompileError)(HSQUIRRELVM sqvm, const char* error, const char* file, int line, int column);
 template <ScriptContext context>
-void __fastcall ScriptCompileErrorHook(HSquirrelVM* sqvm, const char* error, const char* file, int line, int column)
+void __fastcall ScriptCompileErrorHook(HSQUIRRELVM sqvm, const char* error, const char* file, int line, int column)
 {
 	bool bIsFatalError = g_pSquirrel<context>->m_bFatalCompilationErrors;
 	ScriptContext realContext = context; // ui and client use the same function so we use this for prints
@@ -549,7 +546,7 @@ template <ScriptContext context> void ConCommand_script(const CCommand& args)
 	g_pSquirrel<context>->ExecuteCode(args.ArgS());
 }
 
-template <ScriptContext context> SQRESULT SQ_StubbedFunc(HSquirrelVM* sqvm)
+template <ScriptContext context> SQRESULT SQ_StubbedFunc(HSQUIRRELVM sqvm)
 {
 	SQStackInfos si;
 	g_pSquirrel<context>->sq_stackinfos(sqvm, 0, si);
@@ -712,6 +709,7 @@ ON_DLL_LOAD_RELIESON("client.dll", ClientSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x3E49B0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance = module.Offset(0x114F0).RCast<sq_getentityfrominstanceType>();
+	g_pSquirrel<ScriptContext::CLIENT>->__sq_createscriptinstance = module.Offset(0xC20E0).RCast<sq_createscriptinstanceType>();
 	g_pSquirrel<ScriptContext::UI>->__sq_GetEntityConstant_CBaseEntity =
 		g_pSquirrel<ScriptContext::CLIENT>->__sq_GetEntityConstant_CBaseEntity;
 	g_pSquirrel<ScriptContext::UI>->__sq_getentityfrominstance = g_pSquirrel<ScriptContext::CLIENT>->__sq_getentityfrominstance;
@@ -805,6 +803,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 
 	g_pSquirrel<ScriptContext::SERVER>->__sq_GetEntityConstant_CBaseEntity = module.Offset(0x418AF0).RCast<sq_GetEntityConstantType>();
 	g_pSquirrel<ScriptContext::SERVER>->__sq_getentityfrominstance = module.Offset(0x1E920).RCast<sq_getentityfrominstanceType>();
+	g_pSquirrel<ScriptContext::SERVER>->__sq_createscriptinstance = module.Offset(0x43F2F0).RCast<sq_createscriptinstanceType>();
 
 	g_pSquirrel<ScriptContext::SERVER>->logger = NS::log::SCRIPT_SV;
 	// Message buffer stuff
@@ -845,3 +844,12 @@ void InitialiseSquirrelManagers()
 	g_pSquirrel<ScriptContext::UI> = new SquirrelManager<ScriptContext::UI>;
 	g_pSquirrel<ScriptContext::SERVER> = new SquirrelManager<ScriptContext::SERVER>;
 }
+
+// needed to define implementations for squirrelmanager outside of squirrel.h without compiler errors
+template class SquirrelManager<ScriptContext::SERVER>;
+template class SquirrelManager<ScriptContext::CLIENT>;
+template class SquirrelManager<ScriptContext::UI>;
+
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::SERVER>();
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::CLIENT>();
+template std::shared_ptr<spdlog::logger> NS::log::squirrel_logger<ScriptContext::UI>();

@@ -55,6 +55,8 @@ size_t WriteToString(void* ptr, size_t size, size_t count, void* stream)
 
 void ModDownloader::FetchModsListFromAPI()
 {
+	modState.state = MANIFESTO_FETCHING;
+
 	std::thread requestThread(
 		[this]()
 		{
@@ -62,6 +64,9 @@ void ModDownloader::FetchModsListFromAPI()
 			CURL* easyhandle;
 			rapidjson::Document verifiedModsJson;
 			std::string url = modsListUrl;
+
+			// Empty verified mods manifesto
+			verifiedMods = {};
 
 			curl_global_init(CURL_GLOBAL_ALL);
 			easyhandle = curl_easy_init();
@@ -75,7 +80,12 @@ void ModDownloader::FetchModsListFromAPI()
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &readBuffer);
 			curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, WriteToString);
 			result = curl_easy_perform(easyhandle);
-			ScopeGuard cleanup([&] { curl_easy_cleanup(easyhandle); });
+			ScopeGuard cleanup(
+				[&]
+				{
+					curl_easy_cleanup(easyhandle);
+					modState.state = DOWNLOADING;
+				});
 
 			if (result == CURLcode::CURLE_OK)
 			{
@@ -92,21 +102,39 @@ void ModDownloader::FetchModsListFromAPI()
 			verifiedModsJson.Parse(readBuffer);
 			for (auto i = verifiedModsJson.MemberBegin(); i != verifiedModsJson.MemberEnd(); ++i)
 			{
-				std::string name = i->name.GetString();
-				std::string dependency = i->value["DependencyPrefix"].GetString();
+				// Format testing
+				if (!i->value.HasMember("Repository") || !i->value.HasMember("Versions"))
+				{
+					spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
+					return;
+				}
 
+				std::string name = i->name.GetString();
 				std::unordered_map<std::string, VerifiedModVersion> modVersions;
+
 				rapidjson::Value& versions = i->value["Versions"];
 				assert(versions.IsArray());
 				for (auto& attribute : versions.GetArray())
 				{
 					assert(attribute.IsObject());
+					// Format testing
+					if (!attribute.HasMember("Version") || !attribute.HasMember("Checksum") || !attribute.HasMember("DownloadLink") ||
+						!attribute.HasMember("Platform"))
+					{
+						spdlog::warn("Verified mods manifesto format is unrecognized, skipping loading.");
+						return;
+					}
+
 					std::string version = attribute["Version"].GetString();
 					std::string checksum = attribute["Checksum"].GetString();
-					modVersions.insert({version, {.checksum = checksum}});
+					std::string downloadLink = attribute["DownloadLink"].GetString();
+					std::string platformValue = attribute["Platform"].GetString();
+					VerifiedModPlatform platform =
+						platformValue.compare("thunderstore") == 0 ? VerifiedModPlatform::Thunderstore : VerifiedModPlatform::Unknown;
+					modVersions.insert({version, {.checksum = checksum, .downloadLink = downloadLink, .platform = platform}});
 				}
 
-				VerifiedModDetails modConfig = {.dependencyPrefix = dependency, .versions = modVersions};
+				VerifiedModDetails modConfig = {.versions = modVersions};
 				verifiedMods.insert({name, modConfig});
 				spdlog::info("==> Loaded configuration for mod \"" + name + "\"");
 			}
@@ -128,6 +156,14 @@ int ModDownloader::ModFetchingProgressCallback(
 {
 	NOTE_UNUSED(totalToUpload);
 	NOTE_UNUSED(nowUploaded);
+
+	// Abort download
+	ModDownloader* instance = static_cast<ModDownloader*>(ptr);
+	if (instance->modState.state == ABORTED)
+	{
+		return 1;
+	}
+
 	if (totalDownloadSize != 0 && finishedDownloadSize != 0)
 	{
 		ModDownloader* instance = static_cast<ModDownloader*>(ptr);
@@ -140,13 +176,10 @@ int ModDownloader::ModFetchingProgressCallback(
 	return 0;
 }
 
-std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view modName, std::string_view modVersion)
+std::tuple<fs::path, bool> ModDownloader::FetchModFromDistantStore(std::string_view modName, VerifiedModVersion version)
 {
-	// Retrieve mod prefix from local mods list, or use mod name as mod prefix if bypass flag is set
-	std::string modPrefix = strstr(GetCommandLineA(), VERIFICATION_FLAG) ? modName.data() : verifiedMods[modName.data()].dependencyPrefix;
-	// Build archive distant URI
-	std::string archiveName = std::format("{}-{}.zip", modPrefix, modVersion.data());
-	std::string url = STORE_URL + archiveName;
+	std::string url = version.downloadLink;
+	std::string archiveName = fs::path(url).filename().generic_string();
 	spdlog::info(std::format("Fetching mod archive from {}", url));
 
 	// Download destination
@@ -157,7 +190,7 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	modState.state = DOWNLOADING;
 
 	// Download the actual archive
-	bool failed = false;
+	bool success = false;
 	FILE* fp = fopen(downloadPath.generic_string().c_str(), "wb");
 	CURLcode result;
 	CURL* easyhandle;
@@ -186,13 +219,14 @@ std::optional<fs::path> ModDownloader::FetchModFromDistantStore(std::string_view
 	if (result == CURLcode::CURLE_OK)
 	{
 		spdlog::info("Mod archive successfully fetched.");
-		return std::optional<fs::path>(downloadPath);
+		success = true;
 	}
 	else
 	{
 		spdlog::error("Fetching mod archive failed: {}", curl_easy_strerror(result));
-		return std::optional<fs::path>();
 	}
+
+	return {downloadPath, success};
 }
 
 bool ModDownloader::IsModLegit(fs::path modPath, std::string_view expectedChecksum)
@@ -366,11 +400,9 @@ int GetModArchiveSize(unzFile file, unz_global_info64 info)
 	return totalSize;
 }
 
-void ModDownloader::ExtractMod(fs::path modPath)
+void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, VerifiedModPlatform platform)
 {
 	unzFile file;
-	std::string name;
-	fs::path modDirectory;
 
 	file = unzOpen(modPath.generic_string().c_str());
 	ScopeGuard cleanup(
@@ -404,10 +436,13 @@ void ModDownloader::ExtractMod(fs::path modPath)
 	modState.total = GetModArchiveSize(file, gi);
 	modState.progress = 0;
 
-	// Mod directory name (removing the ".zip" fom the archive name)
-	name = modPath.filename().string();
-	name = name.substr(0, name.length() - 4);
-	modDirectory = GetRemoteModFolderPath() / name;
+	// Right now, we only know how to extract Thunderstore mods
+	if (platform != VerifiedModPlatform::Thunderstore)
+	{
+		spdlog::error("Failed extracting mod from unknown platform (value: {}).", platform);
+		modState.state = UNKNOWN_PLATFORM;
+		return;
+	}
 
 	for (int i = 0; i < gi.number_entry; i++)
 	{
@@ -418,7 +453,7 @@ void ModDownloader::ExtractMod(fs::path modPath)
 		// Extract file
 		{
 			std::error_code ec;
-			fs::path fileDestination = modDirectory / zipFilename;
+			fs::path fileDestination = destinationPath / zipFilename;
 			spdlog::info("=> {}", fileDestination.generic_string());
 
 			// Create parent directory if needed
@@ -530,6 +565,13 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			}
 		}
 
+		// Abort mod extraction if needed
+		if (modState.state == ABORTED)
+		{
+			spdlog::info("User cancelled mod installation, aborting mod extraction.");
+			return;
+		}
+
 		// Go to next file
 		if ((i + 1) < gi.number_entry)
 		{
@@ -541,6 +583,9 @@ void ModDownloader::ExtractMod(fs::path modPath)
 			}
 		}
 	}
+
+	// Mod extraction went fine
+	modState.state = DONE;
 }
 
 void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
@@ -555,11 +600,14 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 	std::thread requestThread(
 		[this, modName, modVersion]()
 		{
+			std::string name;
 			fs::path archiveLocation;
+			fs::path modDirectory;
 
 			ScopeGuard cleanup(
 				[&]
 				{
+					// Remove downloaded archive
 					try
 					{
 						remove(archiveLocation);
@@ -569,20 +617,40 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 						spdlog::error("Error while removing downloaded archive: {}", a.what());
 					}
 
-					modState.state = DONE;
-					spdlog::info("Done downloading {}.", modName);
+					// Remove mod if auto-download process failed
+					if (modState.state != DONE)
+					{
+						try
+						{
+							remove_all(modDirectory);
+						}
+						catch (const std::exception& e)
+						{
+							spdlog::error("Error while removing downloaded mod: {}", e.what());
+						}
+					}
+
+					spdlog::info("Done cleaning after downloading {}.", modName);
 				});
 
 			// Download mod archive
-			std::string expectedHash = verifiedMods[modName].versions[modVersion].checksum;
-			std::optional<fs::path> fetchingResult = FetchModFromDistantStore(std::string_view(modName), std::string_view(modVersion));
-			if (!fetchingResult.has_value())
+			VerifiedModVersion fullVersion = verifiedMods[modName].versions[modVersion];
+			std::string expectedHash = fullVersion.checksum;
+
+			const std::tuple<fs::path, bool> downloadResult = FetchModFromDistantStore(std::string_view(modName), fullVersion);
+			archiveLocation = get<0>(downloadResult);
+			bool downloadSuccessful = get<1>(downloadResult);
+
+			if (!downloadSuccessful)
 			{
 				spdlog::error("Something went wrong while fetching archive, aborting.");
-				modState.state = MOD_FETCHING_FAILED;
+				if (modState.state != ABORTED)
+				{
+					modState.state = MOD_FETCHING_FAILED;
+				}
 				return;
 			}
-			archiveLocation = fetchingResult.value();
+
 			if (!IsModLegit(archiveLocation, std::string_view(expectedHash)))
 			{
 				spdlog::warn("Archive hash does not match expected checksum, aborting.");
@@ -590,17 +658,32 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				return;
 			}
 
+			// Mod directory name (removing the ".zip" fom the archive name)
+			name = archiveLocation.filename().string();
+			name = name.substr(0, name.length() - 4);
+			modDirectory = GetRemoteModFolderPath() / name;
+
 			// Extract downloaded mod archive
-			ExtractMod(archiveLocation);
+			ExtractMod(archiveLocation, modDirectory, fullVersion.platform);
 		});
 
 	requestThread.detach();
 }
 
+void ModDownloader::CancelDownload()
+{
+	modState.state = ABORTED;
+}
+
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
 	g_pModDownloader = new ModDownloader();
+}
+
+ADD_SQFUNC("void", NSFetchVerifiedModsManifesto, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
 	g_pModDownloader->FetchModsListFromAPI();
+	return SQRESULT_NULL;
 }
 
 ADD_SQFUNC(
@@ -647,4 +730,10 @@ ADD_SQFUNC("ModInstallState", NSGetModInstallState, "", "", ScriptContext::SERVE
 	g_pSquirrel<context>->sealstructslot(sqvm, 3);
 
 	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("void", NSCancelModDownload, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
+{
+	g_pModDownloader->CancelDownload();
+	return SQRESULT_NULL;
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "core/sourceinterface.h"
+#include "core/tier1.h"
 #include "plugins/interfaces/interface.h"
 #include "plugins/interfaces/IPluginId.h"
 #include "plugins/interfaces/IPluginCallbacks.h"
@@ -20,6 +20,7 @@ private:
 	std::string m_location; // path of the dll
 	bool m_runOnServer;
 	bool m_runOnClient;
+	Color m_logColor;
 
 public:
 	HMODULE m_handle;
@@ -27,7 +28,7 @@ public:
 
 	Plugin(std::string path);
 	bool Unload() const;
-	void Reload() const;
+	bool Reload() const;
 
 	// sys
 	void Log(spdlog::level::level_enum level, char* msg) const;

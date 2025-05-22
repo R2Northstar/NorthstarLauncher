@@ -1,5 +1,4 @@
 #pragma once
-#include "core/sourceinterface.h"
 #include "spdlog/sinks/base_sink.h"
 #include <map>
 
@@ -61,8 +60,6 @@ public:
 	CConsoleDialog* m_pConsole;
 };
 
-extern SourceInterface<CGameConsole>* g_pSourceGameConsole;
-
 // spdlog logger
 class SourceConsoleSink : public CustomSink
 {
@@ -77,7 +74,7 @@ private:
 		{spdlog::level::off, NS::Colors::OFF.ToSourceColor()}};
 
 protected:
-	void custom_sink_it_(const custom_log_msg& msg);
+	void custom_sink_it_(const custom_log_msg& msg) override;
 	void sink_it_(const spdlog::details::log_msg& msg) override;
 	void flush_() override;
 };

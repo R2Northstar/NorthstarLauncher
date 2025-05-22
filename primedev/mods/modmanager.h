@@ -8,6 +8,10 @@
 #include <vector>
 #include <filesystem>
 #include <unordered_set>
+#include <regex>
+#include "mod.h"
+
+namespace fs = std::filesystem;
 
 const std::string MOD_FOLDER_SUFFIX = "\\mods";
 const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\packages";
@@ -16,129 +20,6 @@ const fs::path MOD_OVERRIDE_DIR = "mod";
 const std::string COMPILED_ASSETS_SUFFIX = "\\runtime\\compiled";
 
 const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
-
-struct ModConVar
-{
-public:
-	std::string Name;
-	std::string DefaultValue;
-	std::string HelpString;
-	int Flags;
-};
-
-struct ModConCommand
-{
-public:
-	std::string Name;
-	std::string Function;
-	std::string HelpString;
-	ScriptContext Context;
-	int Flags;
-};
-
-struct ModScriptCallback
-{
-public:
-	ScriptContext Context;
-
-	// called before the codecallback is executed
-	std::string BeforeCallback;
-	// called after the codecallback has finished executing
-	std::string AfterCallback;
-	// called right before the vm is destroyed.
-	std::string DestroyCallback;
-};
-
-struct ModScript
-{
-public:
-	std::string Path;
-	std::string RunOn;
-
-	std::vector<ModScriptCallback> Callbacks;
-};
-
-// these are pretty much identical, could refactor to use the same stuff?
-struct ModVPKEntry
-{
-public:
-	bool m_bAutoLoad;
-	std::string m_sVpkPath;
-};
-
-struct ModRpakEntry
-{
-public:
-	bool m_bAutoLoad;
-	std::string m_sPakName;
-	std::string m_sLoadAfterPak;
-};
-
-class Mod
-{
-public:
-	// runtime stuff
-	bool m_bEnabled = true;
-	bool m_bWasReadSuccessfully = false;
-	fs::path m_ModDirectory;
-	bool m_bIsRemote;
-
-	// mod.json stuff:
-
-	// the mod's name
-	std::string Name;
-	// the mod's description
-	std::string Description;
-	// the mod's version, should be in semver
-	std::string Version;
-	// a download link to the mod, for clients that try to join without the mod
-	std::string DownloadLink;
-
-	// whether clients need the mod to join servers running this mod
-	bool RequiredOnClient;
-	// the priority for this mod's files, mods with prio 0 are loaded first, then 1, then 2, etc
-	int LoadPriority;
-
-	// custom scripts used by the mod
-	std::vector<ModScript> Scripts;
-	// convars created by the mod
-	std::vector<ModConVar*> ConVars;
-	// concommands created by the mod
-	std::vector<ModConCommand*> ConCommands;
-	// custom localisation files created by the mod
-	std::vector<std::string> LocalisationFiles;
-	// custom script init.nut
-	std::string initScript;
-
-	// other files:
-
-	std::vector<ModVPKEntry> Vpks;
-	std::unordered_map<size_t, std::string> KeyValues;
-	std::vector<std::string> BinkVideos;
-	std::string Pdiff; // only need one per mod
-
-	std::vector<ModRpakEntry> Rpaks;
-	std::unordered_map<std::string, std::string>
-		RpakAliases; // paks we alias to other rpaks, e.g. to load sp_crashsite paks on the map mp_crashsite
-	std::vector<size_t> StarpakPaths; // starpaks that this mod contains
-	// there seems to be no nice way to get the rpak that is causing the load of a starpak?
-	// hashed with STR_HASH
-
-	std::unordered_map<std::string, std::string> DependencyConstants;
-	std::vector<std::string> PluginDependencyConstants;
-
-public:
-	Mod(fs::path modPath, char* jsonBuf);
-
-private:
-	void ParseConVars(rapidjson_document& json);
-	void ParseConCommands(rapidjson_document& json);
-	void ParseScripts(rapidjson_document& json);
-	void ParseLocalization(rapidjson_document& json);
-	void ParseDependencies(rapidjson_document& json);
-	void ParsePluginDependencies(rapidjson_document& json);
-	void ParseInitScript(rapidjson_document& json);
-};
 
 struct ModOverrideFile
 {
@@ -153,6 +34,7 @@ private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
+	std::string cfgPath;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
@@ -164,6 +46,29 @@ public:
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
 	std::unordered_set<std::string> m_PluginDependencyConstants;
+
+private:
+	/**
+	 * Saves mod enabled state to enabledmods.json file.
+	 *
+	 * This loops over loaded mods (stored in `m_LoadedMods` list), exports their
+	 * state (enabled or disabled) to a local JSON document, then exports this
+	 * document to local profile.
+	 *
+	 * @returns nothing
+	 **/
+	void ExportModsConfigurationToFile();
+
+	/**
+	 * Load information for all mods from filesystem.
+	 *
+	 * This looks for mods in several directories (expecting them to be formatted in
+	 * some way); it then uses respective `mod.json` manifest files to create `Mod`
+	 * instances, which are then stored in the `m_LoadedMods` variable.
+	 *
+	 * @returns nothing
+	 **/
+	void SearchFilesystemForMods();
 
 public:
 	ModManager();
