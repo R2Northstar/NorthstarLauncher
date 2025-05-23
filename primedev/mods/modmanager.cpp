@@ -12,8 +12,6 @@
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 
-#include "semver/semver.hpp"
-
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -652,7 +650,7 @@ void ModManager::DisableMultipleModVersions()
 		i++;
 	}
 
-	// Find duplicate mods
+	// Find duplicate mods and disable them
 	for (const auto& pair : modVersions)
 	{
 		if (pair.second.size() <= 1)
@@ -668,78 +666,6 @@ void ModManager::DisableMultipleModVersions()
 
 			m_LoadedMods[versionIndex].m_bEnabled = false;
 			spdlog::warn("	-> v{} is now disabled.", version);
-		}
-	}
-
-
-	std::map<std::string, std::vector<std::tuple<std::string, int>>> conflictingModVersions;
-	for (const auto& pair : modVersions)
-	{
-		if (pair.second.size() > 1)
-		{
-			conflictingModVersions[pair.first] = pair.second;
-		}
-	}
-
-	// If none, early exit
-	if (conflictingModVersions.size() == 0)
-	{
-		spdlog::info("No conflicting mod versions detected.");
-		return;
-	}
-
-	for (const auto& pair : conflictingModVersions)
-	{
-		spdlog::warn("Mod '{}' has several versions enabled.", pair.first);
-
-		// This version will be enabled in the end
-		std::string versionToActivate = std::get<std::string>(pair.second.front());
-
-		// This semantic version range is used to check whether a mod version is higher than `versionToActivate`
-		semver::range_set range;
-		const auto [ptr, ec] = semver::parse(">" + versionToActivate, range);
-		if (ec != std::errc {})
-		{
-			spdlog::error("Could not parse mod version range, skipping.");
-			continue;
-		}
-
-		// Look for the latest (according to semantic versioning) version
-		for (const std::tuple<std::string, int> tVersion : pair.second)
-		{
-			std::string version = std::get<std::string>(tVersion);
-			semver::version modVersion;
-			const auto [ptr, ec] = semver::parse(version, modVersion);
-			if (ec != std::errc {})
-			{
-				spdlog::error("Could not parse mod version '{}', skipping.", version);
-				continue;
-			}
-
-			// Update parameters if a higher version is found
-			if (range.contains(modVersion))
-			{
-				semver::parse(">" + version, range);
-				versionToActivate = version;
-			}
-		}
-
-		// Loop over mod versions again to enable/disable them
-		for (const std::tuple<std::string, int> tVersion : pair.second)
-		{
-			std::string version = std::get<std::string>(tVersion);
-			int versionIndex = std::get<int>(tVersion);
-
-			if (version.compare(versionToActivate) == 0)
-			{
-				m_LoadedMods[versionIndex].m_bEnabled = true;
-				spdlog::warn("	-> v{} is now enabled.", version);
-			}
-			else
-			{
-				m_LoadedMods[versionIndex].m_bEnabled = false;
-				spdlog::warn("	-> v{} is now disabled.", version);
-			}
 		}
 	}
 }
