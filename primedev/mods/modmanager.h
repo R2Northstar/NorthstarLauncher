@@ -77,9 +77,8 @@ private:
 	 * a same mod can be located in the current profile: enabling all of them would
 	 * lead to a crash, due to some files loaded several times.
 	 *
-	 * This first checks the local `m_LoadedMods` mods list for multiple versions of
-	 * a same mod; if this is detected, this enables the latest version of the
-	 * relevant mod and disables the older versions, based on semantic versioning.
+	 * This checks the local `m_LoadedMods` mods list for multiple versions of a
+	 * same mod: if so, this disables all versions of the relevant mod.
 	 *
 	 * @returns nothing
 	 **/
