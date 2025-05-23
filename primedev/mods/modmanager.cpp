@@ -653,6 +653,25 @@ void ModManager::DisableMultipleModVersions()
 	}
 
 	// Find duplicate mods
+	for (const auto& pair : modVersions)
+	{
+		if (pair.second.size() <= 1)
+		{
+			continue;
+		}
+
+		spdlog::warn("Mod '{}' has several versions enabled, disabling them all.", pair.first);
+		for (const std::tuple<std::string, int> tVersion : pair.second)
+		{
+			std::string version = std::get<std::string>(tVersion);
+			int versionIndex = std::get<int>(tVersion);
+
+			m_LoadedMods[versionIndex].m_bEnabled = false;
+			spdlog::warn("	-> v{} is now disabled.", version);
+		}
+	}
+
+
 	std::map<std::string, std::vector<std::tuple<std::string, int>>> conflictingModVersions;
 	for (const auto& pair : modVersions)
 	{
