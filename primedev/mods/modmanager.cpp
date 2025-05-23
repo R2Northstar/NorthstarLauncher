@@ -634,7 +634,7 @@ void ModManager::DisableMultipleModVersions()
 	//     "Extraction": [ {"1.2.0", 3}, {"1.2.1", 4}, {"1.3.0", 5} ]
 	// }
 	//
-	std::map<std::string, std::vector<std::tuple<std::string, int>>> modVersions;
+	std::unordered_map<std::string, std::vector<std::tuple<std::string, int>>> modVersions;
 
 	// Load up the dictionary
 	int i = 0;
