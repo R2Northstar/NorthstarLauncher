@@ -659,7 +659,7 @@ void ModManager::DisableMultipleModVersions()
 		}
 
 		spdlog::warn("Mod '{}' has several versions enabled, disabling them all.", pair.first);
-		for (auto &[version, versionIndex] : pair.second)
+		for (auto& [version, versionIndex] : pair.second)
 		{
 
 			m_LoadedMods[versionIndex].m_bEnabled = false;
