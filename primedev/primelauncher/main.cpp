@@ -274,37 +274,36 @@ bool LoadNorthstar()
 {
 	FARPROC Hook_Init = nullptr;
 	{
-		std::string strProfile = "R2Northstar";
-		char* clachar = strstr(GetCommandLineA(), "-profile=");
-		if (clachar)
+		std::wstring strProfile = L"R2Northstar";
+		wchar_t* clArgChar = StrStrW(GetCommandLineW(), L"-profile=");
+		if (clArgChar)
 		{
-			std::string cla = std::string(clachar);
-			if (strncmp(cla.substr(9, 1).c_str(), "\"", 1))
+			std::wstring cla = clArgChar;
+			if (cla.substr(9, 1) != L"\"")
 			{
-				size_t space = cla.find(" ");
-				std::string dirname = cla.substr(9, space - 9);
-				std::cout << "[*] Found profile in command line arguments: " << dirname << std::endl;
-				strProfile = dirname.c_str();
+				size_t space = cla.find(L" ");
+				std::wstring dirname = cla.substr(9, space - 9);
+				std::wcout << L"[*] Found profile in command line arguments: " << dirname << std::endl;
+				strProfile = dirname;
 			}
 			else
 			{
-				std::string quote = "\"";
+				std::wstring quote = L"\"";
 				size_t quote1 = cla.find(quote);
 				size_t quote2 = (cla.substr(quote1 + 1)).find(quote);
-				std::string dirname = cla.substr(quote1 + 1, quote2);
-				std::cout << "[*] Found profile in command line arguments: " << dirname << std::endl;
+				std::wstring dirname = cla.substr(quote1 + 1, quote2);
+				std::wcout << L"[*] Found profile in command line arguments: " << dirname << std::endl;
 				strProfile = dirname;
 			}
 		}
 		else
 		{
 			std::cout << "[*] Profile was not found in command line arguments. Using default: R2Northstar" << std::endl;
-			strProfile = "R2Northstar";
+			strProfile = L"R2Northstar";
 		}
 
 		// Check if "Northstar.dll" exists in profile directory, if it doesnt fall back to root
-		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, std::wstring(strProfile.begin(), strProfile.end()).c_str());
-
+		swprintf_s(buffer, L"%s\\%s\\Northstar.dll", exePath, strProfile.c_str());
 		if (!fs::exists(fs::path(buffer)))
 			swprintf_s(buffer, L"%s\\Northstar.dll", exePath);
 
@@ -337,30 +336,10 @@ HMODULE LoadDediStub(const char* name)
 	return h;
 }
 
-int main(int argc, char* argv[])
+// Initializes Northstar, returns pointer to the LauncherMain function.
+// Moved from main() to save stack space.
+FARPROC InitNorthstar(int argc, char* argv[])
 {
-
-	if (strstr(GetCommandLineA(), "-waitfordebugger"))
-	{
-		while (!IsDebuggerPresent())
-		{
-			// Sleep 100ms to give debugger time to attach.
-			Sleep(100);
-		}
-	}
-
-	if (!GetExePathWide(exePath, sizeof(exePath)))
-	{
-		MessageBoxA(
-			GetForegroundWindow(),
-			"Failed getting game directory.\nThe game cannot continue and has to exit.",
-			"Northstar Launcher Error",
-			0);
-		return 1;
-	}
-
-	SetCurrentDirectoryW(exePath);
-
 	bool noOriginStartup = false;
 	bool dedicated = false;
 	bool nostubs = false;
@@ -403,7 +382,7 @@ int main(int argc, char* argv[])
 						"The game cannot continue and has to exit.",
 						"Northstar Launcher Error",
 						0);
-					return 1;
+					return nullptr;
 				}
 			}
 		}
@@ -416,61 +395,95 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	PrependPath();
+
+	if (!fs::exists("ns_startup_args.txt"))
 	{
-		PrependPath();
+		std::ofstream file("ns_startup_args.txt");
+		std::string defaultArgs = "-multiple";
+		file.write(defaultArgs.c_str(), defaultArgs.length());
+		file.close();
+	}
+	if (!fs::exists("ns_startup_args_dedi.txt"))
+	{
+		std::ofstream file("ns_startup_args_dedi.txt");
+		std::string defaultArgs = "+setplaylist private_match";
+		file.write(defaultArgs.c_str(), defaultArgs.length());
+		file.close();
+	}
 
-		if (!fs::exists("ns_startup_args.txt"))
-		{
-			std::ofstream file("ns_startup_args.txt");
-			std::string defaultArgs = "-multiple";
-			file.write(defaultArgs.c_str(), defaultArgs.length());
-			file.close();
-		}
-		if (!fs::exists("ns_startup_args_dedi.txt"))
-		{
-			std::ofstream file("ns_startup_args_dedi.txt");
-			std::string defaultArgs = "+setplaylist private_match";
-			file.write(defaultArgs.c_str(), defaultArgs.length());
-			file.close();
-		}
+	std::cout << "[*] Loading tier0.dll" << std::endl;
+	swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
+	hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+	if (!hTier0Module)
+	{
+		LibraryLoadError(GetLastError(), L"tier0.dll", buffer);
+		return nullptr;
+	}
 
-		std::cout << "[*] Loading tier0.dll" << std::endl;
-		swprintf_s(buffer, L"%s\\bin\\x64_retail\\tier0.dll", exePath);
-		hTier0Module = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
-		if (!hTier0Module)
-		{
-			LibraryLoadError(GetLastError(), L"tier0.dll", buffer);
-			return 1;
-		}
+	bool loadNorthstar = ShouldLoadNorthstar(argc, argv);
+	if (loadNorthstar)
+	{
+		std::cout << "[*] Loading Northstar" << std::endl;
+		if (!LoadNorthstar())
+			return nullptr;
+	}
+	else
+		std::cout << "[*] Going to load the vanilla game" << std::endl;
 
-		bool loadNorthstar = ShouldLoadNorthstar(argc, argv);
-		if (loadNorthstar)
-		{
-			std::cout << "[*] Loading Northstar" << std::endl;
-			if (!LoadNorthstar())
-				return 1;
-		}
-		else
-			std::cout << "[*] Going to load the vanilla game" << std::endl;
-
-		std::cout << "[*] Loading launcher.dll" << std::endl;
-		swprintf_s(buffer, L"%s\\bin\\x64_retail\\launcher.dll", exePath);
-		hLauncherModule = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
-		if (!hLauncherModule)
-		{
-			LibraryLoadError(GetLastError(), L"launcher.dll", buffer);
-			return 1;
-		}
+	std::cout << "[*] Loading launcher.dll" << std::endl;
+	swprintf_s(buffer, L"%s\\bin\\x64_retail\\launcher.dll", exePath);
+	hLauncherModule = LoadLibraryExW(buffer, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+	if (!hLauncherModule)
+	{
+		LibraryLoadError(GetLastError(), L"launcher.dll", buffer);
+		return nullptr;
 	}
 
 	std::cout << "[*] Launching the game..." << std::endl;
-	auto LauncherMain = GetLauncherMain();
+	FARPROC LauncherMain = GetLauncherMain();
 	if (!LauncherMain)
+	{
 		MessageBoxA(
 			GetForegroundWindow(),
 			"Failed loading launcher.dll.\nThe game cannot continue and has to exit.",
 			"Northstar Launcher Error",
 			0);
+	}
+	return LauncherMain;
+}
+
+int main(int argc, char* argv[])
+{
+	if (strstr(GetCommandLineA(), "-waitfordebugger"))
+	{
+		while (!IsDebuggerPresent())
+		{
+			// Sleep 100ms to give debugger time to attach.
+			Sleep(100);
+		}
+	}
+
+	if (!GetExePathWide(exePath, sizeof(exePath)))
+	{
+		MessageBoxA(
+			GetForegroundWindow(),
+			"Failed getting game directory.\nThe game cannot continue and has to exit.",
+			"Northstar Launcher Error",
+			0);
+		return 1;
+	}
+
+	SetCurrentDirectoryW(exePath);
+
+	FARPROC LauncherMain = InitNorthstar(argc, argv);
+
+	// InitNorthstar already displays error messages if anything goes wrong,
+	// so we don't need to display one here.
+	if (!LauncherMain)
+	{
+		return 1;
+	}
 
 	std::cout.flush();
 	return ((int(/*__fastcall*/*)(HINSTANCE, HINSTANCE, LPSTR, int))LauncherMain)(
