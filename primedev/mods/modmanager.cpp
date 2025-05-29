@@ -11,7 +11,6 @@
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
-
 #include <filesystem>
 #include <fstream>
 #include <string>
