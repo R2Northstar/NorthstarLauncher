@@ -715,12 +715,11 @@ void ModManager::DisableMultipleModVersions()
 	for (Mod& mod : m_LoadedMods)
 	{
 		// Store versions for enabled mods only, as disabled mods are not loaded and won't collide
-		if (!mod.m_bEnabled)
+		if (mod.m_bEnabled)
 		{
-			continue;
+			modVersions[mod.Name].push_back({mod.Version.c_str(), i});
 		}
 
-		modVersions[mod.Name].push_back({mod.Version.c_str(), i});
 		i++;
 	}
 
