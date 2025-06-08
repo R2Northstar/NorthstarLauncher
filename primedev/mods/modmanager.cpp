@@ -232,97 +232,97 @@ void ModManager::LoadMods()
 			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "paks"))
 			{
 				// ensure we're only loading rpaks
-				if (fs::is_regular_file(file) && file.path().extension() == ".rpak")
+				if (!fs::is_regular_file(file) || file.path().extension() != ".rpak")
+					continue;
+
+				std::string pakName(file.path().filename().string());
+				ModRpakEntry& modPak = mod.Rpaks.emplace_back(mod);
+
+				modPak.m_pakName = pakName;
+
+				if (!bUseRpakJson)
 				{
-					std::string pakName(file.path().filename().string());
-					ModRpakEntry& modPak = mod.Rpaks.emplace_back(mod);
+					spdlog::warn("Mod {} contains rpaks without valid rpak.json, rpaks might not be loaded", mod.Name);
+				}
+				else
+				{
+					modPak.m_preload =
+						(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
+							dRpakJson["Preload"][pakName].IsTrue());
 
-					modPak.m_pakName = pakName;
+					// only one load method can be used for an rpak.
+					if (modPak.m_preload)
+						goto REGISTER_STARPAK;
 
-					if (!bUseRpakJson)
+					// postload things
+					if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
 					{
-						spdlog::warn("Mod {} contains rpaks without valid rpak.json, rpaks might not be loaded", mod.Name);
+						modPak.m_dependentPakHash = STR_HASH(dRpakJson["Postload"][pakName].GetString());
+
+						// only one load method can be used for an rpak.
+						goto REGISTER_STARPAK;
+					}
+
+					// this is the only bit of rpak.json that isn't really deprecated. Even so, it will be moved over to the mod.json
+					// eventually
+					if (dRpakJson.HasMember(pakName))
+					{
+						if (!dRpakJson[pakName].IsString())
+						{
+							spdlog::error("Mod {} has invalid rpak.json. Rpak entries must be strings.", mod.Name);
+							continue;
+						}
+
+						std::string loadStr = dRpakJson[pakName].GetString();
+						try
+						{
+							modPak.m_loadRegex = std::regex(loadStr);
+						}
+						catch (...)
+						{
+							spdlog::error("Mod {} has invalid rpak.json. Malformed regex \"{}\" for {}", mod.Name, loadStr, pakName);
+							continue;
+						}
+					}
+				}
+
+			REGISTER_STARPAK:
+				// read header of file and get the starpak paths
+				// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
+				// and there is seemingly no good way to tell which rpak is causing the load of a starpak :/
+
+				std::ifstream rpakStream(file.path(), std::ios::binary);
+
+				// seek to the point in the header where the starpak reference size is
+				rpakStream.seekg(0x38, std::ios::beg);
+				int starpaksSize = 0;
+				rpakStream.read((char*)&starpaksSize, 2);
+
+				// seek to just after the header
+				rpakStream.seekg(0x58, std::ios::beg);
+				// read the starpak reference(s)
+				std::vector<char> buf(starpaksSize);
+				rpakStream.read(buf.data(), starpaksSize);
+
+				rpakStream.close();
+
+				// split the starpak reference(s) into strings to hash
+				std::string str = "";
+				for (int i = 0; i < starpaksSize; i++)
+				{
+					// if the current char is null, that signals the end of the current starpak path
+					if (buf[i] != 0x00)
+					{
+						str += buf[i];
 					}
 					else
 					{
-						modPak.m_preload =
-							(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
-							 dRpakJson["Preload"][pakName].IsTrue());
-
-						// only one load method can be used for an rpak.
-						if (modPak.m_preload)
-							goto REGISTER_STARPAK;
-
-						// postload things
-						if (dRpakJson.HasMember("Postload") && dRpakJson["Postload"].IsObject() && dRpakJson["Postload"].HasMember(pakName))
+						// only add the string we are making if it isnt empty
+						if (!str.empty())
 						{
-							modPak.m_dependentPakHash = STR_HASH(dRpakJson["Postload"][pakName].GetString());
-
-							// only one load method can be used for an rpak.
-							goto REGISTER_STARPAK;
-						}
-
-						// this is the only bit of rpak.json that isn't really deprecated. Even so, it will be moved over to the mod.json
-						// eventually
-						if (dRpakJson.HasMember(pakName))
-						{
-							if (!dRpakJson[pakName].IsString())
-							{
-								spdlog::error("Mod {} has invalid rpak.json. Rpak entries must be strings.", mod.Name);
-								continue;
-							}
-
-							std::string loadStr = dRpakJson[pakName].GetString();
-							try
-							{
-								modPak.m_loadRegex = std::regex(loadStr);
-							}
-							catch (...)
-							{
-								spdlog::error("Mod {} has invalid rpak.json. Malformed regex \"{}\" for {}", mod.Name, loadStr, pakName);
-								continue;
-							}
-						}
-					}
-
-				REGISTER_STARPAK:
-					// read header of file and get the starpak paths
-					// this is done here as opposed to on starpak load because multiple rpaks can load a starpak
-					// and there is seemingly no good way to tell which rpak is causing the load of a starpak :/
-
-					std::ifstream rpakStream(file.path(), std::ios::binary);
-
-					// seek to the point in the header where the starpak reference size is
-					rpakStream.seekg(0x38, std::ios::beg);
-					int starpaksSize = 0;
-					rpakStream.read((char*)&starpaksSize, 2);
-
-					// seek to just after the header
-					rpakStream.seekg(0x58, std::ios::beg);
-					// read the starpak reference(s)
-					std::vector<char> buf(starpaksSize);
-					rpakStream.read(buf.data(), starpaksSize);
-
-					rpakStream.close();
-
-					// split the starpak reference(s) into strings to hash
-					std::string str = "";
-					for (int i = 0; i < starpaksSize; i++)
-					{
-						// if the current char is null, that signals the end of the current starpak path
-						if (buf[i] != 0x00)
-						{
-							str += buf[i];
-						}
-						else
-						{
-							// only add the string we are making if it isnt empty
-							if (!str.empty())
-							{
-								mod.StarpakPaths.push_back(STR_HASH(str));
-								spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
-								str = "";
-							}
+							mod.StarpakPaths.push_back(STR_HASH(str));
+							spdlog::info("Mod {} registered starpak '{}'", mod.Name, str);
+							str = "";
 						}
 					}
 				}
@@ -376,13 +376,13 @@ void ModManager::LoadMods()
 		{
 			for (fs::directory_entry file : fs::directory_iterator(mod.m_ModDirectory / "audio"))
 			{
-				if (fs::is_regular_file(file) && file.path().extension().string() == ".json")
+				if (!fs::is_regular_file(file) || file.path().extension().string() != ".json")
+					continue;
+
+				if (!g_CustomAudioManager.TryLoadAudioOverride(file.path(), mod.Name))
 				{
-					if (!g_CustomAudioManager.TryLoadAudioOverride(file.path(), mod.Name))
-					{
-						spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
-						continue;
-					}
+					spdlog::warn("Mod {} has an invalid audio def {}", mod.Name, file.path().filename().string());
+					continue;
 				}
 			}
 		}
