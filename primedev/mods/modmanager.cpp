@@ -35,13 +35,8 @@ ModManager::ModManager()
 	LoadMods();
 }
 
-struct Test
-{
-	std::string funcName;
-	ScriptContext context;
-};
-
-template <ScriptContext context> auto ModConCommandCallback_Internal(std::string name, const CCommand& command)
+template <ScriptContext context>
+void ModConCommandCallback_Internal(std::string name, const CCommand& command)
 {
 	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
 	{
@@ -64,7 +59,7 @@ template <ScriptContext context> auto ModConCommandCallback_Internal(std::string
 	}
 }
 
-auto ModConCommandCallback(const CCommand& command)
+static void ModConCommandCallback(const CCommand& command)
 {
 	ModConCommand* found = nullptr;
 	auto commandString = std::string(command.GetCommandString());
@@ -79,6 +74,9 @@ auto ModConCommandCallback(const CCommand& command)
 	// Find the mod this command belongs to
 	for (auto& mod : g_pModManager->m_LoadedMods)
 	{
+		if (!mod.m_bEnabled)
+			continue;
+
 		auto res = std::find_if(
 			mod.ConCommands.begin(),
 			mod.ConCommands.end(),
@@ -142,7 +140,6 @@ void ModManager::LoadMods()
 			// make sure command isnt't registered multiple times.
 			if (!g_pCVar->FindCommand(command->Name.c_str()))
 			{
-				std::string funcName = command->Function;
 				RegisterConCommand(command->Name.c_str(), ModConCommandCallback, command->HelpString.c_str(), command->Flags);
 			}
 		}
