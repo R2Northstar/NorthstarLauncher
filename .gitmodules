@@ -9,3 +9,6 @@
 [submodule "thirdparty/minizip"]
 	path = primedev/thirdparty/minizip
 	url = https://github.com/zlib-ng/minizip-ng.git
+[submodule "thirdparty/imgui-ws"]
+	path = primedev/thirdparty/imgui-ws
+	url = https://github.com/ggerganov/imgui-ws
