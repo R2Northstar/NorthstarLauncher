@@ -501,7 +501,7 @@ void ModManager::SearchFilesystemForMods()
 
 		jsonStream.close();
 
-		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
+		Mod mod(modDir, jsonStringStream.str().c_str());
 
 		for (auto& modDependencyConstant : mod.DependencyConstants)
 		{
@@ -827,19 +827,19 @@ void ConCommand_reload_mods(const CCommand& args)
 
 fs::path GetModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix()) / MOD_FOLDER_SUFFIX;
 }
 fs::path GetThunderstoreModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + THUNDERSTORE_MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix()) / THUNDERSTORE_MOD_FOLDER_SUFFIX;
 }
 fs::path GetRemoteModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + REMOTE_MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix()) / REMOTE_MOD_FOLDER_SUFFIX;
 }
 fs::path GetCompiledAssetsPath()
 {
-	return fs::path(GetNorthstarPrefix() + COMPILED_ASSETS_SUFFIX);
+	return fs::path(GetNorthstarPrefix()) / COMPILED_ASSETS_SUFFIX;
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CModule module))
