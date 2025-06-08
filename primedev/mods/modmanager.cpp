@@ -280,7 +280,7 @@ void ModManager::LoadMods()
 							catch (...)
 							{
 								spdlog::error("Mod {} has invalid rpak.json. Malformed regex \"{}\" for {}", mod.Name, loadStr, pakName);
-								return;
+								continue;
 							}
 						}
 					}
