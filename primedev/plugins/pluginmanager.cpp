@@ -61,7 +61,7 @@ bool PluginManager::LoadPlugins(bool reloaded)
 		return false;
 	}
 
-	fs::create_directories(GetThunderstoreModFolderPath());
+	fs::create_directories(GetThunderstoreLegacyModFolderPath());
 
 	std::vector<fs::path> paths;
 
@@ -74,7 +74,7 @@ bool PluginManager::LoadPlugins(bool reloaded)
 	FindPlugins(pluginPath, paths);
 
 	// Special case for Thunderstore mods dir
-	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
+	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreLegacyModFolderPath());
 	// Set up regex for `AUTHOR-MOD-VERSION` pattern
 	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
 	for (fs::directory_entry dir : thunderstoreModsDir)

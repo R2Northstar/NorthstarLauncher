@@ -115,8 +115,9 @@ void ModManager::LoadMods()
 
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
-	fs::create_directories(GetModFolderPath());
-	fs::create_directories(GetThunderstoreModFolderPath());
+	fs::create_directories(GetCoreModFolderPath());
+	fs::create_directories(GetManualModFolderPath());
+	fs::create_directories(GetThunderstoreLegacyModFolderPath());
 	fs::create_directories(GetRemoteModFolderPath());
 
 	m_DependencyConstants.clear();
@@ -595,11 +596,27 @@ void ModManager::SearchFilesystemForMods()
 	m_LoadedMods.clear();
 
 	// get mod directories
-	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
+	std::filesystem::directory_iterator coreModsDir = fs::directory_iterator(GetCoreModFolderPath());
+	std::filesystem::directory_iterator manualModsDir = fs::directory_iterator(GetManualModFolderPath());
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
-	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
+	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreLegacyModFolderPath());
 
-	for (fs::directory_entry dir : classicModsDir)
+	// Set up regex for `Northstar.*` pattern
+	std::regex northstar_pattern(R"(.*\\Northstar\..+)");
+	for (fs::directory_entry dir : coreModsDir)
+	{
+		if (!std::regex_match(dir.path().string(), northstar_pattern))
+		{
+			spdlog::warn(
+				"The following directory did not match 'Northstar.*' and is most likely an incorrectly manually installed mod: {}",
+				dir.path().string());
+			continue; // skip loading mod that doesn't match
+		}
+		if (fs::exists(dir.path() / "mod.json"))
+			modDirs.push_back(dir.path());
+	}
+
+	for (fs::directory_entry dir : manualModsDir)
 		if (fs::exists(dir.path() / "mod.json"))
 			modDirs.push_back(dir.path());
 
@@ -814,13 +831,17 @@ void ConCommand_reload_mods(const CCommand& args)
 	g_pModManager->LoadMods();
 }
 
-fs::path GetModFolderPath()
+fs::path GetCoreModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix() + CORE_MOD_FOLDER_SUFFIX);
 }
-fs::path GetThunderstoreModFolderPath()
+fs::path GetManualModFolderPath()
 {
-	return fs::path(GetNorthstarPrefix() + THUNDERSTORE_MOD_FOLDER_SUFFIX);
+	return fs::path(GetNorthstarPrefix() + MANUAL_MOD_FOLDER_SUFFIX);
+}
+fs::path GetThunderstoreLegacyModFolderPath()
+{
+	return fs::path(GetNorthstarPrefix() + THUNDERSTORE_LEGACY_MOD_FOLDER_SUFFIX);
 }
 fs::path GetRemoteModFolderPath()
 {
