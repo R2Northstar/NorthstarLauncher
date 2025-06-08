@@ -49,6 +49,17 @@ public:
 
 private:
 	/**
+	 * Discovers all mods from disk, and loads their initial state.
+	 *
+	 * This searches for mods in various ways and loads the mods configuration from
+	 * disk, populating `m_LoadedMods`. Note that this does not clear `m_LoadedMods`
+	 * before doing work.
+	 *
+	 * @returns nothing
+	 **/
+	void DiscoverMods();
+
+	/**
 	 * Saves mod enabled state to enabledmods.json file.
 	 *
 	 * This loops over loaded mods (stored in `m_LoadedMods` list), exports their
@@ -83,6 +94,13 @@ private:
 	 * @returns nothing
 	 **/
 	void DisableMultipleModVersions();
+
+	/**
+	 * Builds the modinfo object for sending to the masterserver.
+	 *
+	 * @returns nothing
+	 **/
+	void BuildModInfo();
 
 public:
 	ModManager();

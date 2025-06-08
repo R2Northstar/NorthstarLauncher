@@ -113,123 +113,16 @@ void ModManager::LoadMods()
 	if (m_bHasLoadedMods)
 		UnloadMods();
 
+	// Find all mods from disk
+	DiscoverMods();
+
 	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
-	fs::create_directories(GetModFolderPath());
-	fs::create_directories(GetThunderstoreModFolderPath());
-	fs::create_directories(GetRemoteModFolderPath());
 
 	m_DependencyConstants.clear();
 
-	// File format checks
-	bool isUsingOldFormat = false;
-	rapidjson_document oldEnabledModsCfg;
-
-	// read enabled mods cfg
-	std::ifstream enabledModsStream(cfgPath);
-	std::stringstream enabledModsStringStream;
-
-	// create configuration file if does not exist
-	if (enabledModsStream.fail())
-	{
-		m_EnabledModsCfg.SetObject();
-	}
-	else
-	{
-		while (enabledModsStream.peek() != EOF)
-			enabledModsStringStream << (char)enabledModsStream.get();
-		enabledModsStream.close();
-		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
-			enabledModsStringStream.str().c_str());
-
-		// Check file format, and rename file if it is not using new format
-		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
-		isUsingOldFormat =
-			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
-
-		if (isUsingUnknownFormat || isUsingOldFormat)
-		{
-			spdlog::info(
-				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
-			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
-			if (ret)
-			{
-				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
-				return;
-			}
-
-			// Copy old configuration to migrate manifesto to new format
-			if (isUsingOldFormat)
-			{
-				oldEnabledModsCfg.CopyFrom(m_EnabledModsCfg, oldEnabledModsCfg.GetAllocator());
-			}
-
-			// Reset current configuration
-			m_EnabledModsCfg.SetObject();
-		}
-	}
-
-	// Load mod info from filesystem into `m_LoadedMods`
-	SearchFilesystemForMods();
-
-	// Do not activate the same mod multiple times
-	DisableMultipleModVersions();
-
-	// This is used to check if some mods have a folder but no entry in enabledmods.json
-	bool newModsDetected = false;
-
-	// Set manifest version
-	const char* versionMember = "Version";
-	if (!m_EnabledModsCfg.HasMember(versionMember))
-	{
-		m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), 1, m_EnabledModsCfg.GetAllocator());
-
-		// Force manifesto write to disk
-		newModsDetected = true;
-	}
-
 	for (Mod& mod : m_LoadedMods)
 	{
-		// Add mod entry to enabledmods.json if it doesn't exist
-		bool isModRemote = mod.m_bIsRemote;
-		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
-		bool modEntryHasCorrectFormat = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].IsObject();
-		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
-
-		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
-		{
-			// Creating mod key (with name)
-			if (!modEntryHasCorrectFormat)
-			{
-				// Adjust wrong format (string instead of object)
-				if (modEntryExists)
-				{
-					m_EnabledModsCfg.RemoveMember(mod.Name.c_str());
-				}
-				m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
-				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
-			}
-
-			// Creating version key
-			if (!modVersionEntryExists)
-			{
-				m_EnabledModsCfg[mod.Name.c_str()].AddMember(
-					rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
-			}
-
-			// Add mod entry
-			bool modIsEnabled = mod.m_bEnabled;
-			// Try to use old manifesto if currently migrating from old format
-			if (isUsingOldFormat && oldEnabledModsCfg.HasMember(mod.Name.c_str()) && oldEnabledModsCfg[mod.Name.c_str()].IsBool())
-			{
-				modIsEnabled = oldEnabledModsCfg[mod.Name.c_str()].GetBool();
-				mod.m_bEnabled = modIsEnabled;
-			}
-			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(modIsEnabled);
-
-			newModsDetected = true;
-		}
-
 		// register convars
 		// for reloads, this is sorta barebones, when we have a good findconvar method, we could probably reset flags and stuff on
 		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
@@ -493,66 +386,27 @@ void ModManager::LoadMods()
 				}
 			}
 		}
-	}
 
-	// If there are new mods, we write entries accordingly in enabledmods.json
-	if (newModsDetected)
-	{
-		std::ofstream writeStream(cfgPath);
-		rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
-		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
-		m_EnabledModsCfg.Accept(writer);
-	}
-
-	// in a seperate loop because we register mod files in reverse order, since mods loaded later should have their files prioritised
-	for (int64_t i = m_LoadedMods.size() - 1; i > -1; i--)
-	{
-		if (!m_LoadedMods[i].m_bEnabled)
-			continue;
-
-		if (fs::exists(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR))
+		// register mod files
+		if (fs::exists(mod.m_ModDirectory / MOD_OVERRIDE_DIR))
 		{
-			for (fs::directory_entry file : fs::recursive_directory_iterator(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR))
+			for (fs::directory_entry file : fs::recursive_directory_iterator(mod.m_ModDirectory / MOD_OVERRIDE_DIR))
 			{
 				std::string path =
-					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(m_LoadedMods[i].m_ModDirectory / MOD_OVERRIDE_DIR));
+					g_pModManager->NormaliseModFilePath(file.path().lexically_relative(mod.m_ModDirectory / MOD_OVERRIDE_DIR));
 				if (file.is_regular_file() && m_ModFiles.find(path) == m_ModFiles.end())
 				{
 					ModOverrideFile modFile;
-					modFile.m_pOwningMod = &m_LoadedMods[i];
+					modFile.m_pOwningMod = &mod;
 					modFile.m_Path = path;
-					m_ModFiles.insert(std::make_pair(path, modFile));
+					m_ModFiles.insert_or_assign(path, modFile);
 				}
 			}
 		}
 	}
 
 	// build modinfo obj for masterserver
-	rapidjson_document modinfoDoc;
-	auto& alloc = modinfoDoc.GetAllocator();
-	modinfoDoc.SetObject();
-	modinfoDoc.AddMember("Mods", rapidjson::kArrayType, alloc);
-
-	int currentModIndex = 0;
-	for (Mod& mod : m_LoadedMods)
-	{
-		if (!mod.m_bEnabled)
-			continue;
-
-		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
-		modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
-
-		currentModIndex++;
-	}
-
-	rapidjson::StringBuffer buffer;
-	buffer.Clear();
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	modinfoDoc.Accept(writer);
-	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
+	BuildModInfo();
 
 	m_bHasLoadedMods = true;
 }
@@ -764,6 +618,161 @@ void ModManager::ExportModsConfigurationToFile()
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
 	m_EnabledModsCfg.Accept(writer);
+}
+
+void ModManager::DiscoverMods()
+{
+	fs::create_directories(GetModFolderPath());
+	fs::create_directories(GetThunderstoreModFolderPath());
+	fs::create_directories(GetRemoteModFolderPath());
+
+	// File format checks
+	bool isUsingOldFormat = false;
+	rapidjson_document oldEnabledModsCfg;
+
+	// read enabled mods cfg
+	std::ifstream enabledModsStream(cfgPath);
+	std::stringstream enabledModsStringStream;
+
+	// create configuration file if does not exist
+	if (enabledModsStream.fail())
+	{
+		m_EnabledModsCfg.SetObject();
+	}
+	else
+	{
+		while (enabledModsStream.peek() != EOF)
+			enabledModsStringStream << (char)enabledModsStream.get();
+		enabledModsStream.close();
+		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
+			enabledModsStringStream.str().c_str());
+
+		// Check file format, and rename file if it is not using new format
+		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
+		isUsingOldFormat =
+			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
+
+		if (isUsingUnknownFormat || isUsingOldFormat)
+		{
+			spdlog::info(
+				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
+			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
+			if (ret)
+			{
+				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
+				return;
+			}
+
+			// Copy old configuration to migrate manifesto to new format
+			if (isUsingOldFormat)
+			{
+				oldEnabledModsCfg.CopyFrom(m_EnabledModsCfg, oldEnabledModsCfg.GetAllocator());
+			}
+
+			// Reset current configuration
+			m_EnabledModsCfg.SetObject();
+		}
+	}
+
+	// Load mod info from filesystem into `m_LoadedMods`
+	SearchFilesystemForMods();
+
+	// Do not activate the same mod multiple times
+	DisableMultipleModVersions();
+
+	// This is used to check if some mods have a folder but no entry in enabledmods.json
+	bool newModsDetected = false;
+
+	// Set manifest version
+	const char* versionMember = "Version";
+	if (!m_EnabledModsCfg.HasMember(versionMember))
+	{
+		m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), 1, m_EnabledModsCfg.GetAllocator());
+
+		// Force manifesto write to disk
+		newModsDetected = true;
+	}
+
+	for (Mod& mod : m_LoadedMods)
+	{
+		// Add mod entry to enabledmods.json if it doesn't exist
+		bool isModRemote = mod.m_bIsRemote;
+		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
+		bool modEntryHasCorrectFormat = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].IsObject();
+		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
+
+		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
+		{
+			// Creating mod key (with name)
+			if (!modEntryHasCorrectFormat)
+			{
+				// Adjust wrong format (string instead of object)
+				if (modEntryExists)
+				{
+					m_EnabledModsCfg.RemoveMember(mod.Name.c_str());
+				}
+				m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
+			}
+
+			// Creating version key
+			if (!modVersionEntryExists)
+			{
+				m_EnabledModsCfg[mod.Name.c_str()].AddMember(
+					rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			}
+
+			// Add mod entry
+			bool modIsEnabled = mod.m_bEnabled;
+			// Try to use old manifesto if currently migrating from old format
+			if (isUsingOldFormat && oldEnabledModsCfg.HasMember(mod.Name.c_str()) && oldEnabledModsCfg[mod.Name.c_str()].IsBool())
+			{
+				modIsEnabled = oldEnabledModsCfg[mod.Name.c_str()].GetBool();
+				mod.m_bEnabled = modIsEnabled;
+			}
+			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(modIsEnabled);
+
+			newModsDetected = true;
+		}
+	}
+
+	// If there are new mods, we write entries accordingly in enabledmods.json
+	if (newModsDetected)
+	{
+		std::ofstream writeStream(cfgPath);
+		rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
+		rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
+		m_EnabledModsCfg.Accept(writer);
+	}
+}
+
+void ModManager::BuildModInfo()
+{
+	rapidjson_document modinfoDoc;
+	auto& alloc = modinfoDoc.GetAllocator();
+	modinfoDoc.SetObject();
+	modinfoDoc.AddMember("Mods", rapidjson::kArrayType, alloc);
+
+	int currentModIndex = 0;
+	for (Mod& mod : m_LoadedMods)
+	{
+		if (!mod.m_bEnabled)
+			continue;
+
+		modinfoDoc["Mods"].PushBack(rapidjson::kObjectType, modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Name", rapidjson::StringRef(&mod.Name[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Version", rapidjson::StringRef(&mod.Version[0]), modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("RequiredOnClient", mod.RequiredOnClient, modinfoDoc.GetAllocator());
+		modinfoDoc["Mods"][currentModIndex].AddMember("Pdiff", rapidjson::StringRef(&mod.Pdiff[0]), modinfoDoc.GetAllocator());
+
+		currentModIndex++;
+	}
+
+	rapidjson::StringBuffer buffer;
+	buffer.Clear();
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	modinfoDoc.Accept(writer);
+	g_pMasterServerManager->m_sOwnModInfoJson = std::string(buffer.GetString());
 }
 
 std::string ModManager::NormaliseModFilePath(const fs::path path)
