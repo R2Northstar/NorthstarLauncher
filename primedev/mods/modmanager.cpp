@@ -35,8 +35,7 @@ ModManager::ModManager()
 	LoadMods();
 }
 
-template <ScriptContext context>
-void ModConCommandCallback_Internal(std::string name, const CCommand& command)
+template <ScriptContext context> void ModConCommandCallback_Internal(std::string name, const CCommand& command)
 {
 	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
 	{
@@ -248,7 +247,7 @@ void ModManager::LoadMods()
 				{
 					modPak.m_preload =
 						(dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) &&
-							dRpakJson["Preload"][pakName].IsTrue());
+						 dRpakJson["Preload"][pakName].IsTrue());
 
 					// only one load method can be used for an rpak.
 					if (modPak.m_preload)
