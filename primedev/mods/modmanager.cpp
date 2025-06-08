@@ -121,6 +121,9 @@ void ModManager::LoadMods()
 
 	for (Mod& mod : m_LoadedMods)
 	{
+		if (!mod.m_bEnabled)
+			continue;
+
 		// register convars
 		// for reloads, this is sorta barebones, when we have a good findconvar method, we could probably reset flags and stuff on
 		// preexisting convars note: we don't delete convars if they already exist because they're used for script stuff, unfortunately this
