@@ -503,22 +503,27 @@ void ModManager::SearchFilesystemForMods()
 
 		Mod mod(modDir, (char*)jsonStringStream.str().c_str());
 
-		for (auto& pair : mod.DependencyConstants)
+		for (auto& modDependencyConstant : mod.DependencyConstants)
 		{
-			if (m_DependencyConstants.find(pair.first) != m_DependencyConstants.end() && m_DependencyConstants[pair.first] != pair.second)
+			const auto& [constantName, targetMod] = modDependencyConstant;
+			const auto& [dependencyConstant, didInsert] = m_DependencyConstants.insert(modDependencyConstant);
+			// if we inserted successfully, we are good to go
+			if (didInsert)
+				continue;
+
+			const auto& [foundConstantName, foundTargetMod] = *dependencyConstant;
+			if (targetMod != foundTargetMod)
 			{
 				spdlog::error(
 					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
 					"Change the constant name.",
 					mod.Name,
-					pair.first,
-					pair.second,
-					m_DependencyConstants[pair.first]);
+					constantName,
+					targetMod,
+					foundConstantName);
 				mod.m_bWasReadSuccessfully = false;
 				break;
 			}
-			if (m_DependencyConstants.find(pair.first) == m_DependencyConstants.end())
-				m_DependencyConstants.emplace(pair);
 		}
 
 		for (std::string& dependency : mod.PluginDependencyConstants)
