@@ -211,10 +211,10 @@ add_library(
 set(WEB_EMBED_OUTPUT_FILES "imgui/imgui-ws/common.h" "imgui/imgui-ws/incppect/common.h")
 set(WEB_EMBED_INPUT_FILES "imgui/imgui-ws/imgui-ws.js" "imgui/imgui-ws/index.html" "imgui/imgui-ws/incppect/incppect.js")
 add_custom_command(
-	OUTPUT ${WEB_EMBED_OUTPUT_FILES}
-	COMMAND ${CMAKE_COMMAND} -D SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui-ws/embed_web.cmake
-	DEPENDS ${WEB_EMBED_INPUT_FILES}
-	COMMENT "Embedding web files into headers."
+    OUTPUT ${WEB_EMBED_OUTPUT_FILES}
+    COMMAND ${CMAKE_COMMAND} -D SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui-ws/embed_web.cmake
+    DEPENDS ${WEB_EMBED_INPUT_FILES}
+    COMMENT "Embedding web files into headers."
 )
 
 add_custom_target(embed_web ALL DEPENDS ${WEB_EMBED_OUTPUT_FILES})

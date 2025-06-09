@@ -228,6 +228,7 @@ struct State
 	State() {}
 
 	bool showDemoWindow = true;
+	bool showWebSocketClients = true;
 
 	// client control management
 	struct ClientData
@@ -461,7 +462,7 @@ void Start()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	//ImGui::GetIO().MouseDrawCursor = true;
+	// ImGui::GetIO().MouseDrawCursor = true;
 
 	ImGui::StyleColorsDark();
 	ImGui::GetStyle().AntiAliasedFill = false;
@@ -504,45 +505,35 @@ void Render(float deltaTime)
 
 	ImGui::NewFrame();
 
-	// render stuff
-	if (state.showDemoWindow)
+	if (state.showWebSocketClients &&
+		ImGui::Begin(std::format("WebSocket clients ({})", state.clients.size()).c_str(), &state.showWebSocketClients))
 	{
-		ImGui::ShowDemoWindow(&state.showDemoWindow);
-	}
-
-	// debug window
-	{
-		ImGui::Begin("Hello, world!");
-		ImGui::Checkbox("Demo Window", &state.showDemoWindow);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::Text(" Id   Ip addr");
+		for (auto& [cid, client] : state.clients)
+		{
+			ImGui::Text("%3d : %s", cid, client.ip.c_str());
+			if (client.hasControl)
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled(" [has control for %4.2f seconds]", state.tControlNext_s - ImGui::GetTime());
+			}
+		}
 		ImGui::End();
 	}
 
+	// dear imgui demo. please never delete this.
+	if (state.showDemoWindow)
+		ImGui::ShowDemoWindow(&state.showDemoWindow);
+
+	if (!ImGui::BeginMainMenuBar())
+		return;
+
 	// show connected clients
-	ImGui::SetNextWindowPos({10, 10}, ImGuiCond_Always);
-	ImGui::SetNextWindowSize({400, 300}, ImGuiCond_Always);
-	ImGui::Begin(
-		(std::string("WebSocket clients (") + std::to_string(state.clients.size()) + ")").c_str(), nullptr);
-	ImGui::Text(" Id   Ip addr");
-	for (auto& [cid, client] : state.clients)
-	{
-		ImGui::Text("%3d : %s", cid, client.ip.c_str());
-		if (client.hasControl)
-		{
-			ImGui::SameLine();
-			ImGui::TextDisabled(" [has control for %4.2f seconds]", state.tControlNext_s - ImGui::GetTime());
-		}
-	}
-	ImGui::End();
+	ImGui::MenuItem("Dear ImGui Demo", 0, &state.showDemoWindow);
+	ImGui::MenuItem("WebSocket", 0, &state.showWebSocketClients);
 
-	ImGui::Begin("Wow, it's ImGui!");
-	if (ImGui::Button("Press to close the game"))
-	{
-		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "quit", cmd_source_t::kCommandSrcCode);
-	}
-
-	ImGui::End();
-
+	ImGui::EndMainMenuBar();
 
 	// generate ImDrawData
 	ImGui::Render();
