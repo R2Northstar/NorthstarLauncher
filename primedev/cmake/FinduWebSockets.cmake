@@ -1,6 +1,8 @@
 if(NOT TARGET uWebSockets)
     set(UWEBSOCKETS_BASE_DIR "${PROJECT_SOURCE_DIR}/primedev/thirdparty/uWebSockets")
 
+    find_package(OpenSSL REQUIRED)
+
     add_library(uWebSockets STATIC
         ${UWEBSOCKETS_BASE_DIR}/uSockets/src/bsd.c
         ${UWEBSOCKETS_BASE_DIR}/uSockets/src/context.c
@@ -17,6 +19,7 @@ if(NOT TARGET uWebSockets)
         ${UWEBSOCKETS_BASE_DIR}/uSockets/src
         ${UWEBSOCKETS_BASE_DIR}/src
         ${LIBUV_INCLUDE_DIRS}
+        ${OPENSSL_INCLUDE_DIRS}
     )
 
     target_link_libraries(uWebSockets PUBLIC
@@ -25,6 +28,8 @@ if(NOT TARGET uWebSockets)
         ${ZLIB_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
     )
+
+    target_link_libraries(uWebSockets PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
     set(uWebSockets_FOUND TRUE)
 endif()

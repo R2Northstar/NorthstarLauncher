@@ -280,6 +280,8 @@ bool ImGuiWS::init(int32_t port, std::string pathHttp, std::vector<std::string> 
 
     resources.push_back("imgui-ws.js");
     m_impl->incpp.setResource("/imgui-ws.js", kImGuiWS_js);
+	resources.push_back("index.html");
+    m_impl->incpp.setResource("/index.html", kImGuiWS_html);
 
     // start the http/websocket server
     incppect::Parameters parameters;

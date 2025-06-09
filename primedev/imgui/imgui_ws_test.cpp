@@ -459,7 +459,7 @@ void Start()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui::GetIO().MouseDrawCursor = true;
+	//ImGui::GetIO().MouseDrawCursor = true;
 
 	ImGui::StyleColorsDark();
 	ImGui::GetStyle().AntiAliasedFill = false;
@@ -468,7 +468,7 @@ void Start()
 	ImGui::GetStyle().ScrollbarRounding = 0.0f;
 
 	// setup imgui-ws
-	imguiWS.init(port, "./", {"", "index.html"});
+	imguiWS.init(port, "./", {""});
 
 	// prepare font texture
 	{
@@ -485,8 +485,6 @@ void Render(float deltaTime)
 {
 	if (!isInited)
 		Start();
-
-	spdlog::info("FRAME {}", deltaTime);
 
 	// websocket event handling
 	auto events = imguiWS.takeEvents();
@@ -522,7 +520,7 @@ void Render(float deltaTime)
 	ImGui::SetNextWindowPos({10, 10}, ImGuiCond_Always);
 	ImGui::SetNextWindowSize({400, 300}, ImGuiCond_Always);
 	ImGui::Begin(
-		(std::string("WebSocket clients (") + std::to_string(state.clients.size()) + ")").c_str(), nullptr, ImGuiWindowFlags_NoCollapse);
+		(std::string("WebSocket clients (") + std::to_string(state.clients.size()) + ")").c_str(), nullptr);
 	ImGui::Text(" Id   Ip addr");
 	for (auto& [cid, client] : state.clients)
 	{
