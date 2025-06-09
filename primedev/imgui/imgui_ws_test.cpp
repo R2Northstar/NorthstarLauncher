@@ -228,7 +228,6 @@ struct State
 	State() {}
 
 	bool showDemoWindow = true;
-	bool showWebSocketClients = true;
 
 	// client control management
 	struct ClientData
@@ -456,7 +455,7 @@ void State::update()
 	}
 }
 
-void Start()
+void ImGuiDisplay::Start()
 {
 	int port = 5000;
 
@@ -484,7 +483,7 @@ void Start()
 	isInited = true;
 }
 
-void Render(float deltaTime)
+void ImGuiDisplay::Render(float deltaTime)
 {
 	if (!isInited)
 		Start();
@@ -505,35 +504,22 @@ void Render(float deltaTime)
 
 	ImGui::NewFrame();
 
-	if (state.showWebSocketClients &&
-		ImGui::Begin(std::format("WebSocket clients ({})", state.clients.size()).c_str(), &state.showWebSocketClients))
-	{
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::Text(" Id   Ip addr");
-		for (auto& [cid, client] : state.clients)
-		{
-			ImGui::Text("%3d : %s", cid, client.ip.c_str());
-			if (client.hasControl)
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled(" [has control for %4.2f seconds]", state.tControlNext_s - ImGui::GetTime());
-			}
-		}
-		ImGui::End();
-	}
+	for (auto& menu : m_menus)
+		menu.Render();
 
 	// dear imgui demo. please never delete this.
 	if (state.showDemoWindow)
 		ImGui::ShowDemoWindow(&state.showDemoWindow);
 
-	if (!ImGui::BeginMainMenuBar())
-		return;
+	// main menu bar
+	if (ImGui::BeginMainMenuBar())
+	{
+		ImGui::MenuItem("DearImGui Demo", 0, &state.showDemoWindow);
+		for (auto& menu : m_menus)
+			menu.RenderMenuItem();
 
-	// show connected clients
-	ImGui::MenuItem("Dear ImGui Demo", 0, &state.showDemoWindow);
-	ImGui::MenuItem("WebSocket", 0, &state.showWebSocketClients);
-
-	ImGui::EndMainMenuBar();
+		ImGui::EndMainMenuBar();
+	}
 
 	// generate ImDrawData
 	ImGui::Render();
@@ -542,8 +528,23 @@ void Render(float deltaTime)
 	imguiWS.setDrawData(ImGui::GetDrawData());
 }
 
-void Shutdown()
+void ImGuiDisplay::Shutdown()
 {
 	ImGui::DestroyContext();
 	isInited = false;
+}
+
+void ImGuiDisplay::RegisterMenu(const char* name, ImGuiRenderCallback callback, const char* shortcut)
+{
+	m_menus.emplace_back(name, callback, shortcut);
+}
+
+ImGuiDisplay& ImGuiDisplay::GetInstance()
+{
+	static ImGuiDisplay* display = nullptr;
+
+	if (display == nullptr)
+		display = new ImGuiDisplay();
+
+	return *display;
 }

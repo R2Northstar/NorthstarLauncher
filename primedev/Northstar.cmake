@@ -75,6 +75,8 @@ add_library(
     "game/client/clientmode_shared.cpp"
     "imgui/imgui_ws_test.cpp"
     "imgui/imgui_ws_test.h"
+    "imgui/imgui_menu.cpp"
+    "imgui/imgui_menu.h"
     "imgui/imgui/imgui.cpp"
     "imgui/imgui/imgui.h"
     "imgui/imgui/imgui_demo.cpp"
