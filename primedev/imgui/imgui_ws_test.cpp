@@ -3,6 +3,8 @@
 #include "imgui-ws/imgui-draw-data-compressor.h"
 #include "imgui/imgui.h"
 
+#include "engine/r2engine.h"
+
 static ImGuiIO* io = nullptr;
 static ImGuiWS imguiWS;
 static bool isInited = false;
@@ -532,6 +534,15 @@ void Render(float deltaTime)
 		}
 	}
 	ImGui::End();
+
+	ImGui::Begin("Wow, it's ImGui!");
+	if (ImGui::Button("Press to close the game"))
+	{
+		Cbuf_AddText(Cbuf_GetCurrentPlayer(), "quit", cmd_source_t::kCommandSrcCode);
+	}
+
+	ImGui::End();
+
 
 	// generate ImDrawData
 	ImGui::Render();

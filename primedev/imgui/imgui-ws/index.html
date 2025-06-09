@@ -10,8 +10,6 @@
 <body style="font-family: Georgia, serif;">
     <script>
         function init() {
-            var output = document.getElementById('client-info');
-
             incppect.render = function () {
                 imgui_ws.gl.clearColor(0.45, 0.55, 0.60, 1.00);
                 imgui_ws.gl.clear(imgui_ws.gl.COLOR_BUFFER_BIT);
@@ -19,21 +17,8 @@
                 imgui_ws.incppect_textures(this);
                 imgui_ws.incppect_draw_lists(this);
                 imgui_ws.render();
-
-                var my_id = this.get_int32('my_id[%d]', -1) || 0;
-                output.innerHTML = 'Your client Id: ' + my_id;
             }
 
-            incppect.onerror = function (evt) {
-                if (typeof evt === 'object') {
-                    output.innerHTML = 'Error: check console for more information';
-                    console.error(evt);
-                } else {
-                    output.innerHTML = evt;
-                }
-            }
-
-            incppect.k_requests_update_freq_ms = document.getElementById('update_freq_ms').value;
             incppect.init();
 
             imgui_ws.set_incppect_handlers(incppect);
@@ -45,11 +30,6 @@
     </script>
 
     <div id=main-container align=left width=900px style='padding-left: 16px; padding-top: 1px;'>
-        <div id="client-info"></div>
-        Update freq: <input type="range" min="16" max="200" value="16" class="slider" id="update_freq_ms"
-                            onChange="incppect.k_requests_update_freq_ms = this.value; update_freq_ms_out.value = this.value;">
-        <output id="update_freq_ms_out">16</output>[ms]<br>
-        <br>
         <canvas id="canvas_main" width="1200px" height="800px" style="background-color: black;" tabindex="0">Your browser does not support the HTML5 canvas tag.</canvas>
     </div>
 
