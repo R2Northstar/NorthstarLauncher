@@ -113,7 +113,6 @@ void ModManager::LoadMods()
 	// Find all mods from disk
 	DiscoverMods();
 
-	// ensure dirs exist
 	fs::remove_all(GetCompiledAssetsPath());
 
 	m_DependencyConstants.clear();
