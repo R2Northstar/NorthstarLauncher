@@ -12,3 +12,6 @@
 [submodule "thirdparty/imgui-ws"]
 	path = primedev/thirdparty/imgui-ws
 	url = https://github.com/ggerganov/imgui-ws
+[submodule "primedev/thirdparty/vcpkg"]
+	path = primedev/thirdparty/vcpkg
+	url = https://github.com/microsoft/vcpkg
