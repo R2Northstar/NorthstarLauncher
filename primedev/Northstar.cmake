@@ -2,8 +2,11 @@
 
 find_package(minhook REQUIRED)
 find_package(libcurl REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(libuv REQUIRED)
 find_package(minizip REQUIRED)
 find_package(silver-bun REQUIRED)
+find_package(imgui-ws REQUIRED)
 
 add_library(
     NorthstarDLL SHARED
@@ -69,6 +72,8 @@ add_library(
     "engine/r2engine.h"
     "engine/runframe.cpp"
     "game/client/clientmode_shared.cpp"
+    "imgui/imgui_ws_test.cpp"
+    "imgui/imgui_ws_test.h"
     "logging/crashhandler.cpp"
     "logging/crashhandler.h"
     "logging/logging.cpp"
@@ -185,7 +190,7 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-    )
+	)
 
 target_link_libraries(
     NorthstarDLL
@@ -193,6 +198,7 @@ target_link_libraries(
             libcurl
             minizip
             silver-bun
+            imgui-ws
             ws2_32.lib
             crypt32.lib
             cryptui.lib

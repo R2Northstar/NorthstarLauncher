@@ -8,6 +8,7 @@
 #include "shared/exploit_fixes/ns_limits.h"
 #include "squirrel/squirrel.h"
 #include "plugins/pluginmanager.h"
+#include "imgui/imgui_ws_test.h"
 
 CHostState* g_pHostState;
 
@@ -147,6 +148,8 @@ static void(__fastcall* o_pCHostState__FrameUpdate)(CHostState* self, double flC
 static void __fastcall h_CHostState__FrameUpdate(CHostState* self, double flCurrentTime, float flFrameTime)
 {
 	o_pCHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
+
+	Render(flFrameTime);
 
 	if (*g_pServerState == server_state_t::ss_active)
 	{
