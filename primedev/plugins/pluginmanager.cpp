@@ -114,11 +114,21 @@ void PluginManager::ReloadPlugins()
 {
 	NS::log::PLUGINSYS->info("Reloading plugins");
 
+	std::vector<const Plugin*> reloadedPlugins;
 	for (const Plugin& plugin : this->plugins | std::views::reverse)
 	{
 		std::string name = plugin.GetName();
 		if (plugin.Reload())
+		{
 			NS::log::PLUGINSYS->info("Reloaded {}", name);
+			reloadedPlugins.push_back(&plugin);
+		}
+	}
+
+	// inform all reloaded plugins
+	for (const Plugin* plugin : reloadedPlugins)
+	{
+		plugin->Finalize();
 	}
 }
 
