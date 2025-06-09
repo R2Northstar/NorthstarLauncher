@@ -1,0 +1,7 @@
+#pragma once
+
+// the main js module
+constexpr auto kImGuiWS_js = R"(@src_imgui-ws_js@)";
+
+// the main html page
+constexpr auto kImGuiWS_htmll = R"(@src_index_html@)";

@@ -1,0 +1,4 @@
+#pragma once
+
+// the main js module
+constexpr auto kIncppect_js = R"(@src_incppect_js@)";

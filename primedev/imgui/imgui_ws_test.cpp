@@ -1,7 +1,7 @@
 #include "imgui_ws_test.h"
-#include "thirdparty/imgui-ws/include/imgui-ws/imgui-ws.h"
-#include "thirdparty/imgui-ws/third-party/imgui/imgui/imgui.h"
-#include "thirdparty/imgui-ws/src/common.h"
+#include "imgui-ws/imgui-ws.h"
+#include "imgui-ws/imgui-draw-data-compressor.h"
+#include "imgui/imgui.h"
 
 static ImGuiIO* io = nullptr;
 static ImGuiWS imguiWS;

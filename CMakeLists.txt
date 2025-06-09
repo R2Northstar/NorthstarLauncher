@@ -9,6 +9,7 @@ project(
     Northstar
     CXX
     ASM_MASM
+    C
     )
 
 if(NOT CMAKE_BUILD_TYPE)
