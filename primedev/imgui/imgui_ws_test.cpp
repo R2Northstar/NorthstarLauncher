@@ -9,7 +9,7 @@ static ImGuiIO* io = nullptr;
 static ImGuiWS imguiWS;
 static bool isInited = false;
 
-ImGuiKey toImGuiKey(int32_t keyCode)
+static ImGuiKey toImGuiKey(int32_t keyCode)
 {
 	switch (keyCode)
 	{

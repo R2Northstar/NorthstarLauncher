@@ -1,13 +1,13 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    <title>imgui-ws : demo-null</title>
+    <title>ImGui Debug Tools | R2Northstar</title>
 
     <script src="incppect.js"></script>
     <script src="imgui-ws.js"></script>
 </head>
 
-<body style="font-family: Georgia, serif;">
+<body style="font-family: Georgia, serif;" >
     <script>
         function init() {
             incppect.render = function () {
@@ -26,13 +26,8 @@
         }
 
         window.addEventListener('load', init);
-
     </script>
 
-    <div id=main-container align=left width=900px style='padding-left: 16px; padding-top: 1px;'>
-        <canvas id="canvas_main" width="1200px" height="800px" style="background-color: black;" tabindex="0">Your browser does not support the HTML5 canvas tag.</canvas>
-    </div>
-
-
+    <canvas id="canvas_main" style="background-color: black; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; " tabindex="0">Your browser does not support the HTML5 canvas tag.</canvas>
 </body>
 </html>
