@@ -831,7 +831,6 @@ fs::path GetCompiledAssetsPath()
 
 static void RenderImGuiMenu()
 {
-	ImGui::Text("WOW MODS");
 	for (auto& mod : g_pModManager->m_LoadedMods)
 	{
 		ImGui::NewLine();
