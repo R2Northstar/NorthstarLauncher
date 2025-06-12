@@ -121,39 +121,117 @@ void ModManager::LoadMods()
 
 	m_DependencyConstants.clear();
 
+	// File format checks
+	bool isUsingOldFormat = false;
+	rapidjson_document oldEnabledModsCfg;
+
 	// read enabled mods cfg
 	std::ifstream enabledModsStream(cfgPath);
 	std::stringstream enabledModsStringStream;
 
-	if (!enabledModsStream.fail())
+	// create configuration file if does not exist
+	if (enabledModsStream.fail())
+	{
+		m_EnabledModsCfg.SetObject();
+	}
+	else
 	{
 		while (enabledModsStream.peek() != EOF)
 			enabledModsStringStream << (char)enabledModsStream.get();
-
 		enabledModsStream.close();
 		m_EnabledModsCfg.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 			enabledModsStringStream.str().c_str());
 
-		m_bHasEnabledModsCfg = m_EnabledModsCfg.IsObject();
+		// Check file format, and rename file if it is not using new format
+		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
+		isUsingOldFormat =
+			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
+
+		if (isUsingUnknownFormat || isUsingOldFormat)
+		{
+			spdlog::info(
+				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
+			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
+			if (ret)
+			{
+				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
+				return;
+			}
+
+			// Copy old configuration to migrate manifesto to new format
+			if (isUsingOldFormat)
+			{
+				oldEnabledModsCfg.CopyFrom(m_EnabledModsCfg, oldEnabledModsCfg.GetAllocator());
+			}
+
+			// Reset current configuration
+			m_EnabledModsCfg.SetObject();
+		}
 	}
 
 	// Load mod info from filesystem into `m_LoadedMods`
 	SearchFilesystemForMods();
 
+	// Do not activate the same mod multiple times
+	DisableMultipleModVersions();
+
 	// This is used to check if some mods have a folder but no entry in enabledmods.json
 	bool newModsDetected = false;
 
+	// Set manifest version
+	const char* versionMember = "Version";
+	if (!m_EnabledModsCfg.HasMember(versionMember))
+	{
+		m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), 1, m_EnabledModsCfg.GetAllocator());
+
+		// Force manifesto write to disk
+		newModsDetected = true;
+	}
+
 	for (Mod& mod : m_LoadedMods)
 	{
-		if (!mod.m_bEnabled)
-			continue;
-
 		// Add mod entry to enabledmods.json if it doesn't exist
-		if (!mod.m_bIsRemote && m_bHasEnabledModsCfg && !m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		bool isModRemote = mod.m_bIsRemote;
+		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
+		bool modEntryHasCorrectFormat = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].IsObject();
+		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
+
+		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
 		{
-			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), true, m_EnabledModsCfg.GetAllocator());
+			// Creating mod key (with name)
+			if (!modEntryHasCorrectFormat)
+			{
+				// Adjust wrong format (string instead of object)
+				if (modEntryExists)
+				{
+					m_EnabledModsCfg.RemoveMember(mod.Name.c_str());
+				}
+				m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+				m_EnabledModsCfg[mod.Name.c_str()].SetObject();
+			}
+
+			// Creating version key
+			if (!modVersionEntryExists)
+			{
+				m_EnabledModsCfg[mod.Name.c_str()].AddMember(
+					rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			}
+
+			// Add mod entry
+			bool modIsEnabled = mod.m_bEnabled;
+			// Try to use old manifesto if currently migrating from old format
+			if (isUsingOldFormat && oldEnabledModsCfg.HasMember(mod.Name.c_str()) && oldEnabledModsCfg[mod.Name.c_str()].IsBool())
+			{
+				modIsEnabled = oldEnabledModsCfg[mod.Name.c_str()].GetBool();
+				mod.m_bEnabled = modIsEnabled;
+			}
+			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(modIsEnabled);
+
 			newModsDetected = true;
 		}
+
+		if (!mod.m_bEnabled)
+			continue;
 
 		// register convars
 		// for reloads, this is sorta barebones, when we have a good findconvar method, we could probably reset flags and stuff on
@@ -597,8 +675,10 @@ void ModManager::SearchFilesystemForMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		if (m_bHasEnabledModsCfg && m_EnabledModsCfg.HasMember(mod.Name.c_str()))
-			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()].IsTrue();
+		if (m_EnabledModsCfg.HasMember(mod.Name.c_str()) && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version))
+		{
+			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
+		}
 		else
 			mod.m_bEnabled = true;
 
@@ -619,20 +699,68 @@ void ModManager::SearchFilesystemForMods()
 	std::sort(m_LoadedMods.begin(), m_LoadedMods.end(), [](Mod& a, Mod& b) { return a.LoadPriority < b.LoadPriority; });
 }
 
+void ModManager::DisableMultipleModVersions()
+{
+	// Stores versions, for each mod, associated to their position in the `m_LoadedMods` array, *e.g.*:
+	//
+	// {
+	//     "Northstar.Client": [ {"1.30.2", 0} ],
+	//     "Northstar.Custom": [ {"1.30.2", 1} ],
+	//     "Northstar.CustomServers": [ {"1.30.2", 2} ],
+	//     "Extraction": [ {"1.2.0", 3}, {"1.2.1", 4}, {"1.3.0", 5} ]
+	// }
+	//
+	std::unordered_map<std::string, std::vector<std::tuple<const char*, int>>> modVersions;
+
+	// Load up the dictionary
+	int i = 0;
+	for (Mod& mod : m_LoadedMods)
+	{
+		// Store versions for enabled mods only, as disabled mods are not loaded and won't collide
+		if (mod.m_bEnabled)
+		{
+			modVersions[mod.Name].push_back({mod.Version.c_str(), i});
+		}
+
+		i++;
+	}
+
+	// Find duplicate mods and disable them
+	for (const auto& pair : modVersions)
+	{
+		if (pair.second.size() <= 1)
+		{
+			continue;
+		}
+
+		spdlog::warn("Mod '{}' has several versions enabled, disabling them all.", pair.first);
+		for (auto& [version, versionIndex] : pair.second)
+		{
+
+			m_LoadedMods[versionIndex].m_bEnabled = false;
+			spdlog::warn("	-> v{} is now disabled.", version);
+		}
+	}
+}
+
 void ModManager::ExportModsConfigurationToFile()
 {
 	m_EnabledModsCfg.SetObject();
 
 	for (Mod& mod : m_LoadedMods)
 	{
-		// write to m_enabledModsCfg
-		// should we be doing this here or should scripts be doing this manually?
-		// main issue with doing this here is when we reload mods for connecting to a server, we write enabled mods, which isn't necessarily
-		// what we wanna do
+		// Creating mod key (with name)
 		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
+		{
 			m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(mod.Name.c_str()), false, m_EnabledModsCfg.GetAllocator());
+			m_EnabledModsCfg[mod.Name.c_str()].SetObject();
+		}
 
-		m_EnabledModsCfg[mod.Name.c_str()].SetBool(mod.m_bEnabled);
+		// Creating version key
+		if (!m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str()))
+			m_EnabledModsCfg[mod.Name.c_str()].AddMember(
+				rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
+		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
 	std::ofstream writeStream(cfgPath);
