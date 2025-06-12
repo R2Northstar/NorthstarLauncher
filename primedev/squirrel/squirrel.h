@@ -266,6 +266,7 @@ public:
 		messageBuffer->push(message);
 		return message;
 	}
+	
 	SquirrelMessage AsyncCall(std::string funcname)
 	{
 		// This function schedules a call to be executed on the next frame
