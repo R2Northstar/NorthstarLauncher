@@ -266,7 +266,7 @@ public:
 		messageBuffer->push(message);
 		return message;
 	}
-	
+
 	SquirrelMessage AsyncCall(std::string funcname)
 	{
 		// This function schedules a call to be executed on the next frame
@@ -291,8 +291,7 @@ public:
 
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
-			spdlog::error(
-				"{} was called on context {} while VM was not initialized.", __FUNCTION__, GetContextName(context));
+			spdlog::error("{} was called on context {} while VM was not initialized.", __FUNCTION__, GetContextName(context));
 			return SQRESULT_ERROR;
 		}
 
@@ -316,8 +315,7 @@ public:
 		// If you want to call into squirrel asynchronously, use `schedule_call` instead
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
-			spdlog::error(
-				"{} was called on context {} while VM was not initialized.", __FUNCTION__, GetContextName(context));
+			spdlog::error("{} was called on context {} while VM was not initialized.", __FUNCTION__, GetContextName(context));
 			return SQRESULT_ERROR;
 		}
 		SQObject functionobj {};
