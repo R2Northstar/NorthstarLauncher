@@ -22,4 +22,5 @@ private:
 	ImGuiDisplay() = default;
 
 	std::vector<ImGuiMenu> m_menus = {};
+	ImGuiContext* m_context = nullptr;
 };

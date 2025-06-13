@@ -2,12 +2,17 @@
 #include "imgui-ws/imgui-ws.h"
 #include "imgui-ws/imgui-draw-data-compressor.h"
 #include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_dx11.h"
 
 #include "engine/r2engine.h"
 
 static ImGuiIO* io = nullptr;
 static ImGuiWS imguiWS;
 static bool isInited = false;
+static bool thing = true;
+
+static ID3D11Device** device = nullptr; 
+static ID3D11DeviceContext** deviceContext = nullptr; 
 
 static ImGuiKey toImGuiKey(int32_t keyCode)
 {
@@ -460,8 +465,10 @@ void ImGuiDisplay::Start()
 	int port = 5000;
 
 	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
+	m_context = ImGui::CreateContext();
 	// ImGui::GetIO().MouseDrawCursor = true;
+
+	ImGui_ImplDX11_Init(*device, *deviceContext);
 
 	ImGui::StyleColorsDark();
 	ImGui::GetStyle().AntiAliasedFill = false;
@@ -502,6 +509,8 @@ void ImGuiDisplay::Render(float deltaTime)
 		io.DeltaTime = deltaTime;
 	}
 
+	ImGui::SetCurrentContext(m_context);
+	//ImGui_ImplDX11_NewFrame();
 	ImGui::NewFrame();
 
 	for (auto& menu : m_menus)
@@ -525,12 +534,14 @@ void ImGuiDisplay::Render(float deltaTime)
 	ImGui::Render();
 
 	// store ImDrawData for asynchronous dispatching to WS clients
-	imguiWS.setDrawData(ImGui::GetDrawData());
+	auto* drawData = ImGui::GetDrawData();
+	imguiWS.setDrawData(drawData);
+	//ImGui_ImplDX11_RenderDrawData(drawData);
 }
 
 void ImGuiDisplay::Shutdown()
 {
-	ImGui::DestroyContext();
+	ImGui::DestroyContext(m_context);
 	isInited = false;
 }
 
@@ -547,4 +558,10 @@ ImGuiDisplay& ImGuiDisplay::GetInstance()
 		display = new ImGuiDisplay();
 
 	return *display;
+}
+
+ON_DLL_LOAD("materialsystem_dx11.dll", ImGuiMaterialSystem, (CModule module))
+{
+	device = module.Offset(0x14E8DD0).RCast<ID3D11Device**>();
+	deviceContext = module.Offset(0x14E8DD8).RCast<ID3D11DeviceContext**>();
 }
