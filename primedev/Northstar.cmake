@@ -86,6 +86,8 @@ add_library(
     "imgui/imgui/imgui_widgets.cpp"
     "imgui/imgui/backends/imgui_impl_dx11.cpp"
     "imgui/imgui/backends/imgui_impl_dx11.h"
+    "imgui/imgui/backends/imgui_impl_win32.cpp"
+    "imgui/imgui/backends/imgui_impl_win32.h"
     "imgui/imgui-ws/imgui-ws.cpp"
     "imgui/imgui-ws/imgui-ws.h"
     "imgui/imgui-ws/compressor-xor-rle-per-draw-list-with-vtx-offset.cpp"

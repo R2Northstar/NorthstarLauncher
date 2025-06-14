@@ -149,8 +149,6 @@ static void __fastcall h_CHostState__FrameUpdate(CHostState* self, double flCurr
 {
 	o_pCHostState__FrameUpdate(self, flCurrentTime, flFrameTime);
 
-	ImGuiDisplay::GetInstance().Render(flFrameTime);
-
 	if (*g_pServerState == server_state_t::ss_active)
 	{
 		// update server presence

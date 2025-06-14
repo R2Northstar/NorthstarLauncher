@@ -3,8 +3,11 @@
 #include "imgui-ws/imgui-draw-data-compressor.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_dx11.h"
+#include "imgui/backends/imgui_impl_win32.h"
 
 #include "engine/r2engine.h"
+
+AUTOHOOK_INIT()
 
 static ImGuiIO* io = nullptr;
 static ImGuiWS imguiWS;
@@ -12,7 +15,7 @@ static bool isInited = false;
 static bool thing = true;
 
 static ID3D11Device** device = nullptr; 
-static ID3D11DeviceContext** deviceContext = nullptr; 
+static ID3D11DeviceContext** deviceContext = nullptr;
 
 static ImGuiKey toImGuiKey(int32_t keyCode)
 {
@@ -468,6 +471,7 @@ void ImGuiDisplay::Start()
 	m_context = ImGui::CreateContext();
 	// ImGui::GetIO().MouseDrawCursor = true;
 
+	ImGui_ImplWin32_Init(FindWindow(L"Titanfall 2", NULL));
 	ImGui_ImplDX11_Init(*device, *deviceContext);
 
 	ImGui::StyleColorsDark();
@@ -505,13 +509,16 @@ void ImGuiDisplay::Render(float deltaTime)
 
 	{
 		auto& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2(1200, 800);
-		io.DeltaTime = deltaTime;
+		io.DisplaySize = ImVec2(2560, 1440);
 	}
 
 	ImGui::SetCurrentContext(m_context);
-	//ImGui_ImplDX11_NewFrame();
+	ImGui_ImplDX11_NewFrame();
+	//ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+
+	bool isOverlay = debugVisible && debugOverlay;
+	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, isOverlay ? 0.75f : 1.f);
 
 	for (auto& menu : m_menus)
 		menu.Render();
@@ -530,17 +537,23 @@ void ImGuiDisplay::Render(float deltaTime)
 		ImGui::EndMainMenuBar();
 	}
 
+	// clear our overlay style
+	ImGui::PopStyleVar();
+
 	// generate ImDrawData
 	ImGui::Render();
 
 	// store ImDrawData for asynchronous dispatching to WS clients
 	auto* drawData = ImGui::GetDrawData();
 	imguiWS.setDrawData(drawData);
-	//ImGui_ImplDX11_RenderDrawData(drawData);
+	if (debugVisible)
+		ImGui_ImplDX11_RenderDrawData(drawData);
 }
 
 void ImGuiDisplay::Shutdown()
 {
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext(m_context);
 	isInited = false;
 }
@@ -560,8 +573,84 @@ ImGuiDisplay& ImGuiDisplay::GetInstance()
 	return *display;
 }
 
+// todo: replace with proper Present hook
+AUTOHOOK(Thing3, materialsystem_dx11.dll + 0x54340, __int64, , (__int64 a1, __int64 a2, __int64 a3, int a4))
+{
+	//spdlog::info("THING3");
+	ImGuiDisplay::GetInstance().Render(0.05f);
+	return Thing3(a1, a2, a3, a4);
+}
+
 ON_DLL_LOAD("materialsystem_dx11.dll", ImGuiMaterialSystem, (CModule module))
 {
+	AUTOHOOK_DISPATCH_MODULE(materialsystem_dx11.dll)
+
 	device = module.Offset(0x14E8DD0).RCast<ID3D11Device**>();
 	deviceContext = module.Offset(0x14E8DD8).RCast<ID3D11DeviceContext**>();
+}
+
+static bool IsKeyMsg(UINT uMsg)
+{
+	return uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST;
+}
+
+static bool IsMouseMsg(UINT uMsg)
+{
+	return uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST;
+}
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+static int (*o_pGameWndProc)(void* game, const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = nullptr;
+static int h_GameWndProc(void* game, const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	auto& instance = ImGuiDisplay::GetInstance();
+	// only handle input if not in overlay mode
+	if (ImGui::GetCurrentContext() != nullptr && instance.IsDebugVisible() && !instance.IsDebugOverlay())
+	{
+		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+
+		auto& io = ImGui::GetIO();
+		// Only block from game if imgui capturing
+		if (IsMouseMsg(uMsg) && io.WantCaptureMouse)
+		{
+			return 0;
+		}
+
+		if (IsKeyMsg(uMsg) && io.WantCaptureKeyboard)
+		{
+			return 0;
+		}
+	}
+
+	return o_pGameWndProc(game, hWnd, uMsg, wParam, lParam);
+}
+
+static void ConCommand_toggleimgui(const CCommand& arg)
+{
+	NOTE_UNUSED(arg);
+	auto& instance = ImGuiDisplay::GetInstance();
+	if (instance.IsDebugOverlay())
+	{
+		instance.SetDebugVisible(false);
+		instance.SetDebugOverlay(false);
+	}
+	else if (instance.IsDebugVisible())
+	{
+		instance.SetDebugOverlay(true);
+	}
+	else
+	{
+		instance.SetDebugVisible(true);
+	}
+}
+
+ON_DLL_LOAD_RELIESON("client.dll", ImGuiClient, ConCommand, (CModule module))
+{
+	RegisterConCommand("toggleimgui", ConCommand_toggleimgui, "Show/Overlay/Hide the ImGui debug.", FCVAR_DONTRECORD);
+}
+
+ON_DLL_LOAD("inputsystem.dll", ImGuiInput, (CModule module))
+{
+	o_pGameWndProc = module.Offset(0x8B80).RCast<decltype(o_pGameWndProc)>();
+	HookAttach(&(PVOID&)o_pGameWndProc, h_GameWndProc);
 }
