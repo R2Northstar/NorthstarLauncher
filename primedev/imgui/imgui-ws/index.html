@@ -1,0 +1,33 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title>ImGui Dev Tools | R2Northstar</title>
+
+    <script src="incppect.js"></script>
+    <script src="imgui-ws.js"></script>
+</head>
+
+<body style="font-family: Georgia, serif;" >
+    <script>
+        function init() {
+            incppect.render = function () {
+                imgui_ws.gl.clearColor(0.45, 0.55, 0.60, 1.00);
+                imgui_ws.gl.clear(imgui_ws.gl.COLOR_BUFFER_BIT);
+
+                imgui_ws.incppect_textures(this);
+                imgui_ws.incppect_draw_lists(this);
+                imgui_ws.render();
+            }
+
+            incppect.init();
+
+            imgui_ws.set_incppect_handlers(incppect);
+            imgui_ws.init('canvas_main');
+        }
+
+        window.addEventListener('load', init);
+    </script>
+
+    <canvas id="canvas_main" style="background-color: black; position: fixed; top: 0; left: 0; " tabindex="0">Your browser does not support the HTML5 canvas tag.</canvas>
+</body>
+</html>
