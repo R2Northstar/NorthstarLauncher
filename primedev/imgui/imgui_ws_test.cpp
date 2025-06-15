@@ -4,18 +4,36 @@
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_dx11.h"
 #include "imgui/backends/imgui_impl_win32.h"
+#include "core/vanilla.h"
+
+// todo: move this define? needed for hooking Present
+#define CINTERFACE
+#include "dxgi.h"
+#undef CINTERFACE
+#include "d3d11.h"
 
 #include "engine/r2engine.h"
 
-AUTOHOOK_INIT()
-
-static ImGuiIO* io = nullptr;
 static ImGuiWS imguiWS;
 static bool isInited = false;
-static bool thing = true;
 
 static ID3D11Device** device = nullptr; 
 static ID3D11DeviceContext** deviceContext = nullptr;
+static IDXGISwapChain** swapChain = nullptr;
+
+static ConVar* Cvar_imgui_mode = nullptr;
+
+static int GetImGuiMode()
+{
+	if (!Cvar_imgui_mode)
+		return 0;
+
+	// vanilla compat mode - don't allow drawing on the screen because I don't want people to get accidentally fairfight banned
+	if (g_pVanillaCompatibility->GetVanillaCompatibility())
+		return 0;
+
+	return Cvar_imgui_mode->GetInt();
+}
 
 static ImGuiKey toImGuiKey(int32_t keyCode)
 {
@@ -227,32 +245,11 @@ static ImGuiKey toImGuiKey(int32_t keyCode)
 	default:
 		return ImGuiKey_COUNT;
 	}
-
-	return ImGuiKey_COUNT;
 }
 
 struct State
 {
 	State() {}
-
-	bool showDemoWindow = true;
-
-	// client control management
-	struct ClientData
-	{
-		bool hasControl = false;
-
-		std::string ip = "---";
-	};
-
-	// client control
-	float tControl_s = 10.0f;
-	float tControlNext_s = 0.0f;
-
-	int controlIteration = 0;
-	int curIdControl = -1;
-	std::map<int, ClientData> clients;
-
 	struct InputEvent
 	{
 		enum Type
@@ -286,178 +283,85 @@ static State state;
 
 void State::handle(ImGuiWS::Event&& event)
 {
+	ImGuiMouseButton butImGui = event.mouse_but;
+	// map the JS button code to Dear ImGui's button code
+	switch (event.mouse_but)
+	{
+	case 1:
+		butImGui = ImGuiMouseButton_Middle;
+		break;
+	case 2:
+		butImGui = ImGuiMouseButton_Right;
+		break;
+	}
+
 	switch (event.type)
 	{
 	case ImGuiWS::Event::Connected:
-	{
-		clients[event.clientId].ip = event.ip;
-	}
-	break;
 	case ImGuiWS::Event::Disconnected:
-	{
-		clients.erase(event.clientId);
-	}
-	break;
+		break;
 	case ImGuiWS::Event::MouseMove:
-	{
-		if (event.clientId == curIdControl)
-		{
-			inputEvents.push_back(
-				InputEvent {InputEvent::Type::EMousePos, false, ImGuiKey_COUNT, -1, {event.mouse_x, event.mouse_y}, 0.0f, 0.0f});
-		}
-	}
-	break;
+		inputEvents.push_back({InputEvent::Type::EMousePos, false, ImGuiKey_COUNT, -1, {event.mouse_x, event.mouse_y}, 0.0f, 0.0f});
+		break;
 	case ImGuiWS::Event::MouseDown:
-	{
-		if (event.clientId == curIdControl)
-		{
-			// map the JS button code to Dear ImGui's button code
-			ImGuiMouseButton butImGui = event.mouse_but;
-			switch (event.mouse_but)
-			{
-			case 1:
-				butImGui = ImGuiMouseButton_Middle;
-				break;
-			case 2:
-				butImGui = ImGuiMouseButton_Right;
-				break;
-			}
-
-			inputEvents.push_back(
-				InputEvent {InputEvent::Type::EMouseButton, true, ImGuiKey_COUNT, butImGui, {event.mouse_x, event.mouse_y}, 0.0f, 0.0f});
-		}
-	}
-	break;
 	case ImGuiWS::Event::MouseUp:
-	{
-		if (event.clientId == curIdControl)
-		{
-			// map the JS button code to Dear ImGui's button code
-			ImGuiMouseButton butImGui = event.mouse_but;
-			switch (event.mouse_but)
-			{
-			case 1:
-				butImGui = ImGuiMouseButton_Middle;
-				break;
-			case 2:
-				butImGui = ImGuiMouseButton_Right;
-				break;
-			}
-
-			inputEvents.push_back(
-				InputEvent {InputEvent::Type::EMouseButton, false, ImGuiKey_COUNT, butImGui, {event.mouse_x, event.mouse_y}, 0.0f, 0.0f});
-		}
-	}
-	break;
+		inputEvents.push_back({InputEvent::Type::EMouseButton, event.type == ImGuiWS::Event::MouseDown, ImGuiKey_COUNT, butImGui, {event.mouse_x, event.mouse_y}, 0.0f, 0.0f});
+		break;
 	case ImGuiWS::Event::MouseWheel:
-	{
-		if (event.clientId == curIdControl)
-		{
-			inputEvents.push_back(InputEvent {InputEvent::Type::EMouseWheel, false, ImGuiKey_COUNT, -1, {}, event.wheel_x, event.wheel_y});
-		}
-	}
-	break;
+		inputEvents.push_back({InputEvent::Type::EMouseWheel, false, ImGuiKey_COUNT, -1, {}, event.wheel_x, event.wheel_y});
+		break;
 	case ImGuiWS::Event::KeyUp:
-	{
-		if (event.clientId == curIdControl)
-		{
-			if (event.key > 0)
-			{
-				ImGuiKey keyImGui = ::toImGuiKey(event.key);
-				inputEvents.push_back(InputEvent {InputEvent::Type::EKey, false, keyImGui, -1, {}, 0.0f, 0.0f});
-			}
-		}
-	}
-	break;
 	case ImGuiWS::Event::KeyDown:
-	{
-		if (event.clientId == curIdControl)
+		if (event.key > 0)
 		{
-			if (event.key > 0)
-			{
-				ImGuiKey keyImGui = ::toImGuiKey(event.key);
-				inputEvents.push_back(InputEvent {InputEvent::Type::EKey, true, keyImGui, -1, {}, 0.0f, 0.0f});
-			}
+			ImGuiKey keyImGui = toImGuiKey(event.key);
+			inputEvents.push_back({InputEvent::Type::EKey, event.type == ImGuiWS::Event::KeyUp, keyImGui, -1, {}, 0.0f, 0.0f});
 		}
-	}
-	break;
+		break;
 	case ImGuiWS::Event::KeyPress:
-	{
-		if (event.clientId == curIdControl)
-		{
-			lastAddText.resize(1);
-			lastAddText[0] = event.key;
-		}
-	}
-	break;
+		lastAddText.resize(1);
+		lastAddText[0] = event.key;
+		break;
 	default:
-	{
-		printf("Unknown input event\n");
-	}
+		spdlog::warn("ImGui: Unknown input event\n");
 	}
 }
 
 void State::update()
 {
-	if (clients.size() > 0 && (clients.find(curIdControl) == clients.end() || ImGui::GetTime() > tControlNext_s))
+	auto& io = ImGui::GetIO();
+
+	if (lastAddText.size() > 0)
 	{
-		if (clients.find(curIdControl) != clients.end())
-		{
-			clients[curIdControl].hasControl = false;
-		}
-		int k = ++controlIteration % clients.size();
-		auto client = clients.begin();
-		std::advance(client, k);
-		client->second.hasControl = true;
-		curIdControl = client->first;
-		tControlNext_s = ImGui::GetTime() + tControl_s;
-		ImGui::GetIO().ClearInputKeys();
+		io.AddInputCharactersUTF8(lastAddText.c_str());
 	}
 
-	if (clients.size() == 0)
+	for (const auto& event : inputEvents)
 	{
-		curIdControl = -1;
-	}
-
-	if (curIdControl > 0)
-	{
+		switch (event.type)
 		{
-			auto& io = ImGui::GetIO();
-
-			if (lastAddText.size() > 0)
-			{
-				io.AddInputCharactersUTF8(lastAddText.c_str());
-			}
-
-			for (const auto& event : inputEvents)
-			{
-				switch (event.type)
-				{
-				case InputEvent::Type::EKey:
-				{
-					io.AddKeyEvent(event.key, event.isDown);
-				}
-				break;
-				case InputEvent::Type::EMousePos:
-				{
-					io.AddMousePosEvent(event.mousePos.x, event.mousePos.y);
-				}
-				break;
-				case InputEvent::Type::EMouseButton:
-				{
-					io.AddMouseButtonEvent(event.mouseButton, event.isDown);
-					io.AddMousePosEvent(event.mousePos.x, event.mousePos.y);
-				}
-				break;
-				case InputEvent::Type::EMouseWheel:
-				{
-					io.AddMouseWheelEvent(event.mouseWheelX, event.mouseWheelY);
-				}
-				break;
-				};
-			}
+		case InputEvent::Type::EKey:
+		{
+			io.AddKeyEvent(event.key, event.isDown);
 		}
-
+		break;
+		case InputEvent::Type::EMousePos:
+		{
+			io.AddMousePosEvent(event.mousePos.x, event.mousePos.y);
+		}
+		break;
+		case InputEvent::Type::EMouseButton:
+		{
+			io.AddMouseButtonEvent(event.mouseButton, event.isDown);
+			io.AddMousePosEvent(event.mousePos.x, event.mousePos.y);
+		}
+		break;
+		case InputEvent::Type::EMouseWheel:
+		{
+			io.AddMouseWheelEvent(event.mouseWheelX, event.mouseWheelY);
+		}
+		break;
+		};
 		inputEvents.clear();
 		lastAddText = "";
 	}
@@ -471,7 +375,11 @@ void ImGuiDisplay::Start()
 	m_context = ImGui::CreateContext();
 	// ImGui::GetIO().MouseDrawCursor = true;
 
-	ImGui_ImplWin32_Init(FindWindow(L"Titanfall 2", NULL));
+	// get the hwnd from directx
+	DXGI_SWAP_CHAIN_DESC desc;
+	(*swapChain)->lpVtbl->GetDesc(*swapChain, &desc);
+
+	ImGui_ImplWin32_Init(desc.OutputWindow);
 	ImGui_ImplDX11_Init(*device, *deviceContext);
 
 	ImGui::StyleColorsDark();
@@ -494,10 +402,12 @@ void ImGuiDisplay::Start()
 	isInited = true;
 }
 
-void ImGuiDisplay::Render(float deltaTime)
+void ImGuiDisplay::Render()
 {
 	if (!isInited)
 		Start();
+
+	auto& io = ImGui::GetIO();
 
 	// websocket event handling
 	auto events = imguiWS.takeEvents();
@@ -507,30 +417,30 @@ void ImGuiDisplay::Render(float deltaTime)
 	}
 	state.update();
 
-	{
-		auto& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2(2560, 1440);
-	}
-
 	ImGui::SetCurrentContext(m_context);
 	ImGui_ImplDX11_NewFrame();
-	//ImGui_ImplWin32_NewFrame();
+	const ImVec2 lastSize = io.DisplaySize;
+	ImGui_ImplWin32_NewFrame();
+	// when you alt tab in fullscreen, the client size goes to 0 and
+	// the websocket therefore scales to 0, so don't let that happen.
+	if (io.DisplaySize.x == 0 || io.DisplaySize.y == 0)
+		io.DisplaySize = lastSize;
 	ImGui::NewFrame();
 
-	bool isOverlay = debugVisible && debugOverlay;
+	const bool isOverlay = GetImGuiMode() == 2;
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, isOverlay ? 0.75f : 1.f);
 
 	for (auto& menu : m_menus)
 		menu.Render();
 
 	// dear imgui demo. please never delete this.
-	if (state.showDemoWindow)
-		ImGui::ShowDemoWindow(&state.showDemoWindow);
+	if (m_showDemoWindow)
+		ImGui::ShowDemoWindow(&m_showDemoWindow);
 
 	// main menu bar
 	if (ImGui::BeginMainMenuBar())
 	{
-		ImGui::MenuItem("DearImGui Demo", 0, &state.showDemoWindow);
+		ImGui::MenuItem("DearImGui Demo", 0, &m_showDemoWindow);
 		for (auto& menu : m_menus)
 			menu.RenderMenuItem();
 
@@ -546,7 +456,7 @@ void ImGuiDisplay::Render(float deltaTime)
 	// store ImDrawData for asynchronous dispatching to WS clients
 	auto* drawData = ImGui::GetDrawData();
 	imguiWS.setDrawData(drawData);
-	if (debugVisible)
+	if (GetImGuiMode())
 		ImGui_ImplDX11_RenderDrawData(drawData);
 }
 
@@ -573,20 +483,28 @@ ImGuiDisplay& ImGuiDisplay::GetInstance()
 	return *display;
 }
 
-// todo: replace with proper Present hook
-AUTOHOOK(Thing3, materialsystem_dx11.dll + 0x54340, __int64, , (__int64 a1, __int64 a2, __int64 a3, int a4))
+static HRESULT (*o_pPresent)(IDXGISwapChain* This, UINT SyncInterval, UINT Flags) = nullptr;
+static HRESULT h_Present(IDXGISwapChain* This, UINT SyncInterval, UINT Flags)
 {
-	//spdlog::info("THING3");
-	ImGuiDisplay::GetInstance().Render(0.05f);
-	return Thing3(a1, a2, a3, a4);
+	// render our ImGui, todo: handle draw data on MainThread and only render it on RenderThread? I'm concerned about threading and fetching server/client data for ImGui rendering.
+	ImGuiDisplay::GetInstance().Render();
+
+	return o_pPresent(This, SyncInterval, Flags);
 }
 
-ON_DLL_LOAD("materialsystem_dx11.dll", ImGuiMaterialSystem, (CModule module))
+// this does various things, including initing the swapChain
+static __int64 (*o_pSub_15470)(HWND hWnd, __int64 a2) = nullptr;
+static __int64 h_sub_15470(HWND hWnd, __int64 a2)
 {
-	AUTOHOOK_DISPATCH_MODULE(materialsystem_dx11.dll)
+	// swapChain is inited after here, so now we can hook the present func
+	auto ret = o_pSub_15470(hWnd, a2);
 
-	device = module.Offset(0x14E8DD0).RCast<ID3D11Device**>();
-	deviceContext = module.Offset(0x14E8DD8).RCast<ID3D11DeviceContext**>();
+	// create present hook
+	auto* present = (*swapChain)->lpVtbl->Present;
+	MH_CreateHook(present, h_Present, (void**)&o_pPresent);
+	MH_EnableHook(present);
+
+	return ret;
 }
 
 static bool IsKeyMsg(UINT uMsg)
@@ -605,52 +523,38 @@ static int h_GameWndProc(void* game, const HWND hWnd, UINT uMsg, WPARAM wParam, 
 {
 	auto& instance = ImGuiDisplay::GetInstance();
 	// only handle input if not in overlay mode
-	if (ImGui::GetCurrentContext() != nullptr && instance.IsDebugVisible() && !instance.IsDebugOverlay())
+	if (ImGui::GetCurrentContext() != nullptr && GetImGuiMode() == 1)
 	{
 		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 
-		auto& io = ImGui::GetIO();
-		// Only block from game if imgui capturing
-		if (IsMouseMsg(uMsg) && io.WantCaptureMouse)
+		// block game input if the game doesn't already have a cursor visible
+		// todo: check note below
+		if (false)
 		{
-			return 0;
+			if (IsMouseMsg(uMsg) || IsKeyMsg(uMsg))
+				return 0;
 		}
 
-		if (IsKeyMsg(uMsg) && io.WantCaptureKeyboard)
-		{
-			return 0;
-		}
 	}
 
 	return o_pGameWndProc(game, hWnd, uMsg, wParam, lParam);
 }
 
-static void ConCommand_toggleimgui(const CCommand& arg)
+ON_DLL_LOAD("materialsystem_dx11.dll", ImGuiMaterialSystem, (CModule module))
 {
-	NOTE_UNUSED(arg);
-	auto& instance = ImGuiDisplay::GetInstance();
-	if (instance.IsDebugOverlay())
-	{
-		instance.SetDebugVisible(false);
-		instance.SetDebugOverlay(false);
-	}
-	else if (instance.IsDebugVisible())
-	{
-		instance.SetDebugOverlay(true);
-	}
-	else
-	{
-		instance.SetDebugVisible(true);
-	}
+	device = module.Offset(0x14E8DD0).RCast<ID3D11Device**>();
+	deviceContext = module.Offset(0x14E8DD8).RCast<ID3D11DeviceContext**>();
+	swapChain = module.Offset(0x14EE258).RCast<IDXGISwapChain**>();
+
+	o_pSub_15470 = module.Offset(0x15470).RCast<decltype(o_pSub_15470)>();
+	HookAttach(&(PVOID&)o_pSub_15470, h_sub_15470);
 }
 
-ON_DLL_LOAD_RELIESON("client.dll", ImGuiClient, ConCommand, (CModule module))
-{
-	RegisterConCommand("toggleimgui", ConCommand_toggleimgui, "Show/Overlay/Hide the ImGui debug.", FCVAR_DONTRECORD);
-}
-
-ON_DLL_LOAD("inputsystem.dll", ImGuiInput, (CModule module))
+ON_DLL_LOAD_RELIESON("inputsystem.dll", ImGuiInput, ConVar, (CModule module))
 {
 	o_pGameWndProc = module.Offset(0x8B80).RCast<decltype(o_pGameWndProc)>();
 	HookAttach(&(PVOID&)o_pGameWndProc, h_GameWndProc);
+
+	Cvar_imgui_mode = new ConVar("imgui_mode", "0", FCVAR_GAMEDLL | FCVAR_DONTRECORD, "Change ImGui debug display mode: 0 - none, 1 - full, 2 - overlay");
+	// todo: use Sys_GetFactoryPtr to get vgui thing (ttf2sdk) to get cursor hook
 }

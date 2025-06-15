@@ -7,14 +7,10 @@ class ImGuiDisplay
 {
 public:
 	void Start();
-	void Render(float deltaTime);
+	void Render();
 	void Shutdown();
 
 	void RegisterMenu(const char* name, ImGuiRenderCallback callback, const char* shortcut);
-	bool IsDebugVisible() const { return debugVisible; }
-	void SetDebugVisible(bool isVisible) { debugVisible = isVisible; }
-	bool IsDebugOverlay() const { return debugVisible && debugOverlay; }
-	void SetDebugOverlay(bool isOverlay) { debugOverlay = isOverlay; }
 
 	static ImGuiDisplay& GetInstance();
 
@@ -27,6 +23,6 @@ private:
 
 	std::vector<ImGuiMenu> m_menus = {};
 	ImGuiContext* m_context = nullptr;
-	bool debugVisible = false;
-	bool debugOverlay = false;
+	// demo window is built into the display
+	bool m_showDemoWindow = false;
 };
