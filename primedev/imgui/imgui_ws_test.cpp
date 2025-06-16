@@ -5,14 +5,14 @@
 #include "imgui/backends/imgui_impl_dx11.h"
 #include "imgui/backends/imgui_impl_win32.h"
 #include "core/vanilla.h"
+#include "core/tier1.h"
+#include "engine/r2engine.h"
 
 // todo: move this define? needed for hooking Present
 #define CINTERFACE
 #include "dxgi.h"
 #undef CINTERFACE
 #include "d3d11.h"
-
-#include "engine/r2engine.h"
 
 static ImGuiWS imguiWS;
 static bool isInited = false;
@@ -22,6 +22,47 @@ static ID3D11DeviceContext** deviceContext = nullptr;
 static IDXGISwapChain** swapChain = nullptr;
 
 static ConVar* Cvar_imgui_mode = nullptr;
+
+enum CursorCode
+{
+	dc_user,
+	dc_none,
+	dc_arrow,
+	dc_ibeam,
+	dc_hourglass,
+	dc_waitarrow,
+	dc_crosshair,
+	dc_up,
+	dc_sizenwse,
+	dc_sizenesw,
+	dc_sizewe,
+	dc_sizens,
+	dc_sizeall,
+	dc_no,
+	dc_hand,
+	dc_blank,
+	dc_last,
+};
+
+static bool engineCursorVisible = false;
+
+class ISurface
+{
+public:
+	struct VTable
+	{
+		void* unknown1[61];
+		void (*SetCursor)(ISurface* surface, unsigned int cursor);
+		bool (*IsCursorVisible)(ISurface* surface);
+		void* unknown2[11];
+		void (*UnlockCursor)(ISurface* surface);
+		void (*LockCursor)(ISurface* surface);
+	};
+
+	VTable* m_vtable;
+};
+
+static ISurface* VGUI_Surface031 = nullptr;
 
 static int GetImGuiMode()
 {
@@ -367,6 +408,11 @@ void State::update()
 	}
 }
 
+static void RenderImGuiDebug()
+{
+	ImGui::Text("Engine cursor visible: %i", engineCursorVisible);
+}
+
 void ImGuiDisplay::Start()
 {
 	int port = 5000;
@@ -398,6 +444,8 @@ void ImGuiDisplay::Start()
 		ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
 		imguiWS.setTexture(0, ImGuiWS::Texture::Type::Alpha8, width, height, (const char*)pixels);
 	}
+
+	RegisterMenu("ImGui Debug", RenderImGuiDebug, nullptr);
 
 	isInited = true;
 }
@@ -466,6 +514,7 @@ void ImGuiDisplay::Shutdown()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext(m_context);
 	isInited = false;
+	m_menus.clear();
 }
 
 void ImGuiDisplay::RegisterMenu(const char* name, ImGuiRenderCallback callback, const char* shortcut)
@@ -527,17 +576,45 @@ static int h_GameWndProc(void* game, const HWND hWnd, UINT uMsg, WPARAM wParam, 
 	{
 		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 
-		// block game input if the game doesn't already have a cursor visible
-		// todo: check note below
-		if (false)
-		{
-			if (IsMouseMsg(uMsg) || IsKeyMsg(uMsg))
-				return 0;
-		}
+		// don't let the game actually change the cursor while ImGui is taking precedence
+		if (uMsg == WM_SETCURSOR)
+			return 0;
 
+		// don't let the game do hittests? Weird but they cause a lot of lag when in game
+		if (uMsg == WM_NCHITTEST)
+			return 0;
+
+		// block game mouse input if the game doesn't already have a cursor visible
+		if ((IsMouseMsg(uMsg) || uMsg == WM_INPUT )&& !engineCursorVisible)
+			return 0;
+
+		// block keyboard input if imgui wants to capture it (e.g. text box entry)
+		// note that we don't always block it so that the user can still do things like
+		// opening the console.
+		if (IsKeyMsg(uMsg) && ImGui::GetIO().WantCaptureKeyboard)
+			return 0;
 	}
 
 	return o_pGameWndProc(game, hWnd, uMsg, wParam, lParam);
+}
+
+static void (*o_pSetCursor)(ISurface* surface, unsigned int cursor) = nullptr;
+static void h_setCursor(ISurface* surface, unsigned int cursor)
+{
+	// keep track of if the game wants a cursor
+	engineCursorVisible = (cursor != dc_user && cursor != dc_none && cursor != dc_blank);
+
+	o_pSetCursor(surface, cursor);
+}
+
+static void (*o_pLockCursor)(ISurface* surface) = nullptr;
+static void h_lockCursor(ISurface* surface)
+{
+	// only allow locking the cursor if ImGui doesn't want it
+	if (GetImGuiMode() == 1)
+		return;
+
+	o_pLockCursor(surface);
 }
 
 ON_DLL_LOAD("materialsystem_dx11.dll", ImGuiMaterialSystem, (CModule module))
@@ -556,5 +633,17 @@ ON_DLL_LOAD_RELIESON("inputsystem.dll", ImGuiInput, ConVar, (CModule module))
 	HookAttach(&(PVOID&)o_pGameWndProc, h_GameWndProc);
 
 	Cvar_imgui_mode = new ConVar("imgui_mode", "0", FCVAR_GAMEDLL | FCVAR_DONTRECORD, "Change ImGui debug display mode: 0 - none, 1 - full, 2 - overlay");
-	// todo: use Sys_GetFactoryPtr to get vgui thing (ttf2sdk) to get cursor hook
+}
+
+ON_DLL_LOAD("vguimatsurface.dll", ImGuiVGui, (CModule module))
+{
+	VGUI_Surface031 = Sys_GetFactoryPtr("vguimatsurface.dll", "VGUI_Surface031").RCast<ISurface*>();
+
+	auto* setCursor = VGUI_Surface031->m_vtable->SetCursor;
+	MH_CreateHook(setCursor, h_setCursor, (void**)&o_pSetCursor);
+	MH_EnableHook(setCursor);
+
+	auto* lockCursor = VGUI_Surface031->m_vtable->LockCursor;
+	MH_CreateHook(lockCursor, h_lockCursor, (void**)&o_pLockCursor);
+	MH_EnableHook(lockCursor);
 }
