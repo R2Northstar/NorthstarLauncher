@@ -13,6 +13,10 @@
 #undef CINTERFACE
 #include "d3d11.h"
 
+// thread-local to allow for different threads to have different contexts,
+// i.e. render thread for most menus, other threads for squirrel things
+thread_local ImGuiContext* ImGuiThreadContext;
+
 static ImGuiWS imguiWS;
 static bool isInited = false;
 

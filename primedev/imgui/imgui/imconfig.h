@@ -139,3 +139,7 @@ namespace ImGui
     void MyFunction(const char* name, MyMatrix44* mtx);
 }
 */
+
+struct ImGuiContext;
+extern thread_local ImGuiContext* ImGuiThreadContext;
+#define GImGui ImGuiThreadContext
