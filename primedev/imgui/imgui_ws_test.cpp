@@ -8,7 +8,6 @@
 #include "core/tier1.h"
 #include "engine/r2engine.h"
 
-// todo: move this define? needed for hooking Present
 #define CINTERFACE
 #include "dxgi.h"
 #undef CINTERFACE
@@ -22,6 +21,7 @@ static ID3D11DeviceContext** deviceContext = nullptr;
 static IDXGISwapChain** swapChain = nullptr;
 
 static ConVar* Cvar_imgui_mode = nullptr;
+static ConVar* Cvar_imgui_ws_port = nullptr;
 
 enum CursorCode
 {
@@ -70,6 +70,7 @@ static int GetImGuiMode()
 		return 0;
 
 	// vanilla compat mode - don't allow drawing on the screen because I don't want people to get accidentally fairfight banned
+	// they can still access the websocket version though
 	if (g_pVanillaCompatibility->GetVanillaCompatibility())
 		return 0;
 
@@ -288,9 +289,9 @@ static ImGuiKey toImGuiKey(int32_t keyCode)
 	}
 }
 
-struct State
+struct WsState
 {
-	State() {}
+	WsState() {}
 	struct InputEvent
 	{
 		enum Type
@@ -312,6 +313,8 @@ struct State
 		float mouseWheelY = 0.0f;
 	};
 
+	int port = 5000;
+
 	// client input
 	std::vector<InputEvent> inputEvents;
 	std::string lastAddText = "";
@@ -320,9 +323,9 @@ struct State
 	void update();
 };
 
-static State state;
+static WsState state;
 
-void State::handle(ImGuiWS::Event&& event)
+void WsState::handle(ImGuiWS::Event&& event)
 {
 	ImGuiMouseButton butImGui = event.mouse_but;
 	// map the JS button code to Dear ImGui's button code
@@ -368,7 +371,7 @@ void State::handle(ImGuiWS::Event&& event)
 	}
 }
 
-void State::update()
+void WsState::update()
 {
 	auto& io = ImGui::GetIO();
 
@@ -408,14 +411,16 @@ void State::update()
 	}
 }
 
+// a menu for debugging the ImGui integration systems
 static void RenderImGuiDebug()
 {
+	ImGui::Text("Port: %i", state.port);
 	ImGui::Text("Engine cursor visible: %i", engineCursorVisible);
 }
 
 void ImGuiDisplay::Start()
 {
-	int port = 5000;
+	state.port = Cvar_imgui_ws_port->GetInt();
 
 	IMGUI_CHECKVERSION();
 	m_context = ImGui::CreateContext();
@@ -435,7 +440,7 @@ void ImGuiDisplay::Start()
 	ImGui::GetStyle().ScrollbarRounding = 0.0f;
 
 	// setup imgui-ws
-	imguiWS.init(port, "./", {""});
+	imguiWS.init(state.port, "./", {""});
 
 	// prepare font texture
 	{
@@ -444,8 +449,6 @@ void ImGuiDisplay::Start()
 		ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
 		imguiWS.setTexture(0, ImGuiWS::Texture::Type::Alpha8, width, height, (const char*)pixels);
 	}
-
-	RegisterMenu("ImGui Debug", RenderImGuiDebug, nullptr);
 
 	isInited = true;
 }
@@ -464,6 +467,18 @@ void ImGuiDisplay::Render()
 		state.handle(std::move(event));
 	}
 	state.update();
+
+	// some thoughts about squirrel imgui rendering stuff:
+	// 1. squirrel is on a different thread, need to look into making that work properly. Seems that it runs at the same framerate, but not
+	// the same thread
+	// 2. this means that we have problems due to ImGui::GetCurrentContext(), only one context can be active at the same time, we need to
+	// either have a context per thread (which is pretty hard and will diverge a lot from normal ImGui) or lock the context during our
+	// render
+
+	// 3. an alternative solution could be to do something similar to imgui.cpp:1290, and use that to give each thread its own ImGuiContext.
+	// the question then becomes "how do i render these all from the RenderThread". I think I can make a helper class that stores the ImDrawData (double buffered?)
+	// in a thread safe manner and pass a function pointer for each of these "contexts" that handles rendering (dont want VGui-ImGui to draw on the websocket and such)
+	// Perhaps i could make an "ImGuiRenderTarget" class that handles this stuff, and in the Present hook I render all the things? something like that idk
 
 	ImGui::SetCurrentContext(m_context);
 	ImGui_ImplDX11_NewFrame();
@@ -527,7 +542,11 @@ ImGuiDisplay& ImGuiDisplay::GetInstance()
 	static ImGuiDisplay* display = nullptr;
 
 	if (display == nullptr)
+	{
 		display = new ImGuiDisplay();
+		// add the ImGui debug menu always first
+		display->RegisterMenu("ImGui Debug", RenderImGuiDebug, nullptr);
+	}
 
 	return *display;
 }
@@ -625,6 +644,8 @@ ON_DLL_LOAD("materialsystem_dx11.dll", ImGuiMaterialSystem, (CModule module))
 
 	o_pSub_15470 = module.Offset(0x15470).RCast<decltype(o_pSub_15470)>();
 	HookAttach(&(PVOID&)o_pSub_15470, h_sub_15470);
+
+	Cvar_imgui_ws_port = new ConVar("imgui_ws_port", "5000", FCVAR_GAMEDLL | FCVAR_DONTRECORD, "The port that the ImGui debug display is hosted on");
 }
 
 ON_DLL_LOAD_RELIESON("inputsystem.dll", ImGuiInput, ConVar, (CModule module))
