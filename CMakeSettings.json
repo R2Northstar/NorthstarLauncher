@@ -9,7 +9,8 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ]
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "cmakeToolchain": "${projectDir}\\primedev\\thirdparty\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
     },
     {
       "name": "x64-RelWithDebInfo",
@@ -20,7 +21,8 @@
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "cmakeToolchain": "${projectDir}\\primedev\\thirdparty\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
     },
     {
       "name": "x64-Debug",
@@ -32,7 +34,7 @@
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "cmakeToolchain": "${projectDir}\\primedev\\thirdparty\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
     }
   ]
 }
