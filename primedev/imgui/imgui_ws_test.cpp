@@ -432,7 +432,7 @@ static void RenderImGuiDebug()
 // a small panel for controlling the imgui_mode
 static void RenderImGuiDebugControls()
 {
-	if (ImGui::Begin("Debug Controls", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
+	if (ImGui::Begin("Debug Controls", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking))
 	{
 		if (GetImGuiMode() == 2)
 		{
@@ -494,6 +494,7 @@ void ImGuiDisplay::Start()
 
 	IMGUI_CHECKVERSION();
 	m_context = ImGui::CreateContext();
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	ImGuiRenderThreadContext = m_context;
 	strcpy(ImGuiRenderThreadContext->ContextName, "Render");
 	// ImGui::GetIO().MouseDrawCursor = true;
@@ -561,6 +562,11 @@ void ImGuiDisplay::Render()
 	if (io.DisplaySize.x == 0 || io.DisplaySize.y == 0)
 		io.DisplaySize = lastSize;
 	ImGui::NewFrame();
+
+	// prevent the docking background from covering the entire game
+	ImGui::SetNextWindowBgAlpha(0);
+	// add a dock space over the entire screen
+	ImGui::DockSpaceOverViewport(0, 0, ImGuiDockNodeFlags_PassthruCentralNode, 0);
 
 	const bool isOverlay = GetImGuiMode() == 2;
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, isOverlay ? 0.75f : 1.f);
