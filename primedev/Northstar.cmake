@@ -130,6 +130,7 @@ add_library(
     "scripts/client/clientchathooks.cpp"
     "scripts/client/cursorposition.cpp"
     "scripts/client/scriptbrowserhooks.cpp"
+    "scripts/client/scriptimgui.cpp"
     "scripts/client/scriptmainmenupromos.cpp"
     "scripts/client/scriptmodmenu.cpp"
     "scripts/client/scriptoriginauth.cpp"

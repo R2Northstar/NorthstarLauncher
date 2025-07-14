@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "imgui_menu.h"
+#include "imgui_club/imgui_threaded_rendering/imgui_threaded_rendering.h"
 
 class ImGuiDisplay
 {
@@ -26,3 +27,5 @@ private:
 	// demo window is built into the display
 	bool m_showDemoWindow = false;
 };
+
+void RenderScriptThing(const char* message);

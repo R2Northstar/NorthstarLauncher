@@ -7,6 +7,7 @@
 #include "core/vanilla.h"
 #include "core/tier1.h"
 #include "engine/r2engine.h"
+#include <mutex>
 
 #define CINTERFACE
 #include "dxgi.h"
@@ -17,12 +18,18 @@
 // i.e. render thread for most menus, other threads for squirrel things
 thread_local ImGuiContext* ImGuiThreadContext;
 
+static ImGuiContext* ImGuiRenderThreadContext;
+static ImGuiContext* ImGuiSquirrelThreadContext;
+
 static ImGuiWS imguiWS;
 static bool isInited = false;
 
 static ID3D11Device** device = nullptr; 
 static ID3D11DeviceContext** deviceContext = nullptr;
 static IDXGISwapChain** swapChain = nullptr;
+
+static std::mutex sqRenderSnapshot_mutex;
+static ImDrawDataSnapshot sqRenderSnapshot;
 
 static ConVar* Cvar_imgui_mode = nullptr;
 static ConVar* Cvar_imgui_ws_port = nullptr;
@@ -422,12 +429,73 @@ static void RenderImGuiDebug()
 	ImGui::Text("Engine cursor visible: %i", engineCursorVisible);
 }
 
+// a small panel for controlling the imgui_mode
+static void RenderImGuiDebugControls()
+{
+	if (ImGui::Begin("Debug Controls", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize))
+	{
+		if (GetImGuiMode() == 2)
+		{
+			ImGui::Text("ImGui debug is in overlay mode");
+			ImGui::NewLine();
+			ImGui::Text("Enter 'imgui_mode 0' into the console to close ImGui");
+			ImGui::Text("Enter 'imgui_mode 1' into the console to return to normal mode");
+
+			ImGui::End();
+			return;
+		}
+
+		if (ImGui::Button("Close"))
+			Cvar_imgui_mode->SetValue(0);
+		if (ImGui::Button("Overlay Mode"))
+			Cvar_imgui_mode->SetValue(2);
+	}
+	ImGui::End();
+}
+
+void RenderScriptThing(const char* message)
+{
+	// context was set up on the other thread, so the TLS variable isnt set
+	if (ImGui::GetCurrentContext() == nullptr)
+		ImGui::SetCurrentContext(ImGuiSquirrelThreadContext);
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+
+	for (int i = 0; i < 10; ++i)
+	{
+		ImGui::NewFrame();
+		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, {0.226, 0.16, 0.476, 1});
+
+		if (ImGui::Begin("HELLO WORLD", 0, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::TextColored({0.4, 1, 0.4, 1}, "This text is green!");
+			ImGui::TextColored({1, 0.4, 0.4, 1}, "This text is red!");
+			ImGui::Separator();
+			ImGui::Text("The following text is from UI script:\n\n%s", message);
+		}
+		else
+		{
+			spdlog::error("NO IMGUI MENU????");
+		}
+		ImGui::End();
+
+		ImGui::PopStyleColor(1);
+
+		ImGui::Render();
+
+		const std::lock_guard<std::mutex> lock(sqRenderSnapshot_mutex);
+		sqRenderSnapshot.SnapUsingSwap(ImGui::GetDrawData(), ImGui::GetTime());
+	}
+}
+
 void ImGuiDisplay::Start()
 {
 	state.port = Cvar_imgui_ws_port->GetInt();
 
 	IMGUI_CHECKVERSION();
 	m_context = ImGui::CreateContext();
+	ImGuiRenderThreadContext = m_context;
+	strcpy(ImGuiRenderThreadContext->ContextName, "Render");
 	// ImGui::GetIO().MouseDrawCursor = true;
 
 	// get the hwnd from directx
@@ -454,6 +522,18 @@ void ImGuiDisplay::Start()
 		imguiWS.setTexture(0, ImGuiWS::Texture::Type::Alpha8, width, height, (const char*)pixels);
 	}
 
+	// todo: move this to UI vm instantiation?
+	if (!ImGuiSquirrelThreadContext)
+	{
+		ImGuiSquirrelThreadContext = ImGui::CreateContext();
+		strcpy(ImGuiSquirrelThreadContext->ContextName, "Squirrel");
+
+		ImGui::SetCurrentContext(ImGuiSquirrelThreadContext);
+		ImGui_ImplWin32_Init(desc.OutputWindow);
+		ImGui_ImplDX11_Init(*device, *deviceContext);
+		ImGui::SetCurrentContext(ImGuiRenderThreadContext);
+	}
+
 	isInited = true;
 }
 
@@ -472,18 +552,6 @@ void ImGuiDisplay::Render()
 	}
 	state.update();
 
-	// some thoughts about squirrel imgui rendering stuff:
-	// 1. squirrel is on a different thread, need to look into making that work properly. Seems that it runs at the same framerate, but not
-	// the same thread
-	// 2. this means that we have problems due to ImGui::GetCurrentContext(), only one context can be active at the same time, we need to
-	// either have a context per thread (which is pretty hard and will diverge a lot from normal ImGui) or lock the context during our
-	// render
-
-	// 3. an alternative solution could be to do something similar to imgui.cpp:1290, and use that to give each thread its own ImGuiContext.
-	// the question then becomes "how do i render these all from the RenderThread". I think I can make a helper class that stores the ImDrawData (double buffered?)
-	// in a thread safe manner and pass a function pointer for each of these "contexts" that handles rendering (dont want VGui-ImGui to draw on the websocket and such)
-	// Perhaps i could make an "ImGuiRenderTarget" class that handles this stuff, and in the Present hook I render all the things? something like that idk
-
 	ImGui::SetCurrentContext(m_context);
 	ImGui_ImplDX11_NewFrame();
 	const ImVec2 lastSize = io.DisplaySize;
@@ -496,6 +564,9 @@ void ImGuiDisplay::Render()
 
 	const bool isOverlay = GetImGuiMode() == 2;
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, isOverlay ? 0.75f : 1.f);
+
+	if (GetImGuiMode())
+		RenderImGuiDebugControls();
 
 	for (auto& menu : m_menus)
 		menu.Render();
@@ -558,6 +629,14 @@ ImGuiDisplay& ImGuiDisplay::GetInstance()
 static HRESULT (*o_pPresent)(IDXGISwapChain* This, UINT SyncInterval, UINT Flags) = nullptr;
 static HRESULT h_Present(IDXGISwapChain* This, UINT SyncInterval, UINT Flags)
 {
+	{
+		const std::lock_guard<std::mutex> lock(sqRenderSnapshot_mutex);
+		if (&sqRenderSnapshot.DrawData)
+		{
+			ImGui_ImplDX11_RenderDrawData(&sqRenderSnapshot.DrawData); // todo: mutex for this in some way? bad things are happening
+		}
+	}
+
 	// render our ImGui, todo: handle draw data on MainThread and only render it on RenderThread? I'm concerned about threading and fetching server/client data for ImGui rendering.
 	ImGuiDisplay::GetInstance().Render();
 
@@ -586,37 +665,40 @@ static bool IsKeyMsg(UINT uMsg)
 
 static bool IsMouseMsg(UINT uMsg)
 {
+	if (uMsg == WM_INPUT)
+		return true;
 	return uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST;
 }
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandlerEx(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, ImGuiIO& io);
 static int (*o_pGameWndProc)(void* game, const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = nullptr;
 static int h_GameWndProc(void* game, const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	//spdlog::warn("MESSAGE: {}", uMsg);
+
 	auto& instance = ImGuiDisplay::GetInstance();
-	// only handle input if not in overlay mode
-	if (ImGui::GetCurrentContext() != nullptr && GetImGuiMode() == 1)
+
+	// debug imgui, takes all mouse and keyboard input while not in overlay-mode
+	if (ImGuiRenderThreadContext != nullptr && GetImGuiMode() == 1)
 	{
-		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+		auto res = ImGui_ImplWin32_WndProcHandlerEx(hWnd, uMsg, wParam, lParam, ImGuiRenderThreadContext->IO);
 
-		// don't let the game actually change the cursor while ImGui is taking precedence
-		if (uMsg == WM_SETCURSOR)
-			return 0;
-
-		// don't let the game do hittests? Weird but they cause a lot of lag when in game
-		if (uMsg == WM_NCHITTEST)
-			return 0;
-
-		// block game mouse input if the game doesn't already have a cursor visible
-		if ((IsMouseMsg(uMsg) || uMsg == WM_INPUT )&& !engineCursorVisible)
-			return 0;
-
-		// block keyboard input if imgui wants to capture it (e.g. text box entry)
-		// note that we don't always block it so that the user can still do things like
-		// opening the console.
-		if (IsKeyMsg(uMsg) && ImGui::GetIO().WantCaptureKeyboard)
-			return 0;
+		if (IsMouseMsg(uMsg) || IsKeyMsg(uMsg))
+			return res;
 	}
+
+	// squirrel imgui, only takes input when it needs to.
+	if (ImGuiSquirrelThreadContext != nullptr)
+	{
+		auto res = ImGui_ImplWin32_WndProcHandlerEx(hWnd, uMsg, wParam, lParam, ImGuiSquirrelThreadContext->IO);
+
+		if (IsMouseMsg(uMsg) && ImGuiSquirrelThreadContext->IO.WantCaptureMouse)
+			return res;
+		if (IsKeyMsg(uMsg) && ImGuiSquirrelThreadContext->IO.WantCaptureKeyboard)
+			return res;
+	}
+
+	//spdlog::warn("GOT THROUGH");
 
 	return o_pGameWndProc(game, hWnd, uMsg, wParam, lParam);
 }
