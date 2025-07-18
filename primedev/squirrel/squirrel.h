@@ -326,7 +326,7 @@ public:
 #pragma endregion
 };
 
-static SquirrelManager* g_pSquirrel[ScriptContext_COUNT];
+static SquirrelManager* g_pSquirrel[3];
 
 void InitialiseSquirrelManagers();
 
