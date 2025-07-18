@@ -28,35 +28,35 @@ static void __fastcall h_CHudChat__AddGameLine(void* self, const char* message, 
 
 	RemoveAsciiControlSequences(const_cast<char*>(message), true);
 
-	SQRESULT result = g_pSquirrel<ScriptContext::CLIENT>->Call(
+	SQRESULT result = g_pSquirrel[ScriptContext_CLIENT]->Call(
 		"CHudChat_ProcessMessageStartThread", static_cast<int>(senderId) - 1, payload, isTeam, isDead, type);
 	if (result == SQRESULT_ERROR)
 		for (CHudChat* hud = *CHudChat::allHuds; hud != NULL; hud = hud->next)
 			o_pCHudChat__AddGameLine(hud, message, inboxId, isTeam, isDead);
 }
 
-ADD_SQFUNC("void", NSChatWrite, "int context, string text", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSChatWrite, "int context, string text", "", ScriptContext_CLIENT)
 {
-	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	int chatContext = g_pSquirrel[ScriptContext_CLIENT]->getinteger(sqvm, 1);
+	const char* str = g_pSquirrel[ScriptContext_CLIENT]->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)chatContext).Write(str);
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSChatWriteRaw, "int context, string text", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSChatWriteRaw, "int context, string text", "", ScriptContext_CLIENT)
 {
-	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	int chatContext = g_pSquirrel[ScriptContext_CLIENT]->getinteger(sqvm, 1);
+	const char* str = g_pSquirrel[ScriptContext_CLIENT]->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)chatContext).InsertText(str);
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSChatWriteLine, "int context, string text", "", ScriptContext::CLIENT)
+ADD_SQFUNC("void", NSChatWriteLine, "int context, string text", "", ScriptContext_CLIENT)
 {
-	int chatContext = g_pSquirrel<ScriptContext::CLIENT>->getinteger(sqvm, 1);
-	const char* str = g_pSquirrel<ScriptContext::CLIENT>->getstring(sqvm, 2);
+	int chatContext = g_pSquirrel[ScriptContext_CLIENT]->getinteger(sqvm, 1);
+	const char* str = g_pSquirrel[ScriptContext_CLIENT]->getstring(sqvm, 2);
 
 	LocalChatWriter((LocalChatWriter::Context)chatContext).WriteLine(str);
 	return SQRESULT_NULL;

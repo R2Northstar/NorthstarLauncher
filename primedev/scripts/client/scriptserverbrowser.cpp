@@ -6,32 +6,32 @@
 
 // functions for viewing server browser
 
-ADD_SQFUNC("void", NSRequestServerList, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSRequestServerList, "", "", ScriptContext_UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pMasterServerManager->RequestServerList();
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsRequestingServerList, "", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsRequestingServerList, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bScriptRequestingServerList);
+	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bScriptRequestingServerList);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSMasterServerConnectionSuccessful, "", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSMasterServerConnectionSuccessful, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyConnected);
+	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyConnected);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("int", NSGetServerCount, "", "", ScriptContext::UI)
+ADD_SQFUNC("int", NSGetServerCount, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->pushinteger(sqvm, (SQInteger)g_pMasterServerManager->m_vRemoteServers.size());
+	g_pSquirrel[context]->pushinteger(sqvm, (SQInteger)g_pMasterServerManager->m_vRemoteServers.size());
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext_UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pMasterServerManager->ClearServerList();
@@ -40,14 +40,14 @@ ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext::UI)
 
 // functions for authenticating with servers
 
-ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''", "", ScriptContext_UI)
 {
-	SQInteger serverIndex = g_pSquirrel<context>->getinteger(sqvm, 1);
-	const SQChar* password = g_pSquirrel<context>->getstring(sqvm, 2);
+	SQInteger serverIndex = g_pSquirrel[context]->getinteger(sqvm, 1);
+	const SQChar* password = g_pSquirrel[context]->getstring(sqvm, 2);
 
 	if (serverIndex >= g_pMasterServerManager->m_vRemoteServers.size())
 	{
-		g_pSquirrel<context>->raiseerror(
+		g_pSquirrel[context]->raiseerror(
 			sqvm,
 			fmt::format(
 				"Tried to auth with server index {} when only {} servers are available",
@@ -72,23 +72,23 @@ ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''",
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsAuthenticatingWithServer, "", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSIsAuthenticatingWithServer, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bScriptAuthenticatingWithGameServer);
+	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bScriptAuthenticatingWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSWasAuthSuccessful, "", "", ScriptContext::UI)
+ADD_SQFUNC("bool", NSWasAuthSuccessful, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyAuthenticatedWithGameServer);
+	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyAuthenticatedWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext_UI)
 {
 	if (!g_pMasterServerManager->m_bHasPendingConnectionInfo)
 	{
-		g_pSquirrel<context>->raiseerror(
+		g_pSquirrel[context]->raiseerror(
 			sqvm, fmt::format("Tried to connect to authed server before any pending connection info was available").c_str());
 		return SQRESULT_ERROR;
 	}
@@ -114,7 +114,7 @@ ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext::UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext_UI)
 {
 	NOTE_UNUSED(sqvm);
 	// do auth request
@@ -123,7 +123,7 @@ ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext::UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext_UI)
 {
 	NOTE_UNUSED(sqvm);
 	// literally just set serverfilter
@@ -134,80 +134,80 @@ ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext::UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string", NSGetAuthFailReason, "", "", ScriptContext::UI)
+ADD_SQFUNC("string", NSGetAuthFailReason, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->pushstring(sqvm, g_pMasterServerManager->m_sAuthFailureReason.c_str(), -1);
+	g_pSquirrel[context]->pushstring(sqvm, g_pMasterServerManager->m_sAuthFailureReason.c_str(), -1);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
+ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext_UI)
 {
-	g_pSquirrel<context>->newarray(sqvm, 0);
+	g_pSquirrel[context]->newarray(sqvm, 0);
 	for (size_t i = 0; i < g_pMasterServerManager->m_vRemoteServers.size(); i++)
 	{
 		const RemoteServerInfo& remoteServer = g_pMasterServerManager->m_vRemoteServers[i];
 
-		g_pSquirrel<context>->pushnewstructinstance(sqvm, 11);
+		g_pSquirrel[context]->pushnewstructinstance(sqvm, 11);
 
 		// index
-		g_pSquirrel<context>->pushinteger(sqvm, (SQInteger)i);
-		g_pSquirrel<context>->sealstructslot(sqvm, 0);
+		g_pSquirrel[context]->pushinteger(sqvm, (SQInteger)i);
+		g_pSquirrel[context]->sealstructslot(sqvm, 0);
 
 		// id
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.id, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 1);
+		g_pSquirrel[context]->pushstring(sqvm, remoteServer.id, -1);
+		g_pSquirrel[context]->sealstructslot(sqvm, 1);
 
 		// name
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.name, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 2);
+		g_pSquirrel[context]->pushstring(sqvm, remoteServer.name, -1);
+		g_pSquirrel[context]->sealstructslot(sqvm, 2);
 
 		// description
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.description.c_str(), -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 3);
+		g_pSquirrel[context]->pushstring(sqvm, remoteServer.description.c_str(), -1);
+		g_pSquirrel[context]->sealstructslot(sqvm, 3);
 
 		// map
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.map, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 4);
+		g_pSquirrel[context]->pushstring(sqvm, remoteServer.map, -1);
+		g_pSquirrel[context]->sealstructslot(sqvm, 4);
 
 		// playlist
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.playlist, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 5);
+		g_pSquirrel[context]->pushstring(sqvm, remoteServer.playlist, -1);
+		g_pSquirrel[context]->sealstructslot(sqvm, 5);
 
 		// playerCount
-		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.playerCount);
-		g_pSquirrel<context>->sealstructslot(sqvm, 6);
+		g_pSquirrel[context]->pushinteger(sqvm, remoteServer.playerCount);
+		g_pSquirrel[context]->sealstructslot(sqvm, 6);
 
 		// maxPlayerCount
-		g_pSquirrel<context>->pushinteger(sqvm, remoteServer.maxPlayers);
-		g_pSquirrel<context>->sealstructslot(sqvm, 7);
+		g_pSquirrel[context]->pushinteger(sqvm, remoteServer.maxPlayers);
+		g_pSquirrel[context]->sealstructslot(sqvm, 7);
 
 		// requiresPassword
-		g_pSquirrel<context>->pushbool(sqvm, remoteServer.requiresPassword);
-		g_pSquirrel<context>->sealstructslot(sqvm, 8);
+		g_pSquirrel[context]->pushbool(sqvm, remoteServer.requiresPassword);
+		g_pSquirrel[context]->sealstructslot(sqvm, 8);
 
 		// region
-		g_pSquirrel<context>->pushstring(sqvm, remoteServer.region, -1);
-		g_pSquirrel<context>->sealstructslot(sqvm, 9);
+		g_pSquirrel[context]->pushstring(sqvm, remoteServer.region, -1);
+		g_pSquirrel[context]->sealstructslot(sqvm, 9);
 
 		// requiredMods
-		g_pSquirrel<context>->newarray(sqvm);
+		g_pSquirrel[context]->newarray(sqvm);
 		for (const RemoteModInfo& mod : remoteServer.requiredMods)
 		{
-			g_pSquirrel<context>->pushnewstructinstance(sqvm, 2);
+			g_pSquirrel[context]->pushnewstructinstance(sqvm, 2);
 
 			// name
-			g_pSquirrel<context>->pushstring(sqvm, mod.Name.c_str(), -1);
-			g_pSquirrel<context>->sealstructslot(sqvm, 0);
+			g_pSquirrel[context]->pushstring(sqvm, mod.Name.c_str(), -1);
+			g_pSquirrel[context]->sealstructslot(sqvm, 0);
 
 			// version
-			g_pSquirrel<context>->pushstring(sqvm, mod.Version.c_str(), -1);
-			g_pSquirrel<context>->sealstructslot(sqvm, 1);
+			g_pSquirrel[context]->pushstring(sqvm, mod.Version.c_str(), -1);
+			g_pSquirrel[context]->sealstructslot(sqvm, 1);
 
-			g_pSquirrel<context>->arrayappend(sqvm, -2);
+			g_pSquirrel[context]->arrayappend(sqvm, -2);
 		}
-		g_pSquirrel<context>->sealstructslot(sqvm, 10);
+		g_pSquirrel[context]->sealstructslot(sqvm, 10);
 
-		g_pSquirrel<context>->arrayappend(sqvm, -2);
+		g_pSquirrel[context]->arrayappend(sqvm, -2);
 	}
 	return SQRESULT_NOTNULL;
 }

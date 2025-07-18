@@ -5,12 +5,13 @@
 
 struct SQVM;
 
-enum class ScriptContext : int
+enum ScriptContext : int
 {
-	INVALID = -1,
-	SERVER,
-	CLIENT,
-	UI,
+	ScriptContext_INVALID = -1,
+	ScriptContext_SERVER = 0,
+	ScriptContext_CLIENT = 1,
+	ScriptContext_UI = 2,
+	ScriptContext_COUNT = 3,
 };
 
 struct alignas(8) SQVM

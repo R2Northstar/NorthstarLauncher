@@ -1,6 +1,6 @@
 #pragma once
 
-enum class ScriptContext;
+enum ScriptContext : int;
 
 // These definitions below should match on the Squirrel side so we can easily pass them along through a function.
 

@@ -158,14 +158,14 @@ static void __fastcall h_CHostState__FrameUpdate(CHostState* self, double flCurr
 	}
 
 	// Run Squirrel message buffer
-	if (g_pSquirrel<ScriptContext::UI>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::UI>->m_pSQVM->sqvm != nullptr)
-		g_pSquirrel<ScriptContext::UI>->ProcessMessageBuffer();
+	if (g_pSquirrel[ScriptContext_UI]->m_pSQVM != nullptr && g_pSquirrel[ScriptContext_UI]->m_pSQVM->sqvm != nullptr)
+		g_pSquirrel[ScriptContext_UI]->ProcessMessageBuffer();
 
-	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM->sqvm != nullptr)
-		g_pSquirrel<ScriptContext::CLIENT>->ProcessMessageBuffer();
+	if (g_pSquirrel[ScriptContext_CLIENT]->m_pSQVM != nullptr && g_pSquirrel[ScriptContext_CLIENT]->m_pSQVM->sqvm != nullptr)
+		g_pSquirrel[ScriptContext_CLIENT]->ProcessMessageBuffer();
 
-	if (g_pSquirrel<ScriptContext::SERVER>->m_pSQVM != nullptr && g_pSquirrel<ScriptContext::SERVER>->m_pSQVM->sqvm != nullptr)
-		g_pSquirrel<ScriptContext::SERVER>->ProcessMessageBuffer();
+	if (g_pSquirrel[ScriptContext_SERVER]->m_pSQVM != nullptr && g_pSquirrel[ScriptContext_SERVER]->m_pSQVM->sqvm != nullptr)
+		g_pSquirrel[ScriptContext_SERVER]->ProcessMessageBuffer();
 
 	g_pPluginManager->RunFrame();
 }
