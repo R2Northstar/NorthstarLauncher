@@ -8,10 +8,9 @@ struct SQVM;
 enum ScriptContext : int
 {
 	ScriptContext_INVALID = -1,
-	ScriptContext_SERVER = 0,
-	ScriptContext_CLIENT = 1,
-	ScriptContext_UI = 2,
-	ScriptContext_COUNT = 3,
+	ScriptContext_SERVER = 1 << 0,
+	ScriptContext_CLIENT = 1 << 1,
+	ScriptContext_UI = 1 << 2,
 };
 
 struct alignas(8) SQVM
