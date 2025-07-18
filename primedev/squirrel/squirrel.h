@@ -28,26 +28,6 @@ typedef unsigned long SQUnsignedInteger;
 typedef char SQChar;
 typedef SQUnsignedInteger SQBool;
 
-static constexpr int operator&(ScriptContext first, ScriptContext second)
-{
-	return first == second;
-}
-
-static constexpr int operator&(int first, ScriptContext second)
-{
-	return first & (1 << static_cast<int>(second));
-}
-
-static constexpr int operator|(ScriptContext first, ScriptContext second)
-{
-	return (1 << static_cast<int>(first)) + (1 << static_cast<int>(second));
-}
-
-static constexpr int operator|(int first, ScriptContext second)
-{
-	return first + (1 << static_cast<int>(second));
-}
-
 const char* GetContextName(ScriptContext context);
 const char* GetContextName_Short(ScriptContext context);
 eSQReturnType SQReturnTypeFromString(const char* pReturnType);
