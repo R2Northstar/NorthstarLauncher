@@ -250,7 +250,7 @@ public:
 		// This is useful for things like threads and plugins, which do not run on the main thread
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
-			spdlog::error("AsyncCall {} was called on context {} while VM was not initialized.", funcname, GetContextName(context));
+			spdlog::error("AsyncCall {} was called on context {} while VM was not initialized.", funcname, GetContextName(m_context));
 			return SquirrelMessage();
 		}
 		FunctionVector functionVector;
@@ -266,7 +266,7 @@ public:
 		// This is useful for things like threads and plugins, which do not run on the main thread
 		if (!m_pSQVM || !m_pSQVM->sqvm)
 		{
-			spdlog::error("AsyncCall {} was called on context {} while VM was not initialized.", funcname, GetContextName(context));
+			spdlog::error("AsyncCall {} was called on context {} while VM was not initialized.", funcname, GetContextName(m_context));
 			return SquirrelMessage();
 		}
 		FunctionVector functionVector = {};
