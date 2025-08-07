@@ -37,11 +37,11 @@ ModManager::ModManager()
 
 template <ScriptContext context> void ModConCommandCallback_Internal(std::string name, const CCommand& command)
 {
-	if (g_pSquirrel<context>->m_pSQVM && g_pSquirrel<context>->m_pSQVM)
+	if (g_pSquirrel[context]->m_pSQVM && g_pSquirrel[context]->m_pSQVM)
 	{
 		if (command.ArgC() == 1)
 		{
-			g_pSquirrel<context>->AsyncCall(name);
+			g_pSquirrel[context]->AsyncCall(name);
 		}
 		else
 		{
@@ -49,7 +49,7 @@ template <ScriptContext context> void ModConCommandCallback_Internal(std::string
 			args.reserve(command.ArgC());
 			for (int i = 1; i < command.ArgC(); i++)
 				args.push_back(command.Arg(i));
-			g_pSquirrel<context>->AsyncCall(name, args);
+			g_pSquirrel[context]->AsyncCall(name, args);
 		}
 	}
 	else
@@ -91,14 +91,14 @@ static void ModConCommandCallback(const CCommand& command)
 
 	switch (found->Context)
 	{
-	case ScriptContext::CLIENT:
-		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
+	case ScriptContext_CLIENT:
+		ModConCommandCallback_Internal<ScriptContext_CLIENT>(found->Function, command);
 		break;
-	case ScriptContext::SERVER:
-		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
+	case ScriptContext_SERVER:
+		ModConCommandCallback_Internal<ScriptContext_SERVER>(found->Function, command);
 		break;
-	case ScriptContext::UI:
-		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
+	case ScriptContext_UI:
+		ModConCommandCallback_Internal<ScriptContext_UI>(found->Function, command);
 		break;
 	default:
 		spdlog::error("ModConCommandCallback on invalid Context {}", found->Context);
