@@ -196,7 +196,7 @@ void Mod::ParseConCommands(rapidjson_document& json)
 		concommand->Name = concommandObj["Name"].GetString();
 		concommand->Function = concommandObj["Function"].GetString();
 		concommand->Context = ScriptContextFromString(concommandObj["Context"].GetString());
-		if (concommand->Context == ScriptContext::INVALID)
+		if (concommand->Context == ScriptContext_INVALID)
 		{
 			spdlog::warn("ConCommand '{}' has invalid context '{}', skipping...", concommand->Name, concommandObj["Context"].GetString());
 			continue;
@@ -272,7 +272,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 			if (scriptObj["ServerCallback"].IsObject())
 			{
 				ModScriptCallback callback;
-				callback.Context = ScriptContext::SERVER;
+				callback.Context = ScriptContext_SERVER;
 
 				if (scriptObj["ServerCallback"].HasMember("Before"))
 				{
@@ -312,7 +312,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 			if (scriptObj["ClientCallback"].IsObject())
 			{
 				ModScriptCallback callback;
-				callback.Context = ScriptContext::CLIENT;
+				callback.Context = ScriptContext_CLIENT;
 
 				if (scriptObj["ClientCallback"].HasMember("Before"))
 				{
@@ -352,7 +352,7 @@ void Mod::ParseScripts(rapidjson_document& json)
 			if (scriptObj["UICallback"].IsObject())
 			{
 				ModScriptCallback callback;
-				callback.Context = ScriptContext::UI;
+				callback.Context = ScriptContext_UI;
 
 				if (scriptObj["UICallback"].HasMember("Before"))
 				{
