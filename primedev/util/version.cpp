@@ -15,7 +15,14 @@ void InitialiseVersion()
 	// On github CI, we set this to a 0 automatically as we replace the 0,0,0,1 with the real version number
 	if (northstar_version[3])
 	{
-		sprintf_s(version, sizeof(version), "%d.%d.%d.%d+dev", northstar_version[0], northstar_version[1], northstar_version[2], northstar_version[3]);
+		sprintf_s(
+			version,
+			sizeof(version),
+			"%d.%d.%d.%d+dev",
+			northstar_version[0],
+			northstar_version[1],
+			northstar_version[2],
+			northstar_version[3]);
 		ua_len += snprintf(
 			NSUserAgent + ua_len,
 			sizeof(NSUserAgent) - ua_len,
