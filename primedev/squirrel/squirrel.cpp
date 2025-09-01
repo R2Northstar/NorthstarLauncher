@@ -577,7 +577,7 @@ template <ScriptContext context> void StubUnsafeSQFuncs()
 		g_pSquirrel<context>->AddFuncOverride("DevTextBufferWrite", SQ_StubbedFunc<context>);
 		g_pSquirrel<context>->AddFuncOverride("DevTextBufferClear", SQ_StubbedFunc<context>);
 		g_pSquirrel<context>->AddFuncOverride("DevTextBufferDumpToFile", SQ_StubbedFunc<context>);
-		g_pSquirrel<context>->AddFuncOverride("Dev_CommandLineAddParam", SQ_StubbedFunc<context>);
+		g_pSquirrel<context>->AddFuncOverride("Dev_CommandLineAddParm", SQ_StubbedFunc<context>);
 		g_pSquirrel<context>->AddFuncOverride("DevP4Checkout", SQ_StubbedFunc<context>);
 		g_pSquirrel<context>->AddFuncOverride("DevP4Add", SQ_StubbedFunc<context>);
 	}
