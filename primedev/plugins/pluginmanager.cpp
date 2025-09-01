@@ -1,6 +1,7 @@
 #include "pluginmanager.h"
 
 #include <regex>
+#include <ranges>
 #include "plugins.h"
 #include "config/profile.h"
 #include "core/convar/concommand.h"
@@ -14,15 +15,15 @@ const std::vector<Plugin>& PluginManager::GetLoadedPlugins() const
 	return this->plugins;
 }
 
-const std::optional<Plugin> PluginManager::GetPlugin(HMODULE handle) const
+const std::optional<const Plugin*> PluginManager::GetPlugin(HMODULE handle) const
 {
 	for (const Plugin& plugin : GetLoadedPlugins())
 		if (plugin.m_handle == handle)
-			return plugin;
+			return &plugin;
 	return std::nullopt;
 }
 
-void PluginManager::LoadPlugin(fs::path path, bool reloaded)
+std::optional<HMODULE> PluginManager::LoadPlugin(fs::path path, bool reloaded)
 {
 	Plugin plugin = Plugin(path.string());
 
@@ -30,11 +31,13 @@ void PluginManager::LoadPlugin(fs::path path, bool reloaded)
 	{
 		NS::log::PLUGINSYS->warn("Unloading invalid plugin '{}'", path.string());
 		plugin.Unload();
-		return;
+		return std::nullopt;
 	}
 
 	plugins.push_back(plugin);
 	plugin.Init(reloaded);
+
+	return plugins.back().m_handle;
 }
 
 inline void FindPlugins(fs::path pluginPath, std::vector<fs::path>& paths)
@@ -111,13 +114,27 @@ bool PluginManager::LoadPlugins(bool reloaded)
 
 void PluginManager::ReloadPlugins()
 {
-	for (const Plugin& plugin : this->GetLoadedPlugins())
+	NS::log::PLUGINSYS->info("Reloading plugins");
+
+	std::vector<HMODULE> reloadedHandles;
+	for (const Plugin& plugin : this->plugins | std::views::reverse)
 	{
-		plugin.Unload();
+		std::optional<HMODULE> reloadedHandle = plugin.Reload();
+		if (reloadedHandle.has_value())
+		{
+			std::optional<const Plugin*> maybe = g_pPluginManager->GetPlugin(reloadedHandle.value());
+			const Plugin* reloadedPlugin = maybe.value();
+			reloadedHandles.push_back(reloadedPlugin->m_handle);
+
+			NS::log::PLUGINSYS->info("Reloaded {}", reloadedPlugin->GetName());
+		}
 	}
 
-	this->plugins.clear();
-	this->LoadPlugins(true);
+	// inform all reloaded plugins
+	for (HMODULE handle : reloadedHandles)
+	{
+		g_pPluginManager->GetPlugin(handle).value()->Finalize();
+	}
 }
 
 void PluginManager::RemovePlugin(HMODULE handle)

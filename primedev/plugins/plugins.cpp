@@ -138,9 +138,9 @@ bool Plugin::Unload() const
 
 	if (IsValid())
 	{
-		bool unloaded = m_callbacks->Unload();
+		bool shouldUnload = m_callbacks->Unload();
 
-		if (!unloaded)
+		if (!shouldUnload)
 			return false;
 	}
 
@@ -154,14 +154,16 @@ bool Plugin::Unload() const
 	return true;
 }
 
-void Plugin::Reload() const
+std::optional<HMODULE> Plugin::Reload() const
 {
+	std::string location = m_location;
+
 	bool unloaded = Unload();
 
 	if (!unloaded)
-		return;
+		return std::nullopt;
 
-	g_pPluginManager->LoadPlugin(fs::path(m_location), true);
+	return g_pPluginManager->LoadPlugin(fs::path(location), true);
 }
 
 void Plugin::Log(spdlog::level::level_enum level, char* msg) const

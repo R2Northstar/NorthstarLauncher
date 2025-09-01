@@ -187,8 +187,6 @@ void FixupCvarFlags()
 	// array of cvars and the flags we want to add to them
 	const std::vector<std::tuple<const char*, uint32_t>> CVAR_FIXUP_ADD_FLAGS = {
 		// system commands (i.e. necessary for proper functionality)
-		// servers need to be able to disconnect
-		{"disconnect", FCVAR_SERVER_CAN_EXECUTE},
 
 		// cheat commands
 		{"give", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS},
@@ -222,6 +220,15 @@ void FixupCvarFlags()
 		// however they're defined on client, so can't make replicated atm sadly
 		{"cl_footstep_event_max_dist", FCVAR_CHEAT},
 		{"cl_footstep_event_max_dist_titan", FCVAR_CHEAT},
+
+		// fcvars that should be saved
+		{"cl_ragdoll_force_fade_time", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"cl_ragdoll_force_fade_time_local_view_player", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"cl_ragdoll_force_fade_time_on_moving_geo", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"cl_ragdoll_force_fade_time_titan", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"sound_volume_dialogue_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"sound_volume_music_game_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
+		{"sound_volume_sfx_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
 	};
 
 	// array of cvars and the flags we want to remove from them
@@ -301,6 +308,7 @@ void FixupCvarFlags()
 		// these 2 could be FCVAR_CHEAT, i guess?
 		{"cl_draw_player_model", FCVAR_DEVELOPMENTONLY},
 		{"cl_always_draw_3p_player", FCVAR_DEVELOPMENTONLY},
+		{"cl_gib_lifetime", FCVAR_CHEAT},
 		{"idcolor_neutral", FCVAR_DEVELOPMENTONLY},
 		{"idcolor_ally", FCVAR_DEVELOPMENTONLY},
 		{"idcolor_ally_cb1", FCVAR_DEVELOPMENTONLY},
