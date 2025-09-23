@@ -624,6 +624,10 @@ void ModManager::ExportModsConfigurationToFile()
 		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
+	// Exporting manifesto version
+	const char* versionMember = "Version";
+	m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), manifestoVersion, m_EnabledModsCfg.GetAllocator());
+
 	std::ofstream writeStream(cfgPath);
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
@@ -660,7 +664,6 @@ void ModManager::DiscoverMods()
 		// Check file format, and rename file if it is not using new format
 		bool isUsingUnknownFormat =
 			!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Version") || !m_EnabledModsCfg["Version"].IsInt();
-
 		isUsingOldFormat =
 			m_EnabledModsCfg.IsObject() &&
 			(!m_EnabledModsCfg.HasMember("Version") || (m_EnabledModsCfg["Version"].IsInt() && m_EnabledModsCfg["Version"].GetInt() == 0));
@@ -710,6 +713,10 @@ void ModManager::DiscoverMods()
 		// Force manifesto write to disk
 		newModsDetected = true;
 	}
+
+	// Load manifesto version into memory
+	manifestoVersion = m_EnabledModsCfg[versionMember].GetInt();
+	spdlog::info("Using manifesto version {} to set mods state.", manifestoVersion);
 
 	for (Mod& mod : m_LoadedMods)
 	{
