@@ -658,9 +658,11 @@ void ModManager::DiscoverMods()
 			enabledModsStringStream.str().c_str());
 
 		// Check file format, and rename file if it is not using new format
-		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Version") || !m_EnabledModsCfg["Version"].IsInt();
+		bool isUsingUnknownFormat =
+			!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Version") || !m_EnabledModsCfg["Version"].IsInt();
 		isUsingOldFormat =
-			m_EnabledModsCfg.IsObject() && (!m_EnabledModsCfg.HasMember("Version") || (m_EnabledModsCfg["Version"].IsInt() && m_EnabledModsCfg["Version"].GetInt() == 0));
+			m_EnabledModsCfg.IsObject() &&
+			(!m_EnabledModsCfg.HasMember("Version") || (m_EnabledModsCfg["Version"].IsInt() && m_EnabledModsCfg["Version"].GetInt() == 0));
 
 		if (isUsingUnknownFormat || isUsingOldFormat)
 		{
