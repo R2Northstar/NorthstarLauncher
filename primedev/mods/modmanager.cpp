@@ -660,6 +660,7 @@ void ModManager::DiscoverMods()
 		// Check file format, and rename file if it is not using new format
 		bool isUsingUnknownFormat =
 			!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Version") || !m_EnabledModsCfg["Version"].IsInt();
+
 		isUsingOldFormat =
 			m_EnabledModsCfg.IsObject() &&
 			(!m_EnabledModsCfg.HasMember("Version") || (m_EnabledModsCfg["Version"].IsInt() && m_EnabledModsCfg["Version"].GetInt() == 0));
@@ -668,12 +669,17 @@ void ModManager::DiscoverMods()
 		{
 			spdlog::info(
 				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
-			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
-			if (ret)
+
+			// Removing old manifesto if needed
+			std::filesystem::path oldManifestoPath = GetNorthstarPrefix() + "/enabledmods.old.json";
+			if (std::filesystem::exists(oldManifestoPath))
 			{
-				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
-				return;
+				spdlog::info("enabledmods.old.json already exists, removing.");
+				std::filesystem::remove(oldManifestoPath);
 			}
+
+			// Renaming manifesto
+			std::filesystem::rename(cfgPath.c_str(), oldManifestoPath.c_str());
 
 			// Copy old configuration to migrate manifesto to new format
 			if (isUsingOldFormat)
