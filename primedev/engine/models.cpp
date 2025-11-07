@@ -1,15 +1,19 @@
 static void (*Studio_ReloadModels)(__int64 a1, unsigned int a2) = nullptr;
 static uintptr_t model_loader;
+static uint8_t* g_VpkMode;
 
 void ConCommand_reload_models(const CCommand& args)
 {
-	CModule filesystem_dll = CModule("filesystem_stdio.dll");
-	char* g_VpkMode = filesystem_dll.Offset(0xe5aa9).RCast<char*>();
-	char back = *g_VpkMode;
+	uint8_t prevVpkMode = *g_VpkMode;
 	*g_VpkMode = 0; // need to set to zero to disable file cache temporarily
 	Studio_ReloadModels(model_loader, 2);
-	*g_VpkMode = back;
+	*g_VpkMode = prevVpkMode;
 };
+
+ON_DLL_LOAD_CLIENT("filesystem_stdio.dll", FileSystemModels, (CModule module))
+{
+	g_VpkMode = module.Offset(0xe5aa9).RCast<uint8_t*>();
+}
 
 ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineModels, ConCommand, (CModule module))
 {
