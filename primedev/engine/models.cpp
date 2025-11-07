@@ -16,5 +16,5 @@ ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineModels, ConCommand, (CModule mod
 	model_loader = module.Offset(0x7c4c20);
 	module.Offset(0xCF024).Patch({0xEB, 0x0E});
 	Studio_ReloadModels = module.Offset(0xCEEF0).RCast<decltype(Studio_ReloadModels)>();
-	RegisterConCommand("reload_models", ConCommand_reload_models, "Send friend request to uid", FCVAR_GAMEDLL);
+	RegisterConCommand("reload_models", ConCommand_reload_models, "reload all models", FCVAR_GAMEDLL);
 }
