@@ -185,7 +185,8 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-     "engine/models.cpp")
+    "engine/models.cpp"
+    )
 
 target_link_libraries(
     NorthstarDLL
