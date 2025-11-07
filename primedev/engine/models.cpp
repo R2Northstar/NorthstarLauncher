@@ -6,12 +6,13 @@ void ConCommand_reload_models(const CCommand& args)
 	CModule filesystem_dll = CModule("filesystem_stdio.dll");
 	char* g_VpkMode = filesystem_dll.Offset(0xe5aa9).RCast<char*>();
 	char back = *g_VpkMode;
-	*g_VpkMode = 0; // need to set to zero to disable file cache temporarily 
+	*g_VpkMode = 0; // need to set to zero to disable file cache temporarily
 	Studio_ReloadModels(model_loader, 2);
 	*g_VpkMode = back;
 };
 
-ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineModels, ConCommand, (CModule module)) {
+ON_DLL_LOAD_CLIENT_RELIESON("engine.dll", EngineModels, ConCommand, (CModule module))
+{
 	model_loader = module.Offset(0x7c4c20);
 	module.Offset(0xCF024).Patch({0xEB, 0x0E});
 	Studio_ReloadModels = module.Offset(0xCEEF0).RCast<decltype(Studio_ReloadModels)>();
