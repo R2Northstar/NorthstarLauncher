@@ -464,7 +464,7 @@ void ModManager::SearchFilesystemForMods()
 			fs::path modsDir = dir.path() / "mods"; // Check for mods folder in the Thunderstore mod
 
 			// Do not register ModWorkshop mods twice
-			if (std::find(modDirs.begin(), modDirs.end(), modsDir) != modDirs.end())
+			if (std::find(modDirs.begin(), modDirs.end(), dir.path()) != modDirs.end())
 			{
 				continue;
 			}
