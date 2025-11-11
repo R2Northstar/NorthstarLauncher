@@ -672,10 +672,19 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 				return;
 			}
 
-			// Mod directory name (removing the ".zip" fom the archive name)
-			name = archiveLocation.filename().string();
-			name = name.substr(0, name.length() - 4);
-			modDirectory = GetRemoteModFolderPath() / name;
+			// Mod directory name
+			/// Don't use archive name as destination with ModWorkshop
+			if (fullVersion.platform == VerifiedModPlatform::ModWorkshop)
+			{
+				modDirectory = GetRemoteModFolderPath();
+			}
+			else
+			/// Removes the ".zip" fom the archive name and use it as parent directory
+			{
+				name = archiveLocation.filename().string();
+				name = name.substr(0, name.length() - 4);
+				modDirectory = GetRemoteModFolderPath() / name;
+			}
 
 			// Extract downloaded mod archive
 			ExtractMod(archiveLocation, modDirectory, fullVersion.platform);
