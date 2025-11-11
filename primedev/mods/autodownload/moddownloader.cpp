@@ -450,10 +450,10 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 	modState.total = GetModArchiveSize(file, gi);
 	modState.progress = 0;
 
-	// Right now, we only know how to extract Thunderstore mods
-	if (platform != VerifiedModPlatform::Thunderstore)
+	// We don't know how to extract mods from unknown platforms
+	if (platform == VerifiedModPlatform::Unknown)
 	{
-		spdlog::error("Failed extracting mod from unknown platform (value: {}).", platform);
+		spdlog::error("Failed extracting mod from unknown platform.");
 		modState.state = UNKNOWN_PLATFORM;
 		return;
 	}
