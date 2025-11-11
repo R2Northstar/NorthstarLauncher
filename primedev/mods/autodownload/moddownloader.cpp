@@ -175,13 +175,28 @@ int ModDownloader::ModFetchingProgressCallback(
 	return 0;
 }
 
+std::string ModDownloader::GetModArchiveName(std::string url)
+{
+	std::string name = fs::path(url).filename().generic_string();
+	std::string::size_type charIndex = name.find("?");
+
+	// Thunderstore format
+	if (std::string::npos == charIndex)
+	{
+		return name;
+	}
+
+	// ModWorkshop format (removing the "?filename=" part)
+	return name.substr(charIndex + 10);
+}
+
 std::tuple<fs::path, bool> ModDownloader::FetchModFromDistantStore(std::string_view modName, VerifiedModVersion version)
 {
 	std::string url = version.downloadLink;
-	std::string archiveName = fs::path(url).filename().generic_string();
-	spdlog::info(std::format("Fetching mod archive from {}", url));
 
 	// Download destination
+	spdlog::info(std::format("Fetching mod archive from {}", url));
+	std::string archiveName = ModDownloader::GetModArchiveName(url);
 	std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
 	spdlog::info(std::format("Downloading archive to {}", downloadPath.generic_string()));
 
