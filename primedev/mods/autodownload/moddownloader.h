@@ -14,11 +14,14 @@ private:
 		ModWorkshop,
 		Thunderstore
 	};
-	VerifiedModPlatform resolvePlatform(std::string input) {
-		if (input.compare("thunderstore") == 0) {
+	VerifiedModPlatform resolvePlatform(std::string input)
+	{
+		if (input.compare("thunderstore") == 0)
+		{
 			return VerifiedModPlatform::Thunderstore;
 		}
-		if (input.compare("modworkshop") == 0) {
+		if (input.compare("modworkshop") == 0)
+		{
 			return VerifiedModPlatform::ModWorkshop;
 		}
 		return VerifiedModPlatform::Unknown;
