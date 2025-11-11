@@ -96,7 +96,8 @@ private:
 	 *
 	 * Thunderstore and ModWorkshop do not format their URLs the same way:
 	 *     - Thunderstore: https://gcdn.thunderstore.io/live/repository/packages/Nyami11-mp_brick-1.0.2.zip
-	 *     - ModWorkshop:  https://storage.modworkshop.net/mods/files/46563_156759_CSio1Cd3QVXYRZLd1h6iNu0IPuuaY9ePKGceQD31.zip?filename=em4v.zip
+	 *     - ModWorkshop:
+	 * https://storage.modworkshop.net/mods/files/46563_156759_CSio1Cd3QVXYRZLd1h6iNu0IPuuaY9ePKGceQD31.zip?filename=em4v.zip
 	 *
 	 * This takes those differences into account and returns an archive name for
 	 * both types of URLs.
