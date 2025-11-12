@@ -457,6 +457,9 @@ void ModManager::SearchFilesystemForMods()
 	// Set up regex for `AUTHOR-MOD-VERSION` pattern
 	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
 
+	// Reset directory iterator
+	remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
+
 	for (fs::directory_iterator dirIterator : {thunderstoreModsDir, remoteModsDir})
 	{
 		for (fs::directory_entry dir : dirIterator)
