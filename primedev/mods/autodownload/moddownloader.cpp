@@ -597,6 +597,9 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 		return;
 	}
 
+	// Tell VM we're ready to download mod
+	modState.state = DOWNLOADING;
+
 	std::thread requestThread(
 		[this, modName, modVersion]()
 		{
