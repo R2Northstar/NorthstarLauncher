@@ -84,7 +84,7 @@ void ModDownloader::FetchModsListFromAPI()
 				[&]
 				{
 					curl_easy_cleanup(easyhandle);
-					modState.state = DOWNLOADING;
+					modState.state = DONE;
 				});
 
 			if (result == CURLcode::CURLE_OK)
