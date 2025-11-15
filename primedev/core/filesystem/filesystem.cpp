@@ -56,7 +56,7 @@ static void __fastcall h_AddSearchPath(IFileSystem* fileSystem, const char* pPat
 	}
 }
 
-void SetNewModSearchPaths(Mod* mod)
+void SetNewModSearchPaths(Mod* mod, const char* pPathID)
 {
 	// put our new path to the head if we need to read from a different mod path
 	// in the future we could also determine whether the file we're setting paths for needs a mod dir, or compiled assets
@@ -65,16 +65,18 @@ void SetNewModSearchPaths(Mod* mod)
 		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 		{
 			o_pAddSearchPath(
-				g_pFilesystem, (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+				g_pFilesystem, (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), pPathID, PATH_ADD_TO_HEAD);
 			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
 		}
 	}
 	else // push compiled to head
-		o_pAddSearchPath(g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+		o_pAddSearchPath(g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), pPathID, PATH_ADD_TO_HEAD);
 }
 
-bool TryReplaceFile(const char* pPath, bool shouldCompile)
+bool TryReplaceFile(const char* pPath, bool shouldCompile, const char* pPathID = nullptr)
 {
+	//if (pPathID)
+	//	spdlog::error("{}, {}", pPath, pPathID);
 	if (bReadingOriginalFile)
 		return false;
 
@@ -86,7 +88,7 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 	auto file = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
 	if (file != g_pModManager->m_ModFiles.end())
 	{
-		SetNewModSearchPaths(file->second.m_pOwningMod);
+		SetNewModSearchPaths(file->second.m_pOwningMod, pPathID);
 		return true;
 	}
 
@@ -122,7 +124,7 @@ static FileHandle_t(__fastcall* o_pCBaseFileSystem__OpenEx)(
 static FileHandle_t __fastcall h_CBaseFileSystem__OpenEx(
 	IFileSystem* filesystem, const char* pPath, const char* pOptions, uint32_t flags, const char* pPathID, char** ppszResolvedFilename)
 {
-	TryReplaceFile(pPath, true);
+	TryReplaceFile(pPath, true, pPathID);
 	return o_pCBaseFileSystem__OpenEx(filesystem, pPath, pOptions, flags, pPathID, ppszResolvedFilename);
 }
 
