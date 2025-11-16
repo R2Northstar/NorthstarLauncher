@@ -75,10 +75,10 @@ void SetNewModSearchPaths(Mod* mod, const char* pPathID)
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile, const char* pPathID = nullptr)
 {
-	//if (pPathID)
-	//	spdlog::error("{}, {}", pPath, pPathID);
 	if (bReadingOriginalFile)
 		return false;
+
+	const char* pathID = pPathID ? pPathID : "GAME";
 
 	if (shouldCompile)
 		g_pModManager->CompileAssetsForFile(pPath);
@@ -88,7 +88,7 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile, const char* pPathID =
 	auto file = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
 	if (file != g_pModManager->m_ModFiles.end())
 	{
-		SetNewModSearchPaths(file->second.m_pOwningMod, pPathID);
+		SetNewModSearchPaths(file->second.m_pOwningMod, pathID);
 		return true;
 	}
 
