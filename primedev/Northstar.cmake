@@ -185,7 +185,7 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-    )
+     "mods/compiled/particles_manifest.cpp")
 
 target_link_libraries(
     NorthstarDLL

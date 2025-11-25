@@ -1,0 +1,76 @@
+#include "mods/modmanager.h"
+#include "core/filesystem/filesystem.h"
+#include "shared/keyvalues.h"
+
+#include <fstream>
+
+const char* PARTICLES_MANIFEST_PATH = "particles\\particles_manifest.txt";
+
+// super basic parsing
+void ParseParticlesFile(std::stringstream& stream, std::vector<std::string>& entries)
+{
+	std::string fileStr = stream.str();
+
+	static std::regex regex(R"(^(?:#base.+\n)*\s*particles_manifest\s+\{\s*?\n\s*([^\x00]*)\}\s*$)");
+
+	std::smatch matches;
+	if (std::regex_search(fileStr, matches, regex))
+	{
+		if (matches.size() < 2)
+			return;
+		entries.push_back(matches[1]);
+	}
+}
+
+// compiles the particles_manifest file
+void ModManager::BuildParticlesManifest()
+{
+	spdlog::info("Building particles_manifest.txt");
+
+	fs::create_directories(GetCompiledAssetsPath() / "particles");
+
+	// gather particle entries from vanilla and mod particles_manifest.txt
+	std::vector<std::string> entries = {};
+
+	std::string originalFile = ReadVPKOriginalFile(PARTICLES_MANIFEST_PATH);
+	std::stringstream originalStream(originalFile);
+	ParseParticlesFile(originalStream, entries);
+
+	for (auto& mod : m_LoadedMods)
+	{
+		if (!mod.m_bEnabled)
+			continue;
+
+		std::string path = g_pModManager->NormaliseModFilePath(mod.m_ModDirectory / MOD_OVERRIDE_DIR / PARTICLES_MANIFEST_PATH);
+		if (!fs::is_regular_file(path))
+			continue;
+
+		std::ifstream t(path);
+		std::stringstream fileStream;
+		fileStream << t.rdbuf();
+		t.close();
+
+		entries.push_back(std::format("// [{}]\n", mod.Name));
+		ParseParticlesFile(fileStream, entries);
+	}
+
+	// write the output file
+	fs::create_directories(GetCompiledAssetsPath() / "particles");
+	std::ofstream soCompiledParticles(GetCompiledAssetsPath() / PARTICLES_MANIFEST_PATH, std::ios::binary);
+
+	soCompiledParticles << "particles_manifest\n{\n";
+	for (auto& entry : entries)
+	{
+		soCompiledParticles << '\t' << entry << '\n';
+	}
+	soCompiledParticles << "}\n";
+
+	soCompiledParticles.close();
+
+	// push to overrides
+	ModOverrideFile overrideFile;
+	overrideFile.m_pOwningMod = nullptr;
+	overrideFile.m_Path = PARTICLES_MANIFEST_PATH;
+
+	m_ModFiles.insert_or_assign(PARTICLES_MANIFEST_PATH, overrideFile);
+}
