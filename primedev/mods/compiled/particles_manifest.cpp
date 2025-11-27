@@ -6,11 +6,16 @@
 
 const char* PARTICLES_MANIFEST_PATH = "particles\\particles_manifest.txt";
 
-// super basic parsing
 void ParseParticlesFile(std::stringstream& stream, std::vector<std::string>& entries)
 {
 	std::string fileStr = stream.str();
 
+	// looks for:
+	// any amount of #base commands
+	// "particles_manifest"
+	// {
+	// <some stuff that gets captured
+	// }
 	static std::regex regex(R"(^(?:#base.+\n)*\s*particles_manifest\s+\{\s*?\n\s*([^\x00]*)\}\s*$)");
 
 	std::smatch matches;
