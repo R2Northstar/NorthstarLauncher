@@ -6,10 +6,8 @@
 
 const char* PARTICLES_MANIFEST_PATH = "particles\\particles_manifest.txt";
 
-void ParseParticlesFile(std::stringstream& stream, std::vector<std::string>& entries)
+void ParseParticlesFile(std::string& fileStr, std::vector<std::string>& entries)
 {
-	std::string fileStr = stream.str();
-
 	// looks for:
 	// any amount of #base commands
 	// "particles_manifest"
@@ -38,14 +36,14 @@ void ModManager::BuildParticlesManifest()
 	std::vector<std::string> entries = {};
 
 	std::string originalFile = ReadVPKOriginalFile(PARTICLES_MANIFEST_PATH);
-	std::stringstream originalStream(originalFile);
-	ParseParticlesFile(originalStream, entries);
+	ParseParticlesFile(originalFile, entries);
 
 	for (auto& mod : m_LoadedMods)
 	{
 		if (!mod.m_bEnabled)
 			continue;
 
+		// check to see if mod wants to edit the file?
 		std::string path = g_pModManager->NormaliseModFilePath(mod.m_ModDirectory / MOD_OVERRIDE_DIR / PARTICLES_MANIFEST_PATH);
 		if (!fs::is_regular_file(path))
 			continue;
@@ -53,10 +51,11 @@ void ModManager::BuildParticlesManifest()
 		std::ifstream t(path);
 		std::stringstream fileStream;
 		fileStream << t.rdbuf();
+		std::string modFile = fileStream.str();
 		t.close();
 
 		entries.push_back(std::format("// [{}]\n", mod.Name));
-		ParseParticlesFile(fileStream, entries);
+		ParseParticlesFile(modFile, entries);
 	}
 
 	// write the output file
