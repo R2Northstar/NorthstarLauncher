@@ -56,21 +56,24 @@ static void __fastcall h_AddSearchPath(IFileSystem* fileSystem, const char* pPat
 	}
 }
 
+void SetNewCompiledSearchPaths()
+{
+	// push compiled to head
+	o_pAddSearchPath(g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+}
+
 void SetNewModSearchPaths(Mod* mod)
 {
 	// put our new path to the head if we need to read from a different mod path
 	// in the future we could also determine whether the file we're setting paths for needs a mod dir, or compiled assets
-	if (mod != nullptr)
+	if (mod == nullptr)
+		return;
+	if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
 	{
-		if ((fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().compare(sCurrentModPath))
-		{
-			o_pAddSearchPath(
-				g_pFilesystem, (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
-			sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
-		}
+		o_pAddSearchPath(
+			g_pFilesystem, (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+		sCurrentModPath = (fs::absolute(mod->m_ModDirectory) / MOD_OVERRIDE_DIR).string();
 	}
-	else // push compiled to head
-		o_pAddSearchPath(g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
 }
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile)
@@ -83,7 +86,15 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 
 	// idk how efficient the lexically normal check is
 	// can't just set all /s in path to \, since some paths aren't in writeable memory
-	auto file = g_pModManager->m_ModFiles.find(g_pModManager->NormaliseModFilePath(fs::path(pPath)));
+	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(pPath));
+
+	if (g_pModManager->m_CompiledFiles.contains(normalisedPath))
+	{
+		SetNewCompiledSearchPaths();
+		return true;
+	}
+
+	auto file = g_pModManager->m_ModFiles.find(normalisedPath);
 	if (file != g_pModManager->m_ModFiles.end())
 	{
 		SetNewModSearchPaths(file->second.m_pOwningMod);

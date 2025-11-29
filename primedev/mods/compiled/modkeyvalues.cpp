@@ -93,12 +93,5 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	writeStream << newKvs;
 	writeStream.close();
 
-	ModOverrideFile overrideFile;
-	overrideFile.m_pOwningMod = nullptr;
-	overrideFile.m_Path = normalisedPath;
-
-	if (m_ModFiles.find(normalisedPath) == m_ModFiles.end())
-		m_ModFiles.insert(std::make_pair(normalisedPath, overrideFile));
-	else
-		m_ModFiles[normalisedPath] = overrideFile;
+	m_CompiledFiles.insert(normalisedPath);
 }

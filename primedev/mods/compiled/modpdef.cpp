@@ -107,12 +107,5 @@ void ModManager::BuildPdef()
 	writeStream << pdef;
 	writeStream.close();
 
-	ModOverrideFile overrideFile;
-	overrideFile.m_pOwningMod = nullptr;
-	overrideFile.m_Path = VPK_PDEF_PATH;
-
-	if (m_ModFiles.find(VPK_PDEF_PATH) == m_ModFiles.end())
-		m_ModFiles.insert(std::make_pair(VPK_PDEF_PATH, overrideFile));
-	else
-		m_ModFiles[VPK_PDEF_PATH] = overrideFile;
+	m_CompiledFiles.insert(VPK_PDEF_PATH);
 }
