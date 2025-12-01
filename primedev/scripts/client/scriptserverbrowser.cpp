@@ -6,32 +6,32 @@
 
 // functions for viewing server browser
 
-ADD_SQFUNC("void", NSRequestServerList, "", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSRequestServerList, "", "", ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pMasterServerManager->RequestServerList();
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsRequestingServerList, "", "", ScriptContext_UI)
+ADD_SQFUNC("bool", NSIsRequestingServerList, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bScriptRequestingServerList);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSMasterServerConnectionSuccessful, "", "", ScriptContext_UI)
+ADD_SQFUNC("bool", NSMasterServerConnectionSuccessful, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyConnected);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("int", NSGetServerCount, "", "", ScriptContext_UI)
+ADD_SQFUNC("int", NSGetServerCount, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushinteger(sqvm, (SQInteger)g_pMasterServerManager->m_vRemoteServers.size());
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pMasterServerManager->ClearServerList();
@@ -40,7 +40,7 @@ ADD_SQFUNC("void", NSClearRecievedServerList, "", "", ScriptContext_UI)
 
 // functions for authenticating with servers
 
-ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''", "", ScriptContext::UI)
 {
 	SQInteger serverIndex = g_pSquirrel[context]->getinteger(sqvm, 1);
 	const SQChar* password = g_pSquirrel[context]->getstring(sqvm, 2);
@@ -72,19 +72,19 @@ ADD_SQFUNC("void", NSTryAuthWithServer, "int serverIndex, string password = ''",
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsAuthenticatingWithServer, "", "", ScriptContext_UI)
+ADD_SQFUNC("bool", NSIsAuthenticatingWithServer, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bScriptAuthenticatingWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSWasAuthSuccessful, "", "", ScriptContext_UI)
+ADD_SQFUNC("bool", NSWasAuthSuccessful, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bSuccessfullyAuthenticatedWithGameServer);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext::UI)
 {
 	if (!g_pMasterServerManager->m_bHasPendingConnectionInfo)
 	{
@@ -114,7 +114,7 @@ ADD_SQFUNC("void", NSConnectToAuthedServer, "", "", ScriptContext_UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	// do auth request
@@ -123,7 +123,7 @@ ADD_SQFUNC("void", NSTryAuthWithLocalServer, "", "", ScriptContext_UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	// literally just set serverfilter
@@ -134,13 +134,13 @@ ADD_SQFUNC("void", NSCompleteAuthWithLocalServer, "", "", ScriptContext_UI)
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("string", NSGetAuthFailReason, "", "", ScriptContext_UI)
+ADD_SQFUNC("string", NSGetAuthFailReason, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushstring(sqvm, g_pMasterServerManager->m_sAuthFailureReason.c_str(), -1);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext_UI)
+ADD_SQFUNC("array<ServerInfo>", NSGetGameServers, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->newarray(sqvm, 0);
 	for (size_t i = 0; i < g_pMasterServerManager->m_vRemoteServers.size(); i++)

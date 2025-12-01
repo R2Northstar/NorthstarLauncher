@@ -707,13 +707,13 @@ ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module)
 	g_pModDownloader = new ModDownloader();
 }
 
-ADD_SQFUNC("void", NSFetchVerifiedModsManifesto, "", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("void", NSFetchVerifiedModsManifesto, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pModDownloader->FetchModsListFromAPI();
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsModDownloadable, "string name, string version", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("bool", NSIsModDownloadable, "string name, string version", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel[context]->newarray(sqvm, 0);
 
@@ -726,7 +726,7 @@ ADD_SQFUNC("bool", NSIsModDownloadable, "string name, string version", "", Scrip
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSDownloadMod, "string name, string version", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("void", NSDownloadMod, "string name, string version", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel[context]->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel[context]->getstring(sqvm, 2);
@@ -735,7 +735,7 @@ ADD_SQFUNC("void", NSDownloadMod, "string name, string version", "", ScriptConte
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("ModInstallState", NSGetModInstallState, "", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("ModInstallState", NSGetModInstallState, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushnewstructinstance(sqvm, 4);
 
@@ -758,7 +758,7 @@ ADD_SQFUNC("ModInstallState", NSGetModInstallState, "", "", ScriptContext_SERVER
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("void", NSCancelModDownload, "", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("void", NSCancelModDownload, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pModDownloader->CancelDownload();
 	return SQRESULT_NULL;

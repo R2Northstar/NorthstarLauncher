@@ -91,14 +91,14 @@ static void ModConCommandCallback(const CCommand& command)
 
 	switch (found->Context)
 	{
-	case ScriptContext_CLIENT:
-		ModConCommandCallback_Internal<ScriptContext_CLIENT>(found->Function, command);
+	case ScriptContext::CLIENT:
+		ModConCommandCallback_Internal<ScriptContext::CLIENT>(found->Function, command);
 		break;
-	case ScriptContext_SERVER:
-		ModConCommandCallback_Internal<ScriptContext_SERVER>(found->Function, command);
+	case ScriptContext::SERVER:
+		ModConCommandCallback_Internal<ScriptContext::SERVER>(found->Function, command);
 		break;
-	case ScriptContext_UI:
-		ModConCommandCallback_Internal<ScriptContext_UI>(found->Function, command);
+	case ScriptContext::UI:
+		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
 		break;
 	default:
 		spdlog::error("ModConCommandCallback on invalid Context {}", found->Context);

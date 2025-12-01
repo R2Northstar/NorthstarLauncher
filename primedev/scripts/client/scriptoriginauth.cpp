@@ -3,7 +3,7 @@
 #include "engine/r2engine.h"
 #include "client/r2client.h"
 
-ADD_SQFUNC("bool", NSIsMasterServerAuthenticated, "", "", ScriptContext_UI)
+ADD_SQFUNC("bool", NSIsMasterServerAuthenticated, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bOriginAuthWithMasterServerDone);
 	return SQRESULT_NOTNULL;
@@ -18,7 +18,7 @@ global struct MasterServerAuthResult
 }
 */
 
-ADD_SQFUNC("MasterServerAuthResult", NSGetMasterServerAuthResult, "", "", ScriptContext_UI)
+ADD_SQFUNC("MasterServerAuthResult", NSGetMasterServerAuthResult, "", "", ScriptContext::UI)
 {
 	g_pSquirrel[context]->pushnewstructinstance(sqvm, 3);
 

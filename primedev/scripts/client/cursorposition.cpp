@@ -1,7 +1,7 @@
 #include "squirrel/squirrel.h"
 #include "util/wininfo.h"
 
-ADD_SQFUNC("vector ornull", NSGetCursorPosition, "", "", ScriptContext_UI)
+ADD_SQFUNC("vector ornull", NSGetCursorPosition, "", "", ScriptContext::UI)
 {
 	RECT rcClient;
 	POINT p;

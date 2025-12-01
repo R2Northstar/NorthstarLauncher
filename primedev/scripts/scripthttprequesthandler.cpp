@@ -571,13 +571,13 @@ template <ScriptContext context> void HttpRequestHandler::RegisterSQFuncs()
 
 ON_DLL_LOAD_RELIESON("client.dll", HttpRequestHandler_ClientInit, ClientSquirrel, (CModule module))
 {
-	g_httpRequestHandler->RegisterSQFuncs<ScriptContext_CLIENT>();
-	g_httpRequestHandler->RegisterSQFuncs<ScriptContext_UI>();
+	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::CLIENT>();
+	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::UI>();
 }
 
 ON_DLL_LOAD_RELIESON("server.dll", HttpRequestHandler_ServerInit, ServerSquirrel, (CModule module))
 {
-	g_httpRequestHandler->RegisterSQFuncs<ScriptContext_SERVER>();
+	g_httpRequestHandler->RegisterSQFuncs<ScriptContext::SERVER>();
 }
 
 ON_DLL_LOAD("engine.dll", HttpRequestHandler_Init, (CModule module))

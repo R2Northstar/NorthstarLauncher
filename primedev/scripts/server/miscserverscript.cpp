@@ -7,7 +7,7 @@
 
 #include <filesystem>
 
-ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", ScriptContext_SERVER)
+ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", ScriptContext::SERVER)
 {
 	const CBasePlayer* pPlayer = g_pSquirrel[context]->template getentity<CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
@@ -30,15 +30,15 @@ ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", S
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("bool", NSIsWritingPlayerPersistence, "", "", ScriptContext_SERVER)
+ADD_SQFUNC("bool", NSIsWritingPlayerPersistence, "", "", ScriptContext::SERVER)
 {
 	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext_SERVER)
+ADD_SQFUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext::SERVER)
 {
-	const CBasePlayer* pPlayer = g_pSquirrel[ScriptContext_SERVER]->template getentity<CBasePlayer>(sqvm, 1);
+	const CBasePlayer* pPlayer = g_pSquirrel[ScriptContext::SERVER]->template getentity<CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		spdlog::warn("NSIsPlayerLocalPlayer got null player");
@@ -52,7 +52,7 @@ ADD_SQFUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext_SER
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("bool", NSIsDedicated, "", "", ScriptContext_SERVER)
+ADD_SQFUNC("bool", NSIsDedicated, "", "", ScriptContext::SERVER)
 {
 	g_pSquirrel[context]->pushbool(sqvm, IsDedicatedServer());
 	return SQRESULT_NOTNULL;
@@ -63,7 +63,7 @@ ADD_SQFUNC(
 	NSDisconnectPlayer,
 	"entity player, string reason",
 	"Disconnects the player from the server with the given reason",
-	ScriptContext_SERVER)
+	ScriptContext::SERVER)
 {
 	const CBasePlayer* pPlayer = g_pSquirrel[context]->template getentity<CBasePlayer>(sqvm, 1);
 	const char* reason = g_pSquirrel[context]->getstring(sqvm, 2);

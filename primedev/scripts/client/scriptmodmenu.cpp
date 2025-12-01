@@ -50,7 +50,7 @@ template <ScriptContext context> void ModToSquirrel(HSQUIRRELVM sqvm, Mod& mod)
 	g_pSquirrel[context]->arrayappend(sqvm, -2);
 }
 
-ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel[context]->newarray(sqvm, 0);
 
@@ -62,7 +62,7 @@ ADD_SQFUNC("array<ModInfo>", NSGetModsInformation, "", "", ScriptContext_SERVER 
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<ModInfo>", NSGetModInformation, "string modName", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("array<ModInfo>", NSGetModInformation, "string modName", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel[context]->getstring(sqvm, 1);
 	g_pSquirrel[context]->newarray(sqvm, 0);
@@ -79,7 +79,7 @@ ADD_SQFUNC("array<ModInfo>", NSGetModInformation, "string modName", "", ScriptCo
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	g_pSquirrel[context]->newarray(sqvm, 0);
 
@@ -97,7 +97,7 @@ ADD_SQFUNC(
 	NSSetModEnabled,
 	"string modName, string modVersion, bool enabled",
 	"",
-	ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel[context]->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel[context]->getstring(sqvm, 2);
@@ -116,7 +116,7 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext_UI)
+ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pModManager->LoadMods();

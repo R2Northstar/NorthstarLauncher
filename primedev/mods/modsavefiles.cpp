@@ -250,7 +250,7 @@ bool IsPathSafe(const std::string param, fs::path dir)
 }
 
 // void NSSaveFile( string file, string data )
-ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 	if (mod == nullptr)
@@ -304,7 +304,7 @@ ADD_SQFUNC("void", NSSaveFile, "string file, string data", "", ScriptContext_SER
 }
 
 // void NSSaveJSONFile(string file, table data)
-ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 	if (mod == nullptr)
@@ -360,7 +360,7 @@ ADD_SQFUNC("void", NSSaveJSONFile, "string file, table data", "", ScriptContext_
 }
 
 // int NS_InternalLoadFile(string file)
-ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm, 1); // the function that called NSLoadFile :)
 	if (mod == nullptr)
@@ -390,7 +390,7 @@ ADD_SQFUNC("int", NS_InternalLoadFile, "string file", "", ScriptContext_SERVER |
 }
 
 // bool NSDoesFileExist(string file)
-ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 
@@ -414,7 +414,7 @@ ADD_SQFUNC("bool", NSDoesFileExist, "string file", "", ScriptContext_SERVER | Sc
 }
 
 // int NSGetFileSize(string file)
-ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 
@@ -448,7 +448,7 @@ ADD_SQFUNC("int", NSGetFileSize, "string file", "", ScriptContext_SERVER | Scrip
 }
 
 // void NSDeleteFile(string file)
-ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext_SERVER | ScriptContext_CLIENT | ScriptContext_UI)
+ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 
@@ -472,7 +472,7 @@ ADD_SQFUNC("void", NSDeleteFile, "string file", "", ScriptContext_SERVER | Scrip
 }
 
 // The param is not optional because that causes issues :)
-ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptContext_CLIENT | ScriptContext_UI | ScriptContext_SERVER)
+ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	// depth 1 because this should always get called from Northstar.Custom
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm, 1);
@@ -511,7 +511,7 @@ ADD_SQFUNC("array<string>", NS_InternalGetAllFiles, "string path", "", ScriptCon
 	}
 }
 
-ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext_CLIENT | ScriptContext_UI | ScriptContext_SERVER)
+ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();
@@ -546,7 +546,7 @@ ADD_SQFUNC("bool", NSIsFolder, "string path", "", ScriptContext_CLIENT | ScriptC
 }
 
 // side note, expensive.
-ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext_CLIENT | ScriptContext_UI | ScriptContext_SERVER)
+ADD_SQFUNC("int", NSGetTotalSpaceRemaining, "", "", ScriptContext::CLIENT | ScriptContext::UI | ScriptContext::SERVER)
 {
 	Mod* mod = g_pSquirrel[context]->getcallingmod(sqvm);
 	fs::path dir = savePath / fs::path(mod->m_ModDirectory).filename();

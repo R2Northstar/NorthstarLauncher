@@ -162,7 +162,7 @@ ADD_SQFUNC(
 	NSGetLoadedMapNames,
 	"",
 	"Returns a string array of loaded map file names",
-	ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER)
+	ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER)
 {
 	// Maybe we should call this on mods reload instead
 	RefreshMapList();

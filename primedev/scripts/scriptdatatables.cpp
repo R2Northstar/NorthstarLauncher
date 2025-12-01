@@ -60,7 +60,7 @@ struct CSVData
 std::unordered_map<std::string, CSVData> CSVCache;
 
 // var function GetDataTable( asset path )
-REPLACE_SQFUNC(GetDataTable, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTable, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	const char* pAssetName;
 	g_pSquirrel[context]->getasset(sqvm, 2, &pAssetName);
@@ -236,7 +236,7 @@ REPLACE_SQFUNC(GetDataTable, (ScriptContext_UI | ScriptContext_CLIENT | ScriptCo
 }
 
 // int function GetDataTableColumnByName( var datatable, string columnName )
-REPLACE_SQFUNC(GetDataTableColumnByName, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableColumnByName, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -264,7 +264,7 @@ REPLACE_SQFUNC(GetDataTableColumnByName, (ScriptContext_UI | ScriptContext_CLIEN
 
 // this function has casing that is inconsistent with the others...
 // int function GetDatatableRowCount( var datatable )
-REPLACE_SQFUNC(GetDatatableRowCount, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDatatableRowCount, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -279,7 +279,7 @@ REPLACE_SQFUNC(GetDatatableRowCount, (ScriptContext_UI | ScriptContext_CLIENT | 
 }
 
 // string function GetDataTableString( var datatable, int row, int col )
-REPLACE_SQFUNC(GetDataTableString, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableString, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -306,7 +306,7 @@ REPLACE_SQFUNC(GetDataTableString, (ScriptContext_UI | ScriptContext_CLIENT | Sc
 }
 
 // asset function GetDataTableAsset( var datatable, int row, int col )
-REPLACE_SQFUNC(GetDataTableAsset, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableAsset, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -333,7 +333,7 @@ REPLACE_SQFUNC(GetDataTableAsset, (ScriptContext_UI | ScriptContext_CLIENT | Scr
 }
 
 // int function GetDataTableInt( var datatable, int row, int col )
-REPLACE_SQFUNC(GetDataTableInt, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableInt, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -360,7 +360,7 @@ REPLACE_SQFUNC(GetDataTableInt, (ScriptContext_UI | ScriptContext_CLIENT | Scrip
 }
 
 // float function GetDataTableFloat( var datatable, int row, int col )
-REPLACE_SQFUNC(GetDataTableFloat, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableFloat, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -387,7 +387,7 @@ REPLACE_SQFUNC(GetDataTableFloat, (ScriptContext_UI | ScriptContext_CLIENT | Scr
 }
 
 // bool function GetDataTableBool( var datatable, int row, int col )
-REPLACE_SQFUNC(GetDataTableBool, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableBool, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -414,7 +414,7 @@ REPLACE_SQFUNC(GetDataTableBool, (ScriptContext_UI | ScriptContext_CLIENT | Scri
 }
 
 // vector function GetDataTableVector( var datatable, int row, int col )
-REPLACE_SQFUNC(GetDataTableVector, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableVector, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -441,7 +441,7 @@ REPLACE_SQFUNC(GetDataTableVector, (ScriptContext_UI | ScriptContext_CLIENT | Sc
 }
 
 // int function GetDataTableRowMatchingStringValue( var datatable, int col, string value )
-REPLACE_SQFUNC(GetDataTableRowMatchingStringValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowMatchingStringValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -467,7 +467,7 @@ REPLACE_SQFUNC(GetDataTableRowMatchingStringValue, (ScriptContext_UI | ScriptCon
 }
 
 // int function GetDataTableRowMatchingAssetValue( var datatable, int col, asset value )
-REPLACE_SQFUNC(GetDataTableRowMatchingAssetValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowMatchingAssetValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -494,7 +494,7 @@ REPLACE_SQFUNC(GetDataTableRowMatchingAssetValue, (ScriptContext_UI | ScriptCont
 }
 
 // int function GetDataTableRowMatchingFloatValue( var datatable, int col, float value )
-REPLACE_SQFUNC(GetDataTableRowMatchingFloatValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowMatchingFloatValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -520,7 +520,7 @@ REPLACE_SQFUNC(GetDataTableRowMatchingFloatValue, (ScriptContext_UI | ScriptCont
 }
 
 // int function GetDataTableRowMatchingIntValue( var datatable, int col, int value )
-REPLACE_SQFUNC(GetDataTableRowMatchingIntValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowMatchingIntValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -546,7 +546,7 @@ REPLACE_SQFUNC(GetDataTableRowMatchingIntValue, (ScriptContext_UI | ScriptContex
 }
 
 // int function GetDataTableRowMatchingVectorValue( var datatable, int col, vector value )
-REPLACE_SQFUNC(GetDataTableRowMatchingVectorValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowMatchingVectorValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -573,7 +573,7 @@ REPLACE_SQFUNC(GetDataTableRowMatchingVectorValue, (ScriptContext_UI | ScriptCon
 }
 
 // int function GetDataTableRowGreaterThanOrEqualToIntValue( var datatable, int col, int value )
-REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToIntValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToIntValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -600,7 +600,7 @@ REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToIntValue, (ScriptContext_UI | 
 }
 
 // int function GetDataTableRowLessThanOrEqualToIntValue( var datatable, int col, int value )
-REPLACE_SQFUNC(GetDataTableRowLessThanOrEqualToIntValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowLessThanOrEqualToIntValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -626,7 +626,7 @@ REPLACE_SQFUNC(GetDataTableRowLessThanOrEqualToIntValue, (ScriptContext_UI | Scr
 }
 
 // int function GetDataTableRowGreaterThanOrEqualToFloatValue( var datatable, int col, float value )
-REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToFloatValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToFloatValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -652,7 +652,7 @@ REPLACE_SQFUNC(GetDataTableRowGreaterThanOrEqualToFloatValue, (ScriptContext_UI 
 }
 
 // int function GetDataTableRowLessThanOrEqualToFloatValue( var datatable, int col, float value )
-REPLACE_SQFUNC(GetDataTableRowLessThanOrEqualToFloatValue, (ScriptContext_UI | ScriptContext_CLIENT | ScriptContext_SERVER))
+REPLACE_SQFUNC(GetDataTableRowLessThanOrEqualToFloatValue, (ScriptContext::UI | ScriptContext::CLIENT | ScriptContext::SERVER))
 {
 	CSVData** pData;
 	uint64_t typeId;
@@ -854,13 +854,13 @@ void ConCommand_dump_datatables(const CCommand& args)
 
 ON_DLL_LOAD_RELIESON("server.dll", ServerScriptDatatables, ServerSquirrel, (CModule module))
 {
-	SQ_GetDatatableInternal<ScriptContext_SERVER> = module.Offset(0x1250f0).RCast<Datatable* (*)(HSQUIRRELVM)>();
+	SQ_GetDatatableInternal<ScriptContext::SERVER> = module.Offset(0x1250f0).RCast<Datatable* (*)(HSQUIRRELVM)>();
 }
 
 ON_DLL_LOAD_RELIESON("client.dll", ClientScriptDatatables, ClientSquirrel, (CModule module))
 {
-	SQ_GetDatatableInternal<ScriptContext_CLIENT> = module.Offset(0x1C9070).RCast<Datatable* (*)(HSQUIRRELVM)>();
-	SQ_GetDatatableInternal<ScriptContext_UI> = SQ_GetDatatableInternal<ScriptContext_CLIENT>;
+	SQ_GetDatatableInternal<ScriptContext::CLIENT> = module.Offset(0x1C9070).RCast<Datatable* (*)(HSQUIRRELVM)>();
+	SQ_GetDatatableInternal<ScriptContext::UI> = SQ_GetDatatableInternal<ScriptContext::CLIENT>;
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", SharedScriptDataTables, ConVar, (CModule module))
