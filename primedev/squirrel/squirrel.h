@@ -360,6 +360,7 @@ static class
 {
 public:
 	SquirrelManager* operator[](ScriptContext context) { return m_pSquirrel[static_cast<int>(context)]; }
+
 private:
 	SquirrelManager* m_pSquirrel[3] = {};
 } g_pSquirrel;
