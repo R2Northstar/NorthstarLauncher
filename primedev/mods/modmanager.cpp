@@ -448,19 +448,30 @@ void ModManager::SearchFilesystemForMods()
 	std::filesystem::directory_iterator remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
 	std::filesystem::directory_iterator thunderstoreModsDir = fs::directory_iterator(GetThunderstoreModFolderPath());
 
-	for (fs::directory_entry dir : classicModsDir)
-		if (fs::exists(dir.path() / "mod.json"))
-			modDirs.push_back(dir.path());
+	for (fs::directory_iterator dirIterator : {classicModsDir, remoteModsDir})
+		for (fs::directory_entry dir : dirIterator)
+			if (fs::exists(dir.path() / "mod.json"))
+				modDirs.push_back(dir.path());
 
 	// Special case for Thunderstore and remote mods directories
 	// Set up regex for `AUTHOR-MOD-VERSION` pattern
 	std::regex pattern(R"(.*\\([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)-(\d+\.\d+\.\d+))");
+
+	// Reset directory iterator
+	remoteModsDir = fs::directory_iterator(GetRemoteModFolderPath());
 
 	for (fs::directory_iterator dirIterator : {thunderstoreModsDir, remoteModsDir})
 	{
 		for (fs::directory_entry dir : dirIterator)
 		{
 			fs::path modsDir = dir.path() / "mods"; // Check for mods folder in the Thunderstore mod
+
+			// Do not register ModWorkshop mods twice
+			if (std::find(modDirs.begin(), modDirs.end(), dir.path()) != modDirs.end())
+			{
+				continue;
+			}
+
 			// Use regex to match `AUTHOR-MOD-VERSION` pattern
 			if (!std::regex_match(dir.path().string(), pattern))
 			{
@@ -624,6 +635,10 @@ void ModManager::ExportModsConfigurationToFile()
 		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
 	}
 
+	// Exporting manifesto version
+	const char* versionMember = "Version";
+	m_EnabledModsCfg.AddMember(rapidjson_document::StringRefType(versionMember), manifestoVersion, m_EnabledModsCfg.GetAllocator());
+
 	std::ofstream writeStream(cfgPath);
 	rapidjson::OStreamWrapper writeStreamWrapper(writeStream);
 	rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(writeStreamWrapper);
@@ -658,20 +673,27 @@ void ModManager::DiscoverMods()
 			enabledModsStringStream.str().c_str());
 
 		// Check file format, and rename file if it is not using new format
-		bool isUsingUnknownFormat = !m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Northstar.Client");
+		bool isUsingUnknownFormat =
+			!m_EnabledModsCfg.IsObject() || !m_EnabledModsCfg.HasMember("Version") || !m_EnabledModsCfg["Version"].IsInt();
 		isUsingOldFormat =
-			m_EnabledModsCfg.IsObject() && m_EnabledModsCfg.HasMember("Northstar.Client") && m_EnabledModsCfg["Northstar.Client"].IsBool();
+			m_EnabledModsCfg.IsObject() &&
+			(!m_EnabledModsCfg.HasMember("Version") || (m_EnabledModsCfg["Version"].IsInt() && m_EnabledModsCfg["Version"].GetInt() == 0));
 
 		if (isUsingUnknownFormat || isUsingOldFormat)
 		{
 			spdlog::info(
 				"==> {} manifesto format detected, renaming it to enabledmods.old.json.", isUsingUnknownFormat ? "Unknown" : "Old");
-			int ret = rename(cfgPath.c_str(), (GetNorthstarPrefix() + "/enabledmods.old.json").c_str());
-			if (ret)
+
+			// Removing old manifesto if needed
+			std::filesystem::path oldManifestoPath = GetNorthstarPrefix() + "/enabledmods.old.json";
+			if (std::filesystem::exists(oldManifestoPath))
 			{
-				spdlog::error("Failed renaming manifesto (error code: {}).", ret);
-				return;
+				spdlog::info("enabledmods.old.json already exists, removing.");
+				std::filesystem::remove(oldManifestoPath);
 			}
+
+			// Renaming manifesto
+			std::filesystem::rename(cfgPath.c_str(), oldManifestoPath.c_str());
 
 			// Copy old configuration to migrate manifesto to new format
 			if (isUsingOldFormat)
@@ -702,6 +724,10 @@ void ModManager::DiscoverMods()
 		// Force manifesto write to disk
 		newModsDetected = true;
 	}
+
+	// Load manifesto version into memory
+	manifestoVersion = m_EnabledModsCfg[versionMember].GetInt();
+	spdlog::info("Using manifesto version {} to set mods state.", manifestoVersion);
 
 	for (Mod& mod : m_LoadedMods)
 	{
