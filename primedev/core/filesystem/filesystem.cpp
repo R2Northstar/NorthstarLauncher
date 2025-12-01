@@ -5,7 +5,9 @@
 #include <iostream>
 #include <sstream>
 
-bool bReadingOriginalFile = false;
+// the currently accepted sources for files
+int iFileSourceType = FileSourceType_Any;
+
 std::string sCurrentModPath;
 
 ConVar* Cvar_ns_fs_log_reads;
@@ -31,13 +33,14 @@ std::string ReadVPKFile(const char* path)
 	return fileStream.str();
 }
 
-std::string ReadVPKOriginalFile(const char* path)
+std::string ReadVPKFile(const char* path, int fileSourceType)
 {
-	// todo: should probably set search path to be g_pModName here also
+	int oldType = iFileSourceType;
+	iFileSourceType = fileSourceType;
 
-	bReadingOriginalFile = true;
 	std::string ret = ReadVPKFile(path);
-	bReadingOriginalFile = false;
+
+	iFileSourceType = oldType;
 
 	return ret;
 }
@@ -60,6 +63,7 @@ void SetNewCompiledSearchPaths()
 {
 	// push compiled to head
 	o_pAddSearchPath(g_pFilesystem, fs::absolute(GetCompiledAssetsPath()).string().c_str(), "GAME", PATH_ADD_TO_HEAD);
+	sCurrentModPath = "";
 }
 
 void SetNewModSearchPaths(Mod* mod)
@@ -78,27 +82,31 @@ void SetNewModSearchPaths(Mod* mod)
 
 bool TryReplaceFile(const char* pPath, bool shouldCompile)
 {
-	if (bReadingOriginalFile)
-		return false;
-
-	if (shouldCompile)
-		g_pModManager->CompileAssetsForFile(pPath);
-
 	// idk how efficient the lexically normal check is
 	// can't just set all /s in path to \, since some paths aren't in writeable memory
 	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(pPath));
 
-	if (g_pModManager->m_CompiledFiles.contains(normalisedPath))
+	if (iFileSourceType & FileSourceType_Compiled)
 	{
-		SetNewCompiledSearchPaths();
-		return true;
+		// only compile assets if we would accept a compiled asset in the first place
+		if (shouldCompile)
+			g_pModManager->CompileAssetsForFile(pPath);
+
+		if (g_pModManager->m_CompiledFiles.contains(normalisedPath))
+		{
+			SetNewCompiledSearchPaths();
+			return true;
+		}
 	}
 
-	auto file = g_pModManager->m_ModFiles.find(normalisedPath);
-	if (file != g_pModManager->m_ModFiles.end())
+	if (iFileSourceType & FileSourceType_ModOverride)
 	{
-		SetNewModSearchPaths(file->second.m_pOwningMod);
-		return true;
+		auto file = g_pModManager->m_ModFiles.find(normalisedPath);
+		if (file != g_pModManager->m_ModFiles.end())
+		{
+			SetNewModSearchPaths(file->second.m_pOwningMod);
+			return true;
+		}
 	}
 
 	return false;

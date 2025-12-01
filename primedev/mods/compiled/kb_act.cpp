@@ -14,7 +14,7 @@ void ModManager::BuildKBActionsList()
 	std::ofstream soCompiledKeys(GetCompiledAssetsPath() / KB_ACT_PATH, std::ios::binary);
 
 	// write vanilla file's content to compiled file
-	soCompiledKeys << ReadVPKOriginalFile(KB_ACT_PATH);
+	soCompiledKeys << ReadVPKFile(KB_ACT_PATH, FileSourceType_Original);
 
 	for (Mod& mod : m_LoadedMods)
 	{

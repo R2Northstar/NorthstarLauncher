@@ -54,7 +54,7 @@ void ModManager::TryBuildKeyValues(const char* filename)
 	newKvs += "\"\n";
 
 	// load original file, so we can parse out the name of the root obj (e.g. WeaponData for weapons)
-	std::string originalFile = ReadVPKOriginalFile(filename);
+	std::string originalFile = ReadVPKFile(filename, FileSourceType_ModOverride + FileSourceType_Original);
 
 	if (!originalFile.length())
 	{
