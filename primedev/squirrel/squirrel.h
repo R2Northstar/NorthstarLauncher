@@ -60,8 +60,6 @@ namespace NS::log
 	std::shared_ptr<spdlog::logger> squirrel_logger(ScriptContext context);
 }; // namespace NS::log
 
-// This base class means that only the templated functions have to be rebuilt for each template instance
-// Cuts down on compile time by ~5 seconds
 class SquirrelManager
 {
 protected:
@@ -359,13 +357,18 @@ public:
 static class
 {
 public:
+	void InitialiseSquirrelManagers()
+	{
+		m_pSquirrel[static_cast<int>(ScriptContext::CLIENT)] = new SquirrelManager(ScriptContext::CLIENT);
+		m_pSquirrel[static_cast<int>(ScriptContext::UI)] = new SquirrelManager(ScriptContext::UI);
+		m_pSquirrel[static_cast<int>(ScriptContext::SERVER)] = new SquirrelManager(ScriptContext::SERVER);
+	}
+
 	SquirrelManager* operator[](ScriptContext context) { return m_pSquirrel[static_cast<int>(context)]; }
 
 private:
 	SquirrelManager* m_pSquirrel[3] = {};
 } g_pSquirrel;
-
-void InitialiseSquirrelManagers();
 
 /*
 	Beware all ye who enter below.

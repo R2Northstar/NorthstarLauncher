@@ -481,10 +481,10 @@ int64_t __fastcall RegisterSquirrelFunctionHook(CSquirrelVM* sqvm, SQFuncRegistr
 
 template <ScriptContext context> void CheckFuncOverrides()
 {
-	for (auto& [name, func] : g_pSquirrel<context>->m_funcOverrides)
+	for (auto& [name, func] : g_pSquirrel[context]->m_funcOverrides)
 	{
-		if (!g_pSquirrel<context>->m_funcOriginals.count(name))
-			g_pSquirrel<context>->logger->error("Failed to replace SQ function '{}' as it doesn't exist.", name);
+		if (!g_pSquirrel[context]->m_funcOriginals.count(name))
+			g_pSquirrel[context]->m_logger->error("Failed to replace SQ function '{}' as it doesn't exist.", name);
 	}
 }
 
@@ -851,11 +851,4 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerSquirrel, ConCommand, (CModule module))
 		FCVAR_GAMEDLL | FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS | FCVAR_CHEAT);
 
 	StubUnsafeSQFuncs<ScriptContext::SERVER>();
-}
-
-void InitialiseSquirrelManagers()
-{
-	g_pSquirrel[ScriptContext::CLIENT] = new SquirrelManager(ScriptContext::CLIENT);
-	g_pSquirrel[ScriptContext::UI] = new SquirrelManager(ScriptContext::UI);
-	g_pSquirrel[ScriptContext::SERVER] = new SquirrelManager(ScriptContext::SERVER);
 }
