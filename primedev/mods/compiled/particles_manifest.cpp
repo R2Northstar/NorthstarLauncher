@@ -35,7 +35,8 @@ void ModManager::BuildParticlesManifest()
 	// gather particle entries from vanilla and mod particles_manifest.txt
 	std::vector<std::string> entries = {};
 
-	std::string originalFile = ReadVPKOriginalFile(PARTICLES_MANIFEST_PATH);
+	// read the original version of the manifest
+	std::string originalFile = ReadVPKFile(PARTICLES_MANIFEST_PATH, FileSourceType_Original);
 	ParseParticlesFile(originalFile, entries);
 
 	for (auto& mod : m_LoadedMods)
@@ -71,10 +72,6 @@ void ModManager::BuildParticlesManifest()
 
 	soCompiledParticles.close();
 
-	// push to overrides
-	ModOverrideFile overrideFile;
-	overrideFile.m_pOwningMod = nullptr;
-	overrideFile.m_Path = PARTICLES_MANIFEST_PATH;
-
-	m_ModFiles.insert_or_assign(PARTICLES_MANIFEST_PATH, overrideFile);
+	// push to compiled files
+	m_CompiledFiles.insert(PARTICLES_MANIFEST_PATH);
 }
