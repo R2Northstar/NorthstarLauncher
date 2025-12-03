@@ -114,6 +114,7 @@ void ModManager::LoadMods()
 	// Find all mods from disk
 	DiscoverMods();
 
+	m_CompiledFiles.clear();
 	fs::remove_all(GetCompiledAssetsPath());
 
 	for (Mod& mod : m_LoadedMods)
@@ -414,6 +415,7 @@ void ModManager::UnloadMods()
 	m_DependencyConstants.clear();
 
 	m_ModFiles.clear();
+	m_CompiledFiles.clear();
 	fs::remove_all(GetCompiledAssetsPath());
 
 	g_CustomAudioManager.ClearAudioOverrides();
