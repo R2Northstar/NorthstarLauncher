@@ -1,4 +1,5 @@
 #include "moddownloader.h"
+#include "core/vanilla.h"
 #include "util/utils.h"
 #include <rapidjson/fwd.h>
 #include <mz_strm_mem.h>
@@ -704,6 +705,9 @@ void ModDownloader::CancelDownload()
 
 ON_DLL_LOAD_RELIESON("engine.dll", ModDownloader, (ConCommand), (CModule module))
 {
+	if (g_pVanillaCompatibility->GetVanillaCompatibility())
+		return;
+
 	g_pModDownloader = new ModDownloader();
 }
 
