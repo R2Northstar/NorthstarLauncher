@@ -13,11 +13,11 @@
 
 namespace fs = std::filesystem;
 
-const std::string MOD_FOLDER_SUFFIX = "\\mods";
-const std::string THUNDERSTORE_MOD_FOLDER_SUFFIX = "\\packages";
-const std::string REMOTE_MOD_FOLDER_SUFFIX = "\\runtime\\remote\\mods";
+const fs::path MOD_FOLDER_SUFFIX = "mods";
+const fs::path THUNDERSTORE_MOD_FOLDER_SUFFIX = "packages";
+const fs::path REMOTE_MOD_FOLDER_SUFFIX = "runtime\\remote\\mods";
 const fs::path MOD_OVERRIDE_DIR = "mod";
-const std::string COMPILED_ASSETS_SUFFIX = "\\runtime\\compiled";
+const fs::path COMPILED_ASSETS_SUFFIX = "runtime\\compiled";
 
 const std::set<std::string> MODS_BLACKLIST = {"Mod Settings"};
 
@@ -34,6 +34,8 @@ private:
 	bool m_bHasLoadedMods = false;
 	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
+	std::string cfgPath;
+	int manifestoVersion = 0;
 
 	// precalculated hashes
 	size_t m_hScriptsRsonHash;
@@ -43,10 +45,33 @@ private:
 public:
 	std::vector<Mod> m_LoadedMods;
 	std::unordered_map<std::string, ModOverrideFile> m_ModFiles;
+	std::unordered_set<std::string> m_CompiledFiles;
 	std::unordered_map<std::string, std::string> m_DependencyConstants;
 	std::unordered_set<std::string> m_PluginDependencyConstants;
 
 private:
+	/**
+	 * Discovers all mods from disk, and loads their initial state.
+	 *
+	 * This searches for mods in various ways and loads the mods configuration from
+	 * disk, populating `m_LoadedMods`. Note that this does not clear `m_LoadedMods`
+	 * before doing work.
+	 *
+	 * @returns nothing
+	 **/
+	void DiscoverMods();
+
+	/**
+	 * Saves mod enabled state to enabledmods.json file.
+	 *
+	 * This loops over loaded mods (stored in `m_LoadedMods` list), exports their
+	 * state (enabled or disabled) to a local JSON document, then exports this
+	 * document to local profile.
+	 *
+	 * @returns nothing
+	 **/
+	void ExportModsConfigurationToFile();
+
 	/**
 	 * Load information for all mods from filesystem.
 	 *
@@ -57,6 +82,27 @@ private:
 	 * @returns nothing
 	 **/
 	void SearchFilesystemForMods();
+
+	/**
+	 * Prevents crashes caused by mods being installed several times.
+	 *
+	 * Whether through manual install or remote mod downloading, several versions of
+	 * a same mod can be located in the current profile: enabling all of them would
+	 * lead to a crash, due to some files loaded several times.
+	 *
+	 * This checks the local `m_LoadedMods` mods list for multiple versions of a
+	 * same mod: if so, this disables all versions of the relevant mod.
+	 *
+	 * @returns nothing
+	 **/
+	void DisableMultipleModVersions();
+
+	/**
+	 * Builds the modinfo object for sending to the masterserver.
+	 *
+	 * @returns nothing
+	 **/
+	void BuildModInfo();
 
 public:
 	ModManager();
