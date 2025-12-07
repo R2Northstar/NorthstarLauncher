@@ -354,7 +354,8 @@ public:
 #pragma endregion
 };
 
-static class
+// just a wrapper that lets us still access SquirrelManagers using [] operators
+class SquirrelManagerManager
 {
 public:
 	void InitialiseSquirrelManagers()
@@ -368,7 +369,9 @@ public:
 
 private:
 	SquirrelManager* m_pSquirrel[3] = {};
-} g_pSquirrel;
+};
+
+extern SquirrelManagerManager g_pSquirrel;
 
 /*
 	Beware all ye who enter below.

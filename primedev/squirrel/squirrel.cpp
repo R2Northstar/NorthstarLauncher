@@ -17,6 +17,8 @@
 
 AUTOHOOK_INIT()
 
+SquirrelManagerManager g_pSquirrel;
+
 std::shared_ptr<ColoredLogger> getSquirrelLoggerByContext(ScriptContext context)
 {
 	switch (context)
