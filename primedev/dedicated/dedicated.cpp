@@ -74,10 +74,11 @@ class DedicatedConsoleServerPresence : public ServerPresenceReporter
 	void ReportPresence(const ServerPresence* pServerPresence) override
 	{
 		SetConsoleTitleA(fmt::format(
-							 "{} - {} {}/{} players ({})",
+							 "{} - {} {} ({} bots) / {} humans ({})",
 							 pServerPresence->m_sServerName,
 							 pServerPresence->m_MapName,
-							 pServerPresence->m_iPlayerCount,
+							 (pServerPresence->m_iPlayerCount - pServerPresence->m_iBotCount),
+							 pServerPresence->m_iBotCount,
 							 pServerPresence->m_iMaxPlayers,
 							 pServerPresence->m_PlaylistName)
 							 .c_str());
