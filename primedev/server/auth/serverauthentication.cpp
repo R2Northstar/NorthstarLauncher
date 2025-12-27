@@ -323,10 +323,8 @@ static void h_CBaseClient__ActivatePlayer(CBaseClient* self)
 		int size = 0;
 
 		for (auto& authData : g_pServerAuthentication->m_PlayerAuthenticationData)
-		{
 			if (!authData.second.playerIsBot || g_pServerAuthentication->Cvar_ns_include_bots_in_player_count->GetBool())
 				size++;
-		}
 
 		g_pServerPresence->SetPlayerCount(size);
 	}
@@ -364,10 +362,8 @@ static void h_CBaseClient__Disconnect(CBaseClient* self, uint32_t unknownButAlwa
 	int size = 0;
 
 	for (auto& authData : g_pServerAuthentication->m_PlayerAuthenticationData)
-	{
 		if (!authData.second.playerIsBot || g_pServerAuthentication->Cvar_ns_include_bots_in_player_count->GetBool())
 			size++;
-	}
 
 	g_pServerPresence->SetPlayerCount(size);
 
