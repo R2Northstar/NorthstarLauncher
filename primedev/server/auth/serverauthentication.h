@@ -28,10 +28,10 @@ extern CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 class ServerAuthenticationManager
 {
 public:
-	ConVar* Cvar_ns_include_bots_in_player_count;
 	ConVar* Cvar_ns_erase_auth_info;
 	ConVar* Cvar_ns_auth_allow_insecure;
 	ConVar* Cvar_ns_auth_allow_insecure_write;
+	ConVar* Cvar_ns_include_bots_in_player_count;
 
 	std::mutex m_AuthDataMutex;
 	std::unordered_map<std::string, RemoteAuthData> m_RemoteAuthenticationData;

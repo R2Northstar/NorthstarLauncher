@@ -399,12 +399,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
-	g_pServerAuthentication->Cvar_ns_include_bots_in_player_count =
-		new ConVar(
-			"ns_include_bots_in_player_count",
-			"0",
-			FCVAR_GAMEDLL,
-			"Whether bots should be included in the player count reported to the masterserver");
 	g_pServerAuthentication->Cvar_ns_erase_auth_info =
 		new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
 	g_pServerAuthentication->Cvar_ns_auth_allow_insecure =
@@ -414,6 +408,11 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 		"0",
 		FCVAR_GAMEDLL,
 		"Whether the pdata of unauthenticated clients will be written to disk when changed");
+	g_pServerAuthentication->Cvar_ns_include_bots_in_player_count = new ConVar(
+		"ns_include_bots_in_player_count",
+		"0",
+		FCVAR_GAMEDLL,
+		"Whether bots should be included in the player count reported to the masterserver");
 
 	RegisterConCommand(
 		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
