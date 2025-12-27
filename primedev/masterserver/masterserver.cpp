@@ -1424,7 +1424,7 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 						descEscaped,
 						mapEscaped,
 						playlistEscaped,
-						threadedPresence.m_iPlayerCount,
+						threadedPresence.m_iPlayerCount - (g_pServerAuthentication->Cvar_ns_include_bots_in_player_count->GetBool() ? 0 : threadedPresence.m_iBotCount),
 						threadedPresence.m_iMaxPlayers,
 						passwordEscaped)
 						.c_str());
