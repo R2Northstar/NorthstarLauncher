@@ -42,6 +42,15 @@ void ServerAuthenticationManager::AddPlayer(CBaseClient* pPlayer, const char* pT
 {
 	PlayerAuthenticationData additionalData;
 
+	if (pPlayer->m_bFakePlayer)
+	{
+		additionalData.pdataSize = PERSISTENCE_MAX_SIZE;
+		additionalData.usingLocalPdata = true;
+		additionalData.playerIsBot = true;
+		m_PlayerAuthenticationData.insert(std::make_pair(pPlayer, additionalData));
+		return;
+	}
+
 	auto remoteAuthData = m_RemoteAuthenticationData.find(pToken);
 	if (remoteAuthData != m_RemoteAuthenticationData.end())
 		additionalData.pdataSize = remoteAuthData->second.pdataSize;
@@ -135,6 +144,12 @@ void ServerAuthenticationManager::AuthenticatePlayer(CBaseClient* pPlayer, uint6
 	// copy uuid
 	strcpy(pPlayer->m_UID, sUid.c_str());
 
+	if (pPlayer->m_bFakePlayer)
+	{
+		pPlayer->m_iPersistenceReady = ePersistenceReady::READY_INSECURE;
+		return;
+	}
+
 	std::lock_guard<std::mutex> guard(m_AuthDataMutex);
 	auto authData = m_RemoteAuthenticationData.find(pAuthToken);
 	if (authData != m_RemoteAuthenticationData.end())
@@ -150,7 +165,7 @@ void ServerAuthenticationManager::AuthenticatePlayer(CBaseClient* pPlayer, uint6
 		pPlayer->m_iPersistenceReady = ePersistenceReady::READY_REMOTE;
 	}
 	// we probably allow insecure at this point, but make sure not to write anyway if not insecure
-	else if (Cvar_ns_auth_allow_insecure->GetBool() || pPlayer->m_bFakePlayer)
+	else if (Cvar_ns_auth_allow_insecure->GetBool())
 	{
 		// set persistent data as ready
 		// note: actual placeholder persistent data is populated in script with InitPersistentData()
@@ -261,10 +276,12 @@ h_CBaseClient__Connect(CBaseClient* self, char* pName, void* pNetChannel, char b
 
 	if (!bFakePlayer)
 	{
-		if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
+		if (!pNextPlayerToken)
+			pAuthenticationFailure = "No Authentication Token.";
+		else if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
 			pAuthenticationFailure = "Invalid Name.";
 		else if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
-			pAuthenticationFailure = "Banned From server.";
+			pAuthenticationFailure = "Banned From Server.";
 		else if (!g_pServerAuthentication->CheckAuthentication(self, iNextPlayerUid, pNextPlayerToken))
 			pAuthenticationFailure = "Authentication Failed.";
 	}
@@ -302,7 +319,16 @@ static void h_CBaseClient__ActivatePlayer(CBaseClient* self)
 	{
 		g_pServerAuthentication->m_bForceResetLocalPlayerPersistence = false;
 		g_pServerAuthentication->WritePersistentData(self);
-		g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
+
+		int size = 0;
+
+		for (auto& authData : g_pServerAuthentication->m_PlayerAuthenticationData)
+		{
+			if (!authData.second.playerIsBot || g_pServerAuthentication->Cvar_ns_include_bots_in_player_count->GetBool())
+				size++;
+		}
+
+		g_pServerPresence->SetPlayerCount(size);
 	}
 
 	o_pCBaseClient__ActivatePlayer(self);
@@ -335,7 +361,15 @@ static void h_CBaseClient__Disconnect(CBaseClient* self, uint32_t unknownButAlwa
 		g_pServerLimits->RemovePlayer(self);
 	}
 
-	g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
+	int size = 0;
+
+	for (auto& authData : g_pServerAuthentication->m_PlayerAuthenticationData)
+	{
+		if (!authData.second.playerIsBot || g_pServerAuthentication->Cvar_ns_include_bots_in_player_count->GetBool())
+			size++;
+	}
+
+	g_pServerPresence->SetPlayerCount(size);
 
 	o_pCBaseClient__Disconnect(self, unknownButAlways1, buf);
 }
@@ -369,6 +403,8 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 
 	g_pServerAuthentication = new ServerAuthenticationManager;
 
+	g_pServerAuthentication->Cvar_ns_include_bots_in_player_count =
+		new ConVar("ns_include_bots_in_player_count", "0", FCVAR_GAMEDLL, "Whether bots should be included in the player count reported to the masterserver");
 	g_pServerAuthentication->Cvar_ns_erase_auth_info =
 		new ConVar("ns_erase_auth_info", "1", FCVAR_GAMEDLL, "Whether auth info should be erased from this server on disconnect or crash");
 	g_pServerAuthentication->Cvar_ns_auth_allow_insecure =

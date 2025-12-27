@@ -19,6 +19,7 @@ struct PlayerAuthenticationData
 	bool usingLocalPdata;
 	size_t pdataSize;
 	bool needPersistenceWriteOnLeave = true;
+	bool playerIsBot = false;
 };
 
 typedef int64_t (*CBaseServer__RejectConnectionType)(void* a1, unsigned int a2, void* a3, const char* a4, ...);
@@ -27,6 +28,7 @@ extern CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 class ServerAuthenticationManager
 {
 public:
+	ConVar* Cvar_ns_include_bots_in_player_count;
 	ConVar* Cvar_ns_erase_auth_info;
 	ConVar* Cvar_ns_auth_allow_insecure;
 	ConVar* Cvar_ns_auth_allow_insecure_write;
