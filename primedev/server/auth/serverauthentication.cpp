@@ -408,11 +408,6 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerAuthentication, (ConCommand, ConVar), (
 		"0",
 		FCVAR_GAMEDLL,
 		"Whether the pdata of unauthenticated clients will be written to disk when changed");
-	g_pServerAuthentication->Cvar_ns_include_bots_in_player_count = new ConVar(
-		"ns_include_bots_in_player_count",
-		"0",
-		FCVAR_GAMEDLL,
-		"Whether bots should be included in the player count reported to the master server");
 
 	RegisterConCommand(
 		"ns_resetpersistence", ConCommand_ns_resetpersistence, "resets your pdata when you next enter the lobby", FCVAR_NONE);
