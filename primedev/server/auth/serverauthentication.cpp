@@ -350,6 +350,7 @@ static void h_CBaseClient__Disconnect(CBaseClient* self, uint32_t unknownButAlwa
 		g_pServerAuthentication->RemovePlayer(self);
 		g_pServerLimits->RemovePlayer(self);
 	}
+
 	g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 
 	o_pCBaseClient__Disconnect(self, unknownButAlways1, buf);
