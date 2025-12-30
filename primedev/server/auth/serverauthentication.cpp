@@ -46,7 +46,6 @@ void ServerAuthenticationManager::AddPlayer(CBaseClient* pPlayer, const char* pT
 	{
 		additionalData.pdataSize = PERSISTENCE_MAX_SIZE;
 		additionalData.usingLocalPdata = true;
-		additionalData.playerIsBot = true;
 		m_PlayerAuthenticationData.insert(std::make_pair(pPlayer, additionalData));
 		return;
 	}
@@ -319,14 +318,7 @@ static void h_CBaseClient__ActivatePlayer(CBaseClient* self)
 	{
 		g_pServerAuthentication->m_bForceResetLocalPlayerPersistence = false;
 		g_pServerAuthentication->WritePersistentData(self);
-
-		int size = 0;
-
-		for (auto& authData : g_pServerAuthentication->m_PlayerAuthenticationData)
-			if (authData.second.playerIsBot)
-				size++;
-
-		g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size(), size);
+		g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 	}
 
 	o_pCBaseClient__ActivatePlayer(self);
@@ -358,14 +350,7 @@ static void h_CBaseClient__Disconnect(CBaseClient* self, uint32_t unknownButAlwa
 		g_pServerAuthentication->RemovePlayer(self);
 		g_pServerLimits->RemovePlayer(self);
 	}
-
-	int size = 0;
-
-	for (auto& authData : g_pServerAuthentication->m_PlayerAuthenticationData)
-		if (authData.second.playerIsBot)
-			size++;
-
-	g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size(), size);
+	g_pServerPresence->SetPlayerCount((int)g_pServerAuthentication->m_PlayerAuthenticationData.size());
 
 	o_pCBaseClient__Disconnect(self, unknownButAlways1, buf);
 }

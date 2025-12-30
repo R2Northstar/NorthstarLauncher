@@ -19,7 +19,6 @@ struct PlayerAuthenticationData
 	bool usingLocalPdata;
 	size_t pdataSize;
 	bool needPersistenceWriteOnLeave = true;
-	bool playerIsBot = false;
 };
 
 typedef int64_t (*CBaseServer__RejectConnectionType)(void* a1, unsigned int a2, void* a3, const char* a4, ...);

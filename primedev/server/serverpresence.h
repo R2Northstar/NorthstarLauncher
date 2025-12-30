@@ -18,7 +18,6 @@ public:
 
 	int m_iPlayerCount;
 	int m_iMaxPlayers;
-	int m_iBotCount;
 
 	ServerPresence() {}
 
@@ -37,7 +36,6 @@ public:
 
 		m_iPlayerCount = obj->m_iPlayerCount;
 		m_iMaxPlayers = obj->m_iMaxPlayers;
-		m_iBotCount = obj->m_iBotCount;
 	}
 };
 
@@ -87,7 +85,7 @@ public:
 
 	void SetMap(const char* pMapName, bool isInitialising = false);
 	void SetPlaylist(const char* pPlaylistName);
-	void SetPlayerCount(const int iPlayerCount, const int iBotCount);
+	void SetPlayerCount(const int iPlayerCount);
 };
 
 extern ServerPresenceManager* g_pServerPresence;

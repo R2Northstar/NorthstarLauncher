@@ -120,7 +120,6 @@ void ServerPresenceManager::CreatePresence()
 
 	m_ServerPresence.m_iPlayerCount = 0; // this should actually be 0 at this point, so shouldn't need updating later
 	m_ServerPresence.m_iMaxPlayers = 0;
-	m_ServerPresence.m_iBotCount = 0;
 
 	memset(m_ServerPresence.m_MapName, 0, sizeof(m_ServerPresence.m_MapName));
 	memset(m_ServerPresence.m_PlaylistName, 0, sizeof(m_ServerPresence.m_PlaylistName));
@@ -226,10 +225,9 @@ void ServerPresenceManager::SetPlaylist(const char* pPlaylistName)
 		m_ServerPresence.m_iMaxPlayers = 6;
 }
 
-void ServerPresenceManager::SetPlayerCount(const int iPlayerCount, const int iBotCount)
+void ServerPresenceManager::SetPlayerCount(const int iPlayerCount)
 {
 	m_ServerPresence.m_iPlayerCount = iPlayerCount;
-	m_ServerPresence.m_iBotCount = iBotCount;
 }
 
 ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (CModule module))
