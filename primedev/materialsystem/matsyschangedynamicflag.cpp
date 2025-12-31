@@ -45,7 +45,7 @@ AUTOHOOK(SUB_25B90, materialsystem_dx11.dll + 0x25B90, void, __fastcall, ())
 
 ON_DLL_LOAD_CLIENT("materialsystem_dx11.dll", SUB_25B90, (CModule module))
 {
-	RegisterConCommand("ChangeDynamicTexture", ConCommand_ChangeDynamicTexture, "mad be sad frfr", FCVAR_GAMEDLL);
+	RegisterConCommand("changedynamictexture", ConCommand_ChangeDynamicTexture, "changes dynamic texture", FCVAR_GAMEDLL);
 
 	word_21CB88 = *module.Offset(0x21CB88).RCast<int16_t*>();
 	DeviceContext = module.Offset(0x14E8DD8).RCast<ID3D11DeviceContext**>();
