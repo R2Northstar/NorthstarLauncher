@@ -79,7 +79,7 @@ add_library(
     "logging/sourceconsole.cpp"
     "logging/sourceconsole.h"
     "materialsystem/nscustomdxbuffer.cpp"
-	"masterserver/masterserver.cpp"
+    "masterserver/masterserver.cpp"
     "masterserver/masterserver.h"
     "mods/autodownload/moddownloader.h"
     "mods/autodownload/moddownloader.cpp"
