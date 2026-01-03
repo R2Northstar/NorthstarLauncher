@@ -576,7 +576,7 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 		return;
 	}
 
-	for (int i = 0; i < gi.number_entry; i++)
+	for (uint64_t i = 0; i < gi.number_entry; i++)
 	{
 		char zipFilename[256];
 		unz_file_info64 fileInfo;
