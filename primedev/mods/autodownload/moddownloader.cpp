@@ -582,6 +582,7 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 	else if (platform == VerifiedModPlatform::ModWorkshop)
 	{
 		// find the mod.json and store the folder that it's in as the root directory
+		unzGoToFirstFile(file);
 		for (uint64_t i = 0; i < gi.number_entry; ++i)
 		{
 			char zipFilename[256];
@@ -608,15 +609,9 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 				}
 			}
 		}
-
-		status = unzGoToFirstFile(file);
-		if (status != UNZ_OK)
-		{
-			spdlog::error("Error while browsing archive files (error code: {}).", status);
-			return;
-		}
 	}
 
+	unzGoToFirstFile(file);
 	for (uint64_t i = 0; i < gi.number_entry; i++)
 	{
 		char zipFilename[256];
