@@ -451,8 +451,8 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 	modState.total = GetModArchiveSize(file, gi);
 	modState.progress = 0;
 
-	auto extractFile =
-		[&](fs::path fileDestination, char* zipFilename) -> bool
+	// extracts the file in the archive at zipFilename to fileDestination on disk
+	auto extractFile = [&](fs::path fileDestination, char* zipFilename) -> bool
 	{
 		std::error_code ec;
 		spdlog::info("=> {}", fileDestination.generic_string());
@@ -564,9 +564,13 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 			if (fout)
 				fclose(fout);
 
-			return true;
 		}
+
+		return true;
 	};
+
+	// the folder that contains the mod.json. all other files are considered relative to this
+	fs::path rootDir = "";
 
 	// We don't know how to extract mods from unknown platforms
 	if (platform == VerifiedModPlatform::Unknown)
@@ -575,6 +579,43 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 		modState.state = UNKNOWN_PLATFORM;
 		return;
 	}
+	else if (platform == VerifiedModPlatform::ModWorkshop)
+	{
+		// find the mod.json and store the folder that it's in as the root directory
+		for (uint64_t i = 0; i < gi.number_entry; ++i)
+		{
+			char zipFilename[256];
+			unz_file_info64 fileInfo;
+			status = unzGetCurrentFileInfo64(file, &fileInfo, zipFilename, sizeof(zipFilename), NULL, 0, NULL, 0);
+			fs::path filePath = zipFilename;
+
+			if (filePath.has_filename() && filePath.filename() == "mod.json")
+			{
+				fs::path parentPath = modPath.filename();
+				if (filePath.has_parent_path())
+					rootDir = filePath.parent_path() / "";
+
+				break;
+			}
+
+			if ((i + 1) < gi.number_entry)
+			{
+				status = unzGoToNextFile(file);
+				if (status != UNZ_OK)
+				{
+					spdlog::error("Error while browsing archive files (error code: {}).", status);
+					return;
+				}
+			}
+		}
+
+		status = unzGoToFirstFile(file);
+		if (status != UNZ_OK)
+		{
+			spdlog::error("Error while browsing archive files (error code: {}).", status);
+			return;
+		}
+	}
 
 	for (uint64_t i = 0; i < gi.number_entry; i++)
 	{
@@ -582,17 +623,24 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 		unz_file_info64 fileInfo;
 		status = unzGetCurrentFileInfo64(file, &fileInfo, zipFilename, sizeof(zipFilename), NULL, 0, NULL, 0);
 
-		// Extract file
-		fs::path fileDestination = destinationPath / zipFilename;
-
-		if (!extractFile(fileDestination, zipFilename))
-			return;
-
-		// Abort mod extraction if needed
-		if (modState.state == ABORTED)
+		// Get the destination path, correcting for rootDir
+		fs::path zipFilePath = zipFilename;
+		fs::path relativePath = zipFilePath.lexically_relative(rootDir);
+		// don't try to do anything with our root directory
+		if (zipFilePath.compare(rootDir))
 		{
-			spdlog::info("User cancelled mod installation, aborting mod extraction.");
-			return;
+			fs::path fileDestination = destinationPath / relativePath;
+
+			// Extract file
+			if (!extractFile(fileDestination, zipFilename))
+				return;
+
+			// Abort mod extraction if needed
+			if (modState.state == ABORTED)
+			{
+				spdlog::info("User cancelled mod installation, aborting mod extraction.");
+				return;
+			}
 		}
 
 		// Go to next file
@@ -606,7 +654,6 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 			}
 		}
 	}
-
 
 	// Mod extraction went fine
 	modState.state = DONE;
@@ -690,7 +737,8 @@ void ModDownloader::DownloadMod(std::string modName, std::string modVersion)
 			/// Don't use archive name as destination with ModWorkshop
 			if (fullVersion.platform == VerifiedModPlatform::ModWorkshop)
 			{
-				modDirectory = GetRemoteModFolderPath();
+				name = archiveLocation.stem().string();
+				modDirectory = GetRemoteModFolderPath() / std::format("{}-{}", name, modVersion);
 			}
 			else
 			/// Removes the ".zip" fom the archive name and use it as parent directory
