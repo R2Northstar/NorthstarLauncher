@@ -563,7 +563,6 @@ void ModDownloader::ExtractMod(fs::path modPath, fs::path destinationPath, Verif
 			// Cleanup
 			if (fout)
 				fclose(fout);
-
 		}
 
 		return true;
