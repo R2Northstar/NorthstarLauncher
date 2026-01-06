@@ -13,6 +13,7 @@
 
 const char* BANLIST_PATH_SUFFIX = "/banlist.txt";
 const char BANLIST_COMMENT_CHAR = '#';
+const char BANLIST_REASON_SEPARATOR = '|';
 
 ServerBanSystem* g_pBanSystem;
 
@@ -38,17 +39,29 @@ void ServerBanSystem::OpenBanlist()
 			if (line == "")
 				continue;
 
-			// for inline comments like: 123123123 #banned for unfunny
-			std::string uid = line.substr(0, line.find(BANLIST_COMMENT_CHAR));
+			// Parse UID and reason separated by '|'
+			std::string cleanLine = line.substr(0, line.find(BANLIST_COMMENT_CHAR));
+			std::string uidStr;
+			std::string reason;
 
-			m_vBannedUids.push_back(strtoull(uid.c_str(), nullptr, 10));
+			size_t separatorPos = cleanLine.find(BANLIST_REASON_SEPARATOR);
+			if (separatorPos != std::string::npos)
+			{
+				uidStr = cleanLine.substr(0, separatorPos);
+				reason = cleanLine.substr(separatorPos + 1);
+			}
+			else
+			{
+				uidStr = cleanLine;
+				reason = "";
+			}
+
+			uint64_t uid = strtoull(uidStr.c_str(), nullptr, 10);
+			m_vBannedPlayers.push_back({uid, reason});
 		}
 
 		banlistStream.close();
 	}
-
-	// open write stream for banlist // dont do this to allow for all time access
-	// m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
 }
 
 void ServerBanSystem::ReloadBanlist()
@@ -58,10 +71,30 @@ void ServerBanSystem::ReloadBanlist()
 	if (!fsBanlist.fail())
 	{
 		std::string line;
-		// since we wanna use this as the reload func we need to clear the list
-		m_vBannedUids.clear();
+		m_vBannedPlayers.clear();
 		while (std::getline(fsBanlist, line))
-			m_vBannedUids.push_back(strtoull(line.c_str(), nullptr, 10));
+		{
+			if (line == "" || line.front() == BANLIST_COMMENT_CHAR)
+				continue;
+
+			std::string cleanLine = line.substr(0, line.find(BANLIST_COMMENT_CHAR));
+			std::string uidStr;
+			std::string reason;
+
+			size_t separatorPos = cleanLine.find(BANLIST_REASON_SEPARATOR);
+			if (separatorPos != std::string::npos)
+			{
+				uidStr = cleanLine.substr(0, separatorPos);
+				reason = cleanLine.substr(separatorPos + 1);
+			}
+			else
+			{
+				uidStr = cleanLine;
+				reason = "";
+			}
+
+			m_vBannedPlayers.push_back({strtoull(uidStr.c_str(), nullptr, 10), reason});
+		}
 
 		fsBanlist.close();
 	}
@@ -69,7 +102,7 @@ void ServerBanSystem::ReloadBanlist()
 
 void ServerBanSystem::ClearBanlist()
 {
-	m_vBannedUids.clear();
+	m_vBannedPlayers.clear();
 
 	// reopen the file, don't provide std::ofstream::app so it clears on open
 	m_sBanlistStream.close();
@@ -77,7 +110,7 @@ void ServerBanSystem::ClearBanlist()
 	m_sBanlistStream.close();
 }
 
-void ServerBanSystem::BanUID(uint64_t uid)
+void ServerBanSystem::BanUID(uint64_t uid, const std::string& reason)
 {
 	// checking if last char is \n to make sure uids arent getting fucked
 	std::ifstream fsBanlist(GetNorthstarPrefix() + "/banlist.txt");
@@ -85,22 +118,34 @@ void ServerBanSystem::BanUID(uint64_t uid)
 	fsBanlist.close();
 
 	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
-	if (content.back() != '\n')
+	if (!content.empty() && content.back() != '\n')
 		m_sBanlistStream << std::endl;
 
-	m_vBannedUids.push_back(uid);
-	m_sBanlistStream << std::to_string(uid) << std::endl;
+	m_vBannedPlayers.push_back({uid, reason});
+
+	// Only write separator if reason is not empty
+	if (!reason.empty())
+		m_sBanlistStream << std::to_string(uid) << BANLIST_REASON_SEPARATOR << reason << std::endl;
+	else
+		m_sBanlistStream << std::to_string(uid) << std::endl;
+
 	m_sBanlistStream.close();
-	spdlog::info("{} was banned", uid);
+
+	if (!reason.empty())
+		spdlog::info("{} was banned for: {}", uid, reason);
+	else
+		spdlog::info("{} was banned", uid);
 }
 
 void ServerBanSystem::UnbanUID(uint64_t uid)
 {
-	auto findResult = std::find(m_vBannedUids.begin(), m_vBannedUids.end(), uid);
-	if (findResult == m_vBannedUids.end())
+	auto findResult =
+		std::find_if(m_vBannedPlayers.begin(), m_vBannedPlayers.end(), [uid](const BannedPlayer& player) { return player.uid == uid; });
+
+	if (findResult == m_vBannedPlayers.end())
 		return;
 
-	m_vBannedUids.erase(findResult);
+	m_vBannedPlayers.erase(findResult);
 
 	std::vector<std::string> banlistText;
 	std::ifstream fs_readBanlist(GetNorthstarPrefix() + "/banlist.txt");
@@ -110,29 +155,24 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 		std::string line;
 		while (std::getline(fs_readBanlist, line))
 		{
-			// support for comments and newlines added in https://github.com/R2Northstar/NorthstarLauncher/pull/227
-
-			std::string modLine = line; // copy the line into a free var that we can fuck with, line will be the original
-
-			// remove tabs which shouldnt be there but maybe someone did the funny
+			std::string modLine = line;
 			modLine.erase(std::remove(modLine.begin(), modLine.end(), '\t'), modLine.end());
-			// remove spaces to allow for spaces before uids
 			modLine.erase(std::remove(modLine.begin(), modLine.end(), ' '), modLine.end());
 
-			// ignore line if first char is # or empty line, just add it
 			if (line.front() == BANLIST_COMMENT_CHAR || modLine == "")
 			{
 				banlistText.push_back(line);
 				continue;
 			}
 
-			// for inline comments like: 123123123 #banned for unfunny
 			std::string lineUid = line.substr(0, line.find(BANLIST_COMMENT_CHAR));
-			// have to erase spaces or else inline comments will fuck up the uid finding
 			lineUid.erase(std::remove(lineUid.begin(), lineUid.end(), '\t'), lineUid.end());
 			lineUid.erase(std::remove(lineUid.begin(), lineUid.end(), ' '), lineUid.end());
 
-			// if the uid in the line is the uid we wanna unban
+			size_t separatorPos = lineUid.find(BANLIST_REASON_SEPARATOR);
+			if (separatorPos != std::string::npos)
+				lineUid = lineUid.substr(0, separatorPos);
+
 			if (std::to_string(uid) == lineUid)
 			{
 				// comment the uid out
@@ -165,8 +205,8 @@ void ServerBanSystem::UnbanUID(uint64_t uid)
 	// open write stream for banlist // without append so we clear the file
 	if (m_sBanlistStream.is_open())
 		m_sBanlistStream.close();
-	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 
+	m_sBanlistStream.open(GetNorthstarPrefix() + "/banlist.txt", std::ofstream::out | std::ofstream::binary);
 	for (std::string updatedLine : banlistText)
 		m_sBanlistStream << updatedLine << std::endl;
 
@@ -180,8 +220,18 @@ bool ServerBanSystem::IsUIDAllowed(uint64_t uid)
 	if (localPlayerUserID == uid)
 		return true;
 
-	ReloadBanlist(); // Reload to have up to date list on join
-	return std::find(m_vBannedUids.begin(), m_vBannedUids.end(), uid) == m_vBannedUids.end();
+	ReloadBanlist();
+	auto it =
+		std::find_if(m_vBannedPlayers.begin(), m_vBannedPlayers.end(), [uid](const BannedPlayer& player) { return player.uid == uid; });
+	return it == m_vBannedPlayers.end();
+}
+
+std::string ServerBanSystem::GetBanReason(uint64_t uid)
+{
+	auto it =
+		std::find_if(m_vBannedPlayers.begin(), m_vBannedPlayers.end(), [uid](const BannedPlayer& player) { return player.uid == uid; });
+
+	return it != m_vBannedPlayers.end() ? it->reason : "";
 }
 
 void ConCommand_ban(const CCommand& args)
@@ -189,14 +239,23 @@ void ConCommand_ban(const CCommand& args)
 	if (args.ArgC() < 2)
 		return;
 
+	std::string reason = "";
+	if (args.ArgC() >= 3)
+		reason = args.Arg(2);
+
 	for (int i = 0; i < g_pGlobals->m_nMaxClients; i++)
 	{
 		CBaseClient* player = &g_pClientArray[i];
 
 		if (!strcmp(player->m_Name, args.Arg(1)) || !strcmp(player->m_UID, args.Arg(1)))
 		{
-			g_pBanSystem->BanUID(strtoull(player->m_UID, nullptr, 10));
-			CBaseClient__Disconnect(player, 1, "Banned from server");
+			g_pBanSystem->BanUID(strtoull(player->m_UID, nullptr, 10), reason);
+
+			std::string disconnectMsg = "Banned from server";
+			if (!reason.empty())
+				disconnectMsg += ": " + reason;
+
+			CBaseClient__Disconnect(player, 1, disconnectMsg.c_str());
 			break;
 		}
 	}
@@ -215,6 +274,7 @@ void ConCommand_clearbanlist(const CCommand& args)
 {
 	NOTE_UNUSED(args);
 	g_pBanSystem->ClearBanlist();
+	spdlog::info("Banlist cleared");
 }
 
 int ConCommand_banCompletion(const char* const partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
