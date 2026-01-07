@@ -197,16 +197,10 @@ void PakLoadManager::OnPakUnloading(PakHandle handle)
 	}
 	else
 	{
-		// note: aliasing is handled the old way, long term todo: move it over to the PakLoadManager
-		// handle the potential unloading of an aliased vanilla rpak (we aliased it, and we are now unloading the alias, so we should load
-		// the vanilla one again)
-		// for (auto& [path, resultingHandle] : m_vanillaPaks)
-		//{
-		//	if (resultingHandle != handle)
-		//		continue;
-
-		//	// load vanilla rpak
-		//}
+		// you get dangling references if you don't unload all mod paks but have some loaded, these cause crashes if you download mods at runtime for example.
+		g_pPakLoadManager->UnloadAllModPaks();
+		g_pPakLoadManager->CleanUpUnloadedPaks();
+		g_pPakLoadManager->SetForceReloadOnMapLoad(true);
 	}
 
 	// set handle of the mod pak (if any) that has this handle for proper tracking
@@ -480,7 +474,7 @@ void*, __fastcall, (PakHandle nPakHandle, void* pCallback))
 // we hook this exclusively for resolving stbsp paths, but seemingly it's also used for other stuff like vpk, rpak, mprj and starpak loads
 // tbh this actually might be for memory mapped files or something, would make sense i think
 // clang-format off
-HOOK(OpenFileHook, o_pOpenFile, 
+HOOK(OpenFileHook, o_pOpenFile,
 void*, __fastcall, (const char* pPath, void* pCallback))
 // clang-format on
 {
