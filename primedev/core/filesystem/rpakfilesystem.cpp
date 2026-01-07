@@ -199,8 +199,6 @@ void PakLoadManager::OnPakUnloading(PakHandle handle)
 	{
 		// you get dangling references if you don't unload all mod paks but have some loaded, these cause crashes if you download mods at runtime for example.
 		g_pPakLoadManager->UnloadAllModPaks();
-		g_pPakLoadManager->CleanUpUnloadedPaks();
-		g_pPakLoadManager->SetForceReloadOnMapLoad(true);
 	}
 
 	// set handle of the mod pak (if any) that has this handle for proper tracking
