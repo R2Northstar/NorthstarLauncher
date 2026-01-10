@@ -91,7 +91,6 @@ bool ServerAuthenticationManager::IsDuplicateAccount(CBaseClient* pPlayer, const
 	if (m_bAllowDuplicateAccounts)
 		return false;
 
-	bool bHasUidPlayer = false;
 	for (int i = 0; i < g_pGlobals->m_nMaxClients; i++)
 		if (&g_pClientArray[i] != pPlayer && !strcmp(pPlayerUid, g_pClientArray[i].m_UID))
 			return true;
@@ -264,7 +263,21 @@ h_CBaseClient__Connect(CBaseClient* self, char* pName, void* pNetChannel, char b
 		if (!g_pServerAuthentication->VerifyPlayerName(pNextPlayerToken, pName, pVerifiedName))
 			pAuthenticationFailure = "Invalid Name.";
 		else if (!g_pBanSystem->IsUIDAllowed(iNextPlayerUid))
-			pAuthenticationFailure = "Banned From server.";
+		{
+			std::string banReason = g_pBanSystem->GetBanReason(iNextPlayerUid);
+			std::string banMessage = "Banned from server";
+
+			// Only append reason if it's not empty
+			if (!banReason.empty())
+				banMessage += ": " + banReason;
+
+			// Store in buffer to ensure message persists
+			strncpy_s(pDisconnectReason, 256, banMessage.c_str(), 255);
+			spdlog::info("{}'s (uid {}) connection was rejected: \"{}\"", pName, iNextPlayerUid, banMessage.c_str());
+
+			// Return false immediately with the ban reason
+			return false;
+		}
 		else if (!g_pServerAuthentication->CheckAuthentication(self, iNextPlayerUid, pNextPlayerToken))
 			pAuthenticationFailure = "Authentication Failed.";
 	}
