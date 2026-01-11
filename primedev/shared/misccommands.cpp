@@ -368,13 +368,14 @@ void FixupCvarFlags()
 		{"aisettings_reparse_client", FCVAR_DEVELOPMENTONLY},
 		{"damagedefs_reparse", FCVAR_DEVELOPMENTONLY},
 		{"damagedefs_reparse_client", FCVAR_DEVELOPMENTONLY},
-		{"playerSettings_reparse", FCVAR_DEVELOPMENTONLY},
-		{"_playerSettings_reparse_Server", FCVAR_DEVELOPMENTONLY},
+		{"fx_impact_reparse", FCVAR_CHEAT},
+		{"playerSettings_reparse", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT},
+		{"_playerSettings_reparse_Server", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT},
+		{"weapon_reparse", FCVAR_CHEAT},
 
 	};
 
 	const std::vector<std::tuple<const char*, const char*>> CVAR_FIXUP_DEFAULT_VALUES = {
-		{"sv_stressbots", "0"}, // not currently used but this is probably a bad default if we get bots working
 		{"cl_pred_optimize", "0"} // fixes issues with animation prediction in thirdperson
 	};
 

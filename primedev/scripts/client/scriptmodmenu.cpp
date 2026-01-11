@@ -116,7 +116,7 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pModManager->LoadMods();
