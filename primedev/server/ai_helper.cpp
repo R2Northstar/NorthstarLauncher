@@ -6,6 +6,9 @@
 
 #include "core/math/vplane.h"
 
+#include "imgui/imgui_ws_test.h"
+#include <vector>
+
 #include <fstream>
 
 const int AINET_VERSION_NUMBER = 57;
@@ -149,6 +152,43 @@ void CAI_Helper::DrawNavmeshPolys(dtNavMesh* pNavMesh)
 	}
 }
 
+static void RenderNavmeshImGui()
+{
+	auto* cvar_svCheats = g_pCVar->FindVar("sv_cheats");
+	if (cvar_svCheats == nullptr)
+	{
+		ImGui::Text("sv_cheats could not be found?");
+		return;
+	}
+	auto* cvar_enableDebugOverlays = g_pCVar->FindVar("enable_debug_overlays");
+	if (cvar_enableDebugOverlays == nullptr)
+	{
+		ImGui::Text("enable_debug_overlays could not be found?");
+		return;
+	}
+
+	bool svCheatsEnabled = cvar_svCheats->GetBool();
+	bool debugOverlaysEnabled = cvar_enableDebugOverlays->GetBool();
+
+	if (ImGui::Checkbox("sv_cheats", &svCheatsEnabled))
+		cvar_svCheats->SetValue(svCheatsEnabled);
+	if (ImGui::Checkbox("enable_debug_overlays", &debugOverlaysEnabled))
+		cvar_enableDebugOverlays->SetValue(debugOverlaysEnabled);
+
+	const char* items[] = {"NONE", "SMALL", "MED_SHORT", "MEDIUM", "TITAN"};
+	int selectedHull = Cvar_navmesh_debug_hull->GetInt();
+	if (ImGui::Combo("Hull", &selectedHull, items, 5))
+		Cvar_navmesh_debug_hull->SetValue(selectedHull);
+
+	float cameraRadius = Cvar_navmesh_debug_camera_radius->GetFloat();
+	if (ImGui::SliderFloat("Camera Radius", &cameraRadius, 0, 10000))
+		Cvar_navmesh_debug_camera_radius->SetValue(cameraRadius);
+
+	bool lossyOptimisation = Cvar_navmesh_debug_lossy_optimization->GetBool();
+	if (ImGui::Checkbox("Enable lossy optimisation", &lossyOptimisation))
+		Cvar_navmesh_debug_lossy_optimization->SetValue(lossyOptimisation);
+}
+
 ON_DLL_LOAD("server.dll", ServerAIHelper, (CModule module))
 {
 	Cvar_navmesh_debug_hull = new ConVar("navmesh_debug_hull", "0", FCVAR_RELEASE, "0 = NONE");
@@ -156,4 +196,6 @@ ON_DLL_LOAD("server.dll", ServerAIHelper, (CModule module))
 		new ConVar("navmesh_debug_camera_radius", "1000", FCVAR_RELEASE, "Radius in which to draw navmeshes");
 	Cvar_navmesh_debug_lossy_optimization =
 		new ConVar("navmesh_debug_lossy_optimization", "1", FCVAR_RELEASE, "Whether to enable lossy navmesh debug draw optimizations");
+
+	ImGuiDisplay::GetInstance().RegisterMenu("Navmesh", RenderNavmeshImGui, "");
 }
