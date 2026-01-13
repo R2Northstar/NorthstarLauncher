@@ -372,11 +372,12 @@ void FixupCvarFlags()
 		{"playerSettings_reparse", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT},
 		{"_playerSettings_reparse_Server", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT},
 		{"weapon_reparse", FCVAR_CHEAT},
+		{"weapon_reparse_server", FCVAR_HIDDEN | FCVAR_CHEAT},
 
 	};
 
 	const std::vector<std::tuple<const char*, const char*>> CVAR_FIXUP_DEFAULT_VALUES = {
-		{"sv_stressbots", "0"}, // fixes bots timing out on join during playing state in elimination based gamemodes
+		{"sv_stressbots", "0"}, // fixes bots randomly timing out on join
 		{"cl_pred_optimize", "0"} // fixes issues with animation prediction in thirdperson
 	};
 
