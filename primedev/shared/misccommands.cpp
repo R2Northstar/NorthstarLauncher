@@ -350,8 +350,8 @@ void FixupCvarFlags()
 		{"sv_stressbots", FCVAR_DEVELOPMENTONLY},
 
 		{"fatal_script_errors", FCVAR_DEVELOPMENTONLY},
-		{"fatal_script_errors_client", FCVAR_DEVELOPMENTONLY},
-		{"fatal_script_errors_server", FCVAR_DEVELOPMENTONLY},
+		{"fatal_script_errors_client", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED},
+		{"fatal_script_errors_server", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED},
 		{"script_error_on_midgame_load", FCVAR_DEVELOPMENTONLY}, // idk what this is
 
 		{"ai_ainRebuildOnMapStart", FCVAR_DEVELOPMENTONLY},
