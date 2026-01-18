@@ -68,7 +68,6 @@ class RFixedArray
 	void* buffer;
 };
 
-
 struct PakPatchCompressPair
 {
 	uint64_t compressedSize;

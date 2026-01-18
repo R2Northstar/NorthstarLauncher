@@ -1,6 +1,6 @@
 #include "pakfile.h"
 
-#define IALIGN(a, b) (((a) + ((b) - 1)) & ~((b) - 1))
+#define IALIGN(a, b) (((a) + ((b)-1)) & ~((b)-1))
 
 bool PakFile::IsValid()
 {
