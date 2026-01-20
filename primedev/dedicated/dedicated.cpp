@@ -53,6 +53,7 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
+	// initialise engine
 	g_pEngine->Frame();
 
 	// re-run commandline again
