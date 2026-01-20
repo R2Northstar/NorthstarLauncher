@@ -53,6 +53,12 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
+	g_pEngine->Frame();
+
+	// re-run commandline again
+	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
+	Cbuf_Execute();
+
 	// main loop
 	double frameTitle = 0;
 	while (g_pEngine->m_nQuitting == EngineQuitState::QUIT_NOTQUITTING)
