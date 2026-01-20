@@ -44,9 +44,6 @@ void RunServer(CDedicatedExports* dedicated)
 	spdlog::info("CDedicatedExports::RunServer(): starting");
 	spdlog::info(CommandLine()->GetCmdLine());
 
-	// initialise engine
-	g_pEngine->Frame();
-
 	// add +map if no map loading command is present
 	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
 	if (!CommandLine()->CheckParm("+map") && !CommandLine()->CheckParm("+launchplaylist"))
