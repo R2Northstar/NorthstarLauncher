@@ -377,7 +377,7 @@ void FixupCvarFlags()
 	};
 
 	const std::vector<std::tuple<const char*, const char*>> CVAR_FIXUP_DEFAULT_VALUES = {
-		{"sv_stressbots", "0"}, // fixes bots randomly timing out on join
+		{"sv_stressbots", "0"}, // fixes bots randomly timing out
 		{"cl_pred_optimize", "0"} // fixes issues with animation prediction in thirdperson
 	};
 

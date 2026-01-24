@@ -54,9 +54,10 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_Execute();
 
 	// initialise engine
+	// can't do this before first commandline re-run as mods overriding playlists_v2 will cause a fatal error on dedicated servers
 	g_pEngine->Frame();
 
-	// re-run commandline again
+	// re-run commandline again so stuff like launchplaylist work
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
