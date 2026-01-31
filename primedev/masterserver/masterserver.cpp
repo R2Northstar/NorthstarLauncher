@@ -1062,7 +1062,8 @@ void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServer
 		return;
 	}
 
-	auto url = fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), g_pMasterServerManager->m_sOwnServerId);
+	auto url =
+		fmt::format("{}/server/remove_server?id={}", Cvar_ns_masterserver_hostname->GetString(), g_pMasterServerManager->m_sOwnServerId);
 
 	// Not bothering with better thread safety in this case since DestroyPresence() is called when the game is shutting down.
 	*g_pMasterServerManager->m_sOwnServerId = 0;
@@ -1077,10 +1078,7 @@ void MasterServerPresenceReporter::DestroyPresence(const ServerPresence* pServer
 			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(
-				curl,
-				CURLOPT_URL,
-				url.c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
 			CURLcode result = curl_easy_perform(curl);
 			curl_easy_cleanup(curl);
