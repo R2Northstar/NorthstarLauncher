@@ -44,20 +44,15 @@ void RunServer(CDedicatedExports* dedicated)
 	spdlog::info("CDedicatedExports::RunServer(): starting");
 	spdlog::info(CommandLine()->GetCmdLine());
 
+	// initialise engine
+	g_pEngine->Frame();
+
 	// add +map if no map loading command is present
 	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
 	if (!CommandLine()->CheckParm("+map") && !CommandLine()->CheckParm("+launchplaylist"))
 		CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
 	// re-run commandline
-	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
-	Cbuf_Execute();
-
-	// initialise engine
-	// can't do this before first commandline re-run as mods overriding playlists_v2 will cause a fatal error on dedicated servers
-	g_pEngine->Frame();
-
-	// re-run commandline again so stuff like launchplaylist work
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
