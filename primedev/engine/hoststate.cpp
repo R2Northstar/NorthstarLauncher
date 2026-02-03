@@ -8,6 +8,7 @@
 #include "shared/exploit_fixes/ns_limits.h"
 #include "squirrel/squirrel.h"
 #include "plugins/pluginmanager.h"
+#include "imgui/imgui_ws_test.h"
 
 CHostState* g_pHostState;
 
