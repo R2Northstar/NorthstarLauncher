@@ -33,40 +33,51 @@
 
         cross = pkgs.pkgsCross.x86_64-windows;
 
-        base = cross.windows.sdk;
-        arch = "x64";
+        toolchainHelper = rec {
+          base = cross.windows.sdk;
+          arch = "x64";
+          MSVC_INCLUDE = "${base}/crt/include";
+          MSVC_LIB = "${base}/crt/lib";
+          WINSDK_INCLUDE = "${base}/sdk/Include";
+          WINSDK_LIB = "${base}/sdk/Lib";
+          mkArgs = args: builtins.concatStringsSep " " args;
+          linker = mkArgs [
+            "/manifest:no"
+            "-libpath:${MSVC_LIB}"
+            "-libpath:${WINSDK_LIB}/ucrt/${arch}"
+            "-libpath:${WINSDK_LIB}/um/${arch}"
+            "-libpath:${WINSDK_LIB}/${arch}"
+            "-libpath:${MSVC_LIB}/${arch}"
+          ];
+          compiler = mkArgs [
+            "/vctoolsdir ${cross.windows.sdk}/crt"
+            "/winsdkdir ${cross.windows.sdk}/sdk"
+            # tbh I am not sure what is exactly needed here since I just copied a execiting toolchain file from somewhere
+            # if it causes problems remove it but since it doesn't cause I don't see any reason in removing this
+            # thougths?
+            "/EHs"
+            "-D_CRT_SECURE_NO_WARNINGS"
+            "--target=x86_64-windows-msvc"
+            "-fms-compatibility-version=19.11"
+            "-imsvc ${MSVC_INCLUDE}"
+            "-imsvc ${WINSDK_INCLUDE}/ucrt"
+            "-imsvc ${WINSDK_INCLUDE}/shared"
+            "-imsvc ${WINSDK_INCLUDE}/um"
+            "-imsvc ${WINSDK_INCLUDE}/winrt"
+          ];
+        };
 
         toolchainFile =
           let
-            MSVC_INCLUDE = "${base}/crt/include";
-            MSVC_LIB = "${base}/crt/lib";
-            WINSDK_INCLUDE = "${base}/sdk/Include";
-            WINSDK_LIB = "${base}/sdk/Lib";
-            mkArgs = args: builtins.concatStringsSep " " args;
-            linker = mkArgs [
-              "/manifest:no"
-              "-libpath:${MSVC_LIB}"
-              "-libpath:${WINSDK_LIB}/ucrt/${arch}"
-              "-libpath:${WINSDK_LIB}/um/${arch}"
-              "-libpath:${WINSDK_LIB}/${arch}"
-              "-libpath:${MSVC_LIB}/${arch}"
-            ];
-            compiler = mkArgs [
-              "/vctoolsdir ${cross.windows.sdk}/crt"
-              "/winsdkdir ${cross.windows.sdk}/sdk"
-              # tbh I am not sure what is exactly needed here since I just copied a execiting toolchain file from somewhere
-              # if it causes problems remove it but since it doesn't cause I don't see any reason in removing this
-              # thougths?
-              "/EHs"
-              "-D_CRT_SECURE_NO_WARNINGS"
-              "--target=x86_64-windows-msvc"
-              "-fms-compatibility-version=19.11"
-              "-imsvc ${MSVC_INCLUDE}"
-              "-imsvc ${WINSDK_INCLUDE}/ucrt"
-              "-imsvc ${WINSDK_INCLUDE}/shared"
-              "-imsvc ${WINSDK_INCLUDE}/um"
-              "-imsvc ${WINSDK_INCLUDE}/winrt"
-            ];
+            inherit (toolchainHelper)
+              linker
+              compiler
+              WINSDK_INCLUDE
+              WINSDK_LIB
+              MSVC_INCLUDE
+              MSVC_LIB
+              ;
+
           in
           pkgs.writeText "WindowsToolchain.cmake" ''
             set(CMAKE_SYSTEM_NAME Windows)
@@ -107,12 +118,8 @@
             set(CMAKE_VERBOSE_MAKEFILE ON)
           '';
 
-        mkBuildDir = /* bash */ ''
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchainFile} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
-        '';
-        mkBuildDirShell = /* bash */ ''
-          ${pkgs.bear} -- ${mkBuildDir} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-        '';
+        mkBuildDir = /* bash */ "cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchainFile} -DCMAKE_POLICY_VERSION_MINIMUM=3.5";
+        mkBuildDirShell = mkBuildDir + " -DCMAKE_EXPORT_COMPILE_COMMANDS=1";
 
         lib = pkgs.lib;
 
@@ -258,7 +265,7 @@
                 ${mkBuildDirShell}
                 cmake --build build/
               '')
-              (pkgs.writeShellScriptBin "init-ns" mkBuildDirShell)
+              (pkgs.writeShellScriptBin "generate-build-ns" mkBuildDirShell)
               (pkgs.writeShellScriptBin "build-ns" "cmake --build build/")
             ];
 
@@ -266,16 +273,28 @@
               cross.windows.sdk
             ];
 
-            shellHook = ''
-              cp -f ${pkgs.writeText ".clangd" ''
-                CompileFlags:
-                  CompilationDatabase: "cmake"
-              ''} .clangd
-              echo "Northstar shell init"
-              echo "    init-ns: setups the build dir for cmake and stuff"
-              echo "    build-ns: incrementally re/builds northstar"
-              echo "    rebuild-ns: builds northstar"
-            '';
+            shellHook =
+              let
+                inherit (toolchainHelper) MSVC_INCLUDE WINSDK_INCLUDE;
+                includes = [
+                  "${MSVC_INCLUDE}"
+                  "${WINSDK_INCLUDE}/ucrt"
+                  "${WINSDK_INCLUDE}/shared"
+                  "${WINSDK_INCLUDE}/um"
+                  "${WINSDK_INCLUDE}/winrt"
+                ];
+              in
+              /* bash */ ''
+                cp -f ${pkgs.writeText ".clangd" ''
+                  CompileFlags:
+                    CompilationDatabase: "cmake"
+                ''} .clangd
+                export CPATH="${lib.makeLibraryPath includes}"
+                echo "Northstar shell init"
+                echo "    generate-build-ns: setups the build dir for cmake"
+                echo "    build-ns: incrementally re/builds northstar"
+                echo "    rebuild-ns: builds northstar"
+              '';
           };
           default = self.devShells.${system}.no-auto-build;
         };
