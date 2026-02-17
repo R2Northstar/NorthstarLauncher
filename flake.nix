@@ -258,6 +258,7 @@
               cross.zlib
               pkg-config
 
+              # this helpful for testing the dev shell so I am not removing this yet
               (pkgs.writeShellScriptBin "rebuild-ns" ''
                 rm -rf build/
                 mkdir -p build
@@ -266,7 +267,6 @@
                 cmake --build build/
               '')
               (pkgs.writeShellScriptBin "generate-build-ns" mkBuildDirShell)
-              (pkgs.writeShellScriptBin "build-ns" "cmake --build build/")
             ];
 
             buildInputs = [
@@ -291,9 +291,7 @@
                 ''} .clangd
                 export CPATH="${lib.makeLibraryPath includes}"
                 echo "Northstar shell init"
-                echo "    generate-build-ns: setups the build dir for cmake"
-                echo "    build-ns: incrementally re/builds northstar"
-                echo "    rebuild-ns: builds northstar"
+                echo "    generate-build-ns: generate build files for cmake"
               '';
           };
           default = self.devShells.${system}.no-auto-build;

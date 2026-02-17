@@ -64,8 +64,5 @@ As such the corresponding commands are
 Using the nix package manager to build northstar is just as simple as `nix build github:R2Northstar/NorthstarLauncher` or `nix build` inside the repo.
 
 A development shell exists as well : `nix develop`
-
-where to due to how it's packaged one must use the following commands to build northstar
-- build-ns
-- rebuild-ns
-- init-ns
+1. To generate build files Run `generate-build-ns` (this is required since a custom toolchain file must be used).
+2. Run `cmake --build build/` to build the project.
