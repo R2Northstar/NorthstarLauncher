@@ -54,6 +54,9 @@
             compiler = mkArgs [
               "/vctoolsdir ${cross.windows.sdk}/crt"
               "/winsdkdir ${cross.windows.sdk}/sdk"
+              # tbh I am not sure what is exactly needed here since I just copied a execiting toolchain file from somewhere
+              # if it causes problems remove it but since it doesn't cause I don't see any reason in removing this
+              # thougths?
               "/EHs"
               "-D_CRT_SECURE_NO_WARNINGS"
               "--target=x86_64-windows-msvc"
@@ -69,7 +72,7 @@
             set(CMAKE_SYSTEM_NAME Windows)
             set(CMAKE_SYSTEM_VERSION 10.0)
             set(CMAKE_SYSTEM_PROCESSOR x86_64)
-            set(IS_NIX_ENV 1) # for a check somewhere down the line
+            set(IS_NIX_ENV 1) # for a check somewhere down the line (in one of the CMakeList.cmake)
 
             set(CMAKE_C_COMPILER "clang-cl")
             set(CMAKE_CXX_COMPILER "clang-cl")
@@ -107,9 +110,9 @@
         mkBuildDir = /* bash */ ''
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchainFile} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         '';
-    	mkBuildDirShell = /*bash*/ ''
-    		${pkgs.bear} -- ${mkBuildDir} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-    	'';
+        mkBuildDirShell = /* bash */ ''
+          ${pkgs.bear} -- ${mkBuildDir} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+        '';
 
         lib = pkgs.lib;
 
@@ -144,9 +147,11 @@
         };
 
         packages = {
-          northstar = pkgs.stdenv.mkDerivation {
+          northstar = pkgs.stdenv.mkDerivation (finalAttrs: {
             pname = "NorthstarLauncher";
-            version = "0.0.0";
+            # version should be in the format "0.0.0" or things migth break
+            # if it needs to change update the version coide in postPatch
+            version = "0.0.0"; # TODO: get a some action to update the version
 
             src = self;
 
@@ -183,6 +188,9 @@
                   rev = "9f0f2d4f9f1f28be7e16d8bf3b4e9d4ada70aa9f";
                   hash = "sha256-PL6lH7I4qGduaVTR1pGfXUjpZp41kUERvGrqERmSoNQ=";
                 };
+                versionSeq = (lib.strings.splitString "." finalAttrs.version);
+                versionAt = index: builtins.elemAt versionSeq index;
+                versionQuadruplet = "${versionAt 0},${versionAt 1},${versionAt 2},0";
               in
               ''
                 mkdir -p $TMPDIR/cloned
@@ -197,6 +205,13 @@
                   set(ZLIB_SOURCE_DIR $zlib_src)
                   set(ZLIB_BINARY_DIR $zlib_src)
                   	"
+
+                substituteInPlace primedev/ns_version.h \
+                  --replace "#define NORTHSTAR_VERSION 0,0,0,1" "#define NORTHSTAR_VERSION ${versionQuadruplet}"
+                substituteInPlace primedev/resources.rc \
+                  --replace "DEV" "${finalAttrs.version}"
+                substituteInPlace primedev/primelauncher/resources.rc \
+                  --replace "DEV" "${finalAttrs.version}"
               '';
 
             buildPhase = ''
@@ -209,7 +224,7 @@
 
             installPhase = ''
               mkdir -p $out
-              cp -r build/game $out
+              cp -r build/game/* $out
             '';
 
             meta = {
@@ -220,7 +235,7 @@
               platforms = [ "x86_64-linux" ];
               maintainers = [ ];
             };
-          };
+          });
           default = self.packages.${system}.northstar;
         };
 

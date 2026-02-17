@@ -96,14 +96,15 @@ jobs:
       - name: Build
         run: nix build
 
-      # # Uncomment to debug this job
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
+      - name: Extract Short Commit Hash
+        id: extract
+        shell: bash
+        run: echo commit=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: NorthstarLauncher-NIX-${{ steps.extract.outputs.commit }}
           path: |
             result/
 
