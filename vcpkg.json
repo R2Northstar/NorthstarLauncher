@@ -1,0 +1,7 @@
+{
+	"dependencies": [
+		"zlib",
+		"openssl",
+		"libuv"
+	]
+}

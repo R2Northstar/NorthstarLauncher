@@ -38,4 +38,6 @@ namespace fs = std::filesystem;
 #include "silver-bun/memaddr.h"
 #include "core/hooks.h"
 
+#include "imgui/imgui/imgui.h"
+
 #endif

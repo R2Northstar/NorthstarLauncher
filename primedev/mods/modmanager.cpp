@@ -6,6 +6,7 @@
 #include "core/filesystem/filesystem.h"
 #include "core/filesystem/rpakfilesystem.h"
 #include "config/profile.h"
+#include "imgui/imgui_ws_test.h"
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/document.h"
@@ -878,9 +879,20 @@ fs::path GetCompiledAssetsPath()
 	return fs::path(GetNorthstarPrefix()) / COMPILED_ASSETS_SUFFIX;
 }
 
+static void RenderImGuiMenu()
+{
+	for (auto& mod : g_pModManager->m_LoadedMods)
+	{
+		ImGui::NewLine();
+		ImGui::Text("%s %s", mod.Name.c_str(), mod.m_bEnabled ? "(ENABLED)" : "(DISABLED)");
+	}
+}
+
 ON_DLL_LOAD_RELIESON("engine.dll", ModManager, (ConCommand, MasterServer), (CModule module))
 {
 	g_pModManager = new ModManager;
 
 	RegisterConCommand("reload_mods", ConCommand_reload_mods, "reloads mods", FCVAR_NONE);
+
+	ImGuiDisplay::GetInstance().RegisterMenu("ModManager", RenderImGuiMenu, nullptr);
 }
