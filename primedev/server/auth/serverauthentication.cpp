@@ -23,13 +23,17 @@
 ServerAuthenticationManager* g_pServerAuthentication;
 CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 
-void ServerAuthenticationManager::AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata)
+void ServerAuthenticationManager::AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata, std::string clanTag)
 {
 	std::string uidS = std::to_string(uid);
 
 	RemoteAuthData newAuthData {};
 	strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), uidS.c_str(), uidS.length());
 	strncpy_s(newAuthData.username, sizeof(newAuthData.username), username.c_str(), username.length());
+	if ( !clanTag.empty() )
+		strncpy_s(newAuthData.clanTag, sizeof(newAuthData.clanTag), clanTag.c_str(), sizeof(newAuthData.clanTag) - 1);
+	else
+		newAuthData.clanTag[0] = '\0';
 	newAuthData.pdata = new char[pdata.length()];
 	newAuthData.pdataSize = pdata.length();
 	memcpy(newAuthData.pdata, pdata.c_str(), newAuthData.pdataSize);
@@ -162,6 +166,11 @@ void ServerAuthenticationManager::AuthenticatePlayer(CBaseClient* pPlayer, uint6
 
 		// set persistent data as ready
 		pPlayer->m_iPersistenceReady = ePersistenceReady::READY_REMOTE;
+
+		if ( authData->second.clanTag[0] != '\0' )
+		{
+			strncpy_s(pPlayer->m_ClanTag, sizeof(pPlayer->m_ClanTag), authData->second.clanTag, sizeof(pPlayer->m_ClanTag) - 1);
+		}
 	}
 	// we probably allow insecure at this point, but make sure not to write anyway if not insecure
 	else if (Cvar_ns_auth_allow_insecure->GetBool())
