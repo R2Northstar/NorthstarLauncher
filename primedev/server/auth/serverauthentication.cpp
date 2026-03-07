@@ -30,7 +30,7 @@ void ServerAuthenticationManager::AddRemotePlayer(std::string token, uint64_t ui
 	RemoteAuthData newAuthData {};
 	strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), uidS.c_str(), uidS.length());
 	strncpy_s(newAuthData.username, sizeof(newAuthData.username), username.c_str(), username.length());
-	if ( !clanTag.empty() )
+	if (!clanTag.empty())
 		strncpy_s(newAuthData.clanTag, sizeof(newAuthData.clanTag), clanTag.c_str(), sizeof(newAuthData.clanTag) - 1);
 	else
 		newAuthData.clanTag[0] = '\0';
@@ -167,7 +167,7 @@ void ServerAuthenticationManager::AuthenticatePlayer(CBaseClient* pPlayer, uint6
 		// set persistent data as ready
 		pPlayer->m_iPersistenceReady = ePersistenceReady::READY_REMOTE;
 
-		if ( authData->second.clanTag[0] != '\0' )
+		if (authData->second.clanTag[0] != '\0')
 		{
 			strncpy_s(pPlayer->m_ClanTag, sizeof(pPlayer->m_ClanTag), authData->second.clanTag, sizeof(pPlayer->m_ClanTag) - 1);
 		}
