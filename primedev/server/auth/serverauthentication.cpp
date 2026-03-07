@@ -23,7 +23,8 @@
 ServerAuthenticationManager* g_pServerAuthentication;
 CBaseServer__RejectConnectionType CBaseServer__RejectConnection;
 
-void ServerAuthenticationManager::AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata, std::string clanTag)
+void ServerAuthenticationManager::AddRemotePlayer(
+	std::string token, uint64_t uid, std::string username, std::string pdata, std::string clanTag)
 {
 	std::string uidS = std::to_string(uid);
 
