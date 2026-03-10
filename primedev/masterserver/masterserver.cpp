@@ -1486,63 +1486,61 @@ void MasterServerPresenceReporter::InternalUpdateServer(const ServerPresence* pS
 
 bool MasterServerManager::SetLocalPlayerClanTag(const std::string clan_tag)
 {
-    CURL* curl = curl_easy_init();
-    if (!curl)
-        return false;
+	CURL* curl = curl_easy_init();
+	if (!curl)
+		return false;
 
-    SetCommonHttpClientOptions(curl);
+	SetCommonHttpClientOptions(curl);
 
-    auto ReturnCleanup = [curl](bool result) -> bool
-    {
-        curl_easy_cleanup(curl);
-        return result;
-    };
+	auto ReturnCleanup = [curl](bool result) -> bool
+	{
+		curl_easy_cleanup(curl);
+		return result;
+	};
 
-    std::string urlBase = fmt::format(
-        "{}/accounts/set_clan_tag?id={}&playerToken={}&tag={}",
-        Cvar_ns_masterserver_hostname->GetString(),
-        g_pLocalPlayerUserID,
-        m_sOwnClientAuthToken,
-        clan_tag
-    );
+	std::string urlBase = fmt::format(
+		"{}/accounts/set_clan_tag?id={}&playerToken={}&tag={}",
+		Cvar_ns_masterserver_hostname->GetString(),
+		g_pLocalPlayerUserID,
+		m_sOwnClientAuthToken,
+		clan_tag);
 
-    curl_easy_setopt(curl, CURLOPT_URL, urlBase.c_str());
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
+	curl_easy_setopt(curl, CURLOPT_URL, urlBase.c_str());
+	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteToStringBufferCallback);
 
-    std::string readBuffer;
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+	std::string readBuffer;
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
-    CURLcode result = curl_easy_perform(curl);
+	CURLcode result = curl_easy_perform(curl);
 
-    if (result != CURLcode::CURLE_OK)
-    {
-        spdlog::error("Failed performing SetClanTag request: {}", curl_easy_strerror(result));
-        m_bSuccessfullyConnected = false;
-        return ReturnCleanup(false);
-    }
+	if (result != CURLcode::CURLE_OK)
+	{
+		spdlog::error("Failed performing SetClanTag request: {}", curl_easy_strerror(result));
+		m_bSuccessfullyConnected = false;
+		return ReturnCleanup(false);
+	}
 
-    m_bSuccessfullyConnected = true;
+	m_bSuccessfullyConnected = true;
 
-    rapidjson_document doc;
-    doc.Parse(readBuffer.c_str());
+	rapidjson_document doc;
+	doc.Parse(readBuffer.c_str());
 
-    if (doc.HasParseError())
-    {
-        spdlog::error(
-            "Failed reading SetClanTag response: encountered parse error \"{}\"",
-            rapidjson::GetParseError_En(doc.GetParseError()));
-        return ReturnCleanup(false);
-    }
+	if (doc.HasParseError())
+	{
+		spdlog::error(
+			"Failed reading SetClanTag response: encountered parse error \"{}\"", rapidjson::GetParseError_En(doc.GetParseError()));
+		return ReturnCleanup(false);
+	}
 
-    if (doc["success"].IsTrue())
-    {
-        spdlog::info("Successfully set clan tag for {}", clan_tag);
-        return ReturnCleanup(true);
-    }
-    else
-    {
-        spdlog::error("SetClanTag request failed Response: {}", readBuffer);
-        return ReturnCleanup(false);
-    }
+	if (doc["success"].IsTrue())
+	{
+		spdlog::info("Successfully set clan tag for {}", clan_tag);
+		return ReturnCleanup(true);
+	}
+	else
+	{
+		spdlog::error("SetClanTag request failed Response: {}", readBuffer);
+		return ReturnCleanup(false);
+	}
 }
