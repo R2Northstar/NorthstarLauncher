@@ -10,11 +10,9 @@ void* (*GetWeaponOwner)(uint64_t weapon_entity);
 static bool (__fastcall* o_pOnWeaponAttack)(uint64_t a1, int a2) = nullptr;
 static bool __fastcall h_pOnWeaponAttack(uint64_t a1, int a2)
 {
-	void* player = GetWeaponOwner(a1);
-	int weapon_name_index = *(int32_t*)(a1 + 0x12D8);
-	auto weapon_name = GetWeaponName(weapon_name_index);
+	auto weapon_name = GetWeaponName(*(int32_t*)(a1 + 0x12D8));
 	int shotsFired = 1;
-	auto player_inst = g_pSquirrel[ScriptContext::SERVER]->__sq_createscriptinstance(player);
+	auto player_inst = g_pSquirrel[ScriptContext::SERVER]->__sq_createscriptinstance(GetWeaponOwner(a1));
 	auto weapon_inst = g_pSquirrel[ScriptContext::SERVER]->__sq_createscriptinstance((void*)a1);
 	g_pSquirrel[ScriptContext::SERVER]->Call("CodeCallback_OnWeaponAttack", player_inst, weapon_inst, weapon_name, shotsFired);
 	return o_pOnWeaponAttack(a1, a2);
