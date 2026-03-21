@@ -7,7 +7,7 @@ const char* (*GetWeaponName)(int index);
 void* (*GetWeaponOwner)(uint64_t weapon_entity);
 
 
-static bool (__fastcall* o_pOnWeaponAttack)(uint64_t a1, int a2) = nullptr;
+static bool(__fastcall* o_pOnWeaponAttack)(uint64_t a1, int a2) = nullptr;
 static bool __fastcall h_pOnWeaponAttack(uint64_t a1, int a2)
 {
 	auto weapon_name = GetWeaponName(*(int32_t*)(a1 + 0x12D8));
