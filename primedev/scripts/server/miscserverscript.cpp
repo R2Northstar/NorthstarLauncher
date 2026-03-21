@@ -100,12 +100,7 @@ ADD_SQFUNC(
 	return SQRESULT_NOTNULL;
 }
 
-ADD_SQFUNC(
-	"void",
-	NSSendClientPrint,
-	"entity player, string msg",
-	"Sends a message to the player's console",
-	ScriptContext::SERVER)
+ADD_SQFUNC("void", NSSendClientPrint, "entity player, string msg", "Sends a message to the player's console", ScriptContext::SERVER)
 {
 	const CBasePlayer* pPlayer = g_pSquirrel[context]->template getentity<CBasePlayer>(sqvm, 1);
 	const char* msg = g_pSquirrel[context]->getstring(sqvm, 2);
