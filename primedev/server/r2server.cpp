@@ -6,7 +6,7 @@ CBasePlayer*(__fastcall* UTIL_PlayerByIndex)(int playerIndex);
 uint64_t* GlobalEntList = nullptr;
 const char* (*GetWeaponName)(int index);
 
-static bool (__fastcall* o_pOnWeaponAttack)(uint64_t a1, int a2) = nullptr;
+static bool(__fastcall* o_pOnWeaponAttack)(uint64_t a1, int a2) = nullptr;
 static bool __fastcall h_pOnWeaponAttack(uint64_t a1, int a2)
 {
 	int owner_index = *(int32_t*)(a1 + 0xEB8);
