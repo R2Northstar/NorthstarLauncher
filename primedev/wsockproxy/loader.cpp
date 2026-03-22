@@ -25,6 +25,7 @@ bool GetExePathWide(wchar_t* dest, DWORD destSize)
 	return length && PathRemoveFileSpecW(dest);
 }
 
+
 void LibraryLoadError(DWORD dwMessageId, const wchar_t* libName, const wchar_t* location)
 {
 	char text[4096];

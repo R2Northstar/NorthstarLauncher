@@ -11,46 +11,45 @@
 #include <mutex>
 #include <string>
 
-namespace spdlog
+namespace spdlog {
+namespace sinks {
+/*
+ * Trivial file sink with single file as target
+ */
+template<typename Mutex>
+class basic_file_sink final : public base_sink<Mutex>
 {
-	namespace sinks
-	{
-		/*
-		 * Trivial file sink with single file as target
-		 */
-		template <typename Mutex> class basic_file_sink final : public base_sink<Mutex>
-		{
-		public:
-			explicit basic_file_sink(const filename_t& filename, bool truncate = false);
-			const filename_t& filename() const;
+public:
+    explicit basic_file_sink(const filename_t &filename, bool truncate = false);
+    const filename_t &filename() const;
 
-		protected:
-			void sink_it_(const details::log_msg& msg) override;
-			void flush_() override;
+protected:
+    void sink_it_(const details::log_msg &msg) override;
+    void flush_() override;
 
-		private:
-			details::file_helper file_helper_;
-		};
+private:
+    details::file_helper file_helper_;
+};
 
-		using basic_file_sink_mt = basic_file_sink<std::mutex>;
-		using basic_file_sink_st = basic_file_sink<details::null_mutex>;
+using basic_file_sink_mt = basic_file_sink<std::mutex>;
+using basic_file_sink_st = basic_file_sink<details::null_mutex>;
 
-	} // namespace sinks
+} // namespace sinks
 
-	//
-	// factory functions
-	//
-	template <typename Factory = spdlog::synchronous_factory>
-	inline std::shared_ptr<logger> basic_logger_mt(const std::string& logger_name, const filename_t& filename, bool truncate = false)
-	{
-		return Factory::template create<sinks::basic_file_sink_mt>(logger_name, filename, truncate);
-	}
+//
+// factory functions
+//
+template<typename Factory = spdlog::synchronous_factory>
+inline std::shared_ptr<logger> basic_logger_mt(const std::string &logger_name, const filename_t &filename, bool truncate = false)
+{
+    return Factory::template create<sinks::basic_file_sink_mt>(logger_name, filename, truncate);
+}
 
-	template <typename Factory = spdlog::synchronous_factory>
-	inline std::shared_ptr<logger> basic_logger_st(const std::string& logger_name, const filename_t& filename, bool truncate = false)
-	{
-		return Factory::template create<sinks::basic_file_sink_st>(logger_name, filename, truncate);
-	}
+template<typename Factory = spdlog::synchronous_factory>
+inline std::shared_ptr<logger> basic_logger_st(const std::string &logger_name, const filename_t &filename, bool truncate = false)
+{
+    return Factory::template create<sinks::basic_file_sink_st>(logger_name, filename, truncate);
+}
 
 } // namespace spdlog
 

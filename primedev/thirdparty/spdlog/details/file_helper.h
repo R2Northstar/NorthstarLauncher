@@ -6,54 +6,52 @@
 #include <spdlog/common.h>
 #include <tuple>
 
-namespace spdlog
+namespace spdlog {
+namespace details {
+
+// Helper class for file sinks.
+// When failing to open a file, retry several times(5) with a delay interval(10 ms).
+// Throw spdlog_ex exception on errors.
+
+class SPDLOG_API file_helper
 {
-	namespace details
-	{
+public:
+    explicit file_helper() = default;
 
-		// Helper class for file sinks.
-		// When failing to open a file, retry several times(5) with a delay interval(10 ms).
-		// Throw spdlog_ex exception on errors.
+    file_helper(const file_helper &) = delete;
+    file_helper &operator=(const file_helper &) = delete;
+    ~file_helper();
 
-		class SPDLOG_API file_helper
-		{
-		public:
-			explicit file_helper() = default;
+    void open(const filename_t &fname, bool truncate = false);
+    void reopen(bool truncate);
+    void flush();
+    void close();
+    void write(const memory_buf_t &buf);
+    size_t size() const;
+    const filename_t &filename() const;
 
-			file_helper(const file_helper&) = delete;
-			file_helper& operator=(const file_helper&) = delete;
-			~file_helper();
+    //
+    // return file path and its extension:
+    //
+    // "mylog.txt" => ("mylog", ".txt")
+    // "mylog" => ("mylog", "")
+    // "mylog." => ("mylog.", "")
+    // "/dir1/dir2/mylog.txt" => ("/dir1/dir2/mylog", ".txt")
+    //
+    // the starting dot in filenames is ignored (hidden files):
+    //
+    // ".mylog" => (".mylog". "")
+    // "my_folder/.mylog" => ("my_folder/.mylog", "")
+    // "my_folder/.mylog.txt" => ("my_folder/.mylog", ".txt")
+    static std::tuple<filename_t, filename_t> split_by_extension(const filename_t &fname);
 
-			void open(const filename_t& fname, bool truncate = false);
-			void reopen(bool truncate);
-			void flush();
-			void close();
-			void write(const memory_buf_t& buf);
-			size_t size() const;
-			const filename_t& filename() const;
-
-			//
-			// return file path and its extension:
-			//
-			// "mylog.txt" => ("mylog", ".txt")
-			// "mylog" => ("mylog", "")
-			// "mylog." => ("mylog.", "")
-			// "/dir1/dir2/mylog.txt" => ("/dir1/dir2/mylog", ".txt")
-			//
-			// the starting dot in filenames is ignored (hidden files):
-			//
-			// ".mylog" => (".mylog". "")
-			// "my_folder/.mylog" => ("my_folder/.mylog", "")
-			// "my_folder/.mylog.txt" => ("my_folder/.mylog", ".txt")
-			static std::tuple<filename_t, filename_t> split_by_extension(const filename_t& fname);
-
-		private:
-			const int open_tries_ = 5;
-			const int open_interval_ = 10;
-			std::FILE* fd_ {nullptr};
-			filename_t filename_;
-		};
-	} // namespace details
+private:
+    const int open_tries_ = 5;
+    const int open_interval_ = 10;
+    std::FILE *fd_{nullptr};
+    filename_t filename_;
+};
+} // namespace details
 } // namespace spdlog
 
 #ifdef SPDLOG_HEADER_ONLY

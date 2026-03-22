@@ -14,27 +14,25 @@
 #include <functional>
 #include <mutex>
 #include <thread>
-namespace spdlog
+namespace spdlog {
+namespace details {
+
+class SPDLOG_API periodic_worker
 {
-	namespace details
-	{
+public:
+    periodic_worker(const std::function<void()> &callback_fun, std::chrono::seconds interval);
+    periodic_worker(const periodic_worker &) = delete;
+    periodic_worker &operator=(const periodic_worker &) = delete;
+    // stop the worker thread and join it
+    ~periodic_worker();
 
-		class SPDLOG_API periodic_worker
-		{
-		public:
-			periodic_worker(const std::function<void()>& callback_fun, std::chrono::seconds interval);
-			periodic_worker(const periodic_worker&) = delete;
-			periodic_worker& operator=(const periodic_worker&) = delete;
-			// stop the worker thread and join it
-			~periodic_worker();
-
-		private:
-			bool active_;
-			std::thread worker_thread_;
-			std::mutex mutex_;
-			std::condition_variable cv_;
-		};
-	} // namespace details
+private:
+    bool active_;
+    std::thread worker_thread_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+};
+} // namespace details
 } // namespace spdlog
 
 #ifdef SPDLOG_HEADER_ONLY
