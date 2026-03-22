@@ -13,12 +13,12 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID)
 	if (reason == DLL_PROCESS_ATTACH)
 	{
 		// Tell the OS we don't need to know about threads
-        DisableThreadLibraryCalls(hInst);
+		DisableThreadLibraryCalls(hInst);
 
 		if (!ProvisionNorthstar()) // does not call InitialiseNorthstar yet, will do it on LauncherMain hook
 			return true;
 
-        GetSystemDirectoryW(wsockPath, 4096);
+		GetSystemDirectoryW(wsockPath, 4096);
 		swprintf_s(wsockPath, 4096, L"%s\\wsock32.dll", wsockPath);
 
 		hL = LoadLibraryExW(wsockPath, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -59,16 +59,52 @@ extern "C"
 	FARPROC PA = NULL;
 	int RunASM();
 
-	void PROXY_EnumProtocolsA() { p[1](); }
-	void PROXY_EnumProtocolsW() { p[2](); }
-	void PROXY_GetAddressByNameA() { p[4](); }
-	void PROXY_GetAddressByNameW() { p[5](); }
-	void PROXY_WEP() { p[17](); }
-	void PROXY_WSARecvEx() { p[30](); }
-	void PROXY___WSAFDIsSet() { p[36](); }
-	void PROXY_getnetbyname() { p[45](); }
-	void PROXY_getsockopt() { p[52](); }
-	void PROXY_inet_network() { p[56](); }
-	void PROXY_s_perror() { p[67](); }
-	void PROXY_setsockopt() { p[72](); }
+	void PROXY_EnumProtocolsA()
+	{
+		p[1]();
+	}
+	void PROXY_EnumProtocolsW()
+	{
+		p[2]();
+	}
+	void PROXY_GetAddressByNameA()
+	{
+		p[4]();
+	}
+	void PROXY_GetAddressByNameW()
+	{
+		p[5]();
+	}
+	void PROXY_WEP()
+	{
+		p[17]();
+	}
+	void PROXY_WSARecvEx()
+	{
+		p[30]();
+	}
+	void PROXY___WSAFDIsSet()
+	{
+		p[36]();
+	}
+	void PROXY_getnetbyname()
+	{
+		p[45]();
+	}
+	void PROXY_getsockopt()
+	{
+		p[52]();
+	}
+	void PROXY_inet_network()
+	{
+		p[56]();
+	}
+	void PROXY_s_perror()
+	{
+		p[67]();
+	}
+	void PROXY_setsockopt()
+	{
+		p[72]();
+	}
 }

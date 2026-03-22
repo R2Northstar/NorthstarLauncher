@@ -24,58 +24,60 @@
 // Will attempt to reconnect if connection drops.
 // If more complicated behaviour is needed (i.e get responses), you can inherit it and override the sink_it_ method.
 
-namespace spdlog {
-namespace sinks {
-
-struct tcp_sink_config
+namespace spdlog
 {
-    std::string server_host;
-    int server_port;
-    bool lazy_connect = false; // if true connect on first log call instead of on construction
+	namespace sinks
+	{
 
-    tcp_sink_config(std::string host, int port)
-        : server_host{std::move(host)}
-        , server_port{port}
-    {}
-};
+		struct tcp_sink_config
+		{
+			std::string server_host;
+			int server_port;
+			bool lazy_connect = false; // if true connect on first log call instead of on construction
 
-template<typename Mutex>
-class tcp_sink : public spdlog::sinks::base_sink<Mutex>
-{
-public:
-    // connect to tcp host/port or throw if failed
-    // host can be hostname or ip address
+			tcp_sink_config(std::string host, int port)
+				: server_host {std::move(host)}
+				, server_port {port}
+			{
+			}
+		};
 
-    explicit tcp_sink(tcp_sink_config sink_config)
-        : config_{std::move(sink_config)}
-    {
-        if (!config_.lazy_connect)
-        {
-            this->client_.connect(config_.server_host, config_.server_port);
-        }
-    }
+		template <typename Mutex> class tcp_sink : public spdlog::sinks::base_sink<Mutex>
+		{
+		public:
+			// connect to tcp host/port or throw if failed
+			// host can be hostname or ip address
 
-    ~tcp_sink() override = default;
+			explicit tcp_sink(tcp_sink_config sink_config)
+				: config_ {std::move(sink_config)}
+			{
+				if (!config_.lazy_connect)
+				{
+					this->client_.connect(config_.server_host, config_.server_port);
+				}
+			}
 
-protected:
-    void sink_it_(const spdlog::details::log_msg &msg) override
-    {
-        spdlog::memory_buf_t formatted;
-        spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-        if (!client_.is_connected())
-        {
-            client_.connect(config_.server_host, config_.server_port);
-        }
-        client_.send(formatted.data(), formatted.size());
-    }
+			~tcp_sink() override = default;
 
-    void flush_() override {}
-    tcp_sink_config config_;
-    details::tcp_client client_;
-};
+		protected:
+			void sink_it_(const spdlog::details::log_msg& msg) override
+			{
+				spdlog::memory_buf_t formatted;
+				spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+				if (!client_.is_connected())
+				{
+					client_.connect(config_.server_host, config_.server_port);
+				}
+				client_.send(formatted.data(), formatted.size());
+			}
 
-using tcp_sink_mt = tcp_sink<std::mutex>;
-using tcp_sink_st = tcp_sink<spdlog::details::null_mutex>;
+			void flush_() override {}
+			tcp_sink_config config_;
+			details::tcp_client client_;
+		};
 
-} // namespace sinks
+		using tcp_sink_mt = tcp_sink<std::mutex>;
+		using tcp_sink_st = tcp_sink<spdlog::details::null_mutex>;
+
+	} // namespace sinks
 } // namespace spdlog

@@ -23,68 +23,38 @@ public:
 	};
 
 	CMemory(void) = default;
-	CMemory(const uintptr_t ptr) : ptr(ptr) {}
-	CMemory(const void* ptr) : ptr(uintptr_t(ptr)) {}
-
-	inline operator uintptr_t(void) const
+	CMemory(const uintptr_t ptr)
+		: ptr(ptr)
 	{
-		return ptr;
+	}
+	CMemory(const void* ptr)
+		: ptr(uintptr_t(ptr))
+	{
 	}
 
-	inline operator void*(void) const
-	{
-		return reinterpret_cast<void*>(ptr);
-	}
+	inline operator uintptr_t(void) const { return ptr; }
 
-	inline operator bool(void) const
-	{
-		return ptr != NULL;
-	}
+	inline operator void*(void) const { return reinterpret_cast<void*>(ptr); }
 
-	inline bool operator!= (const CMemory& addr) const
-	{
-		return ptr != addr.ptr;
-	}
+	inline operator bool(void) const { return ptr != NULL; }
 
-	inline bool operator== (const CMemory& addr) const
-	{
-		return ptr == addr.ptr;
-	}
+	inline bool operator!=(const CMemory& addr) const { return ptr != addr.ptr; }
 
-	inline bool operator== (const uintptr_t& addr) const
-	{
-		return ptr == addr;
-	}
+	inline bool operator==(const CMemory& addr) const { return ptr == addr.ptr; }
 
-	inline uintptr_t GetPtr(void) const
-	{
-		return ptr;
-	}
+	inline bool operator==(const uintptr_t& addr) const { return ptr == addr; }
 
-	template<class T> inline T GetValue(void) const
-	{
-		return *reinterpret_cast<T*>(ptr);
-	}
+	inline uintptr_t GetPtr(void) const { return ptr; }
 
-	template<class T> inline T GetVirtualFunctionIndex(void) const
-	{
-		return *reinterpret_cast<T*>(ptr) / 8;
-	}
+	template <class T> inline T GetValue(void) const { return *reinterpret_cast<T*>(ptr); }
 
-	template<typename T> inline T CCast(void) const
-	{
-		return (T)ptr;
-	}
+	template <class T> inline T GetVirtualFunctionIndex(void) const { return *reinterpret_cast<T*>(ptr) / 8; }
 
-	template<typename T> inline T RCast(void) const
-	{
-		return reinterpret_cast<T>(ptr);
-	}
+	template <typename T> inline T CCast(void) const { return (T)ptr; }
 
-	inline CMemory Offset(ptrdiff_t offset) const
-	{
-		return CMemory(ptr + offset);
-	}
+	template <typename T> inline T RCast(void) const { return reinterpret_cast<T>(ptr); }
+
+	inline CMemory Offset(ptrdiff_t offset) const { return CMemory(ptr + offset); }
 
 	inline CMemory OffsetSelf(ptrdiff_t offset)
 	{
@@ -137,8 +107,16 @@ public:
 	void Patch(const std::vector<uint8_t>& vOpcodeArray) const;
 	void PatchString(const char* szString) const;
 
-	CMemory FindPattern(const char* szPattern, const Direction searchDirect = Direction::DOWN, const int opCodesToScan = 512, const ptrdiff_t occurrence = 1) const;
-	CMemory FindPatternSelf(const char* szPattern, const Direction searchDirect = Direction::DOWN, const int opCodesToScan = 512, const ptrdiff_t occurrence = 1);
+	CMemory FindPattern(
+		const char* szPattern,
+		const Direction searchDirect = Direction::DOWN,
+		const int opCodesToScan = 512,
+		const ptrdiff_t occurrence = 1) const;
+	CMemory FindPatternSelf(
+		const char* szPattern,
+		const Direction searchDirect = Direction::DOWN,
+		const int opCodesToScan = 512,
+		const ptrdiff_t occurrence = 1);
 	std::vector<CMemory> FindAllCallReferences(const uintptr_t sectionBase, const size_t sectionSize);
 
 	CMemory FollowNearCall(const ptrdiff_t opcodeOffset = 0x1, const ptrdiff_t nextInstructionOffset = 0x5) const;
@@ -146,7 +124,8 @@ public:
 	CMemory ResolveRelativeAddress(const ptrdiff_t registerOffset = 0x0, const ptrdiff_t nextInstructionOffset = 0x4) const;
 	CMemory ResolveRelativeAddressSelf(const ptrdiff_t registerOffset = 0x0, const ptrdiff_t nextInstructionOffset = 0x4);
 
-	static void HookVirtualMethod(const uintptr_t virtualTable, const void* pHookMethod, const ptrdiff_t methodIndex, void** ppOriginalMethod);
+	static void
+	HookVirtualMethod(const uintptr_t virtualTable, const void* pHookMethod, const ptrdiff_t methodIndex, void** ppOriginalMethod);
 	static void HookImportedFunction(const uintptr_t pImportedMethod, const void* pHookMethod, void** ppOriginalMethod);
 
 private:
