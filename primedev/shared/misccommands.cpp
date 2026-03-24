@@ -34,7 +34,7 @@ void ConCommand_ns_end_reauth_and_leave_to_lobby(const CCommand& arg)
 		g_pCVar->FindVar("serverfilter")->SetValue(g_pServerAuthentication->m_RemoteAuthenticationData.begin()->first.c_str());
 
 	// weird way of checking, but check if client script vm is initialised, mainly just to allow players to cancel this
-	if (g_pSquirrel<ScriptContext::CLIENT>->m_pSQVM)
+	if (g_pSquirrel[ScriptContext::CLIENT]->m_pSQVM)
 	{
 		g_pServerAuthentication->m_bNeedLocalAuthForNewgame = true;
 
@@ -187,8 +187,6 @@ void FixupCvarFlags()
 	// array of cvars and the flags we want to add to them
 	const std::vector<std::tuple<const char*, uint32_t>> CVAR_FIXUP_ADD_FLAGS = {
 		// system commands (i.e. necessary for proper functionality)
-		// servers need to be able to disconnect
-		{"disconnect", FCVAR_SERVER_CAN_EXECUTE},
 
 		// cheat commands
 		{"give", FCVAR_GAMEDLL_FOR_REMOTE_CLIENTS},
@@ -231,6 +229,9 @@ void FixupCvarFlags()
 		{"sound_volume_dialogue_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
 		{"sound_volume_music_game_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
 		{"sound_volume_sfx_sp", FCVAR_ARCHIVE_PLAYERPROFILE},
+
+		// fcvars that should be replicated
+		{"sv_alltalk", FCVAR_REPLICATED},
 	};
 
 	// array of cvars and the flags we want to remove from them

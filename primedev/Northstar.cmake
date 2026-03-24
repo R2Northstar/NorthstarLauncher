@@ -65,6 +65,7 @@ add_library(
     "engine/host.cpp"
     "engine/hoststate.cpp"
     "engine/hoststate.h"
+    "engine/models.cpp"
     "engine/r2engine.cpp"
     "engine/r2engine.h"
     "engine/runframe.cpp"
@@ -77,6 +78,7 @@ add_library(
     "logging/loghooks.h"
     "logging/sourceconsole.cpp"
     "logging/sourceconsole.h"
+    "materialsystem/nscustomdxbuffer.cpp"
     "masterserver/masterserver.cpp"
     "masterserver/masterserver.h"
     "mods/autodownload/moddownloader.h"
@@ -85,6 +87,7 @@ add_library(
     "mods/compiled/modkeyvalues.cpp"
     "mods/compiled/modpdef.cpp"
     "mods/compiled/modscriptsrson.cpp"
+    "mods/compiled/particles_manifest.cpp"
     "mods/mod.cpp"
     "mods/mod.h"
     "mods/modmanager.cpp"
@@ -128,6 +131,7 @@ add_library(
     "server/ai_navmesh.cpp"
     "server/ai_navmesh.h"
     "server/buildainfile.cpp"
+    "server/weaponx.h"
     "server/r2server.cpp"
     "server/r2server.h"
     "server/serverchathooks.cpp"
@@ -153,6 +157,8 @@ add_library(
     "squirrel/squirrelautobind.cpp"
     "squirrel/squirrelautobind.h"
     "squirrel/squirrelclasstypes.h"
+    "rtech/pakfile.h"
+    "rtech/pakfile.cpp"
     "util/printcommands.cpp"
     "util/printcommands.h"
     "util/printmaps.cpp"
@@ -222,3 +228,8 @@ set_target_properties(
                OUTPUT_NAME Northstar
                LINK_FLAGS "/MANIFEST:NO /DEBUG"
     )
+
+# not sure why this is needed but otherwise the linker fails
+if(IS_NIX_ENV)
+    target_link_libraries(NorthstarDLL PRIVATE -nodefaultlib:libucrt.lib msvcrt.lib)
+endif()
