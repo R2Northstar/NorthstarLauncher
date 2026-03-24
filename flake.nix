@@ -52,9 +52,6 @@
           compiler = mkArgs [
             "/vctoolsdir ${cross.windows.sdk}/crt"
             "/winsdkdir ${cross.windows.sdk}/sdk"
-            # tbh I am not sure what is exactly needed here since I just copied a execiting toolchain file from somewhere
-            # if it causes problems remove it but since it doesn't cause I don't see any reason in removing this
-            # thougths?
             "/EHs" # this for exceptions
             "-D_CRT_SECURE_NO_WARNINGS" # disables warnings about unsafe functions
             "--target=x86_64-windows-msvc" # set target just to be sure
@@ -131,8 +128,8 @@
               # Used to find the project root
               projectRootFile = "flake.nix";
 
-              # Add formaters for some other langs
-              programs.clang-format.enable = true; # doesn't format correctly yet
+              # Add formaters for some other langs # TODO: look into cmake formatter
+              programs.clang-format.enable = true;
               programs.nixfmt.enable = true;
 
               # settings
