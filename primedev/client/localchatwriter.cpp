@@ -452,7 +452,7 @@ ON_DLL_LOAD_CLIENT("client.dll", LocalChatWriter, (CModule module))
 	CHudChat::allHuds = module.Offset(0x11BA9E8).RCast<CHudChat**>();
 
 	// Patch chat history length from 3000 chars to 4294967295 :)
-	module.Offset(0x22DE35).Patch({0xBA, 0xFF, 0xFF, 0xFF, 0xFF});
+	module.Offset(0x22DE35).Patch({0xBA, 0xFF, 0xFF, 0xFF, 0x00});
 
 	ConvertANSIToUnicode = module.Offset(0x7339A0).RCast<ConvertANSIToUnicodeType>();
 }
