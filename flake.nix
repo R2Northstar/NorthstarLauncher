@@ -167,7 +167,6 @@
             nativeBuildInputs = with pkgs; [
               cross.buildPackages.cmake
               cross.buildPackages.ninja
-              cross.buildPackages.msitools
               llvmPackages.clang-unwrapped
               llvmPackages.bintools-unwrapped
               perl
@@ -200,7 +199,7 @@
                 versionSeq = (lib.strings.splitString "." finalAttrs.version);
                 versionAt = index: builtins.elemAt versionSeq index;
                 isDev = finalAttrs.version == "0.0.0"; # 1 = dev, 0 = not dev
-                versionQuadruplet = "${versionAt 0},${versionAt 1},${versionAt 2},${if isDev then "1" else "0"}";
+                versionQuadruplet = "${versionAt 0},${versionAt 1},${versionAt 2},${if isDev then "1" else if builtins.length > 3 then versionAt 3 else "0"}";
               in
               ''
                 mkdir -p $TMPDIR/cloned
@@ -254,7 +253,6 @@
             nativeBuildInputs = with pkgs; [
               cross.buildPackages.cmake
               cross.buildPackages.ninja
-              cross.buildPackages.msitools
               llvmPackages.clang-unwrapped
               llvmPackages.bintools-unwrapped
               perl
