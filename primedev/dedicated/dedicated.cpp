@@ -54,7 +54,7 @@ void RunServer(CDedicatedExports* dedicated)
 	Cbuf_Execute();
 
 	// initialise engine
-	// can't do this before first commandline re-run as mods overriding playlists_v2 will cause a fatal error on dedicated servers
+	// can't do this before first commandline re-run as Northstar.CustomServers overriding playlists_v2 will cause a fatal error on dedicated servers
 	g_pEngine->Frame();
 
 	// re-run commandline again so stuff like launchplaylist work
