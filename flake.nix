@@ -55,7 +55,7 @@
             "/EHs" # this for exceptions
             "-D_CRT_SECURE_NO_WARNINGS" # disables warnings about unsafe functions
             "--target=x86_64-windows-msvc" # set target just to be sure
-            "-fms-compatibility-version=19.11" # emulate a specific msvc version # TODO set a better version (this is vs2017 I think)
+            "-fms-compatibility-version=19.11" # emulate a specific msvc version, idk what version it is but works
             "-imsvc ${MSVC_INCLUDE}"
             "-imsvc ${WINSDK_INCLUDE}/ucrt"
             "-imsvc ${WINSDK_INCLUDE}/shared"
