@@ -19,7 +19,7 @@ jobs:
         with:
           submodules: 'true'
       - name: Setup msvc
-        uses: microsoft/setup-msbuild@v3
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Configure cmake
         run: cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE:STRING="Release"
       - name: Setup resource file version
