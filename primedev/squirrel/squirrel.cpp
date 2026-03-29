@@ -12,6 +12,7 @@
 #include "core/vanilla.h"
 
 #include "spdlog/spdlog.h"
+#include "vscript/languages/squirrel_re/include/squirrel.h"
 #include "vscript/vscript.h"
 
 #include <any>
@@ -391,7 +392,7 @@ template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelV
 				// g_pSquirrel[context]->Call can't be used here ...
 				SQObject functionobj {};
 				int result = g_pSquirrel[context]->sq_getfunction(vm->sqvm, mod.initScriptCallBack.value().c_str(), &functionobj, 0);
-				if (result != 0) // This func returns 0 on success for some reason
+				if (result != SQRESULT_NULL)
 				{
 					spdlog::error("InitScript was unable to find function with name '{}'. Is it global?", mod.initScriptCallBack.value());
 					continue;
