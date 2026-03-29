@@ -501,22 +501,18 @@ void Mod::ParseInitScript(rapidjson_document& json)
 
 	if (json["InitScript"].IsObject())
 	{
-		auto initScriptMember = json["InitScript"].FindMember("InitScript");
-		auto callbackMember = json["InitScript"].FindMember("Callback");
-		if (initScriptMember == json["InitScript"].MemberEnd() && initScriptMember->value.IsString())
+		if (!json["InitScript"].HasMember("InitScript") || !json["InitScript"]["InitScript"].IsString())
 		{
 			spdlog::warn("'InitScript' member is doesn't exist or isn't a string, skipping...");
 			return;
 		}
+		initScript = json["InitScript"]["InitScript"].GetString();
 
-		initScript = initScriptMember->value.GetString();
-
-		if (callbackMember == json["InitScript"].MemberEnd() && callbackMember->value.IsString())
+		if (!json["InitScript"].HasMember("InitScriptCallback") || !json["InitScript"]["InitScriptCallback"].IsString())
 		{
 			return;
 		}
-
-		initScriptCallBack = std::optional(callbackMember->value.GetString());
+		initScriptCallBack = std::optional(json["InitScript"]["InitScriptCallback"].GetString());
 
 		return;
 	}
