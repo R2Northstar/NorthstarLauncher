@@ -375,6 +375,9 @@ template <ScriptContext context> bool (*CSquirrelVM_init)(CSquirrelVM* vm, Scrip
 template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelVM* vm, ScriptContext realContext, float time)
 {
 	bool ret = CSquirrelVM_init<context>(vm, realContext, time);
+
+	g_pPluginManager->InformSqvmCreated(vm);
+
 	for (Mod mod : g_pModManager->m_LoadedMods)
 	{
 		if (mod.m_bEnabled && mod.initScript.size() != 0)
@@ -383,6 +386,9 @@ template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelV
 			std::string path = std::string("scripts/vscripts/") + mod.initScript;
 			if (g_pSquirrel[context]->compilefile(vm, path.c_str(), name.c_str(), 0))
 				g_pSquirrel[context]->compilefile(vm, path.c_str(), name.c_str(), 1);
+
+			if (mod.initScriptCallBack.has_value())
+					g_pSquirrel[context]->Call(mod.initScriptCallBack.value().c_str());
 		}
 	}
 	return ret;

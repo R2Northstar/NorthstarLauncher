@@ -1,4 +1,5 @@
 #include "rapidjson/error/en.h"
+#include <optional>
 
 Mod::Mod(fs::path modDir, const char* jsonBuf)
 {
@@ -491,11 +492,34 @@ void Mod::ParseInitScript(rapidjson_document& json)
 	if (!json.HasMember("InitScript"))
 		return;
 
-	if (!json["InitScript"].IsString())
+	// to be backwards compatible :)
+	if (!json["InitScript"].IsObject() && !json["InitScript"].IsString())
 	{
-		spdlog::warn("'InitScript' field is not a string, skipping...");
+		spdlog::warn("'InitScript' field is not a string nor an object, skipping...");
 		return;
 	}
+
+	if (json["InitScript"].IsObject())
+	{
+		auto initScriptMember = json["InitScript"].FindMember("InitScript");
+		auto callbackMember = json["InitScript"].FindMember("Callback");
+		if (initScriptMember == json["InitScript"].MemberEnd() && initScriptMember->value.IsString()) {
+			spdlog::warn("'InitScript' member is doesn't exist or isn't a string, skipping...");
+			return;
+		}
+
+		initScript = initScriptMember->value.GetString();
+
+		if (callbackMember == json["InitScript"].MemberEnd() && callbackMember->value.IsString()) {
+			return;
+		}
+
+		initScriptCallBack = std::optional(callbackMember->value.GetString());
+
+		return;
+	}
+
+
 
 	initScript = json["InitScript"].GetString();
 }
