@@ -5,6 +5,8 @@ cmake_policy(
     NEW
     )
 
+enable_language(CXX)
+
 project(
     Northstar
     CXX
