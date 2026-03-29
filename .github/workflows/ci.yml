@@ -22,7 +22,10 @@ jobs:
         with:
           submodules: 'true'
       - name: Setup msvc
-        uses: ilammy/msvc-dev-cmd@v1
+        shell: cmd
+        run: |
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+            set >> "%GITHUB_ENV%"
       - name: Configure cmake
         run: cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE:STRING="${{ env.BUILD_PROFILE }}"
       - name: Setup resource file version
