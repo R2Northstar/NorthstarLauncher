@@ -388,7 +388,7 @@ template <ScriptContext context> bool __fastcall CSquirrelVM_initHook(CSquirrelV
 				g_pSquirrel[context]->compilefile(vm, path.c_str(), name.c_str(), 1);
 
 			if (mod.initScriptCallBack.has_value())
-					g_pSquirrel[context]->Call(mod.initScriptCallBack.value().c_str());
+				g_pSquirrel[context]->Call(mod.initScriptCallBack.value().c_str());
 		}
 	}
 	return ret;
