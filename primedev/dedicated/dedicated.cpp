@@ -44,15 +44,20 @@ void RunServer(CDedicatedExports* dedicated)
 	spdlog::info("CDedicatedExports::RunServer(): starting");
 	spdlog::info(CommandLine()->GetCmdLine());
 
-	// initialise engine
-	g_pEngine->Frame();
-
 	// add +map if no map loading command is present
 	// don't manually execute this from cbuf as users may have it in their startup args anyway, easier just to run from stuffcmds if present
 	if (!CommandLine()->CheckParm("+map") && !CommandLine()->CheckParm("+launchplaylist"))
 		CommandLine()->AppendParm("+map", g_pCVar->FindVar("match_defaultMap")->GetString());
 
 	// re-run commandline
+	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
+	Cbuf_Execute();
+
+	// initialise engine
+	// can't do this before first commandline re-run as Northstar.CustomServers overriding playlists_v2 will cause a fatal error
+	g_pEngine->Frame();
+
+	// re-run commandline again so stuff like launchplaylist work
 	Cbuf_AddText(Cbuf_GetCurrentPlayer(), "stuffcmds", cmd_source_t::kCommandSrcCode);
 	Cbuf_Execute();
 
@@ -275,7 +280,9 @@ static void __fastcall h_PrintSquirrelError(void* sqvm)
 	// close dedicated server if a fatal error is hit
 	// atm, this will crash if not aborted, so this just closes more gracefully
 	static ConVar* Cvar_fatal_script_errors = g_pCVar->FindVar("fatal_script_errors");
-	if (Cvar_fatal_script_errors->GetBool())
+	static ConVar* Cvar_fatal_script_errors_server = g_pCVar->FindVar("fatal_script_errors_server");
+	if (Cvar_fatal_script_errors_server->GetInt() == 1 ||
+		(Cvar_fatal_script_errors->GetBool() && Cvar_fatal_script_errors_server->GetInt() != 0))
 	{
 		NS::log::FlushLoggers();
 		abort();

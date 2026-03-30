@@ -7,7 +7,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
     strategy:
       matrix:
         config:
@@ -18,7 +18,7 @@ jobs:
       CXX: ${{ matrix.config.cc }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: 'true'
       - name: Setup msvc
@@ -39,16 +39,16 @@ jobs:
         shell: bash
         run: echo commit=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NorthstarLauncher-${{ matrix.config.name }}-${{ steps.extract.outputs.commit }}
           path: |
             build/game/
 
   format-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: DoozyX/clang-format-lint-action@v0.18.2
       with:
         source: 'primedev'
@@ -58,10 +58,10 @@ jobs:
         style: file
 
   nix-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@v34
@@ -71,7 +71,7 @@ jobs:
           nix_conf: ${{ env.nix_conf }}
 
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           # restore and save a cache using this key
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
@@ -102,7 +102,7 @@ jobs:
         run: echo commit=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NorthstarLauncher-NIX-${{ steps.extract.outputs.commit }}
           path: |
@@ -111,7 +111,7 @@ jobs:
   format-check-cmake-files:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: puneetmatharu/cmake-format-lint-action@v1.0.4
       with:
         args: "--in-place"

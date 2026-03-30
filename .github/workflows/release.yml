@@ -12,10 +12,10 @@ env:
 
 jobs:
   build-launcher:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: 'true'
       - name: Setup msvc
@@ -32,7 +32,7 @@ jobs:
       - name: Build
         run: cmake --build build/
       - name: Upload launcher build as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: northstar-launcher
           path: |
@@ -40,7 +40,7 @@ jobs:
             build/game/*.dll
             build/game/bin/x64_retail/*.dll
       - name: Upload debug build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: launcher-debug-files
           path: |
@@ -53,12 +53,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Download compiled launcher
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: northstar-launcher
           path: northstar-launcher
       - name: Download compiled launcher
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: launcher-debug-files
           path: launcher-debug-files
