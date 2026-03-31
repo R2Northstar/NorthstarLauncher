@@ -12,7 +12,7 @@ jobs:
       matrix:
         config:
           - { name: "MSVC", cc: cl }
-          - { name: "LLVM", cc: clang-cl }
+          - { name: "LLVM", cc: clang-cl  }
     env:
       CC: ${{ matrix.config.cc }}
       CXX: ${{ matrix.config.cc }}
@@ -22,7 +22,7 @@ jobs:
         with:
           submodules: 'true'
       - name: Setup msvc
-        uses: asillyneko/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@138b1c783b65ec697d8342918306b7b2db4e88f1
       - name: Configure cmake
         run: cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE:STRING="${{ env.BUILD_PROFILE }}"
       - name: Setup resource file version
