@@ -12,7 +12,7 @@ jobs:
       matrix:
         config:
           - { name: "MSVC", cc: cl }
-          - { name: "LLVM", cc: clang-cl  }
+          - { name: "LLVM", cc: clang-cl }
     env:
       CC: ${{ matrix.config.cc }}
       CXX: ${{ matrix.config.cc }}
