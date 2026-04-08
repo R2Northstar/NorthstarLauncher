@@ -83,7 +83,7 @@ template <ScriptContext context> void SaveFileManager::SaveFileAsync(fs::path fi
 			}
 
 			// If there's a file extension missing here that you need, feel free to make a PR adding it
-			static const std::set<std::string> whitelist = {".txt", ".json"};
+			static const std::set<std::string> whitelist = {".txt", ".json",".dat",".csv"};
 
 			// Check if file extension is whitelisted
 			std::string extension = file.extension().string();
