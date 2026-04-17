@@ -12,6 +12,8 @@ static void __fastcall h_CHudChat__AddGameLine(void* self, const char* message, 
 	// This hook is called for each HUD, but we only want our logic to run once.
 	if (self != *CHudChat::allHuds)
 		return;
+	if (message == nullptr || message[0] == '\0')
+		return;
 
 	int senderId = inboxId & CUSTOM_MESSAGE_INDEX_MASK;
 	bool isAnonymous = senderId == 0;

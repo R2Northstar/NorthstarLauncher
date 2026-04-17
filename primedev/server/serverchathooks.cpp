@@ -38,6 +38,9 @@ static void __fastcall h_CServerGameDLL__OnReceivedSayTextMessage(
 {
 	RemoveAsciiControlSequences(const_cast<char*>(text), true);
 
+	if (text == nullptr || text[0] == '\0')
+		return;
+
 	// MiniHook doesn't allow calling the base function outside of anywhere but the hook function.
 	// To allow bypassing the hook, isSkippingHook can be set.
 	if (bShouldCallSayTextHook)
