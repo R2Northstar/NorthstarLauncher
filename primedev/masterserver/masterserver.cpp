@@ -561,6 +561,10 @@ void MasterServerManager::AuthenticateWithOwnServer(const char* uid, const char*
 
 				RemoteAuthData newAuthData {};
 				strncpy_s(newAuthData.uid, sizeof(newAuthData.uid), authInfoJson["id"].GetString(), sizeof(newAuthData.uid) - 1);
+				if (authInfoJson.HasMember("clanTag") && authInfoJson["clanTag"].IsString())
+					strncpy_s(newAuthData.clanTag, sizeof(newAuthData.clanTag), authInfoJson["clanTag"].GetString(), sizeof(newAuthData.clanTag) - 1);
+				else
+					newAuthData.clanTag[0] = '\0';
 
 				newAuthData.pdataSize = authInfoJson["persistentData"].GetArray().Size();
 				newAuthData.pdata = new char[newAuthData.pdataSize];
