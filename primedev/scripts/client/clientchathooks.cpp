@@ -33,7 +33,8 @@ static void __fastcall h_CHudChat__AddGameLine(void* self, const char* message, 
 
 	{
 		const char* p = isCustom ? payload : message;
-		while (isspace((unsigned char)*p)) p++;
+		while (isspace((unsigned char)*p))
+			p++;
 		if (*p == '\0')
 			return;
 	}

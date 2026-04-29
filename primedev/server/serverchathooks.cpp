@@ -44,7 +44,8 @@ static void __fastcall h_CServerGameDLL__OnReceivedSayTextMessage(
 	if (text[0] == '\0')
 		return;
 	const char* p = text;
-	while (isspace((unsigned char)*p)) p++;
+	while (isspace((unsigned char)*p))
+		p++;
 	if (*p == '\0')
 		return;
 
