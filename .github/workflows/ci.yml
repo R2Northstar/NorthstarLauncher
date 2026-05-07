@@ -7,7 +7,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-2025
+    runs-on: windows-latest
     strategy:
       matrix:
         config:
@@ -46,7 +46,7 @@ jobs:
             build/game/
 
   format-check:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
     - uses: DoozyX/clang-format-lint-action@v0.18.2
@@ -58,7 +58,7 @@ jobs:
         style: file
 
   nix-build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
