@@ -3,7 +3,6 @@
 #include <regex>
 #include "rtech/pakfile.h"
 
-
 #pragma pack(push, 1)
 struct PakLoadFuncs
 {

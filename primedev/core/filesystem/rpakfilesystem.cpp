@@ -5,7 +5,6 @@
 #include "util/utils.h"
 #include "rtech/pakfile.h"
 
-
 PakLoadFuncs* g_pakLoadApi;
 PakLoadManager* g_pPakLoadManager;
 
