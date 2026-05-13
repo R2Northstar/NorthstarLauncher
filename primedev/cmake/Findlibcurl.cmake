@@ -1,7 +1,6 @@
 if(NOT libcurl_FOUND)
     check_init_submodule(${PROJECT_SOURCE_DIR}/primedev/thirdparty/libcurl)
 
-
     # Fixes libcurl CMake missing libpsl error
     set(CURL_USE_LIBPSL OFF)
 
