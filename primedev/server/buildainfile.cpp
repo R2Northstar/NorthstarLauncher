@@ -230,10 +230,10 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 		memcpy(diskNode.unk6, aiNetwork->nodes[i]->unk10, sizeof(diskNode.unk6));
 
 		spdlog::info(
-				"writing node {} from {} to {:x}",
-				static_cast<int>(aiNetwork->nodes[i]->index),
-				(void*)aiNetwork->nodes[i],
-				static_cast<int>(writeStream.tellp()));
+			"writing node {} from {} to {:x}",
+			static_cast<int>(aiNetwork->nodes[i]->index),
+			(void*)aiNetwork->nodes[i],
+			static_cast<int>(writeStream.tellp()));
 		writeStream.write((char*)&diskNode, sizeof(CAI_NodeDisk));
 
 		calculatedLinkcount += aiNetwork->nodes[i]->linkcount;
@@ -276,9 +276,9 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 
 	// don't know what this is, it's likely a block from tf1 that got deprecated? should just be 1 int per node
 	spdlog::info(
-			"writing {:x} bytes for unknown block at {:x}",
-			static_cast<int>(aiNetwork->nodecount * sizeof(uint32_t)),
-			static_cast<int>(writeStream.tellp()));
+		"writing {:x} bytes for unknown block at {:x}",
+		static_cast<int>(aiNetwork->nodecount * sizeof(uint32_t)),
+		static_cast<int>(writeStream.tellp()));
 	uint32_t* unkNodeBlock = new uint32_t[aiNetwork->nodecount];
 	memset(unkNodeBlock, 0, aiNetwork->nodecount * sizeof(uint32_t));
 	writeStream.write((char*)unkNodeBlock, aiNetwork->nodecount * sizeof(uint32_t));
