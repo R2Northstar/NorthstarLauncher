@@ -229,15 +229,15 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 			-1; // aiNetwork->nodes[i]->unk8; // this field is wrong, however, it's always -1 in vanilla navmeshes anyway, so no biggie
 		memcpy(diskNode.unk6, aiNetwork->nodes[i]->unk10, sizeof(diskNode.unk6));
 
-		spdlog::info("writing node {} from {} to {:x}", aiNetwork->nodes[i]->index, (void*)aiNetwork->nodes[i], writeStream.tellp());
+		spdlog::info("writing node {} from {} to {:x}", static_cast<int>(aiNetwork->nodes[i]->index), (void*)aiNetwork->nodes[i], static_cast<int>(writeStream.tellp()));
 		writeStream.write((char*)&diskNode, sizeof(CAI_NodeDisk));
 
 		calculatedLinkcount += aiNetwork->nodes[i]->linkcount;
 	}
 
 	// links
-	spdlog::info("linkcount: {}", aiNetwork->linkcount);
-	spdlog::info("calculated total linkcount: {}", calculatedLinkcount);
+	spdlog::info("linkcount: {}", static_cast<int>(aiNetwork->linkcount));
+	spdlog::info("calculated total linkcount: {}", static_cast<int>(calculatedLinkcount));
 
 	calculatedLinkcount /= 2;
 	if (Cvar_ns_ai_dumpAINfileFromLoad->GetBool())
@@ -265,13 +265,13 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 			diskLink.unk0 = aiNetwork->nodes[i]->links[j]->unk1;
 			memcpy(diskLink.hulls, aiNetwork->nodes[i]->links[j]->hulls, sizeof(diskLink.hulls));
 
-			spdlog::info("writing link {} => {} to {:x}", diskLink.srcId, diskLink.destId, writeStream.tellp());
+			spdlog::info("writing link {} => {} to {:x}", diskLink.srcId, diskLink.destId, static_cast<int>(writeStream.tellp()));
 			writeStream.write((char*)&diskLink, sizeof(CAI_NodeLinkDisk));
 		}
 	}
 
 	// don't know what this is, it's likely a block from tf1 that got deprecated? should just be 1 int per node
-	spdlog::info("writing {:x} bytes for unknown block at {:x}", aiNetwork->nodecount * sizeof(uint32_t), writeStream.tellp());
+	spdlog::info("writing {:x} bytes for unknown block at {:x}", static_cast<int>(aiNetwork->nodecount * sizeof(uint32_t)), static_cast<int>(writeStream.tellp()));
 	uint32_t* unkNodeBlock = new uint32_t[aiNetwork->nodecount];
 	memset(unkNodeBlock, 0, aiNetwork->nodecount * sizeof(uint32_t));
 	writeStream.write((char*)unkNodeBlock, aiNetwork->nodecount * sizeof(uint32_t));
@@ -279,24 +279,24 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 
 	// TODO: this is traverse nodes i think? these aren't used in tf2 ains so we can get away with just writing count=0 and skipping
 	// but ideally should actually dump these
-	spdlog::info("writing {} traversal nodes at {:x}...", 0, writeStream.tellp());
+	spdlog::info("writing {} traversal nodes at {:x}...", 0, static_cast<int>(writeStream.tellp()));
 	short traverseNodeCount = 0;
 	writeStream.write((char*)&traverseNodeCount, sizeof(short));
 	// only write count since count=0 means we don't have to actually do anything here
 
 	// TODO: ideally these should be actually dumped, but they're always 0 in tf2 from what i can tell
-	spdlog::info("writing {} bytes for unknown hull block at {:x}", MAX_HULLS * 8, writeStream.tellp());
+	spdlog::info("writing {} bytes for unknown hull block at {:x}", static_cast<int>(MAX_HULLS * 8), static_cast<int>(writeStream.tellp()));
 	char* unkHullBlock = new char[MAX_HULLS * 8];
 	memset(unkHullBlock, 0, MAX_HULLS * 8);
 	writeStream.write(unkHullBlock, MAX_HULLS * 8);
 	delete[] unkHullBlock;
 
 	// unknown struct that's seemingly node-related
-	spdlog::info("writing {} unknown node structs at {:x}", *pUnkStruct0Count, writeStream.tellp());
+	spdlog::info("writing {} unknown node structs at {:x}", *pUnkStruct0Count, static_cast<int>(writeStream.tellp()));
 	writeStream.write((char*)pUnkStruct0Count, sizeof(*pUnkStruct0Count));
 	for (int i = 0; i < *pUnkStruct0Count; i++)
 	{
-		spdlog::info("writing unknown node struct {} at {:x}", i, writeStream.tellp());
+		spdlog::info("writing unknown node struct {} at {:x}", i, static_cast<int>(writeStream.tellp()));
 		UnkNodeStruct0* nodeStruct = (*pppUnkNodeStruct0s)[i];
 
 		writeStream.write((char*)&nodeStruct->index, sizeof(nodeStruct->index));
@@ -324,12 +324,12 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	}
 
 	// unknown struct that's seemingly link-related
-	spdlog::info("writing {} unknown link structs at {:x}", *pUnkLinkStruct1Count, writeStream.tellp());
+	spdlog::info("writing {} unknown link structs at {:x}", *pUnkLinkStruct1Count, static_cast<int>(writeStream.tellp()));
 	writeStream.write((char*)pUnkLinkStruct1Count, sizeof(*pUnkLinkStruct1Count));
 	for (int i = 0; i < *pUnkLinkStruct1Count; i++)
 	{
 		// disk and memory structs are literally identical here so just directly write
-		spdlog::info("writing unknown link struct {} at {:x}", i, writeStream.tellp());
+		spdlog::info("writing unknown link struct {} at {:x}", i, static_cast<int>(writeStream.tellp()));
 		writeStream.write((char*)(*pppUnkStruct1s)[i], sizeof(*(*pppUnkStruct1s)[i]));
 	}
 
@@ -337,20 +337,20 @@ void DumpAINInfo(CAI_Network* aiNetwork)
 	writeStream.write((char*)&aiNetwork->unk5, sizeof(aiNetwork->unk5));
 
 	// tf2-exclusive stuff past this point, i.e. ain v57 only
-	spdlog::info("writing {} script nodes at {:x}", aiNetwork->scriptnodecount, writeStream.tellp());
+	spdlog::info("writing {} script nodes at {:x}", static_cast<int>(aiNetwork->scriptnodecount), static_cast<int>(writeStream.tellp()));
 	writeStream.write((char*)&aiNetwork->scriptnodecount, sizeof(aiNetwork->scriptnodecount));
 	for (int i = 0; i < aiNetwork->scriptnodecount; i++)
 	{
 		// disk and memory structs are literally identical here so just directly write
-		spdlog::info("writing script node {} at {:x}", i, writeStream.tellp());
+		spdlog::info("writing script node {} at {:x}", i, static_cast<int>(writeStream.tellp()));
 		writeStream.write((char*)&aiNetwork->scriptnodes[i], sizeof(aiNetwork->scriptnodes[i]));
 	}
 
-	spdlog::info("writing {} hints at {:x}", aiNetwork->hintcount, writeStream.tellp());
+	spdlog::info("writing {} hints at {:x}", static_cast<int>(aiNetwork->hintcount), static_cast<int>(writeStream.tellp()));
 	writeStream.write((char*)&aiNetwork->hintcount, sizeof(aiNetwork->hintcount));
 	for (int i = 0; i < aiNetwork->hintcount; i++)
 	{
-		spdlog::info("writing hint data {} at {:x}", i, writeStream.tellp());
+		spdlog::info("writing hint data {} at {:x}", i, static_cast<int>(writeStream.tellp()));
 		writeStream.write((char*)&aiNetwork->hints[i], sizeof(aiNetwork->hints[i]));
 	}
 

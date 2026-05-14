@@ -7,7 +7,9 @@
 //
 // include bundled or external copy of fmtlib's chrono support
 //
+#include <spdlog/tweakme.h>
 
+#if !defined(SPDLOG_USE_STD_FORMAT)
 #if !defined(SPDLOG_FMT_EXTERNAL)
 #ifdef SPDLOG_HEADER_ONLY
 #ifndef FMT_HEADER_ONLY
@@ -17,4 +19,5 @@
 #include <spdlog/fmt/bundled/chrono.h>
 #else
 #include <fmt/chrono.h>
+#endif
 #endif

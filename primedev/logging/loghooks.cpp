@@ -86,7 +86,7 @@ static void h_TextMsg(BFRead* msg)
 		break;
 
 	default:
-		spdlog::warn("Unimplemented TextMsg type {}! printing to console", msg_dest);
+		spdlog::warn("Unimplemented TextMsg type {}! printing to console", static_cast<int>(msg_dest));
 		[[fallthrough]];
 
 	case TextMsgPrintType_t::HUD_PRINTCONSOLE:

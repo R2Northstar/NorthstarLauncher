@@ -1,6 +1,7 @@
 #pragma once
 #include "spdlog/sinks/base_sink.h"
 #include "spdlog/logger.h"
+#include "spdlog/fmt/fmt.h"
 #include "squirrel/squirrel.h"
 #include "core/math/color.h"
 
@@ -57,6 +58,8 @@ public:
 
 	void sink_it_(const spdlog::details::log_msg& msg)
 	{
+		namespace fmt_lib = fmt;
+
 		custom_log_msg custom_msg {this, msg};
 
 		// Ugh
@@ -66,7 +69,7 @@ public:
 			{
 				sink->log(custom_msg);
 			}
-			SPDLOG_LOGGER_CATCH()
+			SPDLOG_LOGGER_CATCH(spdlog::source_loc{})
 		}
 
 		for (auto& sink : custom_sinks_)
@@ -75,7 +78,7 @@ public:
 			{
 				sink->custom_log(custom_msg);
 			}
-			SPDLOG_LOGGER_CATCH()
+			SPDLOG_LOGGER_CATCH(spdlog::source_loc{})
 		}
 
 		if (should_flush_(custom_msg))
