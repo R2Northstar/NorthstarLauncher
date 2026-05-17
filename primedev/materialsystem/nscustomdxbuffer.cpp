@@ -175,10 +175,10 @@ SQRESULT NSDeregisterCustomDXBufferForGUID(HSQUIRRELVM sqvm)
 		return SQRESULT_ERROR;
 	}
 
+	// we need to add 16 to the pointer, matglueshort is matglue without the first 16 bytes. GetAssetByHash returns a pointer to the full
 	auto* base = reinterpret_cast<uint8_t*>(AssetFromGUID);
 	auto* GUIDMaterialGlue_short = reinterpret_cast<CMaterialGlue_short*>(base + 16);
-	// we need to add 16 to the pointer, matglueshort is matglue without the first 16 bytes. GetAssetByHash returns a pointer to the full
-	// matglue.
+
 	if (NSRegisteredCustomBufferMaterials.contains(GUIDMaterialGlue_short->guid))
 	{
 		NS::log::SCRIPT_CL->info("Deregistered GUID: {} from the NSCustomDXBuffer system", GUIDMaterialGlue_short->guid);
