@@ -127,7 +127,7 @@ bool isValidMaterialGUID(const std::string& str)
 	return true;
 }
 
-template <ScriptContext context> SQRESULT NSRegisterCustomDXBufferForGUID(HSQUIRRELVM sqvm)
+SQRESULT NSRegisterCustomDXBufferForGUID(HSQUIRRELVM sqvm)
 {
 
 	auto rPakMaterialGUIDString = (g_pSquirrel[ScriptContext::CLIENT]->getstring(sqvm, 1));
@@ -160,7 +160,7 @@ template <ScriptContext context> SQRESULT NSRegisterCustomDXBufferForGUID(HSQUIR
 	return SQRESULT_NULL;
 }
 
-template <ScriptContext context> SQRESULT NSDeregisterCustomDXBufferForGUID(HSQUIRRELVM sqvm)
+SQRESULT NSDeregisterCustomDXBufferForGUID(HSQUIRRELVM sqvm)
 {
 
 	auto rPakMaterialGUIDString = (g_pSquirrel[ScriptContext::CLIENT]->getstring(sqvm, 1));
@@ -193,7 +193,7 @@ template <ScriptContext context> SQRESULT NSDeregisterCustomDXBufferForGUID(HSQU
 	return SQRESULT_NULL;
 }
 
-template <ScriptContext context> SQRESULT NSUpdateCustomDXBufferForGUID(HSQUIRRELVM sqvm)
+SQRESULT NSUpdateCustomDXBufferForGUID(HSQUIRRELVM sqvm)
 {
 
 	// get the guid as a string to later conv
@@ -243,7 +243,7 @@ template <ScriptContext context> SQRESULT NSUpdateCustomDXBufferForGUID(HSQUIRRE
 	return SQRESULT_NULL;
 }
 
-template <ScriptContext context> SQRESULT NSBindTextureToMaterial(HSQUIRRELVM sqvm)
+SQRESULT NSBindTextureToMaterial(HSQUIRRELVM sqvm)
 {
 
 	auto rPakMaterialGUIDString = (g_pSquirrel[ScriptContext::CLIENT]->getstring(sqvm, 1));
@@ -300,22 +300,18 @@ ON_DLL_LOAD_CLIENT("materialsystem_dx11.dll", SUB_511D0, (CModule module))
 		"NSUpdateCustomDXBufferForGUID",
 		"string rPakMaterialGUID array NSCustomBufferPerMaterialData",
 		"",
-		NSUpdateCustomDXBufferForGUID<ScriptContext::CLIENT>);
+		NSUpdateCustomDXBufferForGUID);
 
 	g_pSquirrel[ScriptContext::CLIENT]->AddFuncRegistration(
-		"void", "NSRegisterCustomDXBufferForGUID", "string rPakMaterialGUID", "", NSRegisterCustomDXBufferForGUID<ScriptContext::CLIENT>);
+		"void", "NSRegisterCustomDXBufferForGUID", "string rPakMaterialGUID", "", NSRegisterCustomDXBufferForGUID);
 
 	g_pSquirrel[ScriptContext::CLIENT]->AddFuncRegistration(
-		"void",
-		"NSDeregisterCustomDXBufferForGUID",
-		"string rPakMaterialGUID",
-		"",
-		NSDeregisterCustomDXBufferForGUID<ScriptContext::CLIENT>);
+		"void", "NSDeregisterCustomDXBufferForGUID", "string rPakMaterialGUID", "", NSDeregisterCustomDXBufferForGUID);
 
 	g_pSquirrel[ScriptContext::CLIENT]->AddFuncRegistration(
 		"void",
 		"NSBindTextureToMaterial",
 		"string rPakMaterialGUID string rPakTextureGUID int shaderBindingSlot",
 		"",
-		NSBindTextureToMaterial<ScriptContext::CLIENT>);
+		NSBindTextureToMaterial);
 }
