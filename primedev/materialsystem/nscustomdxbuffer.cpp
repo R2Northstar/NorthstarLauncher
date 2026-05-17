@@ -43,7 +43,7 @@ AUTOHOOK(SUB_511D0, materialsystem_dx11.dll + 0x511D0, __int64, __fastcall, (__i
 	if (!DeviceContext || !D3D11Device_14E8DD0 || !*DeviceContext || !*D3D11Device_14E8DD0)
 		return subResult;
 
-		// bind textures to slots if existing
+	// bind textures to slots if existing
 	if (NSMaterialTextureSlotBindings.contains(internal_logic_material->guid))
 	{
 
@@ -303,11 +303,7 @@ ON_DLL_LOAD_CLIENT("materialsystem_dx11.dll", SUB_511D0, (CModule module))
 		NSUpdateCustomDXBufferForGUID<ScriptContext::CLIENT>);
 
 	g_pSquirrel[ScriptContext::CLIENT]->AddFuncRegistration(
-		"void",
-		"NSRegisterCustomDXBufferForGUID",
-		"string rPakMaterialGUID",
-		"",
-		NSRegisterCustomDXBufferForGUID<ScriptContext::CLIENT>);
+		"void", "NSRegisterCustomDXBufferForGUID", "string rPakMaterialGUID", "", NSRegisterCustomDXBufferForGUID<ScriptContext::CLIENT>);
 
 	g_pSquirrel[ScriptContext::CLIENT]->AddFuncRegistration(
 		"void",
