@@ -20,7 +20,7 @@ struct Ns_Constant_Buffer
 struct MaterialTextureMappings
 {
 
-	std::array<uint64_t, 30> slots;
+	std::array<uint64_t, 60> slots;
 };
 
 AUTOHOOK_INIT()
@@ -253,7 +253,7 @@ SQRESULT NSBindTextureToMaterial(HSQUIRRELVM sqvm)
 	uint64_t rPakMaterialGUID = std::stoull(rPakMaterialGUIDString, nullptr, 16);
 	__int64 MatAssetFromGUID = g_pakLoadApi->GetAssetByHash(rPakMaterialGUID);
 
-	if (rPakShaderSlotBindingInt > 30)
+	if (rPakShaderSlotBindingInt > 60)
 	{
 		g_pSquirrel[ScriptContext::CLIENT]->raiseerror(sqvm, fmt::format("TextureOverrides only support 30 custom bindings").c_str());
 		return SQRESULT_ERROR;
