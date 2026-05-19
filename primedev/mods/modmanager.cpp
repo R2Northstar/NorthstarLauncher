@@ -102,7 +102,7 @@ static void ModConCommandCallback(const CCommand& command)
 		ModConCommandCallback_Internal<ScriptContext::UI>(found->Function, command);
 		break;
 	default:
-		spdlog::error("ModConCommandCallback on invalid Context {}", static_cast<int>(found->Context));
+		spdlog::error("ModConCommandCallback on invalid Context {}", found->Context);
 	};
 }
 

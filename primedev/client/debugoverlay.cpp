@@ -193,7 +193,7 @@ static void __fastcall h_DrawOverlay(OverlayBase_t* pOverlay)
 	break;
 	default:
 	{
-		spdlog::warn("Unimplemented overlay type {}", static_cast<int>(pOverlay->m_Type));
+		spdlog::warn("Unimplemented overlay type {}", pOverlay->m_Type);
 	}
 	break;
 	}

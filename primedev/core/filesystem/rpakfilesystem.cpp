@@ -429,7 +429,7 @@ PakHandle, __fastcall, (const char* pPath, void* memoryAllocator, int flags))
 	}
 
 	PakHandle iPakHandle = LoadPakAsync(resultingPath.c_str(), memoryAllocator, flags);
-	NS::log::rpak->info("LoadPakAsync {} {}", resultingPath, static_cast<int>(iPakHandle));
+	NS::log::rpak->info("LoadPakAsync {} {}", resultingPath, iPakHandle);
 
 	g_pPakLoadManager->OnPakLoaded(svOriginalPath, resultingPath, iPakHandle);
 
@@ -443,7 +443,7 @@ void*, __fastcall, (PakHandle nPakHandle, void* pCallback))
 {
 	g_pPakLoadManager->OnPakUnloading(nPakHandle);
 
-	NS::log::rpak->info("UnloadPak {}", static_cast<int>(nPakHandle));
+	NS::log::rpak->info("UnloadPak {}", nPakHandle);
 	return UnloadPak(nPakHandle, pCallback);
 }
 

@@ -29,11 +29,6 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 # Deal with MSVC incompatiblity
 add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 
-# Fixes spdlog 1.90+ failing to compile without utf-8 on MSVC
-if(MSVC)
-    add_compile_options("/utf-8")
-endif()
-
 # This determines the real binary root directory
 set(NS_BINARY_DIR ${CMAKE_BINARY_DIR}/game)
 # NOTE [Fifty]: Visual studio deems Build root with the value "${projectDir}" in CMakeSettings.json as invalid and
