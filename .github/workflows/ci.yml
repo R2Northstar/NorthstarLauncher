@@ -30,10 +30,10 @@ jobs:
         env:
           NS_VERSION: ${{ env.NORTHSTAR_VERSION }}
         run: |
-          VERSION=$(echo $NS_VERSION | sed -E 's/^v//; s/-.*//; s/\./,/g')
-          sed -i 's/DEV/$VERSION/g' primedev/primelauncher/resources.rc
-          sed -i 's/DEV/$VERSION/g' primedev/resources.rc
-          sed -i "s/0,0,0,1/$VERSION/g" primedev/ns_version.h
+          sed -i 's/DEV/${NS_VERSION}/g' primedev/primelauncher/resources.rc
+          sed -i 's/DEV/${NS_VERSION}/g' primedev/resources.rc
+          FILEVERSION=$(echo $NS_VERSION | sed -E 's/^v//; s/-.*//; s/\./,/g')
+          sed -i "s/0,0,0,1/${FILEVERSION}/g" primedev/ns_version.h
       - name: Build
         run: cmake --build build/
       - name: Extract Short Commit Hash
