@@ -28,9 +28,9 @@ jobs:
           NS_VERSION: ${{ env.NORTHSTAR_VERSION }}
         run: |
           VERSION=$(echo $NS_VERSION | tr '.' ',' | sed -E 's/-rc[0-9]+//' | tr -d '[:alpha:]')
-          sed -i 's/DEV/$VERSION/g' primedev/primelauncher/resources.rc
-          sed -i 's/DEV/$VERSION/g' primedev/resources.rc
-          sed -i "s/0,0,0,1/$VERSION/g" primedev/ns_version.h
+          sed -i 's/DEV/${VERSION}/g' primedev/primelauncher/resources.rc
+          sed -i 's/DEV/${VERSION}/g' primedev/resources.rc
+          sed -i "s/0,0,0,1/${VERSION}/g" primedev/ns_version.h
       - name: Build
         run: cmake --build build/
       - name: Upload launcher build as artifact
