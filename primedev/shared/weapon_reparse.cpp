@@ -1,7 +1,6 @@
 #include "mods/modmanager.h"
 #include <string>
 #include <algorithm>
-#include <filesystem>
 
 static void RemoveCompiledWeaponScripts()
 {
