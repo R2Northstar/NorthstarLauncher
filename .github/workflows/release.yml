@@ -24,11 +24,14 @@ jobs:
         run: cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE:STRING="Release"
       - name: Setup resource file version
         shell: bash
+        env:
+          NS_VERSION: ${{ env.NORTHSTAR_VERSION }}
         run: |
-          sed -i 's/DEV/${{ env.NORTHSTAR_VERSION }}/g' primedev/primelauncher/resources.rc
-          sed -i 's/DEV/${{ env.NORTHSTAR_VERSION }}/g' primedev/resources.rc
-          FILEVERSION=$(echo ${{ env.NORTHSTAR_VERSION }} | tr '.' ',' | sed -E 's/-rc[0-9]+//' | tr -d '[:alpha:]')
-          sed -i "s/0,0,0,1/${FILEVERSION}/g" primedev/ns_version.h
+          VERSION=$(echo $NS_VERSION | tr '.' ',' | sed -E 's/-rc[0-9]+//' | tr -d '[:alpha:]')
+          sed -i 's/DEV/VERSION/g' primedev/primelauncher/resources.rc
+          sed -i 's/DEV/VERSION/g' primedev/resources.rc
+          FILEVERSION=$(echo VERSION | tr '.' ',' | sed -E 's/-rc[0-9]+//' | tr -d '[:alpha:]')
+          sed -i "s/0,0,0,1/${VERSION}/g" primedev/ns_version.h
       - name: Build
         run: cmake --build build/
       - name: Upload launcher build as artifact
