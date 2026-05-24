@@ -424,75 +424,72 @@ void Mod::ParseDependencies(rapidjson_document& json)
 	if (!json.HasMember("Dependencies"))
 		return;
 
-	if (!json["Dependencies"].IsObject())
+	if (json["Dependencies"].IsArray())
 	{
-		spdlog::warn("'Dependencies' field is not an object, skipping...");
-		return;
-	}
+		for (auto& entry : json["Dependencies"].GetArray())
+		{
+			if (!entry.IsObject())
+			{
+				spdlog::warn("Dependency entry is not an object, skipping...");
+				continue;
+			}
 
-	for (auto v = json["Dependencies"].MemberBegin(); v != json["Dependencies"].MemberEnd(); v++)
-	{
-		if (!v->name.IsString())
-		{
-			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->name.GetString());
-			continue;
-		}
-		Mod::DependencyValue dv;
+			if (!entry.HasMember("Name") || !entry["Name"].IsString())
+			{
+				spdlog::warn("Dependency entry missing string 'Name', skipping...");
+				continue;
+			}
 
-		if (v->value.IsString())
-		{
-			dv.type = Mod::DependencyType::MOD;
-			dv.value = v->value.GetString();
-		}
-		else if (v->value.IsObject())
-		{
-			if (v->value.HasMember("Mod") && v->value["Mod"].IsString())
+			std::string constantName = entry["Name"].GetString();
+			Mod::DependencyValue dv;
+
+			if (entry.HasMember("Mod") && entry["Mod"].IsString())
 			{
 				dv.type = Mod::DependencyType::MOD;
-				dv.value = v->value["Mod"].GetString();
+				dv.value = entry["Mod"].GetString();
 			}
-			else if (v->value.HasMember("ScriptFile") && v->value["ScriptFile"].IsString())
+			else if (entry.HasMember("ScriptFile") && entry["ScriptFile"].IsString())
 			{
 				dv.type = Mod::DependencyType::SCRIPT_FILE;
-				dv.value = v->value["ScriptFile"].GetString();
+				dv.value = entry["ScriptFile"].GetString();
 			}
-			else if (v->value.HasMember("GlobalFunction") && v->value["GlobalFunction"].IsString())
+			else if (entry.HasMember("GlobalFunction") && entry["GlobalFunction"].IsString())
 			{
 				dv.type = Mod::DependencyType::GLOBAL_FUNCTION;
-				dv.value = v->value["GlobalFunction"].GetString();
+				dv.value = entry["GlobalFunction"].GetString();
 			}
 			else
 			{
-				spdlog::warn("Dependency '{}' has unsupported object form, skipping...", v->name.GetString());
+				spdlog::warn("Dependency entry '{}' has no supported value field, skipping...", constantName);
 				continue;
 			}
-		}
-		else
-		{
-			spdlog::warn("Dependency '{}' is not a string nor object, skipping...", v->name.GetString());
-			continue;
-		}
 
-		auto it = DependencyConstants.find(v->name.GetString());
-		if (it != DependencyConstants.end())
-		{
-			if (it->second.type != dv.type || it->second.value != dv.value)
+			auto it = DependencyConstants.find(constantName);
+			if (it != DependencyConstants.end())
 			{
-				spdlog::error(
-					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant name.",
-					Name,
-					v->name.GetString(),
-					dv.value,
-					it->second.value);
-				return;
+				if (it->second.type != dv.type || it->second.value != dv.value)
+				{
+					spdlog::error(
+						"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant name.",
+						Name,
+						constantName,
+						dv.value,
+						it->second.value);
+					return;
+				}
 			}
-		}
-		else
-		{
-			DependencyConstants.emplace(v->name.GetString(), dv);
-		}
+			else
+			{
+				DependencyConstants.emplace(constantName, dv);
+			}
 
-		spdlog::info("'{}' registered dependency constant '{}' for '{}'", Name, v->name.GetString(), dv.value);
+			spdlog::info("'{}' registered dependency constant '{}' for '{}'", Name, constantName, dv.value);
+		}
+	}
+	else
+	{
+		spdlog::warn("'Dependencies' field is not an object nor array, skipping...");
+		return;
 	}
 }
 
