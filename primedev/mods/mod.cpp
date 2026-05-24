@@ -470,7 +470,8 @@ void Mod::ParseDependencies(rapidjson_document& json)
 				if (it->second.type != dv.type || it->second.value != dv.value)
 				{
 					spdlog::error(
-						"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant name.",
+						"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant "
+						"name.",
 						Name,
 						constantName,
 						dv.value,

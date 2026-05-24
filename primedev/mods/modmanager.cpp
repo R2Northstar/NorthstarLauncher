@@ -528,7 +528,8 @@ void ModManager::SearchFilesystemForMods()
 			if (existing.type != target.type || existing.value != target.value)
 			{
 				spdlog::error(
-					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant name.",
+					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant "
+					"name.",
 					mod.Name,
 					constantName,
 					target.value,
