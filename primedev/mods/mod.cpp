@@ -437,31 +437,62 @@ void Mod::ParseDependencies(rapidjson_document& json)
 			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->name.GetString());
 			continue;
 		}
-		if (!v->value.IsString())
+		Mod::DependencyValue dv;
+
+		if (v->value.IsString())
 		{
-			spdlog::warn("Dependency constant '{}' is not a string, skipping...", v->value.GetString());
+			dv.type = Mod::DependencyType::MOD;
+			dv.value = v->value.GetString();
+		}
+		else if (v->value.IsObject())
+		{
+			if (v->value.HasMember("Mod") && v->value["Mod"].IsString())
+			{
+				dv.type = Mod::DependencyType::MOD;
+				dv.value = v->value["Mod"].GetString();
+			}
+			else if (v->value.HasMember("ScriptFile") && v->value["ScriptFile"].IsString())
+			{
+				dv.type = Mod::DependencyType::SCRIPT_FILE;
+				dv.value = v->value["ScriptFile"].GetString();
+			}
+			else if (v->value.HasMember("GlobalFunction") && v->value["GlobalFunction"].IsString())
+			{
+				dv.type = Mod::DependencyType::GLOBAL_FUNCTION;
+				dv.value = v->value["GlobalFunction"].GetString();
+			}
+			else
+			{
+				spdlog::warn("Dependency '{}' has unsupported object form, skipping...", v->name.GetString());
+				continue;
+			}
+		}
+		else
+		{
+			spdlog::warn("Dependency '{}' is not a string nor object, skipping...", v->name.GetString());
 			continue;
 		}
 
-		if (DependencyConstants.find(v->name.GetString()) != DependencyConstants.end() &&
-			v->value.GetString() != DependencyConstants[v->name.GetString()])
+		auto it = DependencyConstants.find(v->name.GetString());
+		if (it != DependencyConstants.end())
 		{
-			// this is fatal because otherwise the mod will probably try to use functions that dont exist,
-			// which will cause errors further down the line that are harder to debug
-			spdlog::error(
-				"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
-				"Change the constant name.",
-				Name,
-				v->name.GetString(),
-				v->value.GetString(),
-				DependencyConstants[v->name.GetString()]);
-			return;
+			if (it->second.type != dv.type || it->second.value != dv.value)
+			{
+				spdlog::error(
+					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant name.",
+					Name,
+					v->name.GetString(),
+					dv.value,
+					it->second.value);
+				return;
+			}
+		}
+		else
+		{
+			DependencyConstants.emplace(v->name.GetString(), dv);
 		}
 
-		if (DependencyConstants.find(v->name.GetString()) == DependencyConstants.end())
-			DependencyConstants.emplace(v->name.GetString(), v->value.GetString());
-
-		spdlog::info("'{}' registered dependency constant '{}' for mod '{}'", Name, v->name.GetString(), v->value.GetString());
+		spdlog::info("'{}' registered dependency constant '{}' for '{}'", Name, v->name.GetString(), dv.value);
 	}
 }
 

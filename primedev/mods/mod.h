@@ -123,7 +123,20 @@ public:
 	// hashed with STR_HASH
 	std::vector<size_t> StarpakPaths;
 
-	std::unordered_map<std::string, std::string> DependencyConstants;
+	enum class DependencyType
+	{
+		MOD,
+		SCRIPT_FILE,
+		GLOBAL_FUNCTION,
+	};
+
+	struct DependencyValue
+	{
+		DependencyType type = DependencyType::MOD;
+		std::string value;
+	};
+
+	std::unordered_map<std::string, DependencyValue> DependencyConstants;
 	std::vector<std::string> PluginDependencyConstants;
 
 public:

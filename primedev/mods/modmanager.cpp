@@ -517,22 +517,22 @@ void ModManager::SearchFilesystemForMods()
 
 		for (auto& modDependencyConstant : mod.DependencyConstants)
 		{
-			const auto& [constantName, targetMod] = modDependencyConstant;
-			const auto& [dependencyConstant, didInsert] = m_DependencyConstants.insert(modDependencyConstant);
-			// if we inserted successfully, we are good to go
-			if (didInsert)
+			const std::string& constantName = modDependencyConstant.first;
+			const Mod::DependencyValue& target = modDependencyConstant.second;
+
+			auto insertRes = m_DependencyConstants.insert({constantName, target});
+			if (insertRes.second)
 				continue;
 
-			const auto& [foundConstantName, foundTargetMod] = *dependencyConstant;
-			if (targetMod != foundTargetMod)
+			const Mod::DependencyValue& existing = insertRes.first->second;
+			if (existing.type != target.type || existing.value != target.value)
 			{
 				spdlog::error(
-					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. "
-					"Change the constant name.",
+					"'{}' attempted to register a dependency constant '{}' for '{}' that already exists for '{}'. Change the constant name.",
 					mod.Name,
 					constantName,
-					targetMod,
-					foundConstantName);
+					target.value,
+					existing.value);
 				mod.m_bWasReadSuccessfully = false;
 				break;
 			}

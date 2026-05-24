@@ -181,17 +181,89 @@ void SquirrelManager::VMCreated(CSquirrelVM* newSqvm)
 	for (auto& pair : g_pModManager->m_DependencyConstants)
 	{
 		bool bWasFound = false;
+		const Mod::DependencyValue& dep = pair.second;
 
-		for (Mod& dependency : g_pModManager->m_LoadedMods)
+		switch (dep.type)
 		{
-			if (!dependency.m_bEnabled)
-				continue;
-
-			if (dependency.Name == pair.second)
+		case Mod::DependencyType::MOD:
+		{
+			for (Mod& dependency : g_pModManager->m_LoadedMods)
 			{
-				bWasFound = true;
-				break;
+				if (!dependency.m_bEnabled)
+					continue;
+
+				if (dependency.Name == dep.value)
+				{
+					bWasFound = true;
+					break;
+				}
 			}
+			break;
+		}
+		case Mod::DependencyType::SCRIPT_FILE:
+		{
+			for (Mod& dependency : g_pModManager->m_LoadedMods)
+			{
+				if (!dependency.m_bEnabled)
+					continue;
+
+				for (const ModScript& script : dependency.Scripts)
+				{
+					if (script.Path == dep.value)
+					{
+						bWasFound = true;
+						break;
+					}
+				}
+				if (bWasFound)
+					break;
+			}
+			break;
+		}
+		case Mod::DependencyType::GLOBAL_FUNCTION:
+		{
+			for (SQFuncRegistration* funcReg : m_funcRegistrations)
+			{
+				if (funcReg && funcReg->squirrelFuncName && dep.value == funcReg->squirrelFuncName)
+				{
+					bWasFound = true;
+					break;
+				}
+			}
+
+			if (!bWasFound)
+			{
+				for (Mod& dependency : g_pModManager->m_LoadedMods)
+				{
+					if (!dependency.m_bEnabled)
+						continue;
+
+					for (const ModScript& script : dependency.Scripts)
+					{
+						for (const ModScriptCallback& cb : script.Callbacks)
+						{
+							if (cb.BeforeCallback == dep.value || cb.AfterCallback == dep.value || cb.DestroyCallback == dep.value)
+							{
+								bWasFound = true;
+								break;
+							}
+						}
+						if (bWasFound)
+							break;
+					}
+					if (bWasFound)
+						break;
+				}
+			}
+
+			if (!bWasFound)
+			{
+				if (setupfunc(dep.value.c_str()) != SQRESULT_ERROR)
+					bWasFound = true;
+			}
+
+			break;
+		}
 		}
 
 		defconst(m_pSQVM, pair.first.c_str(), bWasFound);
