@@ -97,7 +97,7 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 		a4->leftTeamScoreDiff = rightTeamScore / v28;
 		topColor = enemyColor;
 		bottomColor = friendlyColor;
-		
+
 		float v30 = a4->leftTeamScore / v28;
 		*(__m128*)a4->topColor = topColor;
 		*(__m128*)a4->bottomColor = bottomColor;
@@ -171,7 +171,6 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 
 	return (a1->executeTransform)(a3, 0x9ELL);
 }
-
 
 ON_DLL_LOAD("ui(11).dll", Rui, (CModule module))
 {

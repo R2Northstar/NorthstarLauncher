@@ -159,7 +159,7 @@ add_library(
     "squirrel/squirrelclasstypes.h"
     "rtech/pakfile.h"
     "rtech/pakfile.cpp"
-	"rtech/rui.cpp"
+    "rtech/rui.cpp"
     "util/printcommands.cpp"
     "util/printcommands.h"
     "util/printmaps.cpp"
@@ -194,7 +194,9 @@ add_library(
     "dllmain.cpp"
     "ns_version.h"
     "Northstar.def"
-     "rtech/rui.cpp" "rtech/rui.h")
+    "rtech/rui.cpp"
+    "rtech/rui.h"
+    )
 
 target_link_libraries(
     NorthstarDLL
