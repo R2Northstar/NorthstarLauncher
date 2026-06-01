@@ -47,7 +47,6 @@ void h_gamestate_info_ffa(RuiFunctions_t* funcs, RuiGlobals* globals, RuiInstanc
 	static __m128 friendlyColor = {0.095f, 0.309f, 0.708f, 1.f};
 
 	float endTime = data->endTime;
-	uint64_t globals = (uint64_t)globals;
 	float timeLeft = endTime - globals->currentTime;
 	char* buffer = (char*)alloca(2048);
 	strcpy_s(buffer, 2048, data->statusText);
