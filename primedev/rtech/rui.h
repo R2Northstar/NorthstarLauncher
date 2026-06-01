@@ -58,7 +58,7 @@ struct RuiFunctions_t
 	void(__fastcall* SetErrorWithReason)(RuiInstance* a1, const char* a2);
 	__m128*(__fastcall* GetTransformSize)(RuiInstance* a1);
 	__m128(__fastcall* GetTextSize)(RuiInstance* a1, unsigned int a2);
-	double(__fastcall* unknown_5)(RuiInstance* a1, int a2, int a3);
+	__m128(__fastcall* unknown_5)(RuiInstance* a1, int a2, int a3);
 	void(__fastcall* executeTransform)(RuiInstance* a1, int a2);
 	const char* (*printf)(RuiInstance* a1, const char* format, ...);
 	const char* (*localize)(RuiInstance* a1, const char* format, ...);
