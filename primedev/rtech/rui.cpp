@@ -152,15 +152,16 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 	transformSizes[6] = (__m128)xmmword_D40E0;
 
 	__m128 v35;
-	v35.m128_u64[1] = 0x4220000042200000ULL;
+	//v35.m128_u64[1] = 0x4220000042200000ULL;
+	v35 = _mm_set_ps(40.0f, 40.0f, 0.0f, 0.0f);
 	transformSizes[7] = (__m128)xmmword_D4A00;
 	transformSizes[9] = (__m128)xmmword_D3C20;
 	transformSizes[8] = (__m128)xmmword_D3C40;
 	transformSizes[10] = (__m128)xmmword_D3C20;
 
-	*(double*)v35.m128_u64 = (a1->unknown_5)(a3, 3LL, 4LL);
+	v35 = (a1->unknown_5)(a3, 3LL, 4LL);
 	transformSizes[11] = v35;
-	*(double*)v35.m128_u64 = (a1->unknown_5)(a3, 4LL, 5LL);
+	v35= (a1->unknown_5)(a3, 4LL, 5LL);
 	transformSizes[12] = v35;
 	transformSizes[13] = (a1->GetTextSize)(a3, 42LL);
 	transformSizes[14] = (a1->GetTextSize)(a3, 60LL);
