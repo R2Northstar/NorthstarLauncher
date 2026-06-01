@@ -85,9 +85,8 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 		const char* friendlyPlayerCardImage = a4->friendlyPlayerCardImage;
 		a4->playerCardImageAssetHandle = enemyPlayerCardImage_1;
 		assetHandle v26 = a1->LoadAsset(a3, friendlyPlayerCardImage);
-		__m128i v27 = _mm_cvtsi32_si128(a4->maxTeamScore);
 		a4->otherPlayerCardAssetHandle = v26;
-		float v28 = _mm_cvtepi32_ps(v27).m128_f32[0];
+		float v28 = static_cast<float>(a4->maxTeamScore);
 		if (v28 == 0.0f)
 		{
 			return (a1->SetErrorWithReason)(a3, "content\\r2\\ui\\hud\\gamemode_ffa.rui (83,46): divide by zero.\n");
@@ -97,7 +96,6 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 		a4->leftTeamScoreDiff = rightTeamScore / v28;
 		topColor = enemyColor;
 		bottomColor = friendlyColor;
-
 		float v30 = a4->leftTeamScore / v28;
 		*(__m128*)a4->topColor = topColor;
 		*(__m128*)a4->bottomColor = bottomColor;
@@ -112,9 +110,8 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 		const char* enemyPlayerCardImage = a4->enemyPlayerCardImage;
 		a4->playerCardImageAssetHandle = v11;
 		assetHandle enemyPlayerCardImageAssetHandle_2 = a1->LoadAsset(a3, enemyPlayerCardImage);
-		__m128i maxTeamScore = _mm_cvtsi32_si128(a4->maxTeamScore);
 		a4->otherPlayerCardAssetHandle = enemyPlayerCardImageAssetHandle_2;
-		float maxTeamScore_1 = _mm_cvtepi32_ps(maxTeamScore).m128_f32[0];
+		float maxTeamScore_1 = static_cast<float>(a4->maxTeamScore);
 		if (maxTeamScore_1 == 0.0f)
 		{
 			return (a1->SetErrorWithReason)(a3, "content\\r2\\ui\\hud\\gamemode_ffa.rui (83,46): divide by zero.\n");
@@ -152,7 +149,6 @@ void h_gamestate_info_ffa(RuiFunctions_t* a1, RuiGlobals* a2, RuiInstance* a3, g
 	transformSizes[6] = (__m128)xmmword_D40E0;
 
 	__m128 v35;
-	// v35.m128_u64[1] = 0x4220000042200000ULL;
 	v35 = _mm_set_ps(40.0f, 40.0f, 0.0f, 0.0f);
 	transformSizes[7] = (__m128)xmmword_D4A00;
 	transformSizes[9] = (__m128)xmmword_D3C20;
