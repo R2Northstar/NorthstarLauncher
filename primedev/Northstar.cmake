@@ -100,6 +100,8 @@ add_library(
     "plugins/interfaces/sys/ISys.cpp"
     "plugins/interfaces/IPluginId.h"
     "plugins/interfaces/IPluginCallbacks.h"
+    "plugins/interfaces/IPluginHooks.h"
+    "plugins/interfaces/IPluginHooks.cpp"
     "plugins/plugins.cpp"
     "plugins/plugins.h"
     "plugins/pluginmanager.h"
