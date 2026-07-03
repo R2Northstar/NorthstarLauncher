@@ -115,6 +115,7 @@ add_library(
     "scripts/server/miscserverfixes.cpp"
     "scripts/server/miscserverscript.cpp"
     "scripts/server/scriptuserinfo.cpp"
+    "scripts/clan_tag.cpp"
     "scripts/scriptdatatables.cpp"
     "scripts/scripthttprequesthandler.cpp"
     "scripts/scripthttprequesthandler.h"
