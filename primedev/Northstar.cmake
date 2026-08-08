@@ -29,7 +29,7 @@ add_library(
     "config/profile.cpp"
     "config/profile.h"
     "core/convar/concommand.cpp"
-    "core/convar/concommand.h"
+    "core/tier1/cmd.h"
     "core/convar/convar.cpp"
     "core/convar/convar.h"
     "core/convar/cvar.cpp"

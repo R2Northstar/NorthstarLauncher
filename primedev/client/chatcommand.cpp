@@ -1,5 +1,5 @@
-#include "core/convar/convar.h"
-#include "core/convar/concommand.h"
+#include "core/tier1/convar.h"
+#include "core/tier1/cmd.h"
 #include "localchatwriter.h"
 #include "squirrel/squirrel.h"
 

@@ -4,7 +4,7 @@
 #include <ranges>
 #include "plugins.h"
 #include "config/profile.h"
-#include "core/convar/concommand.h"
+#include "core/tier1/cmd.h"
 
 namespace fs = std::filesystem;
 

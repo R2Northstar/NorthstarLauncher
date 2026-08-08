@@ -1,6 +1,6 @@
 #pragma once
 #include "logging/logging.h"
-#include "core/convar/convar.h"
+#include "core/tier1/convar.h"
 
 class CBaseClient;
 

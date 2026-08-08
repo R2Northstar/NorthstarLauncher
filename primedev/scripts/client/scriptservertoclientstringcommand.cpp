@@ -1,6 +1,6 @@
 #include "squirrel/squirrel.h"
-#include "core/convar/convar.h"
-#include "core/convar/concommand.h"
+#include "core/tier1/convar.h"
+#include "core/tier1/cmd.h"
 
 void ConCommand_ns_script_servertoclientstringcommand(const CCommand& arg)
 {
