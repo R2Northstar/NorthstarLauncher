@@ -1,6 +1,6 @@
 #include "logging.h"
-#include "core/tier1/convar.h"
-#include "core/tier1/cmd.h"
+#include "tier1/convar.h"
+#include "tier1/cmd.h"
 #include "config/profile.h"
 #include "core/tier0.h"
 #include "util/version.h"

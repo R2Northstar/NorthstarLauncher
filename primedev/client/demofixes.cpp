@@ -1,4 +1,4 @@
-#include "core/tier1/convar.h"
+#include "tier1/convar.h"
 
 ON_DLL_LOAD_CLIENT("engine.dll", EngineDemoFixes, (CModule module))
 {

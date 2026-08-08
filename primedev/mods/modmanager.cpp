@@ -1,6 +1,6 @@
 #include "modmanager.h"
-#include "core/tier1/convar.h"
-#include "core/tier1/cmd.h"
+#include "tier1/convar.h"
+#include "tier1/cmd.h"
 #include "client/audio.h"
 #include "masterserver/masterserver.h"
 #include "core/filesystem/filesystem.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/tier1/convar.h"
+#include "tier1/convar.h"
 #include "server/serverpresence.h"
 #include <winsock2.h>
 #include <string>

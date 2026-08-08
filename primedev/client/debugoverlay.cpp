@@ -1,7 +1,7 @@
 #include "debugoverlay.h"
 
 #include "dedicated/dedicated.h"
-#include "core/tier1/cvar.h"
+#include "tier1/cvar.h"
 #include "core/math/vector.h"
 #include "server/ai_helper.h"
 

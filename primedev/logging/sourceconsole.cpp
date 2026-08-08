@@ -1,7 +1,7 @@
-#include "core/tier1/convar.h"
+#include "tier1/convar.h"
 #include "sourceconsole.h"
 #include "core/tier1.h"
-#include "core/tier1/cmd.h"
+#include "tier1/cmd.h"
 #include "util/printcommands.h"
 
 CGameConsole* g_pGameConsole;

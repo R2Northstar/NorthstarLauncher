@@ -1,6 +1,6 @@
 #include "playlist.h"
-#include "core/tier1/cmd.h"
-#include "core/tier1/convar.h"
+#include "tier1/cmd.h"
+#include "tier1/convar.h"
 #include "core/vanilla.h"
 #include "squirrel/squirrel.h"
 #include "engine/hoststate.h"
