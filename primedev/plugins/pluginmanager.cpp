@@ -208,6 +208,8 @@ void ConCommand_unload_plugins(const CCommand& args)
 
 		if (plugin.Unload())
 			NS::log::PLUGINSYS->info("Unloaded {}", name);
+		else
+			NS::log::PLUGINSYS->warn("{} can't be unloaded", name);
 	}
 }
 
