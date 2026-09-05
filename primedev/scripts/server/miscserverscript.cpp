@@ -2,6 +2,7 @@
 #include "masterserver/masterserver.h"
 #include "server/auth/serverauthentication.h"
 #include "dedicated/dedicated.h"
+#include "dedicated/dedicatedlogtoclient.h"
 #include "client/r2client.h"
 #include "server/r2server.h"
 
@@ -9,19 +10,19 @@
 
 ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", ScriptContext::SERVER)
 {
-	const CBasePlayer* pPlayer = g_pSquirrel<context>->template getentity<CBasePlayer>(sqvm, 1);
+	const CBasePlayer* pPlayer = g_pSquirrel[context]->template getentity<CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		spdlog::warn("NSEarlyWritePlayerPersistenceForLeave got null player");
 
-		g_pSquirrel<context>->pushbool(sqvm, false);
+		g_pSquirrel[context]->pushbool(sqvm, false);
 		return SQRESULT_NOTNULL;
 	}
 
 	CBaseClient* pClient = &g_pClientArray[pPlayer->m_nPlayerIndex - 1];
 	if (g_pServerAuthentication->m_PlayerAuthenticationData.find(pClient) == g_pServerAuthentication->m_PlayerAuthenticationData.end())
 	{
-		g_pSquirrel<context>->pushbool(sqvm, false);
+		g_pSquirrel[context]->pushbool(sqvm, false);
 		return SQRESULT_NOTNULL;
 	}
 
@@ -32,29 +33,29 @@ ADD_SQFUNC("void", NSEarlyWritePlayerPersistenceForLeave, "entity player", "", S
 
 ADD_SQFUNC("bool", NSIsWritingPlayerPersistence, "", "", ScriptContext::SERVER)
 {
-	g_pSquirrel<context>->pushbool(sqvm, g_pMasterServerManager->m_bSavingPersistentData);
+	g_pSquirrel[context]->pushbool(sqvm, g_pMasterServerManager->m_bSavingPersistentData);
 	return SQRESULT_NOTNULL;
 }
 
 ADD_SQFUNC("bool", NSIsPlayerLocalPlayer, "entity player", "", ScriptContext::SERVER)
 {
-	const CBasePlayer* pPlayer = g_pSquirrel<ScriptContext::SERVER>->template getentity<CBasePlayer>(sqvm, 1);
+	const CBasePlayer* pPlayer = g_pSquirrel[ScriptContext::SERVER]->template getentity<CBasePlayer>(sqvm, 1);
 	if (!pPlayer)
 	{
 		spdlog::warn("NSIsPlayerLocalPlayer got null player");
 
-		g_pSquirrel<context>->pushbool(sqvm, false);
+		g_pSquirrel[context]->pushbool(sqvm, false);
 		return SQRESULT_NOTNULL;
 	}
 
 	CBaseClient* pClient = &g_pClientArray[pPlayer->m_nPlayerIndex - 1];
-	g_pSquirrel<context>->pushbool(sqvm, !strcmp(g_pLocalPlayerUserID, pClient->m_UID));
+	g_pSquirrel[context]->pushbool(sqvm, !strcmp(g_pLocalPlayerUserID, pClient->m_UID));
 	return SQRESULT_NOTNULL;
 }
 
 ADD_SQFUNC("bool", NSIsDedicated, "", "", ScriptContext::SERVER)
 {
-	g_pSquirrel<context>->pushbool(sqvm, IsDedicatedServer());
+	g_pSquirrel[context]->pushbool(sqvm, IsDedicatedServer());
 	return SQRESULT_NOTNULL;
 }
 
@@ -65,14 +66,14 @@ ADD_SQFUNC(
 	"Disconnects the player from the server with the given reason",
 	ScriptContext::SERVER)
 {
-	const CBasePlayer* pPlayer = g_pSquirrel<context>->template getentity<CBasePlayer>(sqvm, 1);
-	const char* reason = g_pSquirrel<context>->getstring(sqvm, 2);
+	const CBasePlayer* pPlayer = g_pSquirrel[context]->template getentity<CBasePlayer>(sqvm, 1);
+	const char* reason = g_pSquirrel[context]->getstring(sqvm, 2);
 
 	if (!pPlayer)
 	{
 		spdlog::warn("Attempted to call NSDisconnectPlayer() with null player.");
 
-		g_pSquirrel<context>->pushbool(sqvm, false);
+		g_pSquirrel[context]->pushbool(sqvm, false);
 		return SQRESULT_NOTNULL;
 	}
 
@@ -82,7 +83,7 @@ ADD_SQFUNC(
 	{
 		spdlog::warn("NSDisconnectPlayer(): player entity has null CBaseClient!");
 
-		g_pSquirrel<context>->pushbool(sqvm, false);
+		g_pSquirrel[context]->pushbool(sqvm, false);
 		return SQRESULT_NOTNULL;
 	}
 
@@ -95,6 +96,23 @@ ADD_SQFUNC(
 		CBaseClient__Disconnect(pClient, 1, "Disconnected by the server.");
 	}
 
-	g_pSquirrel<context>->pushbool(sqvm, true);
+	g_pSquirrel[context]->pushbool(sqvm, true);
 	return SQRESULT_NOTNULL;
+}
+
+ADD_SQFUNC("void", NSSendClientPrint, "entity player, string msg", "Sends a message to the player's console", ScriptContext::SERVER)
+{
+	const CBasePlayer* pPlayer = g_pSquirrel[context]->template getentity<CBasePlayer>(sqvm, 1);
+	const char* msg = g_pSquirrel[context]->getstring(sqvm, 2);
+
+	if (!pPlayer)
+	{
+		spdlog::warn("NSSendClientPrint(): got null player");
+		return SQRESULT_NULL;
+	}
+
+	CBaseClient* pClient = &g_pClientArray[pPlayer->m_nPlayerIndex - 1];
+	CGameClient__ClientPrintf(pClient, "%s", msg);
+
+	return SQRESULT_NULL;
 }

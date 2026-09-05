@@ -1,6 +1,6 @@
 #include "printmaps.h"
-#include "core/convar/convar.h"
-#include "core/convar/concommand.h"
+#include "tier1/convar.h"
+#include "tier1/cmd.h"
 #include "mods/modmanager.h"
 #include "core/tier0.h"
 #include "engine/r2engine.h"
@@ -167,12 +167,12 @@ ADD_SQFUNC(
 	// Maybe we should call this on mods reload instead
 	RefreshMapList();
 
-	g_pSquirrel<context>->newarray(sqvm, 0);
+	g_pSquirrel[context]->newarray(sqvm, 0);
 
 	for (MapVPKInfo& map : vMapList)
 	{
-		g_pSquirrel<context>->pushstring(sqvm, map.name.c_str());
-		g_pSquirrel<context>->arrayappend(sqvm, -2);
+		g_pSquirrel[context]->pushstring(sqvm, map.name.c_str());
+		g_pSquirrel[context]->arrayappend(sqvm, -2);
 	}
 
 	return SQRESULT_NOTNULL;

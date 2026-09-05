@@ -1,6 +1,6 @@
 #include "logging.h"
-#include "core/convar/convar.h"
-#include "core/convar/concommand.h"
+#include "tier1/convar.h"
+#include "tier1/cmd.h"
 #include "config/profile.h"
 #include "core/tier0.h"
 #include "util/version.h"
@@ -122,7 +122,12 @@ void CustomSink::custom_log(const custom_log_msg& msg)
 
 void InitialiseConsole()
 {
-	if (AllocConsole() != FALSE)
+	if (strstr(GetCommandLineA(), "-noallocconsole"))
+	{
+		FreeConsole();
+		return;
+	}
+	else if (AllocConsole() != FALSE)
 	{
 		freopen("CONOUT$", "w", stdout);
 		freopen("CONOUT$", "w", stderr);

@@ -1,3 +1,4 @@
+#include <optional>
 class Mod;
 
 struct ModConVar
@@ -105,6 +106,7 @@ public:
 	std::vector<std::string> LocalisationFiles;
 	// custom script init.nut
 	std::string initScript;
+	std::optional<std::string> initScriptCallBack;
 
 	// other files:
 
@@ -125,7 +127,7 @@ public:
 	std::vector<std::string> PluginDependencyConstants;
 
 public:
-	Mod(fs::path modPath, char* jsonBuf);
+	Mod(fs::path modPath, const char* jsonBuf);
 
 private:
 	void ParseConVars(rapidjson_document& json);

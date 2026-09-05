@@ -1,6 +1,10 @@
 #pragma once
 #include "logging/logging.h"
-#include "core/convar/convar.h"
+#include "tier1/convar.h"
+
+class CBaseClient;
+
+extern void (*CGameClient__ClientPrintf)(CBaseClient* pClient, const char* fmt, ...);
 
 class DedicatedServerLogToClientSink : public CustomSink
 {
