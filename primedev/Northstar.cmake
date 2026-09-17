@@ -154,6 +154,7 @@ add_library(
     "shared/playlist.cpp"
     "shared/playlist.h"
     "shared/weapon_reparse.cpp"
+    "shared/usercmd_recovery.cpp"
     "squirrel/squirrel.cpp"
     "squirrel/squirrel.h"
     "squirrel/squirrelautobind.cpp"
