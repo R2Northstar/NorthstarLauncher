@@ -24,7 +24,7 @@ void(__fastcall* CRecipientFilter__AddAllPlayers)(CRecipientFilter* self);
 void(__fastcall* CRecipientFilter__AddRecipient)(CRecipientFilter* self, const CBasePlayer* player);
 void(__fastcall* CRecipientFilter__MakeReliable)(CRecipientFilter* self);
 
-void(__fastcall* UserMessageBegin)(CRecipientFilter* filter, const char* messagename);
+void(__fastcall* UserMessageBegin)(CRecipientFilter* filter, const char* messagename, int replayType);
 void(__fastcall* MessageEnd)();
 void(__fastcall* MessageWriteByte)(int iValue);
 void(__fastcall* MessageWriteString)(const char* sz);
@@ -110,7 +110,7 @@ void ChatBroadcastMessage(int fromPlayerIndex, int toPlayerIndex, const char* te
 	}
 	CRecipientFilter__MakeReliable(&filter);
 
-	UserMessageBegin(&filter, "SayText");
+	UserMessageBegin(&filter, "SayText", 2);
 	MessageWriteByte(fromPlayerId);
 	MessageWriteString(sendText);
 	MessageWriteBool(isTeam);
@@ -172,7 +172,7 @@ ON_DLL_LOAD_RELIESON("server.dll", ServerChatHooks, ServerSquirrel, (CModule mod
 	CRecipientFilter__AddRecipient = module.Offset(0x1E9B30).RCast<void(__fastcall*)(CRecipientFilter*, const CBasePlayer*)>();
 	CRecipientFilter__MakeReliable = module.Offset(0x1EA4E0).RCast<void(__fastcall*)(CRecipientFilter*)>();
 
-	UserMessageBegin = module.Offset(0x15C520).RCast<void(__fastcall*)(CRecipientFilter*, const char*)>();
+	UserMessageBegin = module.Offset(0x15C520).RCast<void(__fastcall*)(CRecipientFilter*, const char*, int)>();
 	MessageEnd = module.Offset(0x158880).RCast<void(__fastcall*)()>();
 	MessageWriteByte = module.Offset(0x158A90).RCast<void(__fastcall*)(int)>();
 	MessageWriteString = module.Offset(0x158D00).RCast<void(__fastcall*)(const char*)>();
