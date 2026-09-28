@@ -1,13 +1,12 @@
 #pragma once
 
-struct CustomPacketHandler
+struct CustomPacketManager
 {
 	typedef void (*CustomPacketHandlerType)(void* packetHandler, struct netpacket_s* packet, OUT bool& runOriginalHandler);
 
 public:
 	bool RegisterPacketHandler(uint8_t controller, CustomPacketHandlerType handler);
-
-	CustomPacketHandler();
+	void RegisterPacketHook();
 
 private:
 	static bool (*o_pHandlePacket)(void* packetHandler, netpacket_s* packet);
@@ -16,4 +15,4 @@ private:
 	std::unordered_map<uint8_t, CustomPacketHandlerType> customHandlers {};
 };
 
-extern CustomPacketHandler* g_pCustomPacketHandler;
+extern CustomPacketManager* g_pCustomPacketManager;

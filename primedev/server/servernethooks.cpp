@@ -2,7 +2,7 @@
 #include "engine/r2engine.h"
 #include "shared/exploit_fixes/ns_limits.h"
 #include "masterserver/masterserver.h"
-#include "engine/custom_packet_handler.h"
+#include "engine/custom_packet_manager.h"
 
 #include <string>
 #include <thread>
@@ -197,10 +197,10 @@ ON_DLL_LOAD_RELIESON("engine.dll", ServerNetHooks, ConVar, (CModule module))
 		"Whether to disable signature verification for Atlas connectionless packets (DANGEROUS: this allows anyone to impersonate Atlas)");
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", ServerAtlasPacketHandler, CustomPacketHandler, (CModule module))
+ON_DLL_LOAD_RELIESON("engine.dll", ServerAtlasPacketHandler, CustomPacketManager, (CModule module))
 {
-	assert(g_pCustomPacketHandler);
-	g_pCustomPacketHandler->RegisterPacketHandler(
+	assert(g_pCustomPacketManager);
+	g_pCustomPacketManager->RegisterPacketHandler(
 		'T',
 		[](void* handler, netpacket_s* packet, OUT bool& executeOriginalHandler)
 		{

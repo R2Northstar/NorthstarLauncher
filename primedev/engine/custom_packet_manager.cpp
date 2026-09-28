@@ -1,13 +1,13 @@
-#include "engine/custom_packet_handler.h"
+#include "engine/custom_packet_manager.h"
 #include "r2engine.h"
 #include <shared/exploit_fixes/ns_limits.h>
 
-CustomPacketHandler* g_pCustomPacketHandler;
-
 static const std::unordered_set<uint8_t> nativeHandlers({0x41, 0x48, 0x49, 0x4E}); // Not sure if there are others... probably!
 
-bool (*CustomPacketHandler::o_pHandlePacket)(void* packetHandler, netpacket_s* packet) = nullptr;
-bool CustomPacketHandler::h_HandlePacket(void* packetHandler, netpacket_s* packet)
+CustomPacketManager* g_pCustomPacketManager = new CustomPacketManager;
+
+bool (*CustomPacketManager::o_pHandlePacket)(void* packetHandler, netpacket_s* packet) = nullptr;
+bool CustomPacketManager::h_HandlePacket(void* packetHandler, netpacket_s* packet)
 {
 	if (packet->size >= 5)
 	{
@@ -20,10 +20,10 @@ bool CustomPacketHandler::h_HandlePacket(void* packetHandler, netpacket_s* packe
 		{
 			uint8_t controller = packet->data[sizeof(header)];
 
-			if (g_pCustomPacketHandler->customHandlers.contains(controller))
+			if (g_pCustomPacketManager->customHandlers.contains(controller))
 			{
 				bool shouldFallback = true;
-				const auto callback = g_pCustomPacketHandler->customHandlers.at(controller);
+				const auto callback = g_pCustomPacketManager->customHandlers.at(controller);
 				callback(packetHandler, packet, shouldFallback);
 
 				if (!shouldFallback)
@@ -43,12 +43,7 @@ bool CustomPacketHandler::h_HandlePacket(void* packetHandler, netpacket_s* packe
 	return o_pHandlePacket(packetHandler, packet);
 }
 
-ON_DLL_LOAD("engine.dll", CustomPacketHandler, (CModule module))
-{
-	g_pCustomPacketHandler = new CustomPacketHandler;
-}
-
-bool CustomPacketHandler::RegisterPacketHandler(uint8_t controller, CustomPacketHandlerType handler)
+bool CustomPacketManager::RegisterPacketHandler(uint8_t controller, CustomPacketHandlerType handler)
 {
 
 	if (customHandlers.contains(controller))
@@ -67,9 +62,17 @@ bool CustomPacketHandler::RegisterPacketHandler(uint8_t controller, CustomPacket
 	return true;
 }
 
-CustomPacketHandler::CustomPacketHandler()
+void CustomPacketManager::RegisterPacketHook()
 {
 	const auto module = CModule("engine.dll");
+	assert(module.GetModuleBase()); // Make sure it is proper
+
 	o_pHandlePacket = module.Offset(0x117800).RCast<decltype(o_pHandlePacket)>();
 	HookAttach(&(PVOID&)o_pHandlePacket, (PVOID)h_HandlePacket);
+}
+
+ON_DLL_LOAD("engine.dll", CustomPacketManager, (CModule module))
+{
+	assert(g_pCustomPacketManager);
+	g_pCustomPacketManager->RegisterPacketHook();
 }
