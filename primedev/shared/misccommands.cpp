@@ -349,9 +349,9 @@ void FixupCvarFlags()
 		{"sv_single_core_dedi", FCVAR_DEVELOPMENTONLY},
 		{"sv_stressbots", FCVAR_DEVELOPMENTONLY},
 
-		{"fatal_script_errors", FCVAR_DEVELOPMENTONLY},
-		{"fatal_script_errors_client", FCVAR_DEVELOPMENTONLY},
-		{"fatal_script_errors_server", FCVAR_DEVELOPMENTONLY},
+		{"fatal_script_errors", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED},
+		{"fatal_script_errors_client", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED},
+		{"fatal_script_errors_server", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED},
 		{"script_error_on_midgame_load", FCVAR_DEVELOPMENTONLY}, // idk what this is
 
 		{"ai_ainRebuildOnMapStart", FCVAR_DEVELOPMENTONLY},
@@ -368,13 +368,16 @@ void FixupCvarFlags()
 		{"aisettings_reparse_client", FCVAR_DEVELOPMENTONLY},
 		{"damagedefs_reparse", FCVAR_DEVELOPMENTONLY},
 		{"damagedefs_reparse_client", FCVAR_DEVELOPMENTONLY},
-		{"playerSettings_reparse", FCVAR_DEVELOPMENTONLY},
-		{"_playerSettings_reparse_Server", FCVAR_DEVELOPMENTONLY},
+		{"fx_impact_reparse", FCVAR_CHEAT},
+		{"playerSettings_reparse", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT},
+		{"_playerSettings_reparse_Server", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT},
+		{"weapon_reparse", FCVAR_CHEAT},
+		{"weapon_reparse_server", FCVAR_HIDDEN | FCVAR_CHEAT},
 
 	};
 
 	const std::vector<std::tuple<const char*, const char*>> CVAR_FIXUP_DEFAULT_VALUES = {
-		{"sv_stressbots", "0"}, // not currently used but this is probably a bad default if we get bots working
+		{"sv_stressbots", "0"}, // fixes bots randomly timing out
 		{"cl_pred_optimize", "0"} // fixes issues with animation prediction in thirdperson
 	};
 

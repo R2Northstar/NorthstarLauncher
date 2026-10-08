@@ -201,10 +201,10 @@
             postPatch =
               let
                 zlib = pkgs.fetchFromGitHub {
-                  owner = "R2Northstar";
+                  owner = "madler";
                   repo = "zlib";
-                  rev = "9f0f2d4f9f1f28be7e16d8bf3b4e9d4ada70aa9f";
-                  hash = "sha256-PL6lH7I4qGduaVTR1pGfXUjpZp41kUERvGrqERmSoNQ=";
+                  rev = "da607da739fa6047df13e66a2af6b8bec7c2a498"; # 1.3.2
+                  hash = "sha256-Sthd9RsydSLaITNlBp6g1X35WKZdS4h7gr0QhRqdGoI=";
                 };
                 versionSeq = (lib.strings.splitString "." finalAttrs.version);
                 versionAt = index: builtins.elemAt versionSeq index;
@@ -224,13 +224,13 @@
 
                 cp -r ${zlib} "$zlib_src"
 
-                chmod +rw "$zlib_src"
+                chmod -R +rw "$zlib_src"
 
                 substituteInPlace primedev/thirdparty/minizip/CMakeLists.txt \
                   --replace "clone_repo(zlib https://github.com/madler/zlib)" "
                   set(ZLIB_SOURCE_DIR $zlib_src)
                   set(ZLIB_BINARY_DIR $zlib_src)
-                  	"
+                    "
 
                 substituteInPlace primedev/ns_version.h \
                   --replace "#define NORTHSTAR_VERSION 0,0,0,1" "#define NORTHSTAR_VERSION ${versionQuadruplet}"

@@ -342,7 +342,21 @@ static void h_CBaseClient__Disconnect(CBaseClient* self, uint32_t unknownButAlwa
 
 		// dcing, write persistent data
 		if (g_pServerAuthentication->m_PlayerAuthenticationData[self].needPersistenceWriteOnLeave)
+		{
+			if (!g_pServerAuthentication->m_bStartingLocalSPGame)
+			{
+				for (int i = 0; i < g_pGlobals->m_nMaxClients; i++)
+				{
+					if (&g_pClientArray[i] == self)
+					{
+						g_pSquirrel[ScriptContext::SERVER]->Call("CodeCallback_UpdatePersistenceOnDisconnect", i);
+						break;
+					}
+				}
+			}
+
 			g_pServerAuthentication->WritePersistentData(self);
+		}
 
 		memset(self->m_PersistenceBuffer, 0, g_pServerAuthentication->m_PlayerAuthenticationData[self].pdataSize);
 		g_pServerAuthentication->RemovePlayerAuthData(self); // won't do anything 99% of the time, but just in case

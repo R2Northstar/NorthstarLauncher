@@ -32,7 +32,6 @@ class ModManager
 {
 private:
 	bool m_bHasLoadedMods = false;
-	bool m_bHasEnabledModsCfg;
 	rapidjson_document m_EnabledModsCfg;
 	std::string cfgPath;
 	int manifestoVersion = 0;

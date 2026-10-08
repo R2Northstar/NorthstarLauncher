@@ -38,7 +38,7 @@ ModManager::ModManager()
 
 template <ScriptContext context> void ModConCommandCallback_Internal(std::string name, const CCommand& command)
 {
-	if (g_pSquirrel[context]->m_pSQVM && g_pSquirrel[context]->m_pSQVM)
+	if (g_pSquirrel[context]->m_pSQVM)
 	{
 		if (command.ArgC() == 1)
 		{
@@ -422,9 +422,6 @@ void ModManager::UnloadMods()
 	if (g_pPakLoadManager != nullptr)
 		g_pPakLoadManager->UnloadAllModPaks();
 
-	if (!m_bHasEnabledModsCfg)
-		m_EnabledModsCfg.SetObject();
-
 	for (Mod& mod : m_LoadedMods)
 	{
 		// remove all built kvs
@@ -436,15 +433,12 @@ void ModManager::UnloadMods()
 
 	// save mods configuration to disk
 	ExportModsConfigurationToFile();
-
-	// do we need to dealloc individual entries in m_loadedMods? idk, rework
-	m_LoadedMods.clear();
 }
 
 void ModManager::SearchFilesystemForMods()
 {
 	std::vector<fs::path> modDirs;
-	m_LoadedMods.clear();
+	std::vector<Mod> m_LoadedModsOld = std::move(m_LoadedMods);
 
 	// get mod directories
 	std::filesystem::directory_iterator classicModsDir = fs::directory_iterator(GetModFolderPath());
@@ -543,19 +537,37 @@ void ModManager::SearchFilesystemForMods()
 			m_PluginDependencyConstants.insert(dependency);
 		}
 
-		// Do not load remote mods on first load
-		if (mod.m_bIsRemote && !m_bHasLoadedMods)
+		bool usedOldState = false;
+
+		// keep enabled state of already loaded mods
+		for (Mod& modOld : m_LoadedModsOld)
 		{
-			mod.m_bEnabled = false;
+			if (mod.Name == modOld.Name && mod.Version == modOld.Version)
+			{
+				mod.m_bEnabled = modOld.m_bEnabled;
+				mod.m_bEnabledOld = modOld.m_bEnabledOld;
+				usedOldState = true;
+				break;
+			}
 		}
-		// Else, use enabledmods.json if possible
-		else if (m_EnabledModsCfg.HasMember(mod.Name.c_str()) && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version))
+
+		if (!usedOldState)
 		{
-			mod.m_bEnabled = m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
+			// Do not load remote mods
+			if (mod.m_bIsRemote)
+			{
+				mod.m_bEnabled = false;
+				mod.m_bEnabledOld = false;
+			}
+			// Else, use enabledmods.json if possible
+			else if (m_EnabledModsCfg.HasMember(mod.Name.c_str()) && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str()))
+			{
+				bool modIsEnabled = m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].IsTrue();
+
+				mod.m_bEnabled = modIsEnabled;
+				mod.m_bEnabledOld = modIsEnabled;
+			}
 		}
-		// Else, enable new mods by default
-		else
-			mod.m_bEnabled = true;
 
 		if (mod.m_bWasReadSuccessfully)
 		{
@@ -611,8 +623,8 @@ void ModManager::DisableMultipleModVersions()
 		spdlog::warn("Mod '{}' has several versions enabled, disabling them all.", pair.first);
 		for (auto& [version, versionIndex] : pair.second)
 		{
-
 			m_LoadedMods[versionIndex].m_bEnabled = false;
+			m_LoadedMods[versionIndex].m_bEnabledOld = false;
 			spdlog::warn("	-> v{} is now disabled.", version);
 		}
 	}
@@ -624,6 +636,9 @@ void ModManager::ExportModsConfigurationToFile()
 
 	for (Mod& mod : m_LoadedMods)
 	{
+		if (mod.m_bIsRemote)
+			continue;
+
 		// Creating mod key (with name)
 		if (!m_EnabledModsCfg.HasMember(mod.Name.c_str()))
 		{
@@ -635,7 +650,8 @@ void ModManager::ExportModsConfigurationToFile()
 		if (!m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str()))
 			m_EnabledModsCfg[mod.Name.c_str()].AddMember(
 				rapidjson_document::StringRefType(mod.Version.c_str()), false, m_EnabledModsCfg.GetAllocator());
-		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabled);
+
+		m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(mod.m_bEnabledOld);
 	}
 
 	// Exporting manifesto version
@@ -735,12 +751,11 @@ void ModManager::DiscoverMods()
 	for (Mod& mod : m_LoadedMods)
 	{
 		// Add mod entry to enabledmods.json if it doesn't exist
-		bool isModRemote = mod.m_bIsRemote;
 		bool modEntryExists = m_EnabledModsCfg.HasMember(mod.Name.c_str());
 		bool modEntryHasCorrectFormat = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].IsObject();
 		bool modVersionEntryExists = modEntryExists && m_EnabledModsCfg[mod.Name.c_str()].HasMember(mod.Version.c_str());
 
-		if (!isModRemote && (!modEntryExists || !modVersionEntryExists))
+		if (!mod.m_bIsRemote && (!modEntryExists || !modVersionEntryExists))
 		{
 			// Creating mod key (with name)
 			if (!modEntryHasCorrectFormat)
@@ -762,12 +777,13 @@ void ModManager::DiscoverMods()
 			}
 
 			// Add mod entry
-			bool modIsEnabled = mod.m_bEnabled;
+			bool modIsEnabled = mod.m_bEnabledOld;
 			// Try to use old manifesto if currently migrating from old format
 			if (isUsingOldFormat && oldEnabledModsCfg.HasMember(mod.Name.c_str()) && oldEnabledModsCfg[mod.Name.c_str()].IsBool())
 			{
 				modIsEnabled = oldEnabledModsCfg[mod.Name.c_str()].GetBool();
 				mod.m_bEnabled = modIsEnabled;
+				mod.m_bEnabledOld = modIsEnabled;
 			}
 			m_EnabledModsCfg[mod.Name.c_str()][mod.Version.c_str()].SetBool(modIsEnabled);
 
