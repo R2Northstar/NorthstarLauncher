@@ -53,6 +53,8 @@ public:
 	void AuthenticatePlayer(CBaseClient* pPlayer, uint64_t iUid, char* pAuthToken);
 	bool RemovePlayerAuthData(CBaseClient* pPlayer);
 	void WritePersistentData(CBaseClient* pPlayer);
+
+	bool IsLocalPlayer(CBaseClient* pPlayer);
 };
 
 extern ServerAuthenticationManager* g_pServerAuthentication;

@@ -20,6 +20,8 @@ CBaseClient* g_pClientArray;
 
 server_state_t* g_pServerState;
 
+CClientState* g_pLocalClientState;
+
 char* g_pModName =
 	nullptr; // we cant set this up here atm since we dont have an offset to it in engine, instead we store it in IsRespawnMod
 
@@ -50,4 +52,6 @@ ON_DLL_LOAD("engine.dll", R2Engine, (CModule module))
 	g_pServerState = module.Offset(0x12A53D48).RCast<server_state_t*>();
 
 	g_pGlobals = module.Offset(0x7C6F70).RCast<CGlobalVars*>();
+
+	g_pLocalClientState = module.Offset(0x7A42C0).RCast<CClientState*>();
 }

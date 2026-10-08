@@ -123,6 +123,8 @@ add_library(
     "scripts/scriptjson.cpp"
     "scripts/scriptjson.h"
     "scripts/scriptutility.cpp"
+    "shared/offline_persistence.cpp"
+    "shared/offline_persistence.h"
     "server/auth/bansystem.cpp"
     "server/auth/bansystem.h"
     "server/auth/serverauthentication.cpp"

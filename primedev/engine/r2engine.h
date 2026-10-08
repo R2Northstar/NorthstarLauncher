@@ -312,6 +312,153 @@ static_assert(offsetof(CBaseClient, m_UID) == 0xF500);
 
 extern CBaseClient* g_pClientArray;
 
+#pragma pack(push, 1)
+struct CClientState
+{
+	uint64_t iNetChannelHandlerVftable;
+	uint64_t iConnectionLessPacketHandlerVfTable;
+	uint64_t qword10;
+	uint64_t qword18;
+	uint64_t qword20;
+	char snapshots;
+	uint8_t gap29[47];
+	uint32_t dword58;
+	uint8_t gap5C[4];
+	uint64_t qword60;
+	uint64_t qword68;
+	uint32_t dword70;
+	uint32_t dword74;
+	uint8_t byte78;
+	uint8_t gap79[3];
+	uint32_t dword7C;
+	uint8_t gap80[20];
+	uint8_t byte94;
+	uint8_t gap95[3];
+	uint32_t dword98;
+	uint8_t gap9C[4];
+	uint64_t qwordA0;
+	uint64_t qwordA8;
+	uint32_t dwordB0;
+	char charB4;
+	uint8_t gapB5[148];
+	uint8_t byte149;
+	uint8_t gap14A[2];
+	char char14C;
+	uint8_t gap14D[19];
+	uint8_t byte160;
+	uint8_t byte161;
+	uint8_t gap162[2];
+	uint32_t dword164;
+	uint32_t dword168;
+	uint8_t gap16C[4];
+	uint32_t dword170;
+	char m_szLevelFileName[64];
+	char m_szLevelBaseName[64];
+	char m_szLastLevelBaseName[64];
+	char m_szSkyBoxBaseName[64];
+	uint32_t dword274;
+	uint32_t dword278;
+	uint32_t dword27C;
+	uint8_t gap280[4];
+	uint32_t dword284;
+	uint32_t dword288;
+	uint32_t dword28C;
+	uint8_t byte290;
+	uint8_t gap291[3];
+	uint32_t dword294;
+	uint32_t dword298;
+	uint8_t gap29C[20];
+	uint8_t byte2B0;
+	uint8_t gap2B1[7];
+	uint64_t qword2B8;
+	uint64_t qword2C0;
+	char unk_0x800_buff;
+	uint8_t gap2C9[2047];
+	uint32_t dwordAC8;
+	uint8_t gapACC[4];
+	uint64_t unk; // NOT persistentDataSize!
+	uint8_t persistentData[61440]; // Probably smaller than that!
+	uint8_t byteFAD8;
+	uint8_t gapFAD9[3];
+	uint64_t qwordFADC;
+	uint16_t wordFAE4;
+	uint8_t byteFAE6;
+	uint8_t gapFAE7[1025];
+	char clientDataBLockReceiverVfTable;
+	uint8_t gapFEE9[7];
+	uint64_t qwordFEF0;
+	uint8_t gapFEF8[564];
+	uint32_t dword1012C;
+	uint64_t qword10130;
+	uint64_t qword10138;
+	uint64_t qword10140;
+	uint8_t gap10148[8];
+	uint16_t word10150;
+	uint8_t gap10152[6];
+	uint32_t dword10158;
+	uint64_t qword1015C;
+	uint64_t qword10164;
+	uint64_t qword1016C;
+	uint64_t qword10174;
+	uint8_t gap1017C[4];
+	uint32_t dword10180;
+	uint8_t gap10184[4];
+	uint8_t byte10188;
+	uint8_t gap10189[3];
+	uint32_t dword1018C;
+	uint8_t gap10190[13];
+	uint8_t byte1019D;
+	uint8_t gap1019E[2];
+	uint32_t dword101A0;
+	uint64_t qword101A4;
+	uint32_t dword101AC;
+	uint32_t dword101B0;
+	uint32_t dword101B4;
+	uint32_t dword101B8;
+	uint32_t dword101BC;
+	uint32_t dword101C0;
+	uint32_t dword101C4;
+	uint8_t gap101C8[8];
+	uint64_t qword101D0;
+	uint64_t qword101D8;
+	uint64_t qword101E0;
+	uint32_t dword101E8;
+	uint8_t gap101EC[4];
+	uint64_t qword101F0;
+	uint8_t gap101F8[12176];
+	uint64_t qword13188;
+	uint64_t qword13190;
+	char char13198;
+	uint8_t gap13199[7];
+	uint64_t qword131A0;
+	uint64_t qword131A8;
+	uint64_t qword131B0;
+	uint64_t qword131B8;
+	uint64_t qword131C0;
+	uint64_t qword131C8;
+	uint64_t qword131D0;
+	uint64_t qword131D8;
+	uint64_t qword131E0;
+	uint64_t qword131E8;
+	uint32_t dword131F0;
+	uint8_t gap131F4[1028];
+	uint64_t qword135F8;
+	uint64_t qword13600;
+	uint64_t qword13608;
+	uint64_t qword13610;
+	uint64_t qword13618;
+	uint64_t qword13620;
+	char unk_2047_thingies;
+	uint8_t gap13629[32767];
+	uint8_t byte1B628;
+};
+#pragma pack(pop)
+
+// static_assert(sizeof(CClientState) == 0x1B629); // Not sure about this one
+static_assert(offsetof(CClientState, persistentData) == 0xAD8); // Very sure about this one
+
+extern CClientState* g_pLocalClientState;
+
 enum server_state_t
 {
 	ss_dead = 0, // Dead
