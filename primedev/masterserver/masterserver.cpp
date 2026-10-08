@@ -261,7 +261,7 @@ void MasterServerManager::RequestServerList()
 						std::remove_if(
 							m_vRemoteServers.begin(),
 							m_vRemoteServers.end(),
-							[&](const RemoteServerInfo& s) { return s.onLAN && strncmp(s.id, remoteServerInfo.id, sizeof(s.id)); }),
+							[&](const RemoteServerInfo& s) { return s.onLAN && !strncmp(s.id, remoteServerInfo.id, sizeof(s.id)); }),
 						m_vRemoteServers.end());
 
 					m_vRemoteServers.emplace_back(remoteServerInfo);
