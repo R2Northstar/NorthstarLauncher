@@ -89,8 +89,6 @@ void Lan::SendScanPing()
 
 		// We need to encrypt it first
 		{
-			// For encryption you need to know your local IP Address and Port
-			// Therefore we must do one broadcast for each network card with a bound address
 			sockaddr_in sin {};
 			int addressLength = sizeof(sin);
 			netadr_t r2address {};
@@ -119,6 +117,7 @@ void Lan::SendScanPing()
 			static_assert(sizeof(payload.encryptHeader.nonce) == 12);
 			static_assert(sizeof(payload.encryptHeader.tag) == 16);
 
+			// This is how the game does it
 			int encryptedLength = NET_Encrypt(
 				&r2address,
 				LAN_BROADCAST_SCAN_MSG,
@@ -149,6 +148,7 @@ void Lan::SendScanPing()
 
 			switch (lastError = WSAGetLastError())
 			{
+				// We don't mind if the scan message bounces
 			case WSAECONNREFUSED:
 			case WSAEALREADY:
 			case WSAECONNABORTED:
@@ -253,6 +253,8 @@ void Lan::SetupBroadcastSocket()
 	this->m_broadcastEndpoint = static_cast<SOCKADDR_INET>(bEndpoint);
 	this->m_broadcastEndpointSize = sizeof(bEndpoint);
 
+	// "Don't linger" might not be strictly necessary here but I usually add it to make sure the EXE won't linger in memory once the program
+	// terminated, waiting for a connection to close
 	constexpr bool dontLinger = true;
 	constexpr bool broadcast = true;
 
