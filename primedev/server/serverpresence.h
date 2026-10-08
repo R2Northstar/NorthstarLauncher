@@ -52,7 +52,7 @@ public:
 	bool IsDueForUpdate(double flCurrentTime);
 
 protected:
-	virtual float GetPresenceUpdateCooldown() { return g_pServerPresence->Cvar_ns_server_presence_update_rate->GetFloat(); };
+	virtual float GetPresenceUpdateCooldown();
 
 private:
 	float m_flLastPresenceUpdate;

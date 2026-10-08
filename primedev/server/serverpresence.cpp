@@ -243,8 +243,18 @@ inline bool ServerPresenceReporter::IsDueForUpdate(double flCurrentTime)
 	return (flCurrentTime - m_flLastPresenceUpdate) * 1000 < GetPresenceUpdateCooldown();
 }
 
+inline float ServerPresenceReporter::GetPresenceUpdateCooldown()
+{
+	assert(g_pServerPresence);
+	assert(g_pServerPresence->Cvar_ns_server_presence_update_rate);
+
+	return g_pServerPresence->Cvar_ns_server_presence_update_rate->GetFloat();
+}
+
 ON_DLL_LOAD_RELIESON("engine.dll", ServerPresence, ConVar, (CModule module))
 {
+	assert(g_pServerPresence);
+
 	g_pServerPresence->CreateConVars();
 	Cvar_hostname = module.Offset(0x1315BAE8).Deref().RCast<ConVar*>();
 }
