@@ -2,7 +2,7 @@
 
 #include "server/serverpresence.h"
 #include "engine/r2engine.h"
-#include "engine/custom_packet_handler.h"
+#include "engine/custom_packet_manager.h"
 
 #include <chrono>
 #include <iphlpapi.h>
@@ -390,12 +390,12 @@ ServerPresence Lan::LanServerReporter::Payload::ToPresence(const SOCKADDR_INET* 
 	return presence;
 }
 
-ON_DLL_LOAD_RELIESON("engine.dll", LanDiscoveryPacketHandler, CustomPacketHandler, (CModule module))
+ON_DLL_LOAD_RELIESON("engine.dll", LanDiscoveryPacketHandler, CustomPacketManager, (CModule module))
 {
-	assert(g_pCustomPacketHandler);
+	assert(g_pCustomPacketManager);
 	static_assert(ARRAYSIZE(LAN_BROADCAST_SCAN_MSG) > 4);
 
-	g_pCustomPacketHandler->RegisterPacketHandler(
+	g_pCustomPacketManager->RegisterPacketHandler(
 		LAN_BROADCAST_SCAN_MSG[4],
 		[](void* handler, netpacket_s* packet, OUT bool& executeOriginalHandler)
 		{

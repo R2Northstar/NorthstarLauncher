@@ -8,6 +8,8 @@
 #include <future>
 #include <unordered_set>
 
+#pragma comment(lib, "Iphlpapi.lib")
+
 extern ConVar* Cvar_ns_masterserver_hostname;
 extern ConVar* Cvar_ns_curl_log_enable;
 

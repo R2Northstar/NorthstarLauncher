@@ -232,18 +232,18 @@ void ServerPresenceManager::SetPlayerCount(const int iPlayerCount)
 	m_ServerPresence.m_iPlayerCount = iPlayerCount;
 }
 
-inline void ServerPresenceReporter::ReportPresence(double flCurrentTime, const ServerPresence*)
+void ServerPresenceReporter::ReportPresence(double flCurrentTime, const ServerPresence*)
 {
 	// Default implementation just notifies the presence as updated
 	m_flLastPresenceUpdate = flCurrentTime;
 }
 
-inline bool ServerPresenceReporter::IsDueForUpdate(double flCurrentTime)
+bool ServerPresenceReporter::IsDueForUpdate(double flCurrentTime)
 {
 	return (flCurrentTime - m_flLastPresenceUpdate) * 1000 < GetPresenceUpdateCooldown();
 }
 
-inline float ServerPresenceReporter::GetPresenceUpdateCooldown()
+float ServerPresenceReporter::GetPresenceUpdateCooldown()
 {
 	assert(g_pServerPresence);
 	assert(g_pServerPresence->Cvar_ns_server_presence_update_rate);
