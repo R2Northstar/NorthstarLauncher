@@ -8,6 +8,8 @@
 #include <future>
 #include <unordered_set>
 
+#pragma comment(lib, "Iphlpapi.lib")
+
 extern ConVar* Cvar_ns_masterserver_hostname;
 extern ConVar* Cvar_ns_curl_log_enable;
 
@@ -36,8 +38,10 @@ public:
 
 	// connection stuff
 	bool requiresPassword;
+	bool onLAN; // Means server ID is means of joining
 
 public:
+	// Non-LAN Ctor
 	RemoteServerInfo(
 		const char* newId,
 		const char* newName,
@@ -48,6 +52,12 @@ public:
 		int newPlayerCount,
 		int newMaxPlayers,
 		bool newRequiresPassword);
+
+	// LAN Ctor
+	RemoteServerInfo(const ServerPresence& presence);
+
+private:
+	RemoteServerInfo();
 };
 
 struct RemoteServerConnectionInfo
@@ -172,7 +182,7 @@ public:
 	void CreatePresence(const ServerPresence* pServerPresence) override;
 
 	// Run on an internal to either add the server to the MS or update it.
-	void ReportPresence(const ServerPresence* pServerPresence) override;
+	void ReportPresence(double flCurrentTime, const ServerPresence* pServerPresence) override;
 
 	// Called when we need to remove the server from the master server.
 	void DestroyPresence(const ServerPresence* pServerPresence) override;
