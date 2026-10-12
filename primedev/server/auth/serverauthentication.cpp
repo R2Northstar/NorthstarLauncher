@@ -13,6 +13,7 @@
 #include "engine/r2engine.h"
 #include "client/r2client.h"
 #include "server/r2server.h"
+#include "shared/offline_persistence.h"
 
 #include <fstream>
 #include <filesystem>
@@ -166,6 +167,11 @@ void ServerAuthenticationManager::AuthenticatePlayer(CBaseClient* pPlayer, uint6
 	// we probably allow insecure at this point, but make sure not to write anyway if not insecure
 	else if (Cvar_ns_auth_allow_insecure->GetBool())
 	{
+		if (IsLocalPlayer(pPlayer))
+		{
+			g_pOfflinePersistence->ReadOfflinePersistentData(pPlayer);
+		}
+
 		// set persistent data as ready
 		// note: actual placeholder persistent data is populated in script with InitPersistentData()
 		pPlayer->m_iPersistenceReady = ePersistenceReady::READY_INSECURE;
@@ -180,6 +186,11 @@ bool ServerAuthenticationManager::RemovePlayerAuthData(CBaseClient* pPlayer)
 	// hack for special case where we're on a local server, so we erase our own newly created auth data on disconnect
 	if (m_bNeedLocalAuthForNewgame && !strcmp(pPlayer->m_UID, g_pLocalPlayerUserID))
 		return false;
+
+	if (Cvar_ns_auth_allow_insecure_write->GetBool())
+	{
+		return false; // Keep it in memory
+	}
 
 	// we don't have our auth token at this point, so lookup authdata by uid
 	for (auto& auth : m_RemoteAuthenticationData)
@@ -206,10 +217,15 @@ void ServerAuthenticationManager::WritePersistentData(CBaseClient* pPlayer)
 		g_pMasterServerManager->WritePlayerPersistentData(
 			pPlayer->m_UID, (const char*)pPlayer->m_PersistenceBuffer, m_PlayerAuthenticationData[pPlayer].pdataSize);
 	}
-	else if (Cvar_ns_auth_allow_insecure_write->GetBool())
+	else if (Cvar_ns_auth_allow_insecure_write->GetBool() && IsLocalPlayer(pPlayer))
 	{
-		// todo: write pdata to disk here
+		g_pOfflinePersistence->WriteOfflinePersistentData(pPlayer);
 	}
+}
+
+bool ServerAuthenticationManager::IsLocalPlayer(CBaseClient* pPlayer)
+{
+	return g_pLocalPlayerUserID && !strcmp(pPlayer->m_UID, g_pLocalPlayerUserID);
 }
 
 // auth hooks
