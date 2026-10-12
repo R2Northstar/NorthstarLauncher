@@ -71,8 +71,10 @@ void RunServer(CDedicatedExports* dedicated)
 // use server presence to update window title
 class DedicatedConsoleServerPresence : public ServerPresenceReporter
 {
-	void ReportPresence(const ServerPresence* pServerPresence) override
+	void ReportPresence(double flCurrentTime, const ServerPresence* pServerPresence) override
 	{
+		ServerPresenceReporter::ReportPresence(flCurrentTime, pServerPresence);
+
 		SetConsoleTitleA(fmt::format(
 							 "{} - {} {}/{} players ({})",
 							 pServerPresence->m_sServerName,
