@@ -76,6 +76,7 @@ class Mod
 public:
 	// runtime stuff
 	bool m_bEnabled = true;
+	bool m_bEnabledOld = true;
 	bool m_bWasReadSuccessfully = false;
 	fs::path m_ModDirectory;
 	bool m_bIsRemote;

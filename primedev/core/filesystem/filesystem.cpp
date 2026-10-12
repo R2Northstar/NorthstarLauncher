@@ -85,19 +85,6 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 	// can't just set all /s in path to \, since some paths aren't in writeable memory
 	std::string normalisedPath = g_pModManager->NormaliseModFilePath(fs::path(pPath));
 
-	if (iFileSourceType & FileSourceType_Compiled)
-	{
-		// only compile assets if we would accept a compiled asset in the first place
-		if (shouldCompile)
-			g_pModManager->CompileAssetsForFile(pPath);
-
-		if (g_pModManager->m_CompiledFiles.contains(normalisedPath))
-		{
-			SetNewCompiledSearchPaths();
-			return true;
-		}
-	}
-
 	if (iFileSourceType & FileSourceType_ModOverride)
 	{
 		auto file = g_pModManager->m_ModFiles.find(normalisedPath);
@@ -105,6 +92,26 @@ bool TryReplaceFile(const char* pPath, bool shouldCompile)
 		{
 			SetNewModSearchPaths(file->second.m_pOwningMod);
 			return true;
+		}
+	}
+
+	if (iFileSourceType & FileSourceType_Compiled)
+	{
+		// only compile assets if we would accept a compiled asset in the first place
+		if (g_pModManager->m_CompiledFiles.contains(normalisedPath))
+		{
+			SetNewCompiledSearchPaths();
+			return true;
+		}
+		else if (shouldCompile)
+		{
+			g_pModManager->CompileAssetsForFile(pPath);
+
+			if (g_pModManager->m_CompiledFiles.contains(normalisedPath))
+			{
+				SetNewCompiledSearchPaths();
+				return true;
+			}
 		}
 	}
 
