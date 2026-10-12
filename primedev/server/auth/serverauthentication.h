@@ -8,6 +8,7 @@ struct RemoteAuthData
 {
 	char uid[33];
 	char username[64];
+	char clanTag[17];
 
 	// pdata
 	char* pdata;
@@ -41,7 +42,7 @@ public:
 	bool m_bStartingLocalSPGame = false;
 
 public:
-	void AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata);
+	void AddRemotePlayer(std::string token, uint64_t uid, std::string username, std::string pdata, std::string clanTag);
 
 	void AddPlayer(CBaseClient* pPlayer, const char* pAuthToken);
 	void RemovePlayer(CBaseClient* pPlayer);
