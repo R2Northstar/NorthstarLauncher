@@ -3,7 +3,7 @@
 
 template <ScriptContext context> void ModToSquirrel(HSQUIRRELVM sqvm, Mod& mod)
 {
-	g_pSquirrel[context]->pushnewstructinstance(sqvm, 9);
+	g_pSquirrel[context]->pushnewstructinstance(sqvm, 10);
 
 	// name
 	g_pSquirrel[context]->pushstring(sqvm, mod.Name.c_str(), -1);
@@ -29,13 +29,17 @@ template <ScriptContext context> void ModToSquirrel(HSQUIRRELVM sqvm, Mod& mod)
 	g_pSquirrel[context]->pushbool(sqvm, mod.m_bEnabled);
 	g_pSquirrel[context]->sealstructslot(sqvm, 5);
 
+	// old enabled
+	g_pSquirrel[context]->pushbool(sqvm, mod.m_bEnabledOld);
+	g_pSquirrel[context]->sealstructslot(sqvm, 6);
+
 	// required on client
 	g_pSquirrel[context]->pushbool(sqvm, mod.RequiredOnClient);
-	g_pSquirrel[context]->sealstructslot(sqvm, 6);
+	g_pSquirrel[context]->sealstructslot(sqvm, 7);
 
 	// is remote
 	g_pSquirrel[context]->pushbool(sqvm, mod.m_bIsRemote);
-	g_pSquirrel[context]->sealstructslot(sqvm, 7);
+	g_pSquirrel[context]->sealstructslot(sqvm, 8);
 
 	// convars
 	g_pSquirrel[context]->newarray(sqvm);
@@ -44,7 +48,7 @@ template <ScriptContext context> void ModToSquirrel(HSQUIRRELVM sqvm, Mod& mod)
 		g_pSquirrel[context]->pushstring(sqvm, cvar->Name.c_str());
 		g_pSquirrel[context]->arrayappend(sqvm, -2);
 	}
-	g_pSquirrel[context]->sealstructslot(sqvm, 8);
+	g_pSquirrel[context]->sealstructslot(sqvm, 9);
 
 	// add current object to squirrel array
 	g_pSquirrel[context]->arrayappend(sqvm, -2);
@@ -95,13 +99,14 @@ ADD_SQFUNC("array<string>", NSGetModNames, "", "", ScriptContext::SERVER | Scrip
 ADD_SQFUNC(
 	"void",
 	NSSetModEnabled,
-	"string modName, string modVersion, bool enabled",
+	"string modName, string modVersion, bool enabled, bool temp",
 	"",
 	ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	const SQChar* modName = g_pSquirrel[context]->getstring(sqvm, 1);
 	const SQChar* modVersion = g_pSquirrel[context]->getstring(sqvm, 2);
 	const SQBool enabled = g_pSquirrel[context]->getbool(sqvm, 3);
+	const SQBool temp = g_pSquirrel[context]->getbool(sqvm, 4);
 
 	// manual lookup, not super performant but eh not a big deal
 	for (Mod& mod : g_pModManager->m_LoadedMods)
@@ -109,6 +114,10 @@ ADD_SQFUNC(
 		if (!mod.Name.compare(modName) && !mod.Version.compare(modVersion))
 		{
 			mod.m_bEnabled = enabled;
+
+			if (!temp)
+				mod.m_bEnabledOld = enabled;
+
 			return SQRESULT_NULL;
 		}
 	}
@@ -116,7 +125,7 @@ ADD_SQFUNC(
 	return SQRESULT_NULL;
 }
 
-ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::UI)
+ADD_SQFUNC("void", NSReloadMods, "", "", ScriptContext::SERVER | ScriptContext::CLIENT | ScriptContext::UI)
 {
 	NOTE_UNUSED(sqvm);
 	g_pModManager->LoadMods();
