@@ -279,6 +279,7 @@ void FixupCvarFlags()
 		{"sv_forceGrapplesToFail", FCVAR_DEVELOPMENTONLY},
 		{"sv_maxvelocity", FCVAR_DEVELOPMENTONLY},
 		{"sv_footsteps", FCVAR_DEVELOPMENTONLY},
+		{"bug_reproNum", FCVAR_DEVELOPMENTONLY},
 		// these 2 are flagged as CHEAT above, could be made REPLICATED later potentially
 		{"cl_footstep_event_max_dist", FCVAR_DEVELOPMENTONLY},
 		{"cl_footstep_event_max_dist_titan", FCVAR_DEVELOPMENTONLY},
