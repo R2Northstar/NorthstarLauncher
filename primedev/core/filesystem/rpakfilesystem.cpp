@@ -539,13 +539,13 @@ Pak_Free_t Pak_Free = nullptr;
 std::vector<PakHandle> g_pBadPaks;
 HOOK(v_Pak_Free, o_Pak_Free, void, __fastcall, (PakLoadedInfo_s * info))
 {
-	if (info->pakFile)
-	{
-		if (!info->pakFile->IsValid())
-		{
-			g_pBadPaks.push_back(info->handle);
-		}
-	}
+	//if (info->pakFile)
+	//{
+	//	if (!info->pakFile->IsValid())
+	//	{
+	//		g_pBadPaks.push_back(info->handle);
+	//	}
+	//}
 
 	o_Pak_Free(info);
 }
