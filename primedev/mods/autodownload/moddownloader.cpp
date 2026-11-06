@@ -199,7 +199,7 @@ std::tuple<fs::path, bool> ModDownloader::FetchModFromDistantStore(std::string_v
 	spdlog::info(std::format("Fetching mod archive from {}", url));
 	std::string archiveName = ModDownloader::GetModArchiveName(url);
 	std::filesystem::path downloadPath = std::filesystem::temp_directory_path() / archiveName;
-    spdlog::info(std::format(L"Downloading archive to {}", downloadPath.generic_wstring()));
+	spdlog::info(std::format(L"Downloading archive to {}", downloadPath.generic_wstring()));
 
 	// Update state
 	modState.state = DOWNLOADING;
