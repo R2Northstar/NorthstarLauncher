@@ -26,3 +26,10 @@ ADD_SQFUNC(
 
 	return SQRESULT_NULL;
 }
+
+// bool function NSIsServerVMValid()
+ADD_SQFUNC("bool", NSIsServerVMValid, "", "Returns if server vm is valid.", ScriptContext::UI | ScriptContext::CLIENT)
+{
+	g_pSquirrel[context]->pushbool(sqvm, g_pSquirrel[ScriptContext::SERVER]->m_pSQVM && g_pSquirrel[ScriptContext::SERVER]->m_pSQVM->sqvm);
+	return SQRESULT_NOTNULL;
+}

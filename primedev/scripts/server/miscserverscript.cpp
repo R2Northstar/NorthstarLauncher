@@ -62,7 +62,7 @@ ADD_SQFUNC("bool", NSIsDedicated, "", "", ScriptContext::SERVER)
 ADD_SQFUNC(
 	"bool",
 	NSDisconnectPlayer,
-	"entity player, string reason",
+	"entity player, string reason = \"\"",
 	"Disconnects the player from the server with the given reason",
 	ScriptContext::SERVER)
 {
