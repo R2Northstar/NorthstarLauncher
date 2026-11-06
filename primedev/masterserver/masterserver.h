@@ -134,6 +134,7 @@ public:
 	void AuthenticateWithServer(const char* uid, const char* playerToken, RemoteServerInfo server, const char* password);
 	void WritePlayerPersistentData(const char* playerId, const char* pdata, size_t pdataSize);
 	void ProcessConnectionlessPacketSigreq1(std::string req);
+	bool SetLocalPlayerClanTag(const std::string clan_tag);
 };
 
 extern MasterServerManager* g_pMasterServerManager;
