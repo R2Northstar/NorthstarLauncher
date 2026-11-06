@@ -42,10 +42,20 @@ public:
 class ServerPresenceReporter
 {
 public:
+	// TODO Abstract?
 	virtual void CreatePresence(const ServerPresence* /*pServerPresence*/) {}
-	virtual void ReportPresence(const ServerPresence* /*pServerPresence*/) {}
 	virtual void DestroyPresence(const ServerPresence* /*pServerPresence*/) {}
 	virtual void RunFrame(double /*flCurrentTime*/, const ServerPresence* /*pServerPresence*/) {}
+
+	virtual void ReportPresence(double flCurrentTime, const ServerPresence* /*pServerPresence*/);
+
+	bool IsDueForUpdate(double flCurrentTime);
+
+protected:
+	virtual float GetPresenceUpdateCooldown();
+
+private:
+	float m_flLastPresenceUpdate;
 };
 
 class ServerPresenceManager
@@ -59,7 +69,6 @@ private:
 	std::vector<ServerPresenceReporter*> m_vPresenceReporters;
 
 	double m_flLastPresenceUpdate = 0;
-	ConVar* Cvar_ns_server_presence_update_rate;
 
 	ConVar* Cvar_ns_server_name;
 	ConVar* Cvar_ns_server_desc;
@@ -69,6 +78,8 @@ private:
 	ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
 public:
+	ConVar* Cvar_ns_server_presence_update_rate;
+
 	void AddPresenceReporter(ServerPresenceReporter* reporter);
 
 	void CreateConVars();

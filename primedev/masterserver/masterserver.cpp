@@ -11,6 +11,7 @@
 #include "util/version.h"
 #include "server/auth/bansystem.h"
 #include "dedicated/dedicated.h"
+#include "lan/lan.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -19,6 +20,10 @@
 
 #include <cstring>
 #include <regex>
+#include <WinSock2.h>
+#include <ws2ipdef.h>
+#include <WinDNS.h>
+#include <iphlpapi.h>
 
 using namespace std::chrono_literals;
 
@@ -54,6 +59,33 @@ RemoteServerInfo::RemoteServerInfo(
 
 	playerCount = newPlayerCount;
 	maxPlayers = newMaxPlayers;
+
+	onLAN = false;
+}
+
+RemoteServerInfo::RemoteServerInfo(const ServerPresence& presence)
+{
+	ZeroMemory(id, sizeof(id));
+	strncpy_s(id, sizeof(id), presence.m_sServerId.c_str(), presence.m_sServerId.size());
+
+	ZeroMemory(name, sizeof(name));
+	strncpy_s(name, sizeof(name), presence.m_sServerName.c_str(), presence.m_sServerName.size());
+
+	description = presence.m_sServerDesc;
+
+	ZeroMemory(map, sizeof(map));
+	strncpy_s(map, sizeof(map), presence.m_MapName, sizeof(presence.m_MapName));
+
+	ZeroMemory(playlist, sizeof(playlist));
+	strncpy_s(playlist, sizeof(playlist), presence.m_PlaylistName, sizeof(presence.m_PlaylistName));
+
+	ZeroMemory(region, sizeof(region)); // Not relevant to a LAN party I suppose
+
+	playerCount = presence.m_iPlayerCount;
+	maxPlayers = presence.m_iMaxPlayers;
+	requiresPassword = presence.m_Password[0] != '\x00';
+
+	onLAN = true;
 }
 
 void SetCommonHttpClientOptions(CURL* curl)
@@ -204,6 +236,37 @@ void MasterServerManager::RequestServerList()
 			m_bScriptRequestingServerList = true;
 
 			spdlog::info("Requesting server list from {}", Cvar_ns_masterserver_hostname->GetString());
+
+			if (g_pLan->Enabled())
+			{
+				spdlog::info("Polling local area network for servers...");
+
+				// This is done synchronously with a timeout of ~1sec
+				// The issue is that the way Master server communication is set in NS is very unlike the way Quake/DPMaster do it
+				// traditionally, and so NS has a caveat: it has to receive the server list in one burst. The architecture of NS does not
+				// seem set up in a way that remote servers can be dynamically added to the list "as they are found", like on DP or source
+				// games, so we have to block for LAN discovery _then_ block for Online discovery _then_ display. That leaves a very short
+				// time window for LAN discovery.
+				//
+				// Ultimately the big TODO here is to allow server discovery to happen in an event based
+				// fashion ("I have found you, I add you now") rather than in a synchronous, "all at once" fashion
+				const auto servers = g_pLan->ScanForServers();
+
+				for (const auto& server : servers)
+				{
+					RemoteServerInfo remoteServerInfo(server);
+
+					// if server already exists, remove it and add it with the updated info
+					m_vRemoteServers.erase(
+						std::remove_if(
+							m_vRemoteServers.begin(),
+							m_vRemoteServers.end(),
+							[&](const RemoteServerInfo& s) { return s.onLAN && std::string(s.id) == remoteServerInfo.id; }),
+						m_vRemoteServers.end());
+
+					m_vRemoteServers.emplace_back(remoteServerInfo);
+				}
+			}
 
 			CURL* curl = curl_easy_init();
 			SetCommonHttpClientOptions(curl);
@@ -603,6 +666,38 @@ void MasterServerManager::AuthenticateWithServer(const char* uid, const char* pl
 	// dont wait, just stop if we're trying to do 2 auth requests at once
 	if (m_bAuthenticatingWithGameServer || g_pVanillaCompatibility->GetVanillaCompatibility())
 		return;
+
+	if (server.onLAN) // Lan clients are self authentified
+	{
+		// Very normal Windows APIs require very normal formats
+		constexpr size_t serverAddressLength = sizeof(server.id);
+		wchar_t* wideAddressPort = new wchar_t[serverAddressLength];
+		mbstowcs(wideAddressPort, server.id, serverAddressLength);
+		NET_ADDRESS_INFO addressInfo {};
+		USHORT port {};
+		const auto parse = ParseNetworkString(wideAddressPort, NET_STRING_IPV4_SERVICE, &addressInfo, &port, NULL);
+		delete[] wideAddressPort;
+
+		if (parse == ERROR_SUCCESS)
+		{
+			m_pendingConnectionInfo.ip = addressInfo.Ipv4Address.sin_addr;
+			m_pendingConnectionInfo.port = port;
+
+			strncpy_s(m_pendingConnectionInfo.authToken, sizeof(m_pendingConnectionInfo.authToken), uid, strlen(uid));
+
+			m_bHasPendingConnectionInfo = true;
+			m_bSuccessfullyAuthenticatedWithGameServer = true;
+
+			m_currentServer = server;
+			m_sCurrentServerPassword = std::string();
+			return;
+		}
+		else
+		{
+			spdlog::error("Could not parse ip address of LAN server {}", server.id);
+			assert(parse);
+		}
+	}
 
 	m_bAuthenticatingWithGameServer = true;
 	m_bScriptAuthenticatingWithGameServer = true;
@@ -1007,6 +1102,12 @@ ON_DLL_LOAD_RELIESON("engine.dll", MasterServer, (ConCommand, ServerPresence), (
 
 	MasterServerPresenceReporter* presenceReporter = new MasterServerPresenceReporter;
 	g_pServerPresence->AddPresenceReporter(presenceReporter);
+
+	if (g_pLan->Enabled())
+	{
+		Lan::LanServerReporter* presenceReporter = new Lan::LanServerReporter;
+		g_pServerPresence->AddPresenceReporter(presenceReporter);
+	}
 }
 
 void MasterServerPresenceReporter::CreatePresence(const ServerPresence* pServerPresence)
@@ -1015,8 +1116,10 @@ void MasterServerPresenceReporter::CreatePresence(const ServerPresence* pServerP
 	m_nNumRegistrationAttempts = 0;
 }
 
-void MasterServerPresenceReporter::ReportPresence(const ServerPresence* pServerPresence)
+void MasterServerPresenceReporter::ReportPresence(double flCurrentTime, const ServerPresence* pServerPresence)
 {
+	ServerPresenceReporter::ReportPresence(flCurrentTime, pServerPresence);
+
 	// make a copy of presence for multithreading purposes
 	ServerPresence threadedPresence(pServerPresence);
 
